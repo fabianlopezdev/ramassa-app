@@ -500,7 +500,11 @@ describe('the question builder rows (RAPP-307)', () => {
   });
 
   test('a typed field carries settings the shared schema accepts (RAPP-610)', () => {
-    expect(buildTypedProfileField('signature', {}).question_type).toBe('signature');
+    const consent = buildTypedProfileField('consent', {
+      text: { ca: 'Accepto' },
+      requires_signature: true,
+    });
+    expect(questionSettingsSchema('consent').safeParse(consent.settings).success).toBe(true);
     const number = buildTypedProfileField('number', { integer: true, max: 15 });
     expect(questionSettingsSchema('number').safeParse(number.settings).success).toBe(true);
     expect(buildProfileField().settings).toEqual({});

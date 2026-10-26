@@ -6,7 +6,8 @@
  *
  *   - its settings (`questionSettingsSchema`): a number's range and whether it
  *     is whole, a date's age range, how many items a list takes, a consent's
- *     own text, what a file question accepts;
+ *     own text and whether she signs it (RAPP-671), what a file question
+ *     accepts;
  *   - ONE answer schema (`customAnswerSchema`), used by her phone before she
  *     continues, by the admin before staff save, and mirrored rule for rule by
  *     the database function that saves the answer
@@ -16,8 +17,9 @@
  *
  * Stored values: a number is a JSON number; a date `YYYY-MM-DD`; yes / no,
  * phone (E.164), email and a choice are strings; a list is a list of strings; a
- * consent is `true`; a signature is the strokes of the authorization pad; a
- * file is `{key, name, content_type, size}`, its key in the private folder of
+ * consent is `true`, or `{accepted, signature, signed_on}` when it asks for her
+ * signature (the strokes of the authorization pad, and the day the server
+ * stamps); a file is `{key, name, content_type, size}`, its key in the private folder of
  * the woman who answered; a country or a municipality is its canonical name.
  * Sensitive answers are encrypted as before.
  *
@@ -44,7 +46,6 @@ export const CUSTOM_QUESTION_TYPES = [
   'item_list',
   'consent',
   'file_upload',
-  'signature',
   'country',
   'municipality',
 ] as const;
@@ -69,9 +70,32 @@ export function maxOptionsFor(type: CustomQuestionType): number {
   return type === 'search_choice' ? 500 : 60;
 }
 
-/** Staff may complete or correct every answer but a file or a signature, which are hers to give. */
-export function isStaffWritable(type: CustomQuestionType): boolean {
-  return type !== 'file_upload' && type !== 'signature';
+/**
+ * Whether a consent asks for her signature under the tick (RAPP-671). Such a
+ * consent follows the old signature rules: only she answers it, on her phone.
+ */
+export function asksForSignature(question: {
+  readonly type: CustomQuestionType;
+  readonly settings: unknown;
+}): boolean {
+  const settings = question.settings;
+  return (
+    question.type === 'consent' &&
+    typeof settings === 'object' &&
+    settings !== null &&
+    (settings as { readonly requires_signature?: unknown }).requires_signature === true
+  );
+}
+
+/**
+ * Staff may complete or correct every answer but a file or a consent she
+ * signs, which are hers to give. `private.field_is_hers_only` says the same.
+ */
+export function isStaffWritable(question: {
+  readonly type: CustomQuestionType;
+  readonly settings: unknown;
+}): boolean {
+  return question.type !== 'file_upload' && !asksForSignature(question);
 }
 
 export const YES_NO = ['yes', 'no'] as const;
@@ -144,7 +168,10 @@ const dateSettingsSchema = z
       settings.min_age <= settings.max_age,
   );
 const itemListSettingsSchema = z.strictObject({ max_items: z.int().min(1).max(LIST_MAX_ITEMS) });
-const consentSettingsSchema = z.strictObject({ text: catalanText });
+const consentSettingsSchema = z.strictObject({
+  text: catalanText,
+  requires_signature: z.boolean().optional(),
+});
 const fileSettingsSchema = z.strictObject({ accept: z.enum(FILE_ACCEPTS) });
 const noSettingsSchema = z.strictObject({});
 
@@ -229,8 +256,41 @@ export interface FileAnswer {
   readonly size: number;
 }
 
+/**
+ * A consent that asks for her signature (RAPP-671): the tick, her drawing and
+ * `signed_on` (`YYYY-MM-DD`), the day the server stamps when it saves a new
+ * drawing. While she answers, the tick or the drawing may still be missing;
+ * the check refuses it until both are there.
+ */
+export interface ConsentDraft {
+  readonly accepted: boolean;
+  readonly signature: SignatureStrokes | null;
+  readonly signed_on?: string;
+}
+
 export type CustomAnswerValue =
-  string | number | boolean | readonly string[] | SignatureStrokes | FileAnswer;
+  string | number | boolean | readonly string[] | FileAnswer | ConsentDraft;
+
+function isConsentDraft(value: CustomAnswerValue | undefined): value is ConsentDraft {
+  return typeof value === 'object' && !Array.isArray(value) && 'accepted' in value;
+}
+
+/** A consent that asks for her signature, as she left it: the tick and the drawing. */
+export function consentDraft(value: CustomAnswerValue | undefined): ConsentDraft {
+  if (isConsentDraft(value)) return value;
+  return { accepted: value === true, signature: null };
+}
+
+/** The value to keep for a signed consent: empty when she gave neither the tick nor the drawing. */
+export function consentDraftValue(draft: ConsentDraft): CustomAnswerValue {
+  if (!draft.accepted && draft.signature === null) return '';
+  return { accepted: draft.accepted, signature: draft.signature };
+}
+
+/** The drawing of a signed consent answer, when it holds one. */
+export function consentSignature(value: CustomAnswerValue): SignatureStrokes | null {
+  return isConsentDraft(value) ? value.signature : null;
+}
 
 /** What every answer of every type can be, for reading stored rows. */
 export const customAnswerValueSchema = z.union([
@@ -238,7 +298,11 @@ export const customAnswerValueSchema = z.union([
   z.number(),
   z.boolean(),
   z.array(z.string()),
-  signatureStrokesSchema,
+  z.object({
+    accepted: z.boolean(),
+    signature: signatureStrokesSchema.nullable(),
+    signed_on: z.string().optional(),
+  }),
   z.object({
     key: z.string(),
     name: z.string(),
@@ -263,6 +327,16 @@ export function ageOn(isoDate: string, today: Date = new Date()): number {
     (today.getUTCMonth() + 1 === month && today.getUTCDate() < day);
   if (beforeBirthday) years -= 1;
   return years;
+}
+
+/** A real day in `YYYY-MM-DD`, any year (the day a consent was signed). */
+function isAnyCalendarDate(value: string): boolean {
+  if (!DATE_PATTERN.test(value)) return false;
+  const [year, month, day] = value.split('-').map(Number) as [number, number, number];
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+  );
 }
 
 function isCalendarDate(value: string): boolean {
@@ -355,7 +429,13 @@ export function customAnswerSchema(question: AnswerQuestionShape): z.ZodType<Cus
         .refine((items) => new Set(items).size === items.length);
     }
     case 'consent':
-      return z.literal(true);
+      return asksForSignature(question)
+        ? z.strictObject({
+            accepted: z.literal(true),
+            signature: signatureStrokesSchema,
+            signed_on: z.string().refine(isAnyCalendarDate).optional(),
+          })
+        : z.literal(true);
     case 'file_upload': {
       const accepted = FILE_CONTENT_TYPES[fileSettings(question.settings).accept];
       return z.strictObject({
@@ -369,8 +449,6 @@ export function customAnswerSchema(question: AnswerQuestionShape): z.ZodType<Cus
         size: z.int().min(1).max(FILE_MAX_BYTES),
       });
     }
-    case 'signature':
-      return signatureStrokesSchema;
     case 'country':
       return z.string().refine(isCanonicalCountry);
     case 'municipality':
@@ -470,7 +548,19 @@ export function sampleCustomAnswer(
     case 'item_list':
       return [text.item];
     case 'consent':
-      return true;
+      return asksForSignature(question)
+        ? {
+            accepted: true,
+            signature: [
+              [
+                [100, 500],
+                [300, 400],
+                [500, 600],
+                [700, 450],
+              ],
+            ],
+          }
+        : true;
     case 'country':
       return 'Espanya';
     case 'municipality':
@@ -484,14 +574,5 @@ export function sampleCustomAnswer(
         size: 1024,
       };
     }
-    case 'signature':
-      return [
-        [
-          [100, 500],
-          [300, 400],
-          [500, 600],
-          [700, 450],
-        ],
-      ];
   }
 }

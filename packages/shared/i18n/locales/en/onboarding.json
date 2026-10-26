@@ -210,7 +210,7 @@
   "supportNeedsListAnd": "{{first}} and {{last}}",
   "supportNeedExplanationLabel": "Tell us what support you need",
   "supportingEntitiesInstructionExcept": "If other organisations or programmes are supporting you, apart from {{entity}}, please add them here.",
-  "customSigned": "Signed",
+  "customSignedOn": "Accepted, signed on {{date}}",
   "customErrorNumber": "Write a number.",
   "customErrorNumberWhole": "Write a whole number, without decimals.",
   "customErrorNumberRange": "Write a number from {{min}} to {{max}}.",

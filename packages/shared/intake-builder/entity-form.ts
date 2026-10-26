@@ -95,7 +95,7 @@ export function entityFormItems(layout: ProfileLayout): readonly EntityFormItem[
           : [];
       }
     }
-    if (!isStaffWritable(field.type)) return [];
+    if (!isStaffWritable(field)) return [];
     return [
       { kind: 'custom', question: placedQuestion(layout, field, placement), field, placement },
     ];
@@ -157,13 +157,13 @@ export function entityFormQuestions(items: readonly EntityFormItem[]): readonly 
 /** Where a field of the Fitxa stands for the entity form, for the picker. */
 export type EntityFormPick =
   | 'here'
-  /** A file or a signature: hers to give. */
+  /** A file or a consent she signs: hers to give. */
   | 'hers'
   | 'free';
 
 export function entityFormPick(layout: ProfileLayout, field: ProfileField): EntityFormPick {
   if (placementOn(layout, field.id, 'entity_form') !== undefined) return 'here';
-  return isStaffWritable(field.type) ? 'free' : 'hers';
+  return isStaffWritable(field) ? 'free' : 'hers';
 }
 
 /** Her names: never off the form, always required. */

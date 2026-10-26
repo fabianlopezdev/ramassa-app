@@ -76,7 +76,7 @@ const legacyDraftSchema = z.object({
   season: z.record(z.string(), z.unknown()).optional(),
   terms: z.record(z.string(), z.unknown()).optional(),
   // Her answers to the staff questions, by question id (RAPP-307).
-  // Every type of answer (RAPP-610): text, a number, true, a list, a signature, a file.
+  // Every type of answer (RAPP-610): text, a number, true, a list, a signed consent, a file.
   custom: z.record(z.string(), customAnswerValueSchema).optional(),
   // A test player's situation when the draft began (RAPP-619): a later change
   // on her page makes the draft stale.

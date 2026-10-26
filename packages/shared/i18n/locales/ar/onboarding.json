@@ -210,7 +210,7 @@
   "supportNeedsListAnd": "{{first}} و{{last}}",
   "supportNeedExplanationLabel": "أخبرينا ما الدعم الذي تحتاجينه",
   "supportingEntitiesInstructionExcept": "إذا كانت منظمات أو برامج أخرى تدعمكِ، بالإضافة إلى {{entity}}، فأضيفيها هنا.",
-  "customSigned": "تمّ التوقيع",
+  "customSignedOn": "مقبولة، موقّعة في {{date}}",
   "customErrorNumber": "اكتبي رقمًا.",
   "customErrorNumberWhole": "اكتبي رقمًا صحيحًا بدون كسور.",
   "customErrorNumberRange": "اكتبي رقمًا بين {{min}} و{{max}}.",

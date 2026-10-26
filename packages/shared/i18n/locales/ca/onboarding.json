@@ -210,7 +210,7 @@
   "supportNeedsListAnd": "{{first}} i {{last}}",
   "supportNeedExplanationLabel": "Explica’ns quin suport necessites",
   "supportingEntitiesInstructionExcept": "Si altres entitats o programes et donen suport, a part de {{entity}}, afegeix-los aquí.",
-  "customSigned": "Signat",
+  "customSignedOn": "Acceptada, signada el {{date}}",
   "customErrorNumber": "Escriu un número.",
   "customErrorNumberWhole": "Escriu un número sencer, sense decimals.",
   "customErrorNumberRange": "Escriu un número entre {{min}} i {{max}}.",

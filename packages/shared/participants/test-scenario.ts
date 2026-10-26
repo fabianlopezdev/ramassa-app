@@ -181,7 +181,7 @@ export function scenarioCustomQuestions(catalog: IntakeCatalog): readonly Custom
 
 /**
  * A valid sample answer for each of these staff questions, in her language
- * (RAPP-610): every type, a file and a signature included. A choice question
+ * (RAPP-610): every type, a file and a signed consent included. A choice question
  * with no live option has no sample and is left out.
  */
 export function sampleCustomAnswersFor(

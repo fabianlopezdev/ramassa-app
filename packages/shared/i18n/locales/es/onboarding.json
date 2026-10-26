@@ -210,7 +210,7 @@
   "supportNeedsListAnd": "{{first}} y {{last}}",
   "supportNeedExplanationLabel": "Cuéntanos qué apoyo necesitas",
   "supportingEntitiesInstructionExcept": "Si otras entidades o programas te dan apoyo, además de {{entity}}, añádelos aquí.",
-  "customSigned": "Firmado",
+  "customSignedOn": "Aceptada, firmada el {{date}}",
   "customErrorNumber": "Escribe un número.",
   "customErrorNumberWhole": "Escribe un número entero, sin decimales.",
   "customErrorNumberRange": "Escribe un número entre {{min}} y {{max}}.",

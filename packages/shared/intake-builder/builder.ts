@@ -69,6 +69,7 @@ import {
   type QuestionPrivacy,
 } from './profile-layout';
 import {
+  consentSignature,
   CUSTOM_QUESTION_TYPES,
   customAnswerSchema,
   customAnswerValueSchema,
@@ -500,7 +501,8 @@ function isFileAnswer(value: CustomAnswerValue): value is FileAnswer {
 /**
  * An answer in words: option labels in her language (an archived option
  * marked), a date and a number in the reader's language, a list joined, a
- * consent as yes with its time, a signature as signed, a file by its name.
+ * consent as yes with its time, a consent she signed as accepted and signed on
+ * its day (RAPP-671), a file by its name.
  */
 export function answerText(
   question: CustomQuestion,
@@ -511,7 +513,8 @@ export function answerText(
     readonly no: string;
     readonly maybe: string;
     readonly archived: string;
-    readonly signed?: string;
+    /** "Accepted, signed on {date}", for a consent she signed. */
+    readonly signedOn?: (date: string) => string;
   },
   context: { readonly answeredAt?: string } = {},
 ): string {
@@ -522,6 +525,21 @@ export function answerText(
     return value === 'yes' ? words.yes : value === 'no' ? words.no : words.maybe;
   }
   if (question.type === 'consent') {
+    const signature = consentSignature(value);
+    if (signature !== null) {
+      // Before the server stamps the day (her own summary), she signs today.
+      const day =
+        typeof value === 'object' && 'signed_on' in value && typeof value.signed_on === 'string'
+          ? new Date(`${value.signed_on}T00:00:00Z`)
+          : null;
+      const date = new Intl.DateTimeFormat(language, {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        timeZone: day === null ? ORGANIZATION_TIME_ZONE : 'UTC',
+      }).format(day ?? new Date());
+      return words.signedOn?.(date) ?? words.yes;
+    }
     if (value !== true) return words.no;
     if (context.answeredAt === undefined) return words.yes;
     const at = new Intl.DateTimeFormat(language, {
@@ -531,7 +549,6 @@ export function answerText(
     }).format(new Date(context.answeredAt));
     return `${words.yes} (${at})`;
   }
-  if (question.type === 'signature') return words.signed ?? words.yes;
   if (isFileAnswer(value)) return value.name;
   if (question.type === 'date' && typeof value === 'string') {
     const [year, month, day] = value.split('-').map(Number) as [number, number, number];

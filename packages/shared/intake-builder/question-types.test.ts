@@ -17,6 +17,7 @@ import {
   customAnswerSchema,
   internationalPhone,
   isOptionType,
+  isStaffWritable,
   normalizeCustomAnswerInput,
   parseQuestionSettings,
   questionSettingsSchema,
@@ -59,6 +60,9 @@ const isoDaysAgo = (years: number, days = 0) => {
   return date.toISOString().slice(0, 10);
 };
 
+/** A consent that asks for her signature (RAPP-671). */
+const signedConsent = question('consent', { text: { ca: 'Accepto' }, requires_signature: true });
+
 const fileKey = `${ORG}/${CUSTOM_ANSWER_FILE_FOLDER}/${HER}/2026/10/${'a'.repeat(32)}.pdf`;
 const strokes: [number, number][][] = [
   [
@@ -84,7 +88,6 @@ describe('the types', () => {
       'item_list',
       'consent',
       'file_upload',
-      'signature',
       'country',
       'municipality',
     ]);
@@ -224,8 +227,27 @@ describe('one answer schema per type', () => {
     ['a country in another language', question('country'), 'Syria', false],
     ['a municipality of Catalonia', question('municipality'), 'Vic', true],
     ['a place that is not a municipality', question('municipality'), 'Madrid', false],
-    ['a drawn signature', question('signature'), strokes, true],
-    ['a signature off the pad', question('signature'), [[[10, 2000]]], false],
+    ['a signed consent', signedConsent, { accepted: true, signature: strokes }, true],
+    [
+      'a signed consent with its day',
+      signedConsent,
+      { accepted: true, signature: strokes, signed_on: '2026-10-26' },
+      true,
+    ],
+    [
+      'a signed consent on a day that does not exist',
+      signedConsent,
+      { accepted: true, signature: strokes, signed_on: '2026-02-30' },
+      false,
+    ],
+    ['a tick without the signature', signedConsent, true, false],
+    ['a signature without the tick', signedConsent, { accepted: false, signature: strokes }, false],
+    [
+      'a signature off the pad',
+      signedConsent,
+      { accepted: true, signature: [[[10, 2000]]] },
+      false,
+    ],
   ];
   for (const [name, asked, value, valid] of cases) {
     test(`${name}: ${valid ? 'accepted' : 'refused'}`, () => {
@@ -263,7 +285,7 @@ describe('each answer reads well', () => {
     no: 'No',
     maybe: 'Potser',
     archived: 'arxivada',
-    signed: 'Signat',
+    signedOn: (date: string) => `Acceptada, signada el ${date}`,
   };
   test('dates, numbers and lists in her language; consent with its time', () => {
     expect(answerText(question('date'), '2001-02-28', 'ca', words)).toBe('28/2/2001');
@@ -280,8 +302,15 @@ describe('each answer reads well', () => {
     ).toMatch(/^Sí \(21\/10\/26,? 10:30\)$/);
   });
 
-  test('a signature says signed and a file its name; neither shows its raw data', () => {
-    expect(answerText(question('signature'), strokes, 'en', words)).toBe('Signat');
+  test('a signed consent says its day and a file its name; neither shows its raw data', () => {
+    expect(
+      answerText(
+        signedConsent,
+        { accepted: true, signature: strokes, signed_on: '2026-10-26' },
+        'ca',
+        words,
+      ),
+    ).toBe('Acceptada, signada el 26/10/2026');
     expect(
       answerText(
         question('file_upload', { accept: 'document' }),
@@ -304,7 +333,7 @@ describe('the scenario tool fills every type with a valid sample', () => {
             : type === 'item_list'
               ? { max_items: 1 }
               : type === 'consent'
-                ? { text: { ca: 'Accepto' } }
+                ? { text: { ca: 'Accepto' }, requires_signature: true }
                 : type === 'file_upload'
                   ? { accept: 'photo' }
                   : {};
@@ -313,6 +342,16 @@ describe('the scenario tool fills every type with a valid sample', () => {
       expect(customAnswerError(asked, sample)).toBeNull();
     });
   }
+});
+
+test('a consent that asks for her signature is hers to give, as a file (RAPP-671)', () => {
+  expect(isStaffWritable(question('consent', { text: { ca: 'Accepto' } }))).toBe(true);
+  expect(isStaffWritable(signedConsent)).toBe(false);
+  expect(isStaffWritable(question('file_upload', { accept: 'photo' }))).toBe(false);
+  expect(
+    questionSettingsSchema('consent').safeParse({ text: { ca: 'A' }, requires_signature: 'yes' })
+      .success,
+  ).toBe(false);
 });
 
 test('a phone takes its international form: +34 before a local Spanish number (RAPP-663)', () => {
