@@ -457,7 +457,13 @@ export interface MyConsent {
   readonly granted: boolean;
   /** The consent's words when she decided, in `language`; null outside the authorization. */
   readonly wording: string | null;
+  /** The consent's name in Dades legals (RAPP-699); null from an older server. */
+  readonly name: Readonly<Partial<Record<LanguageCode, string>>> | null;
+  /** The form she decided it on (RAPP-699): null on her profile or by staff. */
+  readonly form: 'authorization' | 'onboarding' | null;
 }
+
+const localizedNameSchema = z.partialRecord(z.enum(['ca', 'es', 'en', 'ar', 'fa']), z.string());
 
 /** Her consents as they stand; a consent never given is absent. */
 export async function fetchMyConsents(
@@ -471,11 +477,16 @@ export async function fetchMyConsents(
         consent_key: z.string(),
         granted: z.boolean(),
         wording: z.string().nullable().optional().default(null),
+        name: localizedNameSchema.nullable().optional().default(null),
+        form: z.enum(['authorization', 'onboarding']).nullable().optional().default(null),
       }),
     )
     .parse(data ?? []);
   return Object.fromEntries(
-    rows.map((row) => [row.consent_key, { granted: row.granted, wording: row.wording }]),
+    rows.map((row) => [
+      row.consent_key,
+      { granted: row.granted, wording: row.wording, name: row.name, form: row.form },
+    ]),
   );
 }
 
@@ -661,17 +672,65 @@ export async function fetchParticipantAuthorizations(
 
 export interface ParticipantConsent {
   readonly key: AuthorizationConsentKey;
+  /** Dades legals (RAPP-699): the consent and its name; null from an older server. */
+  readonly consentId: string | null;
+  readonly name: Readonly<Partial<Record<LanguageCode, string>>> | null;
   readonly granted: boolean;
   readonly decidedAt: string;
   readonly method: string;
+  /** The form she decided it on: null on her profile or by staff. */
+  readonly form: 'authorization' | 'onboarding' | null;
   /** The words she was shown, in `language`; null for a change outside the authorization. */
   readonly wording: string | null;
   readonly language: string | null;
   readonly required: boolean | null;
   readonly seasonName: string | null;
   readonly versionNumber: number | null;
+  /** The staff member present or recording it. */
+  readonly recordedByName: string | null;
+  /** Why staff recorded a withdrawal. */
+  readonly reason: string | null;
 }
 
+const participantConsentRowSchema = z.object({
+  consent_key: z.string(),
+  consent_id: z.uuid().nullable().optional().default(null),
+  name: localizedNameSchema.nullable().optional().default(null),
+  granted: z.boolean(),
+  decided_at: z.string(),
+  method: z.string(),
+  form: z.enum(['authorization', 'onboarding']).nullable().optional().default(null),
+  wording: z.string().nullable().optional().default(null),
+  language: z.string().nullable().optional().default(null),
+  required: z.boolean().nullable().optional().default(null),
+  season_name: z.string().nullable().optional().default(null),
+  version_number: z.number().int().nullable().optional().default(null),
+  recorded_by_name: z.string().nullable().optional().default(null),
+  reason: z.string().nullable().optional().default(null),
+});
+
+function participantConsentFrom(
+  row: z.infer<typeof participantConsentRowSchema>,
+): ParticipantConsent {
+  return {
+    key: row.consent_key,
+    consentId: row.consent_id,
+    name: row.name,
+    granted: row.granted,
+    decidedAt: row.decided_at,
+    method: row.method,
+    form: row.form,
+    wording: row.wording,
+    language: row.language,
+    required: row.required,
+    seasonName: row.season_name,
+    versionNumber: row.version_number,
+    recordedByName: row.recorded_by_name,
+    reason: row.reason,
+  };
+}
+
+/** Her consents as they stand: the latest decision of each. */
 export async function fetchParticipantConsents(
   client: Client,
   profileId: string,
@@ -679,29 +738,53 @@ export async function fetchParticipantConsents(
   const { data, error } = await client.rpc('participant_consents', { p_profile_id: profileId });
   if (error) throw new AppError('DB-1', { message: error.message });
   return z
-    .array(
-      z.object({
-        consent_key: z.string(),
-        granted: z.boolean(),
-        decided_at: z.string(),
-        method: z.string(),
-        wording: z.string().nullable().optional().default(null),
-        language: z.string().nullable().optional().default(null),
-        required: z.boolean().nullable().optional().default(null),
-        season_name: z.string().nullable().optional().default(null),
-        version_number: z.number().int().nullable().optional().default(null),
-      }),
-    )
+    .array(participantConsentRowSchema)
     .parse(data ?? [])
-    .map((row) => ({
-      key: row.consent_key,
-      granted: row.granted,
-      decidedAt: row.decided_at,
-      method: row.method,
-      wording: row.wording,
-      language: row.language,
-      required: row.required,
-      seasonName: row.season_name,
-      versionNumber: row.version_number,
-    }));
+    .map(participantConsentFrom);
+}
+
+/** Every decision of hers (RAPP-699), the newest first. */
+export async function fetchParticipantConsentHistory(
+  client: Client,
+  profileId: string,
+): Promise<readonly ParticipantConsent[]> {
+  const { data, error } = await client.rpc('participant_consent_history', {
+    p_profile_id: profileId,
+  });
+  if (error) throw new AppError('DB-1', { message: error.message });
+  return z
+    .array(participantConsentRowSchema)
+    .parse(data ?? [])
+    .map(participantConsentFrom);
+}
+
+/** How staff record her decision on her page. */
+export type StaffConsentMethod = 'paper' | 'staff';
+
+/**
+ * Staff record her decision (RAPP-699): given or withdrawn on paper, or a
+ * withdrawal she asked for, with its reason. Withdrawing the health data
+ * consent deletes her health answer.
+ */
+export async function recordParticipantConsent(
+  client: Client,
+  input: {
+    readonly profileId: string;
+    readonly consentId: string;
+    readonly granted: boolean;
+    readonly method: StaffConsentMethod;
+    readonly reason: string | null;
+    /** A paper decision's date (YYYY-MM-DD); today when null. */
+    readonly decidedOn: string | null;
+  },
+): Promise<void> {
+  const { error } = await client.rpc('record_participant_consent', {
+    p_profile_id: input.profileId,
+    p_consent_id: input.consentId,
+    p_granted: input.granted,
+    p_method: input.method,
+    p_reason: input.reason as string,
+    p_decided_on: input.decidedOn as string,
+  });
+  if (error) throw new AppError(databaseErrorCode(error.message), { message: error.message });
 }

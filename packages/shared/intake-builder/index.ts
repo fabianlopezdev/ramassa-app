@@ -13,3 +13,4 @@ export * from './app-controls';
 export * from './form-blocks';
 export * from './onboarding-review';
 export * from './authorization-fields';
+export * from './consents';

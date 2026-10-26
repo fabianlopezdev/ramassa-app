@@ -53,6 +53,12 @@ import { SYSTEM_FIELD_QUESTIONS } from '../onboarding/system-fields';
 import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
 import { questionsOffTheirControl } from './app-controls';
+import {
+  parseConsentPlacements,
+  parseConsents,
+  type Consent,
+  type ConsentPlacement,
+} from './consents';
 import { systemFieldIndexFromCatalog, type SystemFieldIndex } from './field-answers';
 import { parseFormBlocks, type FormBlock } from './form-blocks';
 import {
@@ -172,6 +178,9 @@ export const intakeCatalogSchema = z.object({
   placements: z.unknown().optional(),
   // The signature blocks of the forms (RAPP-690), read by `parseFormBlocks`.
   blocks: z.unknown().optional(),
+  // Dades legals (RAPP-699): the consents and where each is asked.
+  consents: z.unknown().optional(),
+  consent_placements: z.unknown().optional(),
 });
 
 export interface CustomOption {
@@ -258,6 +267,10 @@ export interface IntakeCatalog {
   readonly systemFields?: SystemFieldIndex;
   /** The signature blocks of her Onboarding screens and the entity form (RAPP-690). */
   readonly blocks?: readonly FormBlock[];
+  /** Dades legals (RAPP-699): the consents, archived ones for the people who design them. */
+  readonly consents?: readonly Consent[];
+  /** Where each consent is asked. */
+  readonly consentPlacements?: readonly ConsentPlacement[];
 }
 
 export const EMPTY_INTAKE_CATALOG: IntakeCatalog = {
@@ -313,6 +326,8 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
       ? {}
       : { systemFields: systemFieldIndexFromCatalog({ fields: raw.fields }) }),
     blocks: parseFormBlocks(raw.blocks),
+    consents: parseConsents(raw.consents),
+    consentPlacements: parseConsentPlacements(raw.consent_placements),
   };
 }
 
