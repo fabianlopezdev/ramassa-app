@@ -1804,7 +1804,7 @@ export function buildOnboardingScreenVersion(
 
 export type CustomFormRow = PublicRow<'custom_forms'>;
 
-/** The seeded player's form that appears once and is live (RAPP-700). */
+/** The seeded form for every player, published (RAPP-700, RAPP-701). */
 export function buildCustomForm(overrides: Partial<CustomFormRow> = {}): CustomFormRow {
   return {
     id: '5eed0000-0000-4000-8100-000000000001',
@@ -1817,7 +1817,8 @@ export function buildCustomForm(overrides: Partial<CustomFormRow> = {}): CustomF
     filled_by: 'player',
     mandatory: 'optional',
     deadline: null,
-    appears: 'once',
+    audience: 'all',
+    repeats_each_season: false,
     version: 1,
     published_at: '2026-10-01T08:00:00.000Z',
     is_archived: false,

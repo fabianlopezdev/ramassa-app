@@ -1002,6 +1002,92 @@ export type Database = {
           },
         ];
       };
+      custom_form_recipients: {
+        Row: {
+          added_at: string;
+          form_id: string;
+          org_id: string;
+          profile_id: string;
+        };
+        Insert: {
+          added_at?: string;
+          form_id: string;
+          org_id: string;
+          profile_id: string;
+        };
+        Update: {
+          added_at?: string;
+          form_id?: string;
+          org_id?: string;
+          profile_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_form_recipients_form_id_fkey';
+            columns: ['form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_recipients_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_recipients_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      custom_form_reminders: {
+        Row: {
+          form_id: string;
+          org_id: string;
+          season_id: string;
+          sent_at: string;
+        };
+        Insert: {
+          form_id: string;
+          org_id: string;
+          season_id: string;
+          sent_at?: string;
+        };
+        Update: {
+          form_id?: string;
+          org_id?: string;
+          season_id?: string;
+          sent_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_form_reminders_form_id_fkey';
+            columns: ['form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_reminders_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_reminders_season_id_fkey';
+            columns: ['season_id'];
+            isOneToOne: false;
+            referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       custom_form_responses: {
         Row: {
           answered_at: string | null;
@@ -1131,9 +1217,74 @@ export type Database = {
           },
         ];
       };
+      custom_form_versions: {
+        Row: {
+          content: Json;
+          form_id: string;
+          id: string;
+          is_correction: boolean;
+          org_id: string;
+          published_at: string;
+          published_by: string | null;
+          season_id: string | null;
+          version: number;
+        };
+        Insert: {
+          content: Json;
+          form_id: string;
+          id?: string;
+          is_correction?: boolean;
+          org_id: string;
+          published_at?: string;
+          published_by?: string | null;
+          season_id?: string | null;
+          version: number;
+        };
+        Update: {
+          content?: Json;
+          form_id?: string;
+          id?: string;
+          is_correction?: boolean;
+          org_id?: string;
+          published_at?: string;
+          published_by?: string | null;
+          season_id?: string | null;
+          version?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_form_versions_form_id_fkey';
+            columns: ['form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_versions_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_versions_published_by_fkey';
+            columns: ['published_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_versions_season_id_fkey';
+            columns: ['season_id'];
+            isOneToOne: false;
+            referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       custom_forms: {
         Row: {
-          appears: string;
+          audience: string;
           created_at: string;
           created_by: string | null;
           deadline: string | null;
@@ -1144,11 +1295,12 @@ export type Database = {
           name: Json;
           org_id: string;
           published_at: string | null;
+          repeats_each_season: boolean;
           updated_at: string;
           version: number;
         };
         Insert: {
-          appears: string;
+          audience?: string;
           created_at?: string;
           created_by?: string | null;
           deadline?: string | null;
@@ -1159,11 +1311,12 @@ export type Database = {
           name: Json;
           org_id: string;
           published_at?: string | null;
+          repeats_each_season?: boolean;
           updated_at?: string;
           version?: number;
         };
         Update: {
-          appears?: string;
+          audience?: string;
           created_at?: string;
           created_by?: string | null;
           deadline?: string | null;
@@ -1174,6 +1327,7 @@ export type Database = {
           name?: Json;
           org_id?: string;
           published_at?: string | null;
+          repeats_each_season?: boolean;
           updated_at?: string;
           version?: number;
         };
@@ -6061,10 +6215,6 @@ export type Database = {
           isSetofReturn: false;
         };
       };
-      complete_participant_custom_form: {
-        Args: { p_response_id: string };
-        Returns: undefined;
-      };
       complete_photo_handoff: {
         Args: {
           p_content_type: string;
@@ -6085,11 +6235,12 @@ export type Database = {
       create_collaborating_entity: { Args: { p_name: string }; Returns: string };
       create_custom_form: {
         Args: {
-          p_appears: string;
+          p_audience: string;
           p_deadline: string;
           p_filled_by: string;
           p_mandatory: string;
           p_name: Json;
+          p_repeats_each_season: boolean;
         };
         Returns: string;
       };
@@ -7070,7 +7221,6 @@ export type Database = {
       my_session_is_current: { Args: never; Returns: boolean };
       my_terms_acceptance_needed: { Args: never; Returns: boolean };
       my_test_scenario_stamp: { Args: never; Returns: string };
-      new_custom_form_version: { Args: { p_id: string }; Returns: number };
       notification_audience_entities: { Args: never; Returns: string[] };
       onboarding_finished_count: { Args: never; Returns: number };
       open_staff_checkouts: {
@@ -7335,7 +7485,10 @@ export type Database = {
         Args: { p_content: Json };
         Returns: string;
       };
-      publish_custom_form: { Args: { p_id: string }; Returns: number };
+      publish_custom_form: {
+        Args: { p_id: string; p_is_correction?: boolean; p_season_id?: string };
+        Returns: number;
+      };
       purge_expired_entity_invitations: {
         Args: { p_now?: string };
         Returns: number;
@@ -7567,12 +7720,13 @@ export type Database = {
       };
       save_custom_form: {
         Args: {
-          p_appears: string;
+          p_audience: string;
           p_deadline: string;
           p_filled_by: string;
           p_id: string;
           p_mandatory: string;
           p_name: Json;
+          p_repeats_each_season: boolean;
         };
         Returns: undefined;
       };
@@ -7730,14 +7884,6 @@ export type Database = {
           signed_at: string;
         }[];
       };
-      send_custom_form: {
-        Args: {
-          p_audience_config?: Json;
-          p_audience_kind: string;
-          p_form_id: string;
-        };
-        Returns: number;
-      };
       send_message: {
         Args: {
           p_content: string;
@@ -7770,6 +7916,14 @@ export type Database = {
         Returns: undefined;
       };
       set_current_season: { Args: { p_season_id: string }; Returns: undefined };
+      set_custom_form_recipients: {
+        Args: {
+          p_audience_config?: Json;
+          p_audience_kind: string;
+          p_form_id: string;
+        };
+        Returns: number;
+      };
       set_document_step_explanation: {
         Args: { p_explanation: Json };
         Returns: Json;

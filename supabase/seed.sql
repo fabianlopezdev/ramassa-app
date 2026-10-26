@@ -3012,19 +3012,19 @@ values ('5eed0000-0000-4000-8099-000000000003', '5eed0000-0000-4000-8043-0000000
         timestamptz '2026-09-15 19:12:00+02', '5eed0000-0000-4000-8000-000000000002')
 on conflict (id) do nothing;
 
--- Forms the team created (RAPP-700): a player's form that appears once and is
--- live, which Amina answered and Fàtima still has pending, and a team form the
--- team fills in on Natàlia's page.
+-- Forms the team created (RAPP-700, RAPP-701): a form for every player, live,
+-- which Amina answered and Fàtima still has pending, and a form for the players
+-- picked (Natàlia), live too. Each has its published version.
 insert into public.custom_forms
-  (id, org_id, name, filled_by, mandatory, deadline, appears, version, published_at, created_by)
+  (id, org_id, name, filled_by, mandatory, deadline, audience, version, published_at, created_by)
 values
   ('5eed0000-0000-4000-8100-000000000001', '5eed0000-0000-4000-8000-000000000000',
    '{"ca":"Com véns als entrenaments","es":"Cómo vienes a los entrenamientos","en":"How you get to training"}'::jsonb,
-   'player', 'optional', null, 'once', 1, timestamptz '2026-10-01 10:00:00+02',
+   'player', 'optional', null, 'all', 1, timestamptz '2026-10-01 10:00:00+02',
    '5eed0000-0000-4000-8000-000000000002'),
   ('5eed0000-0000-4000-8100-000000000002', '5eed0000-0000-4000-8000-000000000000',
    '{"ca":"Seguiment social","es":"Seguimiento social","en":"Social follow-up"}'::jsonb,
-   'team', 'optional', null, 'once', 1, timestamptz '2026-10-01 10:00:00+02',
+   'player', 'optional', null, 'chosen', 1, timestamptz '2026-10-01 10:00:00+02',
    '5eed0000-0000-4000-8000-000000000002')
 on conflict (id) do nothing;
 
@@ -3061,3 +3061,14 @@ values
    '5eed0000-0000-4000-8100-000000000002', 1, '5eed0000-0000-4000-8000-000000000022', 'pending',
    timestamptz '2026-10-01 10:00:00+02', null, null, null)
 on conflict (id) do nothing;
+
+insert into public.custom_form_recipients (form_id, profile_id, org_id)
+values ('5eed0000-0000-4000-8100-000000000002', '5eed0000-0000-4000-8000-000000000022',
+        '5eed0000-0000-4000-8000-000000000000')
+on conflict do nothing;
+
+insert into public.custom_form_versions (org_id, form_id, version, content, published_at)
+select f.org_id, f.id, 1, private.custom_form_content(f.id), f.published_at
+  from public.custom_forms f
+ where f.id in ('5eed0000-0000-4000-8100-000000000001', '5eed0000-0000-4000-8100-000000000002')
+on conflict (form_id, version) do nothing;
