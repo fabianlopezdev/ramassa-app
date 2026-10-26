@@ -96,11 +96,12 @@ test('gallery moderators reach the gallery from primary navigation', () => {
   expect(holdsAnyPermission(new Set(['forum.moderate']), gallery?.anyPermission)).toBe(false);
 });
 
-test('the onboarding design role sees the test players, the onboarding and the Fitxa (RAPP-615, RAPP-654)', () => {
+test('the onboarding design role sees the test players, the onboarding, the legal texts and the Fitxa (RAPP-615, RAPP-654, RAPP-694)', () => {
   const design = new Set<PermissionCode>(['onboarding.design', 'test_players.manage']);
   expect(visibleStaffNavItems(design).map((item) => item.to)).toEqual([
     '/participants',
     '/onboarding',
+    '/legal',
     '/profile-layout',
   ]);
 });
@@ -110,6 +111,7 @@ test('Settings holds the organization tabs only; the team, entities and Fitxa ha
   expect(visibleStaffNavItems(settings).map((item) => item.to)).toEqual([
     '/dashboard',
     '/onboarding',
+    '/legal',
     '/entities/referral-form',
     '/profile-layout',
     '/settings',
@@ -137,6 +139,7 @@ test('the menu groups by audience in the agreed order (RAPP-654)', () => {
     top: ['/dashboard', '/participants'],
     app: [
       '/onboarding',
+      '/legal',
       '/content',
       '/attendance',
       '/messages',

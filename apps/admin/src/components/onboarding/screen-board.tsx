@@ -4,7 +4,8 @@
  * screen, open it with Edit, and add a screen of their own with the last
  * movable card. The summary, the terms and the season authorization end the
  * onboarding (legal): their cards are locked, open but never move, and
- * nothing drops between them.
+ * nothing drops between them. The terms and authorization cards open their
+ * tab on Textos legals (RAPP-694).
  *
  * A drop saves the order at once through the same call the old order list
  * used (`saveWizardFlowOrder`). The board shows the new order before the
@@ -50,6 +51,7 @@ import type { LanguageCode } from '@ramassa/shared/schemas';
 import {
   boardStep,
   isShownToHer,
+  legalTabOf,
   LOCKED_STEPS,
   movableOrder,
   routeIdOf,
@@ -257,8 +259,14 @@ function ScreenCard({
 }) {
   const { t } = useTranslation('settings');
   const isLocked = step.kind === 'locked';
-  const to = '/onboarding/screens/$screenId' as const;
-  const params = { screenId: routeIdOf(step.key) };
+  const legalTab = legalTabOf(step.key);
+  const link =
+    legalTab === null
+      ? ({
+          to: '/onboarding/screens/$screenId',
+          params: { screenId: routeIdOf(step.key) },
+        } as const)
+      : ({ to: '/legal', search: { tab: legalTab } } as const);
   return (
     <CardFrame
       className={cn(
@@ -299,13 +307,12 @@ function ScreenCard({
           </Button>
         )}
       </header>
-      <Link to={to} params={params} tabIndex={-1} aria-hidden className="block rounded-xl">
+      <Link {...link} tabIndex={-1} aria-hidden className="block rounded-xl">
         {miniature}
       </Link>
       <Button asChild variant="outline" size="sm" className="w-full">
         <Link
-          to={to}
-          params={params}
+          {...link}
           aria-label={t('onboardingBoard.editScreen', { screen: name })}
           data-testid={`board-edit-${step.key}`}
         >

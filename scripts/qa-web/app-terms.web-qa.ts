@@ -40,8 +40,8 @@ test.afterAll(() => {
 
 test('the design role writes a draft but cannot publish it', async ({ page }) => {
   await signIn(page, 'disseny@example.test');
-  // The legal text has its own screen editor on the board (RAPP-641).
-  await page.goto('/onboarding/screens/terms');
+  // The legal texts have their own page, Textos legals (RAPP-694).
+  await page.goto('/legal?tab=terms');
   const editor = page.getByTestId('app-terms-editor');
   await expect(editor).toBeVisible({ timeout: 30_000 });
   await expect(editor.getByTestId('app-terms-publish')).toHaveCount(0);
@@ -58,8 +58,8 @@ test('the design role writes a draft but cannot publish it', async ({ page }) =>
 
 test('an admin previews the draft in each language and publishes it', async ({ page }) => {
   await signIn(page, 'laia.ferrer@example.test');
-  // The legal text has its own screen editor on the board (RAPP-641).
-  await page.goto('/onboarding/screens/terms');
+  // The legal texts have their own page, Textos legals (RAPP-694).
+  await page.goto('/legal?tab=terms');
   const editor = page.getByTestId('app-terms-editor');
   await expect(editor).toBeVisible({ timeout: 30_000 });
   // The draft the design role saved opens here.

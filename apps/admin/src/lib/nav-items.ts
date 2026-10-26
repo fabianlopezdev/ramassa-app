@@ -26,6 +26,7 @@ import {
   LayoutDashboard,
   ListChecks,
   MessageSquare,
+  Scale,
   Settings,
   Share2,
   Users,
@@ -69,6 +70,16 @@ export const STAFF_NAV_GROUPS = [
 
 /** The onboarding page: Settings' own permission, or the design role (RAPP-615). */
 export const ONBOARDING_PERMISSIONS = [
+  'settings.organization',
+  'onboarding.design',
+] as const satisfies readonly PermissionCode[];
+
+/**
+ * Textos legals (RAPP-694): the season authorization and the app terms, with
+ * the same people as when they sat in the Onboarding area. Onboarding
+ * designers write the drafts; only settings.organization publishes.
+ */
+export const LEGAL_TEXTS_PERMISSIONS = [
   'settings.organization',
   'onboarding.design',
 ] as const satisfies readonly PermissionCode[];
@@ -138,6 +149,14 @@ export const STAFF_NAV_ITEMS = [
     labelKey: 'nav:staff.onboarding',
     group: 'app',
     anyPermission: ONBOARDING_PERMISSIONS,
+  },
+  {
+    // The season authorization and the app terms (RAPP-694).
+    to: '/legal',
+    icon: Scale,
+    labelKey: 'nav:staff.legal',
+    group: 'app',
+    anyPermission: LEGAL_TEXTS_PERMISSIONS,
   },
   {
     to: '/content',

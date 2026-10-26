@@ -292,7 +292,8 @@ test('an admin publishes a new authorization version', async ({ page }) => {
   );
   try {
     await signIn(page, ADMIN_EMAIL);
-    await page.goto('/settings?tab=authorization');
+    // The authorization moved to Textos legals (RAPP-694).
+    await page.goto('/legal');
     const editor = page.getByTestId('authorization-editor');
     await expect(editor).toBeVisible();
     await expect(editor.getByTestId('authorization-versions')).toContainText('2026/27');

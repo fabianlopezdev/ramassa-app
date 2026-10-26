@@ -12,11 +12,22 @@
  * designers save and discard the draft; publishing needs
  * settings.organization, because every player signs the new version on her
  * next app open, so the button asks once more before it publishes.
+ *
+ * A draft is published to a season (RAPP-694): the current one, or a future
+ * one the team prepares ahead. A future season's version waits until that
+ * season is marked current. The versions list groups by season.
  */
 
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
 import { RequiredSwitch } from '@/components/settings/required-switch';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -42,6 +53,7 @@ import {
   SUPPORTED_LANGUAGES,
 } from '@ramassa/shared/i18n/languages';
 import type { LanguageCode } from '@ramassa/shared/schemas';
+import { publishableSeasons, type Season } from '@ramassa/shared/seasons';
 
 const PREVIEW_SEASON = '2026/27';
 
@@ -121,15 +133,41 @@ type Status =
 
 export interface AuthorizationEditorProps {
   readonly versions: readonly AuthorizationVersion[];
+  /** The organization's seasons: the picker offers the current and future ones (RAPP-694). */
+  readonly seasons: readonly Season[];
   /** settings.organization: only an admin decision makes every player sign again. */
   readonly canPublish: boolean;
   readonly onSaveDraft: (content: AuthorizationContent) => Promise<void>;
   readonly onDiscardDraft: () => Promise<void>;
-  readonly onPublish: () => Promise<number>;
+  readonly onPublish: (seasonId: string) => Promise<number>;
+}
+
+/** Today as an ISO date in the browser's time zone, the way a season's start date is written. */
+function todayIsoDate(): string {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+/** The published versions by season, in the list's order (newest season first). */
+function versionsBySeason(published: readonly AuthorizationVersion[]) {
+  const groups: { seasonId: string; seasonName: string; versions: AuthorizationVersion[] }[] = [];
+  for (const version of published) {
+    const seasonId = version.seasonId ?? '';
+    const group = groups.find((each) => each.seasonId === seasonId);
+    if (group === undefined) {
+      groups.push({ seasonId, seasonName: version.seasonName ?? '', versions: [version] });
+    } else {
+      group.versions.push(version);
+    }
+  }
+  return groups;
 }
 
 export function AuthorizationEditor({
   versions,
+  seasons,
   canPublish,
   onSaveDraft,
   onDiscardDraft,
@@ -139,6 +177,11 @@ export function AuthorizationEditor({
   const draft = versions.find((version) => version.publishedAt === null) ?? null;
   const published = versions.filter((version) => version.publishedAt !== null);
   const current = published.find((version) => version.isCurrent) ?? null;
+  const currentSeasonId = seasons.find((season) => season.isCurrent)?.id ?? null;
+  const targets = publishableSeasons(seasons, todayIsoDate());
+  // The current season by default; with none, the nearest future season.
+  const [chosenSeasonId, setChosenSeasonId] = useState<string | null>(null);
+  const target = targets.find((season) => season.id === chosenSeasonId) ?? targets[0] ?? null;
   const [language, setLanguage] = useState<LanguageCode>('ca');
   const [content, setContent] = useState<AuthorizationContent>(
     draft?.content ?? current?.content ?? EMPTY_CONTENT,
@@ -188,7 +231,8 @@ export function AuthorizationEditor({
       setIsConfirming(true);
       return;
     }
-    await run('publishing', onPublish, 'published');
+    if (target === null) return;
+    await run('publishing', () => onPublish(target.id), 'published');
   }
 
   const consents = orderedConsents(content);
@@ -245,20 +289,37 @@ export function AuthorizationEditor({
                 </span>
               </li>
             )}
-            {published.map((version) => (
-              <li key={version.id} className="text-start text-sm">
-                {t('authorizationVersionRow', {
-                  season: version.seasonName,
-                  number: version.versionNumber,
-                  date: new Date(version.publishedAt ?? '').toLocaleDateString(
-                    i18n.resolvedLanguage,
-                  ),
-                })}
-                {version.isCurrent ? (
-                  <span className="ms-2 rounded bg-muted px-1.5 py-0.5 text-xs">
-                    {t('authorizationCurrentBadge')}
-                  </span>
-                ) : null}
+            {versionsBySeason(published).map((group) => (
+              <li
+                key={group.seasonId}
+                className="flex flex-col gap-1 pt-2"
+                data-testid={`authorization-season-${group.seasonId}`}
+              >
+                <span className="text-start text-sm font-medium">
+                  {group.seasonName}
+                  {group.seasonId === currentSeasonId ? (
+                    <span className="ms-2 rounded bg-muted px-1.5 py-0.5 text-xs font-normal">
+                      {t('authorizationCurrentSeasonBadge')}
+                    </span>
+                  ) : null}
+                </span>
+                <ul className="flex flex-col gap-1 ps-3">
+                  {group.versions.map((version) => (
+                    <li key={version.id} className="text-start text-sm">
+                      {t('authorizationVersionInSeason', {
+                        number: version.versionNumber,
+                        date: new Date(version.publishedAt ?? '').toLocaleDateString(
+                          i18n.resolvedLanguage,
+                        ),
+                      })}
+                      {version.isCurrent ? (
+                        <span className="ms-2 rounded bg-muted px-1.5 py-0.5 text-xs">
+                          {t('authorizationCurrentBadge')}
+                        </span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
               </li>
             ))}
           </ul>
@@ -685,9 +746,45 @@ export function AuthorizationEditor({
             </Button>
           </fieldset>
 
-          {isConfirming ? (
+          {canPublish && draft !== null ? (
+            <label className="flex flex-col gap-1.5 text-sm font-medium">
+              <span>{t('authorizationPublishSeason')}</span>
+              <Select
+                value={target?.id ?? ''}
+                disabled={targets.length === 0 || isBusy}
+                onValueChange={(value) => {
+                  setChosenSeasonId(value);
+                  setIsConfirming(false);
+                }}
+              >
+                <SelectTrigger
+                  id="authorization-publish-season"
+                  className="w-full max-w-xs"
+                  data-testid="authorization-publish-season"
+                >
+                  <SelectValue placeholder={t('authorizationNoSeasonToPublish')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {targets.map((season) => (
+                    <SelectItem
+                      key={season.id}
+                      value={season.id}
+                      data-testid={`authorization-publish-season-${season.id}`}
+                    >
+                      {season.isCurrent
+                        ? t('authorizationPublishSeasonCurrent', { season: season.name })
+                        : season.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </label>
+          ) : null}
+          {isConfirming && target !== null ? (
             <p role="alert" className="text-start text-sm font-medium">
-              {t('authorizationPublishConfirm')}
+              {target.isCurrent
+                ? t('authorizationPublishConfirm')
+                : t('authorizationPublishConfirmFuture', { season: target.name })}
             </p>
           ) : null}
           {status === 'invalid' ? (
@@ -729,7 +826,7 @@ export function AuthorizationEditor({
               <Button
                 type="button"
                 variant={isConfirming ? 'destructive' : 'secondary'}
-                disabled={isBusy}
+                disabled={isBusy || target === null}
                 onClick={() => void publish()}
                 data-testid="authorization-publish"
               >

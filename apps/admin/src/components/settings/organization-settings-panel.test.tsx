@@ -101,9 +101,8 @@ test('document search delegates the typed query', async () => {
 test('a tab shows only to a holder of its permission (RAPP-231)', () => {
   const { view } = renderPanel({
     permissions: new Set(['settings.documents']),
-    initialTab: 'authorization',
+    initialTab: 'organization',
   });
-  expect(view.queryByRole('tab', { name: /tabAuthorization|Authorization/ })).toBeNull();
   expect(view.queryByRole('tab', { name: /tabOrganization|Organization/ })).toBeNull();
   expect(
     view.getByRole('tab', { name: /tabDocuments|Documents/ }).getAttribute('aria-selected'),

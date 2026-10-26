@@ -326,12 +326,15 @@
   "documentExplanationTooLong": "Each text can be at most {{max}} characters.",
   "documentExplanationFailed": "The note could not be saved. Try again.",
   "documentExplanationSave": "Save note",
-  "tabAuthorization": "Authorization",
   "authorizationIntro": "The text every player signs for the season: participation, insurance, data, images, obligations and the code of conduct.",
   "authorizationVersionsTitle": "Published versions",
   "authorizationNoVersions": "No version has been published yet.",
-  "authorizationVersionRow": "Season {{season}}, version {{number}}, published on {{date}}",
+  "authorizationVersionInSeason": "Version {{number}}, published on {{date}}",
   "authorizationCurrentBadge": "Current",
+  "authorizationNoSeasonToPublish": "No current or future season",
+  "authorizationPublishSeasonCurrent": "{{season}} (current)",
+  "authorizationPublishSeason": "Season",
+  "authorizationCurrentSeasonBadge": "Current season",
   "authorizationEditorTitle": "New version",
   "authorizationLanguage": "Language you are editing",
   "authorizationDocumentTitle": "Document title",
@@ -347,6 +350,7 @@
   "authorizationAddAttachment": "Add a document",
   "authorizationPublishAction": "Publish the version",
   "authorizationPublishConfirm": "Once published, every player must sign it again when she opens the app.",
+  "authorizationPublishConfirmFuture": "Players will sign it once {{season}} is the current season.",
   "authorizationPublishConfirmAction": "Yes, publish it",
   "authorizationPublishFailed": "The version could not be published. Try again.",
   "authorizationConsent": {
@@ -507,6 +511,9 @@
   "onboardingPage": {
     "title": "Onboarding"
   },
+  "legalPage": {
+    "terms": "App terms"
+  },
   "appTerms": {
     "sectionTitle": "App terms",
     "sectionIntro": "The text every player accepts before entering the app, with the introduction screen before it. A published version never changes; when you publish a new one, every player accepts it when she opens the app.",
@@ -554,7 +561,7 @@
       "continue_label": "Main button",
       "decline_label": "Leave button"
     },
-    "termsTitleNote": "This screen's title and intro come from the app terms: change them in the App terms section.",
+    "termsTitleNote": "This screen's title and intro come from the app terms: change them in Legal texts.",
     "detailNote": "This screen opens depending on the previous answer. A title of your own replaces the title of every case.",
     "hideLocked": "It has a required question, so it always shows.",
     "hideReregistrationNote": "Hiding it also stops re-registration asking its question each season, so the app and re-registration always ask the same.",

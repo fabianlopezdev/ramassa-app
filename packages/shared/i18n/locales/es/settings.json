@@ -326,12 +326,15 @@
   "documentExplanationTooLong": "Cada texto puede tener como máximo {{max}} caracteres.",
   "documentExplanationFailed": "No se ha podido guardar la nota. Vuelve a intentarlo.",
   "documentExplanationSave": "Guardar la nota",
-  "tabAuthorization": "Autorización",
   "authorizationIntro": "El texto que cada jugadora firma para la temporada: participación, seguro, datos, imagen, obligaciones y código de conducta.",
   "authorizationVersionsTitle": "Versiones publicadas",
   "authorizationNoVersions": "Todavía no se ha publicado ninguna versión.",
-  "authorizationVersionRow": "Temporada {{season}}, versión {{number}}, publicada el {{date}}",
+  "authorizationVersionInSeason": "Versión {{number}}, publicada el {{date}}",
   "authorizationCurrentBadge": "Vigente",
+  "authorizationNoSeasonToPublish": "Ninguna temporada vigente o futura",
+  "authorizationPublishSeasonCurrent": "{{season}} (vigente)",
+  "authorizationPublishSeason": "Temporada",
+  "authorizationCurrentSeasonBadge": "Temporada vigente",
   "authorizationEditorTitle": "Nueva versión",
   "authorizationLanguage": "Idioma que editas",
   "authorizationDocumentTitle": "Título del documento",
@@ -347,6 +350,7 @@
   "authorizationAddAttachment": "Añadir un documento",
   "authorizationPublishAction": "Publicar la versión",
   "authorizationPublishConfirm": "Al publicarla, todas las jugadoras tendrán que firmarla de nuevo al abrir la app.",
+  "authorizationPublishConfirmFuture": "Las jugadoras la firmarán cuando {{season}} sea la temporada vigente.",
   "authorizationPublishConfirmAction": "Sí, publicarla",
   "authorizationPublishFailed": "No se ha podido publicar. Vuelve a intentarlo.",
   "authorizationConsent": {
@@ -507,6 +511,9 @@
   "onboardingPage": {
     "title": "Onboarding"
   },
+  "legalPage": {
+    "terms": "Condiciones de la app"
+  },
   "appTerms": {
     "sectionTitle": "Términos de la app",
     "sectionIntro": "El texto que todas las jugadoras aceptan antes de entrar en la app, con la pantalla de introducción. Una versión publicada ya no cambia; cuando publicáis una nueva, cada jugadora la acepta al abrir la app.",
@@ -554,7 +561,7 @@
       "continue_label": "Botón principal",
       "decline_label": "Botón para salir"
     },
-    "termsTitleNote": "El título y la introducción de esta pantalla son los de los términos de la app: se cambian en la sección Términos de la app.",
+    "termsTitleNote": "El título y la introducción de esta pantalla son los de las condiciones de la app: se cambian en Textos legales.",
     "detailNote": "Esta pantalla se abre según la respuesta anterior. Un título propio sustituye el título de cada caso.",
     "hideLocked": "Tiene una pregunta obligatoria, así que siempre se muestra.",
     "hideReregistrationNote": "Si la ocultas, la reinscripción de cada temporada tampoco hará su pregunta, para que la aplicación y la reinscripción pregunten siempre lo mismo.",

@@ -9,8 +9,9 @@
  *     its own questions reworded, hidden or made required, then the fields
  *     placed on it. The document screen adds its note (RAPP-302), and a
  *     screen with a detail screen edits that one's wording too.
- *   - The terms and the season authorization keep their own editors
- *     (RAPP-613, RAPP-614), under the screen's wording.
+ *   - The terms and the season authorization are edited on Textos legals
+ *     (RAPP-694); the terms screen keeps its buttons' wording here and links
+ *     there.
  *
  * Fields are picked from the Fitxa (`ScreenFieldsSection`): their type and
  * privacy are the Fitxa's, so this editor never asks them. The form writes in
@@ -22,8 +23,6 @@ import { EditorColumns } from '@/components/layout/editor-columns';
 import { EditorSection } from '@/components/layout/editor-section';
 import { Page, PageHeader } from '@/components/layout/page';
 import {
-  OnboardingAppTermsSection,
-  OnboardingAuthorizationSection,
   OnboardingDocumentSection,
   useReload,
 } from '@/components/settings/onboarding-design-sections';
@@ -537,12 +536,13 @@ function AppScreenEditor({
             {step.key === 'documentation' ? (
               <OnboardingDocumentSection explanation={data.documentExplanation} />
             ) : null}
-            {step.key === 'terms-intro' ? (
+            {step.key === 'terms-intro' || step.key === 'terms' ? (
+              // The terms text itself is edited on Textos legals (RAPP-694).
               <EditorSection
-                title={t('appTerms.sectionTitle')}
+                title={t('legalPage.terms')}
                 actions={
                   <Button asChild variant="outline" size="sm">
-                    <Link to="/onboarding/screens/$screenId" params={{ screenId: 'terms' }}>
+                    <Link to="/legal" search={{ tab: 'terms' }} data-testid="screen-editor-legal">
                       {t('onboardingBoard.edit')}
                     </Link>
                   </Button>
@@ -556,20 +556,6 @@ function AppScreenEditor({
           </>
         }
       />
-      {/* The legal texts keep their own editors, with their versions and previews. */}
-      {step.key === 'terms' ? (
-        <OnboardingAppTermsSection
-          versions={data.termsVersions}
-          canPublish={data.canPublishTerms}
-        />
-      ) : null}
-      {step.key === 'authorization' ? (
-        <OnboardingAuthorizationSection
-          seasons={data.seasons}
-          versions={data.versions}
-          canPublish={data.canPublishTerms}
-        />
-      ) : null}
     </div>
   );
 }
@@ -626,12 +612,9 @@ function WordingSection({
     }
   }
 
-  const note =
-    screen === 'terms-intro' || screen === 'terms'
-      ? t('builtinScreens.termsTitleNote')
-      : DETAIL_SCREEN_PARENTS[screen] === undefined
-        ? null
-        : t('builtinScreens.detailNote');
+  // The terms screens say where their title comes from in the Textos legals
+  // section below (RAPP-694).
+  const note = DETAIL_SCREEN_PARENTS[screen] === undefined ? null : t('builtinScreens.detailNote');
 
   return (
     <EditorSection

@@ -326,12 +326,15 @@
   "documentExplanationTooLong": "Cada text pot tenir com a màxim {{max}} caràcters.",
   "documentExplanationFailed": "No s'ha pogut desar la nota. Torna-ho a provar.",
   "documentExplanationSave": "Desa la nota",
-  "tabAuthorization": "Autorització",
   "authorizationIntro": "El text que cada jugadora signa per a la temporada: participació, assegurança, dades, imatge, obligacions i codi de conducta.",
   "authorizationVersionsTitle": "Versions publicades",
   "authorizationNoVersions": "Encara no s'ha publicat cap versió.",
-  "authorizationVersionRow": "Temporada {{season}}, versió {{number}}, publicada el {{date}}",
+  "authorizationVersionInSeason": "Versió {{number}}, publicada el {{date}}",
   "authorizationCurrentBadge": "Vigent",
+  "authorizationNoSeasonToPublish": "Cap temporada vigent o futura",
+  "authorizationPublishSeasonCurrent": "{{season}} (vigent)",
+  "authorizationPublishSeason": "Temporada",
+  "authorizationCurrentSeasonBadge": "Temporada vigent",
   "authorizationEditorTitle": "Nova versió",
   "authorizationLanguage": "Idioma que edites",
   "authorizationDocumentTitle": "Títol del document",
@@ -347,6 +350,7 @@
   "authorizationAddAttachment": "Afegeix un document",
   "authorizationPublishAction": "Publica la versió",
   "authorizationPublishConfirm": "En publicar-la, totes les jugadores l'hauran de signar de nou quan obrin l'app.",
+  "authorizationPublishConfirmFuture": "Les jugadores la signaran quan {{season}} sigui la temporada vigent.",
   "authorizationPublishConfirmAction": "Sí, publica-la",
   "authorizationPublishFailed": "No s'ha pogut publicar. Torna-ho a provar.",
   "authorizationConsent": {
@@ -507,6 +511,9 @@
   "onboardingPage": {
     "title": "Onboarding"
   },
+  "legalPage": {
+    "terms": "Condicions de l'app"
+  },
   "appTerms": {
     "sectionTitle": "Termes de l'app",
     "sectionIntro": "El text que totes les jugadores accepten abans d'entrar a l'app, amb la pantalla d'introducció. Una versió publicada ja no canvia; quan en publiqueu una de nova, cada jugadora l'accepta en obrir l'app.",
@@ -554,7 +561,7 @@
       "continue_label": "Botó principal",
       "decline_label": "Botó per sortir"
     },
-    "termsTitleNote": "El títol i la introducció d'aquesta pantalla són els dels termes de l'app: es canvien a la secció Termes de l'app.",
+    "termsTitleNote": "El títol i la introducció d'aquesta pantalla són els de les condicions de l'app: es canvien a Textos legals.",
     "detailNote": "Aquesta pantalla s'obre segons la resposta anterior. Un títol propi substitueix el títol de cada cas.",
     "hideLocked": "Té una pregunta obligatòria, així que sempre es mostra.",
     "hideReregistrationNote": "Si l'amagues, la reinscripció de cada temporada tampoc no en farà la pregunta, perquè l'aplicació i la reinscripció preguntin sempre el mateix.",

@@ -17,6 +17,8 @@ describe('the onboarding design role reaches its two areas only (RAPP-615)', () 
       '/account',
       // Dades de les jugadores (RAPP-650, its own page since RAPP-654).
       '/profile-layout',
+      // Textos legals (RAPP-694).
+      '/legal',
     ]) {
       expect(designRoleRedirect(path, DESIGN)).toBeNull();
     }
@@ -29,6 +31,7 @@ describe('the onboarding design role reaches its two areas only (RAPP-615)', () 
       '/settings',
       '/settings/elsewhere',
       '/profile-layout/elsewhere',
+      '/legal/elsewhere',
       '/entities/referral-form',
       '/team',
       '/data',

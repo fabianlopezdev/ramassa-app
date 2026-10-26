@@ -4,7 +4,9 @@
  * (`identity`, `summary`, `authorization`...) or a Ramassà screen's id.
  *
  * The same guard as the board: Settings' own permission or the onboarding
- * design role (RAPP-615). `ssr: false` for the reason every staff screen
+ * design role (RAPP-615). The authorization screen has nothing to edit here
+ * since its text moved to Textos legals (RAPP-694), so its address opens that
+ * tab. `ssr: false` for the reason every staff screen
  * gives (the session lives in localStorage, ADR-005).
  */
 
@@ -12,10 +14,15 @@ import { RequireAuth } from '@/components/auth/require-auth';
 import { ScreenEditor } from '@/components/onboarding/screen-editor';
 import { ONBOARDING_PERMISSIONS } from '@/lib/nav-items';
 import { loadOnboardingDesign } from '@/lib/onboarding-design';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_staff/onboarding/screens/$screenId')({
   ssr: false,
+  beforeLoad: ({ params }) => {
+    if (params.screenId === 'authorization') {
+      throw redirect({ to: '/legal', search: { tab: 'authorization' }, replace: true });
+    }
+  },
   loader: loadOnboardingDesign,
   component: ScreenEditorPage,
 });

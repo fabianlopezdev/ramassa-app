@@ -21,6 +21,7 @@ import { Route as StaffDataRouteImport } from './routes/_staff.data'
 import { Route as StaffFeedbackRouteImport } from './routes/_staff.feedback'
 import { Route as StaffForumRouteImport } from './routes/_staff.forum'
 import { Route as StaffGalleryRouteImport } from './routes/_staff.gallery'
+import { Route as StaffLegalRouteImport } from './routes/_staff.legal'
 import { Route as StaffMentoringRouteImport } from './routes/_staff.mentoring'
 import { Route as StaffMessagesRouteImport } from './routes/_staff.messages'
 import { Route as StaffNotificationsRouteImport } from './routes/_staff.notifications'
@@ -130,6 +131,11 @@ const StaffForumRoute = StaffForumRouteImport.update({
 const StaffGalleryRoute = StaffGalleryRouteImport.update({
   id: '/gallery',
   path: '/gallery',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffLegalRoute = StaffLegalRouteImport.update({
+  id: '/legal',
+  path: '/legal',
   getParentRoute: () => StaffRoute,
 } as any)
 const StaffMentoringRoute = StaffMentoringRouteImport.update({
@@ -432,6 +438,7 @@ export interface FileRoutesByFullPath {
   '/feedback': typeof StaffFeedbackRoute
   '/forum': typeof StaffForumRoute
   '/gallery': typeof StaffGalleryRoute
+  '/legal': typeof StaffLegalRoute
   '/mentoring': typeof StaffMentoringRoute
   '/messages': typeof StaffMessagesRouteWithChildren
   '/notifications': typeof StaffNotificationsRoute
@@ -494,6 +501,7 @@ export interface FileRoutesByTo {
   '/feedback': typeof StaffFeedbackRoute
   '/forum': typeof StaffForumRoute
   '/gallery': typeof StaffGalleryRoute
+  '/legal': typeof StaffLegalRoute
   '/mentoring': typeof StaffMentoringRoute
   '/notifications': typeof StaffNotificationsRoute
   '/profile-layout': typeof StaffProfileLayoutRoute
@@ -558,6 +566,7 @@ export interface FileRoutesById {
   '/_staff/feedback': typeof StaffFeedbackRoute
   '/_staff/forum': typeof StaffForumRoute
   '/_staff/gallery': typeof StaffGalleryRoute
+  '/_staff/legal': typeof StaffLegalRoute
   '/_staff/mentoring': typeof StaffMentoringRoute
   '/_staff/messages': typeof StaffMessagesRouteWithChildren
   '/_staff/notifications': typeof StaffNotificationsRoute
@@ -624,6 +633,7 @@ export interface FileRouteTypes {
     | '/feedback'
     | '/forum'
     | '/gallery'
+    | '/legal'
     | '/mentoring'
     | '/messages'
     | '/notifications'
@@ -686,6 +696,7 @@ export interface FileRouteTypes {
     | '/feedback'
     | '/forum'
     | '/gallery'
+    | '/legal'
     | '/mentoring'
     | '/notifications'
     | '/profile-layout'
@@ -749,6 +760,7 @@ export interface FileRouteTypes {
     | '/_staff/feedback'
     | '/_staff/forum'
     | '/_staff/gallery'
+    | '/_staff/legal'
     | '/_staff/mentoring'
     | '/_staff/messages'
     | '/_staff/notifications'
@@ -894,6 +906,13 @@ declare module '@tanstack/react-router' {
       path: '/gallery'
       fullPath: '/gallery'
       preLoaderRoute: typeof StaffGalleryRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/legal': {
+      id: '/_staff/legal'
+      path: '/legal'
+      fullPath: '/legal'
+      preLoaderRoute: typeof StaffLegalRouteImport
       parentRoute: typeof StaffRoute
     }
     '/_staff/mentoring': {
@@ -1397,6 +1416,7 @@ interface StaffRouteChildren {
   StaffFeedbackRoute: typeof StaffFeedbackRoute
   StaffForumRoute: typeof StaffForumRoute
   StaffGalleryRoute: typeof StaffGalleryRoute
+  StaffLegalRoute: typeof StaffLegalRoute
   StaffMentoringRoute: typeof StaffMentoringRoute
   StaffMessagesRoute: typeof StaffMessagesRouteWithChildren
   StaffNotificationsRoute: typeof StaffNotificationsRoute
@@ -1428,6 +1448,7 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffFeedbackRoute: StaffFeedbackRoute,
   StaffForumRoute: StaffForumRoute,
   StaffGalleryRoute: StaffGalleryRoute,
+  StaffLegalRoute: StaffLegalRoute,
   StaffMentoringRoute: StaffMentoringRoute,
   StaffMessagesRoute: StaffMessagesRouteWithChildren,
   StaffNotificationsRoute: StaffNotificationsRoute,

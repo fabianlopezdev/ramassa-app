@@ -1,7 +1,8 @@
 /**
  * The season authorization editor (RAPP-614): staff shape the consents and
  * the questions of a draft and see her phone's phases in each language, right
- * to left for Arabic and Farsi; only an admin publishes, after a second click.
+ * to left for Arabic and Farsi; only an admin publishes, after a second click,
+ * to the current season or a future one (RAPP-694).
  *
  * Typing into a controlled field does not reach React in this test DOM (no
  * admin test types text); the Playwright spec types and publishes for real.
@@ -13,13 +14,34 @@ import {
   type AuthorizationContent,
   type AuthorizationVersion,
 } from '@ramassa/shared/authorization';
+import type { Season } from '@ramassa/shared/seasons';
 import { buildAuthorizationVersion } from '@ramassa/shared/testing';
 import { AuthorizationEditor, cleanAuthorizationContent } from './authorization-editor';
+
+const CURRENT: Season = {
+  id: '5eed0000-0000-4000-8040-000000000001',
+  name: '2026/27',
+  startsOn: '2026-09-01',
+  isCurrent: true,
+};
+const NEXT: Season = {
+  id: 'season-next',
+  name: '2099/00',
+  startsOn: '2099-09-01',
+  isCurrent: false,
+};
+const PAST: Season = {
+  id: 'season-past',
+  name: '2025/26',
+  startsOn: '2025-09-01',
+  isCurrent: false,
+};
 
 function version(overrides: Partial<AuthorizationVersion> = {}): AuthorizationVersion {
   const row = buildAuthorizationVersion();
   return {
     id: row.id,
+    seasonId: CURRENT.id,
     seasonName: '2026/27',
     versionNumber: 1,
     content: authorizationContentSchema.parse(row.content),
@@ -33,6 +55,7 @@ function version(overrides: Partial<AuthorizationVersion> = {}): AuthorizationVe
 const draftOf = (content?: AuthorizationContent) =>
   version({
     id: '5eed0000-0000-4000-8041-000000000099',
+    seasonId: null,
     seasonName: null,
     versionNumber: null,
     publishedAt: null,
@@ -40,13 +63,18 @@ const draftOf = (content?: AuthorizationContent) =>
     ...(content === undefined ? {} : { content }),
   });
 
-function renderEditor(versions: readonly AuthorizationVersion[], canPublish = true) {
+function renderEditor(
+  versions: readonly AuthorizationVersion[],
+  canPublish = true,
+  seasons: readonly Season[] = [NEXT, CURRENT, PAST],
+) {
   const onSaveDraft = mock(async (content: AuthorizationContent) => void content);
   const onDiscardDraft = mock(async () => undefined);
-  const onPublish = mock(async () => 2);
+  const onPublish = mock(async (seasonId: string) => (seasonId === '' ? 0 : 2));
   const view = render(
     <AuthorizationEditor
       versions={versions}
+      seasons={seasons}
       canPublish={canPublish}
       onSaveDraft={onSaveDraft}
       onDiscardDraft={onDiscardDraft}
@@ -140,11 +168,52 @@ test('an admin publishes the draft after confirming; the design role cannot', as
   expect(onPublish).not.toHaveBeenCalled();
   fireEvent.click(view.getByTestId('authorization-publish'));
   await waitFor(() => expect(onPublish).toHaveBeenCalledTimes(1));
+  // The current season by default (RAPP-694).
+  expect(onPublish.mock.calls[0]?.[0]).toBe(CURRENT.id);
   view.unmount();
   const design = renderEditor([draftOf(), version()], false);
   expect(design.view.queryByTestId('authorization-publish')).toBeNull();
   expect(design.view.getByText('authorizationEditor.publishNeedsAdmin')).toBeTruthy();
   expect(design.view.getByTestId('authorization-discard')).toBeTruthy();
+});
+
+test('with no current season, the nearest future season takes the publish (RAPP-694)', async () => {
+  const later: Season = { ...NEXT, id: 'season-later', name: '2100/01', startsOn: '2100-09-01' };
+  const { view, onPublish } = renderEditor([draftOf()], true, [
+    later,
+    { ...CURRENT, isCurrent: false },
+    NEXT,
+    PAST,
+  ]);
+  fireEvent.click(view.getByTestId('authorization-publish'));
+  expect(view.getByRole('alert').textContent).toBe('authorizationPublishConfirmFuture');
+  fireEvent.click(view.getByTestId('authorization-publish'));
+  await waitFor(() => expect(onPublish).toHaveBeenCalledTimes(1));
+  expect(onPublish.mock.calls[0]?.[0]).toBe(NEXT.id);
+});
+
+test('with no season to take it, publishing waits', () => {
+  const { view } = renderEditor([draftOf()], true, [PAST]);
+  expect(view.getByTestId('authorization-publish').hasAttribute('disabled')).toBe(true);
+});
+
+test('the published versions are grouped by season, the current season marked (RAPP-694)', () => {
+  const { view } = renderEditor([
+    draftOf(),
+    version({
+      id: 'next-1',
+      seasonId: NEXT.id,
+      seasonName: NEXT.name,
+      versionNumber: 1,
+      isCurrent: false,
+    }),
+    version(),
+  ]);
+  const next = view.getByTestId(`authorization-season-${NEXT.id}`);
+  const current = view.getByTestId(`authorization-season-${CURRENT.id}`);
+  expect(next.textContent).toContain('2099/00');
+  expect(next.textContent).not.toContain('authorizationCurrentSeasonBadge');
+  expect(current.textContent).toContain('authorizationCurrentSeasonBadge');
 });
 
 test('cleaning drops empty languages and empty wording, and numbers the places', () => {

@@ -42,8 +42,6 @@ interface OrganizationSettingsPanelProps {
   readonly photoHandoff: ReactNode;
   /** The note under the wizard's document step (RAPP-302), for settings.organization. */
   readonly documentExplanation?: ReactNode;
-  /** The participation authorization versions and editor (RAPP-304). */
-  readonly authorization?: ReactNode;
   readonly documents: readonly InternalDocument[];
   readonly documentQuery: string;
   readonly accessToken: string | undefined;
@@ -63,7 +61,7 @@ interface OrganizationSettingsPanelProps {
 
 type PendingAction = 'organization' | 'document' | 'download';
 
-export const SETTINGS_TABS = ['organization', 'authorization', 'documents'] as const;
+export const SETTINGS_TABS = ['organization', 'documents'] as const;
 
 export type SettingsTab = (typeof SETTINGS_TABS)[number];
 
@@ -75,15 +73,14 @@ export function isSettingsTab(value: string | undefined): value is SettingsTab {
  * The tabs a person may open, in display order (RAPP-231). The Fitxa, the
  * referral form, the team and the entities have their own menu items and
  * pages since RAPP-654, so each is reachable from one place. Her screens and
- * the fields they ask are on the Onboarding board and the Fitxa (RAPP-656).
+ * the fields they ask are on the Onboarding board and the Fitxa (RAPP-656);
+ * the season authorization and the app terms on Textos legals (RAPP-694).
  */
 function visibleSettingsTabs(permissions: ReadonlySet<PermissionCode>): readonly SettingsTab[] {
   const tabs: SettingsTab[] = [];
   if (permissions.has('settings.organization') || permissions.has('settings.branding')) {
     tabs.push('organization');
   }
-  // The season's participation authorization (RAPP-304).
-  if (permissions.has('settings.organization')) tabs.push('authorization');
   if (permissions.has('settings.documents')) tabs.push('documents');
   return tabs;
 }
@@ -115,7 +112,6 @@ export function OrganizationSettingsPanel({
   permissions,
   photoHandoff,
   documentExplanation,
-  authorization,
   documents,
   documentQuery,
   accessToken,
@@ -317,9 +313,6 @@ export function OrganizationSettingsPanel({
         <TabsList className="max-w-full overflow-x-auto" variant="line">
           {tabs.includes('organization') ? (
             <TabsTrigger value="organization">{t('tabOrganization')}</TabsTrigger>
-          ) : null}
-          {tabs.includes('authorization') ? (
-            <TabsTrigger value="authorization">{t('tabAuthorization')}</TabsTrigger>
           ) : null}
           {tabs.includes('documents') ? (
             <TabsTrigger value="documents">{t('tabDocuments')}</TabsTrigger>
@@ -539,11 +532,6 @@ export function OrganizationSettingsPanel({
               </Table>
             </div>
           )}
-        </TabsContent>
-
-        <TabsContent value="authorization" className="space-y-6">
-          <SectionHeader title={t('tabAuthorization')} intro={t('authorizationIntro')} />
-          {authorization}
         </TabsContent>
       </Tabs>
     </Page>

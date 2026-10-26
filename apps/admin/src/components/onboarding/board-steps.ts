@@ -12,6 +12,7 @@
  * so they come last, locked.
  */
 
+import type { LegalTab } from '@/lib/legal-texts';
 import {
   customStepId,
   customStepKey,
@@ -46,6 +47,16 @@ export function stepFromRouteId(catalog: IntakeCatalog, routeId: string): BoardS
     return flowStep(catalog, routeId);
   }
   return flowStep(catalog, customStepKey(routeId));
+}
+
+/**
+ * The Textos legals tab a step's card opens (RAPP-694): the terms and the
+ * season authorization are edited there. Null for every other step.
+ */
+export function legalTabOf(key: string): LegalTab | null {
+  if (key === 'authorization') return 'authorization';
+  if (key === 'terms') return 'terms';
+  return null;
 }
 
 /** The address segment of a step. */

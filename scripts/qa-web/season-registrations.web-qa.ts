@@ -17,9 +17,10 @@ test.afterAll(() => {
   `);
 });
 
-test('an admin creates a season in Settings', async ({ page }) => {
+test('an admin creates a season on Textos legals', async ({ page }) => {
   await signIn(page, ADMIN_EMAIL);
-  await page.goto('/settings?tab=authorization');
+  // The seasons sit with the authorization on Textos legals (RAPP-694).
+  await page.goto('/legal');
   const panel = page.getByTestId('seasons-panel');
   await expect(panel).toBeVisible();
   await expect(panel).toContainText('2026/27');

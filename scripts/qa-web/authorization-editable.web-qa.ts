@@ -53,8 +53,8 @@ test('the design role adds a required consent and saves a draft she cannot publi
   page,
 }) => {
   await signIn(page, ONBOARDING_DESIGNER_EMAIL);
-  // The legal text has its own screen editor on the board (RAPP-641).
-  await page.goto('/onboarding/screens/authorization');
+  // The legal texts have their own page, Textos legals (RAPP-694).
+  await page.goto('/legal');
   const editor = page.getByTestId('authorization-editor');
   await expect(editor).toBeVisible({ timeout: 30_000 });
 
@@ -96,8 +96,8 @@ test('the design role adds a required consent and saves a draft she cannot publi
 
 test('an admin publishes the draft after confirming', async ({ page }) => {
   await signIn(page, ADMIN_EMAIL);
-  // The legal text has its own screen editor on the board (RAPP-641).
-  await page.goto('/onboarding/screens/authorization');
+  // The legal texts have their own page, Textos legals (RAPP-694).
+  await page.goto('/legal');
   const editor = page.getByTestId('authorization-editor');
   await expect(editor.getByTestId('authorization-draft-row')).toBeVisible({ timeout: 30_000 });
   await editor.getByTestId('authorization-publish').click();

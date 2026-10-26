@@ -1,10 +1,6 @@
 import { RequireAuth } from '@/components/auth/require-auth';
 import { ORGANIZATION_BRANDING_CHANGED_EVENT } from '@/components/branding/organization-branding-provider';
-import {
-  OnboardingAppTermsSection,
-  OnboardingAuthorizationSection,
-  OnboardingDocumentSection,
-} from '@/components/settings/onboarding-design-sections';
+import { OnboardingDocumentSection } from '@/components/settings/onboarding-design-sections';
 import {
   isSettingsTab,
   OrganizationSettingsPanel,
@@ -17,8 +13,7 @@ import { supabase } from '@/lib/supabase';
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { z } from 'zod';
 import { useAuth } from '@ramassa/shared/auth';
-import { fetchAuthorizationVersions } from '@ramassa/shared/authorization';
-import { fetchAppTermsVersions, fetchDocumentStepExplanation } from '@ramassa/shared/intake';
+import { fetchDocumentStepExplanation } from '@ramassa/shared/intake';
 import {
   fetchOrganizationSettings,
   registerInternalDocument,
@@ -26,12 +21,11 @@ import {
   searchInternalDocuments,
 } from '@ramassa/shared/organization-settings';
 import { fetchMyPermissions } from '@ramassa/shared/permissions';
-import { fetchSeasons } from '@ramassa/shared/seasons';
 
 export const Route = createFileRoute('/_staff/settings')({
   ssr: false,
   // The tabs that became pages (Fitxa, the old Questions tab, referral form,
-  // team, entities) stay valid here, with the entity, so the staff layout can
+  // team, entities, the authorization since RAPP-694) stay valid here, with the entity, so the staff layout can
   // forward their old links before this page loads (RAPP-654, RAPP-656).
   validateSearch: z.object({
     q: z.string().max(120).optional().catch(undefined),
@@ -51,26 +45,15 @@ export const Route = createFileRoute('/_staff/settings')({
       fetchMyPermissions(supabase),
       fetchOrganizationSettings(supabase),
     ]);
-    const [documents, documentExplanation, authorizationVersions, seasons, appTermsVersions] =
-      await Promise.all([
-        permissions.has('settings.documents')
-          ? searchInternalDocuments(supabase, deps.documentQuery)
-          : Promise.resolve([]),
-        permissions.has('settings.organization')
-          ? fetchDocumentStepExplanation(supabase)
-          : Promise.resolve(null),
-        permissions.has('settings.organization')
-          ? fetchAuthorizationVersions(supabase)
-          : Promise.resolve([]),
-        permissions.has('settings.organization') ? fetchSeasons(supabase) : Promise.resolve([]),
-        permissions.has('settings.organization')
-          ? fetchAppTermsVersions(supabase)
-          : Promise.resolve([]),
-      ]);
+    const [documents, documentExplanation] = await Promise.all([
+      permissions.has('settings.documents')
+        ? searchInternalDocuments(supabase, deps.documentQuery)
+        : Promise.resolve([]),
+      permissions.has('settings.organization')
+        ? fetchDocumentStepExplanation(supabase)
+        : Promise.resolve(null),
+    ]);
     return {
-      appTermsVersions,
-      authorizationVersions,
-      seasons,
       documentExplanation,
       documents,
       documentQuery: deps.documentQuery,
@@ -105,19 +88,6 @@ function OrganizationSettingsScreen() {
       organization={data.organization}
       permissions={permissions}
       photoHandoff={<PhotoHandoffButton onDone={refresh} />}
-      authorization={
-        permissions.has('settings.organization') ? (
-          <>
-            {/* The app terms sit with the other legal text she accepts (RAPP-613). */}
-            <OnboardingAppTermsSection versions={data.appTermsVersions} canPublish />
-            <OnboardingAuthorizationSection
-              seasons={data.seasons}
-              versions={data.authorizationVersions}
-              canPublish
-            />
-          </>
-        ) : undefined
-      }
       documentExplanation={
         permissions.has('settings.organization') ? (
           <OnboardingDocumentSection explanation={data.documentExplanation} />

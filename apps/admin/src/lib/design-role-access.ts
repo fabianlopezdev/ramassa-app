@@ -2,8 +2,9 @@
  * Where the onboarding design role may go in the admin (RAPP-615).
  *
  * A person whose only access is `onboarding.design` and `test_players.manage`
- * reaches the onboarding page, Dades de les jugadores (RAPP-650, its own
- * page since RAPP-654), the test players and her own account page (RAPP-634),
+ * reaches the onboarding page, Textos legals (RAPP-694), Dades de les
+ * jugadores (RAPP-650, its own page since RAPP-654), the test players and her
+ * own account page (RAPP-634),
  * and every other admin URL sends her back. This is the screen half: the
  * database refuses her every other read and write on its own
  * (`private.limited_to_test_players`).
@@ -33,6 +34,11 @@ function isOnboardingPath(pathname: string): boolean {
   return pathname === '/onboarding' || pathname.startsWith('/onboarding/');
 }
 
+/** Textos legals (RAPP-694): the authorization and terms drafts she writes. */
+function isLegalPath(pathname: string): boolean {
+  return pathname === '/legal' || pathname === '/legal/';
+}
+
 /** Dades de les jugadores (RAPP-650, RAPP-654). */
 function isProfileLayoutPath(pathname: string): boolean {
   return pathname === '/profile-layout' || pathname === '/profile-layout/';
@@ -50,6 +56,7 @@ export function designRoleRedirect(
   if (!isLimitedToTestPlayers(permissions)) return null;
   if (isOwnAccountPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isOnboardingPath(pathname)) return null;
+  if (permissions.has('onboarding.design') && isLegalPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isProfileLayoutPath(pathname)) return null;
   if (permissions.has('test_players.manage') && isTestPlayerPath(pathname)) return null;
   return designRoleLanding(permissions);

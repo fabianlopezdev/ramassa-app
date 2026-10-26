@@ -21,10 +21,15 @@ test('the Settings tabs that became pages forward to them (RAPP-654)', () => {
     to: '/entities',
     search: {},
   });
+  // Textos legals (RAPP-694).
+  expect(movedSettingsTab('/settings', { tab: 'authorization' })).toEqual({
+    to: '/legal',
+    search: { tab: 'authorization' },
+  });
 });
 
 test('the tabs that stay in Settings, and every other URL, are left alone', () => {
-  for (const tab of [undefined, 'organization', 'authorization', 'documents']) {
+  for (const tab of [undefined, 'organization', 'documents']) {
     expect(movedSettingsTab('/settings', { tab })).toBeNull();
   }
   expect(movedSettingsTab('/participants', { tab: 'staff' })).toBeNull();
