@@ -259,3 +259,11 @@ test('a draft says that only test players see it (RAPP-619)', () => {
   withDraft.unmount();
   expect(renderEditor([version()]).view.queryByTestId('authorization-draft-note')).toBeNull();
 });
+
+test('the editor is headed as the screen editor heads a screen, its place in her onboarding', () => {
+  const { view } = renderEditor([version()]);
+  expect(
+    view.getByRole('heading', { level: 2, name: 'onboardingBoard.authorization' }),
+  ).toBeTruthy();
+  expect(view.getByText('onboardingBoard.stepOf')).toBeTruthy();
+});

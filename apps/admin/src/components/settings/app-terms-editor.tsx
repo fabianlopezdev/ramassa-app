@@ -14,7 +14,9 @@
 
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
 import { EditorColumns } from '@/components/layout/editor-columns';
+import { PageHeader } from '@/components/layout/page';
 import {
+  onboardingPlace,
   TERMS_PHONE_STEPS,
   termsPhoneScreen,
   type TermsPhoneStep,
@@ -145,8 +147,20 @@ export function AppTermsEditor({
   const direction = getLanguageDirection(language);
   const isBusy = status === 'saving' || status === 'publishing';
 
+  // The shown screen and its place in her onboarding, as the screen editor heads a screen.
+  const place = onboardingPlace(catalog, phoneStep);
+
   return (
-    <div data-testid="app-terms-editor">
+    <div className="flex flex-col gap-6" data-testid="app-terms-editor">
+      <PageHeader
+        isSection
+        title={t(`builtinScreens.screenName.${phoneStep}`)}
+        description={
+          place === null
+            ? undefined
+            : t('onboardingBoard.stepOf', { number: place.number, total: place.total })
+        }
+      />
       <EditorColumns
         language={language}
         onLanguageChange={setLanguage}

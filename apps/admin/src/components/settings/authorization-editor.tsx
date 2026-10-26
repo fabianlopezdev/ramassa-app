@@ -23,10 +23,12 @@
 
 import { AdminAuthField } from '@/components/auth/admin-auth-field';
 import { EditorColumns } from '@/components/layout/editor-columns';
+import { PageHeader } from '@/components/layout/page';
 import {
   AUTHORIZATION_FIELD_STEP,
   authorizationPhoneScreen,
   authorizationPhoneSteps,
+  onboardingPlace,
   type AuthorizationPhoneStep,
 } from '@/components/legal/legal-phone-content';
 import { SteppedPhone } from '@/components/onboarding/phone-preview';
@@ -291,8 +293,20 @@ export function AuthorizationEditor({
     { seasonName, catalog },
   );
 
+  // Its place in her onboarding, as the screen editor heads a screen.
+  const place = onboardingPlace(catalog, 'authorization');
+
   return (
-    <div data-testid="authorization-editor">
+    <div className="flex flex-col gap-6" data-testid="authorization-editor">
+      <PageHeader
+        isSection
+        title={t('onboardingBoard.authorization')}
+        description={
+          place === null
+            ? undefined
+            : t('onboardingBoard.stepOf', { number: place.number, total: place.total })
+        }
+      />
       <EditorColumns
         language={language}
         onLanguageChange={setLanguage}

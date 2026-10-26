@@ -285,6 +285,16 @@ export function authorizationPhoneScreen(
   };
 }
 
+/** A screen's place on the Onboarding board, as the screen editor's "Step N of M" reads it. */
+export function onboardingPlace(
+  catalog: IntakeCatalog,
+  key: string,
+): { readonly number: number; readonly total: number } | null {
+  const steps = allSteps(catalog);
+  const number = steps.findIndex((each) => each.key === key) + 1;
+  return number === 0 ? null : { number, total: steps.length };
+}
+
 /** The app terms' two screens, in her onboarding's order. */
 export const TERMS_PHONE_STEPS = ['terms-intro', 'terms'] as const;
 
@@ -303,14 +313,8 @@ export function termsPhoneScreen(
   catalog: IntakeCatalog,
 ): PhoneScreen {
   const flow = boardStep(catalog, step);
-  const steps = allSteps(catalog);
-  const position =
-    flow === null
-      ? {}
-      : {
-          step: steps.findIndex((each) => each.key === flow.key) + 1,
-          total: steps.length,
-        };
+  const place = onboardingPlace(catalog, step);
+  const position = place === null ? {} : { step: place.number, total: place.total };
   const base =
     flow === null
       ? { ...EMPTY, title: '', continueLabel: '' }

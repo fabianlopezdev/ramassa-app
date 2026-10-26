@@ -131,3 +131,14 @@ test('a draft says that only test players see it (RAPP-619)', () => {
 test('without a draft there is no draft note', () => {
   expect(renderEditor([version()]).view.queryByTestId('app-terms-draft-note')).toBeNull();
 });
+
+test('the heading names the screen on her phone and follows its tab (RAPP-695)', () => {
+  const { view } = renderEditor([version()]);
+  expect(view.getByRole('heading', { level: 2 }).textContent).toBe(
+    'builtinScreens.screenName.terms',
+  );
+  phoneOn(view, 'terms-intro');
+  expect(view.getByRole('heading', { level: 2 }).textContent).toBe(
+    'builtinScreens.screenName.terms-intro',
+  );
+});
