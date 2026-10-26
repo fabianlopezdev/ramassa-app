@@ -53,7 +53,8 @@ select results_eq(
       where f.id in ('5eed0000-0000-4000-8045-000000000001', '5eed0000-0000-4000-8045-000000000004',
                      '5eed0000-0000-4000-8045-000000000005')
       order by f.id $$,
-  $$ values (array['entity_form', 'onboarding']), (array[]::text[]), (array['onboarding', 'season']) $$,
+  -- The seeded forms the team created ask the first two too (RAPP-700).
+  $$ values (array['custom_form', 'entity_form', 'onboarding']), (array['custom_form']), (array['onboarding', 'season']) $$,
   'the placements say where each field is asked'
 );
 select is(

@@ -32,6 +32,8 @@ select plan(50);
 
 create temporary table ids (name text primary key, id uuid) on commit drop;
 grant all on ids to authenticated;
+insert into ids select 'newsletter', c.id from public.consents c
+ where c.org_id = '5eed0000-0000-4000-8000-000000000000' and c.key = 'newsletter';
 
 -- 1. Creating a form ---------------------------------------------------------------------------------------
 
@@ -97,14 +99,14 @@ select throws_ok(
   '23514', 'a signature is asked on a form she fills in', 'a team form holds no signature block'
 );
 select throws_ok(
-  format($$ select public.place_consent('dc1bbdde-e6f5-435c-9866-2265afbe56b7', 'custom_form', %L) $$,
-         (select id::text from ids where name = 'team-screen')),
+  format($$ select public.place_consent(%L, 'custom_form', %L) $$,
+         (select id from ids where name = 'newsletter'), (select id::text from ids where name = 'team-screen')),
   '23514', 'a consent is asked on a form she fills in', 'a team form asks no consent'
 );
 insert into ids values ('once-block', public.save_form_block(
   null, 'custom_form', (select id::text from ids where name = 'once-screen'), '{"ca": "Confirmo que les dades són certes"}'));
 insert into ids values ('once-consent', public.place_consent(
-  'dc1bbdde-e6f5-435c-9866-2265afbe56b7', 'custom_form', (select id::text from ids where name = 'once-screen'), true));
+  (select id from ids where name = 'newsletter'), 'custom_form', (select id::text from ids where name = 'once-screen'), true));
 select throws_ok(
   $$ select public.place_field('5eed0000-0000-4000-8045-000000000001', 'custom_form', '5eed0000-0000-4000-8000-000000000000') $$,
   'P0002', 'no such screen', 'a placement names a live screen of a form'
