@@ -1843,11 +1843,13 @@ export type Database = {
           referral_id: string | null;
           screen_key: string | null;
           signed_at: string;
+          signed_on_tablet: boolean;
           signer_kind: string;
           signer_name: string;
           signer_user_id: string | null;
           strokes: Json;
           surface: string;
+          witnessed_by: string | null;
         };
         Insert: {
           block_id?: string | null;
@@ -1859,11 +1861,13 @@ export type Database = {
           referral_id?: string | null;
           screen_key?: string | null;
           signed_at?: string;
+          signed_on_tablet?: boolean;
           signer_kind: string;
           signer_name: string;
           signer_user_id?: string | null;
           strokes: Json;
           surface: string;
+          witnessed_by?: string | null;
         };
         Update: {
           block_id?: string | null;
@@ -1875,11 +1879,13 @@ export type Database = {
           referral_id?: string | null;
           screen_key?: string | null;
           signed_at?: string;
+          signed_on_tablet?: boolean;
           signer_kind?: string;
           signer_name?: string;
           signer_user_id?: string | null;
           strokes?: Json;
           surface?: string;
+          witnessed_by?: string | null;
         };
         Relationships: [
           {
@@ -1913,6 +1919,13 @@ export type Database = {
           {
             foreignKeyName: 'form_signatures_signer_user_id_fkey';
             columns: ['signer_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'form_signatures_witnessed_by_fkey';
+            columns: ['witnessed_by'];
             isOneToOne: false;
             referencedRelation: 'profiles';
             referencedColumns: ['id'];
@@ -5053,6 +5066,74 @@ export type Database = {
           },
         ];
       };
+      walk_in_form_signatures: {
+        Row: {
+          block_id: string | null;
+          body: string;
+          id: string;
+          language: string;
+          org_id: string;
+          screen_key: string | null;
+          signed_at: string;
+          strokes: Json;
+          walk_in_id: string;
+          witnessed_by: string | null;
+        };
+        Insert: {
+          block_id?: string | null;
+          body: string;
+          id?: string;
+          language: string;
+          org_id: string;
+          screen_key?: string | null;
+          signed_at: string;
+          strokes: Json;
+          walk_in_id: string;
+          witnessed_by?: string | null;
+        };
+        Update: {
+          block_id?: string | null;
+          body?: string;
+          id?: string;
+          language?: string;
+          org_id?: string;
+          screen_key?: string | null;
+          signed_at?: string;
+          strokes?: Json;
+          walk_in_id?: string;
+          witnessed_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'walk_in_form_signatures_block_id_fkey';
+            columns: ['block_id'];
+            isOneToOne: false;
+            referencedRelation: 'form_blocks';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'walk_in_form_signatures_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'walk_in_form_signatures_walk_in_id_fkey';
+            columns: ['walk_in_id'];
+            isOneToOne: false;
+            referencedRelation: 'walk_in_signings';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'walk_in_form_signatures_witnessed_by_fkey';
+            columns: ['witnessed_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       walk_in_signings: {
         Row: {
           collected_by: string | null;
@@ -6419,6 +6500,15 @@ export type Database = {
           invited_at: string;
         }[];
       };
+      my_form_signatures: {
+        Args: never;
+        Returns: {
+          block_id: string;
+          body: string;
+          language: string;
+          signed_at: string;
+        }[];
+      };
       my_intake_upload_org: { Args: never; Returns: string };
       my_pending_invite: {
         Args: never;
@@ -6520,10 +6610,12 @@ export type Database = {
           language: string;
           screen_key: string;
           signed_at: string;
+          signed_on_tablet: boolean;
           signer_kind: string;
           signer_name: string;
           strokes: Json;
           surface: string;
+          witnessed_by_name: string;
         }[];
       };
       participant_material: {
@@ -7111,6 +7203,7 @@ export type Database = {
       };
       submit_walk_in_signing: {
         Args: {
+          p_block_signatures?: Json;
           p_first_name: string;
           p_id: string;
           p_last_name: string;
