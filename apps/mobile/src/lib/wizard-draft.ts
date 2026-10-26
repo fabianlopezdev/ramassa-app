@@ -61,7 +61,7 @@ const SECTION_KEYS: Readonly<Record<Section, readonly string[]>> = {
   ],
 };
 
-/** Her names and app language live on her account (D2). */
+/** Her names travel as she typed them (stored as her answers, RAPP-693); her app language is her account's. */
 const ACCOUNT_KEYS = ['firstName', 'lastName', 'preferredLanguage'] as const;
 const DATE_KEYS = ['day', 'month', 'year'] as const;
 /** "None" to the entity question is an answer with no value. */

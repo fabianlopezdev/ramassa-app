@@ -161,7 +161,7 @@ function OnboardingScreens() {
       // A screen with a signature block always shows (RAPP-690).
       const custom = herOnboarding(catalog, answers, asking);
       return {
-        // Her names, when staff gave them (RAPP-300); they stay on her account (D2).
+        // Her names, when staff gave them (RAPP-300), read from her answers (RAPP-693).
         names:
           profile === null
             ? {}
