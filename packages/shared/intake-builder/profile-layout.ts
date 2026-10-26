@@ -97,6 +97,8 @@ const fieldSchema = z.object({
   label: anyLanguageTextSchema,
   help: anyLanguageTextSchema.nullable(),
   privacy: z.enum(QUESTION_PRIVACY_LEVELS),
+  // A permission a reader needs on top of the privacy level (RAPP-698).
+  read_permission: z.string().nullable().optional(),
   default_required: z.boolean(),
   settings: z.unknown().optional(),
   show_when_field_id: z.uuid().nullable(),
@@ -159,6 +161,11 @@ export interface ProfileField {
   readonly label: BuilderText;
   readonly help: BuilderText | null;
   readonly privacy: QuestionPrivacy;
+  /**
+   * A permission a reader needs on top of its privacy level, whatever the
+   * level: `participants.view_health` on her health (RAPP-698). Null for most.
+   */
+  readonly readPermission?: string | null;
   /** What a new placement of it starts from. */
   readonly defaultRequired: boolean;
   /** The type's settings as stored; `parseQuestionSettings` reads them. */
@@ -263,6 +270,7 @@ export function parseProfileLayout(raw: {
       label: field.label,
       help: field.help,
       privacy: field.privacy,
+      readPermission: field.read_permission ?? null,
       defaultRequired: field.default_required,
       settings: field.settings ?? {},
       ...(field.show_when_field_id !== null && field.show_when_option_id !== null

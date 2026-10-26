@@ -120,12 +120,12 @@ select is(
 -- 4. Private helper ---------------------------------------------------------------------------------------------
 
 select throws_ok(
-  $$ select private.readers_by_role('5eed0000-0000-4000-8000-000000000000', 'participants.view', 'participants.view_personal') $$,
+  $$ select private.readers_by_role('5eed0000-0000-4000-8000-000000000000', 'participants.view', 'participants.view_personal', null) $$,
   '42501', null::text, 'team members cannot call the helper');
 
 reset role;
 select is(
-  private.readers_by_role('5eed0000-0000-4000-8000-000000000000', 'participants.view', 'participants.view'),
+  private.readers_by_role('5eed0000-0000-4000-8000-000000000000', 'participants.view', 'participants.view', null),
   '[]'::jsonb, 'the same permission on both sides lists nobody');
 
 select * from finish();

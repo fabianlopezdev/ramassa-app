@@ -10,8 +10,8 @@
 --   3. Signing writes her answers through the answer writer, encrypted, and
 --      checks them: a required field of the Health screen, a value that fits,
 --      and the health data consent for a health answer.
---   4. Who reads them: at the Sensible level, like every Sensible answer;
---      she reads her own.
+--   4. Who reads them: at the Sensible level, like every Sensible answer, and
+--      her health only with the health permission too (0160); she reads her own.
 --   5. Anonymizing her deletes them.
 --
 -- Seed: admin ...001, staff ...002 (participants.view_sensitive, rgpd.erase),
@@ -175,9 +175,11 @@ select throws_ok(
 -- 4. Who reads them -------------------------------------------------------------------------------------------
 
 select is(
-  (select answers ->> (select id::text from run where label = 'health_info')
+  (select coalesce(answers ->> (select id::text from run where label = 'health_info'), 'hidden') || '|'
+          || (answers ->> (select id::text from run where label = 'emergency_contact_phone'))
      from public.get_participant_profile('5eed0000-0000-4000-8000-000000000011')),
-  'No', 'staff with participants.view_sensitive read her health answer'
+  'hidden|+34600000099',
+  'staff with participants.view_sensitive read her contact; her health needs the health permission'
 );
 reset role;
 delete from public.team_member_permissions

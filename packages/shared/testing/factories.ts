@@ -1612,6 +1612,8 @@ export function buildProfileField(overrides: Partial<ProfileFieldRow> = {}): Pro
     label: { ca: 'Vens amb transport públic?' },
     help: null,
     privacy: 'normal',
+    // Most fields need no permission on top of their level (RAPP-698).
+    read_permission: null,
     default_required: false,
     settings: {},
     show_when_field_id: null,

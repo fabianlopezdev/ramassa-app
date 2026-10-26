@@ -150,10 +150,10 @@ select is(
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
-  (select (answers ->> (select id::text from run where label = 'health_info')) || '|'
+  (select coalesce(answers ->> (select id::text from run where label = 'health_info'), 'hidden') || '|'
           || (answers ->> (select id::text from run where label = 'emergency_contact_name'))
      from public.get_participant_profile('5eed0000-0000-4000-8000-000000000022')),
-  'Asma lleu, porto inhalador.|Olena', 'staff with participants.view_sensitive read them as answers'
+  'hidden|Olena', 'staff without participants.view_health read the contact, never her health'
 );
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(

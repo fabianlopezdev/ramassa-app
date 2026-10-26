@@ -500,7 +500,8 @@
       "search1": "Morocco",
       "search2": "Senegal",
       "listItem": "Social services"
-    }
+    },
+    "healthReadersOnly": "Only people with the health permission read it."
   },
   "onboardingPage": {
     "title": "Onboarding"

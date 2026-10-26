@@ -22,12 +22,15 @@ set local search_path = public, extensions;
 select plan(22);
 
 -- The fields of player ...011 with a current answer, at the given levels.
-create function pg_temp.expected(p_levels text[]) returns text[] language sql security definer as $$
+create function pg_temp.expected(p_levels text[], p_with_health boolean default false)
+returns text[] language sql security definer as $$
   select coalesce(array_agg(a.question_id::text order by a.question_id::text), '{}')
     from public.custom_answers a join public.profile_fields f on f.id = a.question_id
    where a.profile_id = '5eed0000-0000-4000-8000-000000000011'
      and (a.season_id is null or a.season_id = private.current_season_id(f.org_id))
-     and f.privacy = any (p_levels);
+     and f.privacy = any (p_levels)
+     -- Her health needs the health permission, which staff ...003 does not hold (RAPP-698).
+     and (p_with_health or f.read_permission is null);
 $$;
 create function pg_temp.keys(p jsonb) returns text[] language sql immutable as $$
   select coalesce(array_agg(k order by k), '{}') from jsonb_object_keys(p) k;
@@ -143,7 +146,7 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", 
 
 select is(
   (select pg_temp.keys(answers) from public.get_own_profile()),
-  pg_temp.expected(array['normal', 'personal', 'sensitive']),
+  pg_temp.expected(array['normal', 'personal', 'sensitive'], true),
   'she reads every answer about her, whatever its level');
 select is(
   (select answers ->> pg_temp.field('document_number') from public.get_own_profile()),

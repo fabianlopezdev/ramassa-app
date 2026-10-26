@@ -500,7 +500,8 @@
       "search1": "Marroc",
       "search2": "Senegal",
       "listItem": "Serveis socials"
-    }
+    },
+    "healthReadersOnly": "Només la veu qui té el permís de salut."
   },
   "onboardingPage": {
     "title": "Onboarding"

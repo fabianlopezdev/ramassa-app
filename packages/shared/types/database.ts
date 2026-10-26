@@ -3304,6 +3304,7 @@ export type Database = {
           org_id: string;
           privacy: string;
           question_type: string;
+          read_permission: string | null;
           section_id: string;
           settings: Json;
           show_when_field_id: string | null;
@@ -3324,6 +3325,7 @@ export type Database = {
           org_id: string;
           privacy: string;
           question_type: string;
+          read_permission?: string | null;
           section_id: string;
           settings?: Json;
           show_when_field_id?: string | null;
@@ -3344,6 +3346,7 @@ export type Database = {
           org_id?: string;
           privacy?: string;
           question_type?: string;
+          read_permission?: string | null;
           section_id?: string;
           settings?: Json;
           show_when_field_id?: string | null;

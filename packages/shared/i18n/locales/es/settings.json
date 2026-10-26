@@ -500,7 +500,8 @@
       "search1": "Marruecos",
       "search2": "Senegal",
       "listItem": "Servicios sociales"
-    }
+    },
+    "healthReadersOnly": "Solo la ve quien tiene el permiso de salud."
   },
   "onboardingPage": {
     "title": "Onboarding"
