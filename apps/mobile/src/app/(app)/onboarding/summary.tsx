@@ -9,7 +9,8 @@
  * built-in screens and staff screens (RAPP-307), each under its title with its
  * own Change button. Her answers to Fitxa fields show under the screen they
  * are placed on, worded as they were asked (RAPP-655). A built-in question staff removed, or a screen staff hid,
- * shows no row: it is never asked.
+ * shows no row: it is never asked. Each signature block she signed (RAPP-690)
+ * shows its text, marked as signed, under its screen.
  */
 
 import { ReviewEditAction, ReviewRow, ReviewSection } from '@/components/onboarding/review-section';
@@ -48,6 +49,8 @@ import {
 import {
   answerText,
   appScreenFields,
+  formBlocksOn,
+  formBlockText,
   isCustomQuestionVisible,
   isEmptyAnswer,
   textIn,
@@ -100,24 +103,41 @@ function EditButton({
   );
 }
 
-/** Her answers to staff questions, one row each (RAPP-307). */
+/**
+ * Her answers to staff questions, one row each (RAPP-307), then each signature
+ * block of the screen she signed: the text she accepts, marked as signed
+ * (RAPP-690).
+ */
 function CustomRows({
   screen,
   answers,
+  signatures,
   language,
 }: {
   readonly screen: IntakeScreen;
   readonly answers: CustomAnswers;
+  /** The strokes she drew, by block id, from her draft. */
+  readonly signatures: OnboardingDraft['signatures'];
   readonly language: LanguageCode;
 }) {
   const { t } = useTranslation('onboarding');
+  const { catalog } = useWizardIntake();
+  const signed = formBlocksOn(catalog.blocks, 'onboarding', screen.builtinScreen ?? screen.id)
+    .filter((block) => signatures?.[block.id] != null)
+    .map((block) => (
+      <ReviewRow
+        key={block.id}
+        label={formBlockText(block, language).text}
+        value={t('summarySigned')}
+      />
+    ));
   const words = {
     yes: t('yesOption'),
     no: t('noOption'),
     maybe: t('customMaybeOption'),
     archived: t('customArchivedOption'),
   };
-  return screen.questions
+  const rows = screen.questions
     .filter((question) => isCustomQuestionVisible(question, answers))
     .map((question) => {
       const value = answers[question.id];
@@ -133,16 +153,19 @@ function CustomRows({
         />
       );
     });
+  return [...rows, ...signed];
 }
 
 /** A staff screen with her answers (RAPP-307). */
 function CustomSection({
   screen,
   answers,
+  signatures,
   language,
 }: {
   readonly screen: IntakeScreen;
   readonly answers: CustomAnswers;
+  readonly signatures: OnboardingDraft['signatures'];
   readonly language: LanguageCode;
 }) {
   const router = useRouter();
@@ -160,7 +183,7 @@ function CustomSection({
         />
       }
     >
-      <CustomRows screen={screen} answers={answers} language={language} />
+      <CustomRows screen={screen} answers={answers} signatures={signatures} language={language} />
     </ReviewSection>
   );
 }
@@ -232,7 +255,12 @@ export default function SummaryStepScreen() {
   const added = (screen: WizardQuestionScreen): ReactNode => {
     const placed = appScreenFields(customScreens, screen);
     return placed === undefined ? null : (
-      <CustomRows screen={placed} answers={answers} language={locale} />
+      <CustomRows
+        screen={placed}
+        answers={answers}
+        signatures={draft?.signatures}
+        language={locale}
+      />
     );
   };
   // A built-in screen whose every question staff removed has nothing to correct.
@@ -591,7 +619,12 @@ export default function SummaryStepScreen() {
             {custom === undefined ? (
               (sections[step as WizardQuestionScreen] ?? null)
             ) : (
-              <CustomSection screen={custom} answers={answers} language={locale} />
+              <CustomSection
+                screen={custom}
+                answers={answers}
+                signatures={draft?.signatures}
+                language={locale}
+              />
             )}
           </Fragment>
         );

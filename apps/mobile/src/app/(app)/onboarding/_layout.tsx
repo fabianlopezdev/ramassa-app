@@ -4,12 +4,7 @@ import {
 } from '@/components/announcements/feed-states';
 import { logger } from '@/lib/observability';
 import { onboardingDraftStore } from '@/lib/onboarding';
-import {
-  draftForScenario,
-  withSelectedLanguage,
-  withSignatureScreens,
-  wizardDraftStep,
-} from '@/lib/onboarding-intake';
+import { draftForScenario, withSelectedLanguage, wizardDraftStep } from '@/lib/onboarding-intake';
 import { WizardIntakeProvider, type WizardIntake } from '@/lib/onboarding-intake-context';
 import { ScreenWordingProvider } from '@/lib/screen-wording';
 import { supabase } from '@/lib/supabase';
@@ -150,7 +145,7 @@ function OnboardingScreens() {
       // never asked, a screen with none left is skipped (RAPP-643), and one on
       // Ask shows even when answered. The staff phone preview reads the same.
       // A screen with a signature block always shows (RAPP-690).
-      const custom = withSignatureScreens(catalog, herOnboarding(catalog, answers, asking));
+      const custom = herOnboarding(catalog, answers, asking);
       return {
         // Her names, when staff gave them (RAPP-300); they stay on her account (D2).
         names:
