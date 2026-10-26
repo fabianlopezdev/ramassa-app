@@ -429,43 +429,46 @@ function BuiltinPlacementRow({
     .filter(Boolean)
     .join(' · ');
   return (
-    <PlacementRow
-      name={reworded || appLabel}
-      detail={detail}
-      type={field?.type ?? builtinQuestionType(question)}
-      privacy={field?.privacy ?? 'personal'}
-      handle={null}
-      required={{
-        id: `builtin-required-${question}`,
-        checked: isRequiredQuestion(question, required),
-        ...(builtinRequiredLock(question) === undefined
-          ? {}
-          : { lockReason: t('settings:questions.requiredLock.always') }),
-        onChange: (next) => {
-          setIsBusy(true);
-          saveBuiltinQuestionRequired(supabase, question, next)
-            .then(() => reload())
-            .catch(() => toast.error(t('settings:questions.failed')))
-            .finally(() => setIsBusy(false));
-        },
-      }}
-      isBusy={isBusy}
-      isEditing={isEditing}
-      onToggleEdit={onToggleEdit}
-      {...(placement === undefined ? {} : { onRemove: () => setIsConfirming(true) })}
-      testId={`builtin-row-${question}`}
-    >
-      <BuiltinForm
-        info={{ question, label: appLabel }}
-        override={override}
-        required={required}
-        onLabelChange={onLabelChange}
-        onSave={async (next) => {
-          await saveBuiltinOverride(supabase, next);
-          await reload();
+    <>
+      <PlacementRow
+        name={reworded || appLabel}
+        detail={detail}
+        type={field?.type ?? builtinQuestionType(question)}
+        privacy={field?.privacy ?? 'personal'}
+        handle={null}
+        required={{
+          id: `builtin-required-${question}`,
+          checked: isRequiredQuestion(question, required),
+          ...(builtinRequiredLock(question) === undefined
+            ? {}
+            : { lockReason: t('settings:questions.requiredLock.always') }),
+          onChange: (next) => {
+            setIsBusy(true);
+            saveBuiltinQuestionRequired(supabase, question, next)
+              .then(() => reload())
+              .catch(() => toast.error(t('settings:questions.failed')))
+              .finally(() => setIsBusy(false));
+          },
         }}
-        onCancel={onClose}
-      />
+        isBusy={isBusy}
+        isEditing={isEditing}
+        onToggleEdit={onToggleEdit}
+        {...(placement === undefined ? {} : { onRemove: () => setIsConfirming(true) })}
+        testId={`builtin-row-${question}`}
+      >
+        <BuiltinForm
+          info={{ question, label: appLabel }}
+          override={override}
+          required={required}
+          onLabelChange={onLabelChange}
+          onSave={async (next) => {
+            await saveBuiltinOverride(supabase, next);
+            await reload();
+          }}
+          onCancel={onClose}
+        />
+      </PlacementRow>
+      {/* Outside the row: the row draws its children only while it is open for editing. */}
       {placement === undefined ? null : (
         <ConfirmDialog
           isOpen={isConfirming}
@@ -482,6 +485,6 @@ function BuiltinPlacementRow({
           }}
         />
       )}
-    </PlacementRow>
+    </>
   );
 }
