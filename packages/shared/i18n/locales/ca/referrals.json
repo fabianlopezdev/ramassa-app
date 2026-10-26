@@ -58,5 +58,9 @@
   "consentRequired": "Cal que confirmis que ha acceptat compartir les seves dades.",
   "privacyNote": "Ramassà tracta aquestes dades per gestionar la seva inscripció i participació, amb el seu consentiment. Només les veu l'equip de Ramassà.",
   "dateOfBirthError": "Escriu una data vàlida.",
-  "documentNumberError": "Escriu el número del document."
+  "documentNumberError": "Escriu el número del document.",
+  "signatureLabel": "Espai per signar",
+  "signaturePrompt": "Signa aquí",
+  "signatureClear": "Esborra la signatura",
+  "signatureMissing": "Cal signar-ho."
 }

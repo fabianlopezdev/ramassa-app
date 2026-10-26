@@ -624,5 +624,15 @@
     "accountTitle": "Account",
     "olderSeasons_one": "{{count}} more season",
     "olderSeasons_other": "{{count}} more seasons"
+  },
+  "signatures": {
+    "title": "Signatures",
+    "entityForm": "Entity form",
+    "form": "Form",
+    "text": "Text",
+    "signer": "Signed by",
+    "date": "Date",
+    "entitySigner": "{{name}} (entity)",
+    "drawing": "Signature of {{name}}"
   }
 }

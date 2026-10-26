@@ -62,6 +62,7 @@ describe('referral intake validation', () => {
       seasonNumber: null,
       consentConfirmed: true,
       answers: {},
+      signatures: {},
     });
   });
 
@@ -277,6 +278,7 @@ describe('the referral by field (RAPP-663)', () => {
           seasonNumber: 2,
           consentConfirmed: true,
           answers: { [systemFieldFixtureId('city')]: 'Vic' },
+          signatures: {},
         },
       },
     ]);

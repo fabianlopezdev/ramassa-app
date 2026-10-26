@@ -386,10 +386,10 @@
       "email": "Correu electrònic",
       "search_choice": "Una opció d’una llista llarga",
       "item_list": "Llista d'elements",
-      "consent": "Autorització",
       "file_upload": "Foto o fitxer",
       "country": "País",
-      "municipality": "Municipi de Catalunya"
+      "municipality": "Municipi de Catalunya",
+      "signature": "Signatura"
     },
     "privacy": "Privacitat",
     "privacyLevels": {
@@ -435,8 +435,6 @@
       "yes": "Sí",
       "no": "No",
       "maybe": "Potser",
-      "signedOn": "Acceptada, signada el {{date}}",
-      "viewSignature": "Mostra la signatura",
       "openFile": "Obre el fitxer",
       "fileFailed": "No s’ha pogut obrir el fitxer.",
       "fileUnavailable": "aquest servidor encara no pot obrir fitxers",
@@ -457,7 +455,6 @@
       "email": "Una adreça de correu electrònic.",
       "search_choice": "Una opció d’una llista llarga amb cercador, com el país.",
       "item_list": "S’hi afegeixen elements un per un, com les entitats que donen suport.",
-      "consent": "Una casella per acceptar el text que escriguis. Pots demanar també una signatura.",
       "file_upload": "Una foto o un PDF. És privat: només el veu l’equip que pot llegir aquest nivell.",
       "country": "Un país de la llista de tots els països.",
       "municipality": "Un municipi de Catalunya, de la llista oficial."
@@ -473,13 +470,11 @@
       "minAge": "Edat mínima (opcional)",
       "maxAge": "Edat màxima (opcional)",
       "maxItems": "Quants elements com a màxim",
-      "consentText": "Text de l’autorització",
       "accept": "Què pot enviar",
       "acceptDocument": "Una foto o un PDF",
       "acceptPhoto": "Només una foto",
       "filePrivacy": "El fitxer es guarda en privat. El veu ella i l’equip que pot llegir el nivell de privacitat de la pregunta.",
       "uploadsUnavailable": "Aquest servidor encara no pot guardar fitxers. Pots crear la pregunta, però al mòbil dirà que enviar fitxers encara no està disponible.",
-      "requiresSignature": "Demana signatura",
       "pasteOptions": "Enganxa moltes opcions de cop (opcional)",
       "pasteHint": "Una opció per línia, en català. S’afegeixen a les de dalt."
     },
@@ -506,8 +501,7 @@
       "option3": "Vespre",
       "search1": "Marroc",
       "search2": "Senegal",
-      "listItem": "Serveis socials",
-      "consent": "Hi estic d’acord"
+      "listItem": "Serveis socials"
     }
   },
   "onboardingPage": {
@@ -810,5 +804,13 @@
     "hers": "Només ella ho pot donar",
     "removeNamed": "Treu {{field}} del formulari",
     "removeTitle": "Vols treure «{{field}}» del formulari?"
+  },
+  "signatureBlock": {
+    "add": "Afegeix una signatura",
+    "text": "Text que accepta",
+    "alwaysRequired": "Una signatura sempre és obligatòria",
+    "removeNamed": "Treu la signatura",
+    "removeTitle": "Vols treure aquesta signatura?",
+    "removeBody": "Les signatures ja donades es conserven."
   }
 }

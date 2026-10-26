@@ -210,7 +210,6 @@
   "supportNeedsListAnd": "{{first}} y {{last}}",
   "supportNeedExplanationLabel": "Cuéntanos qué apoyo necesitas",
   "supportingEntitiesInstructionExcept": "Si otras entidades o programas te dan apoyo, además de {{entity}}, añádelos aquí.",
-  "customSignedOn": "Aceptada, firmada el {{date}}",
   "customErrorNumber": "Escribe un número.",
   "customErrorNumberWhole": "Escribe un número entero, sin decimales.",
   "customErrorNumberRange": "Escribe un número entre {{min}} y {{max}}.",
@@ -228,5 +227,6 @@
   "customFileUploading": "Enviando el archivo",
   "customFileUploadFailed": "No hemos podido enviar el archivo. Vuelve a intentarlo.",
   "customFileUnavailable": "Todavía no se pueden enviar archivos. Puedes continuar sin él.",
-  "customFileRemove": "Quita {{name}}"
+  "customFileRemove": "Quita {{name}}",
+  "customErrorSignature": "Firma con el dedo."
 }

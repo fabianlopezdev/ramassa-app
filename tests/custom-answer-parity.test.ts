@@ -29,7 +29,6 @@ const yearsAgo = (years: number, extraDays = 0) => {
 };
 
 type Case = readonly [CustomQuestionType, QuestionSettings, unknown];
-const SIGNED: QuestionSettings = { text: { ca: 'Accepto' }, requires_signature: true };
 const file = (extension: string, contentType: string, extra: Record<string, unknown> = {}) => ({
   key: `${KEY}.${extension}`,
   name: `informe.${extension}`,
@@ -90,9 +89,6 @@ const CASES: readonly Case[] = [
   ['item_list', { max_items: 2 }, ['']],
   ['item_list', { max_items: 2 }, ['x'.repeat(121)]],
   ['item_list', { max_items: 2 }, []],
-  ['consent', { text: { ca: 'Accepto' } }, true],
-  ['consent', { text: { ca: 'Accepto' } }, false],
-  ['consent', { text: { ca: 'Accepto' } }, 'true'],
   ['file_upload', { accept: 'document' }, file('pdf', 'application/pdf')],
   ['file_upload', { accept: 'photo' }, file('pdf', 'application/pdf')],
   ['file_upload', { accept: 'photo' }, file('jpg', 'image/jpeg')],
@@ -108,28 +104,6 @@ const CASES: readonly Case[] = [
       key: `${ORG}/gallery/${HER}/2026/10/${'a'.repeat(32)}.pdf`,
     },
   ],
-  // A consent that asks for her signature (RAPP-671): the tick, her drawing and its day.
-  [
-    'consent',
-    SIGNED,
-    {
-      accepted: true,
-      signature: [
-        [
-          [0, 0],
-          [1000, 1000],
-        ],
-      ],
-    },
-  ],
-  ['consent', SIGNED, { accepted: true, signature: [[[1, 2]]], signed_on: '2026-10-26' }],
-  ['consent', SIGNED, { accepted: true, signature: [[[1, 2]]], signed_on: '2026-02-30' }],
-  ['consent', SIGNED, { accepted: true, signature: [[[0, 1001]]] }],
-  ['consent', SIGNED, { accepted: true, signature: [[[0.5, 3]]] }],
-  ['consent', SIGNED, { accepted: true, signature: [] }],
-  ['consent', SIGNED, { accepted: false, signature: [[[1, 2]]] }],
-  ['consent', SIGNED, { accepted: true, signature: [[[1, 2]]], extra: 1 }],
-  ['consent', SIGNED, true],
   // Whitespace the way JavaScript's trim sees it (RAPP-610): tabs, new lines,
   // a no-break space and an ideographic space are blank, and padding is not
   // part of the answer.

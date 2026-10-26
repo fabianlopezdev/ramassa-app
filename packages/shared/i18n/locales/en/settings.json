@@ -386,10 +386,10 @@
       "email": "Email",
       "search_choice": "One choice from a long list",
       "item_list": "List of items",
-      "consent": "Consent",
       "file_upload": "Photo or file",
       "country": "Country",
-      "municipality": "Municipality of Catalonia"
+      "municipality": "Municipality of Catalonia",
+      "signature": "Signature"
     },
     "privacy": "Privacy",
     "privacyLevels": {
@@ -435,8 +435,6 @@
       "yes": "Yes",
       "no": "No",
       "maybe": "Maybe",
-      "signedOn": "Accepted, signed on {{date}}",
-      "viewSignature": "Show the signature",
       "openFile": "Open the file",
       "fileFailed": "The file could not be opened.",
       "fileUnavailable": "this server cannot open files yet",
@@ -457,7 +455,6 @@
       "email": "An email address.",
       "search_choice": "One option from a long list with a search box, like the country.",
       "item_list": "Items are added one by one, like the organizations that give support.",
-      "consent": "A tick box to accept the text you write. You can also ask for a signature.",
       "file_upload": "A photo or a PDF. It is private: only staff who may read this level see it.",
       "country": "A country from the list of every country.",
       "municipality": "A municipality of Catalonia, from the official list."
@@ -473,13 +470,11 @@
       "minAge": "Lowest age (optional)",
       "maxAge": "Highest age (optional)",
       "maxItems": "How many items at most",
-      "consentText": "Text she accepts",
       "accept": "What she can send",
       "acceptDocument": "A photo or a PDF",
       "acceptPhoto": "A photo only",
       "filePrivacy": "The file is kept private. She sees it, and so do staff who may read the question’s privacy level.",
       "uploadsUnavailable": "This server cannot store files yet. You can create the question, but her phone will say sending files is not available yet.",
-      "requiresSignature": "Ask for a signature",
       "pasteOptions": "Paste many options at once (optional)",
       "pasteHint": "One option per line, in Catalan. They are added to the ones above."
     },
@@ -506,8 +501,7 @@
       "option3": "Evening",
       "search1": "Morocco",
       "search2": "Senegal",
-      "listItem": "Social services",
-      "consent": "I agree"
+      "listItem": "Social services"
     }
   },
   "onboardingPage": {
@@ -810,5 +804,13 @@
     "hers": "Only she can give it",
     "removeNamed": "Remove {{field}} from the form",
     "removeTitle": "Remove “{{field}}” from the form?"
+  },
+  "signatureBlock": {
+    "add": "Add a signature",
+    "text": "Text to accept",
+    "alwaysRequired": "A signature is always required",
+    "removeNamed": "Remove the signature",
+    "removeTitle": "Remove this signature?",
+    "removeBody": "Signatures already given are kept."
   }
 }

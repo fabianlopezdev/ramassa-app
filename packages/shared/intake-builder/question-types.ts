@@ -5,9 +5,8 @@
  * she answered. Each type has:
  *
  *   - its settings (`questionSettingsSchema`): a number's range and whether it
- *     is whole, a date's age range, how many items a list takes, a consent's
- *     own text and whether she signs it (RAPP-671), what a file question
- *     accepts;
+ *     is whole, a date's age range, how many items a list takes, what a file
+ *     question accepts;
  *   - ONE answer schema (`customAnswerSchema`), used by her phone before she
  *     continues, by the admin before staff save, and mirrored rule for rule by
  *     the database function that saves the answer
@@ -17,16 +16,14 @@
  *
  * Stored values: a number is a JSON number; a date `YYYY-MM-DD`; yes / no,
  * phone (E.164), email and a choice are strings; a list is a list of strings; a
- * consent is `true`, or `{accepted, signature, signed_on}` when it asks for her
- * signature (the strokes of the authorization pad, and the day the server
- * stamps); a file is `{key, name, content_type, size}`, its key in the private folder of
+ * file is `{key, name, content_type, size}`, its key in the private folder of
  * the woman who answered; a country or a municipality is its canonical name.
- * Sensitive answers are encrypted as before.
+ * Sensitive answers are encrypted as before. A signature is no answer: it is a
+ * block of the forms (RAPP-690, `form-blocks.ts`).
  *
  * Docs: https://zod.dev/api (z.iso.date, refinements, discriminated settings).
  */
 import { z } from 'zod';
-import { signatureStrokesSchema, type SignatureStrokes } from '../equipment/handover';
 import { isCanonicalCountry } from '../i18n/countries';
 import { isCanonicalMunicipality } from '../i18n/municipalities';
 import type { LanguageCode } from '../schemas/language';
@@ -44,7 +41,6 @@ export const CUSTOM_QUESTION_TYPES = [
   'email',
   'search_choice',
   'item_list',
-  'consent',
   'file_upload',
   'country',
   'municipality',
@@ -71,31 +67,11 @@ export function maxOptionsFor(type: CustomQuestionType): number {
 }
 
 /**
- * Whether a consent asks for her signature under the tick (RAPP-671). Such a
- * consent follows the old signature rules: only she answers it, on her phone.
+ * Staff may complete or correct every answer but a file, which is hers to
+ * give. `private.field_is_hers_only` says the same.
  */
-export function asksForSignature(question: {
-  readonly type: CustomQuestionType;
-  readonly settings: unknown;
-}): boolean {
-  const settings = question.settings;
-  return (
-    question.type === 'consent' &&
-    typeof settings === 'object' &&
-    settings !== null &&
-    (settings as { readonly requires_signature?: unknown }).requires_signature === true
-  );
-}
-
-/**
- * Staff may complete or correct every answer but a file or a consent she
- * signs, which are hers to give. `private.field_is_hers_only` says the same.
- */
-export function isStaffWritable(question: {
-  readonly type: CustomQuestionType;
-  readonly settings: unknown;
-}): boolean {
-  return question.type !== 'file_upload' && !asksForSignature(question);
+export function isStaffWritable(question: { readonly type: CustomQuestionType }): boolean {
+  return question.type !== 'file_upload';
 }
 
 export const YES_NO = ['yes', 'no'] as const;
@@ -137,15 +113,6 @@ export const FILE_CONTENT_TYPES: Readonly<Record<FileAccept, readonly string[]>>
 
 // Settings ------------------------------------------------------------------------------------
 
-const localizedTextSchema = z.object({
-  ca: z.string().optional(),
-  es: z.string().optional(),
-  en: z.string().optional(),
-  ar: z.string().optional(),
-  fa: z.string().optional(),
-});
-const catalanText = localizedTextSchema.refine((text) => (text.ca ?? '').trim().length > 0);
-
 const boundedNumber = z.number().min(-NUMBER_LIMIT).max(NUMBER_LIMIT);
 const age = z.int().min(0).max(120);
 
@@ -168,23 +135,17 @@ const dateSettingsSchema = z
       settings.min_age <= settings.max_age,
   );
 const itemListSettingsSchema = z.strictObject({ max_items: z.int().min(1).max(LIST_MAX_ITEMS) });
-const consentSettingsSchema = z.strictObject({
-  text: catalanText,
-  requires_signature: z.boolean().optional(),
-});
 const fileSettingsSchema = z.strictObject({ accept: z.enum(FILE_ACCEPTS) });
 const noSettingsSchema = z.strictObject({});
 
 export type NumberSettings = z.infer<typeof numberSettingsSchema>;
 export type DateSettings = z.infer<typeof dateSettingsSchema>;
 export type ItemListSettings = z.infer<typeof itemListSettingsSchema>;
-export type ConsentSettings = z.infer<typeof consentSettingsSchema>;
 export type FileSettings = z.infer<typeof fileSettingsSchema>;
 export type QuestionSettings =
   | NumberSettings
   | DateSettings
   | ItemListSettings
-  | ConsentSettings
   | FileSettings
   | Readonly<Record<string, never>>;
 
@@ -197,8 +158,6 @@ export function questionSettingsSchema(type: CustomQuestionType): z.ZodType<Ques
       return dateSettingsSchema;
     case 'item_list':
       return itemListSettingsSchema;
-    case 'consent':
-      return consentSettingsSchema;
     case 'file_upload':
       return fileSettingsSchema;
     default:
@@ -209,7 +168,6 @@ export function questionSettingsSchema(type: CustomQuestionType): z.ZodType<Ques
 const DEFAULT_SETTINGS: Readonly<Partial<Record<CustomQuestionType, QuestionSettings>>> = {
   number: { integer: false },
   item_list: { max_items: LIST_DEFAULT_MAX_ITEMS },
-  consent: { text: { ca: '' } },
   file_upload: { accept: 'document' },
 };
 
@@ -230,9 +188,6 @@ export function itemListSettings(settings: QuestionSettings): ItemListSettings {
   return 'max_items' in settings
     ? (settings as ItemListSettings)
     : { max_items: LIST_DEFAULT_MAX_ITEMS };
-}
-export function consentSettings(settings: QuestionSettings): ConsentSettings {
-  return 'text' in settings ? (settings as ConsentSettings) : { text: { ca: '' } };
 }
 export function fileSettings(settings: QuestionSettings): FileSettings {
   return 'accept' in settings ? (settings as FileSettings) : { accept: 'document' };
@@ -256,41 +211,7 @@ export interface FileAnswer {
   readonly size: number;
 }
 
-/**
- * A consent that asks for her signature (RAPP-671): the tick, her drawing and
- * `signed_on` (`YYYY-MM-DD`), the day the server stamps when it saves a new
- * drawing. While she answers, the tick or the drawing may still be missing;
- * the check refuses it until both are there.
- */
-export interface ConsentDraft {
-  readonly accepted: boolean;
-  readonly signature: SignatureStrokes | null;
-  readonly signed_on?: string;
-}
-
-export type CustomAnswerValue =
-  string | number | boolean | readonly string[] | FileAnswer | ConsentDraft;
-
-function isConsentDraft(value: CustomAnswerValue | undefined): value is ConsentDraft {
-  return typeof value === 'object' && !Array.isArray(value) && 'accepted' in value;
-}
-
-/** A consent that asks for her signature, as she left it: the tick and the drawing. */
-export function consentDraft(value: CustomAnswerValue | undefined): ConsentDraft {
-  if (isConsentDraft(value)) return value;
-  return { accepted: value === true, signature: null };
-}
-
-/** The value to keep for a signed consent: empty when she gave neither the tick nor the drawing. */
-export function consentDraftValue(draft: ConsentDraft): CustomAnswerValue {
-  if (!draft.accepted && draft.signature === null) return '';
-  return { accepted: draft.accepted, signature: draft.signature };
-}
-
-/** The drawing of a signed consent answer, when it holds one. */
-export function consentSignature(value: CustomAnswerValue): SignatureStrokes | null {
-  return isConsentDraft(value) ? value.signature : null;
-}
+export type CustomAnswerValue = string | number | boolean | readonly string[] | FileAnswer;
 
 /** What every answer of every type can be, for reading stored rows. */
 export const customAnswerValueSchema = z.union([
@@ -298,11 +219,6 @@ export const customAnswerValueSchema = z.union([
   z.number(),
   z.boolean(),
   z.array(z.string()),
-  z.object({
-    accepted: z.boolean(),
-    signature: signatureStrokesSchema.nullable(),
-    signed_on: z.string().optional(),
-  }),
   z.object({
     key: z.string(),
     name: z.string(),
@@ -327,16 +243,6 @@ export function ageOn(isoDate: string, today: Date = new Date()): number {
     (today.getUTCMonth() + 1 === month && today.getUTCDate() < day);
   if (beforeBirthday) years -= 1;
   return years;
-}
-
-/** A real day in `YYYY-MM-DD`, any year (the day a consent was signed). */
-function isAnyCalendarDate(value: string): boolean {
-  if (!DATE_PATTERN.test(value)) return false;
-  const [year, month, day] = value.split('-').map(Number) as [number, number, number];
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return (
-    date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
-  );
 }
 
 function isCalendarDate(value: string): boolean {
@@ -428,14 +334,6 @@ export function customAnswerSchema(question: AnswerQuestionShape): z.ZodType<Cus
         )
         .refine((items) => new Set(items).size === items.length);
     }
-    case 'consent':
-      return asksForSignature(question)
-        ? z.strictObject({
-            accepted: z.literal(true),
-            signature: signatureStrokesSchema,
-            signed_on: z.string().refine(isAnyCalendarDate).optional(),
-          })
-        : z.literal(true);
     case 'file_upload': {
       const accepted = FILE_CONTENT_TYPES[fileSettings(question.settings).accept];
       return z.strictObject({
@@ -547,20 +445,6 @@ export function sampleCustomAnswer(
       return 'prova@example.test';
     case 'item_list':
       return [text.item];
-    case 'consent':
-      return asksForSignature(question)
-        ? {
-            accepted: true,
-            signature: [
-              [
-                [100, 500],
-                [300, 400],
-                [500, 600],
-                [700, 450],
-              ],
-            ],
-          }
-        : true;
     case 'country':
       return 'Espanya';
     case 'municipality':

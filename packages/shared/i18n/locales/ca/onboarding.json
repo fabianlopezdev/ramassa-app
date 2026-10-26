@@ -210,7 +210,6 @@
   "supportNeedsListAnd": "{{first}} i {{last}}",
   "supportNeedExplanationLabel": "Explica’ns quin suport necessites",
   "supportingEntitiesInstructionExcept": "Si altres entitats o programes et donen suport, a part de {{entity}}, afegeix-los aquí.",
-  "customSignedOn": "Acceptada, signada el {{date}}",
   "customErrorNumber": "Escriu un número.",
   "customErrorNumberWhole": "Escriu un número sencer, sense decimals.",
   "customErrorNumberRange": "Escriu un número entre {{min}} i {{max}}.",
@@ -228,5 +227,6 @@
   "customFileUploading": "S’està enviant el fitxer",
   "customFileUploadFailed": "No hem pogut enviar el fitxer. Torna-ho a provar.",
   "customFileUnavailable": "Encara no es poden enviar fitxers. Pots continuar sense.",
-  "customFileRemove": "Treu {{name}}"
+  "customFileRemove": "Treu {{name}}",
+  "customErrorSignature": "Signa amb el dit."
 }

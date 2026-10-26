@@ -202,9 +202,14 @@ export function referralAppAnswers(
 
 /**
  * The referral as `create_entity_referral` takes it: her names, every answer
- * by field (the app's and Ramassà's), and the referral's own data.
+ * by field (the app's and Ramassà's), the referral's own data, and the entity
+ * person's signature of each signature block of the form (RAPP-690).
  */
-export function referralRequest(referral: CreateReferral, answers: ReferralFieldAnswers): Json {
+export function referralRequest(
+  referral: CreateReferral,
+  answers: ReferralFieldAnswers,
+  signatures: Json = {},
+): Json {
   return {
     first_name: referral.firstName,
     last_name: referral.lastName,
@@ -216,6 +221,7 @@ export function referralRequest(referral: CreateReferral, answers: ReferralField
     answers: Object.fromEntries(
       Object.entries(answers).filter(([, value]) => !isEmptyAnswer(value)),
     ) as Json,
+    signatures,
   };
 }
 
@@ -224,9 +230,10 @@ export async function sendReferral(
   client: Pick<Client, 'rpc'>,
   referral: CreateReferral,
   answers: ReferralFieldAnswers,
+  signatures: Json = {},
 ): Promise<string> {
   const { data, error } = await client.rpc('create_entity_referral', {
-    p_payload: referralRequest(referral, answers),
+    p_payload: referralRequest(referral, answers, signatures),
   });
   if (error) databaseFailure(error.message);
   return z.uuid().parse(data);

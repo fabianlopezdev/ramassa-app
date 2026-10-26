@@ -624,5 +624,15 @@
     "accountTitle": "Compte",
     "olderSeasons_one": "{{count}} temporada més",
     "olderSeasons_other": "{{count}} temporades més"
+  },
+  "signatures": {
+    "title": "Signatures",
+    "entityForm": "Formulari de l'entitat",
+    "form": "Formulari",
+    "text": "Text",
+    "signer": "Signat per",
+    "date": "Data",
+    "entitySigner": "{{name}} (entitat)",
+    "drawing": "Signatura de {{name}}"
   }
 }

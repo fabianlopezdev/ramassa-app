@@ -22,7 +22,9 @@
 
 import { z } from 'zod';
 import { AppError } from '../errors';
+import { formSignatureDraftsSchema } from '../intake-builder/form-blocks';
 import { customAnswerValueSchema, type CustomAnswerValue } from '../intake-builder/question-types';
+import type { SignatureStrokes } from '../equipment/handover';
 import { SUPPORT_NEED_CATEGORIES, type SupportNeedCategory } from '../schemas/support-needs';
 import type { MmkvLike } from './supabase';
 
@@ -76,8 +78,10 @@ const legacyDraftSchema = z.object({
   season: z.record(z.string(), z.unknown()).optional(),
   terms: z.record(z.string(), z.unknown()).optional(),
   // Her answers to the staff questions, by question id (RAPP-307).
-  // Every type of answer (RAPP-610): text, a number, true, a list, a signed consent, a file.
+  // Every type of answer (RAPP-610): text, a number, true, a list, a file.
   custom: z.record(z.string(), customAnswerValueSchema).optional(),
+  // The strokes she drew on each signature block, not yet sent (RAPP-690).
+  signatures: formSignatureDraftsSchema.optional(),
   // A test player's situation when the draft began (RAPP-619): a later change
   // on her page makes the draft stale.
   scenarioStamp: z.string().optional(),
@@ -102,6 +106,7 @@ const storedDraftSchema = z.object({
   answers: z.record(z.string(), customAnswerValueSchema).optional(),
   screen: z.record(z.string(), z.unknown()).optional(),
   terms: z.record(z.string(), z.unknown()).optional(),
+  signatures: formSignatureDraftsSchema.optional(),
   scenarioStamp: z.string().optional(),
 });
 
@@ -119,6 +124,8 @@ export interface OnboardingDraft {
   season?: Record<string, unknown>;
   terms?: Record<string, unknown>;
   custom?: Record<string, CustomAnswerValue>;
+  /** The strokes she drew on each signature block, by block id (RAPP-690). */
+  signatures?: Record<string, SignatureStrokes | null>;
   scenarioStamp?: string;
 }
 
@@ -130,6 +137,7 @@ export interface StoredOnboardingDraft {
   answers?: Record<string, CustomAnswerValue>;
   screen?: Record<string, unknown>;
   terms?: Record<string, unknown>;
+  signatures?: Record<string, SignatureStrokes | null>;
   scenarioStamp?: string;
 }
 

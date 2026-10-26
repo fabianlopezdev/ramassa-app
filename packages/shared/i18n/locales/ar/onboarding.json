@@ -210,7 +210,6 @@
   "supportNeedsListAnd": "{{first}} و{{last}}",
   "supportNeedExplanationLabel": "أخبرينا ما الدعم الذي تحتاجينه",
   "supportingEntitiesInstructionExcept": "إذا كانت منظمات أو برامج أخرى تدعمكِ، بالإضافة إلى {{entity}}، فأضيفيها هنا.",
-  "customSignedOn": "مقبولة، موقّعة في {{date}}",
   "customErrorNumber": "اكتبي رقمًا.",
   "customErrorNumberWhole": "اكتبي رقمًا صحيحًا بدون كسور.",
   "customErrorNumberRange": "اكتبي رقمًا بين {{min}} و{{max}}.",
@@ -228,5 +227,6 @@
   "customFileUploading": "جارٍ إرسال الملف",
   "customFileUploadFailed": "تعذّر إرسال الملف. حاولي مرة أخرى.",
   "customFileUnavailable": "إرسال الملفات غير متاح بعد. يمكنكِ المتابعة بدونه.",
-  "customFileRemove": "أزيلي {{name}}"
+  "customFileRemove": "أزيلي {{name}}",
+  "customErrorSignature": "وقّعي بإصبعكِ."
 }

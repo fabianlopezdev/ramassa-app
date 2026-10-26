@@ -210,7 +210,6 @@
   "supportNeedsListAnd": "{{first}} و {{last}}",
   "supportNeedExplanationLabel": "بگویید به چه حمایتی نیاز دارید",
   "supportingEntitiesInstructionExcept": "اگر نهادها یا برنامه‌های دیگری، به‌جز {{entity}}، از شما حمایت می‌کنند، لطفاً آن‌ها را اینجا اضافه کنید.",
-  "customSignedOn": "پذیرفته شد، امضا شده در {{date}}",
   "customErrorNumber": "یک عدد بنویسید.",
   "customErrorNumberWhole": "یک عدد کامل بدون اعشار بنویسید.",
   "customErrorNumberRange": "عددی بین {{min}} و {{max}} بنویسید.",
@@ -228,5 +227,6 @@
   "customFileUploading": "در حال ارسال فایل",
   "customFileUploadFailed": "ارسال فایل ممکن نشد. دوباره تلاش کنید.",
   "customFileUnavailable": "ارسال فایل هنوز ممکن نیست. می‌توانید بدون آن ادامه دهید.",
-  "customFileRemove": "حذف {{name}}"
+  "customFileRemove": "حذف {{name}}",
+  "customErrorSignature": "با انگشت امضا کنید."
 }

@@ -60,17 +60,7 @@ const isoDaysAgo = (years: number, days = 0) => {
   return date.toISOString().slice(0, 10);
 };
 
-/** A consent that asks for her signature (RAPP-671). */
-const signedConsent = question('consent', { text: { ca: 'Accepto' }, requires_signature: true });
-
 const fileKey = `${ORG}/${CUSTOM_ANSWER_FILE_FOLDER}/${HER}/2026/10/${'a'.repeat(32)}.pdf`;
-const strokes: [number, number][][] = [
-  [
-    [10, 20],
-    [30, 40],
-  ],
-];
-
 describe('the types', () => {
   test('the builder offers every field kind the app uses, the five first ones unchanged', () => {
     expect(CUSTOM_QUESTION_TYPES).toEqual([
@@ -86,7 +76,6 @@ describe('the types', () => {
       'email',
       'search_choice',
       'item_list',
-      'consent',
       'file_upload',
       'country',
       'municipality',
@@ -123,16 +112,10 @@ describe('settings per type', () => {
     expect(questionSettingsSchema('date').safeParse({ min_age: 1.5 }).success).toBe(false);
   });
 
-  test('a list caps its items; a consent has its own Catalan text; a file what it accepts', () => {
+  test('a list caps its items; a file what it accepts; the consent is gone (RAPP-690)', () => {
     expect(questionSettingsSchema('item_list').safeParse({ max_items: 10 }).success).toBe(true);
     expect(questionSettingsSchema('item_list').safeParse({ max_items: 0 }).success).toBe(false);
-    expect(
-      questionSettingsSchema('consent').safeParse({ text: { ca: 'Accepto', en: 'I agree' } })
-        .success,
-    ).toBe(true);
-    expect(questionSettingsSchema('consent').safeParse({ text: { en: 'I agree' } }).success).toBe(
-      false,
-    );
+    expect((CUSTOM_QUESTION_TYPES as readonly string[]).includes('consent')).toBe(false);
     expect(questionSettingsSchema('file_upload').safeParse({ accept: 'photo' }).success).toBe(true);
     expect(questionSettingsSchema('file_upload').safeParse({ accept: 'video' }).success).toBe(
       false,
@@ -198,8 +181,6 @@ describe('one answer schema per type', () => {
     ['a list with a repeated item', question('item_list', { max_items: 3 }), ['A', 'A'], false],
     ['a list too long', question('item_list', { max_items: 1 }), ['A', 'B'], false],
     ['an empty item', question('item_list', { max_items: 3 }), ['A', ' '], false],
-    ['a ticked consent', question('consent', { text: { ca: 'Accepto' } }), true, true],
-    ['an unticked consent', question('consent', { text: { ca: 'Accepto' } }), false, false],
     [
       'her file',
       question('file_upload', { accept: 'document' }),
@@ -227,32 +208,11 @@ describe('one answer schema per type', () => {
     ['a country in another language', question('country'), 'Syria', false],
     ['a municipality of Catalonia', question('municipality'), 'Vic', true],
     ['a place that is not a municipality', question('municipality'), 'Madrid', false],
-    ['a signed consent', signedConsent, { accepted: true, signature: strokes }, true],
-    [
-      'a signed consent with its day',
-      signedConsent,
-      { accepted: true, signature: strokes, signed_on: '2026-10-26' },
-      true,
-    ],
-    [
-      'a signed consent on a day that does not exist',
-      signedConsent,
-      { accepted: true, signature: strokes, signed_on: '2026-02-30' },
-      false,
-    ],
-    ['a tick without the signature', signedConsent, true, false],
-    ['a signature without the tick', signedConsent, { accepted: false, signature: strokes }, false],
-    [
-      'a signature off the pad',
-      signedConsent,
-      { accepted: true, signature: [[[10, 2000]]] },
-      false,
-    ],
   ];
   for (const [name, asked, value, valid] of cases) {
     test(`${name}: ${valid ? 'accepted' : 'refused'}`, () => {
       expect(customAnswerSchema(asked).safeParse(value).success).toBe(valid);
-      // An empty value (an unticked consent) clears the answer instead.
+      // An empty value clears the answer instead.
       expect(customAnswerError(asked, value as never)).toBe(
         valid || isEmptyAnswer(value as never) ? null : 'invalid',
       );
@@ -272,7 +232,7 @@ describe('one answer schema per type', () => {
     ]);
   });
 
-  test('an unticked consent, no file and no signature are empty answers', () => {
+  test('false and nothing are empty answers', () => {
     expect(isEmptyAnswer(false)).toBe(true);
     expect(isEmptyAnswer(true)).toBe(false);
     expect(isEmptyAnswer(0)).toBe(false);
@@ -285,9 +245,8 @@ describe('each answer reads well', () => {
     no: 'No',
     maybe: 'Potser',
     archived: 'arxivada',
-    signedOn: (date: string) => `Acceptada, signada el ${date}`,
   };
-  test('dates, numbers and lists in her language; consent with its time', () => {
+  test('dates, numbers and lists in her language', () => {
     expect(answerText(question('date'), '2001-02-28', 'ca', words)).toBe('28/2/2001');
     expect(answerText(question('number', { integer: false }), 1234.5, 'ca', words)).toBe('1234,5');
     expect(answerText(question('item_list', { max_items: 5 }), ['A', 'B'], 'ca', words)).toBe(
@@ -295,22 +254,9 @@ describe('each answer reads well', () => {
     );
     expect(answerText(question('yes_no'), 'no', 'ca', words)).toBe('No');
     expect(answerText(question('search_choice'), OPTION_A, 'ca', words)).toBe('Primera');
-    expect(
-      answerText(question('consent', { text: { ca: 'Accepto' } }), true, 'ca', words, {
-        answeredAt: '2026-10-21T08:30:00Z',
-      }),
-    ).toMatch(/^Sí \(21\/10\/26,? 10:30\)$/);
   });
 
-  test('a signed consent says its day and a file its name; neither shows its raw data', () => {
-    expect(
-      answerText(
-        signedConsent,
-        { accepted: true, signature: strokes, signed_on: '2026-10-26' },
-        'ca',
-        words,
-      ),
-    ).toBe('Acceptada, signada el 26/10/2026');
+  test('a file says its name, never its raw data', () => {
     expect(
       answerText(
         question('file_upload', { accept: 'document' }),
@@ -332,11 +278,9 @@ describe('the scenario tool fills every type with a valid sample', () => {
             ? { min_age: 18, max_age: 40 }
             : type === 'item_list'
               ? { max_items: 1 }
-              : type === 'consent'
-                ? { text: { ca: 'Accepto' }, requires_signature: true }
-                : type === 'file_upload'
-                  ? { accept: 'photo' }
-                  : {};
+              : type === 'file_upload'
+                ? { accept: 'photo' }
+                : {};
       const asked = question(type, settings as CustomQuestion['settings']);
       const sample = sampleCustomAnswer(asked, 'ar', { orgId: ORG, profileId: HER });
       expect(customAnswerError(asked, sample)).toBeNull();
@@ -344,14 +288,9 @@ describe('the scenario tool fills every type with a valid sample', () => {
   }
 });
 
-test('a consent that asks for her signature is hers to give, as a file (RAPP-671)', () => {
-  expect(isStaffWritable(question('consent', { text: { ca: 'Accepto' } }))).toBe(true);
-  expect(isStaffWritable(signedConsent)).toBe(false);
+test('a file is hers to give; staff write every other answer', () => {
+  expect(isStaffWritable(question('yes_no'))).toBe(true);
   expect(isStaffWritable(question('file_upload', { accept: 'photo' }))).toBe(false);
-  expect(
-    questionSettingsSchema('consent').safeParse({ text: { ca: 'A' }, requires_signature: 'yes' })
-      .success,
-  ).toBe(false);
 });
 
 test('a phone takes its international form: +34 before a local Spanish number (RAPP-663)', () => {

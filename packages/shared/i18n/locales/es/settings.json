@@ -386,10 +386,10 @@
       "email": "Correo electrónico",
       "search_choice": "Una opción de una lista larga",
       "item_list": "Lista de elementos",
-      "consent": "Autorización",
       "file_upload": "Foto o archivo",
       "country": "País",
-      "municipality": "Municipio de Cataluña"
+      "municipality": "Municipio de Cataluña",
+      "signature": "Firma"
     },
     "privacy": "Privacidad",
     "privacyLevels": {
@@ -435,8 +435,6 @@
       "yes": "Sí",
       "no": "No",
       "maybe": "Quizás",
-      "signedOn": "Aceptada, firmada el {{date}}",
-      "viewSignature": "Mostrar la firma",
       "openFile": "Abrir el archivo",
       "fileFailed": "No se ha podido abrir el archivo.",
       "fileUnavailable": "este servidor todavía no puede abrir archivos",
@@ -457,7 +455,6 @@
       "email": "Una dirección de correo electrónico.",
       "search_choice": "Una opción de una lista larga con buscador, como el país.",
       "item_list": "Se añaden elementos uno por uno, como las entidades que dan apoyo.",
-      "consent": "Una casilla para aceptar el texto que escribas. Puedes pedir también una firma.",
       "file_upload": "Una foto o un PDF. Es privado: solo lo ve el equipo que puede leer este nivel.",
       "country": "Un país de la lista de todos los países.",
       "municipality": "Un municipio de Cataluña, de la lista oficial."
@@ -473,13 +470,11 @@
       "minAge": "Edad mínima (opcional)",
       "maxAge": "Edad máxima (opcional)",
       "maxItems": "Cuántos elementos como máximo",
-      "consentText": "Texto de la autorización",
       "accept": "Qué puede enviar",
       "acceptDocument": "Una foto o un PDF",
       "acceptPhoto": "Solo una foto",
       "filePrivacy": "El archivo se guarda en privado. Lo ve ella y el equipo que puede leer el nivel de privacidad de la pregunta.",
       "uploadsUnavailable": "Este servidor todavía no puede guardar archivos. Puedes crear la pregunta, pero en el móvil dirá que enviar archivos todavía no está disponible.",
-      "requiresSignature": "Pedir firma",
       "pasteOptions": "Pega muchas opciones de golpe (opcional)",
       "pasteHint": "Una opción por línea, en catalán. Se añaden a las de arriba."
     },
@@ -506,8 +501,7 @@
       "option3": "Noche",
       "search1": "Marruecos",
       "search2": "Senegal",
-      "listItem": "Servicios sociales",
-      "consent": "Estoy de acuerdo"
+      "listItem": "Servicios sociales"
     }
   },
   "onboardingPage": {
@@ -810,5 +804,13 @@
     "hers": "Solo ella puede darlo",
     "removeNamed": "Quita {{field}} del formulario",
     "removeTitle": "¿Quieres quitar «{{field}}» del formulario?"
+  },
+  "signatureBlock": {
+    "add": "Añade una firma",
+    "text": "Texto que acepta",
+    "alwaysRequired": "Una firma siempre es obligatoria",
+    "removeNamed": "Quita la firma",
+    "removeTitle": "¿Quieres quitar esta firma?",
+    "removeBody": "Las firmas ya dadas se conservan."
   }
 }

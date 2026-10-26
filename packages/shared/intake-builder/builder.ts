@@ -54,6 +54,7 @@ import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
 import { questionsOffTheirControl } from './app-controls';
 import { systemFieldIndexFromCatalog, type SystemFieldIndex } from './field-answers';
+import { parseFormBlocks, type FormBlock } from './form-blocks';
 import {
   anyLanguageTextSchema,
   builtinField,
@@ -69,7 +70,6 @@ import {
   type QuestionPrivacy,
 } from './profile-layout';
 import {
-  consentSignature,
   CUSTOM_QUESTION_TYPES,
   customAnswerSchema,
   customAnswerValueSchema,
@@ -170,6 +170,8 @@ export const intakeCatalogSchema = z.object({
   sections: z.unknown().optional(),
   fields: z.unknown().optional(),
   placements: z.unknown().optional(),
+  // The signature blocks of the forms (RAPP-690), read by `parseFormBlocks`.
+  blocks: z.unknown().optional(),
 });
 
 export interface CustomOption {
@@ -187,7 +189,7 @@ export interface CustomQuestion {
   readonly help: BuilderText | null;
   readonly privacy: QuestionPrivacy;
   readonly isArchived: boolean;
-  /** The type's settings (RAPP-610): a number's range, a date's ages, a consent's text... */
+  /** The type's settings (RAPP-610): a number's range, a date's ages, what a file accepts... */
   readonly settings: QuestionSettings;
   /** Required where it is asked (RAPP-611): the placement says. Absent: optional. */
   readonly isRequired?: boolean;
@@ -254,6 +256,8 @@ export interface IntakeCatalog {
    * ids. Absent when the catalog could not load.
    */
   readonly systemFields?: SystemFieldIndex;
+  /** The signature blocks of her Onboarding screens and the entity form (RAPP-690). */
+  readonly blocks?: readonly FormBlock[];
 }
 
 export const EMPTY_INTAKE_CATALOG: IntakeCatalog = {
@@ -308,6 +312,7 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
     ...(raw.fields === undefined
       ? {}
       : { systemFields: systemFieldIndexFromCatalog({ fields: raw.fields }) }),
+    blocks: parseFormBlocks(raw.blocks),
   };
 }
 
@@ -467,7 +472,7 @@ export function customAnswerError(
     : 'invalid';
 }
 
-/** True when the value says nothing: empty text, nothing chosen, an unticked consent. */
+/** True when the value says nothing: empty text, nothing chosen. */
 export function isEmptyAnswer(value: CustomAnswerValue | null | undefined): boolean {
   if (value == null || value === false) return true;
   if (typeof value === 'string') return value.trim() === '';
@@ -491,9 +496,6 @@ export function answerPayload(answers: Readonly<Record<string, CustomAnswerValue
   ) as Json;
 }
 
-/** The time a consent was given, in the organization's time zone. */
-const ORGANIZATION_TIME_ZONE = 'Europe/Madrid';
-
 function isFileAnswer(value: CustomAnswerValue): value is FileAnswer {
   return typeof value === 'object' && !Array.isArray(value) && 'key' in value;
 }
@@ -501,8 +503,7 @@ function isFileAnswer(value: CustomAnswerValue): value is FileAnswer {
 /**
  * An answer in words: option labels in her language (an archived option
  * marked), a date and a number in the reader's language, a list joined, a
- * consent as yes with its time, a consent she signed as accepted and signed on
- * its day (RAPP-671), a file by its name.
+ * file by its name.
  */
 export function answerText(
   question: CustomQuestion,
@@ -513,41 +514,13 @@ export function answerText(
     readonly no: string;
     readonly maybe: string;
     readonly archived: string;
-    /** "Accepted, signed on {date}", for a consent she signed. */
-    readonly signedOn?: (date: string) => string;
   },
-  context: { readonly answeredAt?: string } = {},
 ): string {
   if (
     (question.type === 'yes_no_maybe' || question.type === 'yes_no') &&
     typeof value === 'string'
   ) {
     return value === 'yes' ? words.yes : value === 'no' ? words.no : words.maybe;
-  }
-  if (question.type === 'consent') {
-    const signature = consentSignature(value);
-    if (signature !== null) {
-      // Before the server stamps the day (her own summary), she signs today.
-      const day =
-        typeof value === 'object' && 'signed_on' in value && typeof value.signed_on === 'string'
-          ? new Date(`${value.signed_on}T00:00:00Z`)
-          : null;
-      const date = new Intl.DateTimeFormat(language, {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        timeZone: day === null ? ORGANIZATION_TIME_ZONE : 'UTC',
-      }).format(day ?? new Date());
-      return words.signedOn?.(date) ?? words.yes;
-    }
-    if (value !== true) return words.no;
-    if (context.answeredAt === undefined) return words.yes;
-    const at = new Intl.DateTimeFormat(language, {
-      dateStyle: 'short',
-      timeStyle: 'short',
-      timeZone: ORGANIZATION_TIME_ZONE,
-    }).format(new Date(context.answeredAt));
-    return `${words.yes} (${at})`;
   }
   if (isFileAnswer(value)) return value.name;
   if (question.type === 'date' && typeof value === 'string') {
