@@ -238,6 +238,17 @@ export function placedPhoneQuestions(
   return [...shown, ...blocks.map((block) => signaturePhoneQuestion(block, language, typed))];
 }
 
+/** The signature blocks of one screen on her phone, in their order (RAPP-690). */
+export function signaturePhoneQuestions(
+  catalog: IntakeCatalog,
+  screenKey: string,
+  language: LanguageCode,
+): PhoneQuestion[] {
+  return formBlocksOn(catalog.blocks, 'onboarding', screenKey).map((block) =>
+    signaturePhoneQuestion(block, language, null),
+  );
+}
+
 /** A signature block on her phone: its text, typed or saved, and the box. */
 function signaturePhoneQuestion(
   block: FormBlock,

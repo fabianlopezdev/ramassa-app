@@ -21,6 +21,7 @@ import { BOARD_GRID, CardFrame, stepName } from '@/components/onboarding/screen-
 import {
   builtinPhoneQuestion,
   customPhoneQuestion,
+  signaturePhoneQuestions,
   stepContent,
 } from '@/components/onboarding/screen-content';
 import { CHOICE_LABEL_KEYS } from '@/components/participants/choice-menu';
@@ -230,26 +231,34 @@ function PlayerScreenCard({
   readonly onSwitch: (isAsked: boolean) => void;
 }) {
   const { t } = useTranslation(['participants', 'settings', 'onboarding']);
-  const { step, questions, number, isSkipped, mustAsk, askedCount } = screen;
+  const { step, questions, number, isSkipped, mustAsk, askedCount, hasSignature } = screen;
   const isLocked = step.kind === 'locked';
   const name = stepName(step, language, t);
   const status = isSkipped
     ? t('participants:inviteScreenSkipped')
-    : !isLocked && askedCount === 0
+    : !isLocked && askedCount === 0 && !hasSignature
       ? t('participants:inviteScreenNotAsked')
       : null;
-  // The miniature draws only what she will be asked.
+  // The miniature draws only what she will be asked, her signature blocks
+  // included (RAPP-690): a screen with only a block shows it.
   const content = stepContent(catalog, step, language, t, {
     ...(isLocked
       ? {}
       : {
-          questions: questions
-            .filter((question) => question.asking !== 'not-asked')
-            .map((question) =>
-              question.kind === 'builtin'
-                ? builtinPhoneQuestion(catalog, question.question, language, t)
-                : customPhoneQuestion(question.question, language),
+          questions: [
+            ...questions
+              .filter((question) => question.asking !== 'not-asked')
+              .map((question) =>
+                question.kind === 'builtin'
+                  ? builtinPhoneQuestion(catalog, question.question, language, t)
+                  : customPhoneQuestion(question.question, language),
+              ),
+            ...signaturePhoneQuestions(
+              catalog,
+              step.kind === 'custom' ? step.screen.id : step.key,
+              language,
             ),
+          ],
         }),
   });
   const switchId = `invite-screen-switch-${step.key}`;
