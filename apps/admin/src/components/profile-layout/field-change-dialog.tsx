@@ -3,9 +3,10 @@
  * (RAPP-665, D8). It says in plain words, with the database's own counts
  * (`preview_field_change`), what happens to her answers: how many convert to
  * the new type and how many leave the field for her history, how many are
- * stored encrypted or in clear, how many team members start or stop seeing
- * them, which features stop or start reading the field, which fields stop
- * depending on it, and the app screen that asks it.
+ * stored encrypted or in clear, which features stop or start reading the
+ * field, which fields stop depending on it, and the app screen that asks it.
+ * A privacy change names each role whose people stop or start seeing it, with
+ * how many they are (RAPP-692).
  */
 
 import {
@@ -19,16 +20,33 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useTranslation } from 'react-i18next';
-import type { FieldChangePreview, FieldFeatureKey } from '@ramassa/shared/intake-builder';
+import type {
+  FieldChangePreview,
+  FieldFeatureKey,
+  RoleReaders,
+} from '@ramassa/shared/intake-builder';
+
+interface Sentence {
+  readonly key: string;
+  readonly values?: Record<string, unknown>;
+  /** The role a sentence names, translated when it is rendered. */
+  readonly role?: RoleReaders;
+}
+
+function roleSentence(role: RoleReaders, change: 'Losing' | 'Gaining'): Sentence {
+  return {
+    key: role.roleId === null ? `fieldChange.noRole${change}` : `fieldChange.role${change}`,
+    values: { people: role.people },
+    role,
+  };
+}
 
 /** The sentences of the dialog, in order, as translation keys and values. */
 export function changeSentences(
   preview: FieldChangePreview,
   appScreen: string | null,
-): ReadonlyArray<{ readonly key: string; readonly values?: Record<string, unknown> }> {
-  const lines: { key: string; values?: Record<string, unknown> }[] = [
-    { key: 'fieldChange.answers', values: { count: preview.answers } },
-  ];
+): readonly Sentence[] {
+  const lines: Sentence[] = [{ key: 'fieldChange.answers', values: { count: preview.answers } }];
   if (preview.isTypeChange) {
     if (preview.converted > 0) {
       lines.push({ key: 'fieldChange.converted', values: { count: preview.converted } });
@@ -49,12 +67,8 @@ export function changeSentences(
     if (preview.toDecrypt > 0) {
       lines.push({ key: 'fieldChange.decrypt', values: { count: preview.toDecrypt } });
     }
-    if (preview.readersLosing > 0) {
-      lines.push({ key: 'fieldChange.readersLosing', values: { count: preview.readersLosing } });
-    }
-    if (preview.readersGaining > 0) {
-      lines.push({ key: 'fieldChange.readersGaining', values: { count: preview.readersGaining } });
-    }
+    for (const role of preview.rolesLosing) lines.push(roleSentence(role, 'Losing'));
+    for (const role of preview.rolesGaining) lines.push(roleSentence(role, 'Gaining'));
   }
   if (preview.conditionsCleared > 0) {
     lines.push({ key: 'fieldChange.conditions', values: { count: preview.conditionsCleared } });
@@ -102,6 +116,8 @@ export function FieldChangeDialog({
 }) {
   const { t } = useTranslation('settings');
   const level = (privacy: string) => t(`questions.privacyLevels.${privacy}`);
+  const roleName = (role: RoleReaders) =>
+    role.name ?? t(`team.preset.${role.builtinKey ?? 'custom'}`);
   return (
     <AlertDialog
       open={preview !== null}
@@ -116,10 +132,11 @@ export function FieldChangeDialog({
             <div className="flex flex-col gap-2 text-start">
               {preview === null
                 ? null
-                : changeSentences(preview, appScreen).map(({ key, values }) => (
-                    <p key={key} data-testid={`field-change-${key.split('.')[1]}`}>
+                : changeSentences(preview, appScreen).map(({ key, values, role }, index) => (
+                    <p key={`${key}-${index}`} data-testid={`field-change-${key.split('.')[1]}`}>
                       {t(key, {
                         ...values,
+                        ...(role === undefined ? {} : { role: roleName(role) }),
                         ...(values?.from === undefined
                           ? {}
                           : { from: level(String(values.from)), to: level(String(values.to)) }),

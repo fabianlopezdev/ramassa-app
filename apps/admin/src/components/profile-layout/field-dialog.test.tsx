@@ -1,7 +1,9 @@
 /**
  * Changing a field with answers (RAPP-665, D8): saving a new type or privacy
  * first shows what happens to the answers, with the database's counts, and
- * saves only on Confirm. A rename, or a field with no answers, saves at once.
+ * saves only on Confirm. A rename, or a new type on a field with no answers,
+ * saves at once. A new privacy level always asks and names the roles whose
+ * people stop or start seeing it (RAPP-692).
  * Her names keep their type and privacy and have no Archive.
  */
 import { createAdminI18n } from '@/lib/i18n';
@@ -59,6 +61,11 @@ const PREVIEW: FieldChangePreview = {
   toDecrypt: 0,
   readersGaining: 0,
   readersLosing: 3,
+  rolesGaining: [],
+  rolesLosing: [
+    { roleId: '69200000-0000-4000-8000-000000000001', builtinKey: null, name: 'Equip', people: 2 },
+    { roleId: '69200000-0000-4000-8000-000000000002', builtinKey: 'coach', name: null, people: 1 },
+  ],
   conditionsCleared: 0,
   featuresLost: ['impact.nationalities'],
   featuresRegained: [],
@@ -103,7 +110,8 @@ test('a new type on an answered field asks first, with the counts, and Cancel sa
   expect(text).toContain('Té 12 respostes.');
   expect(text).toContain('2 respostes no encaixen amb el nou tipus.');
   expect(text).toContain('10 respostes es guardaran xifrades.');
-  expect(text).toContain("3 persones de l'equip deixaran de veure aquestes respostes.");
+  expect(text).toContain('Les persones amb el rol Equip (2) ja no el veuran.');
+  expect(text).toContain('Les persones amb el rol Entrenador (1) ja no el veuran.');
   expect(text).toContain('«Origen»');
   expect(text).toContain("Informe d'impacte: nacionalitats");
   fireEvent.click(view.getByTestId('field-change-cancel'));
@@ -128,6 +136,44 @@ test('a field with no answers saves at once', async () => {
   fireEvent.click(view.getByTestId('field-form-save'));
   await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
   expect(previewChange).not.toHaveBeenCalled();
+});
+
+test('a new privacy level asks even with no answers, and names who gains it (RAPP-692)', async () => {
+  const { view, onSave, previewChange } = open({
+    field: field({ hasAnswers: false }),
+    preview: {
+      ...PREVIEW,
+      answers: 0,
+      converted: 0,
+      notConverted: 0,
+      isTypeChange: false,
+      privacyTo: 'normal',
+      toEncrypt: 0,
+      readersLosing: 0,
+      readersGaining: 3,
+      rolesLosing: [],
+      rolesGaining: [
+        {
+          roleId: '69200000-0000-4000-8000-000000000003',
+          builtinKey: null,
+          name: 'Coordinació',
+          people: 2,
+        },
+        { roleId: null, builtinKey: null, name: null, people: 1 },
+      ],
+      featuresLost: [],
+    },
+  });
+  fireEvent.click(view.getByTestId('question-privacy-change'));
+  fireEvent.click(view.getByTestId('question-privacy-option-normal'));
+  fireEvent.click(view.getByTestId('field-form-save'));
+  await waitFor(() => expect(view.getByTestId('field-change-dialog')).toBeTruthy());
+  expect(previewChange).toHaveBeenCalledTimes(1);
+  const text = view.getByTestId('field-change-dialog').textContent ?? '';
+  expect(text).toContain('Les persones amb el rol Coordinació (2) el podran veure.');
+  expect(text).toContain('Les persones sense rol (1) el podran veure.');
+  fireEvent.click(view.getByTestId('field-change-confirm'));
+  await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
 });
 
 test('a rename saves at once, even with answers', async () => {
@@ -161,7 +207,8 @@ test('the sentences follow what changes', () => {
     'fieldChange.appScreen',
     'fieldChange.privacy',
     'fieldChange.encrypt',
-    'fieldChange.readersLosing',
+    'fieldChange.roleLosing',
+    'fieldChange.roleLosing',
   ]);
   expect(
     keys({
@@ -172,12 +219,14 @@ test('the sentences follow what changes', () => {
       toDecrypt: 12,
       readersLosing: 0,
       readersGaining: 1,
+      rolesLosing: [],
+      rolesGaining: [{ roleId: null, builtinKey: null, name: null, people: 1 }],
     }),
   ).toEqual([
     'fieldChange.answers',
     'fieldChange.privacy',
     'fieldChange.decrypt',
-    'fieldChange.readersGaining',
+    'fieldChange.noRoleGaining',
   ]);
   expect(keys({ ...PREVIEW, isPrivacyChange: false, conditionsCleared: 1 })).toContain(
     'fieldChange.conditions',

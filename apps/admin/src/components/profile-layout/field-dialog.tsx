@@ -2,8 +2,8 @@
  * A field of the Fitxa in a dialog (RAPP-650): new from a section's "Add a
  * field", or opened with Edit. The form writes one language at a time. Every
  * field but her names changes type, privacy and options (RAPP-665): when a
- * field with answers changes type or privacy, saving first shows what happens
- * to them (`FieldChangeDialog`) and waits for Confirm. Archive asks first,
+ * field with answers changes type, or any field changes privacy (RAPP-692),
+ * saving first shows what happens (`FieldChangeDialog`) and waits for Confirm. Archive asks first,
  * saying how many answers the field keeps; her names are never archived. The
  * onboarding picker (RAPP-651) opens it for a new field, with the section
  * chosen there.
@@ -93,7 +93,8 @@ export function FieldDialog({
   async function save(draft: FieldFormDraft): Promise<void | false> {
     if (field !== null && previewChange !== undefined && needsChangeConfirmation(field, draft)) {
       const preview = await previewChange(draft);
-      if (preview.answers > 0 || preview.conditionsCleared > 0) {
+      // A privacy change always asks: it changes who reads the field (RAPP-692).
+      if (preview.answers > 0 || preview.conditionsCleared > 0 || preview.isPrivacyChange) {
         if (!(await confirmChange(preview))) return false;
       }
     }
