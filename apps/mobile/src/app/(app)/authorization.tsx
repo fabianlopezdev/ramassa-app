@@ -11,6 +11,7 @@
 import { AuthorizationForm } from '@/components/authorization/authorization-form';
 import { ReregistrationSteps } from '@/components/authorization/reregistration-steps';
 import { useAuthorizationStatus, useSignAuthorization } from '@/lib/authorization';
+import { useAuthorizationFields } from '@/lib/authorization-fields';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
@@ -28,12 +29,14 @@ export default function AuthorizationScreen() {
   const language = (i18n.resolvedLanguage as LanguageCode | undefined) ?? 'ca';
   const status = useAuthorizationStatus(true);
   const sign = useSignAuthorization();
+  // The Health screen's fields, her saved answers filled in (RAPP-698).
+  const fields = useAuthorizationFields(true, true);
   const [hasFailed, setHasFailed] = useState(false);
   // A returning player checks her details and answers the season questions
   // first (RAPP-306); a new player signs straight away.
   const [hasReregistered, setHasReregistered] = useState(false);
 
-  if (status.isPending) {
+  if (status.isPending || fields.isPending) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-50">
         <ActivityIndicator
@@ -68,6 +71,9 @@ export default function AuthorizationScreen() {
       testID="authorization-screen"
       content={current.content}
       seasonName={current.seasonName}
+      questions={fields.data?.questions ?? []}
+      initialAnswers={fields.data?.answers ?? {}}
+      healthFieldId={fields.data?.healthFieldId ?? null}
       language={language}
       isBusy={sign.isPending}
       hasFailed={hasFailed}

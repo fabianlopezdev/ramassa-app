@@ -1,12 +1,12 @@
 /**
  * The participation authorization form (RAPP-304): the text staff published
- * (in collapsible sections), the medical answer, an optional emergency contact, each
- * consent, and her signature, or the ticks alone when she cannot draw.
+ * (in collapsible sections), the Health screen's fields (her health and her
+ * emergency contact among them, RAPP-698), each consent, and her signature,
+ * or the ticks alone when she cannot draw.
  *
- * Everything comes from the version (RAPP-614): its consents in their order,
- * which questions it asks and which are required (the middle phase hides
- * when it asks neither), and the wording of the form. A wording field staff
- * left empty in her language shows the app's own text.
+ * The version gives its consents in their order and the wording of the form
+ * (RAPP-614); a wording field staff left empty in her language shows the
+ * app's own text. The Health screen hides while staff place no field on it.
  *
  * Her own app shows it in the app's language. On a staff tablet (RAPP-305) it
  * is shown in the language she picks, in her script's direction, whatever the
@@ -14,15 +14,16 @@
  */
 
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
-import { AuthTextField } from '@/components/auth/auth-text-field';
 import { AuthTitle } from '@/components/auth/auth-title';
 import { ConsentRow } from '@/components/authorization/consent-row';
 import { SignatureSection } from '@/components/authorization/signature-section';
 import { BrandSymbol } from '@/components/forms/data-icon';
 import { FormScreen } from '@/components/layout/form-screen';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { OptionChip } from '@/components/onboarding/option-chip';
-import { ChoiceGrid } from '@/components/onboarding/option-grid';
+import {
+  CustomQuestionField,
+  type CustomAnswerDraft,
+} from '@/components/onboarding/custom-question-field';
 import { WizardProgress } from '@/components/onboarding/wizard-progress';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -37,9 +38,8 @@ import {
   authorizationScreenOrder,
   authorizationSigningSchemaFor,
   authorizationWording,
-  EMERGENCY_TITLE_REQUIRED_KEY,
   HEALTH_DATA_CONSENT,
-  isMiddlePhaseShown,
+  isHealthScreenShown,
   numberAuthorizationDocument,
   orderedConsents,
   type AuthorizationConsentKey,
@@ -47,16 +47,20 @@ import {
   type AuthorizationSigning,
   type AuthorizationText,
   type AuthorizationTextField,
-  type EmergencyTextField,
-  type HealthTextField,
 } from '@ramassa/shared/authorization';
 import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import { isRtlLanguage, resolveLocalizedText, type SupportedLanguage } from '@ramassa/shared/i18n';
-import { trimPersonName } from '@ramassa/shared/schemas';
+import {
+  checkCustomAnswers,
+  isCustomQuestionVisible,
+  updateCustomAnswer,
+  type CustomAnswers,
+  type CustomQuestion,
+} from '@ramassa/shared/intake-builder';
 
-type Problem = 'consents' | 'health' | 'healthConsent' | 'emergency' | 'signature';
+type Problem = 'consents' | 'healthConsent' | 'signature';
 
-/** Each screen's phase: 1 the document, 2 health and emergency contact, 3 consents and signature. */
+/** Each screen's phase: 1 the document, 2 the Health screen's fields, 3 consents and signature. */
 const PHASE_OF_SCREEN = { document: 1, health: 2, consents: 3 } as const;
 
 // Her text runs in her script's direction, whatever the app's is.
@@ -76,6 +80,15 @@ export interface AuthorizationFormProps {
   readonly isBusy: boolean;
   readonly hasFailed: boolean;
   readonly onSubmit: (signing: AuthorizationSigning) => void;
+  /**
+   * The Health screen's fields (RAPP-698): her health, her emergency contact
+   * and whatever staff placed there, asked with the generic field renderer.
+   */
+  readonly questions: readonly CustomQuestion[];
+  /** Her saved answers, filled in; none on a tablet. */
+  readonly initialAnswers?: CustomAnswers;
+  /** The health field's id: a health answer needs the health data consent. */
+  readonly healthFieldId?: string | null;
   /** Shown above the title: the tablet's language choice and hand-back (RAPP-305). */
   readonly header?: ReactNode;
   /**
@@ -94,6 +107,9 @@ export function AuthorizationForm({
   isBusy,
   hasFailed,
   onSubmit,
+  questions,
+  initialAnswers = {},
+  healthFieldId = null,
   header,
   isOtherLanguage = false,
 }: AuthorizationFormProps) {
@@ -102,12 +118,14 @@ export function AuthorizationForm({
   const fontClass = fontClassForLanguage(language);
   const displayContent = useMemo(() => numberAuthorizationDocument(content), [content]);
   const consentList = useMemo(() => orderedConsents(displayContent), [displayContent]);
-  const signingSchema = useMemo(() => authorizationSigningSchemaFor(content), [content]);
-  const { health, emergency_contact: emergency } = content.questions;
+  const signingSchema = useMemo(
+    () => authorizationSigningSchemaFor(content, healthFieldId),
+    [content, healthFieldId],
+  );
   // The phases she goes through, in the version's order (RAPP-696): the
-  // health one only while it asks something, the signature always last.
+  // health one only while staff place a field on it, the signature always last.
   const phases = authorizationScreenOrder(content)
-    .filter((screen) => screen !== 'health' || isMiddlePhaseShown(content))
+    .filter((screen) => screen !== 'health' || isHealthScreenShown(questions))
     .map((screen) => PHASE_OF_SCREEN[screen]);
   const [phase, setPhase] = useState(phases[0] ?? 1);
   const phaseIndex = Math.max(0, phases.indexOf(phase));
@@ -116,16 +134,6 @@ export function AuthorizationForm({
       authorizationWording(content.texts, field, language) ??
         t(AUTHORIZATION_BUNDLED_TEXT_KEYS.texts[field], values),
       seasonName,
-    );
-  const healthWords = (field: HealthTextField) =>
-    authorizationWording(health.texts, field, language) ??
-    t(AUTHORIZATION_BUNDLED_TEXT_KEYS.health[field]);
-  const emergencyWords = (field: EmergencyTextField) =>
-    authorizationWording(emergency.texts, field, language) ??
-    t(
-      field === 'title' && emergency.required
-        ? EMERGENCY_TITLE_REQUIRED_KEY
-        : AUTHORIZATION_BUNDLED_TEXT_KEYS.emergency_contact[field],
     );
   const [readDocument, setReadDocument] = useState<{
     content: AuthorizationContent;
@@ -139,9 +147,8 @@ export function AuthorizationForm({
   );
 
   const [consents, setConsents] = useState<Partial<Record<AuthorizationConsentKey, boolean>>>({});
-  const [hasHealthNotes, setHasHealthNotes] = useState<boolean | null>(null);
-  const [healthNotes, setHealthNotes] = useState('');
-  const [contact, setContact] = useState({ name: '', relation: '', phone: '' });
+  const [answers, setAnswers] = useState<CustomAnswerDraft>(initialAnswers);
+  const [answerErrors, setAnswerErrors] = useState<Readonly<Record<string, string>>>({});
   const [strokes, setStrokes] = useState<SignatureStrokes | null>(null);
   const [unableToDraw, setUnableToDraw] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -158,17 +165,16 @@ export function AuthorizationForm({
   const text = (value: AuthorizationText) => resolveLocalizedText(value, language)?.text ?? '';
 
   const submit = () => {
-    // "No" is stored as the paper form asks for it, so staff read it in any language.
-    const healthInfo = hasHealthNotes === false ? 'No' : hasHealthNotes ? healthNotes : '';
+    // Her answers to the Health screen's fields, only those (RAPP-698).
+    const given = Object.fromEntries(
+      questions.flatMap((question) => {
+        const value = answers[question.id];
+        return value === undefined ? [] : [[question.id, value]];
+      }),
+    );
     const parsed = signingSchema.safeParse({
       consents,
-      healthInfo,
-      emergencyContact:
-        trimPersonName(contact.name) === '' &&
-        contact.relation.trim() === '' &&
-        contact.phone.trim() === ''
-          ? undefined
-          : contact,
+      answers: given,
       strokes: unableToDraw ? null : strokes,
       unableToDraw,
     });
@@ -182,8 +188,6 @@ export function AuthorizationForm({
             content.consents[HEALTH_DATA_CONSENT]?.required !== true;
           found.add(isHealthConsent ? 'healthConsent' : 'consents');
         }
-        if (issue.path[0] === 'healthInfo') found.add('health');
-        if (issue.path[0] === 'emergencyContact') found.add('emergency');
         if (issue.path[0] === 'strokes') found.add('signature');
       }
       setProblems(found);
@@ -255,24 +259,11 @@ export function AuthorizationForm({
             onPress={() => {
               if (phase === 1 && !hasReachedDocumentEnd) return;
               if (phase === 2) {
-                const found = new Set<Problem>();
-                // An answered Yes needs its description; a required question needs an answer.
-                if (
-                  health.asked &&
-                  ((health.required && hasHealthNotes === null) ||
-                    (hasHealthNotes === true && healthNotes.trim() === ''))
-                ) {
-                  found.add('health');
-                }
-                if (
-                  emergency.asked &&
-                  emergency.required &&
-                  (trimPersonName(contact.name) === '' || contact.phone.trim() === '')
-                ) {
-                  found.add('emergency');
-                }
-                if (found.size > 0) {
-                  setProblems(found);
+                // Each field checked by its own rules, as the database will (RAPP-698).
+                const checked = checkCustomAnswers(questions, answers, t);
+                setAnswers(checked.answers);
+                setAnswerErrors(checked.errors);
+                if (Object.keys(checked.errors).length > 0) {
                   playHaptic('warning');
                   return;
                 }
@@ -328,84 +319,30 @@ export function AuthorizationForm({
             </>
           ) : null}
           {phase === 2 ? (
-            <>
-              {health.asked ? (
-                <View className="gap-sm">
-                  <Text className={`text-start text-form text-neutral-800 ${fontClass}`}>
-                    {healthWords('question')}
-                  </Text>
-                  <ChoiceGrid maximumColumns={2}>
-                    <OptionChip
-                      accessibilityRole="radio"
-                      testID="authorization-health-no"
-                      label={healthWords('no_label')}
-                      accessibilityHint={healthWords('question')}
-                      isSelected={hasHealthNotes === false}
-                      onPress={() => {
-                        setHasHealthNotes(false);
-                        clearProblem('health');
-                      }}
-                    />
-                    <OptionChip
-                      accessibilityRole="radio"
-                      testID="authorization-health-yes"
-                      label={healthWords('yes_label')}
-                      accessibilityHint={healthWords('question')}
-                      isSelected={hasHealthNotes === true}
-                      onPress={() => {
-                        setHasHealthNotes(true);
-                        clearProblem('health');
-                      }}
-                    />
-                  </ChoiceGrid>
-                  {hasHealthNotes === true ? (
-                    <AuthTextField
-                      testID="authorization-health-notes"
-                      label={healthWords('details_label')}
-                      value={healthNotes}
-                      onChangeText={(value) => {
-                        setHealthNotes(value);
-                        clearProblem('health');
-                      }}
-                      multiline
-                      maxLength={4000}
-                    />
-                  ) : null}
-                  {problemText('health', 'authorizationErrorHealth')}
-                </View>
-              ) : null}
-
-              {emergency.asked ? (
-                <View className="gap-sm">
-                  <Text className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}>
-                    {emergencyWords('title')}
-                  </Text>
-                  <AuthTextField
-                    testID="authorization-emergency-name"
-                    label={emergencyWords('name_label')}
-                    value={contact.name}
-                    onChangeText={(name) => setContact((value) => ({ ...value, name }))}
-                    maxLength={200}
+            <View testID="authorization-health-fields" className="gap-lg">
+              {questions
+                .filter((question) => isCustomQuestionVisible(question, answers))
+                .map((question) => (
+                  <CustomQuestionField
+                    key={question.id}
+                    question={question}
+                    value={answers[question.id]}
+                    errorMessage={answerErrors[question.id]}
+                    onChange={(value) => {
+                      setAnswers((current) =>
+                        updateCustomAnswer(questions, current, question.id, value),
+                      );
+                      if (answerErrors[question.id] !== undefined) {
+                        setAnswerErrors((current) =>
+                          Object.fromEntries(
+                            Object.entries(current).filter(([id]) => id !== question.id),
+                          ),
+                        );
+                      }
+                    }}
                   />
-                  <AuthTextField
-                    testID="authorization-emergency-relation"
-                    label={emergencyWords('relation_label')}
-                    value={contact.relation}
-                    onChangeText={(relation) => setContact((value) => ({ ...value, relation }))}
-                    maxLength={100}
-                  />
-                  <AuthTextField
-                    testID="authorization-emergency-phone"
-                    label={emergencyWords('phone_label')}
-                    value={contact.phone}
-                    onChangeText={(phone) => setContact((value) => ({ ...value, phone }))}
-                    keyboardType="phone-pad"
-                    maxLength={50}
-                  />
-                  {problemText('emergency', 'authorizationErrorEmergency')}
-                </View>
-              ) : null}
-            </>
+                ))}
+            </View>
           ) : null}
           {phase === 3 ? (
             <>

@@ -21,6 +21,7 @@ import { AuthorizationForm } from '@/components/authorization/authorization-form
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SignatureBlockField } from '@/components/onboarding/signature-block-field';
+import { useAuthorizationFields } from '@/lib/authorization-fields';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { fontClassForLanguage } from '@/lib/language-font-class';
@@ -105,6 +106,8 @@ export default function SigningModeScreen() {
   const [strokes, setStrokes] = useState<Readonly<Record<string, SignatureStrokes | null>>>({});
   const [unsigned, setUnsigned] = useState<ReadonlySet<string>>(new Set());
   const [isDrawing, setIsDrawing] = useState(false);
+  // The Health screen's fields (RAPP-698), kept on the tablet like the version.
+  const fields = useAuthorizationFields(session !== null, false);
 
   // Android's back button stays in signing mode; iOS swipe back is off in the layout.
   useEffect(() => {
@@ -124,7 +127,7 @@ export default function SigningModeScreen() {
   const t = useMemo(() => i18n.getFixedT(language ?? 'ca', 'onboarding'), [i18n, language]);
 
   const current = authorization.data;
-  if (session === null || authorization.isPending || current == null) {
+  if (session === null || authorization.isPending || current == null || fields.isPending) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center gap-lg bg-neutral-50 p-lg">
         {authorization.isPending ? (
@@ -332,6 +335,8 @@ export default function SigningModeScreen() {
       testID="signing-form"
       content={current.content}
       seasonName={current.seasonName}
+      questions={fields.data?.questions ?? []}
+      healthFieldId={fields.data?.healthFieldId ?? null}
       language={language}
       isOtherLanguage
       isBusy={isSaving}

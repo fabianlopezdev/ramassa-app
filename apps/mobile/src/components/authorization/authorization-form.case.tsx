@@ -7,6 +7,7 @@ import {
   type AuthorizationContent,
   type AuthorizationSigning,
 } from '@ramassa/shared/authorization';
+import type { CustomQuestion } from '@ramassa/shared/intake-builder';
 
 let reachDocumentEnd: (() => void) | undefined;
 const submit = mock<(signing: AuthorizationSigning) => void>(() => {});
@@ -179,6 +180,50 @@ mock.module('@/components/equipment/signature-pad', () => ({
       'Draw signature',
     ),
 }));
+// The Health screen's fields (RAPP-698): the health field answers "No" with
+// one tap, any other field is a text box named by its id.
+mock.module('@/components/onboarding/custom-question-field', () => ({
+  CustomQuestionField: ({
+    question,
+    value,
+    onChange,
+    errorMessage,
+  }: {
+    question: { id: string };
+    value: unknown;
+    onChange: (value: string) => void;
+    errorMessage?: string;
+  }) =>
+    createElement(
+      'div',
+      null,
+      question.id === HEALTH
+        ? createElement(
+            'button',
+            { onClick: () => onChange('No'), 'aria-pressed': value === 'No' },
+            'authorizationHealthNo',
+          )
+        : createElement('input', {
+            'aria-label': question.id,
+            value: typeof value === 'string' ? value : '',
+            onInput: (e: { target: { value: string } }) => onChange(e.target.value),
+          }),
+      errorMessage ?? null,
+    ),
+}));
+const HEALTH = '5eed0000-0000-4000-8045-00000000aaaa';
+const question = (id: string, isRequired: boolean): CustomQuestion => ({
+  id,
+  type: 'short_text',
+  label: { en: id },
+  help: null,
+  privacy: 'sensitive',
+  isArchived: false,
+  settings: {},
+  isRequired,
+  options: [],
+});
+const QUESTIONS = [question(HEALTH, true), question('contact', false)];
 const { AuthorizationForm } = await import('./authorization-form');
 // The RAPP-304 consents, as every converted version holds them (RAPP-614).
 const AUTHORIZATION_CONSENTS = [
@@ -205,14 +250,12 @@ const content: AuthorizationContent = {
       { required, position, label: { en: key } },
     ]),
   ),
-  questions: {
-    health: { asked: true, required: true, privacy: 'health', texts: {} },
-    emergency_contact: { asked: true, required: false, privacy: 'personal', texts: {} },
-  },
   texts: {},
   attachments: [],
 };
 const props = {
+  questions: QUESTIONS,
+  healthFieldId: HEALTH,
   testID: 'authorization-screen',
   content,
   seasonName: '2026/27',
@@ -248,9 +291,9 @@ test('medical answer and explicit consents/signature are required but optional c
   fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
   expect(view.getByText('2/3')).toBeTruthy();
   fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
-  expect(view.getByText('authorizationErrorHealth')).toBeTruthy();
+  expect(view.getByText('onboarding:errorRequired')).toBeTruthy();
   fireEvent.click(view.getByRole('button', { name: 'authorizationHealthNo' }));
-  expect(view.queryByText('authorizationErrorHealth') === null).toBe(true);
+  expect(view.queryByText('onboarding:errorRequired') === null).toBe(true);
   fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
   expect(view.getByText('3/3')).toBeTruthy();
   expect(
@@ -276,8 +319,7 @@ test('medical answer and explicit consents/signature are required but optional c
         code_of_conduct: true,
         health_data: true,
       },
-      healthInfo: 'No',
-      emergencyContact: undefined,
+      answers: { [HEALTH]: 'No' },
       strokes: null,
       unableToDraw: true,
     },
@@ -399,12 +441,16 @@ for (const language of ['ca', 'es', 'en', 'ar', 'fa'] as const) {
   });
 }
 
-test('an optional emergency contact may contain just the details the player knows', () => {
-  const view = render(createElement(AuthorizationForm, props));
+test('her saved answers are filled in, and she adds the ones she knows (RAPP-698)', () => {
+  const view = render(
+    createElement(AuthorizationForm, { ...props, initialAnswers: { [HEALTH]: 'No' } }),
+  );
   act(() => reachDocumentEnd?.());
   fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
-  fireEvent.click(view.getByRole('button', { name: 'authorizationHealthNo' }));
-  fireEvent.input(view.getByRole('textbox', { name: 'authorizationEmergencyName' }), {
+  expect(
+    view.getByRole('button', { name: 'authorizationHealthNo' }).getAttribute('aria-pressed'),
+  ).toBe('true');
+  fireEvent.input(view.getByRole('textbox', { name: 'contact' }), {
     target: { value: 'Maria' },
   });
   fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
@@ -413,11 +459,7 @@ test('an optional emergency contact may contain just the details the player know
   fireEvent.click(view.getByRole('checkbox', { name: 'authorizationCannotDraw' }));
   fireEvent.click(view.getByRole('button', { name: 'authorizationSignAndEnterAction' }));
   expect(submit).toHaveBeenCalledTimes(1);
-  expect(submit.mock.calls[0]?.[0].emergencyContact).toEqual({
-    name: 'Maria',
-    relation: '',
-    phone: '',
-  });
+  expect(submit.mock.calls[0]?.[0].answers).toEqual({ [HEALTH]: 'No', contact: 'Maria' });
 });
 
 // RAPP-614: everything comes from the version ---------------------------------------------------
@@ -450,19 +492,8 @@ test('a consent staff added shows in its place and, required, blocks signing unt
   expect(submit).toHaveBeenCalledTimes(1);
 });
 
-test('a version that asks neither question has two phases', () => {
-  const view = render(
-    createElement(AuthorizationForm, {
-      ...props,
-      content: {
-        ...content,
-        questions: {
-          health: { asked: false, required: false, privacy: 'health', texts: {} },
-          emergency_contact: { asked: false, required: false, privacy: 'personal', texts: {} },
-        },
-      },
-    }),
-  );
+test('with no field on the Health screen the form has two phases', () => {
+  const view = render(createElement(AuthorizationForm, { ...props, questions: [] }));
   expect(view.getByText('1/2')).toBeTruthy();
   act(() => reachDocumentEnd?.());
   fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
@@ -472,7 +503,7 @@ test('a version that asks neither question has two phases', () => {
     if (required) fireEvent.click(view.getByRole('checkbox', { name: key }));
   fireEvent.click(view.getByRole('checkbox', { name: 'authorizationCannotDraw' }));
   fireEvent.click(view.getByRole('button', { name: 'authorizationSignAndEnterAction' }));
-  expect(submit.mock.calls[0]?.[0].healthInfo).toBe('');
+  expect(submit.mock.calls[0]?.[0].answers).toEqual({});
   fireEvent.click(view.getByRole('button', { name: 'Back' }));
   expect(view.getByText('1/2')).toBeTruthy();
 });
@@ -506,20 +537,12 @@ test('staff wording shows in her language; a language they left empty shows the 
       sign_and_enter_label: { en: 'Sign and play' },
       cannot_draw_label: { en: 'I sign with ticks' },
     },
-    questions: {
-      ...content.questions,
-      health: {
-        ...content.questions.health,
-        texts: { question: { en: 'Anything we should know?' } },
-      },
-    },
   };
   const view = render(createElement(AuthorizationForm, { ...props, content: worded }));
   expect(view.getByText('Read it for 2026/27.')).toBeTruthy();
   act(() => reachDocumentEnd?.());
   fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
   expect(view.getByRole('heading', { name: 'Your health' })).toBeTruthy();
-  expect(view.getByText('Anything we should know?')).toBeTruthy();
   fireEvent.click(view.getByRole('button', { name: 'authorizationHealthNo' }));
   fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
   expect(view.getByRole('button', { name: 'Sign and play' })).toBeTruthy();
@@ -531,25 +554,18 @@ test('staff wording shows in her language; a language they left empty shows the 
   expect(arabic.getByText('authorizationIntro')).toBeTruthy();
 });
 
-test('a required emergency contact asks a name and a phone before the consents', () => {
+test('a required field of the Health screen asks for an answer before the consents', () => {
   const view = render(
     createElement(AuthorizationForm, {
       ...props,
-      content: {
-        ...content,
-        questions: {
-          ...content.questions,
-          emergency_contact: { asked: true, required: true, privacy: 'sensitive', texts: {} },
-        },
-      },
+      questions: [question(HEALTH, true), question('contact', true)],
     }),
   );
   act(() => reachDocumentEnd?.());
   fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
-  expect(view.getByText('authorizationEmergencyTitleRequired')).toBeTruthy();
   fireEvent.click(view.getByRole('button', { name: 'authorizationHealthNo' }));
   fireEvent.click(view.getByRole('button', { name: 'continueAction' }));
-  expect(view.getByText('authorizationErrorEmergency')).toBeTruthy();
+  expect(view.getByText('onboarding:errorRequired')).toBeTruthy();
   expect(view.getByText('2/3')).toBeTruthy();
 });
 
@@ -563,11 +579,8 @@ test('an optional health answer given asks for the health data consent', () => {
           ...content.consents,
           health_data: { ...content.consents.health_data!, required: false },
         },
-        questions: {
-          ...content.questions,
-          health: { asked: true, required: false, privacy: 'health', texts: {} },
-        },
       },
+      questions: [question(HEALTH, false)],
     }),
   );
   act(() => reachDocumentEnd?.());

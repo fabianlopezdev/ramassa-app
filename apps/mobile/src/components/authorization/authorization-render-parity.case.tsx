@@ -11,6 +11,10 @@
  * requires the same text, phase by phase, so the conversion changed nothing a
  * player sees. Run with AUTHORIZATION_RENDER_WRITE=1 only to record a new
  * baseline on purpose.
+ *
+ * Recorded again on purpose for RAPP-698: the Health screen asks the four
+ * fields of Dades de les jugadores the migration placed there, worded as the
+ * fields are, so that phase reads the fields' own words now.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { act, fireEvent, render } from '@testing-library/react';
@@ -169,6 +173,12 @@ mock.module('@/components/equipment/signature-pad', () => ({
     ),
 }));
 
+// The four fields the migration places on the Health screen (RAPP-698), in their words.
+let shownLanguage: (typeof LANGUAGES)[number] = 'ca';
+mock.module('@/components/onboarding/custom-question-field', () => ({
+  CustomQuestionField: ({ question }: { question: { label: Record<string, string> } }) =>
+    createElement('div', null, question.label[shownLanguage]),
+}));
 const { AuthorizationForm } = await import('./authorization-form');
 const { authorizationContentSchema } = await import('@ramassa/shared/authorization');
 
@@ -193,12 +203,40 @@ function shownText(root: Element): string[] {
   return lines;
 }
 
+const migration = readFileSync(
+  `${import.meta.dir}/../../../../../supabase/migrations/20261026210000_health_and_emergency_as_fields.sql`,
+  'utf8',
+);
+const FIELDS = [
+  ...migration.matchAll(/\('([a-z_]+)', '[a-z_]+', '([a-z_]+)', \d,\s+'(\{"ca".*?\})'::jsonb\)/gu),
+].map(([, key, type, label]) => ({
+  id: key!,
+  type: type as 'short_text',
+  label: JSON.parse(label!.replace(/''/gu, "'")) as Record<string, string>,
+  help: null,
+  privacy: 'sensitive' as const,
+  isArchived: false,
+  settings: {},
+  isRequired: key === 'health_info',
+  options: [],
+}));
+
 const seed = readFileSync(`${import.meta.dir}/../../../../../supabase/seed.sql`, 'utf8');
 const content = authorizationContentSchema.parse(
   JSON.parse(seed.match(/\$auth\$([\s\S]*?)\$auth\$/)?.[1] ?? 'null'),
 );
 
+test('the four authorization fields are read from the migration', () => {
+  expect(FIELDS.map((field) => field.id)).toEqual([
+    'health_info',
+    'emergency_contact_name',
+    'emergency_contact_relation',
+    'emergency_contact_phone',
+  ]);
+});
+
 function renderAll(language: (typeof LANGUAGES)[number], onTablet: boolean) {
+  shownLanguage = language;
   const view = render(
     createElement(AuthorizationForm, {
       testID: 'authorization-screen',
@@ -208,6 +246,9 @@ function renderAll(language: (typeof LANGUAGES)[number], onTablet: boolean) {
       isBusy: false,
       hasFailed: false,
       onSubmit: () => {},
+      questions: FIELDS,
+      initialAnswers: { health_info: 'No' },
+      healthFieldId: 'health_info',
       isOtherLanguage: onTablet,
     }),
   );
@@ -219,10 +260,8 @@ function renderAll(language: (typeof LANGUAGES)[number], onTablet: boolean) {
   phases.document = shownText(view.container);
   act(() => reachDocumentEnd?.());
   fireEvent.click(view.getByTestId('submit'));
-  // Phase 2: health and emergency contact, with the details field open.
-  fireEvent.click(view.getByTestId('authorization-health-yes'));
+  // Phase 2: the Health screen's fields (RAPP-698).
   phases.health = shownText(view.container);
-  fireEvent.click(view.getByTestId('authorization-health-no'));
   fireEvent.click(view.getByTestId('submit'));
   // Phase 3: consents and signature, then with "I cannot draw" ticked.
   phases.consents = shownText(view.container);
