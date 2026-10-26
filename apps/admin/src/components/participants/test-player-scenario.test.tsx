@@ -37,13 +37,9 @@ const SCREEN = '5eed0000-0000-4000-8044-0000000000b1';
 const SECTION = '5eed0000-0000-4000-8047-0000000000b1';
 const fields: readonly (readonly [string, string, unknown])[] = [
   ['5eed0000-0000-4000-8045-0000000000b1', 'number', { integer: true, min: 3 }],
-  [
-    '5eed0000-0000-4000-8045-0000000000b2',
-    'consent',
-    { text: { ca: 'Signo' }, requires_signature: true },
-  ],
+  ['5eed0000-0000-4000-8045-0000000000b2', 'file_upload', { accept: 'document' }],
   ['5eed0000-0000-4000-8045-0000000000b3', 'file_upload', { accept: 'photo' }],
-  ['5eed0000-0000-4000-8045-0000000000b4', 'consent', { text: { ca: 'Accepto' } }],
+  ['5eed0000-0000-4000-8045-0000000000b4', 'yes_no', {}],
 ];
 const catalog = parseIntakeCatalog({
   screens: [
@@ -171,9 +167,9 @@ test('a refusal is explained', async () => {
 
 test('staff questions of every type are filled with a valid sample, or cleared (RAPP-610)', async () => {
   const { view, onChange } = renderPanel();
-  const signature = view.getByTestId('test-scenario-custom-5eed0000-0000-4000-8045-0000000000b2');
-  expect(signature.dataset.answered).toBe('true');
-  fireEvent.click(signature.querySelector('button') as HTMLButtonElement);
+  const file = view.getByTestId('test-scenario-custom-5eed0000-0000-4000-8045-0000000000b2');
+  expect(file.dataset.answered).toBe('true');
+  fireEvent.click(file.querySelector('button') as HTMLButtonElement);
   await waitFor(() =>
     expect(onChange).toHaveBeenLastCalledWith({
       kind: 'custom_answers',

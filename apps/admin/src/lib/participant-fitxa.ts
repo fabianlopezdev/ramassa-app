@@ -110,7 +110,7 @@ export interface SeasonAnswersLine {
 }
 
 /** The types whose answer says nothing without the field's name ("Sí"). */
-const NAMED_TYPES: ReadonlySet<string> = new Set(['yes_no', 'yes_no_maybe', 'consent', 'number']);
+const NAMED_TYPES: ReadonlySet<string> = new Set(['yes_no', 'yes_no_maybe', 'number']);
 
 /**
  * Her answers by season, newest season first, each season's answers in the

@@ -156,7 +156,6 @@ function FitxaFieldRow({
           <CustomAnswerValueView
             question={asked}
             value={current.value}
-            answeredAt={current.answeredAt}
             language={language}
             onOpenFile={context.onOpenFile}
           />
@@ -169,9 +168,9 @@ function FitxaFieldRow({
       }
       older={(answers?.older ?? []).map(
         (row) =>
-          `${row.seasonName ?? ''}: ${answerText(asked, row.value, language, words, { answeredAt: row.answeredAt })}`,
+          `${row.seasonName ?? ''}: ${answerText(asked, row.value, language, words)}`,
       )}
-      // A file or a consent she signs is hers to give; an archived field keeps what she said.
+      // A file is hers to give; an archived field keeps what she said.
       canEdit={
         context.canEdit && lockedLevel === null && !field.isArchived && isStaffWritable(field)
       }

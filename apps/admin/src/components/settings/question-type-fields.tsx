@@ -10,9 +10,7 @@
  */
 
 import { textFromForm } from '@/components/fields/language-fields';
-import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getCountryOptions } from '@ramassa/shared/i18n/countries';
 import {
@@ -22,8 +20,6 @@ import {
 } from '@ramassa/shared/i18n/languages';
 import { getMunicipalityOptions } from '@ramassa/shared/i18n/municipalities';
 import {
-  asksForSignature,
-  consentSettings,
   dateSettings,
   fileSettings,
   itemListSettings,
@@ -66,12 +62,6 @@ export function readQuestionSettings(fields: FormData, type: CustomQuestionType)
       return { ...optional('setting-min-age'), ...optional('setting-max-age') };
     case 'item_list':
       return { max_items: numberFrom(fields, 'setting-max-items') ?? LIST_DEFAULT_MAX_ITEMS };
-    case 'consent':
-      // The switch is left out when off, so a plain consent keeps its settings as before.
-      return {
-        text: textFromForm(fields, 'setting-consent-text'),
-        ...(fields.get('setting-requires-signature') === 'on' ? { requires_signature: true } : {}),
-      };
     case 'file_upload':
       return { accept: fields.get('setting-accept') === 'photo' ? 'photo' : 'document' };
     default:
@@ -140,14 +130,11 @@ export function QuestionSettingsFields({
   type,
   settings,
   uploadsAvailable,
-  consentTextField,
 }: {
   readonly type: CustomQuestionType;
   readonly settings: QuestionSettings | undefined;
   /** False when this deployment has no media service: file answers cannot be stored. */
   readonly uploadsAvailable: boolean;
-  /** The consent's own text, in each language (the form's language fields). */
-  readonly consentTextField: ReactNode;
 }) {
   const { t } = useTranslation('settings');
   const current = settings ?? {};
@@ -227,21 +214,6 @@ export function QuestionSettingsFields({
             max={LIST_MAX_ITEMS}
           />
         </fieldset>
-      );
-    case 'consent':
-      return (
-        <>
-          {consentTextField}
-          {/* She ticks, then signs under the tick (RAPP-671). */}
-          <label className="flex items-center gap-2 text-sm font-medium">
-            <Switch
-              name="setting-requires-signature"
-              defaultChecked={consentSettings(current).requires_signature === true}
-              data-testid="setting-requires-signature"
-            />
-            <span>{t('questions.settings.requiresSignature')}</span>
-          </label>
-        </>
       );
     case 'file_upload':
       return (
@@ -522,32 +494,6 @@ export function QuestionControl({
               <span aria-hidden className="text-primary">
                 ×
               </span>
-            </div>
-          ) : null}
-        </div>
-      );
-    case 'consent':
-      return (
-        <div className="flex flex-col gap-2">
-          <label className="flex items-center gap-2 rounded-md border p-2 text-sm">
-            {isExample ? (
-              <ChoiceMark isMultiple isChosen />
-            ) : (
-              <span aria-hidden className="h-4 w-4 rounded border-2 border-primary" />
-            )}
-            <span>
-              {isExample
-                ? sample('consent')
-                : textIn(consentSettings(draft.settings).text, language)}
-            </span>
-          </label>
-          {/* With the switch on she signs under the tick (RAPP-671). */}
-          {asksForSignature(draft) ? (
-            <div
-              className={`${boxClass} flex h-20 items-center justify-center border-dashed`}
-              data-testid="question-preview-signature"
-            >
-              {phone('authorizationSignaturePrompt')}
             </div>
           ) : null}
         </div>

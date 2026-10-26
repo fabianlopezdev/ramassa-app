@@ -15,7 +15,6 @@
 import { ListPicker } from '@/components/fields/list-picker';
 import { useTranslation } from 'react-i18next';
 import {
-  consentSettings,
   customAnswerMessage,
   dateSettings,
   isStaffWritable,
@@ -49,7 +48,6 @@ function readOne(
       .filter((value): value is string => typeof value === 'string');
     return chosen.length === 0 ? null : chosen;
   }
-  if (question.type === 'consent') return fields.get(name) === 'on' ? true : null;
   const raw = fields.get(name);
   const text = typeof raw === 'string' ? raw.trim() : '';
   if (text === '') return null;
@@ -181,20 +179,6 @@ export function CustomAnswerInput({
             </span>
           </label>
         ))}
-        {helpLine}
-        {errorLine}
-      </fieldset>
-    );
-  }
-
-  if (question.type === 'consent') {
-    return (
-      <fieldset className="flex flex-col gap-1.5" aria-describedby={helpId}>
-        <legend className="text-start text-sm font-medium">{label}</legend>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name={name} defaultChecked={value === true} />
-          <span>{textIn(consentSettings(question.settings).text, language)}</span>
-        </label>
         {helpLine}
         {errorLine}
       </fieldset>

@@ -259,19 +259,6 @@ export function FieldForm({
           type={type}
           settings={value?.type === type ? value.settings : undefined}
           uploadsAvailable={canStoreFiles}
-          consentTextField={
-            <LanguageFields
-              name="setting-consent-text"
-              legend={t('questions.settings.consentText')}
-              value={
-                value !== null && 'text' in value.settings
-                  ? (value.settings as { readonly text: BuilderText }).text
-                  : null
-              }
-              isCatalanRequired
-              isLong
-            />
-          }
         />
         {isChoiceType(type) ? (
           <div className="flex flex-col gap-3" data-testid="question-options">
