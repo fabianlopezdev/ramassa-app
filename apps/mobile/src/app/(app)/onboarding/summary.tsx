@@ -323,25 +323,32 @@ export default function SummaryStepScreen() {
           />
         }
       >
-        <ReviewRow
-          icon="calendar"
-          label={wording.label('date_of_birth', t('dateOfBirthLabel'))}
-          value={show(birthDate)}
-        />
-        <ReviewRow
-          icon="location"
-          label={wording.label('place_of_birth', t('placeOfBirthLabel'))}
-          value={show(text(identity.placeOfBirth))}
-        />
-        <ReviewRow
-          icon="globe"
-          label={wording.label('nationality', t('nationalityLabel'))}
-          value={show(
-            nationality === null
-              ? null
-              : (countryLabelForCanonical(nationality, locale) ?? nationality),
-          )}
-        />
+        {/* A question off its control is listed with the fields placed here (RAPP-665). */}
+        {shows('date_of_birth') ? (
+          <ReviewRow
+            icon="calendar"
+            label={wording.label('date_of_birth', t('dateOfBirthLabel'))}
+            value={show(birthDate)}
+          />
+        ) : null}
+        {shows('place_of_birth') ? (
+          <ReviewRow
+            icon="location"
+            label={wording.label('place_of_birth', t('placeOfBirthLabel'))}
+            value={show(text(identity.placeOfBirth))}
+          />
+        ) : null}
+        {shows('nationality') ? (
+          <ReviewRow
+            icon="globe"
+            label={wording.label('nationality', t('nationalityLabel'))}
+            value={show(
+              nationality === null
+                ? null
+                : (countryLabelForCanonical(nationality, locale) ?? nationality),
+            )}
+          />
+        ) : null}
         <ReviewRow
           icon="conversation"
           label={wording.label('preferred_language', t('preferredLanguageLabel'))}
