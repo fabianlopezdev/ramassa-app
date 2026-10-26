@@ -43,6 +43,8 @@ export interface CompleteOnboardingRequest {
   readonly locale_shown: string;
   readonly answers: FieldAnswers;
   readonly signatures: ReturnType<typeof formSignaturesPayload>;
+  /** Her ticks of the consents her Onboarding asks, by key (RAPP-699), when it asks one. */
+  readonly consents?: Readonly<Record<string, boolean>>;
 }
 
 /**

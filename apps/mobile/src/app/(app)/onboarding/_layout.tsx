@@ -101,6 +101,7 @@ function seedWizardDraft(intake: WizardIntake, language: LanguageCode): void {
       customScreens: intake.customScreens,
       storedCustom: intake.customAnswers,
       blocks: intake.catalog.blocks,
+      consentCatalog: intake.catalog,
     }),
   });
 }

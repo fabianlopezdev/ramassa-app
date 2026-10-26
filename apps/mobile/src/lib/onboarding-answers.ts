@@ -29,7 +29,9 @@ import {
   appAnswersFromForm,
   appFormField,
   appFormToSend,
+  consentDecisionsPayload,
   formSignaturesPayload,
+  liveOnboardingConsents,
   type FieldAnswers,
 } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraft } from '@ramassa/shared/onboarding-drafts';
@@ -41,6 +43,8 @@ interface OnboardingAnswers {
   readonly preferred_language: string;
   readonly answers: FieldAnswers;
   readonly signatures: ReturnType<typeof formSignaturesPayload>;
+  /** Her ticks of the consents her screens ask, by key (RAPP-699); absent when none is asked. */
+  readonly consents?: Readonly<Record<string, boolean>>;
 }
 
 export type OnboardingAnswersResult =
@@ -59,6 +63,7 @@ export function onboardingAnswersFromDraft(
     customScreens: intake.customScreens,
     storedCustom: intake.customAnswers,
     blocks: intake.catalog.blocks,
+    consentCatalog: intake.catalog,
   });
   if (incomplete !== null) return { ok: false, step: incomplete };
   const required = intake.required ?? DEFAULT_REQUIRED_QUESTIONS;
@@ -104,6 +109,12 @@ export function onboardingAnswersFromDraft(
   // An app field the generic renderer asks (RAPP-665) is saved from there only.
   for (const question of placed) delete appAnswers[question.id];
 
+  const askedConsents = liveOnboardingConsents({
+    consents: intake.catalog.consents,
+    consentPlacements: intake.catalog.consentPlacements,
+    screens: intake.catalog.screens,
+  });
+
   return {
     ok: true,
     value: {
@@ -118,6 +129,11 @@ export function onboardingAnswersFromDraft(
         draft?.signatures,
         language,
       ),
+      // Her tick of every consent her live screens ask (RAPP-699). Sent only
+      // when one is asked, so a server from before Dades legals still takes it.
+      ...(askedConsents.length === 0
+        ? {}
+        : { consents: consentDecisionsPayload(askedConsents, draft?.consents) }),
     },
   };
 }

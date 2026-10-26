@@ -196,6 +196,14 @@ describe('a screen saves only what it changed', () => {
     expect(store.loadStoredDraft()?.answers?.[nationality]).toBe('Síria del nord');
     expect(store.loadDraft()?.custom).toEqual({ [nationality]: 'Síria del nord' });
   });
+
+  test('her ticks of the consents on her screens are kept by key (RAPP-699)', () => {
+    const store = wizardDraftStoreOn(createInMemoryOnboardingDraftStore(), fields);
+    store.saveDraft(legacy);
+    store.saveDraft({ ...store.loadDraft()!, consents: { sortides: true, newsletter: false } });
+    expect(store.loadStoredDraft()?.consents).toEqual({ sortides: true, newsletter: false });
+    expect(store.loadDraft()?.consents).toEqual({ sortides: true, newsletter: false });
+  });
 });
 
 describe('her birth date in three boxes', () => {

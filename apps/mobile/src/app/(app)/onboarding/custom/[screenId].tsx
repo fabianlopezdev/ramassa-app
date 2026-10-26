@@ -7,13 +7,15 @@
  *
  * Her answers stay in the draft until the terms step sends them, and so do
  * her strokes on the screen's signature blocks, which show among the fields in
- * their order, each required (RAPP-690).
+ * their order, each required (RAPP-690), and her ticks of the screen's
+ * consents (RAPP-699).
  */
 
 import {
   CustomQuestionField,
   type CustomAnswerDraft,
 } from '@/components/onboarding/custom-question-field';
+import { useScreenConsents } from '@/components/onboarding/screen-consents';
 import { useSignatureBlocks } from '@/components/onboarding/signature-blocks';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
@@ -48,6 +50,7 @@ export default function CustomStepScreen() {
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
   const [isDrawing, setIsDrawing] = useState(false);
   const signatures = useSignatureBlocks(screenId, setIsDrawing);
+  const consents = useScreenConsents(screenId);
   const screen = customScreens.find((candidate) => candidate.id === screenId);
 
   // Staff removed the screen since her draft was saved: the summary shows the rest.
@@ -67,6 +70,7 @@ export default function CustomStepScreen() {
       currentStep,
       custom: { ...latest?.custom, ...mine },
       signatures: signatures.drafted(latest?.signatures),
+      consents: consents.drafted(latest?.consents),
     });
   }
 
@@ -88,7 +92,8 @@ export default function CustomStepScreen() {
         setAnswers(checked.answers);
         setErrors(checked.errors);
         const isSigned = signatures.check();
-        if (Object.keys(checked.errors).length > 0 || !isSigned) {
+        const isTicked = consents.check();
+        if (Object.keys(checked.errors).length > 0 || !isSigned || !isTicked) {
           playHaptic('warning');
           return;
         }
@@ -105,7 +110,7 @@ export default function CustomStepScreen() {
       }
     >
       <WizardValidationSummary
-        isVisible={Object.keys(errors).length > 0 || signatures.hasErrors}
+        isVisible={Object.keys(errors).length > 0 || signatures.hasErrors || consents.hasErrors}
         message={t('errorSummary')}
       />
       <View testID={`wizard-custom-${screen.id}`} className="gap-lg">
@@ -131,6 +136,7 @@ export default function CustomStepScreen() {
               }}
             />
           ),
+          consents.entries,
         )}
       </View>
     </WizardFrame>

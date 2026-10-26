@@ -151,6 +151,7 @@ export function viewOfStoredDraft(
     ...(Object.keys(custom).length === 0 ? {} : { custom }),
     ...(stored.terms === undefined ? {} : { terms: stored.terms }),
     ...(stored.signatures === undefined ? {} : { signatures: stored.signatures }),
+    ...(stored.consents === undefined ? {} : { consents: stored.consents }),
     ...(stored.scenarioStamp === undefined ? {} : { scenarioStamp: stored.scenarioStamp }),
   };
 }
@@ -267,6 +268,7 @@ export function storedDraftOfView(
     ...(Object.keys(screen).length === 0 ? {} : { screen }),
     ...(view.terms === undefined ? {} : { terms: view.terms }),
     ...(view.signatures === undefined ? {} : { signatures: view.signatures }),
+    ...(view.consents === undefined ? {} : { consents: view.consents }),
     ...(view.scenarioStamp === undefined ? {} : { scenarioStamp: view.scenarioStamp }),
   };
 }

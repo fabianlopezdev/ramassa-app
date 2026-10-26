@@ -2,7 +2,11 @@ import { wizardDraftStoreOn } from '@/lib/wizard-draft';
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import { afterAll, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
-import { EMPTY_INTAKE_CATALOG, systemFieldIndexFromCatalog } from '@ramassa/shared/intake-builder';
+import {
+  EMPTY_INTAKE_CATALOG,
+  systemFieldIndexFromCatalog,
+  type IntakeCatalog,
+} from '@ramassa/shared/intake-builder';
 import { createInMemoryOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
 import { systemFieldsCatalogFixture } from '@ramassa/shared/testing';
 
@@ -72,6 +76,7 @@ mock.module('@/components/onboarding/wizard-frame', () => ({
 
 // She reviews the sizes screen, saved as a Nova versió since she joined.
 const fields = systemFieldIndexFromCatalog(systemFieldsCatalogFixture());
+let catalog: IntakeCatalog = EMPTY_INTAKE_CATALOG;
 mock.module('@/lib/onboarding-intake-context', () => ({
   useWizardIntake: () => ({
     customAnswers: {},
@@ -80,7 +85,7 @@ mock.module('@/lib/onboarding-intake-context', () => ({
     customPlan: [],
     fields,
     flow: { order: [], hiddenScreens: new Set() },
-    catalog: EMPTY_INTAKE_CATALOG,
+    catalog,
     review: ['equipment'],
   }),
   useWizardStep: () => ({
@@ -144,6 +149,49 @@ test('her review saves her answers with the Onboarding writers and opens the app
   // Her names only when her review asked them.
   expect(payload['first_name']).toBeUndefined();
   expect(Object.keys(payload['answers'] as object).length).toBeGreaterThan(0);
+  // No consent is placed: the payload an older server takes (RAPP-699).
+  expect('consents' in payload).toBe(false);
   expect(haptics.at(-1)).toBe('success');
   screen.unmount();
+  calls.length = 0;
+});
+
+test('her ticks of the consents on her screens travel with her review (RAPP-699)', async () => {
+  catalog = {
+    ...EMPTY_INTAKE_CATALOG,
+    consents: [
+      {
+        id: '00000000-0000-4000-8000-000000000001',
+        key: 'sortides',
+        systemKey: null,
+        name: { ca: 'Sortides' },
+        body: { ca: 'Vinc a les sortides.' },
+        isArchived: false,
+      },
+    ],
+    consentPlacements: [
+      {
+        id: '00000000-0000-4000-8000-000000000002',
+        consentId: '00000000-0000-4000-8000-000000000001',
+        surface: 'onboarding',
+        screenKey: 'equipment',
+        sortOrder: 9,
+        required: false,
+      },
+    ],
+  };
+  store.saveDraft({
+    currentStep: 'summary',
+    identity,
+    documentation: {},
+    logistics,
+    consents: { sortides: true },
+  });
+  const screen = render(createElement(SummaryStepScreen));
+  fireEvent.click(screen.getByTestId('confirm'));
+  await waitFor(() => expect(calls).toHaveLength(1));
+  const payload = calls[0]?.args['payload'] as Record<string, unknown>;
+  expect(payload['consents']).toEqual({ sortides: true });
+  screen.unmount();
+  catalog = EMPTY_INTAKE_CATALOG;
 });

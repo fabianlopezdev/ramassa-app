@@ -29,10 +29,14 @@ type Drafts = Readonly<Record<string, SignatureStrokes | null>>;
 export interface SignatureBlocks {
   readonly blocks: readonly FormBlock[];
   readonly hasErrors: boolean;
-  /** The screen's visible fields and its blocks, in their shared order. */
+  /**
+   * The screen's visible fields, its blocks and its consents (RAPP-699), in
+   * their shared order: on a tie a field first, then a block, then a consent.
+   */
   readonly interleave: (
     questions: readonly CustomQuestion[],
     renderQuestion: (question: CustomQuestion) => ReactNode,
+    consents?: readonly { readonly sortOrder: number; readonly node: ReactNode }[],
   ) => ReactNode[];
   /** Marks the unsigned blocks; true when every block is signed. */
   readonly check: () => boolean;
@@ -73,23 +77,33 @@ export function useSignatureBlocks(
   return {
     blocks,
     hasErrors: unsigned.size > 0,
-    interleave(questions, renderQuestion) {
+    interleave(questions, renderQuestion, consents = []) {
       const order = (question: CustomQuestion) =>
         catalog.layout === undefined
           ? Number.POSITIVE_INFINITY
           : (placementOn(catalog.layout, question.id, 'onboarding')?.sortOrder ??
             Number.POSITIVE_INFINITY);
-      const nodes: ReactNode[] = [];
-      let next = 0;
-      for (const question of questions) {
-        while (next < blocks.length && (blocks[next]?.sortOrder ?? 0) < order(question)) {
-          nodes.push(field(blocks[next] as FormBlock));
-          next += 1;
-        }
-        nodes.push(renderQuestion(question));
-      }
-      for (const block of blocks.slice(next)) nodes.push(field(block));
-      return nodes;
+      const items = [
+        ...questions.map((question) => ({
+          sortOrder: order(question),
+          kind: 0,
+          render: () => renderQuestion(question),
+        })),
+        ...blocks.map((block) => ({
+          sortOrder: block.sortOrder,
+          kind: 1,
+          render: () => field(block),
+        })),
+        ...consents.map((consent) => ({
+          sortOrder: consent.sortOrder,
+          kind: 2,
+          render: () => consent.node,
+        })),
+      ];
+      // A stable sort keeps the fields in the order they came.
+      return items
+        .sort((a, b) => a.sortOrder - b.sortOrder || a.kind - b.kind)
+        .map((item) => item.render());
     },
     check() {
       const missing = unsignedFormBlocks(blocks, strokes);

@@ -217,6 +217,7 @@ export default function SummaryStepScreen() {
     customScreens,
     storedCustom: customAnswers,
     blocks: catalog.blocks,
+    consentCatalog: catalog,
   };
   const wording = useBuiltinWording();
   // A section is titled as staff worded its screen (RAPP-612), or as before.
@@ -247,9 +248,10 @@ export default function SummaryStepScreen() {
               customScreens,
               storedCustom: customAnswers,
               blocks: catalog.blocks,
+              consentCatalog: catalog,
             }),
       );
-    }, [customPlan, flow, required, customScreens, customAnswers, catalog.blocks]),
+    }, [customPlan, flow, required, customScreens, customAnswers, catalog]),
   );
 
   const identity: Section = draft?.identity ?? {};
@@ -605,12 +607,14 @@ export default function SummaryStepScreen() {
     }
     setIsSaving(true);
     setHasSaveFailed(false);
-    const { first_name, last_name, answers, signatures } = built.value;
+    const { first_name, last_name, answers, signatures, consents } = built.value;
     const isSaved = await saveReview({
       // Her names only when her review asked them.
       ...(screens.includes('identity') ? { first_name, last_name } : {}),
       answers,
       signatures,
+      // The server records the ticks of the screens she reviews (RAPP-699).
+      ...(consents === undefined ? {} : { consents }),
     });
     setIsSaving(false);
     if (!isSaved) {

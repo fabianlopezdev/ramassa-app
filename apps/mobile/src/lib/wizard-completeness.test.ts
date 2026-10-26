@@ -204,3 +204,56 @@ describe('signature blocks (RAPP-690)', () => {
     expect(firstIncompleteStep({ ...complete, signatures: { b2: strokes } }, context)).toBeNull();
   });
 });
+
+describe('consents placed on her screens (RAPP-699)', () => {
+  const consentCatalog = {
+    consents: [
+      {
+        id: 'c1',
+        key: 'sortides',
+        systemKey: null,
+        name: { ca: 'Sortides' },
+        body: { ca: 'Vinc a les sortides.' },
+        isArchived: false,
+      },
+      {
+        id: 'c2',
+        key: 'newsletter',
+        systemKey: 'newsletter',
+        name: { ca: 'Butlletí' },
+        body: { ca: 'Vull el butlletí.' },
+        isArchived: false,
+      },
+    ],
+    consentPlacements: [
+      {
+        id: 'p1',
+        consentId: 'c1',
+        surface: 'onboarding' as const,
+        screenKey: 'logistics',
+        sortOrder: 3,
+        required: true,
+      },
+      {
+        id: 'p2',
+        consentId: 'c2',
+        surface: 'onboarding' as const,
+        screenKey: 'logistics',
+        sortOrder: 4,
+        required: false,
+      },
+    ],
+  };
+
+  test('a required consent she has not ticked is where she goes; an optional one never is', () => {
+    const context = { custom: [], flow: appOrder, consentCatalog };
+    expect(firstIncompleteStep(complete, context)).toBe('logistics');
+    expect(
+      firstIncompleteStep(
+        { ...complete, consents: { sortides: false, newsletter: true } },
+        context,
+      ),
+    ).toBe('logistics');
+    expect(firstIncompleteStep({ ...complete, consents: { sortides: true } }, context)).toBeNull();
+  });
+});

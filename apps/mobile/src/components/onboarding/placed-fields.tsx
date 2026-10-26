@@ -12,12 +12,14 @@
  *
  * The signature blocks staff put on the screen (RAPP-690) show among them in
  * their order, each required, their strokes kept in the draft the same way.
+ * So do the consents placed there (RAPP-699), their ticks kept by key.
  */
 
 import {
   CustomQuestionField,
   type CustomAnswerDraft,
 } from '@/components/onboarding/custom-question-field';
+import { useScreenConsents } from '@/components/onboarding/screen-consents';
 import { useSignatureBlocks } from '@/components/onboarding/signature-blocks';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -57,7 +59,9 @@ export function usePlacedFields(screenId: string | undefined): PlacedFields {
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
   const [isDrawing, setIsDrawing] = useState(false);
   const signatures = useSignatureBlocks(screenId, setIsDrawing);
-  const hasQuestions = questions.length > 0 || signatures.blocks.length > 0;
+  const consents = useScreenConsents(screenId);
+  const hasQuestions =
+    questions.length > 0 || signatures.blocks.length > 0 || consents.consents.length > 0;
 
   function save(saved: CustomAnswerDraft = answers) {
     if (!hasQuestions) return;
@@ -74,6 +78,7 @@ export function usePlacedFields(screenId: string | undefined): PlacedFields {
       currentStep: latest?.currentStep ?? wizardDraftStep(screenId as WizardQuestionScreen),
       custom: { ...latest?.custom, ...mine },
       signatures: signatures.drafted(latest?.signatures),
+      consents: consents.drafted(latest?.consents),
     });
   }
 
@@ -84,7 +89,8 @@ export function usePlacedFields(screenId: string | undefined): PlacedFields {
     setAnswers(checked.answers);
     setErrors(checked.errors);
     const isSigned = signatures.check();
-    if (Object.keys(checked.errors).length > 0 || !isSigned) {
+    const isTicked = consents.check();
+    if (Object.keys(checked.errors).length > 0 || !isSigned || !isTicked) {
       playHaptic('warning');
       return false;
     }
@@ -112,6 +118,7 @@ export function usePlacedFields(screenId: string | undefined): PlacedFields {
             }}
           />
         ),
+        consents.entries,
       )}
     </View>
   );
@@ -119,7 +126,7 @@ export function usePlacedFields(screenId: string | undefined): PlacedFields {
   return {
     hasQuestions,
     fields,
-    hasErrors: Object.keys(errors).length > 0 || signatures.hasErrors,
+    hasErrors: Object.keys(errors).length > 0 || signatures.hasErrors || consents.hasErrors,
     isDrawing,
     checkAndSave,
     save: () => save(),

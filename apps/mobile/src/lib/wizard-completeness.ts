@@ -26,11 +26,15 @@ import {
 } from '@ramassa/shared/intake';
 import {
   appScreenFields,
+  consentsOn,
   formBlocksOn,
   isCustomQuestionRequired,
   isCustomQuestionVisible,
   isEmptyAnswer,
   unsignedFormBlocks,
+  untickedRequiredConsents,
+  type Consent,
+  type ConsentPlacement,
   type CustomAnswers,
   type FormBlock,
   type IntakeScreen,
@@ -123,6 +127,11 @@ export interface CompletenessContext {
   readonly storedCustom?: CustomAnswers;
   /** The signature blocks of her Onboarding (RAPP-690): each needs her strokes. */
   readonly blocks?: readonly FormBlock[];
+  /** The consents placed on her screens (RAPP-699): each required one needs her tick. */
+  readonly consentCatalog?: {
+    readonly consents?: readonly Consent[];
+    readonly consentPlacements?: readonly ConsentPlacement[];
+  };
 }
 
 /**
@@ -136,20 +145,24 @@ export function firstIncompleteStep(
 ): WizardStepKey | null {
   const required = context.required ?? DEFAULT_REQUIRED_QUESTIONS;
   const answers: CustomAnswers = { ...context.storedCustom, ...draft?.custom };
-  const isUnsigned = (screenKey: string) =>
+  const isUnsignedOrUnticked = (screenKey: string) =>
     unsignedFormBlocks(formBlocksOn(context.blocks, 'onboarding', screenKey), draft?.signatures)
-      .length > 0;
+      .length > 0 ||
+    untickedRequiredConsents(
+      consentsOn(context.consentCatalog ?? {}, 'onboarding', screenKey),
+      draft?.consents,
+    ).length > 0;
   for (const step of wizardFlowOrder(context.custom, context.flow)) {
     const customId = customStepId(step);
     if (customId !== null) {
       const screen = context.customScreens?.find((candidate) => candidate.id === customId);
       if (screen !== undefined && !isCustomScreenComplete(screen, answers)) return step;
-      if (screen !== undefined && isUnsigned(customId)) return step;
+      if (screen !== undefined && isUnsignedOrUnticked(customId)) return step;
       continue;
     }
     if (!isQuestionScreen(step) || context.flow.hiddenScreens.has(step)) continue;
     if (!isScreenComplete(step, draft, required)) return step;
-    if (isUnsigned(step)) return step;
+    if (isUnsignedOrUnticked(step)) return step;
     // The Fitxa fields placed on this screen (RAPP-655).
     const placed = appScreenFields(context.customScreens ?? [], step);
     if (placed !== undefined && !isCustomScreenComplete(placed, answers)) return step;

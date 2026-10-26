@@ -5,8 +5,10 @@
  * saw. A consent she gave that the current version no longer asks stays here,
  * with the words she agreed to, so she can always withdraw it. Image rights
  * drive the media consent, so a photo decision made here and one made in her
- * profile edit are the same decision. Shown only when her organization has
- * published an authorization.
+ * profile edit are the same decision. The consents she decided on her
+ * Onboarding screens (RAPP-699) show here too, so she can give or withdraw an
+ * optional one. Shown when her organization has published an authorization or
+ * she decided one of those.
  */
 
 import { ConsentRow } from '@/components/authorization/consent-row';
@@ -29,18 +31,31 @@ export function MyConsentsSection({ mediaConsent }: { readonly mediaConsent: boo
   const change = useSetOptionalConsent();
 
   const content = status.data?.content;
-  if (content === undefined) return null;
-
-  const asked = orderedConsents(content)
-    .filter((consent) => !consent.required)
-    .map((consent) => ({
-      key: consent.key,
-      label: resolveLocalizedText(consent.label, language)?.text ?? '',
-    }));
-  // Given earlier, no longer asked: she can still withdraw it.
+  const asked =
+    content === undefined
+      ? []
+      : orderedConsents(content)
+          .filter((consent) => !consent.required)
+          .map((consent) => ({
+            key: consent.key,
+            label: resolveLocalizedText(consent.label, language)?.text ?? '',
+          }));
+  // Given earlier and no longer asked, so she can still withdraw it; or
+  // decided on her Onboarding (RAPP-699), worded as she was shown it.
   const kept = Object.entries(consents.data ?? {})
-    .filter(([key, consent]) => consent.granted && !(key in content.consents))
-    .map(([key, consent]) => ({ key, label: consent.wording ?? key }));
+    .filter(
+      ([key, consent]) =>
+        !(content !== undefined && key in content.consents) &&
+        (consent.granted || consent.form === 'onboarding'),
+    )
+    .map(([key, consent]) => ({
+      key,
+      label:
+        consent.wording ??
+        (consent.name === null ? undefined : resolveLocalizedText(consent.name, language)?.text) ??
+        key,
+    }));
+  if (content === undefined && kept.length === 0) return null;
 
   return (
     <ProfileSection title={t('consentsTitle')}>
