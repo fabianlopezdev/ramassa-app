@@ -22,16 +22,11 @@ import { logout } from '@/lib/auth';
 import { confirmAction } from '@/lib/confirm-action';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { completeOnboarding, onboardingDraftStore } from '@/lib/onboarding';
-import {
-  documentationFormSchemaFor,
-  identityFormSchemaFor,
-  logisticsFormSchemaFor,
-} from '@/lib/onboarding-form';
-import { appAnswersToSave, customAnswersToSave, wizardStepRoute } from '@/lib/onboarding-intake';
+import { onboardingAnswersFromDraft } from '@/lib/onboarding-answers';
+import { wizardStepRoute } from '@/lib/onboarding-intake';
 import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { useScreenWording } from '@/lib/screen-wording';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { firstIncompleteStep } from '@/lib/wizard-completeness';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -40,15 +35,8 @@ import { useAuth } from '@ramassa/shared/auth';
 import { signatureStrokesSchema, type SignatureStrokes } from '@ramassa/shared/equipment';
 import type { AppErrorCode } from '@ramassa/shared/errors';
 import { useLanguage } from '@ramassa/shared/i18n';
-import { DEFAULT_REQUIRED_QUESTIONS, DEFAULT_WIZARD_FLOW } from '@ramassa/shared/intake';
-import {
-  appAnswersFromForm,
-  appFormField,
-  appFormToSend,
-  formSignaturesPayload,
-} from '@ramassa/shared/intake-builder';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
-import { seasonAnswerFields, termsSigningSchema, termsStepSchema } from '@ramassa/shared/schemas';
+import { termsSigningSchema, termsStepSchema } from '@ramassa/shared/schemas';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
 export default function TermsStepScreen() {
@@ -132,106 +120,25 @@ export default function TermsStepScreen() {
     setFailureCode(null);
     setIsSubmitting(true);
     try {
-      // Every stored step re-parses through the SAME schemas the screens used,
-      // so nothing unvalidated can reach the payload even from a tampered or
-      // stale draft. A failed parse sends the player back to that step with
-      // their data still in the draft, not into a dead end.
-      // A required answer missing anywhere (RAPP-611, RAPP-612) sends her to
-      // that screen, before anything is sent.
-      const incomplete = firstIncompleteStep(draft, {
-        custom: intake.customPlan,
-        flow: intake.flow ?? DEFAULT_WIZARD_FLOW,
-        required: intake.required,
-        customScreens: intake.customScreens,
-        storedCustom: intake.customAnswers,
-        blocks: intake.catalog.blocks,
-      });
-      if (incomplete !== null) {
-        router.replace(wizardStepRoute(incomplete, 'back'));
-        return;
-      }
-      const required = intake.required ?? DEFAULT_REQUIRED_QUESTIONS;
-      const identity = identityFormSchemaFor(required).safeParse(draft?.identity ?? {});
-      if (!identity.success) {
-        router.replace(wizardStepRoute('identity', 'back'));
-        return;
-      }
-      const documentation = documentationFormSchemaFor(required).safeParse(
-        draft?.documentation ?? {},
-      );
-      if (!documentation.success) {
-        router.replace(wizardStepRoute('documentation', 'back'));
-        return;
-      }
-      const logistics = logisticsFormSchemaFor(required).safeParse(draft?.logistics ?? {});
-      if (!logistics.success) {
-        const field = logistics.error.issues[0]?.path[0];
-        router.replace(
-          wizardStepRoute(
-            field === 'clothingSize' || field === 'shoeSize' ? 'equipment' : 'logistics',
-            'back',
-          ),
-        );
-        return;
-      }
-      // The registration questions (RAPP-306), all optional: a draft that does
-      // not parse goes back to that screen, as the others do.
-      const season = seasonAnswerFields.safeParse(draft?.season ?? {});
-      if (!season.success) {
-        router.replace(wizardStepRoute('season', 'back'));
+      // Her answers as she sends them, checked (RAPP-663); a screen still
+      // missing something takes her back to it.
+      const built = onboardingAnswersFromDraft(draft, intake, language);
+      if (!built.ok) {
+        router.replace(wizardStepRoute(built.step, 'back'));
         return;
       }
       const terms = termsStepSchema.parse({
         termsAccepted: true,
         mediaConsent: hasMediaConsent,
       });
-
-      // Her answers to the app's fields, by field (RAPP-663): the checked
-      // forms with the rules every screen shares, then only what is new or
-      // changed (RAPP-300). The server keeps every stored answer the payload
-      // leaves out, so a staff answer she only confirmed on the summary keeps
-      // its source.
-      const sent = appFormToSend({
-        ...identity.data,
-        ...documentation.data,
-        ...logistics.data,
-        ...season.data,
-      });
-      const entity = appFormField(intake.fields, 'referenceEntity');
-      const appAnswers = appAnswersToSave(
-        appAnswersFromForm(intake.fields, sent),
-        intake.customAnswers,
-        // "None" to the entity question is an answer with no value.
-        sent.referenceEntity === null && entity !== undefined ? new Set([entity.id]) : new Set(),
-      );
-
-      // Her answers to the staff questions (RAPP-307), only the new or changed
-      // ones. They travel with her profile in the one signed call (RAPP-611),
-      // so a woman who started on her own keeps them too, and the required
-      // ones are checked there before anything is kept.
-      const placed = intake.customScreens.flatMap((screen) => screen.questions);
-      const customAnswers = customAnswersToSave(placed, draft?.custom, intake.customAnswers);
-      // An app field the generic renderer asks (RAPP-665) is saved from there only.
-      for (const question of placed) delete appAnswers[question.id];
-
       const result = await completeOnboarding(
         {
-          first_name: identity.data.firstName,
-          last_name: identity.data.lastName,
-          preferred_language: identity.data.preferredLanguage,
+          ...built.value,
           media_consent: terms.mediaConsent,
           // The version and the language she was shown (RAPP-613): a newer
           // version published while she read this one asks her again.
           terms_version: wording.termsVersion,
           locale_shown: wording.localeShown,
-          answers: { ...appAnswers, ...customAnswers },
-          // Her signature of each block of her Onboarding (RAPP-690), with the
-          // language its text was shown in.
-          signatures: formSignaturesPayload(
-            (intake.catalog.blocks ?? []).filter((block) => block.surface === 'onboarding'),
-            draft?.signatures,
-            language,
-          ),
         },
         signing.data,
       );

@@ -231,5 +231,7 @@
   "customErrorSignature": "Sign with your finger.",
   "summarySigned": "Signed",
   "signingBlocksAction": "Sign",
-  "summarySignaturesTitle": "Signatures"
+  "summarySignaturesTitle": "Signatures",
+  "reviewIntro": "We changed some questions. Check your answers before you continue.",
+  "reviewSaveFailed": "Your answers could not be saved. Please try again."
 }

@@ -231,5 +231,7 @@
   "customErrorSignature": "با انگشت امضا کنید.",
   "summarySigned": "امضا شد",
   "signingBlocksAction": "امضا کنید",
-  "summarySignaturesTitle": "امضاها"
+  "summarySignaturesTitle": "امضاها",
+  "reviewIntro": "برخی پرسش‌ها را تغییر داده‌ایم. پیش از ادامه، پاسخ‌هایتان را بررسی کنید.",
+  "reviewSaveFailed": "پاسخ‌ها ذخیره نشد. دوباره تلاش کنید."
 }

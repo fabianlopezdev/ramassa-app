@@ -231,5 +231,7 @@
   "customErrorSignature": "وقّعي بإصبعكِ.",
   "summarySigned": "تمّ التوقيع",
   "signingBlocksAction": "وقّعي",
-  "summarySignaturesTitle": "التوقيعات"
+  "summarySignaturesTitle": "التوقيعات",
+  "reviewIntro": "غيّرنا بعض الأسئلة. راجعي إجاباتك قبل المتابعة.",
+  "reviewSaveFailed": "تعذّر حفظ الإجابات. حاولي مرة أخرى."
 }

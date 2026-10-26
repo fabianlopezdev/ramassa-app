@@ -231,5 +231,7 @@
   "customErrorSignature": "Firma con el dedo.",
   "summarySigned": "Firmado",
   "signingBlocksAction": "Firma",
-  "summarySignaturesTitle": "Firmas"
+  "summarySignaturesTitle": "Firmas",
+  "reviewIntro": "Hemos cambiado algunas preguntas. Revisa tus respuestas antes de continuar.",
+  "reviewSaveFailed": "No se han podido guardar las respuestas. Vuelve a intentarlo."
 }

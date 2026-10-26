@@ -231,5 +231,7 @@
   "customErrorSignature": "Signa amb el dit.",
   "summarySigned": "Signat",
   "signingBlocksAction": "Signa",
-  "summarySignaturesTitle": "Signatures"
+  "summarySignaturesTitle": "Signatures",
+  "reviewIntro": "Hem canviat algunes preguntes. Revisa les teves respostes abans de continuar.",
+  "reviewSaveFailed": "No s'han pogut desar les respostes. Torna-ho a provar."
 }

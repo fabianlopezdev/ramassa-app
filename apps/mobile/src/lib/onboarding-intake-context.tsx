@@ -92,6 +92,12 @@ export interface WizardIntake {
    * screen asks them again; the summary lists them as signed.
    */
   readonly signedBlocks?: readonly FormBlock[];
+  /**
+   * Her screens to review after a Nova versió (RAPP-697), when this run is a
+   * review: the wizard walks only them, then the summary, which saves her
+   * answers and lets her into the app. Absent for her first Onboarding.
+   */
+  readonly review?: readonly WizardStepKey[];
 }
 
 const EMPTY_INTAKE: WizardIntake = {

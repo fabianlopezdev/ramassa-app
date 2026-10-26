@@ -19,7 +19,9 @@ import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { SeasonAnswerRows } from '@/components/profile/season-answer-rows';
 import { playHaptic } from '@/lib/haptics/haptics';
+import { safeAsync } from '@/lib/observability';
 import { onboardingDraftStore } from '@/lib/onboarding';
+import { onboardingAnswersFromDraft } from '@/lib/onboarding-answers';
 import { normalizeDecimalDigits } from '@/lib/onboarding-form';
 import {
   mergedCustomAnswers,
@@ -27,12 +29,15 @@ import {
   wizardStepRoute,
 } from '@/lib/onboarding-intake';
 import { useBuiltinWording, useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
+import { useRefreshOnboardingReview } from '@/lib/onboarding-review';
 import { useScreenTitle } from '@/lib/screen-wording';
 import { SEASON_SCREEN_TITLE_KEYS } from '@/lib/season-draft';
+import { supabase } from '@/lib/supabase';
 import { firstIncompleteStep } from '@/lib/wizard-completeness';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { Fragment, useCallback, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@ramassa/shared/auth';
 import { LANGUAGE_NATIVE_NAMES } from '@ramassa/shared/i18n';
 import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
 import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
@@ -50,6 +55,7 @@ import {
 import {
   answerText,
   appScreenFields,
+  completeOnboardingReview,
   formBlocksOn,
   formBlockText,
   isCustomQuestionVisible,
@@ -193,6 +199,11 @@ export default function SummaryStepScreen() {
   const { t, i18n } = useTranslation('onboarding');
   const router = useRouter();
   const step = useWizardStep('summary');
+  const intake = useWizardIntake();
+  const { user } = useAuth();
+  const refreshReview = useRefreshOnboardingReview();
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasSaveFailed, setHasSaveFailed] = useState(false);
   const {
     customAnswers,
     hidden,
@@ -202,7 +213,8 @@ export default function SummaryStepScreen() {
     required,
     catalog,
     signedBlocks = [],
-  } = useWizardIntake();
+    review,
+  } = intake;
   const completeness = {
     custom: customPlan,
     flow,
@@ -575,11 +587,50 @@ export default function SummaryStepScreen() {
       else router.push(`${String(wizardStepRoute(incomplete))}?edit=1` as Href);
       return;
     }
+    if (review !== undefined) {
+      void finishReview(review);
+      return;
+    }
     onboardingDraftStore.saveDraft({
       ...onboardingDraftStore.loadDraft(),
       currentStep: step.nextDraftStep,
     });
     step.goNext();
+  }
+
+  // Her review of the screens saved as a Nova versió (RAPP-697) ends here:
+  // her answers are saved with the Onboarding writers, then the app opens.
+  async function finishReview(screens: readonly WizardStepKey[]) {
+    const built = onboardingAnswersFromDraft(onboardingDraftStore.loadDraft(), intake, locale);
+    if (!built.ok) {
+      setMissingStep(built.step);
+      playHaptic('warning');
+      router.push(`${String(wizardStepRoute(built.step))}?edit=1` as Href);
+      return;
+    }
+    setIsSaving(true);
+    setHasSaveFailed(false);
+    const { first_name, last_name, answers, signatures } = built.value;
+    const result = await safeAsync(
+      () =>
+        completeOnboardingReview(supabase, {
+          // Her names only when her review asked them.
+          ...(screens.includes('identity') ? { first_name, last_name } : {}),
+          answers,
+          signatures,
+        }),
+      { code: 'DB-1' },
+    );
+    setIsSaving(false);
+    if (!result.ok) {
+      setHasSaveFailed(true);
+      playHaptic('error');
+      return;
+    }
+    playHaptic('success');
+    if (user !== null) onboardingDraftStore.clearUserDraft(user.id);
+    // The gate reads her screens again and opens the app.
+    await refreshReview();
   }
 
   return (
@@ -588,9 +639,10 @@ export default function SummaryStepScreen() {
       stepNumber={step.position.step}
       totalSteps={step.position.total}
       title={t('summaryTitle')}
-      intro={t('summaryIntro')}
+      intro={review === undefined ? t('summaryIntro') : t('reviewIntro')}
       continueLabel={t('summaryConfirmAction')}
       onContinue={confirm}
+      isContinueBusy={isSaving}
       onBack={
         step.goBack === null
           ? undefined
@@ -603,6 +655,11 @@ export default function SummaryStepScreen() {
             }
       }
     >
+      <WizardValidationSummary
+        testID="summary-review-failed"
+        isVisible={hasSaveFailed}
+        message={t('reviewSaveFailed')}
+      />
       <WizardValidationSummary
         testID="summary-missing-required"
         isVisible={missingStep !== null}

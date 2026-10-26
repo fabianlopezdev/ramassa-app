@@ -29,7 +29,8 @@ import {
 } from '../onboarding/intake';
 import { DETAIL_SCREEN_PARENTS, type EditableWizardScreen } from '../onboarding/screen-texts';
 import type { Database, Json } from '../types/database';
-import { placedQuestions, type IntakeCatalog } from './builder';
+import { answerPayload, placedQuestions, type IntakeCatalog } from './builder';
+import { formSignaturesPayload } from './form-blocks';
 
 type Client = SupabaseClient<Database>;
 
@@ -87,16 +88,16 @@ export async function fetchMyOnboardingReview(client: Client): Promise<readonly 
 export interface OnboardingReviewPayload {
   readonly first_name?: string;
   readonly last_name?: string;
-  readonly answers: Json;
-  readonly signatures: Json;
+  readonly answers: Parameters<typeof answerPayload>[0];
+  readonly signatures: ReturnType<typeof formSignaturesPayload>;
 }
 
 export async function completeOnboardingReview(
   client: Client,
-  payload: OnboardingReviewPayload,
+  { answers, ...rest }: OnboardingReviewPayload,
 ): Promise<void> {
   const { error } = await client.rpc('complete_onboarding_review', {
-    payload: payload as unknown as Json,
+    payload: { ...rest, answers: answerPayload(answers) } as unknown as Json,
   });
   if (error) throw databaseError(error);
 }
