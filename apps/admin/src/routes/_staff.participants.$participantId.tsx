@@ -37,6 +37,7 @@ import {
   fetchIntakeCatalog,
   fetchParticipantChoices,
   fetchParticipantCustomAnswers,
+  fetchParticipantCustomForms,
   fetchParticipantFormSignatures,
   fetchParticipantOnboardingReviewPending,
   NO_CHOICES,
@@ -150,6 +151,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       scenario,
       formSignatures,
       isReviewPending,
+      customForms,
     ] = await Promise.all([
       fetchParticipantNotes(supabase, params.participantId),
       fetchParticipantActivity(supabase, params.participantId),
@@ -184,6 +186,8 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       hasJoined(participant)
         ? fetchParticipantOnboardingReviewPending(supabase, params.participantId).catch(() => false)
         : Promise.resolve(false),
+      // The forms the team created that ask her (RAPP-700); participants.view_personal.
+      fetchParticipantCustomForms(supabase, params.participantId).catch(() => []),
     ]);
     // Filtered here rather than asked for by participant: the queue read is one
     // round trip either way, and the same call feeds the staff-wide queue, so
@@ -211,6 +215,7 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       testScenario: scenario,
       formSignatures,
       isReviewPending,
+      customForms,
     };
   },
   component: ParticipantDetailPage,
@@ -236,6 +241,7 @@ function ParticipantDetailPage() {
     testScenario,
     formSignatures,
     isReviewPending,
+    customForms,
   } = Route.useLoaderData();
 
   if (participant === null) {
@@ -261,6 +267,7 @@ function ParticipantDetailPage() {
       testScenario={testScenario}
       formSignatures={formSignatures}
       isReviewPending={isReviewPending}
+      customForms={customForms}
     />
   );
 }

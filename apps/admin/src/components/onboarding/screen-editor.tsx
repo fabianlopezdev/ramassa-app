@@ -82,6 +82,7 @@ import {
   builtinPhoneQuestion,
   builtinWording,
   placedPhoneQuestions,
+  staffScreenContent,
   stepContent,
   type PhoneContent,
   type PhoneQuestion,
@@ -117,7 +118,7 @@ export function ScreenEditor({
         }
         actions={
           step?.kind === 'custom' ? (
-            <DeleteScreen screen={step.screen} name={stepName(step, language, t)} />
+            <OnboardingDeleteScreen screen={step.screen} name={stepName(step, language, t)} />
           ) : undefined
         }
       />
@@ -139,10 +140,17 @@ export function ScreenEditorHeading({
   position,
   actions,
 }: {
-  readonly back: {
-    readonly to: '/onboarding' | '/forms/authorization' | '/forms/terms';
-    readonly label: string;
-  };
+  readonly back:
+    | {
+        readonly to: '/onboarding' | '/forms/authorization' | '/forms/terms' | '/forms/custom';
+        readonly label: string;
+      }
+    | {
+        // A form the team created (RAPP-700).
+        readonly to: '/forms/custom/$formId';
+        readonly params: { readonly formId: string };
+        readonly label: string;
+      };
   readonly title: string;
   readonly position?: string;
   readonly actions?: ReactNode;
@@ -150,7 +158,10 @@ export function ScreenEditorHeading({
   return (
     <div className="flex flex-col gap-2">
       <Button asChild variant="ghost" size="sm" className="-ms-2.5 w-fit text-muted-foreground">
-        <Link to={back.to} data-testid="screen-editor-back">
+        <Link
+          {...('params' in back ? { to: back.to, params: back.params } : { to: back.to })}
+          data-testid="screen-editor-back"
+        >
           <ChevronLeft aria-hidden data-icon="inline-start" className="rtl:rotate-180" />
           {back.label}
         </Link>
@@ -160,16 +171,43 @@ export function ScreenEditorHeading({
   );
 }
 
-function DeleteScreen({ screen, name }: { readonly screen: RamassaScreen; readonly name: string }) {
-  const { t } = useTranslation('settings');
+function OnboardingDeleteScreen({
+  screen,
+  name,
+}: {
+  readonly screen: RamassaScreen;
+  readonly name: string;
+}) {
   const navigate = useNavigate();
+  return (
+    <DeleteScreenButton
+      name={name}
+      onDelete={async () => {
+        // Archived: the fields leave the screen and stay on the Fitxa with her answers (RAPP-656).
+        await archiveIntakeScreen(supabase, screen.id);
+        await navigate({ to: '/onboarding' });
+      }}
+    />
+  );
+}
+
+/**
+ * Deleting a screen staff made, on Onboarding or a form the team created
+ * (RAPP-700): asked once, then `onDelete` archives it and goes back.
+ */
+export function DeleteScreenButton({
+  name,
+  onDelete,
+}: {
+  readonly name: string;
+  readonly onDelete: () => Promise<void>;
+}) {
+  const { t } = useTranslation('settings');
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   async function remove() {
     try {
-      // Archived: the fields leave the screen and stay on the Fitxa with her answers (RAPP-656).
-      await archiveIntakeScreen(supabase, screen.id);
-      await navigate({ to: '/onboarding' });
+      await onDelete();
       await router.invalidate();
       toast.success(t('onboardingBoard.deleted', { screen: name }));
     } catch {
@@ -237,7 +275,6 @@ function useRowEditing() {
 function CustomScreenEditor({
   data,
   screen,
-  step,
   number,
   total,
 }: {
@@ -247,8 +284,76 @@ function CustomScreenEditor({
   readonly number: number;
   readonly total: number;
 }) {
-  const { t } = useTranslation(['settings', 'onboarding']);
   const catalog = data.intakeCatalog;
+  const saveKind = useOnboardingSaveKind(data.finishedCount, screen.id);
+  return (
+    <StaffScreenEditor
+      screen={screen}
+      number={number}
+      total={total}
+      saveKind={saveKind}
+      phoneQuestions={(language, wording) =>
+        placedPhoneQuestions(catalog, screen.id, language, wording)
+      }
+      onStore={(title, intro) =>
+        saveIntakeScreen(supabase, {
+          id: screen.id,
+          title,
+          intro,
+          afterScreen: screen.afterScreen,
+        })
+      }
+      fields={(row, language, name) => (
+        <ScreenFieldsSection
+          catalog={catalog}
+          screenKey={screen.id}
+          screenName={name}
+          builtinQuestions={[]}
+          language={language}
+          editing={row.editing}
+          onEdit={row.setEditing}
+          onBuiltinLabelChange={row.setBuiltinLabel}
+          onWordingChange={row.setWording}
+        />
+      )}
+    />
+  );
+}
+
+/** What an open row of a screen's list shows on her phone while staff type. */
+export type RowEditing = ReturnType<typeof useRowEditing>;
+
+/**
+ * A screen staff made, beside her phone (RAPP-641): its title and intro, then
+ * its fields, consents and signature blocks. A Ramassà screen of Onboarding and
+ * a screen of a form the team created (RAPP-700) are both edited here; each
+ * says how it saves and which Desa dialog it asks.
+ */
+export function StaffScreenEditor({
+  screen,
+  number,
+  total,
+  saveKind,
+  phoneQuestions,
+  onStore,
+  fields,
+}: {
+  readonly screen: { readonly title: BuilderText; readonly intro: BuilderText | null };
+  readonly number: number;
+  readonly total: number;
+  readonly saveKind: {
+    readonly dialog: ReactNode;
+    readonly request: (save: () => Promise<boolean>) => Promise<void>;
+  };
+  /** Her phone's questions, with the wording being typed in an open row. */
+  readonly phoneQuestions: (
+    language: LanguageCode,
+    wording: TypedWording | null,
+  ) => readonly PhoneQuestion[];
+  readonly onStore: (title: BuilderText, intro: BuilderText | null) => Promise<unknown>;
+  readonly fields: (row: RowEditing, language: LanguageCode, screenName: string) => ReactNode;
+}) {
+  const { t } = useTranslation(['settings', 'onboarding']);
   const reload = useReload();
   const [language, setLanguage] = useState<LanguageCode>('ca');
   const [previewLanguage, setPreviewLanguage] = useState<LanguageCode>('ca');
@@ -256,7 +361,6 @@ function CustomScreenEditor({
   const [intro, setIntro] = useState<BuilderText>(screen.intro ?? {});
   const [isSaving, setIsSaving] = useState(false);
   const row = useRowEditing();
-  const saveKind = useOnboardingSaveKind(data.finishedCount, screen.id);
 
   async function saveScreen() {
     if ((title.ca ?? '').trim() === '') {
@@ -267,16 +371,14 @@ function CustomScreenEditor({
     await saveKind.request(storeScreen);
   }
 
-  // Both kinds save the same way; a Nova versió then marks the screen (RAPP-697).
+  // Both kinds save the same way; a Nova versió then does what its form asks (RAPP-697).
   async function storeScreen(): Promise<boolean> {
     setIsSaving(true);
     try {
-      await saveIntakeScreen(supabase, {
-        id: screen.id,
+      await onStore(
         title,
-        intro: Object.values(intro).some((value) => (value ?? '').trim() !== '') ? intro : null,
-        afterScreen: screen.afterScreen,
-      });
+        Object.values(intro).some((value) => (value ?? '').trim() !== '') ? intro : null,
+      );
       await reload();
       toast.success(t('onboardingBoard.saved'));
       return true;
@@ -289,11 +391,13 @@ function CustomScreenEditor({
   }
 
   // Her phone: the fields she is asked, the wording being typed as typed.
-  const content = stepContent(catalog, step, previewLanguage, t, {
+  const content = staffScreenContent(
     title,
     intro,
-    questions: placedPhoneQuestions(catalog, screen.id, previewLanguage, row.wording),
-  });
+    phoneQuestions(previewLanguage, row.wording),
+    previewLanguage,
+    t,
+  );
 
   const direction = getLanguageDirection(language);
   return (
@@ -365,17 +469,7 @@ function CustomScreenEditor({
             </FieldGroup>
           </EditorSection>
 
-          <ScreenFieldsSection
-            catalog={catalog}
-            screenKey={screen.id}
-            screenName={textIn(title, language) || textIn(screen.title, language)}
-            builtinQuestions={[]}
-            language={language}
-            editing={row.editing}
-            onEdit={row.setEditing}
-            onBuiltinLabelChange={row.setBuiltinLabel}
-            onWordingChange={row.setWording}
-          />
+          {fields(row, language, textIn(title, language) || textIn(screen.title, language))}
         </>
       }
     />

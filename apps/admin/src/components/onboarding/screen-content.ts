@@ -25,6 +25,7 @@ import {
   builtinField,
   builtinHelp,
   builtinLabel,
+  customFormScreenQuestions,
   fieldById,
   formBlocksOn,
   formBlockText,
@@ -230,12 +231,30 @@ export function placedPhoneQuestions(
   screenKey: string,
   language: LanguageCode,
   typed: TypedWording | null = null,
+  /** A form the team created (RAPP-700) asks the fields of its screen the same way. */
+  surface: 'onboarding' | 'custom_form' = 'onboarding',
 ): PhoneQuestion[] {
   const layout = catalog.layout;
-  const fields = onboardingScreenQuestions(catalog, screenKey).map((question) => {
+  // A field sits once on Onboarding, and once per form: a form's placement is its screen's.
+  const placementOf = (fieldId: string) =>
+    layout === undefined
+      ? undefined
+      : surface === 'onboarding'
+        ? placementOn(layout, fieldId, 'onboarding')
+        : layout.placements.find(
+            (placement) =>
+              placement.fieldId === fieldId &&
+              placement.surface === surface &&
+              placement.screenKey === screenKey,
+          );
+  const asked =
+    surface === 'onboarding'
+      ? onboardingScreenQuestions(catalog, screenKey)
+      : customFormScreenQuestions(catalog, screenKey);
+  const fields = asked.map((question) => {
     const shown = customPhoneQuestion(question, language);
     const field = layout === undefined ? undefined : fieldById(layout, question.id);
-    const saved = layout === undefined ? undefined : placementOn(layout, question.id, 'onboarding');
+    const saved = placementOf(question.id);
     if (typed?.fieldId !== question.id || field === undefined || saved === undefined) return shown;
     const wording = placementWordingIn(
       { ...saved, labelOverride: typed.label, helpOverride: typed.help },
@@ -254,11 +273,9 @@ export function placedPhoneQuestions(
     };
   });
   // Her signature blocks among the fields, in the order they share (RAPP-690).
-  const order = (id: string) =>
-    (layout === undefined ? undefined : placementOn(layout, id, 'onboarding')?.sortOrder) ??
-    Number.POSITIVE_INFINITY;
+  const order = (id: string) => placementOf(id)?.sortOrder ?? Number.POSITIVE_INFINITY;
   const shown: PhoneQuestion[] = [];
-  const blocks = [...formBlocksOn(catalog.blocks, 'onboarding', screenKey)];
+  const blocks = [...formBlocksOn(catalog.blocks, surface, screenKey)];
   for (const question of fields) {
     while (blocks.length > 0 && (blocks[0]?.sortOrder ?? 0) < order(question.id)) {
       shown.push(signaturePhoneQuestion(blocks.shift() as FormBlock, language, typed));
@@ -345,6 +362,31 @@ export interface ContentOverrides {
   readonly seasonName?: string;
 }
 
+/**
+ * A screen staff made on her phone: its title, intro and questions, and
+ * Continue. An Onboarding screen of Ramassà and a screen of a form the team
+ * created (RAPP-700) both draw this way.
+ */
+export function staffScreenContent(
+  title: BuilderText | null,
+  intro: BuilderText | null,
+  questions: readonly PhoneQuestion[],
+  language: LanguageCode,
+  t: Translate,
+): PhoneContent {
+  return {
+    title: textIn(title, language),
+    intro: textIn(intro, language),
+    help: '',
+    questions,
+    lines: [],
+    checkbox: null,
+    signature: false,
+    continueLabel: t('onboarding:continueAction', { lng: language }),
+    declineLabel: null,
+  };
+}
+
 export function stepContent(
   catalog: IntakeCatalog,
   step: BoardStep,
@@ -365,13 +407,13 @@ export function stepContent(
 
   if (step.kind === 'custom') {
     const screen = step.screen;
-    return {
-      ...empty,
-      title: textIn(overrides.title ?? screen.title, language),
-      intro: textIn(overrides.intro ?? screen.intro, language),
-      questions: overrides.questions ?? placedPhoneQuestions(catalog, screen.id, language),
-      continueLabel: phone('continueAction'),
-    };
+    return staffScreenContent(
+      overrides.title ?? screen.title,
+      overrides.intro ?? screen.intro,
+      overrides.questions ?? placedPhoneQuestions(catalog, screen.id, language),
+      language,
+      t,
+    );
   }
 
   if (step.key === 'authorization') {

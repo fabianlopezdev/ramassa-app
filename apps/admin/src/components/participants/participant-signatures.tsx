@@ -29,6 +29,18 @@ export function ParticipantSignatures({
   const formName = (signature: ParticipantFormSignature) => {
     if (signature.surface === 'entity_form') return t('participants:signatures.entityForm');
     const key = signature.screenKey ?? '';
+    if (signature.surface === 'custom_form') {
+      // A form the team created (RAPP-700): its name and the screen.
+      const form = (catalog.customForms ?? []).find((each) =>
+        each.screens.some((screen) => screen.id === key),
+      );
+      const screen = form?.screens.find((each) => each.id === key);
+      return form === undefined
+        ? key
+        : [textIn(form.name, locale), screen === undefined ? '' : textIn(screen.title, locale)]
+            .filter(Boolean)
+            .join(' · ');
+    }
     const screenId = ramassaScreenIdOf(key);
     if (screenId !== null) {
       const screen = catalog.screens.find((candidate) => candidate.id === screenId);

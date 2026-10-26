@@ -101,6 +101,17 @@ export const LEGAL_FORMS_PERMISSIONS = [
   'onboarding.design',
 ] as const satisfies readonly PermissionCode[];
 
+/**
+ * The forms the team creates (RAPP-700): the people who design Onboarding
+ * build them, and the team who reads the participants sends them and sees who
+ * answered.
+ */
+export const CUSTOM_FORMS_PERMISSIONS = [
+  'settings.organization',
+  'onboarding.design',
+  'participants.view_personal',
+] as const satisfies readonly PermissionCode[];
+
 /** The entity referral form (RAPP-652): the organization's own settings. */
 export const REFERRAL_FORM_PERMISSIONS = [
   'settings.organization',
@@ -184,6 +195,14 @@ export const STAFF_NAV_ITEMS = [
     group: 'forms',
     parent: 'legal',
     anyPermission: LEGAL_FORMS_PERMISSIONS,
+  },
+  {
+    // The forms the team creates, listed on one page with Nou formulari (RAPP-700).
+    to: '/forms/custom',
+    icon: ClipboardList,
+    labelKey: 'nav:staff.customForms',
+    group: 'forms',
+    anyPermission: CUSTOM_FORMS_PERMISSIONS,
   },
   {
     // The entity referral form keeps its URL under the entities (RAPP-696).

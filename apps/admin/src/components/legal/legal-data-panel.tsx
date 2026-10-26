@@ -120,7 +120,7 @@ export function LegalDataPanel({
     id: string,
     name: string,
     detail: string,
-    surface: 'onboarding' | 'entity_form' | 'authorization' | 'terms',
+    surface: 'onboarding' | 'entity_form' | 'authorization' | 'terms' | 'custom_form',
     to: string | null,
   ): { readonly id: string; readonly row: ReactNode } => ({
     id,
@@ -135,13 +135,35 @@ export function LegalDataPanel({
       />
     ),
   });
+  // A signature of a form the team created (RAPP-700) opens its screen there.
+  const formOfScreen = (key: string | null) =>
+    (catalog.customForms ?? []).find((form) => form.screens.some((screen) => screen.id === key));
+  const formSignatureRow = (block: NonNullable<IntakeCatalog['blocks']>[number]) => {
+    const form = formOfScreen(block.screenKey);
+    const screen = form?.screens.find((each) => each.id === block.screenKey);
+    return form === undefined || screen === undefined
+      ? []
+      : [
+          signatureRow(
+            block.id,
+            formBlockText(block, language).text,
+            `${textIn(form.name, language)} · ${textIn(screen.title, language)}`,
+            'custom_form',
+            `/forms/custom/${form.id}/screens/${screen.id}`,
+          ),
+        ];
+  };
   const signatureRows = [
+    ...(catalog.blocks ?? [])
+      .filter((block) => block.surface === 'custom_form')
+      .flatMap(formSignatureRow),
     ...(catalog.blocks ?? [])
       .filter(
         (block) =>
-          block.screenKey === null ||
-          !UUID_PATTERN.test(block.screenKey) ||
-          live.has(block.screenKey),
+          block.surface !== 'custom_form' &&
+          (block.screenKey === null ||
+            !UUID_PATTERN.test(block.screenKey) ||
+            live.has(block.screenKey)),
       )
       .map((block) =>
         block.surface === 'entity_form'

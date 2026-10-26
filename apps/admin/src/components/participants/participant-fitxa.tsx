@@ -12,6 +12,7 @@
 
 import { EditorSection } from '@/components/layout/editor-section';
 import { EditorForm } from '@/components/participants/field-answer-editor';
+import { ParticipantCustomForms } from '@/components/participants/participant-custom-forms';
 import { PlayerChoicesBar } from '@/components/participants/player-choices-bar';
 import { ProfileAnswerRow } from '@/components/participants/profile-answer-row';
 import { ProfileSection, type FitxaContext } from '@/components/participants/profile-section';
@@ -29,6 +30,7 @@ import {
   type IntakeCatalog,
   type IntakePreset,
   type ParticipantCustomAnswer,
+  type ParticipantCustomForm,
   type PlayerChoices,
 } from '@ramassa/shared/intake-builder';
 import {
@@ -59,6 +61,10 @@ export interface ParticipantFitxaProps {
   readonly onSavePreset: (name: string, states: QuestionStates) => Promise<void>;
   readonly onDeletePreset: (preset: IntakePreset) => void;
   readonly onOpenFile?: (objectKey: string) => Promise<void>;
+  /** Her asks of the forms the team created (RAPP-700); a team form is filled in here. */
+  readonly customForms?: readonly ParticipantCustomForm[];
+  /** Closes a team form; throws when a required answer is missing. */
+  readonly onCompleteCustomForm?: (responseId: string) => Promise<void>;
 }
 
 export function ParticipantFitxa({
@@ -75,6 +81,8 @@ export function ParticipantFitxa({
   onSavePreset,
   onDeletePreset,
   onOpenFile,
+  customForms = [],
+  onCompleteCustomForm,
 }: ParticipantFitxaProps) {
   const { t, i18n } = useTranslation(['participants', 'onboarding', 'profile', 'common']);
   const locale = i18n.resolvedLanguage ?? 'ca';
@@ -169,6 +177,15 @@ export function ParticipantFitxa({
       {sections.map(({ section, fields }) => (
         <ProfileSection key={section.id} section={section} fields={fields} context={context} />
       ))}
+
+      {customForms.length === 0 || onCompleteCustomForm === undefined ? null : (
+        <ParticipantCustomForms
+          forms={customForms}
+          catalog={catalog}
+          context={context}
+          onComplete={onCompleteCustomForm}
+        />
+      )}
 
       <EditorSection title={t('participants:fitxa.accountTitle')} isFlush testId="fitxa-account">
         <ul className="flex flex-col divide-y">

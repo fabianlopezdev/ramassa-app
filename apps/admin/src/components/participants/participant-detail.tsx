@@ -61,6 +61,7 @@ import {
 } from '@ramassa/shared/intake';
 import {
   choiceChanges,
+  completeParticipantCustomForm,
   deleteIntakePreset,
   EMPTY_INTAKE_CATALOG,
   EMPTY_PROFILE_LAYOUT,
@@ -69,6 +70,7 @@ import {
   type CustomQuestionStates,
   type IntakeCatalog,
   type ParticipantCustomAnswer,
+  type ParticipantCustomForm,
   type ParticipantFormSignature,
   type PlayerChoices,
 } from '@ramassa/shared/intake-builder';
@@ -129,6 +131,8 @@ export interface ParticipantDetailProps {
   readonly formSignatures?: readonly ParticipantFormSignature[];
   /** She has Onboarding screens saved as a Nova versió to review (RAPP-697). */
   readonly isReviewPending?: boolean;
+  /** Her asks of the forms the team created (RAPP-700), read with participants.view_personal. */
+  readonly customForms?: readonly ParticipantCustomForm[];
 }
 
 export function ParticipantDetail({
@@ -150,6 +154,7 @@ export function ParticipantDetail({
   testScenario = null,
   isReviewPending = false,
   formSignatures = [],
+  customForms = [],
 }: ParticipantDetailProps) {
   const { t, i18n } = useTranslation(['participants', 'common', 'profile', 'settings']);
   const locale = i18n.resolvedLanguage ?? 'ca';
@@ -416,6 +421,11 @@ export function ParticipantDetail({
           }
         }}
         onOpenFile={uploadsAvailable(mediaWorkerUrl) ? openAnswerFile : undefined}
+        customForms={customForms}
+        onCompleteCustomForm={async (responseId) => {
+          await completeParticipantCustomForm(supabase, responseId);
+          await router.invalidate();
+        }}
       />
 
       {teamTools && permissions.has('participants.view_personal') ? (

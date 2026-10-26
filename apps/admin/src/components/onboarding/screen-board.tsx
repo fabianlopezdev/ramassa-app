@@ -70,6 +70,7 @@ export function ScreenBoard({ catalog }: { readonly catalog: IntakeCatalog }) {
   const { t, i18n } = useTranslation(['settings', 'onboarding']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const reload = useReload();
+  const createOnboardingScreen = useCreateOnboardingScreen();
   const initial = movableOrder(catalog);
   const hidden = wizardFlow(catalog).hiddenScreens;
   const card = (key: string): BoardCard | null => {
@@ -107,7 +108,7 @@ export function ScreenBoard({ catalog }: { readonly catalog: IntakeCatalog }) {
       label={t('onboardingBoard.listLabel')}
       movable={cards(initial)}
       trailing={cards(BOARD_LOCKED_STEPS)}
-      addCard={<AddScreenCard order={initial} />}
+      addCard={<AddScreenCard onCreate={(name) => createOnboardingScreen(name, initial)} />}
       onReorder={async (next) => {
         // The same call the old order list used (`saveWizardFlowOrder`).
         await saveWizardFlowOrder(supabase, next as readonly WizardStepKey[]);
@@ -124,7 +125,12 @@ type BoardCardLink =
       readonly to: '/forms/authorization/$step' | '/forms/terms/$step';
       readonly params: { readonly step: string };
     }
-  | { readonly to: '/forms/authorization' | '/forms/terms' };
+  | { readonly to: '/forms/authorization' | '/forms/terms' }
+  | {
+      // A screen of a form the team created (RAPP-700).
+      readonly to: '/forms/custom/$formId/screens/$screenId';
+      readonly params: { readonly formId: string; readonly screenId: string };
+    };
 
 /** One card of a form's board (RAPP-696): its screen, or a linked form. */
 export interface BoardCard {
@@ -370,8 +376,33 @@ function ScreenCard({
   );
 }
 
-/** The add card: a dashed card that takes its row's height, after the last movable screen. */
-function AddScreenCard({ order }: { readonly order: readonly WizardStepKey[] }) {
+/** A Ramassà screen added to Onboarding, after the last movable one; opens its editor. */
+function useCreateOnboardingScreen() {
+  const navigate = useNavigate();
+  return async (name: string, order: readonly WizardStepKey[]) => {
+    // The title is stored in Catalan, the language every other one falls back to.
+    const id = await saveIntakeScreen(supabase, {
+      id: null,
+      title: { ca: name },
+      intro: null,
+      afterScreen: 'season',
+    });
+    // Placed after the last movable screen, before the ones that end the onboarding.
+    await saveWizardFlowOrder(supabase, [...order, customStepKey(id)]);
+    await navigate({ to: '/onboarding/screens/$screenId', params: { screenId: id } });
+  };
+}
+
+/**
+ * The add card: a dashed card that takes its row's height, after the last
+ * movable screen. Every form's board adds its screens with it (RAPP-700):
+ * `onCreate` makes the screen from its Catalan name and opens it.
+ */
+export function AddScreenCard({
+  onCreate,
+}: {
+  readonly onCreate: (name: string) => Promise<void>;
+}) {
   const { t } = useTranslation('settings');
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -391,22 +422,21 @@ function AddScreenCard({ order }: { readonly order: readonly WizardStepKey[] }) 
           </span>
         </CardFrame>
       </button>
-      <AddScreenDialog order={order} isOpen={isOpen} onOpenChange={setIsOpen} />
+      <AddScreenDialog onCreate={onCreate} isOpen={isOpen} onOpenChange={setIsOpen} />
     </>
   );
 }
 
 function AddScreenDialog({
-  order,
+  onCreate,
   isOpen,
   onOpenChange,
 }: {
-  readonly order: readonly WizardStepKey[];
+  readonly onCreate: (name: string) => Promise<void>;
   readonly isOpen: boolean;
   readonly onOpenChange: (open: boolean) => void;
 }) {
   const { t } = useTranslation('settings');
-  const navigate = useNavigate();
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -420,17 +450,8 @@ function AddScreenDialog({
     setIsBusy(true);
     setError(null);
     try {
-      // The title is stored in Catalan, the language every other one falls back to.
-      const id = await saveIntakeScreen(supabase, {
-        id: null,
-        title: { ca: name },
-        intro: null,
-        afterScreen: 'season',
-      });
-      // Placed after the last movable screen, before the ones that end the onboarding.
-      await saveWizardFlowOrder(supabase, [...order, customStepKey(id)]);
+      await onCreate(name);
       onOpenChange(false);
-      await navigate({ to: '/onboarding/screens/$screenId', params: { screenId: id } });
     } catch {
       setError(t('onboardingBoard.createFailed'));
     } finally {

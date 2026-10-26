@@ -103,7 +103,9 @@ test('the onboarding design role sees the test players, the onboarding, the lega
     '/onboarding',
     '/forms/authorization',
     '/forms/terms',
+    '/forms/custom',
     '/profile-layout',
+    '/legal-data',
   ]);
 });
 
@@ -114,8 +116,10 @@ test('Settings holds the organization tabs only; the team, entities and Fitxa ha
     '/onboarding',
     '/forms/authorization',
     '/forms/terms',
+    '/forms/custom',
     '/entities/referral-form',
     '/profile-layout',
+    '/legal-data',
     '/settings',
   ]);
   // Dades de les jugadores is for the people who design it (RAPP-658).
@@ -140,8 +144,15 @@ test('the menu groups by audience in the agreed order (RAPP-654)', () => {
   expect(byGroup).toEqual({
     top: ['/dashboard', '/participants'],
     // How players are asked, then what is collected (RAPP-696).
-    forms: ['/onboarding', '/forms/authorization', '/forms/terms', '/entities/referral-form'],
-    data: ['/profile-layout'],
+    forms: [
+      '/onboarding',
+      '/forms/authorization',
+      '/forms/terms',
+      // The forms the team creates (RAPP-700).
+      '/forms/custom',
+      '/entities/referral-form',
+    ],
+    data: ['/profile-layout', '/legal-data'],
     app: [
       '/content',
       '/attendance',

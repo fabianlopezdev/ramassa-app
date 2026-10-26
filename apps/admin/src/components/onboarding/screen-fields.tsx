@@ -15,6 +15,9 @@
  *   - Consents of Dades legals (RAPP-699) are picked in the same picker,
  *     placed among the fields, required or not, reworded in their row. The
  *     authorization's consents screen lists consents alone (`consents`).
+ *   - A screen of a form the team created (RAPP-700) works like an
+ *     Onboarding screen: a field and a consent are asked once per form. A
+ *     form the team fills in on her page holds fields only.
  *
  * Type and privacy belong to the field, so this list never asks them.
  */
@@ -59,6 +62,7 @@ import {
   formBlockText,
   isAskedGenerically,
   isNameField,
+  isStaffWritable,
   overrideFor,
   placementsOnSurface,
   questionsOffTheirControl,
@@ -69,6 +73,7 @@ import {
   textIn,
   type BuilderText,
   type Consent,
+  type CustomFormFiller,
   type FieldPlacement,
   type FormBlock,
   type IntakeCatalog,
@@ -126,13 +131,15 @@ function screenItems(
  */
 function placedFields(
   layout: ProfileLayout,
-  surface: 'onboarding' | 'authorization',
+  surface: 'onboarding' | 'authorization' | 'custom_form',
   screenKey: string | null,
   offTheirControl: ReadonlySet<IntakeQuestion>,
 ): readonly Placed[] {
   return placementsOnSurface(layout, surface, screenKey).flatMap((placement) => {
     const field = fieldById(layout, placement.fieldId);
-    return field === undefined || !isAskedGenerically(field, offTheirControl)
+    // A form the team created asks every field with the generic renderer (RAPP-700).
+    return field === undefined ||
+      (surface !== 'custom_form' && !isAskedGenerically(field, offTheirControl))
       ? []
       : [{ placement, field }];
   });
@@ -142,10 +149,19 @@ function placedFields(
  * The screens this section edits: an Onboarding screen, the authorization's
  * Health screen (RAPP-698), or its consents screen (`consents`, RAPP-699).
  */
-type FieldsSurface = 'onboarding' | 'authorization' | 'consents';
+type FieldsSurface = 'onboarding' | 'authorization' | 'consents' | 'custom_form';
+
+/** The form a screen of a form the team created belongs to (RAPP-700). */
+export interface ScreenFieldsForm {
+  readonly id: string;
+  readonly filledBy: CustomFormFiller;
+  /** Its live screens in order, to say on which one a field already is. */
+  readonly screenIds: readonly string[];
+}
 
 export function ScreenFieldsSection({
   surface = 'onboarding',
+  form,
   catalog,
   screenKey,
   screenName,
@@ -158,6 +174,8 @@ export function ScreenFieldsSection({
 }: {
   /** Onboarding by default; the authorization's Health screen is its surface's one screen. */
   readonly surface?: FieldsSurface;
+  /** On a form the team created: the form. */
+  readonly form?: ScreenFieldsForm;
   readonly catalog: IntakeCatalog;
   /** An app screen's key, or a Ramassà screen's id. */
   readonly screenKey: string;
@@ -180,19 +198,23 @@ export function ScreenFieldsSection({
   const offTheirControl = questionsOffTheirControl(layout);
   const isOnboarding = surface === 'onboarding';
   const isConsents = surface === 'consents';
+  const isForm = surface === 'custom_form';
+  // A form she fills in asks consents and signatures too; a team form, fields only (RAPP-700).
+  const isHerForm = isForm && form?.filledBy === 'player';
   // The Health and consents screens are their surface's one screen: their placements name none.
-  const placementKey = isOnboarding ? screenKey : null;
+  const placementKey = isOnboarding || isForm ? screenKey : null;
   // The consents screen is the authorization's surface for consents (RAPP-699).
   const orderSurface = surface === 'consents' ? 'authorization' : surface;
   const placed = isConsents
     ? []
     : placedFields(layout, orderSurface, placementKey, offTheirControl);
-  const consentSurface = isOnboarding ? 'onboarding' : 'authorization';
-  const consents =
-    isOnboarding || isConsents ? consentsOn(catalog, consentSurface, placementKey) : [];
+  const consentSurface = isOnboarding ? 'onboarding' : isForm ? 'custom_form' : 'authorization';
+  const asksConsents = isOnboarding || isConsents || isHerForm;
+  const blockSurface = isOnboarding ? 'onboarding' : isHerForm ? 'custom_form' : null;
+  const consents = asksConsents ? consentsOn(catalog, consentSurface, placementKey) : [];
   const items = screenItems(
     placed,
-    isOnboarding ? formBlocksOn(catalog.blocks, 'onboarding', screenKey) : [],
+    blockSurface === null ? [] : formBlocksOn(catalog.blocks, blockSurface, screenKey),
     consents,
   );
   const { ordered, reorder } = usePlacementOrder(
@@ -222,7 +244,28 @@ export function ScreenFieldsSection({
     if (editing !== id) onEdit(id);
   };
 
+  const formScreenNote = (screen: string | null): FieldPickState => {
+    if (screen === screenKey) return { kind: 'placed', note: t('fieldPicker.here') };
+    const number = (form?.screenIds ?? []).indexOf(screen ?? '') + 1;
+    return {
+      kind: 'blocked',
+      note: number === 0 ? t('fieldPicker.elsewhereApp') : t('fieldPicker.elsewhere', { number }),
+    };
+  };
+
   const stateOf = (field: ProfileField): FieldPickState => {
+    if (isForm) {
+      // A field is asked once per form; her names stay on her identity screen.
+      const onThisForm = placementsOnSurface(layout, 'custom_form').find(
+        (placement) => placement.fieldId === field.id && placement.customFormId === form?.id,
+      );
+      if (onThisForm !== undefined) return formScreenNote(onThisForm.screenKey);
+      if (isNameField(field)) return { kind: 'blocked', note: t('fieldPicker.elsewhereApp') };
+      if (!isHerForm && !isStaffWritable(field)) {
+        return { kind: 'blocked', note: t('customForms.herFieldOnly') };
+      }
+      return { kind: 'free' };
+    }
     if (!isOnboarding) {
       // A field is asked once per surface: here, or free to place.
       return placementsOnSurface(layout, orderSurface).some(
@@ -259,9 +302,13 @@ export function ScreenFieldsSection({
   // A consent is asked once per form: here, on another Onboarding screen, or free (RAPP-699).
   const consentStateOf = (consent: Consent): FieldPickState => {
     const placement = (catalog.consentPlacements ?? []).find(
-      (each) => each.consentId === consent.id && each.surface === consentSurface,
+      (each) =>
+        each.consentId === consent.id &&
+        each.surface === consentSurface &&
+        (!isForm || each.customFormId === form?.id),
     );
     if (placement === undefined) return { kind: 'free' };
+    if (isForm) return formScreenNote(placement.screenKey);
     if (placement.screenKey === placementKey)
       return { kind: 'placed', note: t('fieldPicker.here') };
     const stepKey =
@@ -384,13 +431,13 @@ export function ScreenFieldsSection({
           <Plus aria-hidden data-icon="inline-start" />
           {isConsents ? t('legalData.addConsent') : t('profileLayout.addField')}
         </Button>
-        {isOnboarding ? (
+        {blockSurface === null ? null : (
           <AddSignatureButton
-            surface="onboarding"
+            surface={blockSurface}
             screenKey={screenKey}
             onAdded={(id) => toggle(id)}
           />
-        ) : null}
+        )}
       </div>
       <FieldPicker
         layout={layout}
@@ -400,12 +447,14 @@ export function ScreenFieldsSection({
         initialSectionId={
           isOnboarding
             ? pickerSectionFor(layout, screenKey)
-            : (layout.sections.find((section) => section.key === 'health_needs')?.id ?? null)
+            : isForm
+              ? null
+              : (layout.sections.find((section) => section.key === 'health_needs')?.id ?? null)
         }
         stateOf={stateOf}
         onConfirm={(ids) => actions.placeFields(orderSurface, placementKey, ids)}
         onCreateField={(section, draft) => actions.saveField(null, section, draft)}
-        {...(isOnboarding || isConsents
+        {...(asksConsents
           ? {
               consents: {
                 items: (catalog.consents ?? []).filter((consent) => !consent.isArchived),
