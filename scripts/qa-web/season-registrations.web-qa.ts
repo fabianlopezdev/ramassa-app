@@ -17,10 +17,10 @@ test.afterAll(() => {
   `);
 });
 
-test('an admin creates a season on Textos legals', async ({ page }) => {
+test('an admin creates a season on the authorization board', async ({ page }) => {
   await signIn(page, ADMIN_EMAIL);
-  // The seasons sit with the authorization on Textos legals (RAPP-694).
-  await page.goto('/legal');
+  // The seasons sit with the authorization's board (RAPP-694, RAPP-696).
+  await page.goto('/forms/authorization');
   const panel = page.getByTestId('seasons-panel');
   await expect(panel).toBeVisible();
   await expect(panel).toContainText('2026/27');

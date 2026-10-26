@@ -292,20 +292,19 @@ test('an admin publishes a new authorization version', async ({ page }) => {
   );
   try {
     await signIn(page, ADMIN_EMAIL);
-    // The authorization moved to Textos legals (RAPP-694).
-    await page.goto('/legal');
+    // The authorization is a board of screens (RAPP-696): its versions on the board.
+    await page.goto('/forms/authorization');
+    await expect(page.getByTestId('authorization-versions')).toContainText('2026/27');
+    await page.goto('/forms/authorization/document');
     const editor = page.getByTestId('authorization-editor');
     await expect(editor).toBeVisible();
-    await expect(editor.getByTestId('authorization-versions')).toContainText('2026/27');
 
     await editor.getByTestId('editor-language').getByRole('radio', { name: 'Català' }).click();
     await editor.locator('#authorization-title').fill(`Autorització ${runTag}`);
-    await editor.getByTestId('authorization-save').click();
-    await expect(editor.getByTestId('authorization-draft-row')).toBeVisible();
+    // Players signed this season, so Desa asks: a new version asks them again (RAPP-696).
     await editor.getByTestId('authorization-publish').click();
-    // Publishing is final: it asks once more.
-    await expect(editor.getByRole('alert')).toContainText(/sign it again|signar de nou/);
-    await editor.getByTestId('authorization-publish').click();
+    await page.getByTestId('save-kind-new').click();
+    await page.getByTestId('save-kind-confirm').click();
 
     await expect
       .poll(

@@ -56,13 +56,15 @@ test.describe.serial('test players see the drafts', () => {
     page,
   }) => {
     await signIn(page, ONBOARDING_DESIGNER_EMAIL);
-    // The legal texts have their own page, Textos legals (RAPP-694).
-    await page.goto('/legal?tab=terms');
+    // The terms screen of the app terms' board (RAPP-696).
+    await page.goto('/forms/terms/terms');
     const editor = page.getByTestId('app-terms-editor');
     await expect(editor).toBeVisible({ timeout: 30_000 });
     await editor.locator('#app-terms-body').fill(DRAFT_BODY);
     await editor.getByTestId('app-terms-save').click();
-    await expect(editor.getByTestId('app-terms-draft-note')).toBeVisible({ timeout: 20_000 });
+    // The board lists the versions, the draft with its note.
+    await page.goto('/forms/terms');
+    await expect(page.getByTestId('app-terms-draft-note')).toBeVisible({ timeout: 20_000 });
     asDesigner(
       `select public.save_authorization_draft(jsonb_set(
          (select content from public.authorization_versions where org_id = '${ORG}' and version_number = 1),

@@ -53,18 +53,31 @@ test('the design role adds a required consent and saves a draft she cannot publi
   page,
 }) => {
   await signIn(page, ONBOARDING_DESIGNER_EMAIL);
-  // The legal texts have their own page, Textos legals (RAPP-694).
-  await page.goto('/legal');
+  // The health screen of the authorization's board (RAPP-696).
+  await page.goto('/forms/authorization/health');
+  const healthEditor = page.getByTestId('authorization-editor');
+  await expect(healthEditor).toBeVisible({ timeout: 30_000 });
+  // The health question optional: its consent may stay required.
+  await healthEditor.locator('#authorization-health-required').uncheck();
+  await healthEditor.getByTestId('authorization-save').click();
+  await expect
+    .poll(() =>
+      queryDatabase(
+        `select content -> 'questions' -> 'health' ->> 'required'
+           from public.authorization_versions where org_id = '${ORG}' and published_at is null`,
+      ),
+    )
+    .toBe('false');
+
+  // The consents and signature screen.
+  await page.goto('/forms/authorization/consents');
   const editor = page.getByTestId('authorization-editor');
   await expect(editor).toBeVisible({ timeout: 30_000 });
-
   await editor.getByTestId('editor-language').getByRole('radio', { name: 'Català' }).click();
   await editor.getByTestId('authorization-consent-add').click();
   await editor.locator('#authorization-consent-label-consent_8').fill(CONSENT_CA);
   await editor.locator('#authorization-consent-required-consent_8').check();
   await editor.locator('#authorization-text-sign_and_enter_label').fill('Signa i juga');
-  // The health question optional: its consent may stay required.
-  await editor.locator('#authorization-health-required').uncheck();
   await editor.getByTestId('editor-language').getByRole('radio', { name: 'العربية' }).click();
   await expect(editor.locator('#authorization-consent-label-consent_8')).toHaveAttribute(
     'dir',
@@ -72,7 +85,6 @@ test('the design role adds a required consent and saves a draft she cannot publi
   );
   await editor.locator('#authorization-consent-label-consent_8').fill(CONSENT_AR);
   // Her phone, on the consents screen, in the editor's frame (RAPP-695).
-  await page.getByTestId('phone-step-consents').click();
   await expect(page.getByTestId('phone-screen')).toContainText(CONSENT_AR);
   await expect(page.getByTestId('phone-screen')).toHaveAttribute('dir', 'rtl');
 
@@ -86,24 +98,27 @@ test('the design role adds a required consent and saves a draft she cannot publi
       ),
     )
     .toBe('true|false');
-  await expect(editor.getByTestId('authorization-draft-row')).toBeVisible();
   await expect(editor.getByTestId('authorization-publish')).toHaveCount(0);
+  await page.goto('/forms/authorization');
+  await expect(page.getByTestId('authorization-draft-row')).toBeVisible({ timeout: 30_000 });
   expect(
     queryDatabase(
       `select count(*) from public.audit_log where action = 'authorization.draft_saved'
           and created_at >= '${startedAt}'::timestamptz`,
     ),
-  ).toBe('1');
+  ).toBe('2');
 });
 
-test('an admin publishes the draft after confirming', async ({ page }) => {
+test('an admin saves the draft as a new version everyone signs', async ({ page }) => {
   await signIn(page, ADMIN_EMAIL);
-  // The legal texts have their own page, Textos legals (RAPP-694).
-  await page.goto('/legal');
+  // Any screen of the authorization's board saves the whole form (RAPP-696).
+  await page.goto('/forms/authorization/consents');
   const editor = page.getByTestId('authorization-editor');
-  await expect(editor.getByTestId('authorization-draft-row')).toBeVisible({ timeout: 30_000 });
+  await expect(editor).toBeVisible({ timeout: 30_000 });
   await editor.getByTestId('authorization-publish').click();
-  await editor.getByTestId('authorization-publish').click();
+  // Players signed version 1, so Desa asks: a new version asks them again.
+  await page.getByTestId('save-kind-new').click();
+  await page.getByTestId('save-kind-confirm').click();
   await expect
     .poll(() =>
       queryDatabase(

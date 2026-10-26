@@ -40,8 +40,8 @@ test.afterAll(() => {
 
 test('the design role writes a draft but cannot publish it', async ({ page }) => {
   await signIn(page, 'disseny@example.test');
-  // The legal texts have their own page, Textos legals (RAPP-694).
-  await page.goto('/legal?tab=terms');
+  // The terms screen of the app terms' board (RAPP-696).
+  await page.goto('/forms/terms/terms');
   const editor = page.getByTestId('app-terms-editor');
   await expect(editor).toBeVisible({ timeout: 30_000 });
   await expect(editor.getByTestId('app-terms-publish')).toHaveCount(0);
@@ -58,8 +58,8 @@ test('the design role writes a draft but cannot publish it', async ({ page }) =>
 
 test('an admin previews the draft in each language and publishes it', async ({ page }) => {
   await signIn(page, 'laia.ferrer@example.test');
-  // The legal texts have their own page, Textos legals (RAPP-694).
-  await page.goto('/legal?tab=terms');
+  // The terms screen of the app terms' board (RAPP-696).
+  await page.goto('/forms/terms/terms');
   const editor = page.getByTestId('app-terms-editor');
   await expect(editor).toBeVisible({ timeout: 30_000 });
   // The draft the design role saved opens here.
@@ -89,9 +89,10 @@ test('an admin previews the draft in each language and publishes it', async ({ p
     )
     .toBe(NEW_BODY);
 
+  // Players accepted version 1, so Desa asks: a new version asks them again (RAPP-696).
   await editor.getByTestId('app-terms-publish').click();
-  await expect(editor.getByRole('alert')).toBeVisible();
-  await editor.getByTestId('app-terms-publish').click();
+  await page.getByTestId('save-kind-new').click();
+  await page.getByTestId('save-kind-confirm').click();
   await expect
     .poll(() =>
       queryDatabase(
@@ -104,7 +105,8 @@ test('an admin previews the draft in each language and publishes it', async ({ p
       `select changes ->> 'version_number' from public.audit_log where action = 'app_terms.publish' order by created_at desc limit 1`,
     ),
   ).toBe('2');
-  await expect(editor.getByTestId('app-terms-versions')).toContainText('2');
+  await page.goto('/forms/terms');
+  await expect(page.getByTestId('app-terms-versions')).toContainText('2');
 });
 
 test('a player who joined accepts version 2 on its own screen, then reaches her home', async ({
