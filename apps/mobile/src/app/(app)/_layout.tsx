@@ -7,6 +7,7 @@ import { HandoverSyncWorker } from '@/components/equipment/handover-sync-worker'
 import { PushPermissionRationale } from '@/components/push-permission-rationale';
 import { areaHome, awaitsSecondFactor, teamScreens } from '@/lib/account-area';
 import { useAuthorizationStatus } from '@/lib/authorization';
+import { useMyCustomForms } from '@/lib/custom-forms';
 import { OnboardingEntranceProvider } from '@/lib/onboarding-entrance';
 import { useOnboardingReview } from '@/lib/onboarding-review';
 import { canPromptForPush } from '@/lib/push-prompt-eligibility';
@@ -72,6 +73,16 @@ function AppNavigator() {
   const review = useOnboardingReview(area === 'player');
   const mustReview =
     area === 'player' && !mustAcceptTerms && !mustSign && (review.data?.length ?? 0) > 0;
+  // A form the team created that keeps her from the app (RAPP-700): required to
+  // use it, or required since its date. It opens after the gates above. A
+  // failed lookup lets her in.
+  const forms = useMyCustomForms(area === 'player');
+  const blockingForm =
+    area === 'player' && !mustAcceptTerms && !mustSign && !mustReview
+      ? (forms.data?.find((form) => form.isBlocking) ?? null)
+      : null;
+  const mustAnswerForm = blockingForm !== null;
+  const blockingFormPath = blockingForm === null ? null : `/form/${blockingForm.responseId}`;
   // Signing mode on a staff tablet (RAPP-305): while a player signs, every
   // other screen is off, so no link, notification or gesture opens one.
   const { session: signingSession } = useSigningSession();
@@ -92,6 +103,7 @@ function AppNavigator() {
       mustAcceptTerms ||
       mustSign ||
       mustReview ||
+      mustAnswerForm ||
       isSigning ||
       requiresSecondFactor ||
       (area === 'player' && authorization.isPending) ||
@@ -122,7 +134,7 @@ function AppNavigator() {
   if (isSigning && pathname !== '/signing-mode') {
     return <Redirect href={'/signing-mode' as Href} />;
   }
-  if (area === 'player' && (authorization.isPending || review.isPending)) {
+  if (area === 'player' && (authorization.isPending || review.isPending || forms.isPending)) {
     return (
       <View
         className="flex-1 items-center justify-center bg-neutral-50"
@@ -144,10 +156,14 @@ function AppNavigator() {
   if (mustReview && !pathname.startsWith('/onboarding') && pathname !== '/profile-edit') {
     return <Redirect href={'/onboarding' as Href} />;
   }
+  if (blockingFormPath !== null && pathname !== blockingFormPath) {
+    return <Redirect href={blockingFormPath as Href} />;
+  }
   if (
     !mustAcceptTerms &&
     !mustSign &&
     !mustReview &&
+    !mustAnswerForm &&
     home !== null &&
     (pathname === '/' ||
       pathname === '/authorization' ||
@@ -189,8 +205,17 @@ function AppNavigator() {
             {/* Her signature is a drag, which iOS would read as swipe back. */}
             <Stack.Screen name="authorization" options={noSwipeBackOptions} />
           </Stack.Protected>
+          {/* A form the team created (RAPP-700): from Home, its notification, or
+            alone while it keeps her from the app. */}
           <Stack.Protected
             guard={area === 'player' && !mustSign && !mustAcceptTerms && !mustReview}
+          >
+            <Stack.Screen name="form/[responseId]" options={noSwipeBackOptions} />
+          </Stack.Protected>
+          <Stack.Protected
+            guard={
+              area === 'player' && !mustSign && !mustAcceptTerms && !mustReview && !mustAnswerForm
+            }
           >
             <Stack.Screen name="(tabs)" />
             {/* Pushed OVER the tabs, not inside them: the edit form and the

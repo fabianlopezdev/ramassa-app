@@ -8,9 +8,13 @@
  * Continue refuses while a required one is unticked. Her ticks stay in her
  * draft (`consents`, by key) on Continue and on Back, until her registration
  * sends them with the rest.
+ *
+ * A form the team created (RAPP-700) asks its consents with the same hook:
+ * `form` gives its catalog and her ticks so far.
  */
 
 import { ConsentRow } from '@/components/authorization/consent-row';
+import type { FormScreenSource } from '@/components/onboarding/signature-blocks';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { useWizardIntake } from '@/lib/onboarding-intake-context';
 import { useState, type ReactNode } from 'react';
@@ -42,13 +46,18 @@ export interface ScreenConsents {
   readonly drafted: (saved: Ticks | undefined) => Ticks;
 }
 
-export function useScreenConsents(screenKey: string | undefined): ScreenConsents {
+export function useScreenConsents(
+  screenKey: string | undefined,
+  form?: FormScreenSource,
+): ScreenConsents {
   const { t } = useTranslation('onboarding');
   const { language } = useLanguage();
-  const { catalog } = useWizardIntake();
-  const consents = screenKey === undefined ? [] : consentsOn(catalog, 'onboarding', screenKey);
+  const wizard = useWizardIntake();
+  const catalog = form?.catalog ?? wizard.catalog;
+  const surface = form === undefined ? 'onboarding' : 'custom_form';
+  const consents = screenKey === undefined ? [] : consentsOn(catalog, surface, screenKey);
   const [ticks, setTicks] = useState<Ticks>(() => {
-    const saved = onboardingDraftStore.loadDraft()?.consents;
+    const saved = form === undefined ? onboardingDraftStore.loadDraft()?.consents : form.consents;
     return Object.fromEntries(consents.map(({ key }) => [key, saved?.[key] === true]));
   });
   const [unticked, setUnticked] = useState<ReadonlySet<string>>(new Set());

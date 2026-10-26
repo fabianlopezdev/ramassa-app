@@ -45,6 +45,16 @@ describe('push detail routes', () => {
     expect(pushDetailQueryRoot('mentoring_update')).toBe('player-mentoring');
   });
 
+  test('a form the team created opens the form she was asked (RAPP-700)', () => {
+    expect(
+      resolvePushDetailRoute({
+        contentType: 'custom_form',
+        contentId: '5eed0000-0000-4000-8102-000000000002',
+      }),
+    ).toBe('/form/5eed0000-0000-4000-8102-000000000002' as Href);
+    expect(pushDetailQueryRoot('custom_form')).toBe('player-forms');
+  });
+
   test('refreshes the content collection before opening a newly published detail', () => {
     expect(pushDetailQueryRoot('announcement')).toBe('player-announcements');
     expect(pushDetailQueryRoot('event')).toBe('player-events');

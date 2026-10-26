@@ -8,13 +8,19 @@ interface PushDetailData {
 }
 
 export type PushDetailQueryRoot =
-  'player-announcements' | 'player-events' | 'messaging' | 'player-mentoring';
+  | 'player-announcements'
+  | 'player-events'
+  | 'messaging'
+  | 'player-mentoring'
+  // A form the team created asks her (RAPP-700).
+  | 'player-forms';
 
 export function pushDetailQueryRoot(contentType: unknown): PushDetailQueryRoot | null {
   if (contentType === 'announcement') return 'player-announcements';
   if (contentType === 'event') return 'player-events';
   if (contentType === 'message') return 'messaging';
   if (contentType === 'mentoring_update') return 'player-mentoring';
+  if (contentType === 'custom_form') return 'player-forms';
   return null;
 }
 
@@ -27,6 +33,8 @@ export function resolvePushDetailRoute(data: unknown): Href | null {
   if (contentType === 'event') return `/event/${contentId}` as Href;
   if (contentType === 'message') return '/team-chat' as Href;
   if (contentType === 'mentoring_update') return '/mentoring' as Href;
+  // The id is her response: the link opens the form she was asked (RAPP-700).
+  if (contentType === 'custom_form') return `/form/${contentId}` as Href;
   return null;
 }
 

@@ -8,6 +8,9 @@
  * refuses while one is unsigned. The strokes stay in her draft (`signatures`,
  * by block id) on Continue and on Back, so saved progress keeps them until the
  * terms step sends them with her registration.
+ *
+ * A form the team created (RAPP-700) draws its screens with the same hook:
+ * `form` gives its catalog and the strokes she already drew on it.
  */
 
 import { SignatureBlockField } from '@/components/onboarding/signature-block-field';
@@ -22,6 +25,7 @@ import {
   unsignedFormBlocks,
   type CustomQuestion,
   type FormBlock,
+  type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
 
 type Drafts = Readonly<Record<string, SignatureStrokes | null>>;
@@ -44,16 +48,26 @@ export interface SignatureBlocks {
   readonly drafted: (saved: Drafts | undefined) => Drafts;
 }
 
+/** A screen of a form the team created (RAPP-700): its catalog and her strokes so far. */
+export interface FormScreenSource {
+  readonly catalog: IntakeCatalog;
+  readonly signatures?: Drafts;
+  readonly consents?: Readonly<Record<string, boolean>>;
+}
+
 export function useSignatureBlocks(
   screenKey: string | undefined,
   onDrawingChange: (isDrawing: boolean) => void,
+  form?: FormScreenSource,
 ): SignatureBlocks {
   const { t } = useTranslation('onboarding');
-  const { catalog } = useWizardIntake();
-  const blocks =
-    screenKey === undefined ? [] : formBlocksOn(catalog.blocks, 'onboarding', screenKey);
+  const wizard = useWizardIntake();
+  const catalog = form?.catalog ?? wizard.catalog;
+  const surface = form === undefined ? 'onboarding' : 'custom_form';
+  const blocks = screenKey === undefined ? [] : formBlocksOn(catalog.blocks, surface, screenKey);
   const [strokes, setStrokes] = useState<Drafts>(() => {
-    const saved = onboardingDraftStore.loadDraft()?.signatures;
+    const saved =
+      form === undefined ? onboardingDraftStore.loadDraft()?.signatures : form.signatures;
     return Object.fromEntries(blocks.map((block) => [block.id, saved?.[block.id] ?? null]));
   });
   const [unsigned, setUnsigned] = useState<ReadonlySet<string>>(new Set());
@@ -81,8 +95,15 @@ export function useSignatureBlocks(
       const order = (question: CustomQuestion) =>
         catalog.layout === undefined
           ? Number.POSITIVE_INFINITY
-          : (placementOn(catalog.layout, question.id, 'onboarding')?.sortOrder ??
-            Number.POSITIVE_INFINITY);
+          : ((form === undefined
+              ? placementOn(catalog.layout, question.id, 'onboarding')
+              : catalog.layout.placements.find(
+                  (placement) =>
+                    placement.fieldId === question.id &&
+                    placement.surface === 'custom_form' &&
+                    placement.screenKey === screenKey,
+                )
+            )?.sortOrder ?? Number.POSITIVE_INFINITY);
       const items = [
         ...questions.map((question) => ({
           sortOrder: order(question),
