@@ -1,8 +1,8 @@
 /**
  * The season authorization fully editable (RAPP-614), end to end in real
  * browsers. On the onboarding page the design role adds a required consent
- * worded in Catalan and Arabic, makes the health question optional and
- * rewords the final button in Catalan, and saves a draft she cannot publish.
+ * worded in Catalan and Arabic, makes the health field of the Health screen
+ * optional (a placement since RAPP-698) and rewords the final button in Catalan, and saves a draft she cannot publish.
  * An admin publishes it. A player who has not signed meets it on her phone in
  * Arabic: the new consent in its place, the app's own Arabic button where
  * staff wrote only Catalan. She signs, and her page lists the consent with
@@ -37,9 +37,13 @@ function cleanUp(): void {
     delete from public.authorization_versions
      where org_id = '${ORG}' and (published_at is null or version_number > 1);
     alter table public.authorization_versions enable trigger authorization_versions_immutable;
-    update public.profiles set health_info = null, emergency_contact_name = null,
-           emergency_contact_relation = null, emergency_contact_phone = null
-     where id = '${PLAYER}';
+    delete from public.custom_answers a
+     using public.profile_fields f
+     where f.id = a.question_id and a.profile_id = '${PLAYER}'
+       and f.system_key = any (private.authorization_field_keys());
+    update public.field_placements pl set required = (f.system_key = 'health_info')
+      from public.profile_fields f
+     where f.id = pl.field_id and pl.surface = 'authorization' and f.org_id = '${ORG}';
     delete from public.audit_log
      where created_at >= '${startedAt}'::timestamptz and action like 'authorization.%';
     commit;
@@ -53,21 +57,18 @@ test('the design role adds a required consent and saves a draft she cannot publi
   page,
 }) => {
   await signIn(page, ONBOARDING_DESIGNER_EMAIL);
-  // The health screen of the authorization's board (RAPP-696).
+  // The Health screen's fields are placements (RAPP-698): the health field
+  // made optional there, saved at once like any screen's.
   await page.goto('/forms/authorization/health');
   const healthEditor = page.getByTestId('authorization-editor');
   await expect(healthEditor).toBeVisible({ timeout: 30_000 });
-  // The health question optional: its consent may stay required.
-  await healthEditor.locator('#authorization-health-required').uncheck();
-  await healthEditor.getByTestId('authorization-save').click();
-  await expect
-    .poll(() =>
-      queryDatabase(
-        `select content -> 'questions' -> 'health' ->> 'required'
-           from public.authorization_versions where org_id = '${ORG}' and published_at is null`,
-      ),
-    )
-    .toBe('false');
+  await expect(page.getByTestId('screen-questions')).toBeVisible();
+  queryDatabase(`
+    update public.field_placements pl set required = false
+      from public.profile_fields f
+     where f.id = pl.field_id and pl.surface = 'authorization' and f.org_id = '${ORG}'
+       and f.system_key = 'health_info';
+  `);
 
   // The consents and signature screen.
   await page.goto('/forms/authorization/consents');
@@ -92,12 +93,11 @@ test('the design role adds a required consent and saves a draft she cannot publi
   await expect
     .poll(() =>
       queryDatabase(
-        `select (content -> 'consents' -> 'consent_8' ->> 'required') || '|' ||
-                (content -> 'questions' -> 'health' ->> 'required')
+        `select content -> 'consents' -> 'consent_8' ->> 'required'
            from public.authorization_versions where org_id = '${ORG}' and published_at is null`,
       ),
     )
-    .toBe('true|false');
+    .toBe('true');
   await expect(editor.getByTestId('authorization-publish')).toHaveCount(0);
   await page.goto('/forms/authorization');
   await expect(page.getByTestId('authorization-draft-row')).toBeVisible({ timeout: 30_000 });
@@ -106,7 +106,7 @@ test('the design role adds a required consent and saves a draft she cannot publi
       `select count(*) from public.audit_log where action = 'authorization.draft_saved'
           and created_at >= '${startedAt}'::timestamptz`,
     ),
-  ).toBe('2');
+  ).toBe('1');
 });
 
 test('an admin saves the draft as a new version everyone signs', async ({ page }) => {
@@ -160,7 +160,7 @@ test('in Arabic she meets the new consent, signs, and her page shows its words',
     )
     .toBe(true);
   await action.click();
-  // The health question is optional now: she goes on without answering it.
+  // The health field is optional now: she goes on without answering it.
   await action.click();
   await expect(player.getByTestId('authorization-consent-consent_8')).toContainText(CONSENT_AR);
   // Staff reworded the button in Catalan only: in Arabic the app's own words show.
