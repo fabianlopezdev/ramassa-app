@@ -152,7 +152,7 @@ export function PhoneMiniature({
       lang={language}
       dir={getLanguageDirection(language)}
       className={cn(
-        'flex aspect-[3/5] w-full flex-col gap-2 overflow-hidden rounded-xl border bg-canvas px-3 pt-3 pb-3',
+        'flex aspect-[9/16] w-full flex-col gap-2 overflow-hidden rounded-xl border bg-canvas px-3 pt-3 pb-3',
         isDimmed && 'opacity-50',
       )}
     >
