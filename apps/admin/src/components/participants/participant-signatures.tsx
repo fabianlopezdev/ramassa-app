@@ -2,7 +2,8 @@
  * Her signatures (RAPP-690): every signature block she signed on her
  * Onboarding, and the ones the entity person signed on a referral that names
  * her. Each row says on which form, the text exactly as shown, who signed and
- * when, with the drawing. Only staff with participants.view_personal read
+ * when, with the drawing; one signed on the walk-in tablet (RAPP-691) says so,
+ * with the team member who was present. Only staff with participants.view_personal read
  * them, as the database does.
  */
 
@@ -72,6 +73,18 @@ export function ParticipantSignatures({
                   {t('participants:signatures.signer')}
                 </dt>
                 <dd className="text-start">{signer}</dd>
+                {signature.signedOnTablet ? (
+                  <dd
+                    className="col-start-2 text-start text-muted-foreground"
+                    data-testid={`participant-signature-${signature.id}-tablet`}
+                  >
+                    {signature.witnessedByName === null
+                      ? t('participants:signatures.onTablet')
+                      : t('participants:signatures.onTabletWith', {
+                          name: signature.witnessedByName,
+                        })}
+                  </dd>
+                ) : null}
                 <dt className="text-start text-muted-foreground">
                   {t('participants:signatures.date')}
                 </dt>
