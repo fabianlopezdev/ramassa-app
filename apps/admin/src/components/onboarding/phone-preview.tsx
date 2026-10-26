@@ -6,8 +6,9 @@
  * Every control is drawn disabled: this is a picture, and the real screen is
  * checked on a phone with "Preview as player".
  *
- * Textos legals draws the season authorization and the app terms in the same
- * frame (RAPP-695): one phone for every editor.
+ * The season authorization and the app terms draw their screens in the same
+ * frame (RAPP-695), on their own boards since RAPP-696: one phone for every
+ * form.
  */
 
 import { QuestionControl } from '@/components/settings/question-type-fields';

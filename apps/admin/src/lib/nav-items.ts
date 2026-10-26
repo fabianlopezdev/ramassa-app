@@ -18,6 +18,7 @@ import {
   ClipboardList,
   ClipboardPen,
   Database,
+  FileSignature,
   FileText,
   HeartHandshake,
   IdCard,
@@ -27,6 +28,7 @@ import {
   ListChecks,
   MessageSquare,
   Scale,
+  ScrollText,
   Settings,
   Share2,
   Users,
@@ -51,18 +53,31 @@ export interface NavItem {
 
 /**
  * The staff menu groups by audience (RAPP-654): the two pages everyone starts
- * from on top, then what the players see in their app, what the partner
- * entities use, and how the organization itself is run.
+ * from on top, then how players are asked things (Formularis) and what is
+ * collected (Dades, RAPP-696), what the players see in their app, what the
+ * partner entities use, and how the organization itself is run.
  */
-export type StaffNavGroupId = 'top' | 'app' | 'entities' | 'organisation';
+export type StaffNavGroupId = 'top' | 'forms' | 'data' | 'app' | 'entities' | 'organisation';
+
+/** A menu row that holds other items under it (RAPP-696): Condicions legals. */
+export type StaffNavParentId = 'legal';
 
 export interface StaffNavItem extends NavItem {
   readonly group: StaffNavGroupId;
+  /** The row it sits under; absent for a row of its own. */
+  readonly parent?: StaffNavParentId;
 }
+
+/** The rows that hold items, with their own label and icon. */
+export const STAFF_NAV_PARENTS = {
+  legal: { labelKey: 'nav:staff.legal', icon: Scale },
+} as const satisfies Record<StaffNavParentId, { labelKey: string; icon: LucideIcon }>;
 
 /** The groups in menu order; the top group has no label. */
 export const STAFF_NAV_GROUPS = [
   { id: 'top', labelKey: null },
+  { id: 'forms', labelKey: 'nav:staff.groups.forms' },
+  { id: 'data', labelKey: 'nav:staff.groups.data' },
   { id: 'app', labelKey: 'nav:staff.groups.app' },
   { id: 'entities', labelKey: 'nav:staff.groups.entities' },
   { id: 'organisation', labelKey: 'nav:staff.groups.organisation' },
@@ -75,11 +90,12 @@ export const ONBOARDING_PERMISSIONS = [
 ] as const satisfies readonly PermissionCode[];
 
 /**
- * Textos legals (RAPP-694): the season authorization and the app terms, with
- * the same people as when they sat in the Onboarding area. Onboarding
- * designers write the drafts; only settings.organization publishes.
+ * Condicions legals (RAPP-694, RAPP-696): the season authorization and the
+ * app terms, each its own form, with the same people as when they sat in the
+ * Onboarding area. Onboarding designers write the drafts; only
+ * settings.organization saves them for the players.
  */
-export const LEGAL_TEXTS_PERMISSIONS = [
+export const LEGAL_FORMS_PERMISSIONS = [
   'settings.organization',
   'onboarding.design',
 ] as const satisfies readonly PermissionCode[];
@@ -147,16 +163,41 @@ export const STAFF_NAV_ITEMS = [
     to: '/onboarding',
     icon: ListChecks,
     labelKey: 'nav:staff.onboarding',
-    group: 'app',
+    group: 'forms',
     anyPermission: ONBOARDING_PERMISSIONS,
   },
   {
-    // The season authorization and the app terms (RAPP-694).
-    to: '/legal',
-    icon: Scale,
-    labelKey: 'nav:staff.legal',
-    group: 'app',
-    anyPermission: LEGAL_TEXTS_PERMISSIONS,
+    // The season authorization, a form of its own (RAPP-696).
+    to: '/forms/authorization',
+    icon: FileSignature,
+    labelKey: 'nav:staff.authorization',
+    group: 'forms',
+    parent: 'legal',
+    anyPermission: LEGAL_FORMS_PERMISSIONS,
+  },
+  {
+    // The app terms, a form of their own (RAPP-696).
+    to: '/forms/terms',
+    icon: ScrollText,
+    labelKey: 'nav:staff.appTerms',
+    group: 'forms',
+    parent: 'legal',
+    anyPermission: LEGAL_FORMS_PERMISSIONS,
+  },
+  {
+    // The entity referral form keeps its URL under the entities (RAPP-696).
+    to: '/entities/referral-form',
+    icon: ClipboardPen,
+    labelKey: 'nav:staff.referralForm',
+    group: 'forms',
+    anyPermission: REFERRAL_FORM_PERMISSIONS,
+  },
+  {
+    to: '/profile-layout',
+    icon: IdCard,
+    labelKey: 'nav:staff.profileLayout',
+    group: 'data',
+    anyPermission: PROFILE_LAYOUT_PERMISSIONS,
   },
   {
     to: '/content',
@@ -240,25 +281,11 @@ export const STAFF_NAV_ITEMS = [
     anyPermission: ['referrals.manage'],
   },
   {
-    to: '/entities/referral-form',
-    icon: ClipboardPen,
-    labelKey: 'nav:staff.referralForm',
-    group: 'entities',
-    anyPermission: REFERRAL_FORM_PERMISSIONS,
-  },
-  {
     to: '/entities',
     icon: Building2,
     labelKey: 'nav:staff.entities',
     group: 'entities',
     anyPermission: ENTITIES_PERMISSIONS,
-  },
-  {
-    to: '/profile-layout',
-    icon: IdCard,
-    labelKey: 'nav:staff.profileLayout',
-    group: 'organisation',
-    anyPermission: PROFILE_LAYOUT_PERMISSIONS,
   },
   {
     to: '/team',

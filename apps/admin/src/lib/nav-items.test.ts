@@ -96,12 +96,13 @@ test('gallery moderators reach the gallery from primary navigation', () => {
   expect(holdsAnyPermission(new Set(['forum.moderate']), gallery?.anyPermission)).toBe(false);
 });
 
-test('the onboarding design role sees the test players, the onboarding, the legal texts and the Fitxa (RAPP-615, RAPP-654, RAPP-694)', () => {
+test('the onboarding design role sees the test players, the onboarding, the legal forms and the Fitxa (RAPP-615, RAPP-654, RAPP-696)', () => {
   const design = new Set<PermissionCode>(['onboarding.design', 'test_players.manage']);
   expect(visibleStaffNavItems(design).map((item) => item.to)).toEqual([
     '/participants',
     '/onboarding',
-    '/legal',
+    '/forms/authorization',
+    '/forms/terms',
     '/profile-layout',
   ]);
 });
@@ -111,7 +112,8 @@ test('Settings holds the organization tabs only; the team, entities and Fitxa ha
   expect(visibleStaffNavItems(settings).map((item) => item.to)).toEqual([
     '/dashboard',
     '/onboarding',
-    '/legal',
+    '/forms/authorization',
+    '/forms/terms',
     '/entities/referral-form',
     '/profile-layout',
     '/settings',
@@ -137,9 +139,10 @@ test('the menu groups by audience in the agreed order (RAPP-654)', () => {
   );
   expect(byGroup).toEqual({
     top: ['/dashboard', '/participants'],
+    // How players are asked, then what is collected (RAPP-696).
+    forms: ['/onboarding', '/forms/authorization', '/forms/terms', '/entities/referral-form'],
+    data: ['/profile-layout'],
     app: [
-      '/onboarding',
-      '/legal',
       '/content',
       '/attendance',
       '/messages',
@@ -150,8 +153,8 @@ test('the menu groups by audience in the agreed order (RAPP-654)', () => {
       '/surveys',
       '/notifications',
     ],
-    entities: ['/participants/referrals', '/entities/referral-form', '/entities'],
-    organisation: ['/profile-layout', '/team', '/participants/season', '/data', '/settings'],
+    entities: ['/participants/referrals', '/entities'],
+    organisation: ['/team', '/participants/season', '/data', '/settings'],
   });
 });
 
@@ -182,6 +185,14 @@ test('only the deepest item the path sits in is marked as the current page', () 
   expect(
     activeStaffNavPath('/participants/referrals', [{ to: '/dashboard' }, { to: '/participants' }]),
   ).toBe('/participants');
+});
+
+test('the two legal forms sit under Condicions legals (RAPP-696)', () => {
+  expect(
+    STAFF_NAV_ITEMS.filter((item) => 'parent' in item && item.parent === 'legal').map(
+      (item) => item.to,
+    ),
+  ).toEqual(['/forms/authorization', '/forms/terms']);
 });
 
 test.each(SUPPORTED_LANGUAGES.map((language) => [language] as const))(

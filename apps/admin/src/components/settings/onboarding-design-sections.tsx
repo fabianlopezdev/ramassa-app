@@ -2,7 +2,7 @@
  * The onboarding settings, wired to the database (RAPP-615): the document
  * step note. Her screens and the fields they ask live on the Onboarding board
  * and the Fitxa (RAPP-641, RAPP-650); the app terms and the season
- * authorization have their own page, Textos legals (RAPP-694).
+ * authorization are forms of their own (RAPP-694, RAPP-696).
  *
  * Settings shows the note in its tabs, and the onboarding page shows it on its
  * own, so the onboarding design role reaches it without the rest of Settings.

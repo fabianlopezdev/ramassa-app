@@ -12,10 +12,19 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
 import { useUnreadMessageCount } from '@/lib/messaging';
-import { activeStaffNavPath, visibleStaffNavGroups, type StaffNavGroup } from '@/lib/nav-items';
+import {
+  activeStaffNavPath,
+  STAFF_NAV_PARENTS,
+  visibleStaffNavGroups,
+  type StaffNavGroup,
+  type StaffNavParentId,
+} from '@/lib/nav-items';
 import { Link, useLocation } from '@tanstack/react-router';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -116,40 +125,77 @@ function StaffNavGroupSection({
       {hasLabel ? <SidebarGroupLabel id={labelId}>{t(group.labelKey)}</SidebarGroupLabel> : null}
       <SidebarGroupContent>
         <SidebarMenu aria-labelledby={hasLabel ? labelId : undefined}>
-          {group.items.map((item) => {
-            const label = t(item.labelKey);
-            const isActive = item.to === activePath;
-            const Icon = item.icon;
-            return (
-              <SidebarMenuItem key={item.to}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive}
-                  tooltip={label}
-                  className={NAV_BUTTON_CLASS}
-                >
-                  {/* The router would mark every link the path sits in (Participants
-                    under /participants/referrals); exact matching leaves the
-                    marking to the one item chosen above. */}
-                  <Link
-                    to={item.to}
-                    activeOptions={{ exact: true, includeSearch: false }}
-                    aria-current={isActive ? 'page' : undefined}
+          {rowsOf(group.items).map((row) => {
+            if (row.kind === 'item') {
+              const { item } = row;
+              const label = t(item.labelKey);
+              const isActive = item.to === activePath;
+              const Icon = item.icon;
+              return (
+                <SidebarMenuItem key={item.to}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive}
+                    tooltip={label}
+                    className={NAV_BUTTON_CLASS}
                   >
+                    {/* The router would mark every link the path sits in (Participants
+                      under /participants/referrals); exact matching leaves the
+                      marking to the one item chosen above. */}
+                    <Link
+                      to={item.to}
+                      activeOptions={{ exact: true, includeSearch: false }}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      <Icon aria-hidden="true" />
+                      <span>{label}</span>
+                      {item.to === '/messages' && unread > 0 ? (
+                        <Badge
+                          variant="secondary"
+                          className="ms-auto"
+                          data-testid="staff-message-badge"
+                          aria-label={t('messaging:unread', { count: unread })}
+                        >
+                          {Math.min(unread, 99)}
+                        </Badge>
+                      ) : null}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            }
+            // A row holding its items (RAPP-696): it opens the first, and in
+            // the icon rail it is the one way in.
+            const parent = STAFF_NAV_PARENTS[row.parent];
+            const label = t(parent.labelKey);
+            const Icon = parent.icon;
+            const first = row.items[0];
+            return (
+              <SidebarMenuItem key={row.parent} data-testid={`staff-nav-parent-${row.parent}`}>
+                <SidebarMenuButton asChild tooltip={label} className={NAV_BUTTON_CLASS}>
+                  <Link to={first?.to ?? '/dashboard'} activeOptions={{ exact: true }}>
                     <Icon aria-hidden="true" />
                     <span>{label}</span>
-                    {item.to === '/messages' && unread > 0 ? (
-                      <Badge
-                        variant="secondary"
-                        className="ms-auto"
-                        data-testid="staff-message-badge"
-                        aria-label={t('messaging:unread', { count: unread })}
-                      >
-                        {Math.min(unread, 99)}
-                      </Badge>
-                    ) : null}
                   </Link>
                 </SidebarMenuButton>
+                <SidebarMenuSub>
+                  {row.items.map((item) => {
+                    const isActive = item.to === activePath;
+                    return (
+                      <SidebarMenuSubItem key={item.to}>
+                        <SidebarMenuSubButton asChild isActive={isActive}>
+                          <Link
+                            to={item.to}
+                            activeOptions={{ exact: true, includeSearch: false }}
+                            aria-current={isActive ? 'page' : undefined}
+                          >
+                            <span>{t(item.labelKey)}</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    );
+                  })}
+                </SidebarMenuSub>
               </SidebarMenuItem>
             );
           })}
@@ -157,4 +203,33 @@ function StaffNavGroupSection({
       </SidebarGroupContent>
     </SidebarGroup>
   );
+}
+
+type GroupItem = StaffNavGroup['items'][number];
+
+type MenuRow =
+  | { readonly kind: 'item'; readonly item: GroupItem }
+  | {
+      readonly kind: 'parent';
+      readonly parent: StaffNavParentId;
+      readonly items: readonly GroupItem[];
+    };
+
+/** The group's rows: each item, or its parent row in the first item's place. */
+function rowsOf(items: readonly GroupItem[]): readonly MenuRow[] {
+  const rows: MenuRow[] = [];
+  for (const item of items) {
+    const parent = 'parent' in item ? item.parent : undefined;
+    if (parent === undefined) {
+      rows.push({ kind: 'item', item });
+      continue;
+    }
+    if (rows.some((row) => row.kind === 'parent' && row.parent === parent)) continue;
+    rows.push({
+      kind: 'parent',
+      parent,
+      items: items.filter((each) => 'parent' in each && each.parent === parent),
+    });
+  }
+  return rows;
 }

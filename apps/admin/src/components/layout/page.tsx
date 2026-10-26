@@ -31,25 +31,16 @@ export interface PageHeaderProps {
   /** Buttons at the end of the header row, such as "New". */
   readonly actions?: ReactNode;
   readonly className?: string;
-  /** A header inside a page that has its own: an editor's, under the page's tabs (RAPP-695). */
-  readonly isSection?: boolean;
 }
 
-export function PageHeader({
-  title,
-  description,
-  actions,
-  className,
-  isSection = false,
-}: PageHeaderProps) {
-  const Heading = isSection ? 'h2' : 'h1';
+export function PageHeader({ title, description, actions, className }: PageHeaderProps) {
   return (
     <header
       data-slot="page-header"
       className={cn('flex flex-wrap items-start justify-between gap-x-6 gap-y-3', className)}
     >
       <div className="min-w-0 flex-1 space-y-2">
-        <Heading className="text-start text-2xl font-semibold">{title}</Heading>
+        <h1 className="text-start text-2xl font-semibold">{title}</h1>
         {description === undefined ? null : (
           <p className="text-start text-sm leading-6 text-muted-foreground">{description}</p>
         )}

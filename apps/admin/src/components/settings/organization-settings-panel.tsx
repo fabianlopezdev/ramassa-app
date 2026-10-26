@@ -74,7 +74,7 @@ export function isSettingsTab(value: string | undefined): value is SettingsTab {
  * referral form, the team and the entities have their own menu items and
  * pages since RAPP-654, so each is reachable from one place. Her screens and
  * the fields they ask are on the Onboarding board and the Fitxa (RAPP-656);
- * the season authorization and the app terms on Textos legals (RAPP-694).
+ * the season authorization and the app terms are forms of their own (RAPP-696).
  */
 function visibleSettingsTabs(permissions: ReadonlySet<PermissionCode>): readonly SettingsTab[] {
   const tabs: SettingsTab[] = [];

@@ -4,10 +4,10 @@
  * (`identity`, `summary`, `authorization`...) or a Ramassà screen's id.
  *
  * The same guard as the board: Settings' own permission or the onboarding
- * design role (RAPP-615). The authorization screen has nothing to edit here
- * since its text moved to Textos legals (RAPP-694), so its address opens that
- * tab. `ssr: false` for the reason every staff screen
- * gives (the session lives in localStorage, ADR-005).
+ * design role (RAPP-615). The app terms and the season authorization are
+ * forms of their own (RAPP-696), so their screens' addresses open there.
+ * `ssr: false` for the reason every staff screen gives (the session lives in
+ * localStorage, ADR-005).
  */
 
 import { RequireAuth } from '@/components/auth/require-auth';
@@ -20,7 +20,14 @@ export const Route = createFileRoute('/_staff/onboarding/screens/$screenId')({
   ssr: false,
   beforeLoad: ({ params }) => {
     if (params.screenId === 'authorization') {
-      throw redirect({ to: '/legal', search: { tab: 'authorization' }, replace: true });
+      throw redirect({ to: '/forms/authorization', replace: true });
+    }
+    if (params.screenId === 'terms' || params.screenId === 'terms-intro') {
+      throw redirect({
+        to: '/forms/terms/$step',
+        params: { step: params.screenId },
+        replace: true,
+      });
     }
   },
   loader: loadOnboardingDesign,

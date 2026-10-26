@@ -31,7 +31,7 @@ export type MovedSettingsTab =
   | { readonly to: '/profile-layout' }
   | { readonly to: '/entities/referral-form' }
   | { readonly to: '/team' }
-  | { readonly to: '/legal'; readonly search: { readonly tab: 'authorization' } }
+  | { readonly to: '/forms/authorization' }
   | { readonly to: '/entities'; readonly search: { readonly entity?: string } };
 
 function isSettingsPath(pathname: string): boolean {
@@ -52,9 +52,9 @@ export function movedSettingsTab(
       return { to: '/entities/referral-form' };
     case 'staff':
       return { to: '/team' };
-    // The authorization and the app terms have their own page (RAPP-694).
+    // The season authorization is a form of its own (RAPP-694, RAPP-696).
     case 'authorization':
-      return { to: '/legal', search: { tab: 'authorization' } };
+      return { to: '/forms/authorization' };
     case 'entities': {
       const entity = search['entity'];
       return { to: '/entities', search: typeof entity === 'string' ? { entity } : {} };

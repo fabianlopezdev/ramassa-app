@@ -1,15 +1,15 @@
 /**
- * The legal texts on her phone (RAPP-695): each screen of the season
- * authorization and of the app terms as `PhoneFrame` draws it, so Textos
- * legals previews them as the Onboarding screen editor previews its screens.
+ * The legal forms on her phone (RAPP-695): each screen of the season
+ * authorization and of the app terms as `PhoneFrame` draws it, so their
+ * boards and screen editors (RAPP-696) preview them as Onboarding does.
  *
- * The order and the content follow her app: the authorization form's phases
- * (document, health when it asks something, consents and signature), then
- * re-registration's two screens for a returning player; the terms'
- * introduction and the terms screen at their place in her onboarding.
+ * The order and the content follow her app: re-registration's two screens
+ * for a returning player, then the authorization form's screens in the
+ * version's order (document, health when it asks something), the consents and
+ * signature last; the terms' introduction, then the terms screen.
  */
 
-import { allSteps, boardStep } from '@/components/onboarding/board-steps';
+import { boardStep } from '@/components/onboarding/board-steps';
 import {
   builtinPhoneQuestion,
   customPhoneQuestion,
@@ -20,6 +20,7 @@ import {
 } from '@/components/onboarding/screen-content';
 import {
   AUTHORIZATION_BUNDLED_TEXT_KEYS,
+  authorizationScreenOrder,
   authorizationWording,
   EMERGENCY_TITLE_REQUIRED_KEY,
   isMiddlePhaseShown,
@@ -40,13 +41,13 @@ import {
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
-/** The authorization's screens, in the order she meets them. */
-const AUTHORIZATION_PHONE_STEPS = [
+/** The authorization's screens; the board orders them as she meets them. */
+export const AUTHORIZATION_PHONE_STEPS = [
+  'reregistration',
+  'reregistrationSeason',
   'document',
   'health',
   'consents',
-  'reregistration',
-  'reregistrationSeason',
 ] as const;
 
 export type AuthorizationPhoneStep = (typeof AUTHORIZATION_PHONE_STEPS)[number];
@@ -97,12 +98,10 @@ const EMPTY: Omit<PhoneContent, 'title' | 'continueLabel'> = {
 const withSeason = (text: string, seasonName: string) =>
   text.replace(/\{\{\s*season\s*\}\}/gu, seasonName);
 
-/** The steps her phone walks for this content: health only while it asks something. */
-export function authorizationPhoneSteps(
-  content: AuthorizationContent,
-): readonly AuthorizationPhoneStep[] {
-  return AUTHORIZATION_PHONE_STEPS.filter(
-    (step) => step !== 'health' || isMiddlePhaseShown(content),
+/** The form's screens her phone walks for this content, in order: health only while it asks something. */
+function walkedScreens(content: AuthorizationContent) {
+  return authorizationScreenOrder(content).filter(
+    (screen) => screen !== 'health' || isMiddlePhaseShown(content),
   );
 }
 
@@ -149,18 +148,18 @@ export function authorizationPhoneScreen(
     ...(heading === undefined ? {} : { heading }),
   });
 
-  // Her form's phases: 1, 2 when it asks something, 3.
-  const phases = isMiddlePhaseShown(content) ? 3 : 2;
-  const progress = (number: number) => ({
-    step: number,
-    total: phases,
+  // Her form's screens in the version's order (RAPP-696), health when it asks something.
+  const walked = walkedScreens(content);
+  const progress = (screen: (typeof walked)[number]) => ({
+    step: Math.max(1, walked.indexOf(screen) + 1),
+    total: walked.length,
     flowLabel: words('flow_label'),
   });
 
   if (step === 'document') {
     const numbered = numberAuthorizationDocument(content);
     return {
-      ...progress(1),
+      ...progress('document'),
       content: {
         ...EMPTY,
         title: text(content.title),
@@ -205,7 +204,7 @@ export function authorizationPhoneScreen(
       );
     }
     return {
-      ...progress(2),
+      ...progress('health'),
       content: {
         ...EMPTY,
         title: words('health_title'),
@@ -217,7 +216,7 @@ export function authorizationPhoneScreen(
 
   if (step === 'consents') {
     return {
-      ...progress(phases),
+      ...progress('consents'),
       content: {
         ...EMPTY,
         title: words('consents_title'),
@@ -285,16 +284,6 @@ export function authorizationPhoneScreen(
   };
 }
 
-/** A screen's place on the Onboarding board, as the screen editor's "Step N of M" reads it. */
-export function onboardingPlace(
-  catalog: IntakeCatalog,
-  key: string,
-): { readonly number: number; readonly total: number } | null {
-  const steps = allSteps(catalog);
-  const number = steps.findIndex((each) => each.key === key) + 1;
-  return number === 0 ? null : { number, total: steps.length };
-}
-
 /** The app terms' two screens, in her onboarding's order. */
 export const TERMS_PHONE_STEPS = ['terms-intro', 'terms'] as const;
 
@@ -302,8 +291,7 @@ export type TermsPhoneStep = (typeof TERMS_PHONE_STEPS)[number];
 
 /**
  * One screen of the app terms with the draft's words: the screen's buttons are
- * the onboarding screen's own (edited on the Onboarding board), its place is
- * its place in her onboarding.
+ * the onboarding screen's own, its place is its place on the terms board.
  */
 export function termsPhoneScreen(
   terms: ReturnType<typeof resolveAppTerms>,
@@ -313,8 +301,7 @@ export function termsPhoneScreen(
   catalog: IntakeCatalog,
 ): PhoneScreen {
   const flow = boardStep(catalog, step);
-  const place = onboardingPlace(catalog, step);
-  const position = place === null ? {} : { step: place.number, total: place.total };
+  const position = { step: TERMS_PHONE_STEPS.indexOf(step) + 1, total: TERMS_PHONE_STEPS.length };
   const base =
     flow === null
       ? { ...EMPTY, title: '', continueLabel: '' }

@@ -2,16 +2,13 @@
  * The registration board (RAPP-641): every onboarding screen as a card, in
  * the order her phone walks them. Staff drag a card by its grip to move the
  * screen, open it with Edit, and add a screen of their own with the last
- * movable card. The summary, the terms and the season authorization end the
- * onboarding (legal): their cards are locked, open but never move, and
- * nothing drops between them. The terms and authorization cards open their
- * tab on Textos legals (RAPP-694).
+ * movable card. The summary, the app terms and the season authorization end
+ * the onboarding (legal): their cards are locked, open but never move, and
+ * nothing drops between them. The app terms and the authorization are forms
+ * of their own (RAPP-696), each one linked card that opens its board.
  *
- * A drop saves the order at once through the same call the old order list
- * used (`saveWizardFlowOrder`). The board shows the new order before the
- * database answers and puts the old one back, with a toast, if it refuses.
- * Pointer and keyboard both drag, and a screen reader hears each move in the
- * staff member's language.
+ * `FormBoard` is every form's board (RAPP-696): Onboarding, the season
+ * authorization and the app terms draw their cards with it.
  */
 
 import { useReload } from '@/components/settings/onboarding-design-sections';
@@ -35,7 +32,7 @@ import {
 import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { EyeOff, GripVertical, Lock, Plus } from 'lucide-react';
+import { EyeOff, GripVertical, Link2, Lock, Plus } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -49,10 +46,10 @@ import {
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import {
+  BOARD_LOCKED_STEPS,
   boardStep,
   isShownToHer,
-  legalTabOf,
-  LOCKED_STEPS,
+  linkedFormOf,
   movableOrder,
   routeIdOf,
   type BoardStep,
@@ -70,63 +67,16 @@ export function stepName(step: BoardStep, language: LanguageCode, t: Translate):
 }
 
 export function ScreenBoard({ catalog }: { readonly catalog: IntakeCatalog }) {
-  const initial = movableOrder(catalog);
-  // Keyed by the saved order: a reload after a save or a reset starts again
-  // from what the database holds.
-  return <BoardGrid key={initial.join('|')} catalog={catalog} initial={initial} />;
-}
-
-function BoardGrid({
-  catalog,
-  initial,
-}: {
-  readonly catalog: IntakeCatalog;
-  readonly initial: readonly WizardStepKey[];
-}) {
   const { t, i18n } = useTranslation(['settings', 'onboarding']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const reload = useReload();
-  const [order, setOrder] = useState<readonly WizardStepKey[]>(initial);
-  const [activeKey, setActiveKey] = useState<UniqueIdentifier | null>(null);
-  const sensors = useSortableSensors();
-  const steps = new Map(
-    [...order, ...LOCKED_STEPS].flatMap((key) => {
-      const step = boardStep(catalog, key);
-      return step === null ? [] : [[key as string, step] as const];
-    }),
-  );
-  const nameOf = (id: UniqueIdentifier): string => {
-    const step = steps.get(String(id));
-    return step === undefined ? '' : stepName(step, language, t);
-  };
-  const positionOf = (id: UniqueIdentifier): number => order.indexOf(id as WizardStepKey) + 1;
-
-  const accessibility = useSortableAccessibility(nameOf, positionOf);
-
-  async function drop({ active, over }: DragEndEvent) {
-    setActiveKey(null);
-    if (over === null || active.id === over.id) return;
-    const previous = order;
-    const next = arrayMove(
-      [...order],
-      order.indexOf(active.id as WizardStepKey),
-      order.indexOf(over.id as WizardStepKey),
-    );
-    setOrder(next);
-    try {
-      await saveWizardFlowOrder(supabase, next);
-      await reload();
-    } catch {
-      setOrder(previous);
-      toast.error(t('onboardingBoard.orderFailed'));
-    }
-  }
-
+  const initial = movableOrder(catalog);
   const hidden = wizardFlow(catalog).hiddenScreens;
-  const card = (key: string, number: number) => {
-    const step = steps.get(key);
-    if (step === undefined) return null;
+  const card = (key: string): BoardCard | null => {
+    const step = boardStep(catalog, key);
+    if (step === null) return null;
     const content = stepContent(catalog, step, language, t);
+    const linked = linkedFormOf(step.key);
     const status =
       step.kind === 'builtin' && hidden.has(step.key)
         ? t('builtinScreens.hiddenBadge')
@@ -134,16 +84,124 @@ function BoardGrid({
           ? t('onboardingBoard.notShown')
           : null;
     return {
-      step,
-      number,
-      name: stepName(step, language, t),
+      key: step.key,
+      name: linked === null ? stepName(step, language, t) : t(linked.labelKey),
       miniature: (
         <PhoneMiniature content={content} language={language} isDimmed={status !== null} />
       ),
       status,
+      isLinked: linked !== null,
+      link:
+        linked === null
+          ? { to: '/onboarding/screens/$screenId', params: { screenId: routeIdOf(step.key) } }
+          : { to: linked.to },
     };
   };
-  const active = activeKey === null ? null : card(String(activeKey), positionOf(activeKey));
+  const cards = (keys: readonly string[]) =>
+    keys.map(card).filter((each): each is BoardCard => each !== null);
+  // Keyed by the saved order: a reload after a save or a reset starts again
+  // from what the database holds.
+  return (
+    <FormBoard
+      key={initial.join('|')}
+      label={t('onboardingBoard.listLabel')}
+      movable={cards(initial)}
+      trailing={cards(BOARD_LOCKED_STEPS)}
+      addCard={<AddScreenCard order={initial} />}
+      onReorder={async (next) => {
+        // The same call the old order list used (`saveWizardFlowOrder`).
+        await saveWizardFlowOrder(supabase, next as readonly WizardStepKey[]);
+        await reload();
+      }}
+    />
+  );
+}
+
+/** Where a card opens: a screen of this form, or another form it links to. */
+type BoardCardLink =
+  | { readonly to: '/onboarding/screens/$screenId'; readonly params: { readonly screenId: string } }
+  | {
+      readonly to: '/forms/authorization/$step' | '/forms/terms/$step';
+      readonly params: { readonly step: string };
+    }
+  | { readonly to: '/forms/authorization' | '/forms/terms' };
+
+/** One card of a form's board (RAPP-696): its screen, or a linked form. */
+export interface BoardCard {
+  readonly key: string;
+  readonly name: string;
+  readonly miniature: ReactNode;
+  /** Hidden or not shown to her; null when the screen shows normally. */
+  readonly status: string | null;
+  readonly link: BoardCardLink;
+  /** A step that opens another form (RAPP-696), such as the app terms on Onboarding. */
+  readonly isLinked?: boolean;
+}
+
+/**
+ * Every form's board (RAPP-641, shared by every form since RAPP-696): its
+ * screens as cards in the order her phone walks them. The movable cards drag
+ * by their grip; the locked ones before and after them open but never move,
+ * and nothing drops between them. A drop shows the new order at once and
+ * puts the old one back, with a toast, if the save fails. Pointer and
+ * keyboard both drag, and a screen reader hears each move in the staff
+ * member's language.
+ */
+export function FormBoard({
+  label,
+  leading = [],
+  movable,
+  trailing = [],
+  addCard = null,
+  onReorder,
+}: {
+  /** The list's name for assistive technology. */
+  readonly label: string;
+  /** Locked cards before the movable ones. */
+  readonly leading?: readonly BoardCard[];
+  readonly movable: readonly BoardCard[];
+  /** Locked cards after the movable ones. */
+  readonly trailing?: readonly BoardCard[];
+  /** A card after the last movable one, such as Onboarding's add card. */
+  readonly addCard?: ReactNode;
+  readonly onReorder: (keys: readonly string[]) => Promise<void>;
+}) {
+  const { t } = useTranslation('settings');
+  const [order, setOrder] = useState<readonly string[]>(movable.map((card) => card.key));
+  const [activeKey, setActiveKey] = useState<UniqueIdentifier | null>(null);
+  const sensors = useSortableSensors();
+  const byKey = new Map([...leading, ...movable, ...trailing].map((card) => [card.key, card]));
+  const positionOf = (id: UniqueIdentifier): number =>
+    leading.length + order.indexOf(String(id)) + 1;
+  const accessibility = useSortableAccessibility(
+    (id) => byKey.get(String(id))?.name ?? '',
+    positionOf,
+  );
+
+  async function drop({ active, over }: DragEndEvent) {
+    setActiveKey(null);
+    if (over === null || active.id === over.id) return;
+    const previous = order;
+    const next = arrayMove(
+      [...order],
+      order.indexOf(String(active.id)),
+      order.indexOf(String(over.id)),
+    );
+    setOrder(next);
+    try {
+      await onReorder(next);
+    } catch {
+      setOrder(previous);
+      toast.error(t('onboardingBoard.orderFailed'));
+    }
+  }
+
+  const lockedCard = (card: BoardCard, number: number) => (
+    <li key={card.key} className="flex" data-testid={`board-step-${card.key}`}>
+      <ScreenCard card={card} number={number} handle={null} isLocked />
+    </li>
+  );
+  const active = activeKey === null ? null : byKey.get(String(activeKey));
 
   return (
     <DndContext
@@ -155,34 +213,28 @@ function BoardGrid({
       onDragEnd={(event) => void drop(event)}
     >
       <SortableContext items={[...order]} strategy={rectSortingStrategy}>
-        <ol
-          className={BOARD_GRID}
-          aria-label={t('onboardingBoard.listLabel')}
-          data-testid="screen-board"
-        >
+        <ol className={BOARD_GRID} aria-label={label} data-testid="screen-board">
+          {leading.map((card, index) => lockedCard(card, index + 1))}
           {order.map((key, index) => {
-            const view = card(key, index + 1);
-            return view === null ? null : (
+            const card = byKey.get(key);
+            return card === undefined ? null : (
               <SortableCard key={key} id={key}>
-                {(handle) => <ScreenCard {...view} handle={handle} />}
+                {(handle) => (
+                  <ScreenCard card={card} number={leading.length + index + 1} handle={handle} />
+                )}
               </SortableCard>
             );
           })}
-          <li className="flex">
-            <AddScreenCard order={order} />
-          </li>
-          {LOCKED_STEPS.map((key, index) => {
-            const view = card(key, order.length + index + 1);
-            return view === null ? null : (
-              <li key={key} className="flex" data-testid={`board-step-${key}`}>
-                <ScreenCard {...view} handle={null} />
-              </li>
-            );
-          })}
+          {addCard === null ? null : <li className="flex">{addCard}</li>}
+          {trailing.map((card, index) =>
+            lockedCard(card, leading.length + order.length + index + 1),
+          )}
         </ol>
       </SortableContext>
       <DragOverlay>
-        {active === null ? null : <ScreenCard {...active} handle={null} isLifted />}
+        {active === undefined || active === null ? null : (
+          <ScreenCard card={active} number={positionOf(active.key)} handle={null} isLifted />
+        )}
       </DragOverlay>
     </DndContext>
   );
@@ -239,34 +291,20 @@ export function CardFrame({
 }
 
 function ScreenCard({
-  step,
+  card,
   number,
-  name,
-  miniature,
-  status,
   handle,
+  isLocked = false,
   isLifted = false,
 }: {
-  readonly step: BoardStep;
+  readonly card: BoardCard;
   readonly number: number;
-  readonly name: string;
-  readonly miniature: ReactNode;
-  /** Hidden or not shown to her; null when the screen shows normally. */
-  readonly status: string | null;
   /** The grip of a movable card; null for a locked card or the lifted copy. */
   readonly handle: Handle | null;
+  readonly isLocked?: boolean;
   readonly isLifted?: boolean;
 }) {
   const { t } = useTranslation('settings');
-  const isLocked = step.kind === 'locked';
-  const legalTab = legalTabOf(step.key);
-  const link =
-    legalTab === null
-      ? ({
-          to: '/onboarding/screens/$screenId',
-          params: { screenId: routeIdOf(step.key) },
-        } as const)
-      : ({ to: '/legal', search: { tab: legalTab } } as const);
   return (
     <CardFrame
       className={cn(
@@ -278,45 +316,54 @@ function ScreenCard({
       <header className="flex h-7 items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted-foreground tabular-nums">
           {t('onboardingBoard.step', { number })}
-          {status === null ? null : (
+          {card.status === null ? null : (
             <span className="inline-flex min-w-0 items-center gap-1 font-normal">
               <EyeOff aria-hidden className="size-3.5 shrink-0" />
-              <span className="truncate">{status}</span>
+              <span className="truncate">{card.status}</span>
             </span>
           )}
         </span>
-        {isLocked ? (
-          <span
-            className="flex size-7 items-center justify-center text-muted-foreground"
-            title={t('onboardingBoard.fixed')}
-          >
-            <Lock aria-hidden className="size-4" />
-            <span className="sr-only">{t('onboardingBoard.fixed')}</span>
-          </span>
+        {handle === null ? (
+          isLifted ? null : (
+            <span
+              className="flex size-7 items-center justify-center text-muted-foreground"
+              title={t('onboardingBoard.fixed')}
+            >
+              <Lock aria-hidden className="size-4" />
+              <span className="sr-only">{t('onboardingBoard.fixed')}</span>
+            </span>
+          )
         ) : (
           <Button
-            ref={handle?.ref}
+            ref={handle.ref}
             type="button"
             variant="ghost"
             size="icon-sm"
             className="cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
-            aria-label={t('onboardingBoard.dragHandle', { screen: name })}
-            {...(handle?.props ?? {})}
+            aria-label={t('onboardingBoard.dragHandle', { screen: card.name })}
+            {...handle.props}
           >
             <GripVertical aria-hidden />
           </Button>
         )}
       </header>
-      <Link {...link} tabIndex={-1} aria-hidden className="block rounded-xl">
-        {miniature}
+      <Link {...card.link} tabIndex={-1} aria-hidden className="block rounded-xl">
+        {card.miniature}
       </Link>
       <Button asChild variant="outline" size="sm" className="w-full">
         <Link
-          {...link}
-          aria-label={t('onboardingBoard.editScreen', { screen: name })}
-          data-testid={`board-edit-${step.key}`}
+          {...card.link}
+          aria-label={t('onboardingBoard.editScreen', { screen: card.name })}
+          data-testid={`board-edit-${card.key}`}
         >
-          {t('onboardingBoard.edit')}
+          {card.isLinked === true ? (
+            <>
+              <Link2 aria-hidden data-icon="inline-start" />
+              {card.name}
+            </>
+          ) : (
+            t('onboardingBoard.edit')
+          )}
         </Link>
       </Button>
     </CardFrame>

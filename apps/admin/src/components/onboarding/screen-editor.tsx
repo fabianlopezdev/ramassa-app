@@ -9,9 +9,9 @@
  *     its own questions reworded, hidden or made required, then the fields
  *     placed on it. The document screen adds its note (RAPP-302), and a
  *     screen with a detail screen edits that one's wording too.
- *   - The terms and the season authorization are edited on Textos legals
- *     (RAPP-694); the terms screen keeps its buttons' wording here and links
- *     there.
+ *   - The app terms and the season authorization are forms of their own
+ *     (RAPP-696): their screens open on their boards, and the terms screens'
+ *     buttons (`WordingSection`) are edited there.
  *
  * Fields are picked from the Fitxa (`ScreenFieldsSection`): their type and
  * privacy are the Fitxa's, so this editor never asks them. The form writes in
@@ -41,7 +41,7 @@ import type { OnboardingDesignData } from '@/lib/onboarding-design';
 import { supabase } from '@/lib/supabase';
 import { Link, useNavigate, useRouter } from '@tanstack/react-router';
 import { ChevronLeft, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { getLanguageDirection } from '@ramassa/shared/i18n/languages';
@@ -74,6 +74,7 @@ import type { LanguageCode } from '@ramassa/shared/schemas';
 import { allSteps, editableScreenOf, stepFromRouteId, type BoardStep } from './board-steps';
 import { ConfirmDialog } from './confirm-dialog';
 import { PhoneFrame, SteppedPhone } from './phone-preview';
+import { useSaveKind } from './save-kind-dialog';
 import { stepName } from './screen-board';
 import {
   builtinPhoneQuestion,
@@ -106,23 +107,18 @@ export function ScreenEditor({
 
   return (
     <Page data-testid="screen-editor-page">
-      <div className="flex flex-col gap-2">
-        <Button asChild variant="ghost" size="sm" className="-ms-2.5 w-fit text-muted-foreground">
-          <Link to="/onboarding" data-testid="screen-editor-back">
-            <ChevronLeft aria-hidden data-icon="inline-start" className="rtl:rotate-180" />
-            {t('onboardingPage.title')}
-          </Link>
-        </Button>
-        {step === null ? (
-          <PageHeader title={t('onboardingBoard.notFound')} />
-        ) : (
-          <EditorHeader
-            step={step}
-            name={stepName(step, language, t)}
-            position={t('onboardingBoard.stepOf', { number, total: steps.length })}
-          />
-        )}
-      </div>
+      <ScreenEditorHeading
+        back={{ to: '/onboarding', label: t('onboardingPage.title') }}
+        title={step === null ? t('onboardingBoard.notFound') : stepName(step, language, t)}
+        position={
+          step === null ? undefined : t('onboardingBoard.stepOf', { number, total: steps.length })
+        }
+        actions={
+          step?.kind === 'custom' ? (
+            <DeleteScreen screen={step.screen} name={stepName(step, language, t)} />
+          ) : undefined
+        }
+      />
       {step === null ? null : (
         // Keyed by the screen: another screen starts from what is saved.
         <EditorBody key={step.key} data={data} step={step} number={number} total={steps.length} />
@@ -131,21 +127,34 @@ export function ScreenEditor({
   );
 }
 
-function EditorHeader({
-  step,
-  name,
+/**
+ * Every form's screen editor heading (RAPP-641, shared by every form since
+ * RAPP-696): back to its board, the screen's name and its place on it.
+ */
+export function ScreenEditorHeading({
+  back,
+  title,
   position,
+  actions,
 }: {
-  readonly step: BoardStep;
-  readonly name: string;
-  readonly position: string;
+  readonly back: {
+    readonly to: '/onboarding' | '/forms/authorization' | '/forms/terms';
+    readonly label: string;
+  };
+  readonly title: string;
+  readonly position?: string;
+  readonly actions?: ReactNode;
 }) {
   return (
-    <PageHeader
-      title={name}
-      description={position}
-      actions={step.kind === 'custom' ? <DeleteScreen screen={step.screen} name={name} /> : null}
-    />
+    <div className="flex flex-col gap-2">
+      <Button asChild variant="ghost" size="sm" className="-ms-2.5 w-fit text-muted-foreground">
+        <Link to={back.to} data-testid="screen-editor-back">
+          <ChevronLeft aria-hidden data-icon="inline-start" className="rtl:rotate-180" />
+          {back.label}
+        </Link>
+      </Button>
+      <PageHeader title={title} description={position} actions={actions} />
+    </div>
   );
 }
 
@@ -245,6 +254,7 @@ function CustomScreenEditor({
   const [intro, setIntro] = useState<BuilderText>(screen.intro ?? {});
   const [isSaving, setIsSaving] = useState(false);
   const row = useRowEditing();
+  const saveKind = useOnboardingSaveKind(data.finishedCount);
 
   async function saveScreen() {
     if ((title.ca ?? '').trim() === '') {
@@ -252,6 +262,11 @@ function CustomScreenEditor({
       toast.error(t('questions.catalanNeeded'));
       return;
     }
+    await saveKind.request(storeScreen);
+  }
+
+  // Every kind saves as today: a new version is not offered yet (RAPP-696).
+  async function storeScreen() {
     setIsSaving(true);
     try {
       await saveIntakeScreen(supabase, {
@@ -296,6 +311,7 @@ function CustomScreenEditor({
       }
       form={
         <>
+          {saveKind.dialog}
           <EditorSection
             title={t('onboardingBoard.screen')}
             testId="screen-texts"
@@ -494,6 +510,7 @@ function AppScreenEditor({
               <WordingSection
                 catalog={catalog}
                 screen={screen}
+                finishedCount={data.finishedCount}
                 language={language}
                 title={t('onboardingBoard.wording')}
                 onChange={(next) => {
@@ -506,6 +523,7 @@ function AppScreenEditor({
               <WordingSection
                 catalog={catalog}
                 screen={detail}
+                finishedCount={data.finishedCount}
                 language={language}
                 title={t(`builtinScreens.screenName.${detail}`)}
                 onChange={(next) => {
@@ -533,23 +551,6 @@ function AppScreenEditor({
             {step.key === 'documentation' ? (
               <OnboardingDocumentSection explanation={data.documentExplanation} />
             ) : null}
-            {step.key === 'terms-intro' || step.key === 'terms' ? (
-              // The terms text itself is edited on Textos legals (RAPP-694).
-              <EditorSection
-                title={t('legalPage.terms')}
-                actions={
-                  <Button asChild variant="outline" size="sm">
-                    <Link to="/legal" search={{ tab: 'terms' }} data-testid="screen-editor-legal">
-                      {t('onboardingBoard.edit')}
-                    </Link>
-                  </Button>
-                }
-              >
-                <p className="text-start text-sm text-muted-foreground">
-                  {t('builtinScreens.termsTitleNote')}
-                </p>
-              </EditorSection>
-            ) : null}
           </>
         }
       />
@@ -557,15 +558,19 @@ function AppScreenEditor({
   );
 }
 
-function WordingSection({
+/** An app screen's own wording and hide switch; the terms screens' buttons too (RAPP-696). */
+export function WordingSection({
   catalog,
   screen,
+  finishedCount,
   language,
   title,
   onChange,
 }: {
   readonly catalog: IntakeCatalog;
   readonly screen: EditableWizardScreen;
+  /** Players who finished Onboarding: once anyone has, Desa asks (RAPP-696). */
+  readonly finishedCount: number;
   readonly language: LanguageCode;
   readonly title: string;
   readonly onChange: (texts: ScreenTexts) => void;
@@ -578,6 +583,7 @@ function WordingSection({
   );
   const [isHidden, setIsHidden] = useState(saved?.isHidden ?? false);
   const [isSaving, setIsSaving] = useState(false);
+  const saveKind = useOnboardingSaveKind(finishedCount);
   const fields = screenTextFields(screen);
   const direction = getLanguageDirection(language);
   const hideable =
@@ -596,7 +602,8 @@ function WordingSection({
     onChange(next);
   };
 
-  async function save() {
+  // Every kind saves as today: a new version is not offered yet (RAPP-696).
+  async function store() {
     setIsSaving(true);
     try {
       await saveBuiltinScreen(supabase, { screen, texts, isHidden: hideable && isHidden });
@@ -609,8 +616,6 @@ function WordingSection({
     }
   }
 
-  // The terms screens say where their title comes from in the Textos legals
-  // section below (RAPP-694).
   const note = DETAIL_SCREEN_PARENTS[screen] === undefined ? null : t('builtinScreens.detailNote');
 
   return (
@@ -621,13 +626,14 @@ function WordingSection({
         <Button
           type="button"
           disabled={isSaving}
-          onClick={() => void save()}
+          onClick={() => void saveKind.request(store)}
           data-testid={`wording-save-${screen}`}
         >
           {t('builtinScreens.save')}
         </Button>
       }
     >
+      {saveKind.dialog}
       <FieldGroup>
         {note === null || screen === 'terms-intro' ? null : (
           <FieldDescription className="text-start">{note}</FieldDescription>
@@ -684,4 +690,18 @@ function WordingSection({
       </FieldGroup>
     </EditorSection>
   );
+}
+
+/**
+ * Onboarding's Desa dialog (RAPP-696): once anyone finished Onboarding, a
+ * screen save asks Correcció or Nova versió. Asking finished players again is
+ * not built yet, so Nova versió shows disabled with the reason, and every save
+ * stays a correction.
+ */
+function useOnboardingSaveKind(finishedCount: number) {
+  const { t } = useTranslation('settings');
+  return useSaveKind({
+    hasAnswers: finishedCount > 0,
+    newVersionBlockedReason: t('saveDialog.newVersionLater'),
+  });
 }

@@ -2,9 +2,9 @@
  * Where the onboarding design role may go in the admin (RAPP-615).
  *
  * A person whose only access is `onboarding.design` and `test_players.manage`
- * reaches the onboarding page, Textos legals (RAPP-694), Dades de les
- * jugadores (RAPP-650, its own page since RAPP-654), the test players and her
- * own account page (RAPP-634),
+ * reaches the onboarding page, the two legal forms (RAPP-694, their own
+ * boards since RAPP-696), Dades de les jugadores (RAPP-650, its own page
+ * since RAPP-654), the test players and her own account page (RAPP-634),
  * and every other admin URL sends her back. This is the screen half: the
  * database refuses her every other read and write on its own
  * (`private.limited_to_test_players`).
@@ -34,10 +34,20 @@ function isOnboardingPath(pathname: string): boolean {
   return pathname === '/onboarding' || pathname.startsWith('/onboarding/');
 }
 
-/** Textos legals (RAPP-694): the authorization and terms drafts she writes. */
+/**
+ * The legal forms (RAPP-696): the authorization and terms drafts she writes,
+ * each a board with its screens. The old Textos legals address (RAPP-694)
+ * stays open so it forwards her there.
+ */
 function isLegalPath(pathname: string): boolean {
-  return pathname === '/legal' || pathname === '/legal/';
+  return (
+    pathname === '/legal' ||
+    pathname === '/legal/' ||
+    LEGAL_FORM_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))
+  );
 }
+
+const LEGAL_FORM_PATHS = ['/forms/authorization', '/forms/terms'] as const;
 
 /** Dades de les jugadores (RAPP-650, RAPP-654). */
 function isProfileLayoutPath(pathname: string): boolean {

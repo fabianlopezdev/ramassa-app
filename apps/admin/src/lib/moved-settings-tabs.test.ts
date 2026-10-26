@@ -21,10 +21,9 @@ test('the Settings tabs that became pages forward to them (RAPP-654)', () => {
     to: '/entities',
     search: {},
   });
-  // Textos legals (RAPP-694).
+  // The season authorization's own form (RAPP-694, RAPP-696).
   expect(movedSettingsTab('/settings', { tab: 'authorization' })).toEqual({
-    to: '/legal',
-    search: { tab: 'authorization' },
+    to: '/forms/authorization',
   });
 });
 
