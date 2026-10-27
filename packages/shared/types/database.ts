@@ -2812,42 +2812,6 @@ export type Database = {
           },
         ];
       };
-      onboarding_form_chains: {
-        Row: {
-          form_refs: string[];
-          org_id: string;
-          updated_at: string;
-          updated_by: string | null;
-        };
-        Insert: {
-          form_refs?: string[];
-          org_id: string;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Update: {
-          form_refs?: string[];
-          org_id?: string;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'onboarding_form_chains_org_id_fkey';
-            columns: ['org_id'];
-            isOneToOne: true;
-            referencedRelation: 'organizations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'onboarding_form_chains_updated_by_fkey';
-            columns: ['updated_by'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       intake_screens: {
         Row: {
           after_screen: string;
@@ -3535,38 +3499,38 @@ export type Database = {
           },
         ];
       };
-      onboarding_screen_versions: {
+      onboarding_form_chains: {
         Row: {
-          changed_at: string;
-          changed_by: string | null;
+          form_refs: string[];
           org_id: string;
-          screen_key: string;
+          updated_at: string;
+          updated_by: string | null;
         };
         Insert: {
-          changed_at?: string;
-          changed_by?: string | null;
+          form_refs?: string[];
           org_id: string;
-          screen_key: string;
+          updated_at?: string;
+          updated_by?: string | null;
         };
         Update: {
-          changed_at?: string;
-          changed_by?: string | null;
+          form_refs?: string[];
           org_id?: string;
-          screen_key?: string;
+          updated_at?: string;
+          updated_by?: string | null;
         };
         Relationships: [
           {
-            foreignKeyName: 'onboarding_screen_versions_changed_by_fkey';
-            columns: ['changed_by'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
+            foreignKeyName: 'onboarding_form_chains_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: true;
+            referencedRelation: 'organizations';
             referencedColumns: ['id'];
           },
           {
-            foreignKeyName: 'onboarding_screen_versions_org_id_fkey';
-            columns: ['org_id'];
+            foreignKeyName: 'onboarding_form_chains_updated_by_fkey';
+            columns: ['updated_by'];
             isOneToOne: false;
-            referencedRelation: 'organizations';
+            referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
         ];
@@ -4015,7 +3979,6 @@ export type Database = {
           media_consent_at: string | null;
           member_number: number;
           onboarding_chain_done_at: string | null;
-          onboarding_current_at: string | null;
           org_id: string;
           preferred_language: string;
           prior_seasons: number;
@@ -4040,7 +4003,6 @@ export type Database = {
           media_consent_at?: string | null;
           member_number?: number;
           onboarding_chain_done_at?: string | null;
-          onboarding_current_at?: string | null;
           org_id: string;
           preferred_language?: string;
           prior_seasons?: number;
@@ -4065,7 +4027,6 @@ export type Database = {
           media_consent_at?: string | null;
           member_number?: number;
           onboarding_chain_done_at?: string | null;
-          onboarding_current_at?: string | null;
           org_id?: string;
           preferred_language?: string;
           prior_seasons?: number;
@@ -6199,7 +6160,7 @@ export type Database = {
           last_name: string;
           media_consent_at: string | null;
           member_number: number;
-          onboarding_current_at: string | null;
+          onboarding_chain_done_at: string | null;
           org_id: string;
           preferred_language: string;
           prior_seasons: number;
@@ -6217,10 +6178,6 @@ export type Database = {
           isSetofReturn: false;
         };
       };
-      complete_onboarding_review: {
-        Args: { payload: Json };
-        Returns: undefined;
-      };
       complete_onboarding_signed: {
         Args: { p_signing: Json; payload: Json };
         Returns: {
@@ -6236,7 +6193,7 @@ export type Database = {
           last_name: string;
           media_consent_at: string | null;
           member_number: number;
-          onboarding_current_at: string | null;
+          onboarding_chain_done_at: string | null;
           org_id: string;
           preferred_language: string;
           prior_seasons: number;
@@ -6436,7 +6393,6 @@ export type Database = {
         Args: { p_app_commit?: string };
         Returns: Json;
       };
-      finish_onboarding_chain: { Args: never; Returns: undefined };
       feedback_monthly_counts: {
         Args: never;
         Returns: {
@@ -6445,6 +6401,7 @@ export type Database = {
           type: string;
         }[];
       };
+      finish_onboarding_chain: { Args: never; Returns: undefined };
       flag_forum_content: {
         Args: {
           p_comment: string;
@@ -7146,10 +7103,6 @@ export type Database = {
         Args: { p_conversation_id: string; p_message_id: string };
         Returns: undefined;
       };
-      mark_onboarding_screen_changed: {
-        Args: { p_screen_key: string };
-        Returns: undefined;
-      };
       mark_staff_notification_read: {
         Args: { p_id: string };
         Returns: undefined;
@@ -7208,7 +7161,6 @@ export type Database = {
           value: Json;
         }[];
       };
-      my_onboarding_chain: { Args: never; Returns: string[] };
       my_custom_forms: {
         Args: never;
         Returns: {
@@ -7248,6 +7200,7 @@ export type Database = {
         }[];
       };
       my_intake_upload_org: { Args: never; Returns: string };
+      my_onboarding_chain: { Args: never; Returns: string[] };
       my_onboarding_review: { Args: never; Returns: string[] };
       my_pending_invite: {
         Args: never;
@@ -7263,7 +7216,6 @@ export type Database = {
       my_terms_acceptance_needed: { Args: never; Returns: boolean };
       my_test_scenario_stamp: { Args: never; Returns: string };
       notification_audience_entities: { Args: never; Returns: string[] };
-      onboarding_finished_count: { Args: never; Returns: number };
       open_staff_checkouts: {
         Args: never;
         Returns: {
@@ -7424,10 +7376,6 @@ export type Database = {
           signature_state: string;
           statement_language: string;
         }[];
-      };
-      participant_onboarding_review_pending: {
-        Args: { p_profile_id: string };
-        Returns: boolean;
       };
       participant_profile_answers: {
         Args: { p_profile_id: string };
@@ -7800,10 +7748,6 @@ export type Database = {
         };
         Returns: string;
       };
-      save_onboarding_form_chain: {
-        Args: { p_refs: string[] };
-        Returns: undefined;
-      };
       save_intake_flow_order: {
         Args: { p_order: string[] };
         Returns: undefined;
@@ -7843,6 +7787,10 @@ export type Database = {
           p_title: Json;
         };
         Returns: string;
+      };
+      save_onboarding_form_chain: {
+        Args: { p_refs: string[] };
+        Returns: undefined;
       };
       save_permission_preset: {
         Args: {

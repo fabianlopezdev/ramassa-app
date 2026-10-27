@@ -1,4 +1,4 @@
--- Dades legals: the walk-in tablet, the setup file and the review ask Onboarding consents (RAPP-699).
+-- Dades legals: the walk-in tablet and the setup file ask Onboarding consents (RAPP-699).
 -- Run with: bunx supabase test db
 --
 -- What these assertions defend:
@@ -8,8 +8,7 @@
 --      none and is accepted; a missing required tick is refused.
 --   2. The setup file carries the consents and their Onboarding placements;
 --      a fresh organization gets them by key, and an older file still imports.
---   3. The review: a tick equal to her current state records nothing, a
---      changed one records a new decision.
+--   The Onboarding review is gone since RAPP-705.
 --
 -- Seed: staff ...002 (consents.collect, participants.invite), admin ...001,
 -- player ...012, version ...8041...001.
@@ -17,7 +16,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(16);
+select plan(13);
 
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
 where not exists (select 1 from vault.secrets where name = 'app_encryption_key');
@@ -90,29 +89,6 @@ select is(
 select is(
   (select disposition from public.personal_data_disposition() where table_name = 'walk_in_consents'),
   'retain_limited', 'the registry lists the waiting ticks'
-);
-
--- 3. The review -------------------------------------------------------------------------------------------
-
-select lives_ok(
-  $$ select private.record_onboarding_consents(
-       (select id from run where label = 'rim'), '{"transport": true}', 'ar', array['logistics'], true) $$,
-  'she reviews the screen and leaves the tick as it was'
-);
-select is(
-  (select count(*)::integer from public.consent_events
-    where profile_id = (select id from run where label = 'rim') and consent_key = 'transport'),
-  1, 'an unchanged tick records nothing'
-);
-update public.consent_placements set required = false
- where consent_id = '69900000-0000-4000-8000-000000000011';
-select private.record_onboarding_consents(
-  (select id from run where label = 'rim'), '{"transport": false}', 'ar', array['logistics'], true);
-select is(
-  (select granted::text || '|' || method from public.consent_events
-    where profile_id = (select id from run where label = 'rim') and consent_key = 'transport'
-    order by decided_at desc, id desc limit 1),
-  'false|app', 'a changed tick records a new decision'
 );
 
 -- 2. The setup file ---------------------------------------------------------------------------------------

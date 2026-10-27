@@ -1720,12 +1720,6 @@ values ('5eed0000-0000-4000-8000-000000000000',
               'season', 'supporting-entities', 'participation-support', 'specific-needs'])
 on conflict do nothing;
 
--- A screen saved as a Nova versió long ago (RAPP-697): every seeded player
--- joined after it, so nobody has a review pending.
-insert into public.onboarding_screen_versions (org_id, screen_key, changed_at)
-values ('5eed0000-0000-4000-8000-000000000000', 'equipment', '2026-01-15 09:00:00+00')
-on conflict do nothing;
-
 insert into public.intake_state_presets (id, org_id, name, states)
 values ('5eed0000-0000-4000-8047-000000000001', '5eed0000-0000-4000-8000-000000000000',
         'Només talles', '{"clothing_size":"ask","shoe_size":"ask"}'::jsonb)

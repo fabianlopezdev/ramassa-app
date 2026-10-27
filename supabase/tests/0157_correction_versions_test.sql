@@ -11,7 +11,6 @@
 --      which versions are corrections.
 --   4. The authorization's screen order is stored only as both movable
 --      screens once.
---   5. Players who finished Onboarding are counted for designers only.
 --
 -- Seed: admin ...001 (settings.organization), player ...011 (signed
 -- authorization version 1 of the current season and app terms version 1),
@@ -20,7 +19,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(21);
+select plan(19);
 
 create temp table run (label text primary key, content jsonb, id uuid) on commit drop;
 grant all on run to authenticated;
@@ -152,16 +151,6 @@ select throws_ok(
        (select content from run where label = 'auth') || '{"screen_order": ["health", "health"]}'::jsonb) $$,
   null::text, null::text,
   'an order that leaves a screen out is refused'
-);
-
--- 5. Players who finished Onboarding ------------------------------------------------------------------------
-
-select ok(public.onboarding_finished_count() > 0, 'a designer reads how many players finished Onboarding');
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated"}';
-select throws_ok(
-  $$ select public.onboarding_finished_count() $$,
-  '42501', null::text,
-  'a player does not'
 );
 
 select * from finish();

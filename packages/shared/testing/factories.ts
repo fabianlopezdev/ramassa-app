@@ -733,8 +733,6 @@ export function buildProfileFromFixture(
     prior_seasons: 0,
     // A real person unless a test says otherwise (RAPP-615).
     is_test_account: false,
-    // Her Onboarding up to date since she joined (RAPP-697).
-    onboarding_current_at: FIXTURE_TIMESTAMP,
     // The forms chained after her Onboarding are behind her (RAPP-703).
     onboarding_chain_done_at: FIXTURE_TIMESTAMP,
     // Her number in her organization (RAPP-693): "Jugadora 0042" where her name is private.
@@ -1785,21 +1783,6 @@ export function buildIntakeBuiltinScreen(
     is_hidden: false,
     updated_at: FIXTURE_TIMESTAMP,
     updated_by: null,
-    ...overrides,
-  };
-}
-
-export type OnboardingScreenVersionRow = PublicRow<'onboarding_screen_versions'>;
-
-/** The seeded Nova versió of the equipment screen, from before every seeded player joined (RAPP-697). */
-export function buildOnboardingScreenVersion(
-  overrides: Partial<OnboardingScreenVersionRow> = {},
-): OnboardingScreenVersionRow {
-  return {
-    org_id: SEED_ORGANIZATION_ID,
-    screen_key: 'equipment',
-    changed_at: '2026-01-15T09:00:00.000Z',
-    changed_by: null,
     ...overrides,
   };
 }
