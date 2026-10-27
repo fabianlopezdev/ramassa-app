@@ -16,7 +16,7 @@
  * The database mirrors `screenTextFields` in the block marked
  * `builtin-screen-text-fields` (a parity test reads it).
  */
-import type { WizardQuestionScreen } from './intake';
+import type { IntakeQuestion, WizardQuestionScreen } from './intake';
 
 export const EDITABLE_WIZARD_SCREENS = [
   'identity',
@@ -109,14 +109,66 @@ export const BUNDLED_SCREEN_TEXT_KEYS: Readonly<
   terms: { continue_label: 'finishAction', decline_label: 'termsDeclineAction' },
 };
 
+/**
+ * When a follow-up screen opens after its screen (RAPP-713): her answer to
+ * `question` is one of `values`, or one follow-up for each answer she ticks.
+ * The phone and the board's branch cards read the same rule, so the board's
+ * condition line is what her phone does. A branch the team makes later can
+ * use the same shape.
+ */
+export type BranchCondition =
+  | {
+      readonly kind: 'answer-in';
+      readonly question: IntakeQuestion;
+      readonly values: readonly string[];
+    }
+  | { readonly kind: 'each-answer'; readonly question: IntakeQuestion };
+
+/** A follow-up screen, the screen it opens from and when it opens. */
+export interface DetailScreenBranch {
+  readonly screen: EditableWizardScreen;
+  readonly parent: WizardQuestionScreen;
+  readonly condition: BranchCondition;
+}
+
+/** The app's built-in follow-up screens, in her order. */
+export const DETAIL_SCREEN_BRANCHES = [
+  {
+    screen: 'documentation-details',
+    parent: 'documentation',
+    condition: { kind: 'answer-in', question: 'document', values: ['nie', 'passport', 'other'] },
+  },
+  {
+    screen: 'applicant-status-details',
+    parent: 'season',
+    condition: { kind: 'answer-in', question: 'applicant_status', values: ['other'] },
+  },
+  {
+    screen: 'specific-needs-details',
+    parent: 'specific-needs',
+    condition: { kind: 'each-answer', question: 'specific_needs' },
+  },
+] as const satisfies readonly DetailScreenBranch[];
+
 /** The detail screens that open from a question screen, and the screen they belong to. */
 export const DETAIL_SCREEN_PARENTS: Readonly<
   Partial<Record<EditableWizardScreen, WizardQuestionScreen>>
-> = {
-  'documentation-details': 'documentation',
-  'applicant-status-details': 'season',
-  'specific-needs-details': 'specific-needs',
-};
+> = Object.fromEntries(DETAIL_SCREEN_BRANCHES.map((branch) => [branch.screen, branch.parent]));
+
+/** Whether her answer opens the follow-up: one answer among the values, or any answer ticked. */
+export function branchOpens(condition: BranchCondition, answer: unknown): boolean {
+  if (condition.kind === 'each-answer') return Array.isArray(answer) && answer.length > 0;
+  return typeof answer === 'string' && condition.values.includes(answer);
+}
+
+/** Whether her answer opens this built-in follow-up screen, as her phone decides. */
+export function opensDetailScreen(
+  screen: (typeof DETAIL_SCREEN_BRANCHES)[number]['screen'],
+  answer: unknown,
+): boolean {
+  const branch = DETAIL_SCREEN_BRANCHES.find((each) => each.screen === screen);
+  return branch !== undefined && branchOpens(branch.condition, answer);
+}
 
 export function isEditableWizardScreen(screen: string): screen is EditableWizardScreen {
   return (EDITABLE_WIZARD_SCREENS as readonly string[]).includes(screen);

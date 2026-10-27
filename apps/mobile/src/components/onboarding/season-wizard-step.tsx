@@ -18,7 +18,11 @@ import {
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { WIZARD_SCREEN_QUESTIONS, type SeasonWizardScreen } from '@ramassa/shared/intake';
+import {
+  opensDetailScreen,
+  WIZARD_SCREEN_QUESTIONS,
+  type SeasonWizardScreen,
+} from '@ramassa/shared/intake';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 import { seasonAnswerFields } from '@ramassa/shared/schemas';
 
@@ -79,7 +83,10 @@ export function SeasonWizardStep({ screen }: { readonly screen: SeasonWizardScre
           playHaptic('warning');
           return;
         }
-        if (screen === 'season' && answers.applicantStatus === 'other') {
+        if (
+          screen === 'season' &&
+          opensDetailScreen('applicant-status-details', answers.applicantStatus)
+        ) {
           persist('applicant-status-details');
           const route =
             `/onboarding/applicant-status-details${step.isEditing ? '?edit=1' : ''}` as Href;

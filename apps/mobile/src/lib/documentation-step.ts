@@ -1,3 +1,4 @@
+import { opensDetailScreen } from '@ramassa/shared/intake';
 import {
   documentationFields,
   refineDocumentNumber,
@@ -6,8 +7,9 @@ import {
 } from '@ramassa/shared/schemas';
 
 export type DocumentChoice = DocumentType | 'skip';
+/** Her answer opens the document details: the rule the board's branch card reads (RAPP-713). */
 export function hasDocumentDetails(type: unknown): type is Exclude<DocumentType, 'none'> {
-  return type === 'nie' || type === 'passport' || type === 'other';
+  return opensDetailScreen('documentation-details', type);
 }
 
 /** Changing type clears the previous document's identity and number. */

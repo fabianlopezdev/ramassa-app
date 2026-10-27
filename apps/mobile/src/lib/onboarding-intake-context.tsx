@@ -17,6 +17,7 @@ import {
   DEFAULT_WIZARD_FLOW,
   isRequiredQuestion,
   nextWizardScreen,
+  opensDetailScreen,
   previousWizardScreen,
   questionFieldLabel,
   wizardScreenPosition,
@@ -218,7 +219,10 @@ function landingStep(
   if (previous === 'documentation' && hasDocumentDetails(draft?.documentation?.documentType))
     return 'documentation-details';
   if (previous === 'specific-needs') return lastSupportNeedStep(draft?.season?.specificNeeds);
-  if (previous === 'season' && draft?.season?.applicantStatus === 'other')
+  if (
+    previous === 'season' &&
+    opensDetailScreen('applicant-status-details', draft?.season?.applicantStatus)
+  )
     return 'applicant-status-details';
   return previous;
 }
