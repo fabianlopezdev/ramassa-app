@@ -3,8 +3,10 @@
  *
  * Each built-in screen has a title, an intro, an optional help line and its
  * button labels, bundled in the app's five languages. Staff write their own
- * per language in the admin; a language they leave empty shows the bundled
- * text in her language, so a screen is never blank. Validation messages are
+ * per language in the admin; a language they never wrote shows the bundled
+ * text in her language (RAPP-710). The intro and the help line are optional:
+ * staff may clear them, and that language then shows none. The title and the
+ * buttons are required, so a screen is never blank. Validation messages are
  * not here: they stay in the app (spec guard).
  *
  * The introduction to the terms and the terms screen take their title and
@@ -43,6 +45,16 @@ export const SCREEN_TEXT_FIELDS = [
   'decline_label',
 ] as const;
 export type ScreenTextField = (typeof SCREEN_TEXT_FIELDS)[number];
+
+/**
+ * The texts her screen can do without (RAPP-710): staff may clear them. The
+ * database lists the same fields in `private.screen_text_optional`.
+ */
+export const OPTIONAL_SCREEN_TEXT_FIELDS: readonly ScreenTextField[] = ['intro', 'help'];
+
+export function isOptionalScreenTextField(field: ScreenTextField): boolean {
+  return OPTIONAL_SCREEN_TEXT_FIELDS.includes(field);
+}
 
 const QUESTION_SCREEN_FIELDS: readonly ScreenTextField[] = [
   'title',

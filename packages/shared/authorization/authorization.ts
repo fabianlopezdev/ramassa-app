@@ -21,6 +21,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { signatureStrokesSchema, type SignatureStrokes } from '../equipment/handover';
 import { AppError, databaseErrorCode } from '../errors';
+import { staffTextIn } from '../i18n/localized-content';
 import { answerPayload } from '../intake-builder/builder';
 import { customAnswerValueSchema } from '../intake-builder/question-types';
 import { withCancellation, type CancellableRequest } from '../lib/cancellation';
@@ -38,16 +39,18 @@ export const IMAGE_RIGHTS_CONSENT = 'image_rights';
 /** The explicit consent her health answer needs (GDPR art. 9). */
 export const HEALTH_DATA_CONSENT = 'health_data';
 
+const languageTextsSchema = z.object({
+  ca: z.string().optional(),
+  es: z.string().optional(),
+  en: z.string().optional(),
+  ar: z.string().optional(),
+  fa: z.string().optional(),
+});
+
 /** Text in any of the five languages; at least one is given. */
-export const authorizationTextSchema = z
-  .object({
-    ca: z.string().optional(),
-    es: z.string().optional(),
-    en: z.string().optional(),
-    ar: z.string().optional(),
-    fa: z.string().optional(),
-  })
-  .refine((text) => Object.values(text).some((value) => (value ?? '').trim() !== ''));
+export const authorizationTextSchema = languageTextsSchema.refine((text) =>
+  Object.values(text).some((value) => (value ?? '').trim() !== ''),
+);
 
 export type AuthorizationText = z.infer<typeof authorizationTextSchema>;
 
@@ -95,6 +98,23 @@ export const AUTHORIZATION_TEXT_FIELDS = {
 } as const;
 
 export type AuthorizationTextField = (typeof AUTHORIZATION_TEXT_FIELDS.texts)[number];
+
+/**
+ * The wording her form can do without (RAPP-710): staff may clear it, and that
+ * language then shows none. Every other field is required. The database lists
+ * the same fields in `private.authorization_text_optional`.
+ */
+export const OPTIONAL_AUTHORIZATION_TEXT_FIELDS: readonly string[] = [
+  'intro',
+  'signature_hint',
+  'cannot_draw_hint',
+  'reregistration_intro',
+  'reregistration_season_intro',
+];
+
+export function isOptionalAuthorizationTextField(field: string): boolean {
+  return OPTIONAL_AUTHORIZATION_TEXT_FIELDS.includes(field);
+}
 export type HealthTextField = (typeof AUTHORIZATION_TEXT_FIELDS.health)[number];
 export type EmergencyTextField = (typeof AUTHORIZATION_TEXT_FIELDS.emergency_contact)[number];
 
@@ -147,13 +167,23 @@ export const AUTHORIZATION_BUNDLED_TEXT_KEYS = {
 /** The app's title for a required emergency contact, without "(optional)". */
 export const EMERGENCY_TITLE_REQUIRED_KEY = 'authorizationEmergencyTitleRequired';
 
+/** An optional text staff may clear (RAPP-710): blank in every language is allowed. */
+const optionalOverrideTextSchema = languageTextsSchema.refine((text) =>
+  Object.values(text).every((value) => (value ?? '').length <= 2000),
+);
+
 const textsOf = <Field extends string>(fields: readonly Field[]) =>
   z
     .object(
-      Object.fromEntries(fields.map((field) => [field, overrideTextSchema.optional()])) as Record<
-        Field,
-        z.ZodOptional<typeof overrideTextSchema>
-      >,
+      Object.fromEntries(
+        fields.map((field) => [
+          field,
+          (isOptionalAuthorizationTextField(field)
+            ? optionalOverrideTextSchema
+            : overrideTextSchema
+          ).optional(),
+        ]),
+      ) as Record<Field, z.ZodOptional<typeof overrideTextSchema>>,
     )
     .strict();
 
@@ -292,16 +322,18 @@ export function newConsentKey(content: AuthorizationContent): AuthorizationConse
 }
 
 /**
- * Staff wording of a field in her language, or undefined: the caller shows
- * the app's own text in her language then, so a screen is never blank.
+ * Staff wording of a field in her language, '' for an optional text staff
+ * cleared, or undefined: the caller shows the app's own text in her language
+ * then, so a required text is never blank (RAPP-710, `staffTextIn`).
  */
 export function authorizationWording(
   texts: Readonly<Partial<Record<string, AuthorizationText | undefined>>> | undefined,
   field: string,
   language: LanguageCode,
 ): string | undefined {
-  const text = texts?.[field]?.[language]?.trim();
-  return text === undefined || text === '' ? undefined : text;
+  return (
+    staffTextIn(texts?.[field], language, isOptionalAuthorizationTextField(field)) ?? undefined
+  );
 }
 
 const statusRowSchema = z.object({

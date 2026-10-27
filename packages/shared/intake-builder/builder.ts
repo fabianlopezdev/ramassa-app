@@ -21,7 +21,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
 import { countryLabelForCanonical } from '../i18n/countries';
-import { resolveLocalizedText } from '../i18n/localized-content';
+import { resolveLocalizedText, staffTextIn } from '../i18n/localized-content';
 import { municipalityLabelForCanonical } from '../i18n/municipalities';
 import { appTermsFromCatalog, type CurrentAppTerms } from '../onboarding/app-terms';
 import {
@@ -44,6 +44,7 @@ import {
 } from '../onboarding/question-states';
 import {
   isEditableWizardScreen,
+  isOptionalScreenTextField,
   SCREEN_TEXT_FIELDS,
   screenTextFields,
   type EditableWizardScreen,
@@ -981,8 +982,9 @@ export function screenSettingsFor(
 }
 
 /**
- * Staff wording of a built-in screen in exactly her language, or null for the
- * app's own text. As for questions (RAPP-530), Catalan written by staff never
+ * Staff wording of a built-in screen in exactly her language, '' for an
+ * optional text staff cleared, or null for the app's own text (RAPP-710,
+ * `staffTextIn`). As for questions (RAPP-530), Catalan written by staff never
  * replaces her Arabic: the app already has every language bundled.
  */
 export function builtinScreenText(
@@ -992,7 +994,11 @@ export function builtinScreenText(
   language: LanguageCode,
 ): string | null {
   if (!screenTextFields(screen).includes(field)) return null;
-  return exactText(screenSettingsFor(catalog, screen)?.texts[field], language) || null;
+  return staffTextIn(
+    screenSettingsFor(catalog, screen)?.texts[field],
+    language,
+    isOptionalScreenTextField(field),
+  );
 }
 
 export async function saveBuiltinScreen(
@@ -1003,10 +1009,20 @@ export async function saveBuiltinScreen(
     readonly isHidden: boolean;
   },
 ): Promise<void> {
+  // A cleared optional text keeps its blank languages: her phone shows none (RAPP-710).
   const texts = Object.fromEntries(
     screenTextFields(settings.screen).flatMap((field) => {
       const text = settings.texts[field];
-      const cleaned = text === undefined ? {} : cleanText(text);
+      const cleaned =
+        text === undefined
+          ? {}
+          : isOptionalScreenTextField(field)
+            ? Object.fromEntries(
+                Object.entries(text).flatMap(([language, value]) =>
+                  typeof value === 'string' ? [[language, value.trim()]] : [],
+                ),
+              )
+            : cleanText(text);
       return Object.keys(cleaned).length > 0 ? [[field, cleaned]] : [];
     }),
   );
