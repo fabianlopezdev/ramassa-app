@@ -15,7 +15,7 @@ import { QuestionControl } from '@/components/settings/question-type-fields';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { ChevronDown, Files } from 'lucide-react';
-import type { ComponentProps, ReactNode } from 'react';
+import { useEffect, useRef, useState, type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getLanguageDirection } from '@ramassa/shared/i18n/languages';
 import type { LanguageCode } from '@ramassa/shared/schemas';
@@ -282,79 +282,63 @@ function PhoneTick({
   );
 }
 
+/** The phone frame's own size, so a card can draw it smaller (RAPP-706). */
+const PHONE_WIDTH = 320;
+// 10px of frame on each side, the screen 9:19 inside it.
+const PHONE_HEIGHT = ((PHONE_WIDTH - 20) * 19) / 9 + 20;
+const PHONE_ASPECT = `${PHONE_WIDTH} / ${PHONE_HEIGHT}`;
+
 /**
- * The card's picture of a screen: its title, the first questions as label
- * and box, and the button. Text stands in as short lines where a screen
- * shows no question.
+ * The card's picture of a screen (RAPP-706): the very same `PhoneFrame` the
+ * screen editor shows, scaled down to the card, so a card and its preview
+ * never differ. It is a picture: hidden from assistive technology and inert.
  */
 export function PhoneMiniature({
   content,
   language,
   isDimmed = false,
+  step,
+  total,
+  flowLabel,
 }: {
   readonly content: PhoneContent;
   readonly language: LanguageCode;
   readonly isDimmed?: boolean;
+  readonly step?: number;
+  readonly total?: number;
+  readonly flowLabel?: string;
 }) {
-  const shown = content.questions.slice(0, 3);
-  return (
-    <MiniatureFrame language={language} isDimmed={isDimmed}>
-      <p className="line-clamp-2 text-start text-[11px] leading-4 font-semibold">{content.title}</p>
-      {shown.length > 0 ? (
-        <div className="flex flex-col gap-2">
-          {shown.map((question) => (
-            <div key={question.id} className="flex flex-col gap-1">
-              <span className="truncate text-start text-[9px] leading-3 text-muted-foreground">
-                {question.label}
-                {question.isRequired ? <span className="text-primary"> *</span> : null}
-              </span>
-              <span className="h-5 rounded-[5px] border border-primary bg-white" />
-            </div>
-          ))}
-          {content.questions.length > shown.length ? (
-            <span className="flex gap-0.5 ps-0.5">
-              {[0, 1, 2].map((dot) => (
-                <span key={dot} className="size-1 rounded-full bg-foreground/25" />
-              ))}
-            </span>
-          ) : null}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-1.5 pt-0.5">
-          {['w-full', 'w-11/12', 'w-4/5', 'w-2/3'].map((width) => (
-            <span key={width} className={cn('h-1.5 rounded-full bg-foreground/10', width)} />
-          ))}
-        </div>
-      )}
-      <span className="mt-auto truncate rounded-full bg-primary px-2 py-1 text-center text-[9px] leading-3 font-semibold text-primary-foreground">
-        {content.continueLabel === '' ? ' ' : content.continueLabel}
-      </span>
-    </MiniatureFrame>
-  );
-}
-
-/** The 9:16 phone every card of a board draws, a screen's or a form's (RAPP-703). */
-function MiniatureFrame({
-  language,
-  isDimmed,
-  children,
-}: {
-  readonly language: LanguageCode;
-  readonly isDimmed: boolean;
-  readonly children: ReactNode;
-}) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.5);
+  useEffect(() => {
+    const box = boxRef.current;
+    if (box === null) return;
+    const fit = () => setScale(box.clientWidth / PHONE_WIDTH);
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, []);
   return (
     <div
+      ref={boxRef}
       aria-hidden
-      lang={language}
-      dir={getLanguageDirection(language)}
-      className={cn(
-        'flex aspect-[9/16] w-full flex-col gap-2 overflow-hidden rounded-xl border bg-white px-3 pt-3 pb-3 [overflow-wrap:anywhere]',
-        isDimmed && 'opacity-50',
-      )}
+      inert
+      className={cn('relative w-full overflow-hidden', isDimmed && 'opacity-50')}
+      style={{ aspectRatio: PHONE_ASPECT }}
     >
-      <div className="mx-auto h-1 w-8 shrink-0 rounded-full bg-foreground/15" />
-      {children}
+      <div
+        className="absolute start-0 top-0 origin-top-left rtl:origin-top-right"
+        style={{ width: PHONE_WIDTH, transform: `scale(${scale})` }}
+      >
+        <PhoneFrame
+          content={content}
+          language={language}
+          step={step}
+          total={total}
+          flowLabel={flowLabel}
+        />
+      </div>
     </div>
   );
 }
@@ -381,7 +365,8 @@ export function FormMiniature({
       aria-hidden
       lang={language}
       dir={getLanguageDirection(language)}
-      className="flex aspect-[9/16] w-full flex-col items-center justify-center gap-3 rounded-xl border bg-muted/40 p-4 text-center"
+      className="flex w-full flex-col items-center justify-center gap-3 rounded-[2rem] border bg-muted/40 p-4 text-center"
+      style={{ aspectRatio: PHONE_ASPECT }}
     >
       <span className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
         <Files className="size-6" />

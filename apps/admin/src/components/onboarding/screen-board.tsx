@@ -60,6 +60,7 @@ import {
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import {
+  allSteps,
   BOARD_LOCKED_STEPS,
   boardStep,
   isShownToHer,
@@ -93,6 +94,8 @@ export function ScreenBoard({
   const createOnboardingScreen = useCreateOnboardingScreen();
   const initial = movableOrder(catalog);
   const hidden = wizardFlow(catalog).hiddenScreens;
+  // Her place in the flow, as the screen editor's phone counts it (RAPP-706).
+  const allKeys = allSteps(catalog).map((each) => each.key);
   const card = (key: string): BoardCard | null => {
     const step = boardStep(catalog, key);
     if (step === null) return null;
@@ -117,7 +120,13 @@ export function ScreenBoard({
             language={language}
           />
         ) : (
-          <PhoneMiniature content={content} language={language} isDimmed={status !== null} />
+          <PhoneMiniature
+            content={content}
+            language={language}
+            isDimmed={status !== null}
+            step={allKeys.indexOf(step.key) + 1}
+            total={allKeys.length}
+          />
         ),
       status,
       isLinked: linked !== null,
