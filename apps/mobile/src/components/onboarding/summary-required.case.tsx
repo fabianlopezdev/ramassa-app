@@ -15,10 +15,6 @@ const store = wizardDraftStoreOn(
 const pushed: string[] = [];
 const haptics: string[] = [];
 let wentNext = 0;
-// Her review of a Nova versió (RAPP-697) is not this test's.
-mock.module('@/lib/onboarding-review', () => ({
-  useFinishOnboardingReview: () => async () => true,
-}));
 mock.module('@/lib/onboarding', () => ({ onboardingDraftStore: store }));
 mock.module('@/lib/haptics/haptics', () => ({
   playHaptic: (kind: string) => void haptics.push(kind),

@@ -6,7 +6,6 @@ import { logger } from '@/lib/observability';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { draftForScenario, withSelectedLanguage, wizardDraftStep } from '@/lib/onboarding-intake';
 import { WizardIntakeProvider, type WizardIntake } from '@/lib/onboarding-intake-context';
-import { useOnboardingReview } from '@/lib/onboarding-review';
 import { ScreenWordingProvider } from '@/lib/screen-wording';
 import { supabase } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -17,7 +16,6 @@ import { Stack } from 'expo-router/stack';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
-import { fetchMyConsents, type MyConsent } from '@ramassa/shared/authorization';
 import { getErrorMessageKey, toAppError } from '@ramassa/shared/errors';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
@@ -27,7 +25,6 @@ import {
   fetchMyQuestionsToAsk,
   nextWizardScreen,
   wizardNotAsked,
-  type WizardStepKey,
 } from '@ramassa/shared/intake';
 import {
   askedRequiredQuestions,
@@ -38,10 +35,6 @@ import {
   herOnboarding,
   hiddenBuiltinQuestions,
   isFormBlockSigned,
-  reviewAsking,
-  reviewFlow,
-  reviewNotAsked,
-  reviewPlan,
   wizardFlow,
   wizardFormFields,
 } from '@ramassa/shared/intake-builder';
@@ -72,23 +65,14 @@ function loadAsking(): Promise<ReadonlyMap<string, boolean>> {
 function seedWizardDraft(intake: WizardIntake, language: LanguageCode): void {
   const firstScreen = nextWizardScreen('start', intake.notAsked, intake.customPlan, intake.flow);
   const scenarioStamp = intake.scenarioStamp ?? null;
-  // A review (RAPP-697) always starts again from her saved answers.
-  const stored =
-    intake.review === undefined
-      ? draftForScenario(onboardingDraftStore.loadStoredDraft(), scenarioStamp)
-      : null;
+  const stored = draftForScenario(onboardingDraftStore.loadStoredDraft(), scenarioStamp);
   const seeded = seededDraft(intake.fields, {
     currentStep: wizardDraftStep(firstScreen),
     scenarioStamp,
     names: intake.names,
     stored: intake.customAnswers,
   });
-  const draft = withSelectedLanguage(
-    stored ??
-      // A review fills her consent ticks with her current state (RAPP-699).
-      (intake.consentTicks === undefined ? seeded : { ...seeded, consents: intake.consentTicks }),
-    language,
-  );
+  const draft = withSelectedLanguage(stored ?? seeded, language);
   onboardingDraftStore.saveStoredDraft(draft);
   if (stored === null) return;
   // Staff may have moved a screen before the step she reached (RAPP-612): she
@@ -128,15 +112,10 @@ export default function OnboardingLayout() {
 function OnboardingScreens() {
   const { t } = useTranslation('onboarding');
   const languageFontClass = useLanguageFontClass();
-  const { user, role } = useAuth();
+  const { user } = useAuth();
   const { language } = useLanguage();
-  // A player who joined is here only to review the screens saved as a Nova
-  // versió since (RAPP-697); the app's gate sent her.
-  const review = useOnboardingReview(role === 'player');
-  const pending: readonly WizardStepKey[] | undefined =
-    role === 'player' ? (review.data ?? []) : undefined;
   const intake = useQuery({
-    queryKey: ['onboarding-intake', user?.id ?? 'signed-out', pending?.join('|') ?? 'first'],
+    queryKey: ['onboarding-intake', user?.id ?? 'signed-out'],
     queryFn: async ({ signal }): Promise<WizardIntake> => {
       // The layout of her fields and her answers to them are needed: the app's
       // own screens read and write her answers by field (RAPP-663).
@@ -150,7 +129,6 @@ function OnboardingScreens() {
         asking,
         scenarioStamp,
         mySignatures,
-        myConsents,
       ] = await Promise.all([
         fetchOwnProfile(supabase, { signal }),
         fetchMyAnsweredQuestions(supabase, { signal }),
@@ -165,11 +143,6 @@ function OnboardingScreens() {
         // The blocks she signed on the walk-in tablet (RAPP-691). Unread, she
         // signs them all here, which the database accepts.
         fetchMyFormSignatures(supabase).catch(() => []),
-        // In a review, her consents as they stand fill her ticks (RAPP-699).
-        // Unread, she ticks them again, and an unchanged tick records nothing.
-        pending === undefined
-          ? Promise.resolve<Readonly<Record<string, MyConsent>>>({})
-          : fetchMyConsents(supabase).catch((): Readonly<Record<string, MyConsent>> => ({})),
       ]);
       // A block she signed, whose text has not changed since, is asked no more.
       const signedBlocks = (fullCatalog.blocks ?? []).filter((block) =>
@@ -183,14 +156,8 @@ function OnboardingScreens() {
       // Her screens from the placements (RAPP-655): a field set to Don't ask is
       // never asked, a screen with none left is skipped (RAPP-643), and one on
       // Ask shows even when answered. The staff phone preview reads the same.
-      // A screen with a signature block always shows (RAPP-690). In a review
-      // (RAPP-697) every field on her screens to review is asked, filled in.
-      const custom = herOnboarding(
-        catalog,
-        answers,
-        pending === undefined ? asking : reviewAsking(catalog, pending, asking),
-      );
-      const flow = wizardFlow(catalog);
+      // A screen with a signature block always shows (RAPP-690).
+      const custom = herOnboarding(catalog, answers, asking);
       return {
         // Her names, when staff gave them (RAPP-300), read from her answers (RAPP-693).
         names:
@@ -207,16 +174,15 @@ function OnboardingScreens() {
         // A built-in question staff removed is never asked, so it never keeps a
         // screen. The staff preview of a new invitation plans with the same
         // function (RAPP-618).
-        notAsked:
-          pending === undefined ? wizardNotAsked(toAsk, hidden) : reviewNotAsked(hidden, pending),
+        notAsked: wizardNotAsked(toAsk, hidden),
         documentExplanation,
         catalog,
         customAnswers: answers,
         customScreens: custom.screens,
-        customPlan: pending === undefined ? custom.plan : reviewPlan(custom.plan, pending),
+        customPlan: custom.plan,
         // The order and hidden screens staff arranged (RAPP-612). The staff
         // preview of a new invitation reads the same flow.
-        flow: pending === undefined ? flow : reviewFlow(flow, pending),
+        flow: wizardFlow(catalog),
         hidden,
         // The one required list (RAPP-611): every screen, the summary and the
         // final check read it. A question off its control is the generic
@@ -224,17 +190,9 @@ function OnboardingScreens() {
         required: askedRequiredQuestions(catalog),
         scenarioStamp,
         signedBlocks,
-        ...(pending === undefined
-          ? {}
-          : {
-              review: pending,
-              consentTicks: Object.fromEntries(
-                Object.entries(myConsents).map(([key, consent]) => [key, consent.granted]),
-              ),
-            }),
       };
     },
-    enabled: user !== null && (role !== 'player' || review.data !== undefined),
+    enabled: user !== null,
     // Staff may change her record between two openings: always read it fresh.
     gcTime: 0,
     refetchOnMount: 'always',

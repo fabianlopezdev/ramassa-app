@@ -20,7 +20,6 @@ import { WizardValidationSummary } from '@/components/onboarding/wizard-validati
 import { SeasonAnswerRows } from '@/components/profile/season-answer-rows';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
-import { onboardingAnswersFromDraft } from '@/lib/onboarding-answers';
 import { normalizeDecimalDigits } from '@/lib/onboarding-form';
 import {
   mergedCustomAnswers,
@@ -28,7 +27,6 @@ import {
   wizardStepRoute,
 } from '@/lib/onboarding-intake';
 import { useBuiltinWording, useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
-import { useFinishOnboardingReview } from '@/lib/onboarding-review';
 import { useScreenTitle } from '@/lib/screen-wording';
 import { SEASON_SCREEN_TITLE_KEYS } from '@/lib/season-draft';
 import { firstIncompleteStep } from '@/lib/wizard-completeness';
@@ -195,10 +193,6 @@ export default function SummaryStepScreen() {
   const { t, i18n } = useTranslation('onboarding');
   const router = useRouter();
   const step = useWizardStep('summary');
-  const intake = useWizardIntake();
-  const saveReview = useFinishOnboardingReview();
-  const [isSaving, setIsSaving] = useState(false);
-  const [hasSaveFailed, setHasSaveFailed] = useState(false);
   const {
     customAnswers,
     hidden,
@@ -208,8 +202,7 @@ export default function SummaryStepScreen() {
     required,
     catalog,
     signedBlocks = [],
-    review,
-  } = intake;
+  } = useWizardIntake();
   const completeness = {
     custom: customPlan,
     flow,
@@ -584,45 +577,11 @@ export default function SummaryStepScreen() {
       else router.push(`${String(wizardStepRoute(incomplete))}?edit=1` as Href);
       return;
     }
-    if (review !== undefined) {
-      void finishReview(review);
-      return;
-    }
     onboardingDraftStore.saveDraft({
       ...onboardingDraftStore.loadDraft(),
       currentStep: step.nextDraftStep,
     });
     step.goNext();
-  }
-
-  // Her review of the screens saved as a Nova versió (RAPP-697) ends here:
-  // her answers are saved with the Onboarding writers, then the app opens.
-  async function finishReview(screens: readonly WizardStepKey[]) {
-    const built = onboardingAnswersFromDraft(onboardingDraftStore.loadDraft(), intake, locale);
-    if (!built.ok) {
-      setMissingStep(built.step);
-      playHaptic('warning');
-      router.push(`${String(wizardStepRoute(built.step))}?edit=1` as Href);
-      return;
-    }
-    setIsSaving(true);
-    setHasSaveFailed(false);
-    const { first_name, last_name, answers, signatures, consents } = built.value;
-    const isSaved = await saveReview({
-      // Her names only when her review asked them.
-      ...(screens.includes('identity') ? { first_name, last_name } : {}),
-      answers,
-      signatures,
-      // The server records the ticks of the screens she reviews (RAPP-699).
-      ...(consents === undefined ? {} : { consents }),
-    });
-    setIsSaving(false);
-    if (!isSaved) {
-      setHasSaveFailed(true);
-      playHaptic('error');
-      return;
-    }
-    playHaptic('success');
   }
 
   return (
@@ -631,10 +590,9 @@ export default function SummaryStepScreen() {
       stepNumber={step.position.step}
       totalSteps={step.position.total}
       title={t('summaryTitle')}
-      intro={review === undefined ? t('summaryIntro') : t('reviewIntro')}
+      intro={t('summaryIntro')}
       continueLabel={t('summaryConfirmAction')}
       onContinue={confirm}
-      isContinueBusy={isSaving}
       onBack={
         step.goBack === null
           ? undefined
@@ -647,11 +605,6 @@ export default function SummaryStepScreen() {
             }
       }
     >
-      <WizardValidationSummary
-        testID="summary-review-failed"
-        isVisible={hasSaveFailed}
-        message={t('reviewSaveFailed')}
-      />
       <WizardValidationSummary
         testID="summary-missing-required"
         isVisible={missingStep !== null}

@@ -1,9 +1,8 @@
 /**
  * Her Onboarding answers as she sends them (RAPP-663, RAPP-690), from the
  * draft: her names and settings, her answers by field (only the new or
- * changed ones) and her signatures of the signature blocks. Her first
- * Onboarding (the terms screen) and her review of the screens saved as a
- * Nova versió (RAPP-697) send the same thing.
+ * changed ones) and her signatures of the signature blocks, sent by the
+ * terms screen at the end of her Onboarding.
  *
  * Every stored step re-parses through the SAME schemas the screens used, so
  * nothing unvalidated can reach the payload even from a tampered or stale

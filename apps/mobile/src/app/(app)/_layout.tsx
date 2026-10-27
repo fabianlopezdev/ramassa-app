@@ -10,7 +10,6 @@ import { useAuthorizationStatus } from '@/lib/authorization';
 import { useMyCustomForms } from '@/lib/custom-forms';
 import { useFinishOnboardingChain, useMyOnboardingChain } from '@/lib/onboarding-chain';
 import { OnboardingEntranceProvider } from '@/lib/onboarding-entrance';
-import { useOnboardingReview } from '@/lib/onboarding-review';
 import { canPromptForPush } from '@/lib/push-prompt-eligibility';
 import { useSigningSession } from '@/lib/tablet-signing';
 import { useAccountAccess } from '@/lib/use-account-access';
@@ -106,18 +105,8 @@ function AppNavigator() {
       ? needsAuthorization(authorization.data ?? null)
       : chainStep.kind === 'authorization');
   const chainFormPath = chainStep?.kind === 'custom' ? `/form/${chainStep.responseId}` : null;
-  // Screens saved as a Nova versió since she joined (RAPP-697): she goes
-  // through them with the Onboarding wizard before using the app. A failed
-  // lookup lets her in.
-  const review = useOnboardingReview(area === 'player');
-  const mustReview =
-    area === 'player' &&
-    !mustAcceptTerms &&
-    !mustSign &&
-    chainFormPath === null &&
-    (review.data?.length ?? 0) > 0;
   const blockingForm =
-    area === 'player' && !mustAcceptTerms && !mustSign && !mustReview
+    area === 'player' && !mustAcceptTerms && !mustSign
       ? (forms.data?.find((form) => form.isBlocking) ?? null)
       : null;
   const blockingFormPath =
@@ -142,7 +131,6 @@ function AppNavigator() {
       isCovered ||
       mustAcceptTerms ||
       mustSign ||
-      mustReview ||
       mustAnswerForm ||
       isSigning ||
       requiresSecondFactor ||
@@ -174,10 +162,7 @@ function AppNavigator() {
   if (isSigning && pathname !== '/signing-mode') {
     return <Redirect href={'/signing-mode' as Href} />;
   }
-  if (
-    area === 'player' &&
-    (authorization.isPending || review.isPending || forms.isPending || chain.isPending)
-  ) {
+  if (area === 'player' && (authorization.isPending || forms.isPending || chain.isPending)) {
     return (
       <View
         className="flex-1 items-center justify-center bg-neutral-50"
@@ -196,22 +181,18 @@ function AppNavigator() {
   if (mustSign && pathname !== '/authorization' && pathname !== '/profile-edit') {
     return <Redirect href={'/authorization' as Href} />;
   }
-  if (mustReview && !pathname.startsWith('/onboarding') && pathname !== '/profile-edit') {
-    return <Redirect href={'/onboarding' as Href} />;
-  }
   if (blockingFormPath !== null && pathname !== blockingFormPath) {
     return <Redirect href={blockingFormPath as Href} />;
   }
   if (
     !mustAcceptTerms &&
     !mustSign &&
-    !mustReview &&
     !mustAnswerForm &&
     home !== null &&
     (pathname === '/' ||
       pathname === '/authorization' ||
       pathname === '/terms-update' ||
-      // Her review just finished (RAPP-697).
+      // Her first Onboarding just finished.
       (area === 'player' && pathname.startsWith('/onboarding')))
   ) {
     return <Redirect href={home as Href} />;
@@ -250,15 +231,11 @@ function AppNavigator() {
           </Stack.Protected>
           {/* A form the team created (RAPP-700): from Home, its notification, or
             alone while it keeps her from the app. */}
-          <Stack.Protected
-            guard={area === 'player' && !mustSign && !mustAcceptTerms && !mustReview}
-          >
+          <Stack.Protected guard={area === 'player' && !mustSign && !mustAcceptTerms}>
             <Stack.Screen name="form/[responseId]" options={noSwipeBackOptions} />
           </Stack.Protected>
           <Stack.Protected
-            guard={
-              area === 'player' && !mustSign && !mustAcceptTerms && !mustReview && !mustAnswerForm
-            }
+            guard={area === 'player' && !mustSign && !mustAcceptTerms && !mustAnswerForm}
           >
             <Stack.Screen name="(tabs)" />
             {/* Pushed OVER the tabs, not inside them: the edit form and the
@@ -443,9 +420,8 @@ function AppNavigator() {
           <Stack.Protected guard={area === 'unresolved'}>
             <Stack.Screen name="account-unresolved" />
           </Stack.Protected>
-          {/* Her first Onboarding, or her review of the screens saved as a
-            Nova versió since she joined (RAPP-697). */}
-          <Stack.Protected guard={area === 'onboarding' || mustReview}>
+          {/* Her first Onboarding: only a player who has not joined yet (RAPP-705). */}
+          <Stack.Protected guard={area === 'onboarding'}>
             <Stack.Screen name="onboarding" />
           </Stack.Protected>
           <Stack.Protected guard={isTeam && permissions.has('consents.collect')}>
