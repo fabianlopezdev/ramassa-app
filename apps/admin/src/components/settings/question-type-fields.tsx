@@ -288,8 +288,9 @@ export function readPreviewDraft(
   };
 }
 
+// The phone's own field (RAPP-704): white, a navy border, her finger's height.
 const boxClass =
-  'rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground';
+  'flex min-h-10 items-center rounded-lg border border-primary bg-white px-3 py-2 text-sm text-muted-foreground';
 const chipClass = 'rounded-full border px-3 py-1 text-sm';
 /** A filled answer in the type picker's pictures (RAPP-646): her words in the box. */
 const filledClass = 'text-foreground';
