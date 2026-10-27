@@ -660,7 +660,7 @@
     "deleteScreenBody": "Dejará de salir en la app con sus preguntas. Las respuestas ya dadas se conservan.",
     "deleted": "Se ha eliminado {{screen}}.",
     "deleteFailed": "No se ha podido eliminar. Vuelve a intentarlo.",
-    "phoneNote": "Una aproximación de cómo se ve en la app. En la app puede cambiar un poco."
+    "phoneNote": "Vista aproximada. El aspecto en la app puede variar."
   },
   "sortable": {
     "instructions": "Para mover un elemento, pulsa espacio o intro, usa las flechas y vuelve a pulsar espacio o intro para soltarlo. Escape cancela.",
