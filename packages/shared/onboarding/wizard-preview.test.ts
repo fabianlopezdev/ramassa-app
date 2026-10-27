@@ -43,34 +43,26 @@ describe('what an invitation records as answered (RAPP-618, RAPP-663, RAPP-664)'
 });
 
 describe('the preview staff confirm before inviting (RAPP-618)', () => {
-  test('Auto: she is asked every question nobody answered', () => {
+  test('Auto: she is asked every question nobody answered, and checks her names (RAPP-708)', () => {
     const rows = previewWizardQuestions(answeredByInvitation({}), {});
     expect(rows.map((row) => row.question)).toEqual([...WIZARD_QUESTIONS]);
-    expect(asked(rows)).toEqual(
-      WIZARD_QUESTIONS.filter((question) => question !== 'first_name' && question !== 'last_name'),
-    );
+    expect(asked(rows)).toEqual([...WIZARD_QUESTIONS]);
   });
 
   test('Ask and Don’t ask change single questions, as her phone will', () => {
     const answered = answeredByInvitation({});
     const rows = previewWizardQuestions(answered, { date_of_birth: 'ask', phone: 'skip' });
     expect(asked(rows)).toEqual(
-      WIZARD_QUESTIONS.filter(
-        (question) => question !== 'first_name' && question !== 'last_name' && question !== 'phone',
-      ),
+      WIZARD_QUESTIONS.filter((question) => question !== 'phone'),
     );
     expect(rows.find((row) => row.question === 'date_of_birth')?.state).toBe('ask');
   });
 
-  test('her name screen shows both names: asking one asks the other too', () => {
+  test('her name screen always shows, with both names, even when staff hid them (RAPP-708)', () => {
     const answered = answeredByInvitation({});
-    const rows = previewWizardQuestions(answered, { first_name: 'ask' });
-    // my_questions_to_ask() lists first_name only, but the identity screen
-    // always shows both fields, so the preview says both are asked.
+    const rows = previewWizardQuestions(answered, { first_name: 'skip', last_name: 'skip' });
     expect(rows.find((row) => row.question === 'first_name')?.asking).toBe('asked');
     expect(rows.find((row) => row.question === 'last_name')?.asking).toBe('asked');
-    const neither = previewWizardQuestions(answered, {});
-    expect(neither.find((row) => row.question === 'last_name')?.asking).toBe('not-asked');
   });
 
   test('her contact at the entity is asked only after she says she has one', () => {

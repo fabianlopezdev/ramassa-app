@@ -43,12 +43,24 @@ import {
 } from './question-states';
 import { isSystemFieldKey, SYSTEM_FIELD_QUESTIONS } from './system-fields';
 
+/**
+ * The questions her wizard always asks, known or not (RAPP-708): her names.
+ * The app is invitation only, and every way to create a player needs her
+ * names, so they are always known. Her name screen opens first, with them
+ * filled in, so she checks them. Both are locked required, so never removed.
+ */
+const ALWAYS_ASKED_QUESTIONS: readonly IntakeQuestion[] = SCREEN_QUESTIONS.identity;
+
 /** The questions her wizard does not ask: not asked by the rules, or removed in Settings. */
 export function wizardNotAsked(
   toAsk: ReadonlySet<IntakeQuestion>,
   hidden: ReadonlySet<IntakeQuestion>,
 ): AnsweredQuestions {
-  return new Set([...questionsNotAsked(toAsk), ...hidden]);
+  return new Set(
+    [...questionsNotAsked(toAsk), ...hidden].filter(
+      (question) => !ALWAYS_ASKED_QUESTIONS.includes(question),
+    ),
+  );
 }
 
 /**

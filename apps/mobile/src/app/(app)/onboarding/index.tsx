@@ -1,9 +1,10 @@
 /**
- * Wizard step 1: a warm, low-friction welcome that asks only for a name.
- * The front door also resumes an interrupted wizard from its stored step, and
- * the layout's seeding sets that step past what staff already answered (RAPP-300).
- * Staff always give both names, so this screen shows only to a woman who
- * started on her own, or when she corrects her name from the summary.
+ * Wizard step 1: she checks her name and surname (RAPP-708). The app is
+ * invitation only and every way to create a player needs both names, so they
+ * open filled in, and every player sees this screen first to confirm or
+ * correct them. The front door also resumes an interrupted wizard from its
+ * stored step, and the layout's seeding sets that step past what staff
+ * already answered (RAPP-300).
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
