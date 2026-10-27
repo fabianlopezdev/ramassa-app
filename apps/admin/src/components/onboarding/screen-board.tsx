@@ -14,6 +14,11 @@
  *
  * `FormBoard` is every form's board (RAPP-696): Onboarding, the season
  * authorization and the app terms draw their cards with it.
+ *
+ * Every card has an eye in its header (RAPP-711): it hides or shows the
+ * screen at once, the setting the editor's switch saves. A hidden card stays
+ * on the board, dimmed and marked. A card that always shows has its eye off,
+ * with the reason on hover.
  */
 
 import { useReload } from '@/components/settings/onboarding-design-sections';
@@ -25,6 +30,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import {
@@ -37,7 +43,7 @@ import {
 import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Link } from '@tanstack/react-router';
-import { EyeOff, GripVertical, Link2, Lock, Plus, X } from 'lucide-react';
+import { Eye, EyeOff, GripVertical, Link2, Lock, Plus, X } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -49,9 +55,12 @@ import {
   chainedFormScreenCount,
   customFormRef,
   flowStepName,
+  saveBuiltinScreen,
   saveIntakeScreen,
   saveOnboardingFormChain,
   saveWizardFlowOrder,
+  screenSettingsFor,
+  setScreenHidden,
   TERMS_SCREEN_COUNT,
   textIn,
   wizardFlow,
@@ -71,6 +80,7 @@ import {
 } from './board-steps';
 import { FormMiniature, PhoneMiniature } from './phone-preview';
 import { stepContent, type Translate } from './screen-content';
+import { builtinHideLockKey, teamHideLockKey } from './screen-hiding';
 
 /** Every card shares one track width, so each row's cards have one size. */
 export const BOARD_GRID =
@@ -101,12 +111,44 @@ export function ScreenBoard({
     if (step === null) return null;
     const content = stepContent(catalog, step, language, t);
     const linked = linkedFormOf(step.key);
-    const status =
-      step.kind === 'builtin' && hidden.has(step.key)
-        ? t('builtinScreens.hiddenBadge')
-        : step.kind === 'custom' && !isShownToHer(catalog, step.screen)
-          ? t('onboardingBoard.notShown')
-          : null;
+    const isHidden =
+      (step.kind === 'builtin' && hidden.has(step.key)) ||
+      (step.kind === 'custom' && step.screen.isHidden === true);
+    const status = isHidden
+      ? t('builtinScreens.hiddenBadge')
+      : step.kind === 'custom' && !isShownToHer(catalog, step.screen)
+        ? t('onboardingBoard.notShown')
+        : null;
+    const hide = (): BoardCardHide => {
+      if (step.kind === 'locked') return lockedHide(t('onboardingBoard.hideLockedFinal'));
+      if (step.kind === 'builtin') {
+        const lock = builtinHideLockKey(catalog, step.key);
+        return {
+          isHidden,
+          canHide: lock === null || isHidden,
+          reason: lock === null ? undefined : t(lock),
+          toggle: async () => {
+            // The editor's switch saves the same setting, with the screen's saved texts.
+            await saveBuiltinScreen(supabase, {
+              screen: step.key,
+              texts: screenSettingsFor(catalog, step.key)?.texts ?? {},
+              isHidden: !isHidden,
+            });
+            await reload();
+          },
+        };
+      }
+      const lock = teamHideLockKey(catalog, 'onboarding', step.screen.id);
+      return {
+        isHidden,
+        canHide: lock === null || isHidden,
+        reason: lock === null ? undefined : t(lock),
+        toggle: async () => {
+          await setScreenHidden(supabase, step.screen.id, !isHidden);
+          await reload();
+        },
+      };
+    };
     return {
       key: step.key,
       name: linked === null ? stepName(step, language, t) : t(linked.labelKey),
@@ -129,6 +171,7 @@ export function ScreenBoard({
           />
         ),
       status,
+      hide: hide(),
       isLinked: linked !== null,
       link:
         linked === null
@@ -216,6 +259,8 @@ function ChainBoard({
         />
       ),
       status: null,
+      // A chained form leaves the chain with ×; its screens hide on its own board.
+      hide: lockedHide(t('onboardingBoard.hideLockedChain')),
       isLinked: true,
       link:
         form === undefined
@@ -349,6 +394,22 @@ export type BoardCardLink =
       readonly params: { readonly formId: string };
     };
 
+/**
+ * The eye on a card (RAPP-711): whether the screen is hidden, and whether it
+ * can be, with the reason when it cannot. `toggle` saves the other state.
+ */
+export interface BoardCardHide {
+  readonly isHidden: boolean;
+  readonly canHide: boolean;
+  readonly reason?: string;
+  readonly toggle: () => Promise<void>;
+}
+
+/** The eye of a card that always shows, off, with the reason on hover. */
+export function lockedHide(reason: string): BoardCardHide {
+  return { isHidden: false, canHide: false, reason, toggle: async () => undefined };
+}
+
 /** One card of a form's board (RAPP-696): its screen, or a linked form. */
 export interface BoardCard {
   readonly key: string;
@@ -363,6 +424,8 @@ export interface BoardCard {
   readonly note?: string;
   /** × on the card: takes a chained form out of the chain (RAPP-703). */
   readonly remove?: { readonly label: string; readonly run: () => Promise<void> };
+  /** The eye in the header (RAPP-711); absent, the card has none. */
+  readonly hide?: BoardCardHide;
 }
 
 /**
@@ -578,6 +641,9 @@ function ScreenCard({
           )}
         </span>
         <span className="flex shrink-0 items-center">
+          {card.hide === undefined || isLifted ? null : (
+            <HideButton hide={card.hide} name={card.name} cardKey={card.key} />
+          )}
           {card.remove === undefined || isLifted ? null : (
             <Button
               type="button"
@@ -640,6 +706,71 @@ function ScreenCard({
         </Link>
       </Button>
     </CardFrame>
+  );
+}
+
+/**
+ * The eye in a card's header (RAPP-711). It shows the screen's state (open
+ * when shown, crossed when hidden) and names the action on hover; a click
+ * saves the other state at once, with a toast. Off when the screen always
+ * shows, the hover gives the reason.
+ */
+function HideButton({
+  hide,
+  name,
+  cardKey,
+}: {
+  readonly hide: BoardCardHide;
+  readonly name: string;
+  readonly cardKey: string;
+}) {
+  const { t } = useTranslation('settings');
+  const [isBusy, setIsBusy] = useState(false);
+  const label = hide.canHide
+    ? t(hide.isHidden ? 'onboardingBoard.show' : 'onboardingBoard.hide')
+    : (hide.reason ?? '');
+  async function toggle() {
+    setIsBusy(true);
+    try {
+      await hide.toggle();
+      toast.success(
+        t(hide.isHidden ? 'onboardingBoard.screenShown' : 'onboardingBoard.screenHidden'),
+      );
+    } catch {
+      toast.error(t('onboardingBoard.hideFailed'));
+    } finally {
+      setIsBusy(false);
+    }
+  }
+  const Icon = hide.isHidden ? EyeOff : Eye;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {/* A disabled button gets no hover: the wrapper carries the reason. */}
+        <span className="inline-flex" tabIndex={hide.canHide ? undefined : 0}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground"
+            disabled={!hide.canHide || isBusy}
+            aria-label={
+              hide.canHide
+                ? t(hide.isHidden ? 'onboardingBoard.showNamed' : 'onboardingBoard.hideNamed', {
+                    screen: name,
+                  })
+                : label
+            }
+            aria-pressed={hide.canHide ? hide.isHidden : undefined}
+            onClick={() => void toggle()}
+            data-testid={`board-hide-${cardKey}`}
+          >
+            <Icon aria-hidden />
+          </Button>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }
 

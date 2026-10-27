@@ -20,7 +20,7 @@ import {
   type TermsPhoneStep,
 } from '@/components/legal/legal-phone-content';
 import { PhoneMiniature } from '@/components/onboarding/phone-preview';
-import { FormBoard, type BoardCard } from '@/components/onboarding/screen-board';
+import { FormBoard, lockedHide, type BoardCard } from '@/components/onboarding/screen-board';
 import {
   ScreenEditorHeading,
   WordingSection,
@@ -107,6 +107,7 @@ export function AuthorizationBoard({ data }: { readonly data: LegalFormsData }) 
           />
         ),
       status: isHidden ? t('onboardingBoard.notShown') : null,
+      hide: lockedHide(t('onboardingBoard.hideLockedLegal')),
       link: { to: '/forms/authorization/$step', params: { step } },
     };
   };
@@ -320,6 +321,7 @@ export function TermsBoard({ data }: { readonly data: LegalFormsData }) {
         />
       ),
     status: null,
+    hide: lockedHide(t('onboardingBoard.hideLockedLegal')),
     link: { to: '/forms/terms/$step', params: { step } },
   });
   return (

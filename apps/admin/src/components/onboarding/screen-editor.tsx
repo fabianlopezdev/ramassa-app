@@ -65,12 +65,11 @@ import {
 import {
   archiveIntakeScreen,
   canHideBuiltin,
-  canHideBuiltinScreen,
-  hasRequiredPlacedField,
   requiredBuiltinQuestions,
   saveBuiltinScreen,
   saveIntakeScreen,
   screenSettingsFor,
+  setScreenHidden,
   textIn,
   type BuilderText,
   type IntakeCatalog,
@@ -101,6 +100,7 @@ import {
   type TypedWording,
 } from './screen-content';
 import { ScreenFieldsSection } from './screen-fields';
+import { builtinHideLockKey, teamHideLockKey } from './screen-hiding';
 
 /** The control column of a setting row, as on the account page: one width, natural controls. */
 const CONTROL_COLUMN = 'flex w-full flex-col gap-2 @md/field-group:w-100!';
@@ -393,13 +393,20 @@ function CustomScreenEditor({
   readonly number: number;
   readonly total: number;
 }) {
+  const { t } = useTranslation('settings');
   const catalog = data.intakeCatalog;
+  const hideLock = teamHideLockKey(catalog, 'onboarding', screen.id);
   return (
     <StaffScreenEditor
       screen={screen}
       number={number}
       total={total}
       saveKind={ONBOARDING_SAVES_AT_ONCE}
+      hide={{
+        isHidden: screen.isHidden === true,
+        lockReason: hideLock === null ? null : t(hideLock),
+        save: (isHidden) => setScreenHidden(supabase, screen.id, isHidden),
+      }}
       phoneQuestions={(language, wording) =>
         placedPhoneQuestions(catalog, screen.id, language, wording)
       }
@@ -435,6 +442,44 @@ export type RowEditing = ReturnType<typeof useRowEditing>;
 type TeamScreenField = 'title' | 'intro';
 
 /**
+ * The hide switch of a screen (RAPP-711), on every screen editor: the app's
+ * screens and the team's. Off, with the reason, while the screen always
+ * shows; a hidden screen can always be shown again.
+ */
+function HideScreenField({
+  id,
+  isHidden,
+  lockReason,
+  note = null,
+  onChange,
+}: {
+  readonly id: string;
+  readonly isHidden: boolean;
+  /** Why the screen always shows; null when it can be hidden. */
+  readonly lockReason: string | null;
+  readonly note?: ReactNode;
+  readonly onChange: (isHidden: boolean) => void;
+}) {
+  const { t } = useTranslation('settings');
+  return (
+    <Field orientation="horizontal">
+      <FieldContent>
+        <FieldLabel htmlFor={id}>{t('onboardingBoard.hideScreen')}</FieldLabel>
+        {lockReason === null ? null : <FieldDescription>{lockReason}</FieldDescription>}
+        {note}
+      </FieldContent>
+      <Switch
+        id={id}
+        checked={isHidden}
+        disabled={lockReason !== null && !isHidden}
+        onCheckedChange={onChange}
+        data-testid={id}
+      />
+    </Field>
+  );
+}
+
+/**
  * A screen staff made, beside her phone (RAPP-641): its title and intro, then
  * its fields, consents and signature blocks. A Ramassà screen of Onboarding and
  * a screen of a form the team created (RAPP-700) are both edited here; each
@@ -447,6 +492,7 @@ export function StaffScreenEditor({
   saveKind,
   phoneQuestions,
   onStore,
+  hide,
   fields,
 }: {
   readonly screen: { readonly title: BuilderText; readonly intro: BuilderText | null };
@@ -462,6 +508,12 @@ export function StaffScreenEditor({
     wording: TypedWording | null,
   ) => readonly PhoneQuestion[];
   readonly onStore: (title: BuilderText, intro: BuilderText | null) => Promise<unknown>;
+  /** The hide switch (RAPP-711): saved with the texts, the setting the board's eye saves. */
+  readonly hide: {
+    readonly isHidden: boolean;
+    readonly lockReason: string | null;
+    readonly save: (isHidden: boolean) => Promise<void>;
+  };
   readonly fields: (row: RowEditing, language: LanguageCode, screenName: string) => ReactNode;
 }) {
   const { t } = useTranslation(['settings', 'onboarding']);
@@ -474,6 +526,7 @@ export function StaffScreenEditor({
     intro: {},
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isHidden, setIsHidden] = useState(hide.isHidden);
   const row = useRowEditing();
   const saved: Readonly<Record<TeamScreenField, BuilderText>> = {
     title: screen.title,
@@ -517,6 +570,7 @@ export function StaffScreenEditor({
     setIsSaving(true);
     try {
       await onStore(toSave('title') ?? {}, toSave('intro') ?? null);
+      if (isHidden !== hide.isHidden) await hide.save(isHidden);
       await reload();
       toast.success(t('onboardingBoard.saved'));
       return true;
@@ -609,6 +663,12 @@ export function StaffScreenEditor({
                   />
                 </div>
               </Field>
+              <HideScreenField
+                id="hide-screen"
+                isHidden={isHidden}
+                lockReason={hide.lockReason}
+                onChange={setIsHidden}
+              />
             </FieldGroup>
           </EditorSection>
 
@@ -833,11 +893,9 @@ export function WordingSection({
   const [isSaving, setIsSaving] = useState(false);
   const fields = screenTextFields(screen);
   const direction = getLanguageDirection(language);
-  const hideable =
-    isQuestionScreen(screen) &&
-    canHideBuiltinScreen(screen, requiredBuiltinQuestions(catalog)) &&
-    // A required field placed on it keeps the screen shown (RAPP-642).
-    !hasRequiredPlacedField(catalog, screen);
+  // A required question or field, a signature, or the name keeps it shown (RAPP-642, RAPP-711).
+  const hideLock = isQuestionScreen(screen) ? builtinHideLockKey(catalog, screen) : null;
+  const hideable = isQuestionScreen(screen) && hideLock === null;
   const bundled = (field: ScreenTextField, shownLanguage: LanguageCode) =>
     bundledScreenText(screen, field, shownLanguage, t);
   const shownIn = (field: ScreenTextField, shownLanguage: LanguageCode): string =>
@@ -956,25 +1014,18 @@ export function WordingSection({
           );
         })}
         {isQuestionScreen(screen) ? (
-          <Field orientation="horizontal">
-            <FieldContent>
-              <FieldLabel htmlFor={`hide-${screen}`}>{t('onboardingBoard.hideScreen')}</FieldLabel>
-              {hideable ? null : (
-                <FieldDescription>{t('builtinScreens.hideLocked')}</FieldDescription>
-              )}
-              {/* Re-registration follows the same hide (RAPP-612): one rule for both. */}
-              {hideable && (SEASON_WIZARD_SCREENS as readonly string[]).includes(screen) ? (
+          <HideScreenField
+            id={`hide-${screen}`}
+            isHidden={hideable && isHidden}
+            lockReason={hideLock === null ? null : t(hideLock)}
+            note={
+              // Re-registration follows the same hide (RAPP-612): one rule for both.
+              hideable && (SEASON_WIZARD_SCREENS as readonly string[]).includes(screen) ? (
                 <FieldDescription>{t('builtinScreens.hideReregistrationNote')}</FieldDescription>
-              ) : null}
-            </FieldContent>
-            <Switch
-              id={`hide-${screen}`}
-              checked={hideable && isHidden}
-              disabled={!hideable}
-              onCheckedChange={setIsHidden}
-              data-testid={`hide-${screen}`}
-            />
-          </Field>
+              ) : null
+            }
+            onChange={setIsHidden}
+          />
         ) : null}
       </FieldGroup>
     </EditorSection>

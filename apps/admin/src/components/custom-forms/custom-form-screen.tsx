@@ -17,6 +17,7 @@ import {
   type SiblingScreen,
 } from '@/components/onboarding/screen-editor';
 import { ScreenFieldsSection } from '@/components/onboarding/screen-fields';
+import { teamHideLockKey } from '@/components/onboarding/screen-hiding';
 import type { CustomFormData } from '@/lib/custom-forms';
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from '@tanstack/react-router';
@@ -24,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import {
   archiveCustomFormScreen,
   saveCustomFormScreen,
+  setScreenHidden,
   textIn,
   type CustomForm,
   type CustomFormScreen,
@@ -101,7 +103,9 @@ function FormScreenBody({
   readonly screen: CustomFormScreen;
   readonly number: number;
 }) {
+  const { t } = useTranslation('settings');
   const catalog = data.intakeCatalog;
+  const hideLock = teamHideLockKey(catalog, 'custom_form', screen.id);
   return (
     <StaffScreenEditor
       screen={screen}
@@ -109,6 +113,11 @@ function FormScreenBody({
       total={form.screens.length}
       // A draft: players see it with the next Publica (RAPP-701).
       saveKind={DRAFT_SAVE}
+      hide={{
+        isHidden: screen.isHidden === true,
+        lockReason: hideLock === null ? null : t(hideLock),
+        save: (isHidden) => setScreenHidden(supabase, screen.id, isHidden),
+      }}
       phoneQuestions={(language, wording) =>
         placedPhoneQuestions(catalog, screen.id, language, wording, 'custom_form')
       }

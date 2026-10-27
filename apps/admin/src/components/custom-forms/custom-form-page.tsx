@@ -24,6 +24,7 @@ import { PhoneMiniature } from '@/components/onboarding/phone-preview';
 import { useSaveKind } from '@/components/onboarding/save-kind-dialog';
 import { AddScreenCard, FormBoard, type BoardCard } from '@/components/onboarding/screen-board';
 import { placedPhoneQuestions, staffScreenContent } from '@/components/onboarding/screen-content';
+import { teamHideLockKey } from '@/components/onboarding/screen-hiding';
 import { useReload } from '@/components/settings/onboarding-design-sections';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,7 @@ import {
   saveCustomForm,
   saveCustomFormScreen,
   setCustomFormRecipients,
+  setScreenHidden,
   textIn,
   type CustomForm,
   type CustomFormChoices,
@@ -237,7 +239,8 @@ function FormActions({ data, form }: { readonly data: CustomFormData; readonly f
           type="button"
           disabled={isBusy || (form.repeatsEachSeason && seasonId === null)}
           onClick={() => {
-            if (form.screens.length === 0) {
+            // A hidden screen is left out of the version (RAPP-711).
+            if (form.screens.every((screen) => screen.isHidden === true)) {
               toast.error(t('customForms.needsScreen'));
               return;
             }
@@ -284,27 +287,42 @@ function FormScreensBoard({
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const reload = useReload();
   const navigate = useNavigate();
-  const cards: BoardCard[] = form.screens.map((screen) => ({
-    key: screen.id,
-    name: textIn(screen.title, language),
-    miniature: (
-      <PhoneMiniature
-        content={staffScreenContent(
-          screen.title,
-          screen.intro,
-          placedPhoneQuestions(data.intakeCatalog, screen.id, language, null, 'custom_form'),
-          language,
-          t,
-        )}
-        language={language}
-      />
-    ),
-    status: null,
-    link: {
-      to: '/forms/custom/$formId/screens/$screenId',
-      params: { formId: form.id, screenId: screen.id },
-    },
-  }));
+  const cards: BoardCard[] = form.screens.map((screen) => {
+    const isHidden = screen.isHidden === true;
+    const lock = teamHideLockKey(data.intakeCatalog, 'custom_form', screen.id);
+    return {
+      key: screen.id,
+      name: textIn(screen.title, language),
+      miniature: (
+        <PhoneMiniature
+          content={staffScreenContent(
+            screen.title,
+            screen.intro,
+            placedPhoneQuestions(data.intakeCatalog, screen.id, language, null, 'custom_form'),
+            language,
+            t,
+          )}
+          language={language}
+          isDimmed={isHidden}
+        />
+      ),
+      status: isHidden ? t('builtinScreens.hiddenBadge') : null,
+      // A draft like every change here: players see it with the next Publica (RAPP-701).
+      hide: {
+        isHidden,
+        canHide: lock === null || isHidden,
+        reason: lock === null ? undefined : t(lock),
+        toggle: async () => {
+          await setScreenHidden(supabase, screen.id, !isHidden);
+          await reload();
+        },
+      },
+      link: {
+        to: '/forms/custom/$formId/screens/$screenId',
+        params: { formId: form.id, screenId: screen.id },
+      },
+    };
+  });
   return (
     <FormBoard
       // Keyed by the saved order: a reload starts again from what the database holds.
