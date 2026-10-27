@@ -33,12 +33,13 @@ export { isShownToHer, movableOrder } from '@ramassa/shared/intake-builder';
 export type BoardStep = FlowStep;
 
 /**
- * The locked cards that end the Onboarding board (RAPP-696): the summary, the
- * app terms form (its two screens, "Abans dels termes" and "Termes i
- * signatura", in one card) and the season authorization form. Her phone
- * still walks every screen in the same order (`LOCKED_STEPS`).
+ * The locked cards that end the Onboarding board (RAPP-696): the summary and
+ * the app terms form (its two screens, "Abans dels termes" and "Termes i
+ * signatura", in one card). The season authorization is a chained form below
+ * the divider since RAPP-703, by default first. Her phone still walks every
+ * screen in the same order (`LOCKED_STEPS`).
  */
-export const BOARD_LOCKED_STEPS = ['summary', 'terms', 'authorization'] as const;
+export const BOARD_LOCKED_STEPS = ['summary', 'terms'] as const;
 
 /** One step of the board from its key, or null for a step the catalog no longer has. */
 export const boardStep = flowStep;

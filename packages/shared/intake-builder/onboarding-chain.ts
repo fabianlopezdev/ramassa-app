@@ -181,8 +181,7 @@ export async function finishOnboardingChain(client: Client): Promise<void> {
 
 /** The next chained form she goes through, or null when none applies to her. */
 export type ChainedFormStep =
-  | { readonly kind: 'authorization' }
-  | { readonly kind: 'custom'; readonly responseId: string };
+  { readonly kind: 'authorization' } | { readonly kind: 'custom'; readonly responseId: string };
 
 /**
  * The first chained form that applies to her, in the chain's order: the

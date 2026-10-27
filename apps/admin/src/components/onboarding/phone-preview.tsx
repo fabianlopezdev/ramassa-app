@@ -15,7 +15,7 @@ import { QuestionControl } from '@/components/settings/question-type-fields';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { ChevronDown } from 'lucide-react';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getLanguageDirection } from '@ramassa/shared/i18n/languages';
 import type { LanguageCode } from '@ramassa/shared/schemas';
@@ -298,16 +298,7 @@ export function PhoneMiniature({
 }) {
   const shown = content.questions.slice(0, 3);
   return (
-    <div
-      aria-hidden
-      lang={language}
-      dir={getLanguageDirection(language)}
-      className={cn(
-        'flex aspect-[9/16] w-full flex-col gap-2 overflow-hidden rounded-xl border bg-canvas px-3 pt-3 pb-3',
-        isDimmed && 'opacity-50',
-      )}
-    >
-      <div className="mx-auto h-1 w-8 shrink-0 rounded-full bg-foreground/15" />
+    <MiniatureFrame language={language} isDimmed={isDimmed}>
       <p className="line-clamp-2 text-start text-[11px] leading-4 font-semibold">{content.title}</p>
       {shown.length > 0 ? (
         <div className="flex flex-col gap-2">
@@ -338,6 +329,59 @@ export function PhoneMiniature({
       <span className="mt-auto truncate rounded-full bg-primary px-2 py-1 text-center text-[9px] leading-3 font-semibold text-primary-foreground">
         {content.continueLabel === '' ? ' ' : content.continueLabel}
       </span>
+    </MiniatureFrame>
+  );
+}
+
+/** The 9:16 phone every card of a board draws, a screen's or a form's (RAPP-703). */
+function MiniatureFrame({
+  language,
+  isDimmed,
+  children,
+}: {
+  readonly language: LanguageCode;
+  readonly isDimmed: boolean;
+  readonly children: ReactNode;
+}) {
+  return (
+    <div
+      aria-hidden
+      lang={language}
+      dir={getLanguageDirection(language)}
+      className={cn(
+        'flex aspect-[9/16] w-full flex-col gap-2 overflow-hidden rounded-xl border bg-canvas px-3 pt-3 pb-3',
+        isDimmed && 'opacity-50',
+      )}
+    >
+      <div className="mx-auto h-1 w-8 shrink-0 rounded-full bg-foreground/15" />
+      {children}
     </div>
+  );
+}
+
+/**
+ * A chained form's card on the Onboarding board (RAPP-703): the same 9:16
+ * phone as a screen's card, holding the form's name, what kind it is and how
+ * many screens it shows her.
+ */
+export function FormMiniature({
+  name,
+  kind,
+  screens,
+  language,
+}: {
+  readonly name: string;
+  readonly kind: string;
+  readonly screens: string;
+  readonly language: LanguageCode;
+}) {
+  return (
+    <MiniatureFrame language={language} isDimmed={false}>
+      <p className="line-clamp-3 text-start text-[11px] leading-4 font-semibold">{name}</p>
+      <p className="text-start text-[10px] leading-4 text-muted-foreground">{kind}</p>
+      <span className="mt-auto truncate rounded-full border px-2 py-1 text-center text-[9px] leading-3 font-semibold tabular-nums">
+        {screens}
+      </span>
+    </MiniatureFrame>
   );
 }
