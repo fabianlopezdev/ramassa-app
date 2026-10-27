@@ -18,6 +18,7 @@ export function EditorColumns({
   onPreviewLanguageChange,
   previewLabel,
   previewLanguageLabel,
+  previewNote,
   form,
   preview,
   previewLanguageTestId = 'phone-language',
@@ -29,6 +30,8 @@ export function EditorColumns({
   /** The preview's name for assistive technology. */
   readonly previewLabel: string;
   readonly previewLanguageLabel: string;
+  /** One line under the preview's languages, such as the phone being an approximation (RAPP-704). */
+  readonly previewNote?: string;
   readonly form: ReactNode;
   readonly preview: ReactNode;
   readonly previewLanguageTestId?: string;
@@ -59,6 +62,11 @@ export function EditorColumns({
           label={previewLanguageLabel}
           testId={previewLanguageTestId}
         />
+        {previewNote === undefined ? null : (
+          <p className="max-w-[20rem] text-center text-xs leading-5 text-muted-foreground">
+            {previewNote}
+          </p>
+        )}
         {preview}
       </aside>
     </div>

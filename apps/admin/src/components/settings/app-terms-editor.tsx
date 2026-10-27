@@ -168,6 +168,7 @@ export function AppTermsEditor({
         previewLanguage={previewLanguage}
         onPreviewLanguageChange={setPreviewLanguage}
         previewLabel={t('onboardingBoard.phone')}
+        previewNote={t('onboardingBoard.phoneNote')}
         previewLanguageLabel={t('onboardingBoard.phoneLanguage')}
         preview={
           <SteppedPhone

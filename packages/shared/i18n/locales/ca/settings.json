@@ -659,7 +659,8 @@
     "deleteScreenTitle": "Vols eliminar aquesta pantalla?",
     "deleteScreenBody": "Deixarà de sortir a l'app amb les seves preguntes. Les respostes ja donades es mantenen.",
     "deleted": "S'ha eliminat {{screen}}.",
-    "deleteFailed": "No s'ha pogut eliminar. Torna-ho a provar."
+    "deleteFailed": "No s'ha pogut eliminar. Torna-ho a provar.",
+    "phoneNote": "Una aproximació de com es veu a l'app. A l'app pot canviar una mica."
   },
   "sortable": {
     "instructions": "Per moure un element, prem espai o retorn, fes servir les fletxes i torna a prémer espai o retorn per deixar-lo. Escapada cancel·la.",

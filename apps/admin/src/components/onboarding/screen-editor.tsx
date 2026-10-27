@@ -407,6 +407,7 @@ export function StaffScreenEditor({
       previewLanguage={previewLanguage}
       onPreviewLanguageChange={setPreviewLanguage}
       previewLabel={t('onboardingBoard.phone')}
+      previewNote={t('onboardingBoard.phoneNote')}
       previewLanguageLabel={t('onboardingBoard.phoneLanguage')}
       preview={
         <PhoneFrame
@@ -600,6 +601,7 @@ function AppScreenEditor({
         previewLanguage={previewLanguage}
         onPreviewLanguageChange={setPreviewLanguage}
         previewLabel={t('onboardingBoard.phone')}
+        previewNote={t('onboardingBoard.phoneNote')}
         previewLanguageLabel={t('onboardingBoard.phoneLanguage')}
         preview={phone}
         form={
