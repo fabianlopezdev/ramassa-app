@@ -1173,6 +1173,7 @@ export type Database = {
           id: string;
           intro: Json | null;
           is_archived: boolean;
+          is_hidden: boolean;
           org_id: string;
           sort_order: number;
           title: Json;
@@ -1184,6 +1185,7 @@ export type Database = {
           id?: string;
           intro?: Json | null;
           is_archived?: boolean;
+          is_hidden?: boolean;
           org_id: string;
           sort_order?: number;
           title: Json;
@@ -1195,6 +1197,7 @@ export type Database = {
           id?: string;
           intro?: Json | null;
           is_archived?: boolean;
+          is_hidden?: boolean;
           org_id?: string;
           sort_order?: number;
           title?: Json;
@@ -2821,6 +2824,7 @@ export type Database = {
           id: string;
           intro: Json | null;
           is_archived: boolean;
+          is_hidden: boolean;
           org_id: string;
           sort_order: number;
           title: Json;
@@ -2834,6 +2838,7 @@ export type Database = {
           id?: string;
           intro?: Json | null;
           is_archived?: boolean;
+          is_hidden?: boolean;
           org_id: string;
           sort_order?: number;
           title: Json;
@@ -2847,6 +2852,7 @@ export type Database = {
           id?: string;
           intro?: Json | null;
           is_archived?: boolean;
+          is_hidden?: boolean;
           org_id?: string;
           sort_order?: number;
           title?: Json;
@@ -7963,6 +7969,10 @@ export type Database = {
       };
       set_prior_seasons: {
         Args: { p_count: number; p_profile_id: string };
+        Returns: undefined;
+      };
+      set_screen_hidden: {
+        Args: { p_hidden: boolean; p_screen_id: string };
         Returns: undefined;
       };
       set_service_interest: {
