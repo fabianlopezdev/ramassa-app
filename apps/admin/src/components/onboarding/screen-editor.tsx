@@ -31,6 +31,7 @@ import {
   Field,
   FieldContent,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
@@ -44,10 +45,11 @@ import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { getLanguageDirection } from '@ramassa/shared/i18n/languages';
+import { getLanguageDirection, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
+import { staffTextIn, staffTextToSave } from '@ramassa/shared/i18n/localized-content';
 import {
-  BUNDLED_SCREEN_TEXT_KEYS,
   DETAIL_SCREEN_PARENTS,
+  isOptionalScreenTextField,
   screenTextFields,
   SEASON_WIZARD_SCREENS,
   WIZARD_QUESTION_SCREENS,
@@ -84,6 +86,7 @@ import { stepName, type BoardCardLink } from './screen-board';
 import {
   builtinPhoneQuestion,
   builtinWording,
+  bundledScreenText,
   placedPhoneQuestions,
   staffScreenContent,
   stepContent,
@@ -712,6 +715,7 @@ function AppScreenEditor({
                 catalog={catalog}
                 screen={screen}
                 language={language}
+                onLanguageChange={setLanguage}
                 title={t('onboardingBoard.wording')}
                 onChange={(next) => {
                   setTexts((current) => ({ ...current, [screen]: next }));
@@ -724,6 +728,7 @@ function AppScreenEditor({
                 catalog={catalog}
                 screen={detail}
                 language={language}
+                onLanguageChange={setLanguage}
                 title={t(`builtinScreens.screenName.${detail}`)}
                 onChange={(next) => {
                   setTexts((current) => ({ ...current, [detail]: next }));
@@ -757,26 +762,35 @@ function AppScreenEditor({
   );
 }
 
-/** An app screen's own wording and hide switch; the terms screens' buttons too (RAPP-696). */
+/**
+ * An app screen's own wording and hide switch; the terms screens' buttons too
+ * (RAPP-696). What staff see is what she sees (RAPP-710): each field holds the
+ * text her phone shows in the language being edited, the saved text or else
+ * the app's own. Clearing an optional text removes it from her phone in that
+ * language; a required text cannot be saved empty.
+ */
 export function WordingSection({
   catalog,
   screen,
   language,
+  onLanguageChange,
   title,
   onChange,
 }: {
   readonly catalog: IntakeCatalog;
   readonly screen: EditableWizardScreen;
   readonly language: LanguageCode;
+  /** Turns the form to a language with an empty required text when saving. */
+  readonly onLanguageChange?: (language: LanguageCode) => void;
   readonly title: string;
   readonly onChange: (texts: ScreenTexts) => void;
 }) {
   const { t } = useTranslation(['settings', 'onboarding']);
   const reload = useReload();
   const saved = screenSettingsFor(catalog, screen);
-  const [texts, setTexts] = useState<Partial<Record<ScreenTextField, BuilderText>>>(
-    saved?.texts ?? {},
-  );
+  const savedTexts: ScreenTexts = saved?.texts ?? {};
+  // Only what staff typed here; every other language shows what her phone shows.
+  const [typed, setTyped] = useState<Partial<Record<ScreenTextField, BuilderText>>>({});
   const [isHidden, setIsHidden] = useState(saved?.isHidden ?? false);
   const [isSaving, setIsSaving] = useState(false);
   const fields = screenTextFields(screen);
@@ -786,20 +800,50 @@ export function WordingSection({
     canHideBuiltinScreen(screen, requiredBuiltinQuestions(catalog)) &&
     // A required field placed on it keeps the screen shown (RAPP-642).
     !hasRequiredPlacedField(catalog, screen);
-  const bundled = (field: ScreenTextField): string => {
-    const key = BUNDLED_SCREEN_TEXT_KEYS[screen][field];
-    return key === undefined ? '' : t(`onboarding:${key}`, { lng: language });
-  };
+  const bundled = (field: ScreenTextField, shownLanguage: LanguageCode) =>
+    bundledScreenText(screen, field, shownLanguage, t);
+  const shownIn = (field: ScreenTextField, shownLanguage: LanguageCode): string =>
+    typed[field]?.[shownLanguage] ??
+    staffTextIn(savedTexts[field], shownLanguage, isOptionalScreenTextField(field)) ??
+    bundled(field, shownLanguage);
+  const isEmptyRequired = (field: ScreenTextField, shownLanguage: LanguageCode) =>
+    !isOptionalScreenTextField(field) && shownIn(field, shownLanguage).trim() === '';
 
   const edit = (field: ScreenTextField, value: string) => {
-    const next = { ...texts, [field]: { ...texts[field], [language]: value } };
-    setTexts(next);
-    onChange(next);
+    const next = { ...typed, [field]: { ...typed[field], [language]: value } };
+    setTyped(next);
+    // Her phone: the saved wording with what is typed over it.
+    onChange(
+      Object.fromEntries(
+        fields.map((each) => [each, { ...savedTexts[each], ...next[each] }]),
+      ) as ScreenTexts,
+    );
   };
 
   // Onboarding is only for players who have not joined yet (RAPP-705): a save
   // changes what they will see, so it saves at once.
   async function store() {
+    const empty = SUPPORTED_LANGUAGES.find((each) =>
+      fields.some((field) => isEmptyRequired(field, each)),
+    );
+    if (empty !== undefined) {
+      onLanguageChange?.(empty);
+      toast.error(t('builtinScreens.requiredText'));
+      return;
+    }
+    const texts = Object.fromEntries(
+      fields.flatMap((field) => {
+        const shown = Object.fromEntries(
+          SUPPORTED_LANGUAGES.map((each) => [each, shownIn(field, each)]),
+        ) as BuilderText;
+        const text = staffTextToSave(
+          shown,
+          (each) => bundled(field, each),
+          isOptionalScreenTextField(field),
+        );
+        return text === undefined ? [] : [[field, text]];
+      }),
+    ) as ScreenTexts;
     setIsSaving(true);
     try {
       await saveBuiltinScreen(supabase, { screen, texts, isHidden: hideable && isHidden });
@@ -841,15 +885,16 @@ export function WordingSection({
         ) : null}
         {fields.map((field) => {
           const id = `wording-${screen}-${field}`;
+          const isInvalid = isEmptyRequired(field, language);
           const shared = {
             id,
             dir: direction,
             lang: language,
-            placeholder: bundled(field),
-            value: texts[field]?.[language] ?? '',
+            value: shownIn(field, language),
+            'aria-invalid': isInvalid,
           } as const;
           return (
-            <Field key={field} orientation="responsive">
+            <Field key={field} orientation="responsive" data-invalid={isInvalid}>
               <FieldContent>
                 <FieldLabel htmlFor={id}>{t(`builtinScreens.field.${field}`)}</FieldLabel>
               </FieldContent>
@@ -863,6 +908,11 @@ export function WordingSection({
                 ) : (
                   <Input {...shared} onChange={(event) => edit(field, event.target.value)} />
                 )}
+                {isInvalid ? (
+                  <FieldError data-testid={`wording-required-${field}`}>
+                    {t('builtinScreens.requiredText')}
+                  </FieldError>
+                ) : null}
               </div>
             </Field>
           );

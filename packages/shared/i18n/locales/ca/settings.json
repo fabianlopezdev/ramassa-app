@@ -583,11 +583,12 @@
       "terms-intro": "Abans dels termes",
       "terms": "Termes i signatura",
       "authorization": "Autorització de la temporada (s'edita a l'autorització)"
-    }
+    },
+    "requiredText": "Aquest text és obligatori."
   },
   "authorizationEditor": {
     "draftRow": "Esborrany, desat el {{date}}",
-    "intro": "Comença des de l'esborrany o la versió vigent. Edita idioma per idioma: un camp de text de l'app que deixis buit mostra el text de l'app en l'idioma de la jugadora.",
+    "intro": "Comença des de l'esborrany o la versió vigent. Edita idioma per idioma: cada camp mostra el text que veurà la jugadora.",
     "imageRightsLock": "Els drets d'imatge sempre són opcionals: decideixen el permís de fotos, que ella pot retirar.",
     "textsTitle": "Textos del formulari",
     "textsIntro": "La introducció, els títols de cada pas, els botons, el pas final de signatura i la reinscripció. Pots escriure {{season}} per posar el nom de la temporada.",

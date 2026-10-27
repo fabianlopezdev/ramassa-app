@@ -10,9 +10,11 @@
 
 import type { PreviewDraft } from '@/components/settings/question-type-fields';
 import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
+import { staffTextIn } from '@ramassa/shared/i18n/localized-content';
 import {
   BUNDLED_SCREEN_TEXT_KEYS,
   INTAKE_QUESTION_LABEL_KEYS,
+  isOptionalScreenTextField,
   isRequiredQuestion,
   resolveAppTerms,
   screenTextFields,
@@ -324,7 +326,22 @@ function builtinScreenQuestions(
 
 export type ScreenTexts = Readonly<Partial<Record<ScreenTextField, BuilderText>>>;
 
-/** A built-in screen's wording in one language: staff text, else the app's. */
+/** The app's own text of a built-in screen's field in one language, '' when it has none. */
+export function bundledScreenText(
+  screen: EditableWizardScreen,
+  field: ScreenTextField,
+  language: LanguageCode,
+  t: Translate,
+): string {
+  const key = BUNDLED_SCREEN_TEXT_KEYS[screen][field];
+  return key === undefined ? '' : t(`onboarding:${key}`, { lng: language });
+}
+
+/**
+ * A built-in screen's wording in one language, by the rule her phone reads
+ * (RAPP-710, `staffTextIn`): staff text, nothing for an optional text staff
+ * cleared, else the app's.
+ */
 export function builtinWording(
   screen: EditableWizardScreen,
   texts: ScreenTexts,
@@ -334,10 +351,10 @@ export function builtinWording(
   const fields = screenTextFields(screen);
   const shown = (field: ScreenTextField): string => {
     if (!fields.includes(field)) return '';
-    const staff = texts[field]?.[language]?.trim() ?? '';
-    if (staff !== '') return staff;
-    const key = BUNDLED_SCREEN_TEXT_KEYS[screen][field];
-    return key === undefined ? '' : t(`onboarding:${key}`, { lng: language });
+    return (
+      staffTextIn(texts[field], language, isOptionalScreenTextField(field)) ??
+      bundledScreenText(screen, field, language, t)
+    );
   };
   return {
     title: shown('title'),

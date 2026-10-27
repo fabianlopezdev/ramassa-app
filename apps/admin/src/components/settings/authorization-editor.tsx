@@ -14,8 +14,10 @@
  * Desa take them as the catalogue holds them then. The Health
  * screen asks fields of Dades de les jugadores (RAPP-698): her health and her
  * emergency contact among them, placed, reworded and required with the
- * shared field picker, saved at once like any screen's. A wording field left empty shows the app's own
- * text in her language, and the phone shows that text. Onboarding
+ * shared field picker, saved at once like any screen's. Each wording field
+ * shows the text her phone shows (RAPP-710): the version's text, else the
+ * app's own in that language, as real text. Clearing an optional text removes
+ * it from her phone; a required one cannot be saved empty. Onboarding
  * designers save and discard the draft. Desa publishes it and needs
  * settings.organization: once anyone signed the season's version, it asks
  * whether this is a correction (her signature still covers it) or a new
@@ -51,13 +53,16 @@ import {
   AUTHORIZATION_BUNDLED_TEXT_KEYS,
   AUTHORIZATION_TEXT_FIELDS,
   authorizationContentSchema,
+  isOptionalAuthorizationTextField,
   orderedConsents,
   type AuthorizationContent,
   type AuthorizationText,
+  type AuthorizationTextField,
   type AuthorizationVersion,
   type SaveKind,
 } from '@ramassa/shared/authorization';
-import { getLanguageDirection } from '@ramassa/shared/i18n/languages';
+import { getLanguageDirection, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
+import { staffTextToSave } from '@ramassa/shared/i18n/localized-content';
 import {
   authorizationConsentsFromCatalog,
   EMPTY_INTAKE_CATALOG,
@@ -82,12 +87,16 @@ const EMPTY_CONTENT: AuthorizationContent = {
   attachments: [],
 };
 
-/** Empty languages are dropped, so they fall back instead of showing a blank. */
-function cleanText(text: AuthorizationText): AuthorizationText {
+/**
+ * Empty languages are dropped, so they fall back instead of showing a blank.
+ * An optional wording keeps them: staff cleared it, so her phone shows none
+ * (RAPP-710).
+ */
+function cleanText(text: AuthorizationText, keepsBlank = false): AuthorizationText {
   return Object.fromEntries(
     Object.entries(text)
       .map(([language, value]) => [language, (value ?? '').trim()] as const)
-      .filter(([, value]) => value !== ''),
+      .filter(([, value]) => keepsBlank || value !== ''),
   );
 }
 
@@ -97,7 +106,10 @@ function cleanTexts<Texts extends Readonly<Record<string, AuthorizationText | un
 ): Texts {
   return Object.fromEntries(
     Object.entries(texts)
-      .map(([field, text]) => [field, cleanText(text ?? {})] as const)
+      .map(
+        ([field, text]) =>
+          [field, cleanText(text ?? {}, isOptionalAuthorizationTextField(field))] as const,
+      )
       .filter(([, text]) => Object.keys(text).length > 0),
   ) as Texts;
 }
@@ -208,8 +220,20 @@ export function AuthorizationEditor({
   // Her phone names the season the draft is published to.
   const seasonName =
     target?.name ?? seasons.find((season) => season.isCurrent)?.name ?? PREVIEW_SEASON;
-  /** The app's own text for a field in the language being edited. */
-  const bundled = (key: string) => t(`onboarding:${key}`, { lng: language, season: seasonName });
+  /** The app's own text for a field, as staff write it: `{{season}}` stays a placeholder. */
+  const bundled = (field: AuthorizationTextField, shownLanguage: LanguageCode) =>
+    t(`onboarding:${AUTHORIZATION_BUNDLED_TEXT_KEYS.texts[field]}`, {
+      lng: shownLanguage,
+      season: '{{season}}',
+    });
+  // What her phone shows (RAPP-710): what is typed or saved, else the app's own text.
+  const shownText = (field: AuthorizationTextField, shownLanguage: LanguageCode) =>
+    content.texts[field]?.[shownLanguage] ?? bundled(field, shownLanguage);
+  const isEmptyRequired = (field: AuthorizationTextField, shownLanguage: LanguageCode) =>
+    !isOptionalAuthorizationTextField(field) && shownText(field, shownLanguage).trim() === '';
+  const emptyRequiredLanguage = SUPPORTED_LANGUAGES.find((each) =>
+    AUTHORIZATION_TEXT_FIELDS.texts.some((field) => isEmptyRequired(field, each)),
+  );
 
   async function run(next: Status, action: () => Promise<unknown>, done: Status) {
     setStatus(next);
@@ -223,7 +247,30 @@ export function AuthorizationEditor({
   }
 
   function parsedContent(): AuthorizationContent | null {
-    const parsed = authorizationContentSchema.safeParse(cleanAuthorizationContent(content));
+    // A required text cannot be saved empty: the form turns to its language.
+    if (emptyRequiredLanguage !== undefined) {
+      setLanguage(emptyRequiredLanguage);
+      setStatus('invalid');
+      return null;
+    }
+    // A language that still reads as the app's text stays unwritten, so it follows the app.
+    const texts = Object.fromEntries(
+      AUTHORIZATION_TEXT_FIELDS.texts.flatMap((field) => {
+        const typed = content.texts[field];
+        const text =
+          typed === undefined
+            ? undefined
+            : staffTextToSave(
+                typed,
+                (each) => bundled(field, each),
+                isOptionalAuthorizationTextField(field),
+              );
+        return text === undefined ? [] : [[field, text]];
+      }),
+    ) as AuthorizationContent['texts'];
+    const parsed = authorizationContentSchema.safeParse(
+      cleanAuthorizationContent({ ...content, texts }),
+    );
     if (!parsed.success) setStatus('invalid');
     return parsed.success ? parsed.data : null;
   }
@@ -394,8 +441,12 @@ export function AuthorizationEditor({
                       id={`authorization-text-${field}`}
                       label={t(`authorizationEditor.textField.${field}`)}
                       dir={direction}
-                      placeholder={bundled(AUTHORIZATION_BUNDLED_TEXT_KEYS.texts[field])}
-                      value={inLanguage(content.texts[field])}
+                      value={shownText(field, language)}
+                      errorMessage={
+                        isEmptyRequired(field, language)
+                          ? t('builtinScreens.requiredText')
+                          : undefined
+                      }
                       onChange={(event) =>
                         edit({
                           ...content,

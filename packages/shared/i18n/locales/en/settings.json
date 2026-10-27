@@ -583,11 +583,12 @@
       "terms-intro": "Before the terms",
       "terms": "Terms and signature",
       "authorization": "Season authorization (edited in the authorization)"
-    }
+    },
+    "requiredText": "This text is required."
   },
   "authorizationEditor": {
     "draftRow": "Draft, saved on {{date}}",
-    "intro": "Start from the draft or the current version. Edit language by language: an app text field you leave empty shows the app's own text in her language.",
+    "intro": "Start from the draft or the current version. Edit language by language: each field shows the text she will see.",
     "imageRightsLock": "Image rights are always optional: they decide the photo consent, which she can withdraw.",
     "textsTitle": "Form wording",
     "textsIntro": "The introduction, each step's title, the buttons, the final signing step and re-registration. Write {{season}} to show the season's name.",
