@@ -46,7 +46,11 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { getLanguageDirection, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
-import { staffTextIn, staffTextToSave } from '@ramassa/shared/i18n/localized-content';
+import {
+  followedTeamText,
+  staffTextIn,
+  staffTextToSave,
+} from '@ramassa/shared/i18n/localized-content';
 import {
   DETAIL_SCREEN_PARENTS,
   isOptionalScreenTextField,
@@ -427,6 +431,9 @@ function CustomScreenEditor({
 /** What an open row of a screen's list shows on her phone while staff type. */
 export type RowEditing = ReturnType<typeof useRowEditing>;
 
+/** The texts of a screen the team made: its title (required) and intro (optional). */
+type TeamScreenField = 'title' | 'intro';
+
 /**
  * A screen staff made, beside her phone (RAPP-641): its title and intro, then
  * its fields, consents and signature blocks. A Ramassà screen of Onboarding and
@@ -461,15 +468,45 @@ export function StaffScreenEditor({
   const reload = useReload();
   const [language, setLanguage] = useState<LanguageCode>('ca');
   const [previewLanguage, setPreviewLanguage] = useState<LanguageCode>('ca');
-  const [title, setTitle] = useState<BuilderText>(screen.title);
-  const [intro, setIntro] = useState<BuilderText>(screen.intro ?? {});
+  // Only what staff typed here; every other language shows what her phone shows (RAPP-710).
+  const [typed, setTyped] = useState<Readonly<Record<TeamScreenField, BuilderText>>>({
+    title: {},
+    intro: {},
+  });
   const [isSaving, setIsSaving] = useState(false);
   const row = useRowEditing();
+  const saved: Readonly<Record<TeamScreenField, BuilderText>> = {
+    title: screen.title,
+    intro: screen.intro ?? {},
+  };
+  const isOptional = (field: TeamScreenField) => field === 'intro';
+  // The saved text with what is typed over it: her phone reads it by the shared rule.
+  const current = (field: TeamScreenField): BuilderText => ({ ...saved[field], ...typed[field] });
+  const shownIn = (field: TeamScreenField, shownLanguage: LanguageCode): string =>
+    typed[field][shownLanguage] ??
+    staffTextIn(saved[field], shownLanguage, isOptional(field)) ??
+    (shownLanguage === 'ca' ? '' : shownIn(field, 'ca'));
+  const isEmptyRequired = (field: TeamScreenField, shownLanguage: LanguageCode) =>
+    !isOptional(field) && shownIn(field, shownLanguage).trim() === '';
+  const edit = (field: TeamScreenField, value: string) =>
+    setTyped({ ...typed, [field]: { ...typed[field], [language]: value } });
+
+  /** What is saved: a language still showing the Catalan keeps following it. */
+  const toSave = (field: TeamScreenField): BuilderText | undefined =>
+    staffTextToSave(
+      Object.fromEntries(
+        SUPPORTED_LANGUAGES.map((each) => [each, shownIn(field, each)]),
+      ) as BuilderText,
+      followedTeamText(shownIn(field, 'ca')),
+      isOptional(field),
+    );
 
   async function saveScreen() {
-    if ((title.ca ?? '').trim() === '') {
-      setLanguage('ca');
-      toast.error(t('questions.catalanNeeded'));
+    // The title cannot be saved empty: the form turns to the language that is.
+    const empty = SUPPORTED_LANGUAGES.find((each) => isEmptyRequired('title', each));
+    if (empty !== undefined) {
+      setLanguage(empty);
+      toast.error(t('builtinScreens.requiredText'));
       return;
     }
     await saveKind.request(storeScreen);
@@ -479,10 +516,7 @@ export function StaffScreenEditor({
   async function storeScreen(): Promise<boolean> {
     setIsSaving(true);
     try {
-      await onStore(
-        title,
-        Object.values(intro).some((value) => (value ?? '').trim() !== '') ? intro : null,
-      );
+      await onStore(toSave('title') ?? {}, toSave('intro') ?? null);
       await reload();
       toast.success(t('onboardingBoard.saved'));
       return true;
@@ -496,8 +530,8 @@ export function StaffScreenEditor({
 
   // Her phone: the fields she is asked, the wording being typed as typed.
   const content = staffScreenContent(
-    title,
-    intro,
+    current('title'),
+    current('intro'),
     phoneQuestions(previewLanguage, row.wording),
     previewLanguage,
     t,
@@ -549,10 +583,15 @@ export function StaffScreenEditor({
                     id="screen-title"
                     dir={direction}
                     lang={language}
-                    value={title[language] ?? ''}
-                    placeholder={language === 'ca' ? '' : (title.ca ?? '')}
-                    onChange={(event) => setTitle({ ...title, [language]: event.target.value })}
+                    value={shownIn('title', language)}
+                    aria-invalid={isEmptyRequired('title', language)}
+                    onChange={(event) => edit('title', event.target.value)}
                   />
+                  {isEmptyRequired('title', language) ? (
+                    <FieldError data-testid="screen-title-required">
+                      {t('builtinScreens.requiredText')}
+                    </FieldError>
+                  ) : null}
                 </div>
               </Field>
               <Field orientation="responsive">
@@ -565,16 +604,15 @@ export function StaffScreenEditor({
                     rows={3}
                     dir={direction}
                     lang={language}
-                    value={intro[language] ?? ''}
-                    placeholder={language === 'ca' ? '' : (intro.ca ?? '')}
-                    onChange={(event) => setIntro({ ...intro, [language]: event.target.value })}
+                    value={shownIn('intro', language)}
+                    onChange={(event) => edit('intro', event.target.value)}
                   />
                 </div>
               </Field>
             </FieldGroup>
           </EditorSection>
 
-          {fields(row, language, textIn(title, language) || textIn(screen.title, language))}
+          {fields(row, language, shownIn('title', language) || textIn(screen.title, language))}
         </>
       }
     />

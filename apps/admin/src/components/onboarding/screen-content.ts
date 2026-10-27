@@ -10,7 +10,7 @@
 
 import type { PreviewDraft } from '@/components/settings/question-type-fields';
 import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
-import { staffTextIn } from '@ramassa/shared/i18n/localized-content';
+import { staffTextIn, teamTextIn } from '@ramassa/shared/i18n/localized-content';
 import {
   BUNDLED_SCREEN_TEXT_KEYS,
   INTAKE_QUESTION_LABEL_KEYS,
@@ -391,9 +391,10 @@ export function staffScreenContent(
   language: LanguageCode,
   t: Translate,
 ): PhoneContent {
+  // One rule with her phone (RAPP-710): a language never written follows the Catalan.
   return {
-    title: textIn(title, language),
-    intro: textIn(intro, language),
+    title: teamTextIn(title, language, false),
+    intro: teamTextIn(intro, language, true),
     help: '',
     questions,
     lines: [],
