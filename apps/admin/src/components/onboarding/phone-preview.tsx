@@ -50,7 +50,7 @@ export function PhoneFrame({
       <div
         lang={language}
         dir={getLanguageDirection(language)}
-        className="relative flex aspect-[9/19] flex-col overflow-hidden rounded-[2.2rem] bg-white text-foreground"
+        className="relative flex aspect-[9/19] flex-col overflow-hidden rounded-[2.2rem] bg-white text-foreground [overflow-wrap:anywhere]"
         data-testid="phone-screen"
       >
         <div aria-hidden className="flex h-8 shrink-0 items-center justify-center">
@@ -349,7 +349,7 @@ function MiniatureFrame({
       lang={language}
       dir={getLanguageDirection(language)}
       className={cn(
-        'flex aspect-[9/16] w-full flex-col gap-2 overflow-hidden rounded-xl border bg-white px-3 pt-3 pb-3',
+        'flex aspect-[9/16] w-full flex-col gap-2 overflow-hidden rounded-xl border bg-white px-3 pt-3 pb-3 [overflow-wrap:anywhere]',
         isDimmed && 'opacity-50',
       )}
     >
