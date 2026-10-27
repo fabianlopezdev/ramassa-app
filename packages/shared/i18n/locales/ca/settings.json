@@ -498,6 +498,22 @@
   "onboardingPage": {
     "title": "Onboarding"
   },
+  "onboardingChain": {
+    "count": "Fins a {{total}} pantalles: {{onboarding}} d'Onboarding · {{terms}} de condicions de l'app · {{forms}} de formularis",
+    "termsLine": "Cal acceptar-les per fer servir l'app.",
+    "divider": "Després de l'onboarding",
+    "listLabel": "Formularis després de l'onboarding",
+    "formStep": "Formulari {{number}}",
+    "repeats": "Es repeteix cada temporada",
+    "once": "Una sola vegada",
+    "screens_one": "{{count}} pantalla",
+    "screens_other": "{{count}} pantalles",
+    "open": "Obre {{form}}",
+    "remove": "Treu {{form}} de després de l'onboarding",
+    "addForm": "Afegeix un formulari",
+    "nothingToAdd": "No hi ha cap formulari per afegir.",
+    "saveFailed": "No s'ha pogut desar. Torna-ho a provar."
+  },
   "appTerms": {
     "sectionTitle": "Termes de l'app",
     "sectionIntro": "El text que totes les jugadores accepten abans d'entrar a l'app, amb la pantalla d'introducció. Una versió publicada ja no canvia; quan en publiqueu una de nova, cada jugadora l'accepta en obrir l'app.",

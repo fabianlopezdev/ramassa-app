@@ -498,6 +498,22 @@
   "onboardingPage": {
     "title": "Onboarding"
   },
+  "onboardingChain": {
+    "count": "Hasta {{total}} pantallas: {{onboarding}} de Onboarding · {{terms}} de condiciones de la app · {{forms}} de formularios",
+    "termsLine": "Hay que aceptarlas para usar la app.",
+    "divider": "Después del onboarding",
+    "listLabel": "Formularios después del onboarding",
+    "formStep": "Formulario {{number}}",
+    "repeats": "Se repite cada temporada",
+    "once": "Una sola vez",
+    "screens_one": "{{count}} pantalla",
+    "screens_other": "{{count}} pantallas",
+    "open": "Abre {{form}}",
+    "remove": "Quita {{form}} de después del onboarding",
+    "addForm": "Añadir un formulario",
+    "nothingToAdd": "No hay ningún formulario para añadir.",
+    "saveFailed": "No se ha podido guardar. Vuelve a intentarlo."
+  },
   "appTerms": {
     "sectionTitle": "Términos de la app",
     "sectionIntro": "El texto que todas las jugadoras aceptan antes de entrar en la app, con la pantalla de introducción. Una versión publicada ya no cambia; cuando publicáis una nueva, cada jugadora la acepta al abrir la app.",

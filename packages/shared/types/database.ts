@@ -2812,6 +2812,42 @@ export type Database = {
           },
         ];
       };
+      onboarding_form_chains: {
+        Row: {
+          form_refs: string[];
+          org_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          form_refs?: string[];
+          org_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          form_refs?: string[];
+          org_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'onboarding_form_chains_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: true;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'onboarding_form_chains_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       intake_screens: {
         Row: {
           after_screen: string;
@@ -3978,6 +4014,7 @@ export type Database = {
           last_name: string;
           media_consent_at: string | null;
           member_number: number;
+          onboarding_chain_done_at: string | null;
           onboarding_current_at: string | null;
           org_id: string;
           preferred_language: string;
@@ -4002,6 +4039,7 @@ export type Database = {
           last_name: string;
           media_consent_at?: string | null;
           member_number?: number;
+          onboarding_chain_done_at?: string | null;
           onboarding_current_at?: string | null;
           org_id: string;
           preferred_language?: string;
@@ -4026,6 +4064,7 @@ export type Database = {
           last_name?: string;
           media_consent_at?: string | null;
           member_number?: number;
+          onboarding_chain_done_at?: string | null;
           onboarding_current_at?: string | null;
           org_id?: string;
           preferred_language?: string;
@@ -6397,6 +6436,7 @@ export type Database = {
         Args: { p_app_commit?: string };
         Returns: Json;
       };
+      finish_onboarding_chain: { Args: never; Returns: undefined };
       feedback_monthly_counts: {
         Args: never;
         Returns: {
@@ -7168,6 +7208,7 @@ export type Database = {
           value: Json;
         }[];
       };
+      my_onboarding_chain: { Args: never; Returns: string[] };
       my_custom_forms: {
         Args: never;
         Returns: {
@@ -7758,6 +7799,10 @@ export type Database = {
           p_sort_order: number;
         };
         Returns: string;
+      };
+      save_onboarding_form_chain: {
+        Args: { p_refs: string[] };
+        Returns: undefined;
       };
       save_intake_flow_order: {
         Args: { p_order: string[] };

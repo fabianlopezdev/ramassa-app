@@ -498,6 +498,22 @@
   "onboardingPage": {
     "title": "Onboarding"
   },
+  "onboardingChain": {
+    "count": "Up to {{total}} screens: {{onboarding}} Onboarding · {{terms}} app terms · {{forms}} forms",
+    "termsLine": "Required to use the app.",
+    "divider": "After onboarding",
+    "listLabel": "Forms after onboarding",
+    "formStep": "Form {{number}}",
+    "repeats": "Repeats every season",
+    "once": "Once",
+    "screens_one": "{{count}} screen",
+    "screens_other": "{{count}} screens",
+    "open": "Open {{form}}",
+    "remove": "Remove {{form}} from after onboarding",
+    "addForm": "Add a form",
+    "nothingToAdd": "There are no forms to add.",
+    "saveFailed": "Could not save. Try again."
+  },
   "appTerms": {
     "sectionTitle": "App terms",
     "sectionIntro": "The text every player accepts before entering the app, with the introduction screen before it. A published version never changes; when you publish a new one, every player accepts it when she opens the app.",

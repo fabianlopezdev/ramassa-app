@@ -735,6 +735,8 @@ export function buildProfileFromFixture(
     is_test_account: false,
     // Her Onboarding up to date since she joined (RAPP-697).
     onboarding_current_at: FIXTURE_TIMESTAMP,
+    // The forms chained after her Onboarding are behind her (RAPP-703).
+    onboarding_chain_done_at: FIXTURE_TIMESTAMP,
     // Her number in her organization (RAPP-693): "Jugadora 0042" where her name is private.
     member_number: fixture.ordinal,
     ...derivedAccountFields(fixture),
