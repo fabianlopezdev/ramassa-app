@@ -682,16 +682,12 @@ function CardUnit(props: ComponentProps<typeof ScreenCard>) {
   if (branches.length === 0) return <ScreenCard {...props} />;
   return (
     <div
-      className="grid w-full items-stretch gap-4"
+      className="grid w-full items-start gap-4"
       style={{ gridTemplateColumns: `repeat(${branches.length + 1}, minmax(0, 1fr))` }}
     >
       <ScreenCard {...props} />
       {branches.map((branch, index) => (
-        <div
-          key={branch.key}
-          className="relative flex"
-          data-testid={`board-branch-${branch.key}`}
-        >
+        <div key={branch.key} className="relative flex" data-testid={`board-branch-${branch.key}`}>
           <span
             aria-hidden
             className="absolute top-1/2 -left-4 flex w-4 -translate-y-1/2 items-center"
@@ -797,12 +793,31 @@ function ScreenCard({
           )}
         </span>
       </header>
-      <Link {...card.link} tabIndex={-1} aria-hidden className="block rounded-xl">
+      {/* Read top to bottom: what the card is for comes before its picture (RAPP-713). */}
+      {card.note === undefined ? null : (
+        <p
+          className={cn(
+            'text-start text-xs leading-5 text-muted-foreground',
+            isBranch && 'line-clamp-2 h-10',
+          )}
+        >
+          {card.note}
+        </p>
+      )}
+      <Link
+        {...card.link}
+        tabIndex={-1}
+        aria-hidden
+        className={cn(
+          'block rounded-xl',
+          // A branch's two-line condition and its gap take 52px; measured on
+          // the board, the phone loses 2.195px of height per px of width, so
+          // it is drawn 23.7px narrower and the card keeps every card's height.
+          isBranch && 'mx-auto w-[calc(100%-23.7px)]',
+        )}
+      >
         {card.miniature}
       </Link>
-      {card.note === undefined ? null : (
-        <p className="text-start text-xs leading-5 text-muted-foreground">{card.note}</p>
-      )}
       <Button asChild variant="outline" size={isBranch ? 'xs' : 'sm'} className="w-full">
         <Link
           {...card.link}
