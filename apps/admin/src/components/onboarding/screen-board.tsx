@@ -682,14 +682,14 @@ function CardUnit(props: ComponentProps<typeof ScreenCard>) {
   if (branches.length === 0) return <ScreenCard {...props} />;
   return (
     <div
-      className="grid w-full items-center gap-4"
+      className="grid w-full items-stretch gap-4"
       style={{ gridTemplateColumns: `repeat(${branches.length + 1}, minmax(0, 1fr))` }}
     >
       <ScreenCard {...props} />
       {branches.map((branch, index) => (
         <div
           key={branch.key}
-          className="relative flex justify-start"
+          className="relative flex"
           data-testid={`board-branch-${branch.key}`}
         >
           <span
@@ -739,7 +739,8 @@ function ScreenCard({
       className={cn(
         'bg-card transition-shadow hover:shadow-md',
         isLocked && 'bg-muted/40',
-        isBranch && 'w-[88%] gap-2 border-dashed border-primary/40 p-2.5',
+        // The same size as every card; only the dashed border marks it (RAPP-713).
+        isBranch && 'border-dashed border-primary/40',
         isLifted && !isBranch && 'rotate-1 shadow-xl ring-2 ring-primary',
       )}
     >
