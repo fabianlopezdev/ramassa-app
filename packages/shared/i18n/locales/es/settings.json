@@ -499,7 +499,7 @@
     "title": "Onboarding"
   },
   "onboardingChain": {
-    "count": "Hasta {{total}} pantallas: {{onboarding}} de Onboarding · {{terms}} de condiciones de la app · {{forms}} de formularios",
+    "count": "En total, {{total}} pantallas: {{onboarding}} de Onboarding · {{terms}} de condiciones de la app · {{forms}} de formularios",
     "termsLine": "Hay que aceptarlas para usar la app.",
     "divider": "Después del onboarding",
     "listLabel": "Formularios después del onboarding",
@@ -511,7 +511,8 @@
     "remove": "Quita {{form}} de después del onboarding",
     "addForm": "Añadir un formulario",
     "nothingToAdd": "No hay ningún formulario para añadir.",
-    "saveFailed": "No se ha podido guardar. Vuelve a intentarlo."
+    "saveFailed": "No se ha podido guardar. Vuelve a intentarlo.",
+    "openForm": "Abrir el formulario"
   },
   "appTerms": {
     "sectionTitle": "Términos de la app",

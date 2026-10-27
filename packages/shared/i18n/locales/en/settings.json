@@ -499,7 +499,7 @@
     "title": "Onboarding"
   },
   "onboardingChain": {
-    "count": "Up to {{total}} screens: {{onboarding}} Onboarding · {{terms}} app terms · {{forms}} forms",
+    "count": "{{total}} screens in total: {{onboarding}} in Onboarding · {{terms}} in the app terms · {{forms}} in forms",
     "termsLine": "Required to use the app.",
     "divider": "After onboarding",
     "listLabel": "Forms after onboarding",
@@ -511,7 +511,8 @@
     "remove": "Remove {{form}} from after onboarding",
     "addForm": "Add a form",
     "nothingToAdd": "There are no forms to add.",
-    "saveFailed": "Could not save. Try again."
+    "saveFailed": "Could not save. Try again.",
+    "openForm": "Open form"
   },
   "appTerms": {
     "sectionTitle": "App terms",

@@ -623,7 +623,7 @@ function ScreenCard({
           {card.isLinked === true ? (
             <>
               <Link2 aria-hidden data-icon="inline-start" />
-              {card.name}
+              {t('onboardingChain.openForm')}
             </>
           ) : (
             t('onboardingBoard.edit')

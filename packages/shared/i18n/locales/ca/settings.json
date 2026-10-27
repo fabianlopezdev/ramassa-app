@@ -499,7 +499,7 @@
     "title": "Onboarding"
   },
   "onboardingChain": {
-    "count": "Fins a {{total}} pantalles: {{onboarding}} d'Onboarding · {{terms}} de condicions de l'app · {{forms}} de formularis",
+    "count": "En total, {{total}} pantalles: {{onboarding}} d'Onboarding · {{terms}} de condicions de l'app · {{forms}} de formularis",
     "termsLine": "Cal acceptar-les per fer servir l'app.",
     "divider": "Després de l'onboarding",
     "listLabel": "Formularis després de l'onboarding",
@@ -511,7 +511,8 @@
     "remove": "Treu {{form}} de després de l'onboarding",
     "addForm": "Afegeix un formulari",
     "nothingToAdd": "No hi ha cap formulari per afegir.",
-    "saveFailed": "No s'ha pogut desar. Torna-ho a provar."
+    "saveFailed": "No s'ha pogut desar. Torna-ho a provar.",
+    "openForm": "Obre el formulari"
   },
   "appTerms": {
     "sectionTitle": "Termes de l'app",
