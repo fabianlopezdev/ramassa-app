@@ -17,7 +17,7 @@ import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
-import { documentExplanationFor } from '@ramassa/shared/intake';
+import { documentExplanationFor, offersSkipAnswer } from '@ramassa/shared/intake';
 import { DOCUMENT_TYPES, type DocumentationStep, type LanguageCode } from '@ramassa/shared/schemas';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -60,9 +60,9 @@ export default function DocumentationStepScreen() {
       choice === 'skip' ? null : (choice ?? null),
     ),
     // "Not now" is no answer: staff can make the document required (RAPP-611).
-    ...(step.isRequired('document')
-      ? []
-      : [{ value: 'skip' as const, label: t('documentSkipAction') }]),
+    ...(offersSkipAnswer('document', step.required)
+      ? [{ value: 'skip' as const, label: t('documentSkipAction') }]
+      : []),
   ];
   const persist = (currentStep: typeof step.nextDraftStep) => {
     const latest = onboardingDraftStore.loadDraft();

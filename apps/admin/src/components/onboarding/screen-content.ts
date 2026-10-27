@@ -16,6 +16,7 @@ import {
   INTAKE_QUESTION_LABEL_KEYS,
   isOptionalScreenTextField,
   isRequiredQuestion,
+  offersSkipAnswer,
   resolveAppTerms,
   screenTextFields,
   WIZARD_SCREEN_QUESTIONS,
@@ -191,18 +192,25 @@ export function builtinPhoneQuestion(
       : typed || appLabel;
   const field = catalog.layout === undefined ? undefined : builtinField(catalog.layout, question);
   const look = BUILTIN_LOOKS[question];
+  const required = requiredBuiltinQuestions(catalog);
+  // Her phone's last answer on an optional document step: "Not now, skip this step".
+  const skip = offersSkipAnswer(question, required)
+    ? [inLanguage('onboarding:documentSkipAction')]
+    : [];
   return {
     id: question,
     label: shownLabel,
     help: builtinHelp(catalog, question, language) ?? '',
-    isRequired: isRequiredQuestion(question, requiredBuiltinQuestions(catalog)),
+    isRequired: isRequiredQuestion(question, required),
     draft: {
       // Her field's own type, as its row shows it: a country picker, a yes or no.
       type: field?.type ?? BUILTIN_TYPES[question],
       label: only(language, shownLabel),
       help: {},
       settings: {},
-      options: builtinOptionLabels(catalog, question, language).map((text) => only(language, text)),
+      options: [...builtinOptionLabels(catalog, question, language), ...skip].map((text) =>
+        only(language, text),
+      ),
       ...(look === undefined ? {} : { look }),
     },
   };
