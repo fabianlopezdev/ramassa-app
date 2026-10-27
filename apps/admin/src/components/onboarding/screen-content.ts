@@ -20,6 +20,7 @@ import {
   resolveAppTerms,
   screenTextFields,
   WIZARD_SCREEN_QUESTIONS,
+  type BranchCondition,
   type EditableWizardScreen,
   type IntakeQuestion,
   type ScreenTextField,
@@ -366,7 +367,7 @@ export function bundledScreenText(
  * (RAPP-710, `staffTextIn`): staff text, nothing for an optional text staff
  * cleared, else the app's.
  */
-export function builtinWording(
+function builtinWording(
   screen: EditableWizardScreen,
   texts: ScreenTexts,
   language: LanguageCode,
@@ -387,6 +388,69 @@ export function builtinWording(
     continue_label: shown('continue_label'),
     decline_label: shown('decline_label'),
   };
+}
+
+/** The phone's two tabs on a screen with a follow-up (RAPP-695): the screen, or its follow-up. */
+export type PhoneScreen = 'main' | 'detail';
+
+/**
+ * A follow-up screen on her phone (RAPP-713): its wording and Continue. The
+ * editor's second tab and the board's branch card draw it the same way.
+ * `texts` is wording typed in the editor, in place of the saved wording.
+ */
+export function detailScreenContent(
+  catalog: IntakeCatalog,
+  screen: EditableWizardScreen,
+  language: LanguageCode,
+  t: Translate,
+  texts?: ScreenTexts,
+): PhoneContent {
+  const wording = builtinWording(
+    screen,
+    texts ?? screenSettingsFor(catalog, screen)?.texts ?? {},
+    language,
+    t,
+  );
+  return {
+    title: wording.title,
+    intro: wording.intro,
+    help: wording.help,
+    questions: [],
+    lines: [],
+    checkbox: null,
+    signature: false,
+    continueLabel: wording.continue_label,
+    declineLabel: null,
+  };
+}
+
+/**
+ * The line under a branch card (RAPP-713), in the dashboard's language, from
+ * the rule her phone reads: "Si tria NIE, Passaport o Un altre" with the
+ * answers as staff named them, or one follow-up per answer she ticks.
+ */
+export function branchConditionLine(
+  catalog: IntakeCatalog,
+  condition: BranchCondition,
+  language: LanguageCode,
+  t: Translate,
+): string {
+  if (condition.kind === 'each-answer') {
+    return t(
+      condition.question === 'specific_needs'
+        ? 'settings:onboardingBoard.branchEachNeed'
+        : 'settings:onboardingBoard.branchEachAnswer',
+    );
+  }
+  const field =
+    catalog.layout === undefined ? undefined : builtinField(catalog.layout, condition.question);
+  const labels = condition.values.map((value) => {
+    const option = field?.options.find((each) => each.key === value);
+    return option === undefined ? value : textIn(option.label, language);
+  });
+  return t('settings:onboardingBoard.branchIf', {
+    answers: new Intl.ListFormat(language, { type: 'disjunction' }).format(labels),
+  });
 }
 
 export interface ContentOverrides {

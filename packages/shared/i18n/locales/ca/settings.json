@@ -513,7 +513,8 @@
     "addForm": "Afegeix un formulari",
     "nothingToAdd": "No hi ha cap formulari per afegir.",
     "saveFailed": "No s'ha pogut desar. Torna-ho a provar.",
-    "openForm": "Obre el formulari"
+    "openForm": "Obre el formulari",
+    "countWithConditional": "En total, {{total}} pantalles: {{onboarding}} d'Onboarding (+{{conditional}} condicionals) · {{terms}} de condicions de l'app · {{forms}} de formularis"
   },
   "appTerms": {
     "sectionTitle": "Termes de l'app",
@@ -678,7 +679,11 @@
     "deleteFailed": "No s'ha pogut eliminar. Torna-ho a provar.",
     "phoneNote": "Vista aproximada. L'aspecte a l'app pot variar.",
     "previousScreen": "Pantalla anterior",
-    "nextScreen": "Pantalla següent"
+    "nextScreen": "Pantalla següent",
+    "branchIf": "Si tria {{answers}}",
+    "branchEachNeed": "Per cada necessitat que marqui",
+    "branchEachAnswer": "Per cada resposta que marqui",
+    "branchFollows": "Es mostra i s'amaga amb {{screen}}"
   },
   "sortable": {
     "instructions": "Per moure un element, prem espai o retorn, fes servir les fletxes i torna a prémer espai o retorn per deixar-lo. Escapada cancel·la.",

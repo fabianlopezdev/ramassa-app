@@ -48,7 +48,15 @@ function OnboardingBoard() {
           <>
             {/* What Onboarding is: her first time only (RAPP-705). */}
             <span className="block">{t('onboardingPage.intro')}</span>
-            <span className="block">{t('onboardingChain.count', { ...counts })}</span>
+            {/* The follow-up screens count too, marked as conditional (RAPP-713). */}
+            <span className="block">
+              {t(
+                counts.conditional === 0
+                  ? 'onboardingChain.count'
+                  : 'onboardingChain.countWithConditional',
+                { ...counts },
+              )}
+            </span>
           </>
         }
       />

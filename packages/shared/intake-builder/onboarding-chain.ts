@@ -21,6 +21,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
 import { FINAL_WIZARD_SCREENS } from '../onboarding/intake';
+import { DETAIL_SCREEN_BRANCHES } from '../onboarding/screen-texts';
 import type { Database } from '../types/database';
 import { authorizationQuestions } from './authorization-fields';
 import { wizardFlow, type IntakeCatalog } from './builder';
@@ -135,6 +136,11 @@ export function chainedFormScreenCount(catalog: IntakeCatalog, ref: ChainedFormR
 export interface OnboardingScreenCounts {
   /** Onboarding's own screens she can be shown, the summary included. */
   readonly onboarding: number;
+  /**
+   * The follow-up screens of those screens (RAPP-713), shown only after some
+   * answers. A hidden screen's follow-up is out.
+   */
+  readonly conditional: number;
   /** The app terms: the screen before them and the one she signs. */
   readonly terms: number;
   /** The chained forms' screens. */
@@ -158,16 +164,19 @@ export function onboardingScreenCounts(
   chain: readonly ChainedFormRef[],
 ): OnboardingScreenCounts {
   const hidden = wizardFlow(catalog).hiddenScreens;
-  const own = movableOrder(catalog).filter((key) => {
+  const shown = movableOrder(catalog).filter((key) => {
     const step = flowStep(catalog, key);
     if (step === null) return false;
     if (step.kind === 'builtin') return !hidden.has(step.key);
     return step.kind !== 'custom' || isShownToHer(catalog, step.screen);
-  }).length;
+  });
+  const conditional = DETAIL_SCREEN_BRANCHES.filter((branch) =>
+    (shown as readonly string[]).includes(branch.parent),
+  ).length;
   const terms = TERMS_SCREEN_COUNT;
-  const onboarding = own + 1;
+  const onboarding = shown.length + 1;
   const forms = chain.reduce((sum, ref) => sum + chainedFormScreenCount(catalog, ref), 0);
-  return { onboarding, terms, forms, total: onboarding + terms + forms };
+  return { onboarding, conditional, terms, forms, total: onboarding + conditional + terms + forms };
 }
 
 // Her phone ---------------------------------------------------------------------------------------

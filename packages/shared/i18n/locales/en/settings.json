@@ -513,7 +513,8 @@
     "addForm": "Add a form",
     "nothingToAdd": "There are no forms to add.",
     "saveFailed": "Could not save. Try again.",
-    "openForm": "Open form"
+    "openForm": "Open form",
+    "countWithConditional": "{{total}} screens in total: {{onboarding}} in Onboarding (+{{conditional}} conditional) · {{terms}} in the app terms · {{forms}} in forms"
   },
   "appTerms": {
     "sectionTitle": "App terms",
@@ -678,7 +679,11 @@
     "deleteFailed": "It could not be deleted. Try again.",
     "phoneNote": "Approximate preview. The appearance in the app may vary.",
     "previousScreen": "Previous screen",
-    "nextScreen": "Next screen"
+    "nextScreen": "Next screen",
+    "branchIf": "If she picks {{answers}}",
+    "branchEachNeed": "For each need she ticks",
+    "branchEachAnswer": "For each answer she ticks",
+    "branchFollows": "Shows and hides with {{screen}}"
   },
   "sortable": {
     "instructions": "To move it, press space or enter, use the arrow keys, then press space or enter again to drop it. Escape cancels.",

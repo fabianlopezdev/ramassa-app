@@ -513,7 +513,8 @@
     "addForm": "Añadir un formulario",
     "nothingToAdd": "No hay ningún formulario para añadir.",
     "saveFailed": "No se ha podido guardar. Vuelve a intentarlo.",
-    "openForm": "Abrir el formulario"
+    "openForm": "Abrir el formulario",
+    "countWithConditional": "En total, {{total}} pantallas: {{onboarding}} de Onboarding (+{{conditional}} condicionales) · {{terms}} de condiciones de la app · {{forms}} de formularios"
   },
   "appTerms": {
     "sectionTitle": "Términos de la app",
@@ -678,7 +679,11 @@
     "deleteFailed": "No se ha podido eliminar. Vuelve a intentarlo.",
     "phoneNote": "Vista aproximada. El aspecto en la app puede variar.",
     "previousScreen": "Pantalla anterior",
-    "nextScreen": "Pantalla siguiente"
+    "nextScreen": "Pantalla siguiente",
+    "branchIf": "Si elige {{answers}}",
+    "branchEachNeed": "Por cada necesidad que marque",
+    "branchEachAnswer": "Por cada respuesta que marque",
+    "branchFollows": "Se muestra y se oculta con {{screen}}"
   },
   "sortable": {
     "instructions": "Para mover un elemento, pulsa espacio o intro, usa las flechas y vuelve a pulsar espacio o intro para soltarlo. Escape cancela.",

@@ -88,13 +88,14 @@ import { PhoneFrame, SteppedPhone } from './phone-preview';
 import { stepName, type BoardCardLink } from './screen-board';
 import {
   builtinPhoneQuestion,
-  builtinWording,
   bundledScreenText,
+  detailScreenContent,
   placedPhoneQuestions,
   staffScreenContent,
   stepContent,
   type PhoneContent,
   type PhoneQuestion,
+  type PhoneScreen,
   type ScreenTexts,
   type Translate,
   type TypedWording,
@@ -108,9 +109,12 @@ const CONTROL_COLUMN = 'flex w-full flex-col gap-2 @md/field-group:w-100!';
 export function ScreenEditor({
   data,
   routeId,
+  shown = 'main',
 }: {
   readonly data: OnboardingDesignData;
   readonly routeId: string;
+  /** The phone's tab to open on: a branch card opens its follow-up screen (RAPP-713). */
+  readonly shown?: PhoneScreen;
 }) {
   const { t, i18n } = useTranslation(['settings', 'onboarding']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
@@ -143,7 +147,14 @@ export function ScreenEditor({
       />
       {step === null ? null : (
         // Keyed by the screen: another screen starts from what is saved.
-        <EditorBody key={step.key} data={data} step={step} number={number} total={steps.length} />
+        <EditorBody
+          key={step.key}
+          data={data}
+          step={step}
+          number={number}
+          total={steps.length}
+          shown={shown}
+        />
       )}
     </Page>
   );
@@ -340,11 +351,13 @@ function EditorBody({
   step,
   number,
   total,
+  shown,
 }: {
   readonly data: OnboardingDesignData;
   readonly step: BoardStep;
   readonly number: number;
   readonly total: number;
+  readonly shown: PhoneScreen;
 }) {
   if (step.kind === 'custom') {
     return (
@@ -357,7 +370,7 @@ function EditorBody({
       />
     );
   }
-  return <AppScreenEditor data={data} step={step} number={number} total={total} />;
+  return <AppScreenEditor data={data} step={step} number={number} total={total} shown={shown} />;
 }
 // A Ramassà screen -----------------------------------------------------------------------------
 
@@ -696,11 +709,13 @@ function AppScreenEditor({
   step,
   number,
   total,
+  shown,
 }: {
   readonly data: OnboardingDesignData;
   readonly step: Exclude<BoardStep, { readonly kind: 'custom' }>;
   readonly number: number;
   readonly total: number;
+  readonly shown: PhoneScreen;
 }) {
   const { t, i18n } = useTranslation(['settings', 'onboarding']);
   const catalog = data.intakeCatalog;
@@ -709,7 +724,7 @@ function AppScreenEditor({
   const screen = editableScreenOf(step);
   const detail = screen === null ? null : detailOf(screen);
   const [texts, setTexts] = useState<Partial<Record<EditableWizardScreen, ScreenTexts>>>({});
-  const [shownScreen, setShownScreen] = useState<'main' | 'detail'>('main');
+  const [shownScreen, setShownScreen] = useState<PhoneScreen>(detail === null ? 'main' : shown);
   const row = useRowEditing();
   const currentSeason = data.seasons.find((season) => season.isCurrent);
 
@@ -740,30 +755,9 @@ function AppScreenEditor({
           ...placedPhoneQuestions(catalog, step.key, previewLanguage, row.wording),
         ]
       : [];
-  const detailContent = (): PhoneContent => {
-    const wording = builtinWording(
-      detail as EditableWizardScreen,
-      texts[detail as EditableWizardScreen] ??
-        screenSettingsFor(catalog, detail as EditableWizardScreen)?.texts ??
-        {},
-      previewLanguage,
-      t,
-    );
-    return {
-      title: wording.title,
-      intro: wording.intro,
-      help: wording.help,
-      questions: [],
-      lines: [],
-      checkbox: null,
-      signature: false,
-      continueLabel: wording.continue_label,
-      declineLabel: null,
-    };
-  };
   const content =
     shownScreen === 'detail' && detail !== null
-      ? detailContent()
+      ? detailScreenContent(catalog, detail, previewLanguage, t, texts[detail])
       : stepContent(catalog, step, previewLanguage, t, {
           ...(screen === null ? {} : { texts: texts[screen] }),
           ...(step.kind === 'builtin' ? { questions: phoneQuestions } : {}),
