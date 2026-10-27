@@ -12,7 +12,7 @@ import { WizardValidationSummary } from '@/components/onboarding/wizard-validati
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { identityNameFormSchema, type IdentityNameFormInput } from '@/lib/onboarding-form';
-import { wizardStackRoute, type WizardStackRoute } from '@/lib/onboarding-intake';
+import { wizardStackRoute, wizardStepRoute, type WizardStackRoute } from '@/lib/onboarding-intake';
 import {
   useBuiltinWording,
   useWizardIntake,
@@ -20,14 +20,26 @@ import {
   wizardBackTrail,
 } from '@/lib/onboarding-intake-context';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useLocalSearchParams, useNavigation } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
-/** The onboarding stack, as the resume rebuilds it. */
+/**
+ * The onboarding stack, as the resume rebuilds it. A RESET must carry the
+ * whole state (`stale: false`, its key and route names): a partial one is
+ * ignored by the navigator and the wizard stayed blank (RAPP-707).
+ */
+interface WizardStackState {
+  readonly key: string;
+  readonly routeNames: readonly string[];
+  readonly [field: string]: unknown;
+}
 interface WizardStackNavigation {
-  reset(state: { index: number; routes: WizardStackRoute[] }): void;
+  getState(): WizardStackState | undefined;
+  reset(
+    state: WizardStackState & { stale: false; index: number; routes: WizardStackRoute[] },
+  ): void;
 }
 
 export default function IdentityStepScreen() {
@@ -36,6 +48,7 @@ export default function IdentityStepScreen() {
   const wording = useBuiltinWording();
   const intake = useWizardIntake();
   const navigation = useNavigation<WizardStackNavigation>();
+  const router = useRouter();
   const { entrance } = useLocalSearchParams<{ entrance?: string }>();
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
@@ -48,15 +61,20 @@ export default function IdentityStepScreen() {
 
   // The earlier screens she was asked go under the step she resumes at, so
   // Back and the back gesture reach each one with her answers (RAPP-707).
+  // Without a stack to rebuild, or a step it does not know, she resumes
+  // alone on her step as before.
   useEffect(() => {
     if (resumeAt === null) return;
     const steps = [...wizardBackTrail(resumeAt, intake, draft), resumeAt];
-    navigation.reset({
-      index: steps.length - 1,
-      routes: steps.map((item, index) =>
-        wizardStackRoute(item, index < steps.length - 1 ? 'back' : 'forward'),
-      ),
-    });
+    const routes = steps.map((item, index) =>
+      wizardStackRoute(item, index < steps.length - 1 ? 'back' : 'forward'),
+    );
+    const state = navigation.getState();
+    if (state === undefined || routes.some((route) => !state.routeNames.includes(route.name))) {
+      router.replace(wizardStepRoute(resumeAt));
+      return;
+    }
+    navigation.reset({ ...state, stale: false, index: routes.length - 1, routes });
     // Once, on mount: the draft and the intake are read as they stood.
   }, []);
 
