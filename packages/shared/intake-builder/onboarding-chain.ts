@@ -140,6 +140,11 @@ export interface OnboardingScreenCounts {
   readonly total: number;
 }
 
+/** The app terms' screens on her phone: the one before them and the one she signs. */
+export const TERMS_SCREEN_COUNT = FINAL_WIZARD_SCREENS.filter(
+  (screen) => screen !== 'summary',
+).length;
+
 /**
  * The screens a new player can be shown, for "Fins a N pantalles". Hidden and
  * archived screens are out, and so is a Ramassà screen with nothing to ask.
@@ -157,8 +162,7 @@ export function onboardingScreenCounts(
     if (step.kind === 'builtin') return !hidden.has(step.key);
     return step.kind !== 'custom' || isShownToHer(catalog, step.screen);
   }).length;
-  // The summary ends her Onboarding; the terms are the last two final screens.
-  const terms = FINAL_WIZARD_SCREENS.filter((screen) => screen !== 'summary').length;
+  const terms = TERMS_SCREEN_COUNT;
   const onboarding = own + 1;
   const forms = chain.reduce((sum, ref) => sum + chainedFormScreenCount(catalog, ref), 0);
   return { onboarding, terms, forms, total: onboarding + terms + forms };

@@ -14,7 +14,7 @@
 import { QuestionControl } from '@/components/settings/question-type-fields';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Files } from 'lucide-react';
 import type { ComponentProps, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getLanguageDirection } from '@ramassa/shared/i18n/languages';
@@ -360,9 +360,10 @@ function MiniatureFrame({
 }
 
 /**
- * A chained form's card on the Onboarding board (RAPP-703): the same 9:16
- * phone as a screen's card, holding the form's name, what kind it is and how
- * many screens it shows her.
+ * A whole form as one card on the Onboarding board (RAPP-703): the app terms
+ * and every form chained after Onboarding. It is the size of a screen's card
+ * and draws no phone, because it stands for the form: its name, one line on
+ * what kind it is, and how many screens it shows her.
  */
 export function FormMiniature({
   name,
@@ -376,12 +377,20 @@ export function FormMiniature({
   readonly language: LanguageCode;
 }) {
   return (
-    <MiniatureFrame language={language} isDimmed={false}>
-      <p className="line-clamp-3 text-start text-[11px] leading-4 font-semibold">{name}</p>
-      <p className="text-start text-[10px] leading-4 text-muted-foreground">{kind}</p>
-      <span className="mt-auto truncate rounded-full border px-2 py-1 text-center text-[9px] leading-3 font-semibold tabular-nums">
+    <div
+      aria-hidden
+      lang={language}
+      dir={getLanguageDirection(language)}
+      className="flex aspect-[9/16] w-full flex-col items-center justify-center gap-3 rounded-xl border bg-muted/40 p-4 text-center"
+    >
+      <span className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <Files className="size-6" />
+      </span>
+      <p className="line-clamp-3 text-sm leading-5 font-semibold">{name}</p>
+      <p className="text-xs leading-4 text-muted-foreground">{kind}</p>
+      <span className="rounded-full border bg-card px-2.5 py-1 text-xs leading-4 font-medium tabular-nums">
         {screens}
       </span>
-    </MiniatureFrame>
+    </div>
   );
 }

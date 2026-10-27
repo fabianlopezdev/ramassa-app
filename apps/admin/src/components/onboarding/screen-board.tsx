@@ -52,6 +52,7 @@ import {
   saveIntakeScreen,
   saveOnboardingFormChain,
   saveWizardFlowOrder,
+  TERMS_SCREEN_COUNT,
   textIn,
   wizardFlow,
   type ChainedFormRef,
@@ -86,7 +87,7 @@ export function ScreenBoard({
   readonly catalog: IntakeCatalog;
   readonly chain: readonly ChainedFormRef[];
 }) {
-  const { t, i18n } = useTranslation(['settings', 'onboarding']);
+  const { t, i18n } = useTranslation(['settings', 'onboarding', 'nav']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const reload = useReload();
   const createOnboardingScreen = useCreateOnboardingScreen();
@@ -106,10 +107,18 @@ export function ScreenBoard({
     return {
       key: step.key,
       name: linked === null ? stepName(step, language, t) : t(linked.labelKey),
-      note: step.key === 'terms' ? t('onboardingChain.termsLine') : undefined,
-      miniature: (
-        <PhoneMiniature content={content} language={language} isDimmed={status !== null} />
-      ),
+      // The app terms are a form of their own: one card for the whole form (RAPP-703).
+      miniature:
+        step.key === 'terms' ? (
+          <FormMiniature
+            name={t('nav:staff.appTerms')}
+            kind={t('onboardingChain.termsLine')}
+            screens={t('onboardingChain.screens', { count: TERMS_SCREEN_COUNT })}
+            language={language}
+          />
+        ) : (
+          <PhoneMiniature content={content} language={language} isDimmed={status !== null} />
+        ),
       status,
       isLinked: linked !== null,
       link:
@@ -241,17 +250,19 @@ function ChainBoard({
           <AddFormCard
             forms={addable}
             onAdd={async (ref) => {
-              await save([...shown, ref]);
+              // First in the chain, as a new screen is first on the board.
+              await save([ref, ...shown]);
             }}
           />
         }
+        isAddCardFirst
         onReorder={async (next) => save(next as readonly ChainedFormRef[])}
       />
     </section>
   );
 }
 
-/** The last card of the chain: lists the forms not chained yet and appends the one picked. */
+/** The first card of the chain, as on every board: lists the forms not chained yet and adds the one picked. */
 function AddFormCard({
   forms,
   onAdd,
