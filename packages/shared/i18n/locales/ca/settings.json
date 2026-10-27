@@ -801,7 +801,7 @@
     "newVersionBody": "Tothom l'haurà de tornar a respondre.",
     "save": "Desa",
     "newVersionCount": "Jugadores que ho tornaran a veure: {{count}}",
-    "newVersionSaved": "Desat. Qui ja havia acabat l'Onboarding ho tornarà a veure."
+    "newVersionSaved": "Desat com a nova versió. Les jugadores que ja havien completat l'Onboarding hauran de revisar aquesta pantalla."
   },
   "legalData": {
     "title": "Dades legals",

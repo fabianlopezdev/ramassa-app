@@ -59,7 +59,7 @@ function StaffLayout() {
             <Outlet />
           </SidebarInset>
           {/* Confirmations such as a deleted notification (RAPP-640). */}
-          <Toaster position="bottom-right" />
+          <Toaster position="top-center" />
         </SidebarProvider>
       </DesignRoleGate>
     </RequireAuth>

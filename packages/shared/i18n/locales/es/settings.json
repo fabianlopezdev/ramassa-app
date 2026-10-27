@@ -801,7 +801,7 @@
     "newVersionBody": "Todo el mundo tendrá que volver a responderlo.",
     "save": "Guardar",
     "newVersionCount": "Jugadoras que lo volverán a ver: {{count}}",
-    "newVersionSaved": "Guardado. Quien ya había terminado el Onboarding lo volverá a ver."
+    "newVersionSaved": "Guardado como nueva versión. Las jugadoras que ya habían completado el Onboarding tendrán que revisar esta pantalla."
   },
   "legalData": {
     "title": "Datos legales",

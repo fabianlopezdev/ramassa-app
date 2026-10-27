@@ -801,7 +801,7 @@
     "newVersionBody": "Everyone will have to answer it again.",
     "save": "Save",
     "newVersionCount": "Players who will see it again: {{count}}",
-    "newVersionSaved": "Saved. Players who had finished Onboarding will see it again."
+    "newVersionSaved": "Saved as a new version. Players who had already completed Onboarding will have to review this screen."
   },
   "legalData": {
     "title": "Legal data",
