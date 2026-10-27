@@ -208,7 +208,8 @@ export function herOnboarding(
   asking: ReadonlyMap<string, boolean> = new Map(),
 ): HerOnboarding {
   const own = catalog.screens
-    .filter((screen) => !screen.isArchived)
+    // A screen staff hid is skipped (RAPP-711).
+    .filter((screen) => !screen.isArchived && screen.isHidden !== true)
     .map((screen): IntakeScreen => ({
       ...screen,
       questions: onboardingScreenQuestions(catalog, screen.id),

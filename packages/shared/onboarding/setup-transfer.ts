@@ -80,6 +80,8 @@ const screenSchema = z.strictObject({
   home_after_screen: z.string().min(1),
   home_sort_order: position,
   is_archived: z.boolean(),
+  // From RAPP-711; an older file has none and its screens show.
+  is_hidden: z.boolean().optional(),
   // A version 1 or 2 file only: the app screen a holder held (RAPP-642), and
   // the screen's questions. The database reads them as fields and placements.
   builtin_screen: z.string().min(1).nullable().optional(),

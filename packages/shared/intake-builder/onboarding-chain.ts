@@ -95,9 +95,11 @@ export function customFormAskingScreens(
 ): readonly CustomFormScreen[] {
   return form.screens.filter(
     (screen) =>
-      customFormScreenQuestions(catalog, screen.id).length > 0 ||
-      customFormScreenBlocks(catalog, screen.id).length > 0 ||
-      customFormScreenConsents(catalog, screen.id).length > 0,
+      // A hidden screen is skipped (RAPP-711).
+      screen.isHidden !== true &&
+      (customFormScreenQuestions(catalog, screen.id).length > 0 ||
+        customFormScreenBlocks(catalog, screen.id).length > 0 ||
+        customFormScreenConsents(catalog, screen.id).length > 0),
   );
 }
 

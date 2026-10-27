@@ -129,10 +129,15 @@ export function flowStepName(
   return t(`settings:builtinScreens.screenName.${step.key}`);
 }
 
-/** A Ramassà screen her phone shows: a live field or a signature block (RAPP-690) is on it. */
+/**
+ * A Ramassà screen her phone shows: a live field or a signature block
+ * (RAPP-690) is on it, and staff did not hide it (RAPP-711).
+ */
 export function isShownToHer(catalog: IntakeCatalog, screen: RamassaScreen): boolean {
   return (
-    placedQuestions(catalog, screen.id).length > 0 || hasSignatureBlocks(catalog.blocks, screen.id)
+    screen.isHidden !== true &&
+    (placedQuestions(catalog, screen.id).length > 0 ||
+      hasSignatureBlocks(catalog.blocks, screen.id))
   );
 }
 
@@ -250,6 +255,7 @@ export function playerPlan(
     .flatMap((step): { step: FlowStep; questions: PlanQuestion[]; signs: boolean }[] => {
       if (step.kind === 'locked') return [{ step, questions: [], signs: false }];
       if (step.kind === 'builtin' && flow.hiddenScreens.has(step.key)) return [];
+      if (step.kind === 'custom' && step.screen.isHidden === true) return [];
       const questions =
         step.kind === 'custom'
           ? customQuestions(placedQuestions(catalog, step.screen.id))

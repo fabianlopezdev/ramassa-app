@@ -15,3 +15,4 @@ export * from './authorization-fields';
 export * from './consents';
 export * from './custom-forms';
 export * from './onboarding-chain';
+export * from './screen-hiding';

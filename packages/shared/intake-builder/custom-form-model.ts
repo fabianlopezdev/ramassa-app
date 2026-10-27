@@ -35,6 +35,8 @@ export interface CustomFormScreen {
   readonly title: BuilderText;
   readonly intro: BuilderText | null;
   readonly sortOrder: number;
+  /** Staff hid it (RAPP-711): the next published version leaves it out. Absent means shown. */
+  readonly isHidden?: boolean;
 }
 
 /** A Publica of a form (RAPP-701): its number, its season when it repeats, and whether it corrected. */
@@ -75,6 +77,8 @@ const screenSchema = z.object({
   title: anyLanguageTextSchema,
   intro: anyLanguageTextSchema.nullable(),
   sort_order: z.number().int(),
+  // The team's draft only (RAPP-711); a published version leaves a hidden screen out.
+  is_hidden: z.boolean().optional(),
 });
 
 const formSchema = z.object({
@@ -140,6 +144,7 @@ export function parseCustomForms(raw: unknown): readonly CustomForm[] {
             title: screen.title,
             intro: screen.intro,
             sortOrder: screen.sort_order,
+            isHidden: screen.is_hidden ?? false,
           })),
       },
     ];

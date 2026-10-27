@@ -151,6 +151,8 @@ const screenSchema = z.object({
   after_screen: z.enum(QUESTION_SCREENS),
   sort_order: z.number().int(),
   is_archived: z.boolean(),
+  // Staff hid it (RAPP-711). An older server sends none: it shows.
+  is_hidden: z.boolean().optional(),
 });
 
 const overrideSchema = z.object({
@@ -233,6 +235,8 @@ export interface RamassaScreen {
   readonly intro: BuilderText | null;
   readonly afterScreen: BuiltinScreen;
   readonly isArchived: boolean;
+  /** Staff hid it (RAPP-711): her phone skips it. Absent means shown. */
+  readonly isHidden?: boolean;
 }
 
 /**
@@ -314,6 +318,7 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
       intro: screen.intro,
       afterScreen: screen.after_screen,
       isArchived: screen.is_archived,
+      isHidden: screen.is_hidden ?? false,
     })),
     overrides: raw.overrides
       .filter((override) => (WIZARD_QUESTIONS as readonly string[]).includes(override.question))
