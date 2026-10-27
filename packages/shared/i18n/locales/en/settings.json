@@ -560,6 +560,7 @@
       "decline_label": "Leave button"
     },
     "detailNote": "This screen opens depending on the previous answer. A title of your own replaces the title of every case.",
+    "identityNote": "The app is invitation only, and creating a player requires her name and surname. That is why this screen asks her to check them.",
     "hideLocked": "It has a required question, so it always shows.",
     "hideReregistrationNote": "Hiding it also stops re-registration asking its question each season, so the app and re-registration always ask the same.",
     "save": "Save text",

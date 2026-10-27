@@ -740,6 +740,12 @@ export function WordingSection({
         {note === null || screen === 'terms-intro' ? null : (
           <FieldDescription className="text-start">{note}</FieldDescription>
         )}
+        {/* Every player checks her names first (RAPP-708): staff read why. */}
+        {screen === 'identity' ? (
+          <FieldDescription className="text-start" data-testid="identity-note">
+            {t('builtinScreens.identityNote')}
+          </FieldDescription>
+        ) : null}
         {fields.map((field) => {
           const id = `wording-${screen}-${field}`;
           const shared = {

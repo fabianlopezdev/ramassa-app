@@ -560,6 +560,7 @@
       "decline_label": "Botó per sortir"
     },
     "detailNote": "Aquesta pantalla s'obre segons la resposta anterior. Un títol propi substitueix el títol de cada cas.",
+    "identityNote": "L'app és només per invitació i, per crear una jugadora, cal el seu nom i cognoms. Per això aquesta pantalla li demana que els comprovi.",
     "hideLocked": "Té una pregunta obligatòria, així que sempre es mostra.",
     "hideReregistrationNote": "Si l'amagues, la reinscripció de cada temporada tampoc no en farà la pregunta, perquè l'aplicació i la reinscripció preguntin sempre el mateix.",
     "save": "Desar el text",

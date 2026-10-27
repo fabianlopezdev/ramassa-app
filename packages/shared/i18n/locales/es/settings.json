@@ -560,6 +560,7 @@
       "decline_label": "Botón para salir"
     },
     "detailNote": "Esta pantalla se abre según la respuesta anterior. Un título propio sustituye el título de cada caso.",
+    "identityNote": "La app es solo por invitación y, para crear una jugadora, hace falta su nombre y apellidos. Por eso esta pantalla le pide que los compruebe.",
     "hideLocked": "Tiene una pregunta obligatoria, así que siempre se muestra.",
     "hideReregistrationNote": "Si la ocultas, la reinscripción de cada temporada tampoco hará su pregunta, para que la aplicación y la reinscripción pregunten siempre lo mismo.",
     "save": "Guardar el texto",
