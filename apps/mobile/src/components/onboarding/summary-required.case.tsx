@@ -20,6 +20,7 @@ mock.module('@/lib/haptics/haptics', () => ({
   playHaptic: (kind: string) => void haptics.push(kind),
 }));
 mock.module('expo-router', () => ({
+  useNavigation: () => ({ getState: () => undefined }),
   useRouter: () => ({ push: (href: string) => void pushed.push(href), replace: () => {} }),
   useFocusEffect: () => {},
 }));

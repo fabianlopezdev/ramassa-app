@@ -12,20 +12,53 @@ import { WizardValidationSummary } from '@/components/onboarding/wizard-validati
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { identityNameFormSchema, type IdentityNameFormInput } from '@/lib/onboarding-form';
-import { wizardStepRoute } from '@/lib/onboarding-intake';
-import { useBuiltinWording, useWizardStep } from '@/lib/onboarding-intake-context';
+import { wizardStackRoute, type WizardStackRoute } from '@/lib/onboarding-intake';
+import {
+  useBuiltinWording,
+  useWizardIntake,
+  useWizardStep,
+  wizardBackTrail,
+} from '@/lib/onboarding-intake-context';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Redirect } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useLocalSearchParams, useNavigation } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+
+/** The onboarding stack, as the resume rebuilds it. */
+interface WizardStackNavigation {
+  reset(state: { index: number; routes: WizardStackRoute[] }): void;
+}
 
 export default function IdentityStepScreen() {
   const { t } = useTranslation('onboarding');
   const step = useWizardStep('identity');
   const wording = useBuiltinWording();
+  const intake = useWizardIntake();
+  const navigation = useNavigation<WizardStackNavigation>();
+  const { entrance } = useLocalSearchParams<{ entrance?: string }>();
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [hasSubmitErrors, setHasSubmitErrors] = useState(false);
+  // The front door resumes at her stored step. A screen Back reaches here
+  // (`entrance=none`) is identity itself, under the step she resumed at.
+  const resumeAt =
+    !step.isEditing && entrance !== 'none' && draft !== null && draft.currentStep !== 'identity'
+      ? draft.currentStep
+      : null;
+
+  // The earlier screens she was asked go under the step she resumes at, so
+  // Back and the back gesture reach each one with her answers (RAPP-707).
+  useEffect(() => {
+    if (resumeAt === null) return;
+    const steps = [...wizardBackTrail(resumeAt, intake, draft), resumeAt];
+    navigation.reset({
+      index: steps.length - 1,
+      routes: steps.map((item, index) =>
+        wizardStackRoute(item, index < steps.length - 1 ? 'back' : 'forward'),
+      ),
+    });
+    // Once, on mount: the draft and the intake are read as they stood.
+  }, []);
 
   const defaultValues = useMemo<IdentityNameFormInput>(() => {
     const saved = (draft?.identity ?? {}) as Partial<IdentityNameFormInput>;
@@ -44,9 +77,7 @@ export default function IdentityStepScreen() {
     defaultValues,
   });
 
-  if (!step.isEditing && draft !== null && draft.currentStep !== 'identity') {
-    return <Redirect href={wizardStepRoute(draft.currentStep)} />;
-  }
+  if (resumeAt !== null) return null;
 
   const continueToBackground = handleSubmit(
     (names) => {

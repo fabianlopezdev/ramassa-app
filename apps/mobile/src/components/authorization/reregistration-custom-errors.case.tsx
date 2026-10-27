@@ -92,7 +92,10 @@ mock.module('@tanstack/react-query', () => ({
 mock.module('@/lib/supabase', () => ({ supabase: {} }));
 mock.module('@/lib/observability', () => ({ logger: { warn: () => {}, error: () => {} } }));
 mock.module('@ramassa/shared/auth', () => ({ useAuth: () => ({ user: { id: 'her' } }) }));
-mock.module('expo-router', () => ({ useRouter: () => ({ push: () => {} }) }));
+mock.module('expo-router', () => ({
+  useNavigation: () => ({ getState: () => undefined }),
+  useRouter: () => ({ push: () => {} }),
+}));
 mock.module('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { resolvedLanguage: 'ca' } }),
 }));

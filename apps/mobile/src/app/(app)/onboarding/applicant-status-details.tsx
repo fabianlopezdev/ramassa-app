@@ -43,9 +43,11 @@ export default function ApplicantStatusDetailsScreen() {
       }}
       onBack={() => {
         persist('season');
-        router.replace(
-          `/onboarding/season?entrance=none${step.isEditing ? '&edit=1' : ''}` as Href,
-        );
+        if (step.isBelow('season')) router.back();
+        else
+          router.replace(
+            `/onboarding/season?entrance=none${step.isEditing ? '&edit=1' : ''}` as Href,
+          );
       }}
     >
       <FormTextArea

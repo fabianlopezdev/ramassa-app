@@ -18,6 +18,7 @@ const store = wizardDraftStoreOn(
 );
 mock.module('@/lib/onboarding', () => ({ onboardingDraftStore: store }));
 mock.module('expo-router', () => ({
+  useNavigation: () => ({ getState: () => undefined }),
   useRouter: () => ({ push: () => {}, replace: () => {} }),
   useFocusEffect: () => {},
 }));

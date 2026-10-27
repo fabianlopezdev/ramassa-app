@@ -91,7 +91,10 @@ mock.module('@/lib/onboarding-intake-context', () => ({
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
 mock.module('@/lib/continuous-corners', () => ({ continuousCorners: {} }));
 mock.module('@/lib/haptics/haptics', () => ({ playHaptic: () => {} }));
-mock.module('expo-router', () => ({ useRouter: () => ({ replace: () => {} }) }));
+mock.module('expo-router', () => ({
+  useNavigation: () => ({ getState: () => undefined }),
+  useRouter: () => ({ replace: () => {} }),
+}));
 mock.module('@/components/forms/data-icon', () => ({
   DataIcon: () => createElement('span', { 'data-testid': 'privacy-icon' }),
 }));

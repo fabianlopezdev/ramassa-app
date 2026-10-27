@@ -21,7 +21,11 @@ const push = mock(() => {});
 const replace = mock(() => {});
 const goNext = mock(() => {});
 mock.module('@/lib/onboarding', () => ({ onboardingDraftStore: store }));
-mock.module('expo-router', () => ({ useRouter: () => ({ push, replace }), Redirect: () => null }));
+mock.module('expo-router', () => ({
+  useNavigation: () => ({ getState: () => undefined }),
+  useRouter: () => ({ push, replace }),
+  Redirect: () => null,
+}));
 mock.module('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 mock.module('@/lib/haptics/haptics', () => ({ playHaptic: () => {} }));
 mock.module('@/components/onboarding/wizard-validation-summary', () => ({

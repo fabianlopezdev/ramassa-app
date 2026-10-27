@@ -22,6 +22,7 @@ mock.module('react-i18next', () => ({
   }),
 }));
 mock.module('expo-router', () => ({
+  useNavigation: () => ({ getState: () => undefined }),
   useRouter: () => ({ push, replace }),
   Redirect: ({ href }: { href: string }) => createElement('div', null, href),
 }));

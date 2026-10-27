@@ -79,9 +79,11 @@ function Details({ category }: { readonly category: string | undefined }) {
       }}
       onBack={() => {
         save('specific-needs');
-        router.replace(
-          `/onboarding/specific-needs?entrance=none${step.isEditing ? '&edit=1' : ''}` as Href,
-        );
+        if (step.isBelow('specific-needs')) router.back();
+        else
+          router.replace(
+            `/onboarding/specific-needs?entrance=none${step.isEditing ? '&edit=1' : ''}` as Href,
+          );
       }}
     >
       <FormTextArea

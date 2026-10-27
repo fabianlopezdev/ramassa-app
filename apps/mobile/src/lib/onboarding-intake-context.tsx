@@ -6,9 +6,9 @@ import { onboardingDraftStore } from '@/lib/onboarding';
  * answered. Loaded once by the onboarding layout, which seeds the draft from it
  * before any screen mounts, and read by every screen through `useWizardStep`.
  */
-import { wizardDraftStep, wizardStepRoute } from '@/lib/onboarding-intake';
+import { isWizardStackRoute, wizardDraftStep, wizardStepRoute } from '@/lib/onboarding-intake';
 import { lastSupportNeedStep } from '@/lib/support-needs-draft';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { createContext, use, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@ramassa/shared/i18n';
@@ -39,7 +39,7 @@ import {
   type IntakeScreen,
   type SystemFieldIndex,
 } from '@ramassa/shared/intake-builder';
-import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
+import type { OnboardingDraft, OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 import type { LocalizedText } from '@ramassa/shared/schemas';
 
 export interface WizardIntake {
@@ -143,6 +143,8 @@ export interface WizardStep {
   /** Null on the first screen she sees: there is nowhere to go back to. */
   readonly previousDraftStep: OnboardingDraftStep | null;
   readonly goBack: (() => void) | null;
+  /** Whether the screen under this one is that step's: Back then pops to it (RAPP-707). */
+  readonly isBelow: (step: WizardStepKey | OnboardingDraftStep) => boolean;
 }
 
 export function useWizardStep(screen: WizardStepKey): WizardStep {
@@ -154,6 +156,7 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
     required = DEFAULT_REQUIRED_QUESTIONS,
   } = useWizardIntake();
   const router = useRouter();
+  const navigation = useNavigation();
   const { edit } = useLocalSearchParams<{ edit?: string }>();
   const isEditing = edit === '1';
 
@@ -165,17 +168,16 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
       ? 'summary'
       : previousWizardScreen(screen, notAsked, customPlan, flow);
     const previousStep =
-      previous === 'documentation' &&
-      hasDocumentDetails(onboardingDraftStore.loadDraft()?.documentation?.documentType)
-        ? 'documentation-details'
-        : previous === 'specific-needs'
-          ? lastSupportNeedStep(onboardingDraftStore.loadDraft()?.season?.specificNeeds)
-          : previous === 'season' &&
-              onboardingDraftStore.loadDraft()?.season?.applicantStatus === 'other'
-            ? 'applicant-status-details'
-            : previous;
+      previous === null || isEditing
+        ? previous
+        : landingStep(previous, onboardingDraftStore.loadDraft());
     // Editing from the summary goes back to that same summary, which re-reads
     // the draft on focus. Without history (a cold start mid-edit), replace.
+    const isBelow = (target: WizardStepKey | OnboardingDraftStep) => {
+      const state = navigation.getState();
+      const below = state === undefined ? undefined : state.routes[state.index - 1];
+      return below !== undefined && isWizardStackRoute(below, target);
+    };
     const backToSummary = () =>
       router.canGoBack() ? router.back() : router.replace(wizardStepRoute('summary', 'back'));
     return {
@@ -187,15 +189,75 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
       nextDraftStep: wizardDraftStep(next),
       goNext: isEditing ? backToSummary : () => router.push(wizardStepRoute(next)),
       previousDraftStep: previousStep === null ? null : wizardDraftStep(previousStep),
-      // replace, not back(): after a resume the redirect REPLACED the route, so
-      // the stack may hold nothing under this screen. The draft is the source of truth.
+      // Back pops to the screen under this one when it is the previous step
+      // (a resume pushes them, RAPP-707); otherwise it replaces this screen
+      // with that step. The draft is the source of truth either way.
       goBack: isEditing
         ? backToSummary
         : previous === null
           ? null
-          : () => router.replace(wizardStepRoute(previousStep ?? previous, 'back')),
+          : () => {
+              const target = previousStep ?? previous;
+              if (isBelow(target)) router.back();
+              else router.replace(wizardStepRoute(target, 'back'));
+            },
+      isBelow,
     };
-  }, [notAsked, customPlan, flow, hidden, required, isEditing, router, screen]);
+  }, [notAsked, customPlan, flow, hidden, required, isEditing, router, navigation, screen]);
+}
+
+/**
+ * The step Back lands on for a previous screen: its detail screen when her
+ * draft opened one (the document details, the "other" status, the last
+ * support need), else the screen itself.
+ */
+function landingStep(
+  previous: WizardStepKey,
+  draft: OnboardingDraft | null,
+): WizardStepKey | OnboardingDraftStep {
+  if (previous === 'documentation' && hasDocumentDetails(draft?.documentation?.documentType))
+    return 'documentation-details';
+  if (previous === 'specific-needs') return lastSupportNeedStep(draft?.season?.specificNeeds);
+  if (previous === 'season' && draft?.season?.applicantStatus === 'other')
+    return 'applicant-status-details';
+  return previous;
+}
+
+/** The screen a detail screen goes back to, or null for a screen of the flow. */
+function detailParent(step: OnboardingDraftStep): WizardStepKey | null {
+  if (step === 'documentation-details') return 'documentation';
+  if (step === 'applicant-status-details') return 'season';
+  if (step.startsWith('needs-detail:')) return 'specific-needs';
+  return null;
+}
+
+/**
+ * The steps Back walks through from `step`, the first one first (RAPP-707).
+ * A resumed wizard puts them under the step she resumes at, so Back and the
+ * platform's back gesture reach every earlier screen she was asked, with her
+ * answers. Screens the planner skips stay skipped.
+ */
+export function wizardBackTrail(
+  step: OnboardingDraftStep,
+  intake: WizardIntake,
+  draft: OnboardingDraft | null,
+): OnboardingDraftStep[] {
+  const flow = intake.flow ?? DEFAULT_WIZARD_FLOW;
+  const trail: OnboardingDraftStep[] = [];
+  let current: OnboardingDraftStep = step;
+  // Bounded: a flow has far fewer steps, and a bad plan must never loop.
+  while (trail.length < 64) {
+    const parent = detailParent(current);
+    const previous =
+      parent ??
+      previousWizardScreen(current as WizardStepKey, intake.notAsked, intake.customPlan, flow);
+    if (previous === null) break;
+    const landing = wizardDraftStep(parent === null ? landingStep(previous, draft) : previous);
+    if (trail.includes(landing) || landing === step) break;
+    trail.unshift(landing);
+    current = landing;
+  }
+  return trail;
 }
 
 export interface BuiltinWording {

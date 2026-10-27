@@ -70,9 +70,11 @@ export default function DocumentDetailsScreen() {
       onContinue={next}
       onBack={() => {
         persist('documentation');
-        router.replace(
-          `/onboarding/documentation?entrance=none${step.isEditing ? '&edit=1' : ''}` as Href,
-        );
+        if (step.isBelow('documentation')) router.back();
+        else
+          router.replace(
+            `/onboarding/documentation?entrance=none${step.isEditing ? '&edit=1' : ''}` as Href,
+          );
       }}
     >
       <WizardValidationSummary isVisible={hasSubmitErrors} message={t('errorSummary')} />

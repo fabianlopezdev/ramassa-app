@@ -73,6 +73,41 @@ export function wizardStepRoute(
   return (direction === 'back' ? `${route}?entrance=none` : route) as Href;
 }
 
+/** A wizard step as a route of the onboarding stack, by its file name (RAPP-707). */
+export interface WizardStackRoute {
+  readonly name: string;
+  readonly params: Readonly<Record<string, string>>;
+}
+
+export function wizardStackRoute(
+  step: WizardStepKey | OnboardingDraftStep,
+  direction: 'forward' | 'back' = 'forward',
+): WizardStackRoute {
+  const entrance: Record<string, string> = direction === 'back' ? { entrance: 'none' } : {};
+  if (step.startsWith('needs-detail:'))
+    return {
+      name: 'specific-needs-details/[category]',
+      params: { ...entrance, category: step.slice('needs-detail:'.length) },
+    };
+  const screenId = customStepId(step);
+  if (screenId !== null) return { name: 'custom/[screenId]', params: { ...entrance, screenId } };
+  return { name: step === 'identity' ? 'index' : step, params: entrance };
+}
+
+/** Whether a route of the onboarding stack is that wizard step's screen. */
+export function isWizardStackRoute(
+  route: { readonly name: string; readonly params?: object },
+  step: WizardStepKey | OnboardingDraftStep,
+): boolean {
+  const expected = wizardStackRoute(step);
+  const params = (route.params ?? {}) as Readonly<Record<string, unknown>>;
+  return (
+    route.name === expected.name &&
+    params.screenId === expected.params.screenId &&
+    params.category === expected.params.category
+  );
+}
+
 /** The draft step that resumes at a wizard step: a staff screen keeps its own key. */
 export function wizardDraftStep(step: WizardStepKey | OnboardingDraftStep): OnboardingDraftStep {
   if (

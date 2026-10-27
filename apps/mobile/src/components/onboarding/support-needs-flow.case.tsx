@@ -19,6 +19,7 @@ let category = 'accessibility';
 let editing = false;
 mock.module('@/lib/onboarding', () => ({ onboardingDraftStore: store }));
 mock.module('expo-router', () => ({
+  useNavigation: () => ({ getState: () => undefined }),
   useRouter: () => ({ push, replace }),
   useLocalSearchParams: () => ({ category }),
   Redirect: () => null,
