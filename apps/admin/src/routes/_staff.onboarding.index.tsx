@@ -44,7 +44,13 @@ function OnboardingBoard() {
     <Page data-testid="onboarding-design-page">
       <PageHeader
         title={t('onboardingPage.title')}
-        description={t('onboardingChain.count', { ...counts })}
+        description={
+          <>
+            {/* What Onboarding is: her first time only (RAPP-705). */}
+            <span className="block">{t('onboardingPage.intro')}</span>
+            <span className="block">{t('onboardingChain.count', { ...counts })}</span>
+          </>
+        }
       />
       <ScreenBoard catalog={data.intakeCatalog} chain={data.formChain} />
     </Page>

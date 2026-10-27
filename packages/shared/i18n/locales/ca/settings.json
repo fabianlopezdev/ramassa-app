@@ -496,7 +496,8 @@
     "healthReadersOnly": "Només la veu qui té el permís de salut."
   },
   "onboardingPage": {
-    "title": "Onboarding"
+    "title": "Onboarding",
+    "intro": "Les pantalles que veu una jugadora la primera vegada que obre l'app."
   },
   "onboardingChain": {
     "count": "En total, {{total}} pantalles: {{onboarding}} d'Onboarding · {{terms}} de condicions de l'app · {{forms}} de formularis",

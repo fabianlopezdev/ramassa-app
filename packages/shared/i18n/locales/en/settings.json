@@ -496,7 +496,8 @@
     "healthReadersOnly": "Only people with the health permission read it."
   },
   "onboardingPage": {
-    "title": "Onboarding"
+    "title": "Onboarding",
+    "intro": "The screens a player sees the first time she opens the app."
   },
   "onboardingChain": {
     "count": "{{total}} screens in total: {{onboarding}} in Onboarding · {{terms}} in the app terms · {{forms}} in forms",

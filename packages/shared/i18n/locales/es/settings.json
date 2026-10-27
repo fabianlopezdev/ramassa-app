@@ -496,7 +496,8 @@
     "healthReadersOnly": "Solo la ve quien tiene el permiso de salud."
   },
   "onboardingPage": {
-    "title": "Onboarding"
+    "title": "Onboarding",
+    "intro": "Las pantallas que ve una jugadora la primera vez que abre la app."
   },
   "onboardingChain": {
     "count": "En total, {{total}} pantallas: {{onboarding}} de Onboarding · {{terms}} de condiciones de la app · {{forms}} de formularios",
