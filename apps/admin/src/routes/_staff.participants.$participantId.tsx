@@ -39,7 +39,6 @@ import {
   fetchParticipantCustomAnswers,
   fetchParticipantCustomForms,
   fetchParticipantFormSignatures,
-  fetchParticipantOnboardingReviewPending,
   NO_CHOICES,
   systemFieldsOf,
 } from '@ramassa/shared/intake-builder';
@@ -150,7 +149,6 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       customAnswers,
       scenario,
       formSignatures,
-      isReviewPending,
       customForms,
     ] = await Promise.all([
       fetchParticipantNotes(supabase, params.participantId),
@@ -182,10 +180,6 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       testScenario,
       // Her signatures of the form blocks (RAPP-690); participants.view_personal.
       fetchParticipantFormSignatures(supabase, params.participantId).catch(() => []),
-      // Onboarding screens saved as a Nova versió she still has to review (RAPP-697).
-      hasJoined(participant)
-        ? fetchParticipantOnboardingReviewPending(supabase, params.participantId).catch(() => false)
-        : Promise.resolve(false),
       // The forms the team created that ask her (RAPP-700); participants.view_personal.
       fetchParticipantCustomForms(supabase, params.participantId).catch(() => []),
     ]);
@@ -214,7 +208,6 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       customAnswers,
       testScenario: scenario,
       formSignatures,
-      isReviewPending,
       customForms,
     };
   },
@@ -240,7 +233,6 @@ function ParticipantDetailPage() {
     customAnswers,
     testScenario,
     formSignatures,
-    isReviewPending,
     customForms,
   } = Route.useLoaderData();
 
@@ -266,7 +258,6 @@ function ParticipantDetailPage() {
       customAnswers={customAnswers}
       testScenario={testScenario}
       formSignatures={formSignatures}
-      isReviewPending={isReviewPending}
       customForms={customForms}
     />
   );

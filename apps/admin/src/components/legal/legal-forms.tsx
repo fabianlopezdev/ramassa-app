@@ -399,7 +399,6 @@ export function TermsScreen({
           <WordingSection
             catalog={data.intakeCatalog}
             screen={step}
-            finishedCount={data.finishedCount}
             language={language}
             title={t('onboardingBoard.wording')}
             onChange={() => undefined}

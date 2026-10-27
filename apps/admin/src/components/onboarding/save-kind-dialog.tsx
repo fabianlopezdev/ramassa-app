@@ -6,8 +6,9 @@
  *     anything. The old version stays recorded.
  *   - Nova versió: everybody answers again.
  *
- * A form may say under Nova versió how many will answer again (Onboarding,
- * RAPP-697). A form nobody has answered saves at once, with no dialog.
+ * A form may say under Nova versió how many will answer again. A form nobody
+ * has answered saves at once, with no dialog. Onboarding never asks: it is
+ * only for players who have not joined yet (RAPP-705).
  */
 
 import { Button } from '@/components/ui/button';

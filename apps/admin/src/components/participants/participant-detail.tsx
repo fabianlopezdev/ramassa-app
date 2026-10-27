@@ -128,8 +128,6 @@ export interface ParticipantDetailProps {
   readonly testScenario?: TestPlayerScenario | null;
   /** Her signatures of the form blocks (RAPP-690), read with participants.view_personal. */
   readonly formSignatures?: readonly ParticipantFormSignature[];
-  /** She has Onboarding screens saved as a Nova versió to review (RAPP-697). */
-  readonly isReviewPending?: boolean;
   /** Her asks of the forms the team created (RAPP-700), read with participants.view_personal. */
   readonly customForms?: readonly ParticipantCustomForm[];
 }
@@ -151,7 +149,6 @@ export function ParticipantDetail({
   intakeCatalog = EMPTY_INTAKE_CATALOG,
   customAnswers = [],
   testScenario = null,
-  isReviewPending = false,
   formSignatures = [],
   customForms = [],
 }: ParticipantDetailProps) {
@@ -343,11 +340,6 @@ export function ParticipantDetail({
                 <Badge variant="destructive">{t('forumBanned')}</Badge>
               ) : null}
               {isTestPlayer ? <Badge variant="muted">{t('testBadge')}</Badge> : null}
-              {isReviewPending ? (
-                <Badge variant="outline" data-testid="participant-review-pending">
-                  {t('reviewPendingBadge')}
-                </Badge>
-              ) : null}
             </div>
             <p className="text-start text-sm text-muted-foreground">
               {t('detailJoinedOn', {
