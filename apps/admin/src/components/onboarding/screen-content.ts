@@ -130,6 +130,21 @@ const BUILTIN_TYPES: Readonly<Record<IntakeQuestion, CustomQuestionType>> = {
   specific_needs: 'search_choice',
 };
 
+/**
+ * How the app's own screens lay out a choice (RAPP-712): one card per row for
+ * her document type, her languages, her status and her support needs; three
+ * columns for her sizes. Any other choice is the two-column grid of a staff
+ * question.
+ */
+const BUILTIN_LOOKS: Partial<Record<IntakeQuestion, PreviewDraft['look']>> = {
+  preferred_language: 'cards',
+  document: 'cards',
+  applicant_status: 'cards',
+  specific_needs: 'cards',
+  clothing_size: 'grid',
+  shoe_size: 'grid',
+};
+
 /** The control her phone shows for a built-in question; the type icon of its row. */
 export function builtinQuestionType(question: IntakeQuestion): CustomQuestionType {
   return BUILTIN_TYPES[question];
@@ -175,19 +190,20 @@ export function builtinPhoneQuestion(
       ? (builtinLabel(catalog, question, language) ?? appLabel)
       : typed || appLabel;
   const field = catalog.layout === undefined ? undefined : builtinField(catalog.layout, question);
-  // A yes, no or maybe field draws its own three answers.
-  const isYesNo = field?.type === 'yes_no' || field?.type === 'yes_no_maybe';
+  const look = BUILTIN_LOOKS[question];
   return {
     id: question,
     label: shownLabel,
     help: builtinHelp(catalog, question, language) ?? '',
     isRequired: isRequiredQuestion(question, requiredBuiltinQuestions(catalog)),
     draft: {
-      type: isYesNo ? field.type : BUILTIN_TYPES[question],
+      // Her field's own type, as its row shows it: a country picker, a yes or no.
+      type: field?.type ?? BUILTIN_TYPES[question],
       label: only(language, shownLabel),
       help: {},
       settings: {},
       options: builtinOptionLabels(catalog, question, language).map((text) => only(language, text)),
+      ...(look === undefined ? {} : { look }),
     },
   };
 }

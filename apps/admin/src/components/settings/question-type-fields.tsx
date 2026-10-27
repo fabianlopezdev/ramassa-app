@@ -11,6 +11,7 @@
 
 import { textFromForm } from '@/components/fields/language-fields';
 import { cn } from '@/lib/utils';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getCountryOptions } from '@ramassa/shared/i18n/countries';
 import {
@@ -25,6 +26,7 @@ import {
   itemListSettings,
   LIST_DEFAULT_MAX_ITEMS,
   LIST_MAX_ITEMS,
+  LONG_TEXT_MAX_LENGTH,
   numberSettings,
   textIn,
   type BuilderText,
@@ -268,6 +270,12 @@ export interface PreviewDraft {
   readonly help: BuilderText;
   readonly settings: QuestionSettings;
   readonly options: readonly BuilderText[];
+  /**
+   * How her phone lays out a choice (RAPP-712). A question staff add shows a
+   * grid of two columns; a screen of the app's own can show one card per row
+   * (her document type, her languages) or a grid of three (her sizes).
+   */
+  readonly look?: 'cards' | 'grid';
 }
 
 export function readPreviewDraft(
@@ -288,59 +296,118 @@ export function readPreviewDraft(
   };
 }
 
-// The phone's own field (RAPP-704): white, a navy border, her finger's height.
-const boxClass =
-  'flex min-h-10 items-center rounded-lg border border-primary bg-white px-3 py-2 text-sm text-muted-foreground';
-const chipClass = 'rounded-full border px-3 py-1 text-sm';
-/** A filled answer in the type picker's pictures (RAPP-646): her words in the box. */
-const filledClass = 'text-foreground';
-const chosenChipClass = 'border-primary bg-primary/10 text-foreground';
+// Her phone's controls, drawn at the phone frame's scale (RAPP-704, RAPP-712).
+// A field: white, a navy border, her finger's height, the placeholder in grey.
+const fieldClass =
+  'flex min-h-11 w-full min-w-0 items-center rounded-md border border-primary bg-white px-3 py-2 text-start text-sm text-foreground';
+const placeholderClass = 'text-muted-foreground';
+// A choice, a card or an action: the app's raised surface, a navy edge under it
+// on the end side, yellow when chosen.
+const raisedClass =
+  'flex min-h-11 min-w-0 items-center rounded-md border border-primary bg-white px-4 py-2 text-sm text-primary shadow-[2px_3px_0_0_var(--color-primary)] rtl:shadow-[-2px_3px_0_0_var(--color-primary)]';
+const chosenClass = 'bg-secondary text-foreground';
+const subLabelClass = 'text-start text-sm font-medium';
+const GRID_COLUMNS = ['grid-cols-1', 'grid-cols-2', 'grid-cols-3'] as const;
 
-/** The mark a chosen chip carries in a picture: a dot for one option, a tick for several. */
-function ChoiceMark({
-  isMultiple,
-  isChosen,
+/** The app's choice grid: equal cells, at most two columns, or three for yes, no and maybe. */
+function ChoiceGrid({
+  labels,
+  maximumColumns,
+  chosen,
 }: {
-  readonly isMultiple: boolean;
-  readonly isChosen: boolean;
+  readonly labels: readonly string[];
+  readonly maximumColumns: 2 | 3;
+  readonly chosen: ReadonlySet<number>;
+}) {
+  const columns = Math.min(maximumColumns, Math.max(1, labels.length));
+  return (
+    <div className={cn('grid gap-2 pe-0.5 pb-1', GRID_COLUMNS[columns - 1])}>
+      {labels.map((label, index) => (
+        <span
+          key={index}
+          className={cn(
+            raisedClass,
+            'justify-center text-center',
+            chosen.has(index) && chosenClass,
+          )}
+        >
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/** The app's choice cards: one per row, her words at the start, a tick at the end when chosen. */
+function ChoiceCards({
+  labels,
+  chosen,
+}: {
+  readonly labels: readonly string[];
+  readonly chosen: ReadonlySet<number>;
 }) {
   return (
-    <span
-      aria-hidden
-      className={cn(
-        'inline-flex size-3.5 shrink-0 items-center justify-center border-[1.5px]',
-        isMultiple ? 'rounded-[3px]' : 'rounded-full',
-        isChosen ? 'border-primary bg-primary text-primary-foreground' : 'border-input',
+    <div className="flex flex-col gap-2 pe-0.5 pb-1">
+      {labels.map((label, index) => (
+        <span
+          key={index}
+          className={cn(raisedClass, 'justify-between gap-2', chosen.has(index) && chosenClass)}
+        >
+          <span className="min-w-0 flex-1 text-start">{label}</span>
+          {chosen.has(index) ? (
+            <svg
+              aria-hidden
+              viewBox="0 0 24 24"
+              className="size-4 shrink-0 text-primary"
+              fill="none"
+            >
+              <path
+                d="M4 12.5 9.5 18 21 6"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ) : null}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/** A field with her words, or the app's placeholder in grey, or nothing. */
+function Field({
+  text,
+  placeholder,
+  className,
+}: {
+  readonly text?: string;
+  readonly placeholder?: ReactNode;
+  readonly className?: string;
+}) {
+  return (
+    <div className={cn(fieldClass, className)}>
+      {text === undefined ? (
+        <span className={cn('truncate', placeholderClass)}>{placeholder ?? ' '}</span>
+      ) : (
+        <span className="truncate">{text}</span>
       )}
-    >
-      {isChosen ? (
-        isMultiple ? (
-          <svg viewBox="0 0 12 12" className="size-2.5" fill="none">
-            <path
-              d="M2.5 6.2 5 8.5l4.5-5"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        ) : (
-          <span className="size-1.5 rounded-full bg-primary-foreground" />
-        )
-      ) : null}
-    </span>
+    </div>
   );
 }
 
 /**
- * Her phone's control for this question, in one language: the same parts
- * and the app's own words (Day, Month, Year, Add, Sign here) in that language.
- * The registration board's phone preview (RAPP-641) draws its questions with
- * it too; there a searchable list shows its box without the option count.
+ * Her phone's control for this question, in one language, laid out as the app
+ * lays it out (RAPP-712): the same fields, choice grids and cards, raised
+ * buttons and the app's own words (Day, Month, Year, Add, Sign here) in that
+ * language. The screen editors, the board cards and the type picker all draw
+ * an answer with it, so they never differ. In the board's phone a searchable
+ * list shows its field without the option count.
  *
  * `isExample` draws it answered, with sample words in that language, for the
- * type picker (RAPP-646): a filled box, chosen options, an added item and a
- * ticked consent, so each type reads apart at a glance.
+ * type picker (RAPP-646): a filled field, chosen options, an added item, so
+ * each type reads apart at a glance.
  */
 export function QuestionControl({
   draft,
@@ -353,52 +420,44 @@ export function QuestionControl({
   readonly showOptionCount?: boolean;
   readonly isExample?: boolean;
 }) {
-  const { t } = useTranslation(['settings', 'onboarding']);
+  const { t } = useTranslation(['settings', 'onboarding', 'common']);
   const phone = (key: string, values: Record<string, unknown> = {}) =>
     t(`onboarding:${key}`, { ...values, lng: language });
   const sample = (key: string) => t(`settings:questions.typeSamples.${key}`, { lng: language });
-  const number = numberSettings(draft.settings);
+  const nothing = new Set<number>();
   switch (draft.type) {
     case 'short_text':
-    case 'phone':
+      return <Field text={isExample ? sample('shortText') : undefined} />;
     case 'email':
-      return (
-        <div className={cn(boxClass, isExample && `${filledClass} truncate`)}>
-          {draft.type === 'phone' ? (
-            <bdi dir="ltr">{phone('phonePlaceholder')}</bdi>
-          ) : isExample ? (
-            draft.type === 'email' ? (
-              <bdi dir="ltr">{sample('email')}</bdi>
-            ) : (
-              sample('shortText')
-            )
-          ) : (
-            ' '
-          )}
-        </div>
-      );
-    case 'long_text':
-      return (
-        <div className={cn(boxClass, 'h-16', isExample && `${filledClass} line-clamp-3`)}>
-          {isExample ? sample('longText') : null}
-        </div>
-      );
+      return <Field text={isExample ? sample('email') : undefined} />;
+    case 'phone':
+      return <Field placeholder={<bdi dir="ltr">{phone('phonePlaceholder')}</bdi>} />;
     case 'number':
+      return <Field text={isExample ? sample('number') : undefined} />;
+    case 'long_text':
+      // The app's writing area, tall, with her character count under it.
       return (
-        <div className={cn(boxClass, isExample && filledClass)}>
-          {isExample
-            ? sample('number')
-            : number.min !== undefined || number.max !== undefined
-              ? `${number.min ?? ''}-${number.max ?? ''}`
-              : ' '}
+        <div className="flex flex-col gap-1.5">
+          <div className={cn(fieldClass, 'h-32 items-start')}>
+            {isExample ? <span className="line-clamp-4">{sample('longText')}</span> : null}
+          </div>
+          <span className="text-start text-xs text-muted-foreground tabular-nums">
+            {t('common:characterCount', {
+              count: isExample ? sample('longText').length : 0,
+              limit: LONG_TEXT_MAX_LENGTH,
+              lng: language,
+            })}
+          </span>
         </div>
       );
     case 'date':
+      // Day, month and year: three fields, each named above its box.
       return (
         <div className="grid grid-cols-3 gap-2">
           {['dayLabel', 'monthLabel', 'yearLabel'].map((key) => (
-            <div key={key} className={boxClass}>
-              {phone(key)}
+            <div key={key} className="flex min-w-0 flex-col gap-1">
+              <span className={cn(subLabelClass, 'truncate')}>{phone(key)}</span>
+              <Field />
             </div>
           ))}
         </div>
@@ -406,74 +465,63 @@ export function QuestionControl({
     case 'yes_no':
     case 'yes_no_maybe':
       return (
-        <div className="flex flex-wrap gap-2">
-          {(draft.type === 'yes_no'
+        <ChoiceGrid
+          labels={(draft.type === 'yes_no'
             ? ['yesOption', 'noOption']
             : ['yesOption', 'noOption', 'customMaybeOption']
-          ).map((key, index) => (
-            <span key={key} className={cn(chipClass, isExample && index === 0 && chosenChipClass)}>
-              {phone(key)}
-            </span>
-          ))}
-        </div>
+          ).map((key) => phone(key))}
+          maximumColumns={3}
+          chosen={isExample ? new Set([0]) : nothing}
+        />
       );
     case 'single_choice':
     case 'multiple_choice': {
-      const isMultiple = draft.type === 'multiple_choice';
-      return (
-        <div className="flex flex-wrap gap-2">
-          {draft.options.map((option, index) => {
-            const isChosen = isExample && (index === 0 || (isMultiple && index === 2));
-            return (
-              <span
-                key={index}
-                className={cn(
-                  chipClass,
-                  isExample && 'inline-flex items-center gap-1.5',
-                  isChosen && chosenChipClass,
-                )}
-              >
-                {isExample ? <ChoiceMark isMultiple={isMultiple} isChosen={isChosen} /> : null}
-                {textIn(option, language)}
-              </span>
-            );
-          })}
-        </div>
+      const labels = draft.options.map((option) => textIn(option, language));
+      const chosen = isExample ? new Set(draft.type === 'multiple_choice' ? [0, 2] : [0]) : nothing;
+      return draft.look === 'cards' ? (
+        <ChoiceCards labels={labels} chosen={chosen} />
+      ) : (
+        <ChoiceGrid
+          labels={labels}
+          maximumColumns={draft.look === 'grid' ? 3 : 2}
+          chosen={chosen}
+        />
       );
     }
     case 'search_choice':
-      return (
-        <div className="flex flex-col gap-1">
-          <div className={boxClass}>{phone('customSearchPlaceholder')}</div>
-          {isExample ? (
-            draft.options.map((option, index) => (
-              <div key={index} className="rounded-md border px-3 py-1.5 text-start text-sm">
-                {textIn(option, language)}
-              </div>
-            ))
-          ) : showOptionCount ? (
-            <span className="text-xs text-muted-foreground">
-              {t('settings:questions.preview.optionCount', { count: draft.options.length })}
-            </span>
-          ) : null}
-        </div>
-      );
     case 'country':
     case 'municipality': {
-      // The lists the app ships (D6): she searches every country, or every municipality.
+      // One field that opens the app's search sheet: her list, the chosen row in navy.
       const list =
-        draft.type === 'country' ? getCountryOptions(language) : getMunicipalityOptions(language);
+        draft.type === 'country'
+          ? getCountryOptions(language).map((option) => option.label)
+          : draft.type === 'municipality'
+            ? getMunicipalityOptions(language).map((option) => option.label)
+            : draft.options.map((option) => textIn(option, language));
+      const placeholder = phone(
+        draft.type === 'country'
+          ? 'searchCountryPlaceholder'
+          : draft.type === 'municipality'
+            ? 'searchMunicipalityPlaceholder'
+            : 'customSearchPlaceholder',
+      );
       return (
         <div className="flex flex-col gap-1">
-          <div className={boxClass}>{phone('customSearchPlaceholder')}</div>
+          <Field placeholder={placeholder} />
           {isExample ? (
-            list.slice(0, 2).map((option) => (
-              <div key={option.code} className="rounded-md border px-3 py-1.5 text-start text-sm">
-                {option.label}
-              </div>
+            list.slice(0, 2).map((label, index) => (
+              <span
+                key={index}
+                className={cn(
+                  'truncate rounded-lg px-3 py-1.5 text-start text-sm',
+                  index === 0 && 'bg-primary font-medium text-primary-foreground',
+                )}
+              >
+                {label}
+              </span>
             ))
           ) : showOptionCount ? (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-start text-xs text-muted-foreground">
               {t('settings:questions.preview.optionCount', { count: list.length })}
             </span>
           ) : null}
@@ -481,18 +529,22 @@ export function QuestionControl({
       );
     }
     case 'item_list':
+      // The supporting organizations list: a named field, Add beside it, then her items.
       return (
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
-            <div className={cn(boxClass, 'flex-1', isExample && 'min-w-0 truncate')}>
-              {phone('customListItemLabel')}
+        <div className="flex flex-col gap-2 pt-1">
+          <div className="flex flex-col gap-1">
+            <span className={subLabelClass}>{phone('customListItemLabel')}</span>
+            <div className="flex items-center gap-2">
+              <Field className="flex-1" />
+              <span className={cn(raisedClass, 'shrink-0 justify-center')}>
+                {phone('supportingEntitiesAddAction')}
+              </span>
             </div>
-            <span className={chipClass}>{phone('supportingEntitiesAddAction')}</span>
           </div>
           {isExample ? (
-            <div className="flex items-center justify-between gap-2 rounded-md border bg-muted/50 px-3 py-1.5 text-sm">
+            <div className="flex items-center justify-between gap-2 rounded-md border border-(--ramassa-color-neutral-200) bg-(--ramassa-color-neutral-50) px-3 py-2 text-sm">
               <span className="truncate text-start">{sample('listItem')}</span>
-              <span aria-hidden className="text-primary">
+              <span aria-hidden className="text-lg leading-none font-medium text-primary">
                 ×
               </span>
             </div>
@@ -500,11 +552,14 @@ export function QuestionControl({
         </div>
       );
     case 'file_upload':
+      // Raised buttons: a photo, and a document when the question takes one.
       return (
-        <div className="flex flex-wrap gap-2">
-          <span className={chipClass}>{phone('customChoosePhoto')}</span>
+        <div className="flex flex-wrap gap-2 pe-0.5 pb-1">
+          <span className={cn(raisedClass, 'justify-center')}>{phone('customChoosePhoto')}</span>
           {fileSettings(draft.settings).accept === 'document' ? (
-            <span className={chipClass}>{phone('customChooseDocument')}</span>
+            <span className={cn(raisedClass, 'justify-center')}>
+              {phone('customChooseDocument')}
+            </span>
           ) : null}
         </div>
       );
