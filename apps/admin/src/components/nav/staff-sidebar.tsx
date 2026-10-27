@@ -1,6 +1,7 @@
 import { OrganizationBrand } from '@/components/branding/organization-brand';
 import { PreviewAsPlayer } from '@/components/content/preview-as-player';
 import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Sidebar,
   SidebarContent,
@@ -10,12 +11,14 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { useUnreadMessageCount } from '@/lib/messaging';
 import {
@@ -26,7 +29,8 @@ import {
   type StaffNavParentId,
 } from '@/lib/nav-items';
 import { Link, useLocation } from '@tanstack/react-router';
-import { useId } from 'react';
+import { ChevronRight } from 'lucide-react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
 import type { LayoutDirection } from '@ramassa/shared/i18n';
@@ -120,64 +124,78 @@ function StaffNavGroupSection({
   const { t } = useTranslation(['nav', 'messaging']);
   const labelId = useId();
   const hasLabel = group.labelKey !== null;
-  return (
-    <SidebarGroup data-testid={`staff-nav-group-${group.id}`}>
-      {hasLabel ? <SidebarGroupLabel id={labelId}>{t(group.labelKey)}</SidebarGroupLabel> : null}
-      <SidebarGroupContent>
-        <SidebarMenu aria-labelledby={hasLabel ? labelId : undefined}>
-          {rowsOf(group.items).map((row) => {
-            if (row.kind === 'item') {
-              const { item } = row;
-              const label = t(item.labelKey);
-              const isActive = item.to === activePath;
-              const Icon = item.icon;
-              return (
-                <SidebarMenuItem key={item.to}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive}
-                    tooltip={label}
-                    className={NAV_BUTTON_CLASS}
-                  >
-                    {/* The router would mark every link the path sits in (Participants
+  const holdsActive = group.items.some((item) => item.to === activePath);
+  const [isOpen, setIsOpen] = useFoldState(`group:${group.id}`, holdsActive);
+  const menu = (
+    <SidebarMenu aria-labelledby={hasLabel ? labelId : undefined}>
+      {rowsOf(group.items).map((row) => {
+        if (row.kind === 'item') {
+          const { item } = row;
+          const label = t(item.labelKey);
+          const isActive = item.to === activePath;
+          const Icon = item.icon;
+          return (
+            <SidebarMenuItem key={item.to}>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive}
+                tooltip={label}
+                className={NAV_BUTTON_CLASS}
+              >
+                {/* The router would mark every link the path sits in (Participants
                       under /participants/referrals); exact matching leaves the
                       marking to the one item chosen above. */}
-                    <Link
-                      to={item.to}
-                      activeOptions={{ exact: true, includeSearch: false }}
-                      aria-current={isActive ? 'page' : undefined}
+                <Link
+                  to={item.to}
+                  activeOptions={{ exact: true, includeSearch: false }}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <Icon aria-hidden="true" />
+                  <span>{label}</span>
+                  {item.to === '/messages' && unread > 0 ? (
+                    <Badge
+                      variant="secondary"
+                      className="ms-auto"
+                      data-testid="staff-message-badge"
+                      aria-label={t('messaging:unread', { count: unread })}
                     >
-                      <Icon aria-hidden="true" />
-                      <span>{label}</span>
-                      {item.to === '/messages' && unread > 0 ? (
-                        <Badge
-                          variant="secondary"
-                          className="ms-auto"
-                          data-testid="staff-message-badge"
-                          aria-label={t('messaging:unread', { count: unread })}
-                        >
-                          {Math.min(unread, 99)}
-                        </Badge>
-                      ) : null}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              );
-            }
-            // A row holding its items (RAPP-696): it opens the first, and in
-            // the icon rail it is the one way in.
-            const parent = STAFF_NAV_PARENTS[row.parent];
-            const label = t(parent.labelKey);
-            const Icon = parent.icon;
-            const first = row.items[0];
-            return (
-              <SidebarMenuItem key={row.parent} data-testid={`staff-nav-parent-${row.parent}`}>
-                <SidebarMenuButton asChild tooltip={label} className={NAV_BUTTON_CLASS}>
-                  <Link to={first?.to ?? '/dashboard'} activeOptions={{ exact: true }}>
-                    <Icon aria-hidden="true" />
-                    <span>{label}</span>
-                  </Link>
-                </SidebarMenuButton>
+                      {Math.min(unread, 99)}
+                    </Badge>
+                  ) : null}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          );
+        }
+        // A row holding its items (RAPP-696): it opens the first, and in
+        // the icon rail it is the one way in.
+        const parent = STAFF_NAV_PARENTS[row.parent];
+        const label = t(parent.labelKey);
+        const Icon = parent.icon;
+        const first = row.items[0];
+        return (
+          <NavParentRow
+            key={row.parent}
+            id={row.parent}
+            holdsActive={row.items.some((item) => item.to === activePath)}
+          >
+            <SidebarMenuItem data-testid={`staff-nav-parent-${row.parent}`}>
+              <SidebarMenuButton asChild tooltip={label} className={NAV_BUTTON_CLASS}>
+                <Link to={first?.to ?? '/dashboard'} activeOptions={{ exact: true }}>
+                  <Icon aria-hidden="true" />
+                  <span>{label}</span>
+                </Link>
+              </SidebarMenuButton>
+              <CollapsibleTrigger asChild>
+                <SidebarMenuAction
+                  className="transition-transform data-[state=open]:rotate-90 rtl:rotate-180 rtl:data-[state=open]:rotate-90"
+                  data-testid={`staff-nav-fold-${row.parent}`}
+                >
+                  <ChevronRight aria-hidden="true" />
+                  <span className="sr-only">{label}</span>
+                </SidebarMenuAction>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
                 <SidebarMenuSub>
                   {row.items.map((item) => {
                     const isActive = item.to === activePath;
@@ -196,13 +214,98 @@ function StaffNavGroupSection({
                     );
                   })}
                 </SidebarMenuSub>
-              </SidebarMenuItem>
-            );
-          })}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
+              </CollapsibleContent>
+            </SidebarMenuItem>
+          </NavParentRow>
+        );
+      })}
+    </SidebarMenu>
   );
+  if (!hasLabel) {
+    return (
+      <SidebarGroup data-testid={`staff-nav-group-${group.id}`}>
+        <SidebarGroupContent>{menu}</SidebarGroupContent>
+      </SidebarGroup>
+    );
+  }
+  // A labelled group folds under its label (RAPP-702); its items stay in the icon rail.
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="group/fold">
+      <SidebarGroup data-testid={`staff-nav-group-${group.id}`}>
+        <SidebarGroupLabel asChild id={labelId}>
+          <CollapsibleTrigger data-testid={`staff-nav-fold-${group.id}`}>
+            {t(group.labelKey)}
+            <ChevronRight
+              aria-hidden="true"
+              className="ms-auto transition-transform group-data-[state=open]/fold:rotate-90 rtl:rotate-180 rtl:group-data-[state=open]/fold:rotate-90"
+            />
+          </CollapsibleTrigger>
+        </SidebarGroupLabel>
+        <CollapsibleContent>
+          <SidebarGroupContent>{menu}</SidebarGroupContent>
+        </CollapsibleContent>
+      </SidebarGroup>
+    </Collapsible>
+  );
+}
+
+/** A row holding items folds them under it (RAPP-702). */
+function NavParentRow({
+  id,
+  holdsActive,
+  children,
+}: {
+  readonly id: StaffNavParentId;
+  readonly holdsActive: boolean;
+  readonly children: ReactNode;
+}) {
+  const [isOpen, setIsOpen] = useFoldState(`parent:${id}`, holdsActive);
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} asChild>
+      {children}
+    </Collapsible>
+  );
+}
+
+const FOLD_STORAGE_KEY = 'ramassa.staff-nav.folded';
+
+function readFolded(): readonly string[] {
+  try {
+    const raw = window.localStorage.getItem(FOLD_STORAGE_KEY);
+    const parsed: unknown = raw === null ? [] : JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((key) => typeof key === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeFolded(keys: readonly string[]) {
+  try {
+    window.localStorage.setItem(FOLD_STORAGE_KEY, JSON.stringify(keys));
+  } catch {
+    // A blocked store only means the menu opens unfolded next time.
+  }
+}
+
+/**
+ * Whether a menu fold is open (RAPP-702): open by default, remembered per
+ * browser, opened again when it holds the page she is on, and always open in
+ * the icon rail, where the labels are gone and the icons are the only way in.
+ */
+function useFoldState(key: string, holdsActive: boolean): [boolean, (open: boolean) => void] {
+  const { state, isMobile } = useSidebar();
+  const [isFolded, setIsFolded] = useState(false);
+  useEffect(() => setIsFolded(readFolded().includes(key)), [key]);
+  useEffect(() => {
+    if (holdsActive) setIsFolded(false);
+  }, [holdsActive]);
+  const isRail = state === 'collapsed' && !isMobile;
+  const setOpen = (open: boolean) => {
+    setIsFolded(!open);
+    const others = readFolded().filter((each) => each !== key);
+    writeFolded(open ? others : [...others, key]);
+  };
+  return [isRail || !isFolded, setOpen];
 }
 
 type GroupItem = StaffNavGroup['items'][number];
