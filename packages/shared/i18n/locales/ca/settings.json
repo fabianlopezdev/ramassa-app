@@ -662,7 +662,9 @@
     "deleteScreenBody": "Deixarà de sortir a l'app amb les seves preguntes. Les respostes ja donades es mantenen.",
     "deleted": "S'ha eliminat {{screen}}.",
     "deleteFailed": "No s'ha pogut eliminar. Torna-ho a provar.",
-    "phoneNote": "Vista aproximada. L'aspecte a l'app pot variar."
+    "phoneNote": "Vista aproximada. L'aspecte a l'app pot variar.",
+    "previousScreen": "Pantalla anterior",
+    "nextScreen": "Pantalla següent"
   },
   "sortable": {
     "instructions": "Per moure un element, prem espai o retorn, fes servir les fletxes i torna a prémer espai o retorn per deixar-lo. Escapada cancel·la.",

@@ -331,7 +331,7 @@ function AddFormCard({
 }
 
 /** Where a card opens: a screen of this form, or another form it links to. */
-type BoardCardLink =
+export type BoardCardLink =
   | { readonly to: '/onboarding/screens/$screenId'; readonly params: { readonly screenId: string } }
   | {
       readonly to: '/forms/authorization/$step' | '/forms/terms/$step';

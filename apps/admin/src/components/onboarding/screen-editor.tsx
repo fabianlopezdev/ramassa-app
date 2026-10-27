@@ -40,7 +40,7 @@ import { Textarea } from '@/components/ui/textarea';
 import type { OnboardingDesignData } from '@/lib/onboarding-design';
 import { supabase } from '@/lib/supabase';
 import { Link, useNavigate, useRouter } from '@tanstack/react-router';
-import { ChevronLeft, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -71,10 +71,16 @@ import {
   type RamassaScreen,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
-import { allSteps, editableScreenOf, stepFromRouteId, type BoardStep } from './board-steps';
+import {
+  allSteps,
+  editableScreenOf,
+  routeIdOf,
+  stepFromRouteId,
+  type BoardStep,
+} from './board-steps';
 import { ConfirmDialog } from './confirm-dialog';
 import { PhoneFrame, SteppedPhone } from './phone-preview';
-import { stepName } from './screen-board';
+import { stepName, type BoardCardLink } from './screen-board';
 import {
   builtinPhoneQuestion,
   builtinWording,
@@ -84,6 +90,7 @@ import {
   type PhoneContent,
   type PhoneQuestion,
   type ScreenTexts,
+  type Translate,
   type TypedWording,
 } from './screen-content';
 import { ScreenFieldsSection } from './screen-fields';
@@ -109,6 +116,14 @@ export function ScreenEditor({
     <Page data-testid="screen-editor-page">
       <ScreenEditorHeading
         back={{ to: '/onboarding', label: t('onboardingPage.title') }}
+        siblings={
+          step === null
+            ? undefined
+            : {
+                previous: onboardingSibling(steps[number - 2], language, t),
+                next: onboardingSibling(steps[number], language, t),
+              }
+        }
         title={step === null ? t('onboardingBoard.notFound') : stepName(step, language, t)}
         position={
           step === null ? undefined : t('onboardingBoard.stepOf', { number, total: steps.length })
@@ -127,15 +142,71 @@ export function ScreenEditor({
   );
 }
 
+/** An Onboarding screen next to this one, opening its editor (RAPP-709). */
+function onboardingSibling(
+  step: BoardStep | undefined,
+  language: LanguageCode,
+  t: Translate,
+): SiblingScreen | null {
+  if (step === undefined) return null;
+  return {
+    name: stepName(step, language, t),
+    link: { to: '/onboarding/screens/$screenId', params: { screenId: routeIdOf(step.key) } },
+  };
+}
+
 /**
  * Every form's screen editor heading (RAPP-641, shared by every form since
  * RAPP-696): back to its board, the screen's name and its place on it.
  */
+/** A screen next to this one on its board, and where its editor opens (RAPP-709). */
+export interface SiblingScreen {
+  readonly name: string;
+  readonly link: BoardCardLink;
+}
+
+/** Previous or next screen: its editor opens; at either end of the board it is off. */
+function SiblingButton({
+  screen,
+  label,
+  direction,
+}: {
+  readonly screen: SiblingScreen | null;
+  readonly label: string;
+  readonly direction: 'previous' | 'next';
+}) {
+  const icon =
+    direction === 'previous' ? (
+      <ChevronLeft aria-hidden data-icon="inline-start" className="rtl:rotate-180" />
+    ) : (
+      <ChevronRight aria-hidden data-icon="inline-end" className="rtl:rotate-180" />
+    );
+  if (screen === null) {
+    return (
+      <Button type="button" variant="outline" size="sm" disabled>
+        {direction === 'previous' ? icon : null}
+        {label}
+        {direction === 'next' ? icon : null}
+      </Button>
+    );
+  }
+  return (
+    <Button asChild variant="outline" size="sm">
+      <Link {...screen.link} title={screen.name} data-testid={`screen-editor-${direction}`}>
+        {direction === 'previous' ? icon : null}
+        {label}
+        {direction === 'next' ? icon : null}
+      </Link>
+    </Button>
+  );
+}
+
 export function ScreenEditorHeading({
   back,
   title,
   position,
   actions,
+  siblings,
 }: {
   readonly back:
     | {
@@ -151,18 +222,40 @@ export function ScreenEditorHeading({
   readonly title: string;
   readonly position?: string;
   readonly actions?: ReactNode;
+  /** The screens before and after it on the board (RAPP-709); null at either end. */
+  readonly siblings?: {
+    readonly previous: SiblingScreen | null;
+    readonly next: SiblingScreen | null;
+  };
 }) {
+  const { t } = useTranslation('settings');
   return (
     <div className="flex flex-col gap-2">
-      <Button asChild variant="ghost" size="sm" className="-ms-2.5 w-fit text-muted-foreground">
-        <Link
-          {...('params' in back ? { to: back.to, params: back.params } : { to: back.to })}
-          data-testid="screen-editor-back"
-        >
-          <ChevronLeft aria-hidden data-icon="inline-start" className="rtl:rotate-180" />
-          {back.label}
-        </Link>
-      </Button>
+      <div className="flex items-center justify-between gap-2">
+        <Button asChild variant="ghost" size="sm" className="-ms-2.5 w-fit text-muted-foreground">
+          <Link
+            {...('params' in back ? { to: back.to, params: back.params } : { to: back.to })}
+            data-testid="screen-editor-back"
+          >
+            <ChevronLeft aria-hidden data-icon="inline-start" className="rtl:rotate-180" />
+            {back.label}
+          </Link>
+        </Button>
+        {siblings === undefined ? null : (
+          <nav className="flex items-center gap-2" aria-label={title}>
+            <SiblingButton
+              screen={siblings.previous}
+              label={t('onboardingBoard.previousScreen')}
+              direction="previous"
+            />
+            <SiblingButton
+              screen={siblings.next}
+              label={t('onboardingBoard.nextScreen')}
+              direction="next"
+            />
+          </nav>
+        )}
+      </div>
       <PageHeader title={title} description={position} actions={actions} />
     </div>
   );

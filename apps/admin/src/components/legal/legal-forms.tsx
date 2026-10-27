@@ -21,7 +21,11 @@ import {
 } from '@/components/legal/legal-phone-content';
 import { PhoneMiniature } from '@/components/onboarding/phone-preview';
 import { FormBoard, type BoardCard } from '@/components/onboarding/screen-board';
-import { ScreenEditorHeading, WordingSection } from '@/components/onboarding/screen-editor';
+import {
+  ScreenEditorHeading,
+  WordingSection,
+  type SiblingScreen,
+} from '@/components/onboarding/screen-editor';
 import { AppTermsEditor } from '@/components/settings/app-terms-editor';
 import { AuthorizationEditor } from '@/components/settings/authorization-editor';
 import { useReload } from '@/components/settings/onboarding-design-sections';
@@ -251,6 +255,10 @@ export function AuthorizationScreen({
     <Page data-testid="authorization-screen-page">
       <ScreenEditorHeading
         back={{ to: '/forms/authorization', label: t('nav:staff.authorization') }}
+        siblings={{
+          previous: authorizationSibling(order[order.indexOf(step) - 1], t),
+          next: authorizationSibling(order[order.indexOf(step) + 1], t),
+        }}
         title={t(`authorizationEditor.phoneStep.${step}`)}
         position={t('onboardingBoard.stepOf', {
           number: order.indexOf(step) + 1,
@@ -383,6 +391,10 @@ export function TermsScreen({
     <Page data-testid="terms-screen-page">
       <ScreenEditorHeading
         back={{ to: '/forms/terms', label: t('nav:staff.appTerms') }}
+        siblings={{
+          previous: termsSibling(TERMS_PHONE_STEPS[TERMS_PHONE_STEPS.indexOf(step) - 1], t),
+          next: termsSibling(TERMS_PHONE_STEPS[TERMS_PHONE_STEPS.indexOf(step) + 1], t),
+        }}
         title={t(`builtinScreens.screenName.${step}`)}
         position={t('onboardingBoard.stepOf', {
           number: TERMS_PHONE_STEPS.indexOf(step) + 1,
@@ -420,4 +432,30 @@ export function TermsScreen({
       />
     </Page>
   );
+}
+
+/** An authorization screen next to this one, opening its editor (RAPP-709). */
+function authorizationSibling(
+  step: AuthorizationPhoneStep | undefined,
+  t: (key: string) => string,
+): SiblingScreen | null {
+  return step === undefined
+    ? null
+    : {
+        name: t(`authorizationEditor.phoneStep.${step}`),
+        link: { to: '/forms/authorization/$step', params: { step } },
+      };
+}
+
+/** An app terms screen next to this one, opening its editor (RAPP-709). */
+function termsSibling(
+  step: TermsPhoneStep | undefined,
+  t: (key: string) => string,
+): SiblingScreen | null {
+  return step === undefined
+    ? null
+    : {
+        name: t(`builtinScreens.screenName.${step}`),
+        link: { to: '/forms/terms/$step', params: { step } },
+      };
 }

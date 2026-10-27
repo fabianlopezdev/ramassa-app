@@ -662,7 +662,9 @@
     "deleteScreenBody": "It stops showing in the app with its questions. Answers already given are kept.",
     "deleted": "{{screen}} was deleted.",
     "deleteFailed": "It could not be deleted. Try again.",
-    "phoneNote": "Approximate preview. The appearance in the app may vary."
+    "phoneNote": "Approximate preview. The appearance in the app may vary.",
+    "previousScreen": "Previous screen",
+    "nextScreen": "Next screen"
   },
   "sortable": {
     "instructions": "To move it, press space or enter, use the arrow keys, then press space or enter again to drop it. Escape cancels.",

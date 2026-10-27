@@ -14,6 +14,7 @@ import {
   DeleteScreenButton,
   ScreenEditorHeading,
   StaffScreenEditor,
+  type SiblingScreen,
 } from '@/components/onboarding/screen-editor';
 import { ScreenFieldsSection } from '@/components/onboarding/screen-fields';
 import type { CustomFormData } from '@/lib/custom-forms';
@@ -53,6 +54,14 @@ export function CustomFormScreenEditor({
                 to: '/forms/custom/$formId',
                 params: { formId: form.id },
                 label: textIn(form.name, language),
+              }
+        }
+        siblings={
+          form === undefined || screen === undefined
+            ? undefined
+            : {
+                previous: customSibling(form.id, form.screens[index - 1], language),
+                next: customSibling(form.id, form.screens[index + 1], language),
               }
         }
         title={screen === undefined ? t('customForms.notFound') : textIn(screen.title, language)}
@@ -149,4 +158,20 @@ function DeleteFormScreen({
       }}
     />
   );
+}
+
+/** A screen next to this one on the form's board, opening its editor (RAPP-709). */
+function customSibling(
+  formId: string,
+  screen: CustomFormScreen | undefined,
+  language: LanguageCode,
+): SiblingScreen | null {
+  if (screen === undefined) return null;
+  return {
+    name: textIn(screen.title, language),
+    link: {
+      to: '/forms/custom/$formId/screens/$screenId',
+      params: { formId, screenId: screen.id },
+    },
+  };
 }
