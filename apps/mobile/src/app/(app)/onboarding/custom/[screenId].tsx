@@ -29,12 +29,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { useLanguage } from '@ramassa/shared/i18n';
+import { teamTextIn } from '@ramassa/shared/i18n/localized-content';
 import { customStepKey } from '@ramassa/shared/intake';
-import {
-  isCustomQuestionVisible,
-  textIn,
-  updateCustomAnswer,
-} from '@ramassa/shared/intake-builder';
+import { isCustomQuestionVisible, updateCustomAnswer } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 
 export default function CustomStepScreen() {
@@ -74,14 +71,15 @@ export default function CustomStepScreen() {
     });
   }
 
-  const intro = textIn(screen.intro, language);
+  // One rule with the admin (RAPP-710): a language never written follows the Catalan.
+  const intro = teamTextIn(screen.intro, language, true);
 
   return (
     <WizardFrame
       screenId={customStepKey(screenId)}
       stepNumber={step.position.step}
       totalSteps={step.position.total}
-      title={textIn(screen.title, language)}
+      title={teamTextIn(screen.title, language, false)}
       intro={intro === '' ? undefined : intro}
       scrollEnabled={!isDrawing}
       continueLabel={t('continueAction')}

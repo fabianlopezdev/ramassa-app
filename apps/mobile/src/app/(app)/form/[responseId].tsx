@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, View } from 'react-native';
 import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import { useLanguage } from '@ramassa/shared/i18n';
+import { teamTextIn } from '@ramassa/shared/i18n/localized-content';
 import {
   customFormAskingScreens,
   customFormById,
@@ -41,7 +42,6 @@ import {
   customFormScreenQuestions,
   formSignaturesPayload,
   isCustomQuestionVisible,
-  textIn,
   updateCustomAnswer,
   type CustomForm,
   type CustomFormScreen,
@@ -231,7 +231,8 @@ function FormStep({
   const source = { catalog, signatures: draft.signatures, consents: draft.consents };
   const signatures = useSignatureBlocks(screen.id, setIsDrawing, source);
   const consents = useScreenConsents(screen.id, source);
-  const intro = textIn(screen.intro, language);
+  // One rule with the admin (RAPP-710): a language never written follows the Catalan.
+  const intro = teamTextIn(screen.intro, language, true);
 
   const current = (checked: CustomAnswerDraft): FormDraft => ({
     answers: { ...draft.answers, ...checked },
@@ -243,7 +244,7 @@ function FormStep({
     <WizardFrame
       stepNumber={number}
       totalSteps={total}
-      title={textIn(screen.title, language)}
+      title={teamTextIn(screen.title, language, false)}
       intro={intro === '' ? undefined : intro}
       scrollEnabled={!isDrawing}
       continueLabel={isLast ? t('customFormSend') : t('continueAction')}

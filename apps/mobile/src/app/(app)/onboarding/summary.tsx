@@ -35,6 +35,7 @@ import { Fragment, useCallback, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LANGUAGE_NATIVE_NAMES } from '@ramassa/shared/i18n';
 import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
+import { teamTextIn } from '@ramassa/shared/i18n/localized-content';
 import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
 import {
   customStepId,
@@ -170,7 +171,7 @@ function CustomSection({
   readonly language: LanguageCode;
 }) {
   const router = useRouter();
-  const title = textIn(screen.title, language);
+  const title = teamTextIn(screen.title, language, false);
   return (
     <ReviewSection
       title={title}
@@ -552,7 +553,7 @@ export default function SummaryStepScreen() {
     const customId = customStepId(step);
     if (customId !== null) {
       const screen = customScreens.find((candidate) => candidate.id === customId);
-      return screen === undefined ? t('summaryTitle') : textIn(screen.title, locale);
+      return screen === undefined ? t('summaryTitle') : teamTextIn(screen.title, locale, false);
     }
     return builtinSectionTitle(step as WizardQuestionScreen);
   };

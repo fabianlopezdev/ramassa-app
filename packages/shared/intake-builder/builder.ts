@@ -124,6 +124,19 @@ export function cleanText(text: BuilderText): BuilderText {
   ) as BuilderText;
 }
 
+/**
+ * A screen text as stored: trimmed, and a cleared optional text keeps its
+ * blank languages, so her phone shows none there (RAPP-710).
+ */
+function savedScreenText(text: BuilderText, isOptional: boolean): BuilderText {
+  if (!isOptional) return cleanText(text);
+  return Object.fromEntries(
+    Object.entries(text).flatMap(([language, value]) =>
+      typeof value === 'string' ? [[language, value.trim()]] : [],
+    ),
+  ) as BuilderText;
+}
+
 export function textIn(text: BuilderText | null | undefined, language: LanguageCode): string {
   if (text == null) return '';
   return resolveLocalizedText(text, language)?.text ?? '';
@@ -707,7 +720,7 @@ export interface ScreenDraft {
 }
 
 export async function saveIntakeScreen(client: Client, draft: ScreenDraft): Promise<string> {
-  const intro = draft.intro === null ? null : cleanText(draft.intro);
+  const intro = draft.intro === null ? null : savedScreenText(draft.intro, true);
   const { data, error } = await client.rpc('save_intake_screen', {
     p_id: draft.id as string,
     p_title: cleanText(draft.title) as Json,
@@ -1009,20 +1022,11 @@ export async function saveBuiltinScreen(
     readonly isHidden: boolean;
   },
 ): Promise<void> {
-  // A cleared optional text keeps its blank languages: her phone shows none (RAPP-710).
   const texts = Object.fromEntries(
     screenTextFields(settings.screen).flatMap((field) => {
       const text = settings.texts[field];
       const cleaned =
-        text === undefined
-          ? {}
-          : isOptionalScreenTextField(field)
-            ? Object.fromEntries(
-                Object.entries(text).flatMap(([language, value]) =>
-                  typeof value === 'string' ? [[language, value.trim()]] : [],
-                ),
-              )
-            : cleanText(text);
+        text === undefined ? {} : savedScreenText(text, isOptionalScreenTextField(field));
       return Object.keys(cleaned).length > 0 ? [[field, cleaned]] : [];
     }),
   );

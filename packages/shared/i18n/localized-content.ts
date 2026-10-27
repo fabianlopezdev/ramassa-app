@@ -47,25 +47,55 @@ export function resolveLocalizedText(
  *   - null when staff never wrote that language, so her phone shows the app's
  *     bundled text in her language.
  *
- * A required text is never blank: a blank one reads as never written. Her phone
- * and the admin preview both read screen texts through this one rule.
+ * A required text is never blank: a blank one reads as never written. With
+ * `follows`, a language never written reads that language by the same rule: a
+ * screen the team made follows its Catalan. Her phone and the admin preview
+ * both read screen texts through this one rule.
  */
 export function staffTextIn(
   text: LocalizedContent | null | undefined,
   language: LanguageCode,
   isOptional: boolean,
+  follows?: LanguageCode,
 ): string | null {
   const value = text?.[language];
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  if (trimmed !== '') return trimmed;
-  return isOptional ? '' : null;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed !== '') return trimmed;
+    if (isOptional) return '';
+  }
+  return follows === undefined || follows === language
+    ? null
+    : staffTextIn(text, follows, isOptional);
+}
+
+/**
+ * A text of a screen the team made, in one language (RAPP-710): by the rule
+ * of `staffTextIn`, a language never written follows the Catalan, and '' is
+ * no text.
+ */
+export function teamTextIn(
+  text: LocalizedContent | null | undefined,
+  language: LanguageCode,
+  isOptional: boolean,
+): string {
+  return staffTextIn(text, language, isOptional, DEFAULT_LANGUAGE) ?? '';
+}
+
+/**
+ * The text each language of a team screen follows when never written: the
+ * Catalan as shown, and nothing for the Catalan itself. `staffTextToSave`
+ * leaves a language equal to it unwritten.
+ */
+export function followedTeamText(catalan: string): (language: LanguageCode) => string {
+  return (language) => (language === DEFAULT_LANGUAGE ? '' : catalan);
 }
 
 /**
  * A screen text as staff save it (RAPP-710), from each language as the editor
- * shows it. A language that still reads as the app's bundled text stays
- * unwritten, so it keeps following the app. A blank optional text is kept as
+ * shows it. A language that still reads as the text it follows (the app's
+ * bundled text, or a team screen's Catalan) stays unwritten, so it keeps
+ * following it. A blank optional text is kept as
  * '' (no text on her phone). Undefined when nothing is left to save.
  */
 export function staffTextToSave(
