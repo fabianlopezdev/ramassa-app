@@ -8,6 +8,7 @@ import { PushPermissionRationale } from '@/components/push-permission-rationale'
 import { areaHome, awaitsSecondFactor, teamScreens } from '@/lib/account-area';
 import { useAuthorizationStatus } from '@/lib/authorization';
 import { useMyCustomForms } from '@/lib/custom-forms';
+import { useFinishOnboardingChain, useMyOnboardingChain } from '@/lib/onboarding-chain';
 import { OnboardingEntranceProvider } from '@/lib/onboarding-entrance';
 import { useOnboardingReview } from '@/lib/onboarding-review';
 import { canPromptForPush } from '@/lib/push-prompt-eligibility';
@@ -16,10 +17,12 @@ import { useAccountAccess } from '@/lib/use-account-access';
 import { usePushRegistration } from '@/lib/use-push-registration';
 import { Redirect, usePathname, type Href } from 'expo-router';
 import { Stack } from 'expo-router/stack';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, useWindowDimensions, View } from 'react-native';
 import { assuranceLevelOf, useAuth } from '@ramassa/shared/auth';
 import { needsAuthorization } from '@ramassa/shared/authorization';
+import { nextChainedForm } from '@ramassa/shared/intake-builder';
 import { tokens } from '@ramassa/shared/tokens';
 
 // Zone boundary (RAPP-12): a crash inside the signed-in area shows the
@@ -65,24 +68,61 @@ function AppNavigator() {
   // A new app terms version (RAPP-613) comes first: she accepts it on the terms
   // screen alone, then the season authorization if it is due.
   const mustAcceptTerms = area === 'player' && needsTermsAcceptance;
+  // A form the team created that keeps her from the app (RAPP-700): required to
+  // use it, or required since its date. It opens after the gates below. A
+  // failed lookup lets her in.
+  const forms = useMyCustomForms(area === 'player');
+  // The forms chained after Onboarding (RAPP-703): while the chain is ahead of
+  // a new player, its next form that applies to her opens first, in the order
+  // the team set. The gates stay the same; only their order changes. Older
+  // builds never read the chain.
+  const chain = useMyOnboardingChain(area === 'player');
+  const finishChain = useFinishOnboardingChain();
+  const isChainAhead =
+    area === 'player' &&
+    !mustAcceptTerms &&
+    (chain.data?.length ?? 0) > 0 &&
+    !authorization.isPending &&
+    !authorization.isError &&
+    !forms.isPending &&
+    !forms.isError;
+  const chainStep = isChainAhead
+    ? nextChainedForm(chain.data ?? [], {
+        mustSignAuthorization: needsAuthorization(authorization.data ?? null),
+        pending: forms.data ?? [],
+      })
+    : null;
+  const isChainDone = isChainAhead && chainStep === null;
+  const hasFinishedChain = useRef(false);
+  useEffect(() => {
+    if (!isChainDone || hasFinishedChain.current) return;
+    hasFinishedChain.current = true;
+    void finishChain();
+  }, [finishChain, isChainDone]);
   const mustSign =
-    area === 'player' && !mustAcceptTerms && needsAuthorization(authorization.data ?? null);
+    area === 'player' &&
+    !mustAcceptTerms &&
+    (chainStep === null
+      ? needsAuthorization(authorization.data ?? null)
+      : chainStep.kind === 'authorization');
+  const chainFormPath = chainStep?.kind === 'custom' ? `/form/${chainStep.responseId}` : null;
   // Screens saved as a Nova versió since she joined (RAPP-697): she goes
   // through them with the Onboarding wizard before using the app. A failed
   // lookup lets her in.
   const review = useOnboardingReview(area === 'player');
   const mustReview =
-    area === 'player' && !mustAcceptTerms && !mustSign && (review.data?.length ?? 0) > 0;
-  // A form the team created that keeps her from the app (RAPP-700): required to
-  // use it, or required since its date. It opens after the gates above. A
-  // failed lookup lets her in.
-  const forms = useMyCustomForms(area === 'player');
+    area === 'player' &&
+    !mustAcceptTerms &&
+    !mustSign &&
+    chainFormPath === null &&
+    (review.data?.length ?? 0) > 0;
   const blockingForm =
     area === 'player' && !mustAcceptTerms && !mustSign && !mustReview
       ? (forms.data?.find((form) => form.isBlocking) ?? null)
       : null;
-  const mustAnswerForm = blockingForm !== null;
-  const blockingFormPath = blockingForm === null ? null : `/form/${blockingForm.responseId}`;
+  const blockingFormPath =
+    chainFormPath ?? (blockingForm === null ? null : `/form/${blockingForm.responseId}`);
+  const mustAnswerForm = blockingFormPath !== null;
   // Signing mode on a staff tablet (RAPP-305): while a player signs, every
   // other screen is off, so no link, notification or gesture opens one.
   const { session: signingSession } = useSigningSession();
@@ -134,7 +174,10 @@ function AppNavigator() {
   if (isSigning && pathname !== '/signing-mode') {
     return <Redirect href={'/signing-mode' as Href} />;
   }
-  if (area === 'player' && (authorization.isPending || review.isPending || forms.isPending)) {
+  if (
+    area === 'player' &&
+    (authorization.isPending || review.isPending || forms.isPending || chain.isPending)
+  ) {
     return (
       <View
         className="flex-1 items-center justify-center bg-neutral-50"

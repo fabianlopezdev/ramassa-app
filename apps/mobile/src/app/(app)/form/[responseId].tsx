@@ -9,6 +9,9 @@
  * shares. Every question shows her saved answer to confirm or change. The
  * last screen sends everything through the Onboarding writers; until then her
  * answers stay on this screen.
+ *
+ * Right after her Onboarding it can open as a form chained to it (RAPP-703):
+ * an optional one she puts off with Back leaves the walk and stays on Home.
  */
 
 import {
@@ -22,6 +25,7 @@ import { WizardValidationSummary } from '@/components/onboarding/wizard-validati
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
 import { useAnswerCustomForm, useCustomFormSource, useMyCustomForms } from '@/lib/custom-forms';
 import { playHaptic } from '@/lib/haptics/haptics';
+import { useMyOnboardingChain, usePassChainedForm } from '@/lib/onboarding-chain';
 import { Redirect, useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -29,7 +33,9 @@ import { ActivityIndicator, View } from 'react-native';
 import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
+  customFormAskingScreens,
   customFormById,
+  customFormRef,
   customFormScreenBlocks,
   customFormScreenConsents,
   customFormScreenQuestions,
@@ -57,6 +63,8 @@ export default function CustomFormRoute() {
   const { responseId = '' } = useLocalSearchParams<{ responseId: string }>();
   const pending = useMyCustomForms(true);
   const source = useCustomFormSource(true);
+  const chain = useMyOnboardingChain(true);
+  const passChainedForm = usePassChainedForm();
 
   if (pending.isPending || source.isPending) {
     return (
@@ -77,6 +85,8 @@ export default function CustomFormRoute() {
   if (asked === undefined || form === undefined || source.data === undefined) {
     return <Redirect href={'/' as Href} />;
   }
+  const ref = customFormRef(form.id);
+  const isChained = chain.data?.includes(ref) === true;
   return (
     <FormWalk
       key={responseId}
@@ -85,17 +95,9 @@ export default function CustomFormRoute() {
       catalog={source.data.catalog}
       saved={source.data.answers}
       isBlocking={asked.isBlocking}
+      // An optional chained form she puts off leaves the walk (RAPP-703).
+      onPutOff={isChained && !asked.isBlocking ? () => passChainedForm(ref) : null}
     />
-  );
-}
-
-/** The screens that ask her something, in the form's order. */
-function askingScreens(catalog: IntakeCatalog, form: CustomForm): readonly CustomFormScreen[] {
-  return form.screens.filter(
-    (screen) =>
-      customFormScreenQuestions(catalog, screen.id).length > 0 ||
-      customFormScreenBlocks(catalog, screen.id).length > 0 ||
-      customFormScreenConsents(catalog, screen.id).length > 0,
   );
 }
 
@@ -105,18 +107,21 @@ function FormWalk({
   catalog,
   saved,
   isBlocking,
+  onPutOff,
 }: {
   readonly responseId: string;
   readonly form: CustomForm;
   readonly catalog: IntakeCatalog;
   readonly saved: CustomAnswerDraft;
   readonly isBlocking: boolean;
+  /** Back on the first screen of a chained form: the walk goes on without it. */
+  readonly onPutOff: (() => void) | null;
 }) {
   const { t } = useTranslation('onboarding');
   const { language } = useLanguage();
   const router = useRouter();
   const answer = useAnswerCustomForm();
-  const screens = askingScreens(catalog, form);
+  const screens = customFormAskingScreens(catalog, form);
   const [index, setIndex] = useState(0);
   const [draft, setDraft] = useState<FormDraft>({ answers: saved, signatures: {}, consents: {} });
   const [isSending, setIsSending] = useState(false);
@@ -173,9 +178,14 @@ function FormWalk({
               setDraft(next);
               setIndex(index - 1);
             }
-          : isBlocking
-            ? undefined
-            : () => router.back()
+          : onPutOff !== null
+            ? () => {
+                onPutOff();
+                router.replace('/' as Href);
+              }
+            : isBlocking
+              ? undefined
+              : () => router.back()
       }
       onContinue={(next) => {
         setDraft(next);
