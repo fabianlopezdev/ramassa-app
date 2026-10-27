@@ -34,10 +34,11 @@ import type { LayoutDirection } from '@ramassa/shared/i18n';
 /**
  * A menu row on the navy sidebar (RAPP-631): white text, a lighter row on
  * hover, and for the current page a yellow marker at the start edge with a
- * yellow icon. Yellow only ever sits on the navy, never on white.
+ * yellow icon. Yellow only ever sits on the navy, never on white. A long name
+ * wraps to a second line, with no ellipsis (RAPP-702).
  */
 const NAV_BUTTON_CLASS =
-  'relative h-9 before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-full before:bg-sidebar-primary before:opacity-0 data-active:font-semibold data-active:before:opacity-100 data-active:[&>svg]:text-sidebar-primary group-data-[collapsible=icon]:before:inset-y-1.5';
+  'relative h-auto min-h-9 leading-snug [&>span:last-child]:text-clip before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-full before:bg-sidebar-primary before:opacity-0 data-active:font-semibold data-active:before:opacity-100 data-active:[&>svg]:text-sidebar-primary group-data-[collapsible=icon]:before:inset-y-1.5';
 
 export function sidebarSideForDirection(direction: LayoutDirection): 'left' | 'right' {
   return direction === 'rtl' ? 'right' : 'left';
