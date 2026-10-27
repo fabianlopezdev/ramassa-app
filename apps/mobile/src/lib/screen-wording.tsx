@@ -4,8 +4,9 @@
  * The onboarding layout provides the catalog it loaded with her language, and
  * every wizard frame reads its own screen's title, intro, help line and button
  * labels from it. Staff wording shows only in the language staff wrote it in;
- * anything else is the app's own text in her language, so a missing or empty
- * override never blanks a screen. Outside the wizard (profile edit, the terms
+ * anything else is the app's own text in her language. An intro or help line
+ * staff cleared shows none; a required text is never blank (RAPP-710, the
+ * shared `staffTextIn`). Outside the wizard (profile edit, the terms
  * update) there is no provider, and every frame keeps the app's text.
  *
  * Kept apart from the wizard intake context on purpose: the frame is shared by
@@ -37,7 +38,7 @@ export function ScreenWordingProvider({
 }
 
 export interface ScreenWording {
-  /** Staff wording for the field in her language, or the app's own text. */
+  /** Staff wording for the field in her language ('' when cleared), or the app's own text. */
   readonly text: <Bundled extends string | undefined>(
     field: ScreenTextField,
     bundled: Bundled,

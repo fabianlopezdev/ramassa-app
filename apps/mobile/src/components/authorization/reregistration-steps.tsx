@@ -124,6 +124,7 @@ export function ReregistrationSteps({
       t(AUTHORIZATION_BUNDLED_TEXT_KEYS.texts[field], { season: seasonName })
     ).replace(/\{\{\s*season\s*\}\}/gu, seasonName);
   const [phase, setPhase] = useState<'review' | 'season'>('review');
+  const intro = words(phase === 'review' ? 'reregistration_intro' : 'reregistration_season_intro');
   const [answers, setAnswers] = useState<SeasonAnswers | null>(null);
   const [hasFailed, setHasFailed] = useState(false);
   const [customDraft, setCustomDraft] = useState<CustomAnswerDraft>({});
@@ -226,11 +227,10 @@ export function ReregistrationSteps({
             >
               {words('reregistration_title')}
             </Text>
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-              {phase === 'review'
-                ? words('reregistration_intro')
-                : words('reregistration_season_intro')}
-            </Text>
+            {/* Staff may clear the intro (RAPP-710): then there is none. */}
+            {intro === '' ? null : (
+              <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>{intro}</Text>
+            )}
           </View>
 
           {phase === 'review' ? (

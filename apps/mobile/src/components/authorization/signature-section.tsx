@@ -80,7 +80,8 @@ export function SignatureSection({
         checked={unableToDraw}
         onToggle={() => onUnableToDrawChange(!unableToDraw)}
       />
-      {unableToDraw ? (
+      {/* Staff may clear the hint (RAPP-710): then there is none. */}
+      {unableToDraw && texts.cannotDrawHint !== '' ? (
         <Text className={`text-start text-form text-neutral-700 ${fontClass}`}>
           {texts.cannotDrawHint ?? t('authorizationCannotDrawHint')}
         </Text>
