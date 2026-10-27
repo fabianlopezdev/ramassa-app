@@ -508,7 +508,6 @@
     "once": "Once",
     "screens_one": "{{count}} screen",
     "screens_other": "{{count}} screens",
-    "open": "Open {{form}}",
     "remove": "Remove {{form}} from after onboarding",
     "addForm": "Add a form",
     "nothingToAdd": "There are no forms to add.",

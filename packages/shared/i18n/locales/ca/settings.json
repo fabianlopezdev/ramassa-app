@@ -508,7 +508,6 @@
     "once": "Una sola vegada",
     "screens_one": "{{count}} pantalla",
     "screens_other": "{{count}} pantalles",
-    "open": "Obre {{form}}",
     "remove": "Treu {{form}} de després de l'onboarding",
     "addForm": "Afegeix un formulari",
     "nothingToAdd": "No hi ha cap formulari per afegir.",
