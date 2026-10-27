@@ -630,7 +630,6 @@
     "onTabletWith": "Signada a la tauleta, amb {{name}}",
     "onTablet": "Signada a la tauleta"
   },
-  "reviewPendingBadge": "Pendent de revisar la benvinguda",
   "consents": {
     "title": "Consentiments",
     "none": "No hi ha cap consentiment.",

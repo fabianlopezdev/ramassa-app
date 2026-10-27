@@ -630,7 +630,6 @@
     "onTabletWith": "Signed on the tablet, with {{name}}",
     "onTablet": "Signed on the tablet"
   },
-  "reviewPendingBadge": "Welcome review pending",
   "consents": {
     "title": "Consents",
     "none": "There are no consents.",

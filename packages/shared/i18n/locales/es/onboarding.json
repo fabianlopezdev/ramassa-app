@@ -233,8 +233,6 @@
   "summarySigned": "Firmado",
   "signingBlocksAction": "Firma",
   "summarySignaturesTitle": "Firmas",
-  "reviewIntro": "Hemos cambiado algunas preguntas. Revisa tus respuestas antes de continuar.",
-  "reviewSaveFailed": "No se han podido guardar las respuestas. Vuelve a intentarlo.",
   "customFormSend": "Enviar",
   "customFormFailed": "No se ha podido enviar. Vuelve a intentarlo."
 }

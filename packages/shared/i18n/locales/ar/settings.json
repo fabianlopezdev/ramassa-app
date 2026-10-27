@@ -273,8 +273,7 @@
     "newVersion": "نسخة جديدة",
     "newVersionBody": "سيتعين على الجميع الإجابة عليه من جديد.",
     "save": "حفظ",
-    "newVersionCount": "اللاعبات اللواتي سيرينه من جديد: {{count}}",
-    "newVersionSaved": "تم الحفظ. من أنهين التسجيل سيرينه من جديد."
+    "newVersionCount": "اللاعبات اللواتي سيرينه من جديد: {{count}}"
   },
   "customForms": {
     "title": "نماذج الفريق",

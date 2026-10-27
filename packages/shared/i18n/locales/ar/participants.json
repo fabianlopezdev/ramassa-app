@@ -258,7 +258,6 @@
     "olderSeasons_many": "{{count}} موسمًا آخر",
     "olderSeasons_other": "{{count}} موسم آخر"
   },
-  "reviewPendingBadge": "بانتظار مراجعة الترحيب",
   "herForms": {
     "title": "النماذج",
     "status": {

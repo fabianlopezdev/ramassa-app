@@ -233,8 +233,6 @@
   "summarySigned": "Signat",
   "signingBlocksAction": "Signa",
   "summarySignaturesTitle": "Signatures",
-  "reviewIntro": "Hem canviat algunes preguntes. Revisa les teves respostes abans de continuar.",
-  "reviewSaveFailed": "No s'han pogut desar les respostes. Torna-ho a provar.",
   "customFormSend": "Envia",
   "customFormFailed": "No s'ha pogut enviar. Torna-ho a provar."
 }
