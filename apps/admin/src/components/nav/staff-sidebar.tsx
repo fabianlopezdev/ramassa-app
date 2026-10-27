@@ -10,12 +10,9 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
@@ -28,8 +25,8 @@ import {
   type StaffNavParentId,
 } from '@/lib/nav-items';
 import { Link, useLocation } from '@tanstack/react-router';
-import { ChevronRight } from 'lucide-react';
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { ChevronRight, type LucideIcon } from 'lucide-react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
 import type { LayoutDirection } from '@ramassa/shared/i18n';
@@ -120,160 +117,165 @@ function StaffNavGroupSection({
   readonly activePath: string | null;
   readonly unread: number;
 }) {
-  const { t } = useTranslation(['nav', 'messaging']);
-  const labelId = useId();
-  const hasLabel = group.labelKey !== null;
-  const holdsActive = group.items.some((item) => item.to === activePath);
-  const [isOpen, setIsOpen] = useFoldState(`group:${group.id}`, holdsActive);
-  const menu = (
-    <SidebarMenu aria-labelledby={hasLabel ? labelId : undefined}>
-      {rowsOf(group.items).map((row) => {
-        if (row.kind === 'item') {
-          const { item } = row;
-          const label = t(item.labelKey);
-          const isActive = item.to === activePath;
-          const Icon = item.icon;
-          return (
-            <SidebarMenuItem key={item.to}>
-              <SidebarMenuButton
-                asChild
-                isActive={isActive}
-                tooltip={label}
-                className={NAV_BUTTON_CLASS}
-              >
-                {/* The router would mark every link the path sits in (Participants
-                      under /participants/referrals); exact matching leaves the
-                      marking to the one item chosen above. */}
-                <Link
-                  to={item.to}
-                  activeOptions={{ exact: true, includeSearch: false }}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  <Icon aria-hidden="true" />
-                  <span>{label}</span>
-                  {item.to === '/messages' && unread > 0 ? (
-                    <Badge
-                      variant="secondary"
-                      className="ms-auto"
-                      data-testid="staff-message-badge"
-                      aria-label={t('messaging:unread', { count: unread })}
-                    >
-                      {Math.min(unread, 99)}
-                    </Badge>
-                  ) : null}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          );
-        }
-        // A row holding its items (RAPP-696): it opens the first, and in
-        // the icon rail it is the one way in.
-        const parent = STAFF_NAV_PARENTS[row.parent];
-        const label = t(parent.labelKey);
-        const Icon = parent.icon;
-        const first = row.items[0];
-        return (
-          <NavParentRow
-            key={row.parent}
-            id={row.parent}
-            holdsActive={row.items.some((item) => item.to === activePath)}
-          >
-            <SidebarMenuItem data-testid={`staff-nav-parent-${row.parent}`}>
-              <SidebarMenuButton asChild tooltip={label} className={NAV_BUTTON_CLASS}>
-                <Link to={first?.to ?? '/dashboard'} activeOptions={{ exact: true }}>
-                  <Icon aria-hidden="true" />
-                  <span>{label}</span>
-                </Link>
-              </SidebarMenuButton>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuAction
-                  className="transition-transform data-[state=open]:rotate-90 rtl:rotate-180 rtl:data-[state=open]:rotate-90"
-                  data-testid={`staff-nav-fold-${row.parent}`}
-                >
-                  <ChevronRight aria-hidden="true" />
-                  <span className="sr-only">{label}</span>
-                </SidebarMenuAction>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarMenuSub>
-                  {row.items.map((item) => {
-                    const isActive = item.to === activePath;
-                    return (
-                      <SidebarMenuSubItem key={item.to}>
-                        <SidebarMenuSubButton asChild isActive={isActive}>
-                          <Link
-                            to={item.to}
-                            activeOptions={{ exact: true, includeSearch: false }}
-                            aria-current={isActive ? 'page' : undefined}
-                          >
-                            <span>{t(item.labelKey)}</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    );
-                  })}
-                </SidebarMenuSub>
-              </CollapsibleContent>
-            </SidebarMenuItem>
-          </NavParentRow>
-        );
-      })}
-    </SidebarMenu>
-  );
-  if (!hasLabel) {
+  const { t } = useTranslation('nav');
+  const { state, isMobile } = useSidebar();
+  const isRail = state === 'collapsed' && !isMobile;
+  const rows = rowsOf(group.items);
+  // In the icon rail every page is one flat icon: folds and indents need labels.
+  if (group.labelKey === null || isRail) {
     return (
       <SidebarGroup data-testid={`staff-nav-group-${group.id}`}>
-        <SidebarGroupContent>{menu}</SidebarGroupContent>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {group.items.map((item) => (
+              <NavItemRow key={item.to} item={item} activePath={activePath} unread={unread} />
+            ))}
+          </SidebarMenu>
+        </SidebarGroupContent>
       </SidebarGroup>
     );
   }
-  // A labelled group folds under its own row (RAPP-702), drawn like a menu
-  // item with its icon; the icon rail hides that row and keeps the items.
-  const GroupIcon = group.icon;
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="group/fold">
-      <SidebarGroup data-testid={`staff-nav-group-${group.id}`}>
-        <SidebarMenu className="group-data-[collapsible=icon]:hidden">
-          <SidebarMenuItem>
-            <CollapsibleTrigger asChild>
-              <SidebarMenuButton
-                id={labelId}
-                className={NAV_BUTTON_CLASS}
-                data-testid={`staff-nav-fold-${group.id}`}
-              >
-                {GroupIcon === null ? null : <GroupIcon aria-hidden="true" />}
-                <span>{t(group.labelKey)}</span>
-                <ChevronRight
-                  aria-hidden="true"
-                  className="ms-auto transition-transform group-data-[state=open]/fold:rotate-90 rtl:rotate-180 rtl:group-data-[state=open]/fold:rotate-90"
-                />
-              </SidebarMenuButton>
-            </CollapsibleTrigger>
-          </SidebarMenuItem>
+    <SidebarGroup data-testid={`staff-nav-group-${group.id}`}>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          <NavFold
+            foldKey={`group:${group.id}`}
+            testId={group.id}
+            label={t(group.labelKey)}
+            icon={group.icon}
+            holdsActive={group.items.some((item) => item.to === activePath)}
+          >
+            <NavRows rows={rows} activePath={activePath} unread={unread} />
+          </NavFold>
         </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
+}
+
+/** A group's rows under its fold: pages, and rows holding pages that fold again. */
+function NavRows({
+  rows,
+  activePath,
+  unread,
+}: {
+  readonly rows: readonly MenuRow[];
+  readonly activePath: string | null;
+  readonly unread: number;
+}) {
+  const { t } = useTranslation('nav');
+  return (
+    <>
+      {rows.map((row) => {
+        if (row.kind === 'item') {
+          return (
+            <NavItemRow key={row.item.to} item={row.item} activePath={activePath} unread={unread} />
+          );
+        }
+        const parent = STAFF_NAV_PARENTS[row.parent];
+        return (
+          <NavFold
+            key={row.parent}
+            foldKey={`parent:${row.parent}`}
+            testId={row.parent}
+            label={t(parent.labelKey)}
+            icon={parent.icon}
+            holdsActive={row.items.some((item) => item.to === activePath)}
+          >
+            {row.items.map((item) => (
+              <NavItemRow key={item.to} item={item} activePath={activePath} unread={unread} />
+            ))}
+          </NavFold>
+        );
+      })}
+    </>
+  );
+}
+
+/**
+ * One fold of the menu (RAPP-702), shared by the groups and by a row that
+ * holds pages: a row drawn like any page, with its icon and a chevron, that
+ * opens and closes on a click anywhere on it; what it holds sits indented
+ * under it.
+ */
+function NavFold({
+  foldKey,
+  testId,
+  label,
+  icon: Icon,
+  holdsActive,
+  children,
+}: {
+  readonly foldKey: string;
+  readonly testId: string;
+  readonly label: string;
+  readonly icon: LucideIcon | null;
+  readonly holdsActive: boolean;
+  readonly children: ReactNode;
+}) {
+  const [isOpen, setIsOpen] = useFoldState(foldKey, holdsActive);
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} asChild className="group/fold">
+      <SidebarMenuItem data-testid={`staff-nav-fold-${testId}`}>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton tooltip={label} className={NAV_BUTTON_CLASS}>
+            {Icon === null ? null : <Icon aria-hidden="true" />}
+            <span>{label}</span>
+            <ChevronRight
+              aria-hidden="true"
+              className="ms-auto transition-transform group-data-[state=open]/fold:rotate-90 rtl:rotate-180 rtl:group-data-[state=open]/fold:rotate-90"
+            />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
         <CollapsibleContent>
-          <SidebarGroupContent>{menu}</SidebarGroupContent>
+          <SidebarMenuSub className="me-0 pe-0">{children}</SidebarMenuSub>
         </CollapsibleContent>
-      </SidebarGroup>
+      </SidebarMenuItem>
     </Collapsible>
   );
 }
 
-/** A row holding items folds them under it (RAPP-702). */
-function NavParentRow({
-  id,
-  holdsActive,
-  children,
+/** One page of the menu, the same row at every depth. */
+function NavItemRow({
+  item,
+  activePath,
+  unread,
 }: {
-  readonly id: StaffNavParentId;
-  readonly holdsActive: boolean;
-  readonly children: ReactNode;
+  readonly item: GroupItem;
+  readonly activePath: string | null;
+  readonly unread: number;
 }) {
-  const [isOpen, setIsOpen] = useFoldState(`parent:${id}`, holdsActive);
+  const { t } = useTranslation(['nav', 'messaging']);
+  const label = t(item.labelKey);
+  const isActive = item.to === activePath;
+  const Icon = item.icon;
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} asChild>
-      {children}
-    </Collapsible>
+    <SidebarMenuItem>
+      <SidebarMenuButton asChild isActive={isActive} tooltip={label} className={NAV_BUTTON_CLASS}>
+        {/* The router would mark every link the path sits in (Participants
+          under /participants/referrals); exact matching leaves the marking
+          to the one item chosen above. */}
+        <Link
+          to={item.to}
+          activeOptions={{ exact: true, includeSearch: false }}
+          aria-current={isActive ? 'page' : undefined}
+        >
+          <Icon aria-hidden="true" />
+          <span>{label}</span>
+          {item.to === '/messages' && unread > 0 ? (
+            <Badge
+              variant="secondary"
+              className="ms-auto"
+              data-testid="staff-message-badge"
+              aria-label={t('messaging:unread', { count: unread })}
+            >
+              {Math.min(unread, 99)}
+            </Badge>
+          ) : null}
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   );
 }
 
