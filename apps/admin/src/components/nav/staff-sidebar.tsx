@@ -8,7 +8,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuAction,
@@ -228,19 +227,30 @@ function StaffNavGroupSection({
       </SidebarGroup>
     );
   }
-  // A labelled group folds under its label (RAPP-702); its items stay in the icon rail.
+  // A labelled group folds under its own row (RAPP-702), drawn like a menu
+  // item with its icon; the icon rail hides that row and keeps the items.
+  const GroupIcon = group.icon;
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="group/fold">
       <SidebarGroup data-testid={`staff-nav-group-${group.id}`}>
-        <SidebarGroupLabel asChild id={labelId}>
-          <CollapsibleTrigger data-testid={`staff-nav-fold-${group.id}`}>
-            {t(group.labelKey)}
-            <ChevronRight
-              aria-hidden="true"
-              className="ms-auto transition-transform group-data-[state=open]/fold:rotate-90 rtl:rotate-180 rtl:group-data-[state=open]/fold:rotate-90"
-            />
-          </CollapsibleTrigger>
-        </SidebarGroupLabel>
+        <SidebarMenu className="group-data-[collapsible=icon]:hidden">
+          <SidebarMenuItem>
+            <CollapsibleTrigger asChild>
+              <SidebarMenuButton
+                id={labelId}
+                className={NAV_BUTTON_CLASS}
+                data-testid={`staff-nav-fold-${group.id}`}
+              >
+                {GroupIcon === null ? null : <GroupIcon aria-hidden="true" />}
+                <span>{t(group.labelKey)}</span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="ms-auto transition-transform group-data-[state=open]/fold:rotate-90 rtl:rotate-180 rtl:group-data-[state=open]/fold:rotate-90"
+                />
+              </SidebarMenuButton>
+            </CollapsibleTrigger>
+          </SidebarMenuItem>
+        </SidebarMenu>
         <CollapsibleContent>
           <SidebarGroupContent>{menu}</SidebarGroupContent>
         </CollapsibleContent>

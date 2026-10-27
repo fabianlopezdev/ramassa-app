@@ -18,12 +18,15 @@ import {
   ClipboardList,
   ClipboardPen,
   Database,
+  Files,
   FileSignature,
   FileText,
+  Handshake,
   HeartHandshake,
   IdCard,
   Images,
   Inbox,
+  Landmark,
   LayoutDashboard,
   ListChecks,
   MessageSquare,
@@ -32,6 +35,8 @@ import {
   Settings,
   Share2,
   ShieldCheck,
+  Smartphone,
+  Table2,
   Users,
   UsersRound,
   Wrench,
@@ -76,13 +81,18 @@ export const STAFF_NAV_PARENTS = {
 
 /** The groups in menu order; the top group has no label. */
 export const STAFF_NAV_GROUPS = [
-  { id: 'top', labelKey: null },
-  { id: 'forms', labelKey: 'nav:staff.groups.forms' },
-  { id: 'data', labelKey: 'nav:staff.groups.data' },
-  { id: 'app', labelKey: 'nav:staff.groups.app' },
-  { id: 'entities', labelKey: 'nav:staff.groups.entities' },
-  { id: 'organisation', labelKey: 'nav:staff.groups.organisation' },
-] as const satisfies readonly { id: StaffNavGroupId; labelKey: string | null }[];
+  { id: 'top', labelKey: null, icon: null },
+  { id: 'forms', labelKey: 'nav:staff.groups.forms', icon: Files },
+  { id: 'data', labelKey: 'nav:staff.groups.data', icon: Table2 },
+  { id: 'app', labelKey: 'nav:staff.groups.app', icon: Smartphone },
+  { id: 'entities', labelKey: 'nav:staff.groups.entities', icon: Handshake },
+  { id: 'organisation', labelKey: 'nav:staff.groups.organisation', icon: Landmark },
+] as const satisfies readonly {
+  id: StaffNavGroupId;
+  labelKey: string | null;
+  /** A labelled group's row reads like a menu item (RAPP-702). */
+  icon: LucideIcon | null;
+}[];
 
 /** The onboarding page: Settings' own permission, or the design role (RAPP-615). */
 export const ONBOARDING_PERMISSIONS = [
@@ -373,6 +383,7 @@ export function visibleStaffNavItems(
 export interface StaffNavGroup {
   readonly id: StaffNavGroupId;
   readonly labelKey: string | null;
+  readonly icon: LucideIcon | null;
   readonly items: readonly StaffNavEntry[];
 }
 
@@ -384,6 +395,7 @@ export function visibleStaffNavGroups(
   return STAFF_NAV_GROUPS.map((group) => ({
     id: group.id,
     labelKey: group.labelKey,
+    icon: group.icon,
     items: visible.filter((item) => item.group === group.id),
   })).filter((group) => group.items.length > 0);
 }
