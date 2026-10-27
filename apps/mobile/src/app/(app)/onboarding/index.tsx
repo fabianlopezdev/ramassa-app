@@ -121,7 +121,6 @@ export default function IdentityStepScreen() {
       stepNumber={step.position.step}
       totalSteps={step.position.total}
       title={t('identityTitle')}
-      intro={t('identityIntro')}
       continueLabel={t('continueAction')}
       onContinue={continueToBackground}
       onBack={step.goBack ?? undefined}

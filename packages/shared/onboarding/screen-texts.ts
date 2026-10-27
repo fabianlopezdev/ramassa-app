@@ -66,7 +66,7 @@ export function screenTextFields(screen: EditableWizardScreen): readonly ScreenT
 export const BUNDLED_SCREEN_TEXT_KEYS: Readonly<
   Record<EditableWizardScreen, Readonly<Partial<Record<ScreenTextField, string>>>>
 > = {
-  identity: { title: 'identityTitle', intro: 'identityIntro', continue_label: 'continueAction' },
+  identity: { title: 'identityTitle', continue_label: 'continueAction' },
   background: { title: 'backgroundTitle', continue_label: 'continueAction' },
   documentation: {
     title: 'documentationTitle',
