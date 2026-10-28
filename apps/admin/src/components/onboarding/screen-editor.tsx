@@ -921,7 +921,7 @@ function AppScreenEditor({
       : [];
   const content =
     detail !== null
-      ? detailScreenContent(catalog, detail, previewLanguage, t, texts[detail])
+      ? detailScreenContent(catalog, detail, previewLanguage, t, texts[detail], row.wording)
       : stepContent(catalog, step, previewLanguage, t, {
           ...(screen === null ? {} : { texts: texts[screen] }),
           ...(step.kind === 'builtin' ? { questions: phoneQuestions } : {}),
@@ -938,7 +938,7 @@ function AppScreenEditor({
       language={previewLanguage}
       step={number}
       total={total}
-      highlight={detail === null ? (row.editing ?? undefined) : undefined}
+      highlight={row.editing ?? undefined}
     />
   );
 
@@ -965,22 +965,37 @@ function AppScreenEditor({
         preview={phone}
         form={
           detail !== null ? (
-            <WordingSection
-              key={detail}
-              catalog={catalog}
-              screen={detail}
-              language={language}
-              onLanguageChange={setLanguage}
-              title={t(`builtinScreens.screenName.${detail}`)}
-              conditionNote={conditionLine(
-                catalog,
-                onboardingConditionOf(catalog, detail),
-                dashboardLanguage,
-                t,
-                detailBranch(detail).condition.repeatsPerAnswer === true,
-              )}
-              onChange={(next) => setTexts((current) => ({ ...current, [detail]: next }))}
-            />
+            <>
+              <WordingSection
+                key={detail}
+                catalog={catalog}
+                screen={detail}
+                language={language}
+                onLanguageChange={setLanguage}
+                title={t(`builtinScreens.screenName.${detail}`)}
+                conditionNote={conditionLine(
+                  catalog,
+                  onboardingConditionOf(catalog, detail),
+                  dashboardLanguage,
+                  t,
+                  detailBranch(detail).condition.repeatsPerAnswer === true,
+                )}
+                onChange={(next) => setTexts((current) => ({ ...current, [detail]: next }))}
+              />
+              {/* Its questions, like any screen's (RAPP-720). */}
+              <ScreenFieldsSection
+                key={`fields-${detail}`}
+                catalog={catalog}
+                screenKey={detail}
+                screenName={t(`builtinScreens.screenName.${detail}`)}
+                builtinQuestions={[]}
+                language={language}
+                editing={row.editing}
+                onEdit={row.setEditing}
+                onBuiltinLabelChange={row.setBuiltinLabel}
+                onWordingChange={row.setWording}
+              />
+            </>
           ) : (
             <>
               {screen === null ? null : (

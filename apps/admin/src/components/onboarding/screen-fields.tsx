@@ -47,7 +47,10 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
   customStepKey,
+  FOLLOW_UP_OWN_FIELDS,
+  followUpsOfOwnField,
   INTAKE_QUESTION_LABEL_KEYS,
+  isFollowUpScreen,
   isRequiredQuestion,
   type IntakeQuestion,
 } from '@ramassa/shared/intake';
@@ -127,7 +130,9 @@ function screenItems(
 /**
  * The fields placed on a screen that her phone asks with the generic
  * renderer, in their order: the Ramassà fields, and the app fields off their
- * own control (RAPP-665).
+ * own control (RAPP-665). On an app follow-up (RAPP-720), its own fields too,
+ * which her phone draws with the app's control: they are edited, required and
+ * removed like any field.
  */
 function placedFields(
   layout: ProfileLayout,
@@ -135,11 +140,16 @@ function placedFields(
   screenKey: string | null,
   offTheirControl: ReadonlySet<IntakeQuestion>,
 ): readonly Placed[] {
+  const own = new Set<string>(
+    isFollowUpScreen(screenKey) ? FOLLOW_UP_OWN_FIELDS[screenKey].map((field) => field.key) : [],
+  );
   return placementsOnSurface(layout, surface, screenKey).flatMap((placement) => {
     const field = fieldById(layout, placement.fieldId);
     // A form the team created asks every field with the generic renderer (RAPP-700).
     return field === undefined ||
-      (surface !== 'custom_form' && !isAskedGenerically(field, offTheirControl))
+      (surface !== 'custom_form' &&
+        !isAskedGenerically(field, offTheirControl) &&
+        !own.has(field.systemKey ?? ''))
       ? []
       : [{ placement, field }];
   });
@@ -277,6 +287,18 @@ export function ScreenFieldsSection({
     const pick = onboardingPick(layout, field, screenKey);
     if (pick.kind === 'here') return { kind: 'placed', note: t('fieldPicker.here') };
     if (pick.kind === 'free') return { kind: 'free' };
+    if (pick.kind === 'followUpOnly') {
+      // Drawn by the app's own control on its follow-ups only (RAPP-720).
+      const screens = followUpsOfOwnField(field.systemKey).map((screen) =>
+        t(`builtinScreens.screenName.${screen}`),
+      );
+      return {
+        kind: 'blocked',
+        note: t('fieldPicker.followUpOnly', {
+          screens: new Intl.ListFormat(uiLanguage, { type: 'disjunction' }).format(screens),
+        }),
+      };
+    }
     if (pick.kind === 'withController') {
       const controller = fieldById(layout, pick.controllerId);
       return {

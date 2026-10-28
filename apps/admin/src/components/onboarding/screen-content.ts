@@ -14,6 +14,7 @@ import { staffTextIn, teamTextIn } from '@ramassa/shared/i18n/localized-content'
 import {
   BUNDLED_SCREEN_TEXT_KEYS,
   INTAKE_QUESTION_LABEL_KEYS,
+  isFollowUpScreen,
   isOptionalScreenTextField,
   isRequiredQuestion,
   offersSkipAnswer,
@@ -24,7 +25,6 @@ import {
   type IntakeQuestion,
   type ScreenCondition,
   type ScreenTextField,
-  type SystemFieldKey,
 } from '@ramassa/shared/intake';
 import {
   builtinField,
@@ -38,9 +38,10 @@ import {
   isCustomQuestionRequired,
   liveOptions,
   onboardingScreenQuestions,
+  placedOwnFields,
+  placedQuestion,
   placementOn,
   placementWordingIn,
-  questionOfField,
   requiredBuiltinQuestions,
   screenSettingsFor,
   textIn,
@@ -264,12 +265,13 @@ export function placedPhoneQuestions(
   surface: 'onboarding' | 'custom_form' = 'onboarding',
 ): PhoneQuestion[] {
   const layout = catalog.layout;
-  // A field sits once on Onboarding, and once per form: a form's placement is its screen's.
+  // A field's placement on this screen: a field sits once on Onboarding but on
+  // sibling follow-ups (RAPP-720), and once per form.
   const placementOf = (fieldId: string) =>
     layout === undefined
       ? undefined
       : surface === 'onboarding'
-        ? placementOn(layout, fieldId, 'onboarding')
+        ? placementOn(layout, fieldId, 'onboarding', screenKey)
         : layout.placements.find(
             (placement) =>
               placement.fieldId === fieldId &&
@@ -392,17 +394,13 @@ function builtinWording(
   };
 }
 
-/** The document fields each document follow-up asks (RAPP-715), as her phone does. */
-const DOCUMENT_SCREEN_FIELDS: Partial<Record<EditableWizardScreen, readonly SystemFieldKey[]>> = {
-  'documentation-nie': ['document_number'],
-  'documentation-passport': ['document_number'],
-  'documentation-other': ['document_name', 'document_number'],
-};
-
 /**
- * A follow-up screen on her phone (RAPP-713): its wording and Continue. The
- * editor's second tab and the board's branch card draw it the same way.
- * `texts` is wording typed in the editor, in place of the saved wording.
+ * A follow-up screen on her phone (RAPP-713, RAPP-720): its wording, the
+ * fields it holds as its placements say (its own ones first, as her phone
+ * draws them, then every other field and signature), and Continue. The
+ * editor, the family row and the board's branch card draw it the same way.
+ * `texts` is wording typed in the editor, and `typed` a field's wording typed
+ * in an open row, in place of the saved ones.
  */
 export function detailScreenContent(
   catalog: IntakeCatalog,
@@ -410,6 +408,7 @@ export function detailScreenContent(
   language: LanguageCode,
   t: Translate,
   texts?: ScreenTexts,
+  typed: TypedWording | null = null,
 ): PhoneContent {
   const wording = builtinWording(
     screen,
@@ -417,25 +416,30 @@ export function detailScreenContent(
     language,
     t,
   );
-  // A document follow-up asks what that document needs (RAPP-715): its
-  // number, and its name for another document.
-  const documentKeys = DOCUMENT_SCREEN_FIELDS[screen] ?? [];
   const layout = catalog.layout;
+  const isFollowUp = isFollowUpScreen(screen);
+  const own =
+    layout === undefined || !isFollowUp
+      ? []
+      : placedOwnFields(catalog, screen).map(({ field, placement }) => {
+          const asTyped =
+            typed?.fieldId === field.id
+              ? { ...placement, labelOverride: typed.label, helpOverride: typed.help }
+              : placement;
+          return customPhoneQuestion(placedQuestion(layout, field, asTyped), language);
+        });
   return {
     title: wording.title,
     intro: wording.intro,
     help: wording.help,
-    questions:
-      layout === undefined
-        ? []
-        : documentKeys.flatMap((key) => {
-            const field = layout.fields.find((each) => each.systemKey === key);
-            return field === undefined
-              ? []
-              : [customPhoneQuestion(questionOfField(layout, field), language)];
-          }),
-    lines:
-      documentKeys.length === 0 ? [] : [t('onboarding:documentReassurance', { lng: language })],
+    questions: [
+      ...own,
+      ...(isFollowUp ? placedPhoneQuestions(catalog, screen, language, typed) : []),
+    ],
+    // The document follow-ups end with the app's note on how her document is kept.
+    lines: screen.startsWith('documentation-')
+      ? [t('onboarding:documentReassurance', { lng: language })]
+      : [],
     checkbox: null,
     signature: false,
     continueLabel: wording.continue_label,

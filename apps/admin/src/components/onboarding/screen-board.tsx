@@ -83,6 +83,7 @@ import {
   customFormRef,
   detailBranch,
   flowStepName,
+  followUpAsksSomething,
   isDetailScreen,
   movableOrder,
   onboardingConditionOf,
@@ -209,7 +210,12 @@ export function ScreenBoard({
             total={total}
           />
         ),
-        status: isHidden ? t('builtinScreens.hiddenBadge') : null,
+        // One that asks her nothing never shows (RAPP-720).
+        status: isHidden
+          ? t('builtinScreens.hiddenBadge')
+          : followUpAsksSomething(catalog, key)
+            ? null
+            : t('onboardingBoard.notShown'),
         note: conditionLine(
           catalog,
           condition,
