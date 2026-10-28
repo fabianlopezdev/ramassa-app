@@ -4,20 +4,32 @@
  * the app needs cannot be hidden, and the form says why. Its options are the
  * options of its field, named on Dades de les jugadores (RAPP-664, RAPP-665). The form
  * is uncontrolled and read with FormData.
+ *
+ * What staff see is what she sees (RAPP-719, as RAPP-710): each box holds the
+ * text her phone shows in its language, the saved text or else the app's own.
+ * A language still equal to the app's text is not saved. The label cannot be
+ * saved empty; a cleared help shows nothing.
  */
 
 import { ErrorLine, useAction } from '@/components/fields/field-form';
-import { LanguageFields, textFromForm } from '@/components/fields/language-fields';
+import { LanguageFields } from '@/components/fields/language-fields';
 import { Button } from '@/components/ui/button';
-import { type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { IntakeQuestion, RequiredQuestions } from '@ramassa/shared/intake';
+import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
+import { staffTextIn, staffTextToSave } from '@ramassa/shared/i18n/localized-content';
+import {
+  INTAKE_QUESTION_LABEL_KEYS,
+  type IntakeQuestion,
+  type RequiredQuestions,
+} from '@ramassa/shared/intake';
 import {
   builtinHideLock,
   canHideBuiltin,
   type BuilderText,
   type BuiltinOverride,
 } from '@ramassa/shared/intake-builder';
+import type { LanguageCode } from '@ramassa/shared/schemas';
 
 export interface BuiltinQuestionInfo {
   readonly question: IntakeQuestion;
@@ -42,18 +54,40 @@ export function BuiltinForm({
   /** The label as typed, for a phone preview beside the form (RAPP-641). */
   readonly onLabelChange?: (label: BuilderText) => void;
 }) {
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'onboarding']);
   const action = useAction();
+  const [emptyLabel, setEmptyLabel] = useState<string | null>(null);
   const lock = builtinHideLock(info.question, required);
+  /** The app's own label in one language. Its help has no text of its own. */
+  const appLabel = (language: LanguageCode) =>
+    t(INTAKE_QUESTION_LABEL_KEYS[info.question] ?? info.question, { lng: language });
+  // What her phone shows in each language: the saved text, else the app's.
+  const shownLabel = Object.fromEntries(
+    SUPPORTED_LANGUAGES.map((language) => [
+      language,
+      staffTextIn(override?.label, language, false) ?? appLabel(language),
+    ]),
+  ) as BuilderText;
+  const shownHelp = Object.fromEntries(
+    SUPPORTED_LANGUAGES.map((language) => [
+      language,
+      staffTextIn(override?.help, language, true) ?? '',
+    ]),
+  ) as BuilderText;
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const fields = new FormData(event.currentTarget);
-    const label = textFromForm(fields, 'builtin-label');
-    const help = textFromForm(fields, 'builtin-help');
+    const label = typedText(fields, 'builtin-label');
+    const empty = SUPPORTED_LANGUAGES.find((language) => (label[language] ?? '').trim() === '');
+    if (empty !== undefined) {
+      setEmptyLabel(t('questions.labelRequiredIn', { language: LANGUAGE_NATIVE_NAMES[empty] }));
+      return;
+    }
+    setEmptyLabel(null);
     const next: BuiltinOverride = {
       question: info.question,
-      label: Object.keys(label).length === 0 ? null : label,
-      help: Object.keys(help).length === 0 ? null : help,
+      label: staffTextToSave(label, appLabel, false) ?? null,
+      help: staffTextToSave(typedText(fields, 'builtin-help'), () => '', true) ?? null,
       isHidden: canHideBuiltin(info.question, required) && fields.get('builtin-hidden') === 'on',
     };
     if (await action.run(() => onSave(next))) onCancel();
@@ -64,21 +98,20 @@ export function BuiltinForm({
       data-testid="builtin-form"
       onSubmit={(event) => void submit(event)}
       onInput={(event) =>
-        onLabelChange?.(textFromForm(new FormData(event.currentTarget), 'builtin-label'))
+        onLabelChange?.(typedText(new FormData(event.currentTarget), 'builtin-label'))
       }
     >
       <h3 className="text-start font-semibold">{info.label}</h3>
-      <p className="text-start text-sm text-muted-foreground">{t('questions.builtinIntro')}</p>
       <LanguageFields
         name="builtin-label"
         legend={t('questions.label')}
-        value={override?.label}
+        value={shownLabel}
         isCatalanRequired={false}
       />
       <LanguageFields
         name="builtin-help"
         legend={t('questions.help')}
-        value={override?.help}
+        value={shownHelp}
         isCatalanRequired={false}
         isLong
       />
@@ -97,7 +130,7 @@ export function BuiltinForm({
           {t(`questions.lock.${lock}`)}
         </p>
       )}
-      <ErrorLine message={action.error} />
+      <ErrorLine message={emptyLabel ?? action.error} />
       <div className="flex gap-2">
         <Button type="submit" disabled={action.isBusy}>
           {t('questions.saveBuiltin')}
@@ -108,4 +141,14 @@ export function BuiltinForm({
       </div>
     </form>
   );
+}
+
+/** Each language's box as typed, blank ones kept: a cleared box is a choice (RAPP-719). */
+function typedText(fields: FormData, name: string): BuilderText {
+  return Object.fromEntries(
+    SUPPORTED_LANGUAGES.flatMap((language) => {
+      const value = fields.get(`${name}.${language}`);
+      return typeof value === 'string' ? [[language, value]] : [];
+    }),
+  ) as BuilderText;
 }

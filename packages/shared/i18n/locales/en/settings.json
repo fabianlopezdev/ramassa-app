@@ -409,7 +409,6 @@
     "catalanNeeded": "Write it in Catalan at least.",
     "optionsNeeded": "A choice question needs at least two options.",
     "failed": "That did not work. Try again.",
-    "builtinIntro": "Leave a language empty to keep the app's own wording in it.",
     "hidden": "Hidden",
     "hideQuestion": "Do not ask this question",
     "lock": {
@@ -492,7 +491,8 @@
       "listItem": "Social services"
     },
     "healthReadersOnly": "Only people with the health permission read it.",
-    "saveBuiltin": "Save question"
+    "saveBuiltin": "Save question",
+    "labelRequiredIn": "The question cannot be empty in {{language}}."
   },
   "onboardingPage": {
     "title": "Onboarding",

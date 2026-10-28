@@ -409,7 +409,6 @@
     "catalanNeeded": "Escríbelo al menos en catalán.",
     "optionsNeeded": "Una pregunta de opciones necesita al menos dos opciones.",
     "failed": "No se ha podido hacer. Vuelve a intentarlo.",
-    "builtinIntro": "Deja un idioma vacío para mantener en él el texto de la app.",
     "hidden": "Oculta",
     "hideQuestion": "No hacer esta pregunta",
     "lock": {
@@ -492,7 +491,8 @@
       "listItem": "Servicios sociales"
     },
     "healthReadersOnly": "Solo la ve quien tiene el permiso de salud.",
-    "saveBuiltin": "Guardar la pregunta"
+    "saveBuiltin": "Guardar la pregunta",
+    "labelRequiredIn": "La pregunta no puede quedar vacía en {{language}}."
   },
   "onboardingPage": {
     "title": "Onboarding",

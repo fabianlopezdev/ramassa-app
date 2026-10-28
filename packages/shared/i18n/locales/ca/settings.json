@@ -409,7 +409,6 @@
     "catalanNeeded": "Escriu-ho almenys en català.",
     "optionsNeeded": "Una pregunta d'opcions necessita almenys dues opcions.",
     "failed": "No s'ha pogut fer. Torna-ho a provar.",
-    "builtinIntro": "Deixa un idioma buit per mantenir-hi el text de l'app.",
     "hidden": "Amagada",
     "hideQuestion": "No facis aquesta pregunta",
     "lock": {
@@ -492,7 +491,8 @@
       "listItem": "Serveis socials"
     },
     "healthReadersOnly": "Només la veu qui té el permís de salut.",
-    "saveBuiltin": "Desa la pregunta"
+    "saveBuiltin": "Desa la pregunta",
+    "labelRequiredIn": "La pregunta no pot quedar buida en {{language}}."
   },
   "onboardingPage": {
     "title": "Onboarding",

@@ -188,11 +188,11 @@ export function builtinPhoneQuestion(
 ): PhoneQuestion {
   const inLanguage: Translate = (key, options) => t(key, { ...options, lng: language });
   const appLabel = inLanguage(INTAKE_QUESTION_LABEL_KEYS[question] ?? question);
-  const typed = label?.[language]?.trim() ?? '';
+  // As typed in an open form, else as saved, by the rule her phone reads (RAPP-719).
   const shownLabel =
     label === undefined
       ? (builtinLabel(catalog, question, language) ?? appLabel)
-      : typed || appLabel;
+      : (staffTextIn(label, language, false) ?? appLabel);
   const field = catalog.layout === undefined ? undefined : builtinField(catalog.layout, question);
   const look = BUILTIN_LOOKS[question];
   const required = requiredBuiltinQuestions(catalog);
