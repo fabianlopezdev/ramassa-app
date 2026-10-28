@@ -491,7 +491,8 @@
       "search2": "Senegal",
       "listItem": "Servicios sociales"
     },
-    "healthReadersOnly": "Solo la ve quien tiene el permiso de salud."
+    "healthReadersOnly": "Solo la ve quien tiene el permiso de salud.",
+    "saveBuiltin": "Guardar la pregunta"
   },
   "onboardingPage": {
     "title": "Onboarding",

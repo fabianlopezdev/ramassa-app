@@ -491,7 +491,8 @@
       "search2": "Senegal",
       "listItem": "Serveis socials"
     },
-    "healthReadersOnly": "Només la veu qui té el permís de salut."
+    "healthReadersOnly": "Només la veu qui té el permís de salut.",
+    "saveBuiltin": "Desa la pregunta"
   },
   "onboardingPage": {
     "title": "Onboarding",
