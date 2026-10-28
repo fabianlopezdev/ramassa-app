@@ -220,6 +220,35 @@ describe('reading a setup file', () => {
     ).toBe(false);
   });
 
+  test('a screen that depends on an answer travels with its field; an older file has none (RAPP-715)', () => {
+    const v3 = {
+      ...document(),
+      schema_version: 3,
+      screens: [
+        {
+          id: SCREEN,
+          title: { ca: 'Més sobre tu' },
+          intro: null,
+          after_screen: 'logistics',
+          sort_order: 0,
+          home_after_screen: 'logistics',
+          home_sort_order: 0,
+          is_archived: false,
+          show_when_field_id: GATE,
+          show_when_values: [OPTION],
+        },
+      ],
+      sections: [],
+      fields: [{ id: GATE, kind: 'custom', options: [] }],
+      placements: [],
+    };
+    expect(readOnboardingSetupFile(asFile(v3)).ok).toBe(true);
+    const outside = { ...v3, screens: [{ ...v3.screens[0], show_when_field_id: CHILD }] };
+    expect(readOnboardingSetupFile(asFile(outside)).ok).toBe(false);
+    const noAnswer = { ...v3, screens: [{ ...v3.screens[0], show_when_values: [] }] };
+    expect(readOnboardingSetupFile(asFile(noAnswer)).ok).toBe(false);
+  });
+
   test('the consents of Dades legals travel by key; an older file has none (RAPP-699)', () => {
     const consent = {
       key: 'transport',

@@ -82,6 +82,10 @@ const screenSchema = z.strictObject({
   is_archived: z.boolean(),
   // From RAPP-711; an older file has none and its screens show.
   is_hidden: z.boolean().optional(),
+  // From RAPP-715: the answer that opens it, a field of the file and its
+  // answers. An older file has none and its screens always show.
+  show_when_field_id: configId.nullable().optional(),
+  show_when_values: z.array(z.string().min(1).max(64)).max(500).nullable().optional(),
   // A version 1 or 2 file only: the app screen a holder held (RAPP-642), and
   // the screen's questions. The database reads them as fields and placements.
   builtin_screen: z.string().min(1).nullable().optional(),
@@ -254,6 +258,21 @@ export const onboardingSetupDocumentSchema = z
         } else if (archivedScreens.has(screenId)) {
           context.addIssue({ code: 'custom', message: 'the flow order names an archived screen' });
         }
+      }
+    }
+    // A screen depends on a field of the file, with at least one answer (RAPP-715).
+    const fieldIds = new Set((document.fields ?? []).map((field) => String(field.id)));
+    for (const screen of document.screens) {
+      const fieldId = screen.show_when_field_id ?? null;
+      const values = screen.show_when_values ?? [];
+      if (
+        (fieldId === null) !== (values.length === 0) ||
+        (fieldId !== null && !fieldIds.has(fieldId))
+      ) {
+        context.addIssue({
+          code: 'custom',
+          message: 'a screen depends on a field outside the file',
+        });
       }
     }
     for (const version of document.authorization.published) {
