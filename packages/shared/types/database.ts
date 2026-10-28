@@ -2257,6 +2257,7 @@ export type Database = {
           org_id: string;
           required: boolean;
           screen_key: string | null;
+          shared_screen: string | null;
           sort_order: number;
           surface: string;
           updated_at: string;
@@ -2271,6 +2272,7 @@ export type Database = {
           org_id: string;
           required?: boolean;
           screen_key?: string | null;
+          shared_screen?: never;
           sort_order?: number;
           surface: string;
           updated_at?: string;
@@ -2285,6 +2287,7 @@ export type Database = {
           org_id?: string;
           required?: boolean;
           screen_key?: string | null;
+          shared_screen?: never;
           sort_order?: number;
           surface?: string;
           updated_at?: string;

@@ -1715,6 +1715,7 @@ export function buildFieldPlacement(overrides: Partial<FieldPlacementRow> = {}):
     field_id: SEED_CUSTOM_QUESTION_ID,
     surface: 'onboarding',
     screen_key: SEED_INTAKE_SCREEN_ID,
+    shared_screen: null,
     sort_order: 0,
     required: false,
     label_override: null,
