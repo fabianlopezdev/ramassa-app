@@ -812,8 +812,10 @@ function CardUnit(props: ComponentProps<typeof ScreenCard>) {
   const branch = branches[index]!;
   const step = (delta: number) =>
     setShown((current) => (current + delta + branches.length) % branches.length);
+  // Centred with a margin, so the button's press effect cannot move it, and
+  // set in the card's padding beside the phone, over its frame at most.
   const arrow =
-    'absolute top-1/2 z-10 size-8 -translate-y-1/2 rounded-full border border-white/50 bg-white/55 text-foreground shadow-sm backdrop-blur-md hover:bg-white/75';
+    'absolute top-1/2 z-10 -mt-3 size-6 rounded-full border border-white/50 bg-white/55 text-foreground shadow-sm backdrop-blur-md hover:bg-white/75 active:not-aria-[haspopup]:translate-y-0 [&_svg]:size-3.5';
   return (
     <div className="grid w-full grid-cols-2 items-start gap-4">
       <ScreenCard {...props} />
@@ -840,7 +842,7 @@ function CardUnit(props: ComponentProps<typeof ScreenCard>) {
               type="button"
               variant="ghost"
               size="icon-sm"
-              className={cn(arrow, 'start-5')}
+              className={cn(arrow, 'start-1')}
               aria-label={t('onboardingBoard.previousScreen')}
               onClick={() => step(-1)}
               data-testid={`board-family-previous-${props.card.key}`}
@@ -851,7 +853,7 @@ function CardUnit(props: ComponentProps<typeof ScreenCard>) {
               type="button"
               variant="ghost"
               size="icon-sm"
-              className={cn(arrow, 'end-5')}
+              className={cn(arrow, 'end-1')}
               aria-label={t('onboardingBoard.nextScreen')}
               onClick={() => step(1)}
               data-testid={`board-family-next-${props.card.key}`}
