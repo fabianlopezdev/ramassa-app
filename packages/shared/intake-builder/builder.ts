@@ -190,6 +190,7 @@ const presetSchema = z.object({
 
 const builtinScreenSchema = z.object({
   screen: z.string(),
+  is_deleted: z.boolean().optional(),
   texts: z.record(z.string(), anyLanguageTextSchema),
   is_hidden: z.boolean(),
 });
@@ -281,6 +282,7 @@ export interface BuiltinOverride {
 
 /** Staff wording and the hide switch of one built-in screen (RAPP-612). */
 export interface BuiltinScreenSettings {
+  readonly isDeleted?: boolean;
   readonly screen: EditableWizardScreen;
   readonly texts: Readonly<Partial<Record<ScreenTextField, BuilderText>>>;
   readonly isHidden: boolean;
@@ -363,6 +365,7 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
                 ),
               ),
               isHidden: entry.is_hidden,
+              isDeleted: entry.is_deleted ?? false,
             },
           ]
         : [],
@@ -778,6 +781,20 @@ export async function saveScreenCondition(
   if (error) throw databaseError(error);
 }
 
+export async function deleteBuilderScreen(
+  client: Client,
+  surface: 'onboarding' | 'custom_form',
+  key: string,
+  expectedKeys: readonly string[],
+): Promise<void> {
+  const { error } = await client.rpc('delete_builder_screen', {
+    p_surface: surface,
+    p_key: key,
+    p_expected_keys: [...expectedKeys],
+  });
+  if (error) throw databaseError(error);
+}
+
 export async function archiveIntakeScreen(client: Client, id: string): Promise<void> {
   const { error } = await client.rpc('archive_intake_screen', { p_id: id });
   if (error) throw databaseError(error);
@@ -1024,14 +1041,24 @@ export function wizardFlow(catalog: IntakeCatalog): WizardFlow {
   const required = requiredBuiltinQuestions(catalog);
   return {
     order: (catalog.flowOrder ?? []).filter(isFlowStep),
+    deletedScreens: new Set(
+      (catalog.screenSettings ?? []).filter((s) => s.isDeleted).map((s) => s.screen),
+    ),
     hiddenScreens: new Set(
       (catalog.screenSettings ?? [])
-        .filter((settings) => settings.isHidden)
+        .filter((settings) => settings.isHidden || settings.isDeleted)
         .map((settings) => settings.screen)
         .filter(isWizardQuestionScreen)
-        .filter((screen) => canHideBuiltinScreen(screen, required))
+        .filter(
+          (screen) =>
+            screenSettingsFor(catalog, screen)?.isDeleted || canHideBuiltinScreen(screen, required),
+        )
         // A required field placed on it keeps the screen shown (RAPP-642).
-        .filter((screen) => !hasRequiredPlacedField(catalog, screen)),
+        .filter(
+          (screen) =>
+            screenSettingsFor(catalog, screen)?.isDeleted ||
+            !hasRequiredPlacedField(catalog, screen),
+        ),
     ),
   };
 }

@@ -199,6 +199,7 @@ export const FINAL_WIZARD_SCREENS = ['summary', 'terms-intro', 'terms'] as const
  * the catalog only lists ones with no required question.
  */
 export interface WizardFlow {
+  readonly deletedScreens?: ReadonlySet<string>;
   readonly order: readonly WizardStepKey[];
   readonly hiddenScreens: ReadonlySet<WizardQuestionScreen>;
 }
@@ -248,7 +249,7 @@ export function wizardFlowOrder(
   return [
     ...branchesAfterParents(placed, (step) => parents.get(step as CustomStepKey)),
     ...FINAL_WIZARD_SCREENS,
-  ];
+  ].filter((key) => !flow.deletedScreens?.has(key));
 }
 
 function isHiddenScreen(step: WizardStepKey, flow: WizardFlow): boolean {

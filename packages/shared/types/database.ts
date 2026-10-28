@@ -2748,6 +2748,7 @@ export type Database = {
       };
       intake_builtin_screens: {
         Row: {
+          is_deleted: boolean;
           is_hidden: boolean;
           org_id: string;
           screen: string;
@@ -2756,6 +2757,7 @@ export type Database = {
           updated_by: string | null;
         };
         Insert: {
+          is_deleted?: boolean;
           is_hidden?: boolean;
           org_id: string;
           screen: string;
@@ -2764,6 +2766,7 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
+          is_deleted?: boolean;
           is_hidden?: boolean;
           org_id?: string;
           screen?: string;
@@ -6069,6 +6072,10 @@ export type Database = {
       };
       archive_custom_form_screen: { Args: { p_id: string }; Returns: undefined };
       archive_intake_screen: { Args: { p_id: string }; Returns: undefined };
+      delete_builder_screen: {
+        Args: { p_surface: string; p_key: string; p_expected_keys: string[] };
+        Returns: undefined;
+      };
       archive_profile_field: { Args: { p_id: string }; Returns: undefined };
       assert_within_hourly_limit: {
         Args: { limited_action: string; maximum_per_hour: number };

@@ -107,6 +107,7 @@ export function followUpOpens(
   screen: DetailScreen,
   answers: Readonly<Record<string, unknown>>,
 ): boolean {
+  if (catalog.screenSettings?.some((s) => s.screen === screen && s.isDeleted)) return false;
   const condition = appBranchCondition(catalog, detailBranch(screen));
   return condition !== null && conditionsHold([condition], answers);
 }
@@ -130,6 +131,7 @@ export function closedFollowUps(
  * follow-up starts.
  */
 export function followUpAsksSomething(catalog: IntakeCatalog, screen: DetailScreen): boolean {
+  if (catalog.screenSettings?.some((s) => s.screen === screen && s.isDeleted)) return false;
   if (!hasAppFields(catalog)) return true;
   return (
     placedOwnFields(catalog, screen).length > 0 ||

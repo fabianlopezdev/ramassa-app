@@ -121,6 +121,7 @@ export const onboardingSetupDocumentSchema = z
     ),
     builtin_screens: z.array(
       z.strictObject({
+        is_deleted: z.boolean().optional(),
         screen: z.string().min(1),
         texts: z.record(z.string(), z.unknown()),
         is_hidden: z.boolean(),

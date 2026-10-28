@@ -104,6 +104,7 @@ function isLockedStep(step: string): step is LockedStep {
 
 /** One step from its key, or null for a step the catalog no longer has. */
 export function flowStep(catalog: IntakeCatalog, key: string): FlowStep | null {
+  if (catalog.screenSettings?.some((s) => s.screen === key && s.isDeleted)) return null;
   if (isLockedStep(key)) return { kind: 'locked', key };
   if (isQuestionScreen(key)) return { kind: 'builtin', key };
   const id = customStepId(key);

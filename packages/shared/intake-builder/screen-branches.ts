@@ -138,7 +138,11 @@ export function onboardingBranchKeys(
   order: readonly string[],
 ): readonly string[] {
   return [
-    ...detailScreensOf(key).map((branch) => branch.screen),
+    ...detailScreensOf(key)
+      .filter(
+        (branch) => !catalog.screenSettings?.some((s) => s.screen === branch.screen && s.isDeleted),
+      )
+      .map((branch) => branch.screen),
     ...order.filter((step) => isCustomStep(step) && onboardingParentOf(catalog, step) === key),
   ];
 }
