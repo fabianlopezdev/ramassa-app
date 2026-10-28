@@ -1,7 +1,7 @@
 /** Participants filtering stays in the URL; only uncommitted search keystrokes are local. */
 import { Button } from '@/components/ui/button';
 import { Field, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import { Input, INPUT_FRAME_CLASS_NAME } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { ParticipantListColumns } from '@/lib/participant-list';
+import { cn } from '@/lib/utils';
 import { Info, Search, X } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -270,7 +271,13 @@ function FilterSelect({
         value={value === allValue ? 'all' : `value:${value}`}
         onValueChange={(next) => onSelect(next === 'all' ? allValue : next.slice(6))}
       >
-        <SelectTrigger id={id} className="h-9 w-full min-w-0">
+        <SelectTrigger
+          id={id}
+          className={cn(
+            INPUT_FRAME_CLASS_NAME,
+            'w-full min-w-0 px-3 py-1 data-[size=default]:h-9 dark:bg-transparent dark:hover:bg-transparent',
+          )}
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent position="popper">
