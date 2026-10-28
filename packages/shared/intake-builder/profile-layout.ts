@@ -369,14 +369,22 @@ export function placementsOf(layout: ProfileLayout, fieldId: string): readonly F
   return layout.placements.filter((placement) => placement.fieldId === fieldId);
 }
 
-/** The field's placement on a surface; a field is on each surface at most once. */
+/**
+ * The field's placement on a surface. A field is on each surface once, but
+ * for the sibling follow-ups of one question (RAPP-720): pass the screen to
+ * read the placement there.
+ */
 export function placementOn(
   layout: ProfileLayout,
   fieldId: string,
   surface: ProfileSurface,
+  screenKey?: string | null,
 ): FieldPlacement | undefined {
   return layout.placements.find(
-    (placement) => placement.fieldId === fieldId && placement.surface === surface,
+    (placement) =>
+      placement.fieldId === fieldId &&
+      placement.surface === surface &&
+      (screenKey === undefined || placement.screenKey === screenKey),
   );
 }
 

@@ -267,9 +267,12 @@ function visibleScreens(
 ): WizardStepKey[] {
   const asked = new Set<WizardStepKey>([
     ...screensToAsk(answered),
-    // An app screen with a placed field she has not answered (RAPP-642).
+    // An app screen with a placed field she has not answered (RAPP-642), or
+    // with a follow-up her answers open that has one (RAPP-720).
     ...custom.flatMap((screen) =>
-      screen.builtinScreen == null || screen.isAnswered ? [] : [screen.builtinScreen],
+      screen.builtinScreen == null || screen.isAnswered || !opensForAnswers(screen, answers)
+        ? []
+        : [screen.builtinScreen],
     ),
   ]);
   const answeredCustom = new Set(

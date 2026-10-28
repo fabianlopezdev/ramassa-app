@@ -806,6 +806,7 @@
     "elsewhere": "Already asked on step {{number}}",
     "elsewhereApp": "Already asked on another screen",
     "withController": "Goes with “{{field}}”",
+    "followUpOnly": "Only on {{screens}}",
     "newField": "New field…",
     "newFieldIn": "Created in {{section}}",
     "add_one": "Add {{count}} field",

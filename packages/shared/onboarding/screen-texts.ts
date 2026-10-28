@@ -185,7 +185,9 @@ export const DETAIL_SCREEN_PARENTS: Readonly<
 > = Object.fromEntries(DETAIL_SCREEN_BRANCHES.map((branch) => [branch.screen, branch.parent]));
 
 /** The app's follow-up screens of one screen, in her order. */
-export function detailScreensOf(parent: string): readonly DetailScreenBranch[] {
+export function detailScreensOf(
+  parent: string,
+): readonly (typeof DETAIL_SCREEN_BRANCHES)[number][] {
   return DETAIL_SCREEN_BRANCHES.filter((branch) => branch.parent === parent);
 }
 

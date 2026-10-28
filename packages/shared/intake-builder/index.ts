@@ -17,3 +17,4 @@ export * from './custom-forms';
 export * from './onboarding-chain';
 export * from './screen-hiding';
 export * from './screen-branches';
+export * from './follow-up-fields';

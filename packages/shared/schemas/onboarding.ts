@@ -14,6 +14,12 @@
 
 import { z } from 'zod';
 import { isCanonicalMunicipality } from '../i18n/municipalities';
+import {
+  DEFAULT_FOLLOW_UP_ASKING,
+  ownFieldAsking,
+  type FollowUpAsking,
+  type OwnFieldAsking,
+} from '../onboarding/follow-ups';
 import type { IntakeQuestion } from '../onboarding/intake';
 import {
   DEFAULT_REQUIRED_QUESTIONS,
@@ -231,10 +237,74 @@ export function refineDocumentNumber(
 
 export const DOCUMENTATION_FIELD_QUESTIONS: FieldQuestions = { documentType: 'document' };
 
-/** The document step; staff may make the document required (RAPP-611): "none" is an answer. */
-export function documentationStepSchemaFor(required: RequiredQuestions) {
+const DOCUMENT_FOLLOW_UPS = {
+  nie: 'documentation-nie',
+  passport: 'documentation-passport',
+  other: 'documentation-other',
+} as const;
+
+/**
+ * How the follow-up of her document asks its number and its name (RAPP-720),
+ * as staff placed them; null for no document or none.
+ */
+export function documentDetailAsking(
+  asking: FollowUpAsking,
+  type: DocumentType | undefined,
+): { readonly number: OwnFieldAsking; readonly name: OwnFieldAsking } | null {
+  if (type === undefined || type === 'none') return null;
+  const screen = DOCUMENT_FOLLOW_UPS[type];
+  return {
+    number: ownFieldAsking(asking, screen, 'document_number'),
+    name: ownFieldAsking(asking, screen, 'document_name'),
+  };
+}
+
+/**
+ * The document rule as her follow-up screen asks it (RAPP-720): what it
+ * requires, and a NIE's form when it asks the number. At the end of her
+ * Onboarding (`atTheEnd`) only the number of a NIE or a passport is required,
+ * as before.
+ */
+export function refineDocumentDetails(asking: FollowUpAsking, atTheEnd: boolean) {
+  return (
+    step: { documentType?: DocumentType; documentName?: string; documentNumber?: string },
+    context: z.RefinementCtx,
+  ): void => {
+    const detail = documentDetailAsking(asking, step.documentType);
+    if (detail === null) return;
+    const numberIsRequired =
+      detail.number === 'required' && (!atTheEnd || step.documentType !== 'other');
+    if (step.documentNumber === undefined && numberIsRequired) {
+      context.addIssue({ code: 'custom', path: ['documentNumber'], message: 'required' });
+    }
+    if (step.documentName === undefined && detail.name === 'required' && !atTheEnd) {
+      context.addIssue({ code: 'custom', path: ['documentName'], message: 'required' });
+    }
+    if (
+      step.documentType === 'nie' &&
+      detail.number !== 'not_asked' &&
+      step.documentNumber !== undefined &&
+      !NIE_PATTERN.test(step.documentNumber)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['documentNumber'],
+        message: 'a NIE is one letter, seven digits, one letter',
+      });
+    }
+  };
+}
+
+/**
+ * The document step; staff may make the document required (RAPP-611): "none"
+ * is an answer. Its follow-up's number counts as its placements say (RAPP-720).
+ */
+export function documentationStepSchemaFor(
+  required: RequiredQuestions,
+  asking: FollowUpAsking = DEFAULT_FOLLOW_UP_ASKING,
+) {
   return documentationFields
-    .superRefine(refineDocumentNumber)
+    .superRefine(refineDocumentDetails(asking, true))
     .superRefine(requireAnswers(DOCUMENTATION_FIELD_QUESTIONS, required), ALWAYS_CHECK);
 }
 

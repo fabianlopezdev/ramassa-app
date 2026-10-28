@@ -48,6 +48,7 @@ import {
   isOptionalScreenTextField,
   SCREEN_TEXT_FIELDS,
   screenTextFields,
+  type DetailScreen,
   type EditableWizardScreen,
   type ScreenTextField,
 } from '../onboarding/screen-texts';
@@ -264,11 +265,11 @@ export interface RamassaScreen {
  * A screen of her onboarding with the Ramassà fields it asks her: a Ramassà
  * screen, or the fields placed on an app screen (`builtinScreen` set). Those
  * show on that app screen after its own questions, and are never a step of
- * their own.
+ * their own. An app follow-up's fields (RAPP-720) show on that follow-up.
  */
 export interface IntakeScreen extends RamassaScreen {
   readonly questions: readonly CustomQuestion[];
-  readonly builtinScreen?: WizardQuestionScreen | null;
+  readonly builtinScreen?: WizardQuestionScreen | DetailScreen | null;
 }
 
 export interface BuiltinOverride {

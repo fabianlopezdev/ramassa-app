@@ -806,6 +806,7 @@
     "elsewhere": "Ya se pregunta en el paso {{number}}",
     "elsewhereApp": "Ya se pregunta en otra pantalla",
     "withController": "Va con «{{field}}»",
+    "followUpOnly": "Solo en {{screens}}",
     "newField": "Campo nuevo…",
     "newFieldIn": "Se crea en {{section}}",
     "add_one": "Añade {{count}} campo",

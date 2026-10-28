@@ -31,6 +31,7 @@ import {
   customFormScreenConsents,
   customFormScreenQuestions,
 } from './custom-forms';
+import { followUpAsksSomething } from './follow-up-fields';
 import { flowStep, isShownToHer, movableOrder } from './player-plan';
 import {
   formOpensWhen,
@@ -184,8 +185,12 @@ export function onboardingScreenCounts(
   // Every follow-up, the app's and the team's, at any depth (RAPP-715).
   const branches = shown.filter((key) => isOnboardingBranch(catalog, key, order));
   const conditional =
-    DETAIL_SCREEN_BRANCHES.filter((branch) => (shown as readonly string[]).includes(branch.parent))
-      .length + branches.length;
+    // An app follow-up that asks her nothing never shows (RAPP-720).
+    DETAIL_SCREEN_BRANCHES.filter(
+      (branch) =>
+        (shown as readonly string[]).includes(branch.parent) &&
+        followUpAsksSomething(catalog, branch.screen),
+    ).length + branches.length;
   const roots = shown.length - branches.length;
   const terms = TERMS_SCREEN_COUNT;
   const onboarding = roots + 1;

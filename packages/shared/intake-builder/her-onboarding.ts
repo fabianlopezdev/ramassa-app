@@ -15,6 +15,7 @@
  * when she finishes, so it is never answered before, and it shows even when
  * no field is left on it.
  */
+import { isFollowUpScreen } from '../onboarding/follow-ups';
 import {
   customStepKey,
   WIZARD_QUESTION_SCREENS,
@@ -24,6 +25,7 @@ import {
   type QuestionScreen,
   type WizardQuestionScreen,
 } from '../onboarding/intake';
+import { DETAIL_SCREEN_BRANCHES } from '../onboarding/screen-texts';
 import { SYSTEM_FIELD_QUESTIONS } from '../onboarding/system-fields';
 import { isAskedGenerically, questionsOffTheirControl } from './app-controls';
 import {
@@ -48,7 +50,12 @@ import {
   type ProfileLayout,
   type ProfileSurface,
 } from './profile-layout';
-import { onboardingOpensWhen, onboardingScreenParent } from './screen-branches';
+import {
+  appBranchCondition,
+  detailBranch,
+  onboardingOpensWhen,
+  onboardingScreenParent,
+} from './screen-branches';
 
 /** A field as a question, worded and required as one of its placements says. */
 export function placedQuestion(
@@ -170,6 +177,32 @@ function appScreenGroup(catalog: IntakeCatalog, screen: WizardQuestionScreen): I
       };
 }
 
+/**
+ * The fields placed on an app follow-up (RAPP-720) that the generic renderer
+ * asks, after the follow-up's own fields, as one group that names the
+ * follow-up. It is never a step of its own: her phone shows it on the
+ * follow-up, which opens from its parent screen. Null when it holds none, or
+ * when its question is missing.
+ */
+function followUpGroup(
+  catalog: IntakeCatalog,
+  branch: (typeof DETAIL_SCREEN_BRANCHES)[number],
+): IntakeScreen | null {
+  if (appBranchCondition(catalog, branch) === null) return null;
+  const questions = onboardingScreenQuestions(catalog, branch.screen);
+  return questions.length === 0 && !hasSignatureBlocks(catalog.blocks, branch.screen)
+    ? null
+    : {
+        id: `app:${branch.screen}`,
+        title: {},
+        intro: null,
+        afterScreen: APP_SCREEN_ANCHORS[branch.parent],
+        isArchived: false,
+        builtinScreen: branch.screen,
+        questions,
+      };
+}
+
 /** The group of fields placed on an app screen, from her screens; undefined when none. */
 export function appScreenFields(
   screens: readonly IntakeScreen[],
@@ -182,8 +215,13 @@ export function appScreenFields(
 
 type PlannedScreen = {
   readonly id: string;
-  readonly builtinScreen?: WizardQuestionScreen | null;
+  readonly builtinScreen?: IntakeScreen['builtinScreen'];
 };
+
+/** The step a group of fields shows on: its app screen, or a follow-up's parent screen. */
+function groupStep(screen: string): WizardQuestionScreen {
+  return isFollowUpScreen(screen) ? detailBranch(screen).parent : (screen as WizardQuestionScreen);
+}
 
 /** Her onboarding's Ramassà part: what her phone shows and how the planner walks it. */
 export interface HerOnboarding {
@@ -219,10 +257,15 @@ export function herOnboarding(
     const group = appScreenGroup(catalog, screen);
     return group === null ? [] : [group];
   });
+  // The fields on the app's follow-ups (RAPP-720), drawn on the follow-up.
+  const onFollowUps = DETAIL_SCREEN_BRANCHES.flatMap((branch) => {
+    const group = followUpGroup(catalog, branch);
+    return group === null ? [] : [group];
+  });
   const signs = (screen: IntakeScreen) =>
     hasSignatureBlocks(catalog.blocks, screen.builtinScreen ?? screen.id);
   // A screen with no field left to ask still shows for its signature blocks.
-  const all = [...own, ...onAppScreens];
+  const all = [...own, ...onAppScreens, ...onFollowUps];
   const asked = new Map(withCustomAsking(all, asking).map((screen) => [screen.id, screen]));
   const shown = all.flatMap((screen) => {
     const kept = asked.get(screen.id);
@@ -234,6 +277,11 @@ export function herOnboarding(
     // holding its question, and opens while her answers meet its conditions.
     const own = catalog.screens.find((each) => each.id === screen.id);
     const opensWhen = own === undefined ? null : onboardingOpensWhen(catalog, own);
+    const builtin = screen.builtinScreen ?? null;
+    // A follow-up's fields (RAPP-720) are asked on its parent's step, when
+    // her answer there opens the follow-up.
+    const followUp = isFollowUpScreen(builtin) ? detailBranch(builtin) : null;
+    const opening = followUp === null ? null : appBranchCondition(catalog, followUp);
     return {
       id: screen.id,
       afterScreen: screen.afterScreen,
@@ -241,7 +289,8 @@ export function herOnboarding(
         !signs(screen) &&
         isScreenAnswered(screen, answers) &&
         !screen.questions.some((question) => asking.get(question.id) === true),
-      builtinScreen: screen.builtinScreen ?? null,
+      builtinScreen: builtin === null ? null : groupStep(builtin),
+      ...(opening === null ? {} : { opensWhen: [opening] }),
       ...(own === undefined || own.showWhen === undefined
         ? {}
         : { parent: onboardingScreenParent(catalog, own), opensWhen: opensWhen ?? [] }),
@@ -249,7 +298,9 @@ export function herOnboarding(
   });
   const order = wizardFlowOrder(plan, wizardFlow(catalog));
   const position = (screen: PlannedScreen) =>
-    order.indexOf(screen.builtinScreen ?? customStepKey(screen.id));
+    order.indexOf(
+      screen.builtinScreen == null ? customStepKey(screen.id) : groupStep(screen.builtinScreen),
+    );
   const byFlow = <Screen extends PlannedScreen>(list: readonly Screen[]) =>
     [...list].sort((a, b) => position(a) - position(b));
   return { screens: byFlow(shown), plan: byFlow(plan) };

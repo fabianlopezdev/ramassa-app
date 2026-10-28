@@ -806,6 +806,7 @@
     "elsewhere": "Ja es pregunta a Pas {{number}}",
     "elsewhereApp": "Ja es pregunta en una altra pantalla",
     "withController": "Va amb «{{field}}»",
+    "followUpOnly": "Només a {{screens}}",
     "newField": "Camp nou…",
     "newFieldIn": "Es crea a {{section}}",
     "add_one": "Afegeix {{count}} camp",
