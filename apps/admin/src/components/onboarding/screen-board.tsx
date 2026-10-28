@@ -956,8 +956,8 @@ function ScreenCard({
           'block rounded-xl',
           // A branch's two-line condition and its gap take 52px; measured on
           // the board, the phone loses 2.195px of height per px of width, so
-          // it is drawn 25.35px narrower and the card keeps every card's height.
-          isBranch && 'mx-auto w-[calc(100%-25.35px)]',
+          // it is drawn 25.5px narrower and the card keeps every card's height.
+          isBranch && 'mx-auto w-[calc(100%-25.5px)]',
         )}
       >
         {card.miniature}
