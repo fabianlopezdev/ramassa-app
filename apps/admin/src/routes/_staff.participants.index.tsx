@@ -18,7 +18,10 @@
  * meant to reach.
  */
 
-import { ParticipantsTable } from '@/components/participants/participants-table';
+import {
+  ParticipantsTable,
+  ParticipantsTablePending,
+} from '@/components/participants/participants-table';
 import { participantListColumns } from '@/lib/participant-list';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute } from '@tanstack/react-router';
@@ -52,6 +55,7 @@ export const Route = createFileRoute('/_staff/participants/')({
     ]);
     return { page, filterOptions, columns: participantListColumns(fields) };
   },
+  pendingComponent: ParticipantsTablePending,
   component: ParticipantsPage,
 });
 

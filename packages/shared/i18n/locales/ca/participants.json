@@ -1,4 +1,8 @@
 {
+  "listActions": "Opcions de participants",
+  "activeFilters": "Filtres actius",
+  "removeFilter": "Treu el filtre {{filter}}",
+  "emptyRosterTitle": "Encara no hi ha participants",
   "title": "Participants",
   "testPlayersTitle": "Jugadores de prova",
   "newTestPlayerAction": "Nova jugadora de prova",

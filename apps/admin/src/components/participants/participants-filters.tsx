@@ -1,39 +1,48 @@
-/**
- * The roster's filter bar (RAPP-23).
- *
- * The search box is the only control here that keeps state of its own, and only
- * the keystrokes it has not committed yet. Committing per keystroke would send
- * a query per letter and push a history entry per letter, so the back button
- * would walk backwards through "a", "am", "ami"; committing only on Enter
- * hides results behind a key most people never press on a search box. It
- * commits on a pause instead.
- *
- * The dropdowns commit immediately: a select is a decision, not a draft.
- */
-
+/** Participants filtering stays in the URL; only uncommitted search keystrokes are local. */
+import { Button } from '@/components/ui/button';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { ParticipantListColumns } from '@/lib/participant-list';
-import { cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { Info, Search, X } from 'lucide-react';
+import { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ParticipantFilterOptions, ParticipantSearch } from '@ramassa/shared/participants';
 
-/**
- * Long enough that ordinary typing produces one query rather than eight, short
- * enough that the table feels like it is keeping up. Tuned for a staff laptop
- * on the shelter's connection, not for a demo on fibre.
- */
 const SEARCH_DEBOUNCE_MS = 300;
 
 export interface ParticipantsFiltersProps {
   readonly search: ParticipantSearch;
   readonly filterOptions: ParticipantFilterOptions;
   readonly onChange: (next: Partial<ParticipantSearch>) => void;
-  /** The filters the feature registry reads (RAPP-664); every one when absent. */
   readonly shown?: Pick<ParticipantListColumns, 'nationality' | 'entity' | 'dependents'>;
 }
 
 const ALL_FILTERS = { nationality: true, entity: true, dependents: true } as const;
+export const CLEARED_PARTICIPANT_FILTERS = {
+  q: '',
+  entity: null,
+  nationality: null,
+  status: 'all',
+  dependents: 'all',
+} as const;
+
+export function hasParticipantFilters(search: ParticipantSearch): boolean {
+  return (
+    search.q !== '' ||
+    search.entity !== null ||
+    search.nationality !== null ||
+    search.status !== 'all' ||
+    search.dependents !== 'all'
+  );
+}
 
 export function ParticipantsFilters({
   search,
@@ -42,93 +51,195 @@ export function ParticipantsFilters({
   shown = ALL_FILTERS,
 }: ParticipantsFiltersProps) {
   const { t } = useTranslation('participants');
+  const searchId = useId();
+  const hintId = useId();
   const [draftQuery, setDraftQuery] = useState(search.q);
-
-  // The URL is the source of truth, so a back/forward navigation or a cleared
-  // filter has to be reflected in the box: without this the input keeps a term
-  // the table is no longer filtered by.
-  useEffect(() => {
-    setDraftQuery(search.q);
-  }, [search.q]);
-
+  useEffect(() => setDraftQuery(search.q), [search.q]);
   useEffect(() => {
     if (draftQuery === search.q) return;
     const timer = setTimeout(() => onChange({ q: draftQuery }), SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [draftQuery, search.q, onChange]);
 
+  function change(next: Partial<ParticipantSearch>) {
+    if (next.q !== undefined) setDraftQuery(next.q);
+    onChange(next);
+  }
+  const statusLabel =
+    search.status === 'active'
+      ? t('statusActive')
+      : search.status === 'inactive'
+        ? t('statusInactive')
+        : t('statusInvited');
+  const active: { key: string; label: string; value: string; clear: Partial<ParticipantSearch> }[] =
+    [
+      ...(search.q === ''
+        ? []
+        : [{ key: 'q', label: t('searchLabel'), value: search.q, clear: { q: '' } }]),
+      ...(search.entity === null
+        ? []
+        : [
+            {
+              key: 'entity',
+              label: t('filterEntity'),
+              value: search.entity,
+              clear: { entity: null },
+            },
+          ]),
+      ...(search.nationality === null
+        ? []
+        : [
+            {
+              key: 'nationality',
+              label: t('filterNationality'),
+              value: search.nationality,
+              clear: { nationality: null },
+            },
+          ]),
+      ...(search.status === 'all'
+        ? []
+        : [
+            {
+              key: 'status',
+              label: t('filterStatus'),
+              value: statusLabel,
+              clear: { status: 'all' as const },
+            },
+          ]),
+      ...(search.dependents === 'all'
+        ? []
+        : [
+            {
+              key: 'dependents',
+              label: t('filterDependents'),
+              value: search.dependents === 'with' ? t('dependentsWith') : t('dependentsWithout'),
+              clear: { dependents: 'all' as const },
+            },
+          ]),
+    ];
   return (
-    <div className="flex flex-wrap items-end gap-3">
-      <label className="flex min-w-64 flex-col gap-1">
-        <span className="text-sm font-medium">{t('searchLabel')}</span>
-        <Input
-          type="search"
-          value={draftQuery}
-          placeholder={t('searchPlaceholder')}
-          onChange={(event) => setDraftQuery(event.target.value)}
-        />
-        {/* Says what search does NOT cover. Without it, a staff member typing a
-            document number concludes the search is broken, when in fact those
-            columns are encrypted and deliberately unsearchable. */}
-        <span className="text-xs text-muted-foreground">{t('searchHint')}</span>
-      </label>
-
-      {shown.entity ? (
+    <div className="flex flex-col gap-4" data-testid="participants-filters">
+      <div className="flex flex-wrap items-center gap-3">
+        <Field className="min-w-0 flex-1 basis-64">
+          <FieldLabel htmlFor={searchId} className="sr-only">
+            {t('searchLabel')}
+          </FieldLabel>
+          <div className="relative">
+            <Search
+              aria-hidden
+              className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              id={searchId}
+              type="search"
+              value={draftQuery}
+              placeholder={t('searchPlaceholder')}
+              className="ps-9 pe-10"
+              aria-describedby={hintId}
+              onChange={(event) => setDraftQuery(event.target.value)}
+            />
+            <span id={hintId} className="sr-only">
+              {t('searchHint')}
+            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="absolute end-1 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  aria-label={t('searchHint')}
+                >
+                  <Info aria-hidden />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('searchHint')}</TooltipContent>
+            </Tooltip>
+          </div>
+        </Field>
+        {active.length === 0 && draftQuery === '' ? null : (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => change(CLEARED_PARTICIPANT_FILTERS)}
+            data-testid="participants-clear-filters"
+          >
+            <X aria-hidden data-icon="inline-start" />
+            {t('clearFilters')}
+          </Button>
+        )}
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {shown.entity ? (
+          <FilterSelect
+            label={t('filterEntity')}
+            value={search.entity ?? ''}
+            allLabel={t('optionAll')}
+            options={filterOptions.entities}
+            onSelect={(value) => change({ entity: value === '' ? null : value })}
+          />
+        ) : null}
+        {shown.nationality ? (
+          <FilterSelect
+            label={t('filterNationality')}
+            value={search.nationality ?? ''}
+            allLabel={t('optionAll')}
+            options={filterOptions.nationalities}
+            onSelect={(value) => change({ nationality: value === '' ? null : value })}
+          />
+        ) : null}
         <FilterSelect
-          label={t('filterEntity')}
-          value={search.entity ?? ''}
-          allLabel={t('optionAll')}
-          options={filterOptions.entities}
-          onSelect={(value) => onChange({ entity: value === '' ? null : value })}
-        />
-      ) : null}
-      {shown.nationality ? (
-        <FilterSelect
-          label={t('filterNationality')}
-          value={search.nationality ?? ''}
-          allLabel={t('optionAll')}
-          options={filterOptions.nationalities}
-          onSelect={(value) => onChange({ nationality: value === '' ? null : value })}
-        />
-      ) : null}
-      <FilterSelect
-        label={t('filterStatus')}
-        value={search.status}
-        allLabel={t('optionAll')}
-        options={[
-          { value: 'active', label: t('statusActive') },
-          { value: 'inactive', label: t('statusInactive') },
-          { value: 'invited', label: t('statusInvited') },
-        ]}
-        allValue="all"
-        onSelect={(value) => onChange({ status: value as ParticipantSearch['status'] })}
-      />
-      {shown.dependents ? (
-        <FilterSelect
-          label={t('filterDependents')}
-          value={search.dependents}
+          label={t('filterStatus')}
+          value={search.status}
           allLabel={t('optionAll')}
           options={[
-            { value: 'with', label: t('dependentsWith') },
-            { value: 'without', label: t('dependentsWithout') },
+            { value: 'active', label: t('statusActive') },
+            { value: 'inactive', label: t('statusInactive') },
+            { value: 'invited', label: t('statusInvited') },
           ]}
           allValue="all"
-          onSelect={(value) => onChange({ dependents: value as ParticipantSearch['dependents'] })}
+          onSelect={(value) => change({ status: value as ParticipantSearch['status'] })}
         />
-      ) : null}
+        {shown.dependents ? (
+          <FilterSelect
+            label={t('filterDependents')}
+            value={search.dependents}
+            allLabel={t('optionAll')}
+            options={[
+              { value: 'with', label: t('dependentsWith') },
+              { value: 'without', label: t('dependentsWithout') },
+            ]}
+            allValue="all"
+            onSelect={(value) => change({ dependents: value as ParticipantSearch['dependents'] })}
+          />
+        ) : null}
+      </div>
+      {active.length === 0 ? null : (
+        <div className="flex flex-wrap gap-2" role="group" aria-label={t('activeFilters')}>
+          {active.map((filter) => (
+            <Button
+              key={filter.key}
+              type="button"
+              variant="outline"
+              size="sm"
+              className="max-w-full"
+              onClick={() => change(filter.clear)}
+              aria-label={t('removeFilter', { filter: `${filter.label}: ${filter.value}` })}
+            >
+              <span className="truncate">
+                {filter.label}: {filter.value}
+              </span>
+              <X aria-hidden data-icon="inline-end" />
+            </Button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 type SelectOption = string | { value: string; label: string };
 
-/**
- * A native `<select>`, deliberately. It is keyboard accessible, screen-reader
- * announced and touch-friendly on every platform without a line of code, and
- * the roster's filters are exactly the plain one-of-many choice it was designed
- * for. A custom listbox here would be work spent re-implementing behaviour the
- * browser already gets right.
- */
 function FilterSelect({
   label,
   value,
@@ -137,35 +248,40 @@ function FilterSelect({
   allValue = '',
   onSelect,
 }: {
-  label: string;
-  value: string;
-  options: readonly SelectOption[];
-  allLabel: string;
-  allValue?: string;
-  onSelect: (value: string) => void;
+  readonly label: string;
+  readonly value: string;
+  readonly options: readonly SelectOption[];
+  readonly allLabel: string;
+  readonly allValue?: string;
+  readonly onSelect: (value: string) => void;
 }) {
+  const id = useId();
+  const { i18n } = useTranslation();
+  const entries = options.map((option) =>
+    typeof option === 'string' ? { value: option, label: option } : option,
+  );
+  if (value !== allValue && !entries.some((entry) => entry.value === value))
+    entries.unshift({ value, label: value });
   return (
-    <label className="flex flex-col gap-1">
-      <span className="text-sm font-medium">{label}</span>
-      <select
-        value={value}
-        onChange={(event) => onSelect(event.target.value)}
-        className={cn(
-          'h-9 min-w-40 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs',
-          'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 outline-none',
-        )}
+    <Field className="min-w-0">
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <Select
+        dir={i18n.dir()}
+        value={value === allValue ? 'all' : `value:${value}`}
+        onValueChange={(next) => onSelect(next === 'all' ? allValue : next.slice(6))}
       >
-        <option value={allValue}>{allLabel}</option>
-        {options.map((option) => {
-          const optionValue = typeof option === 'string' ? option : option.value;
-          const optionLabel = typeof option === 'string' ? option : option.label;
-          return (
-            <option key={optionValue} value={optionValue}>
-              {optionLabel}
-            </option>
-          );
-        })}
-      </select>
-    </label>
+        <SelectTrigger id={id} className="h-9 w-full min-w-0">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent position="popper">
+          <SelectItem value="all">{allLabel}</SelectItem>
+          {entries.map((option) => (
+            <SelectItem key={option.value} value={`value:${option.value}`}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </Field>
   );
 }

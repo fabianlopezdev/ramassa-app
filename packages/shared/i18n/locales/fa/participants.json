@@ -1,4 +1,8 @@
 {
+  "listActions": "گزینه‌های شرکت‌کنندگان",
+  "activeFilters": "فیلترهای فعال",
+  "removeFilter": "حذف فیلتر {{filter}}",
+  "emptyRosterTitle": "هنوز شرکت‌کننده‌ای وجود ندارد",
   "title": "شرکت‌کنندگان",
   "summary": "{{count}} شرکت‌کننده",
   "summary_one": "۱ شرکت‌کننده",

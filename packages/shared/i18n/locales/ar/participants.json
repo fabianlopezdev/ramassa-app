@@ -1,4 +1,8 @@
 {
+  "listActions": "خيارات المشاركات",
+  "activeFilters": "عوامل التصفية النشطة",
+  "removeFilter": "إزالة عامل التصفية {{filter}}",
+  "emptyRosterTitle": "لا توجد مشاركات بعد",
   "title": "المشاركات",
   "summary": "{{count}} مشاركة",
   "summary_one": "مشاركة واحدة",

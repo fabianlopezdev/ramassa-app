@@ -15,14 +15,31 @@
 
 import { DataTable } from '@/components/data-table/data-table';
 import { DataTablePager } from '@/components/data-table/data-table-pager';
-import { Page } from '@/components/layout/page';
-import { ParticipantsFilters } from '@/components/participants/participants-filters';
+import {
+  DataTableEmpty,
+  DataTablePanel,
+  DataTableSkeleton,
+} from '@/components/data-table/data-table-panel';
+import { Page, PageHeader } from '@/components/layout/page';
+import {
+  CLEARED_PARTICIPANT_FILTERS,
+  hasParticipantFilters,
+  ParticipantsFilters,
+} from '@/components/participants/participants-filters';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { ParticipantListColumns } from '@/lib/participant-list';
 import { Link, useNavigate } from '@tanstack/react-router';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { useMemo } from 'react';
+import { Ellipsis, Plus, Users } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
 import {
@@ -145,12 +162,19 @@ export function ParticipantsTable({
         id: 'status',
         header: t('columnStatus'),
         enableSorting: false,
-        cell: ({ row }) =>
-          !row.original.joined
-            ? t('rowInvited')
-            : row.original.is_active
-              ? t('rowActive')
-              : t('rowInactive'),
+        cell: ({ row }) => (
+          <Badge
+            variant={
+              !row.original.joined ? 'muted' : row.original.is_active ? 'secondary' : 'outline'
+            }
+          >
+            {!row.original.joined
+              ? t('rowInvited')
+              : row.original.is_active
+                ? t('rowActive')
+                : t('rowInactive')}
+          </Badge>
+        ),
       },
     ];
     return all.filter(
@@ -163,110 +187,154 @@ export function ParticipantsTable({
    * after narrowing to three results shows an empty table and reads as "no
    * matches", which is the most common way a filtered table lies.
    */
-  function applySearch(next: Partial<ParticipantSearch>) {
-    void navigate({ search: (previous) => ({ ...previous, page: 1, ...next }) });
-  }
+  const applySearch = useCallback(
+    (next: Partial<ParticipantSearch>) => {
+      void navigate({ search: (previous) => ({ ...previous, page: 1, ...next }) });
+    },
+    [navigate],
+  );
 
   const sorting: SortingState = [{ id: search.sort, desc: search.dir === 'desc' }];
   // The onboarding design role (RAPP-615) works with test players only: no
   // queues, invitations or season view, which all hold real participants.
   const testPlayersOnly = isLimitedToTestPlayers(permissions);
 
+  const isFiltered = hasParticipantFilters(search);
+  const newAction = testPlayersOnly ? t('newTestPlayerAction') : t('newAction');
+  const createParticipant = (
+    <Button asChild>
+      <Link to="/participants/new">
+        <Plus aria-hidden data-icon="inline-start" />
+        {newAction}
+      </Link>
+    </Button>
+  );
+
   return (
-    <Page className="gap-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold">
-            {testPlayersOnly ? t('testPlayersTitle') : t('title')}
-          </h1>
-          <p className="text-sm text-muted-foreground">{t('summary', { count: page.total })}</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          {testPlayersOnly ? null : (
-            <>
-              <Button asChild size="lg" variant="outline">
-                <Link to="/participants/referrals">{t('referrals:staffQueueAction')}</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link to="/participants/deletion-requests">{t('deletionRequestsTitle')}</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link to="/participants/invites">{t('invitesAction')}</Link>
-              </Button>
-              {/* Walk-ins who signed on a staff tablet (RAPP-305). */}
-              {permissions.has('participants.invite') ? (
-                <Button asChild size="lg" variant="outline">
-                  <Link to="/participants/walk-ins">{t('walkIns.action')}</Link>
-                </Button>
-              ) : null}
-              {/* Who has re-registered for the current season (RAPP-306). */}
-              <Button asChild size="lg" variant="outline">
-                <Link to="/participants/season">{t('seasonViewAction')}</Link>
-              </Button>
-            </>
-          )}
-          <Button asChild size="lg">
-            <Link to="/participants/new">
-              {testPlayersOnly ? t('newTestPlayerAction') : t('newAction')}
-            </Link>
-          </Button>
-        </div>
-      </header>
-
-      <ParticipantsFilters
-        search={search}
-        filterOptions={filterOptions}
-        onChange={applySearch}
-        shown={shown}
-      />
-
-      <DataTable
-        columns={columns}
-        rows={page.rows}
-        sorting={sorting}
-        onSortingChange={(next) => {
-          const [first] = next;
-          if (first === undefined) return;
-          applySearch({
-            sort: first.id as ParticipantSortColumn,
-            dir: first.desc ? 'desc' : 'asc',
-          });
-        }}
-        empty={
-          // An empty state that says what to DO. "No results" alone leaves a
-          // staff member wondering whether the roster is empty or her filters
-          // are wrong, and those need different reactions.
-          <div className="flex flex-col items-start gap-3 rounded-md border border-dashed p-8">
-            <p className="font-medium">{t('emptyTitle')}</p>
-            <p className="text-sm text-muted-foreground">{t('emptyBody')}</p>
-            <Button
-              variant="outline"
-              onClick={() =>
-                void navigate({
-                  search: () => ({
-                    q: '',
-                    entity: null,
-                    nationality: null,
-                    status: 'all' as const,
-                    dependents: 'all' as const,
-                    sort: search.sort,
-                    dir: search.dir,
-                    page: 1,
-                  }),
-                })
-              }
-            >
-              {t('clearFilters')}
-            </Button>
-          </div>
+    <Page data-testid="participants-list-page">
+      <PageHeader
+        title={testPlayersOnly ? t('testPlayersTitle') : t('title')}
+        description={t('summary', { count: page.total })}
+        actions={
+          <>
+            {testPlayersOnly ? null : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label={t('listActions')}
+                    title={t('listActions')}
+                  >
+                    <Ellipsis aria-hidden />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                  <DropdownMenuItem asChild>
+                    <Link to="/participants/referrals">{t('referrals:staffQueueAction')}</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/participants/deletion-requests">{t('deletionRequestsTitle')}</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/participants/invites">{t('invitesAction')}</Link>
+                  </DropdownMenuItem>
+                  {permissions.has('participants.invite') ? (
+                    <DropdownMenuItem asChild>
+                      <Link to="/participants/walk-ins">{t('walkIns.action')}</Link>
+                    </DropdownMenuItem>
+                  ) : null}
+                  <DropdownMenuItem asChild>
+                    <Link to="/participants/season">{t('seasonViewAction')}</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            {createParticipant}
+          </>
         }
       />
+      <DataTablePanel
+        toolbar={
+          <ParticipantsFilters
+            search={search}
+            filterOptions={filterOptions}
+            onChange={applySearch}
+            shown={shown}
+          />
+        }
+        footer={
+          <DataTablePager
+            page={search.page}
+            pages={pages}
+            onPageChange={(next) => void navigate({ search: (prev) => ({ ...prev, page: next }) })}
+          />
+        }
+      >
+        <DataTable
+          columns={columns}
+          rows={page.rows}
+          sorting={sorting}
+          onSortingChange={(next) => {
+            const [first] = next;
+            if (first === undefined) return;
+            applySearch({
+              sort: first.id as ParticipantSortColumn,
+              dir: first.desc ? 'desc' : 'asc',
+            });
+          }}
+          empty={
+            <DataTableEmpty
+              icon={<Users aria-hidden className="size-5" />}
+              title={isFiltered ? t('emptyTitle') : t('emptyRosterTitle')}
+              actions={
+                isFiltered ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => applySearch(CLEARED_PARTICIPANT_FILTERS)}
+                  >
+                    {t('clearFilters')}
+                  </Button>
+                ) : (
+                  createParticipant
+                )
+              }
+            />
+          }
+        />
+      </DataTablePanel>
+    </Page>
+  );
+}
 
-      <DataTablePager
-        page={search.page}
-        pages={pages}
-        onPageChange={(next) => void navigate({ search: (prev) => ({ ...prev, page: next }) })}
-      />
+/** The same list card while the route loader is pending, without a false zero count. */
+export function ParticipantsTablePending() {
+  const { t } = useTranslation('common');
+  return (
+    <Page role="status" aria-label={t('loading')}>
+      <div aria-hidden className="flex items-start justify-between gap-6">
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-8 w-48 motion-reduce:animate-none" />
+          <Skeleton className="h-4 w-24 motion-reduce:animate-none" />
+        </div>
+        <Skeleton className="h-8 w-32 motion-reduce:animate-none" />
+      </div>
+      <DataTablePanel
+        toolbar={
+          <div aria-hidden className="flex flex-col gap-4">
+            <Skeleton className="h-9 w-full motion-reduce:animate-none" />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }, (_, index) => (
+                <Skeleton key={index} className="h-14 w-full motion-reduce:animate-none" />
+              ))}
+            </div>
+          </div>
+        }
+      >
+        <DataTableSkeleton />
+      </DataTablePanel>
     </Page>
   );
 }

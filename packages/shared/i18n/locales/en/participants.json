@@ -1,4 +1,8 @@
 {
+  "listActions": "Participant options",
+  "activeFilters": "Active filters",
+  "removeFilter": "Remove filter {{filter}}",
+  "emptyRosterTitle": "No participants yet",
   "title": "Participants",
   "testPlayersTitle": "Test players",
   "newTestPlayerAction": "New test player",
