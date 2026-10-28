@@ -378,16 +378,9 @@ export interface FamilyMember {
  * board's own small phones (RAPP-715). The one being edited is marked; a
  * click opens another. Shown only for a family of more than one screen.
  */
-export function FamilyRow({
-  members,
-  add,
-}: {
-  readonly members: readonly FamilyMember[];
-  /** The last + tile (RAPP-717): a screen that depends on the one being edited. */
-  readonly add?: AddDependent;
-}) {
+export function FamilyRow({ members }: { readonly members: readonly FamilyMember[] }) {
   const { t } = useTranslation('settings');
-  if (members.length < 2 && add === undefined) return null;
+  if (members.length < 2) return null;
   return (
     <nav aria-label={t('onboardingBoard.condition.family')} data-testid="screen-family">
       <ol className="flex gap-3 overflow-x-auto pb-2">
@@ -414,42 +407,43 @@ export function FamilyRow({
             </Link>
           </li>
         ))}
-        {add === undefined ? null : (
-          <li className="flex w-32 shrink-0">
-            <AddDependentTile add={add} />
-          </li>
-        )}
       </ol>
     </nav>
   );
 }
 
-/** The family row's last tile (RAPP-717): dashed like a board's add card; off, the hover gives the reason. */
-function AddDependentTile({ add }: { readonly add: AddDependent }) {
+/**
+ * Under the phone preview of a screen's editor (RAPP-718): adds a screen that
+ * depends on this one; the dialog asks which answers open it. Off, with the
+ * reason on hover, for a screen with no question with options.
+ */
+export function AddDependentButton({ add }: { readonly add: AddDependent }) {
   const { t } = useTranslation('settings');
   const label = t('onboardingBoard.addDependent');
-  const tile = (
-    <button
+  const button = (
+    <Button
       type="button"
+      variant="outline"
+      className="w-full"
       disabled={!add.canAdd}
       onClick={add.open}
-      aria-label={add.canAdd ? label : `${label}: ${add.reason ?? ''}`}
-      className="group/add flex w-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-foreground/20 bg-muted p-2 text-center text-xs font-medium text-muted-foreground transition-colors outline-none hover:border-primary/60 hover:bg-primary/5 hover:text-primary focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
-      data-testid="screen-family-add"
+      data-testid="screen-add-dependent"
     >
-      <span className="flex size-9 items-center justify-center rounded-full border border-dashed border-current">
-        <Plus aria-hidden className="size-4" />
-      </span>
+      <Plus aria-hidden data-icon="inline-start" />
       {label}
-    </button>
+    </Button>
   );
-  if (add.canAdd) return tile;
+  if (add.canAdd) return <div className="w-full max-w-[20rem]">{button}</div>;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         {/* A disabled button gets no hover: the wrapper carries the reason. */}
-        <span className="flex w-full" tabIndex={0} data-testid="screen-family-add-reason">
-          {tile}
+        <span
+          className="flex w-full max-w-[20rem]"
+          tabIndex={0}
+          data-testid="screen-add-dependent-reason"
+        >
+          {button}
         </span>
       </TooltipTrigger>
       <TooltipContent>{add.reason}</TooltipContent>

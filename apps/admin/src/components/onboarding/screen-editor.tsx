@@ -105,6 +105,7 @@ import {
   type BoardCardLink,
 } from './screen-board';
 import {
+  AddDependentButton,
   conditionSources,
   FamilyRow,
   ScreenConditionSection,
@@ -458,12 +459,10 @@ function CustomScreenEditor({
       number={number}
       total={total}
       saveKind={ONBOARDING_SAVES_AT_ONCE}
+      previewFooter={<AddDependentButton add={dependent.addFor(key)} />}
       family={
         <>
-          <FamilyRow
-            members={onboardingFamilyMembers(catalog, key, language, t)}
-            add={dependent.addFor(key)}
-          />
+          <FamilyRow members={onboardingFamilyMembers(catalog, key, language, t)} />
           {dependent.dialog}
         </>
       }
@@ -572,6 +571,7 @@ export function StaffScreenEditor({
   hide,
   fields,
   family = null,
+  previewFooter,
   condition = null,
 }: {
   readonly screen: { readonly title: BuilderText; readonly intro: BuilderText | null };
@@ -596,6 +596,8 @@ export function StaffScreenEditor({
   readonly fields: (row: RowEditing, language: LanguageCode, screenName: string) => ReactNode;
   /** The screen and its follow-ups as small phones, above the editor (RAPP-715). */
   readonly family?: ReactNode;
+  /** Under the phone preview: add a dependent screen (RAPP-718). */
+  readonly previewFooter?: ReactNode;
   /** "Quan es mostra": the answer that opens it (RAPP-715). */
   readonly condition?: ReactNode;
 }) {
@@ -679,6 +681,7 @@ export function StaffScreenEditor({
     <div className="flex flex-col gap-6">
       {family}
       <EditorColumns
+        previewFooter={previewFooter}
         language={language}
         onLanguageChange={setLanguage}
         previewLanguage={previewLanguage}
@@ -943,8 +946,6 @@ function AppScreenEditor({
     <div className="flex flex-col gap-6">
       <FamilyRow
         members={onboardingFamilyMembers(catalog, detail ?? step.key, dashboardLanguage, t)}
-        // The summary and the app terms end the onboarding: nothing depends on them.
-        add={step.kind === 'locked' ? undefined : dependent.addFor(detail ?? step.key)}
       />
       {dependent.dialog}
       <EditorColumns
@@ -955,6 +956,12 @@ function AppScreenEditor({
         previewLabel={t('onboardingBoard.phone')}
         previewNote={t('onboardingBoard.phoneNote')}
         previewLanguageLabel={t('onboardingBoard.phoneLanguage')}
+        previewFooter={
+          // The summary and the app terms end the onboarding: nothing depends on them.
+          step.kind === 'locked' ? undefined : (
+            <AddDependentButton add={dependent.addFor(detail ?? step.key)} />
+          )
+        }
         preview={phone}
         form={
           detail !== null ? (

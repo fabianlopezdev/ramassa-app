@@ -21,6 +21,7 @@ export function EditorColumns({
   previewNote,
   form,
   preview,
+  previewFooter,
   previewLanguageTestId = 'phone-language',
 }: {
   readonly language: LanguageCode;
@@ -34,6 +35,8 @@ export function EditorColumns({
   readonly previewNote?: string;
   readonly form: ReactNode;
   readonly preview: ReactNode;
+  /** Under the preview, such as the button that adds a dependent screen (RAPP-718). */
+  readonly previewFooter?: ReactNode;
   readonly previewLanguageTestId?: string;
 }) {
   const { t } = useTranslation('settings');
@@ -68,6 +71,7 @@ export function EditorColumns({
           </p>
         )}
         {preview}
+        {previewFooter}
       </aside>
     </div>
   );

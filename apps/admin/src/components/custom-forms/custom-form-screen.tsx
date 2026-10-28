@@ -17,6 +17,7 @@ import { Page } from '@/components/layout/page';
 import { PhoneMiniature } from '@/components/onboarding/phone-preview';
 import { useAddDependentScreen } from '@/components/onboarding/screen-board';
 import {
+  AddDependentButton,
   conditionSources,
   FamilyRow,
   ScreenConditionSection,
@@ -212,9 +213,10 @@ function FormScreenBody({
       screen={screen}
       number={number}
       total={total}
+      previewFooter={<AddDependentButton add={dependent.addFor(screen.id)} />}
       family={
         <>
-          <FamilyRow members={family} add={dependent.addFor(screen.id)} />
+          <FamilyRow members={family} />
           {dependent.dialog}
         </>
       }
