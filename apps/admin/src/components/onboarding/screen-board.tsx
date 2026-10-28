@@ -26,6 +26,7 @@
  * on the follow-up tab. A branch moves with its screen and hides with it.
  */
 
+import { ChoiceCards } from '@/components/custom-forms/form-choices';
 import { useReload } from '@/components/settings/onboarding-design-sections';
 import {
   useSortableAccessibility,
@@ -58,17 +59,26 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { customStepKey, DETAIL_SCREEN_BRANCHES, type WizardStepKey } from '@ramassa/shared/intake';
+import { customStepKey, type ScreenCondition, type WizardStepKey } from '@ramassa/shared/intake';
 import {
   AUTHORIZATION_FORM_REF,
   authorizationScreenCount,
   chainedCustomForm,
   chainedFormScreenCount,
   customFormRef,
+  detailBranch,
   flowStepName,
+  isDetailScreen,
+  movableOrder,
+  onboardingConditionOf,
+  onboardingFamily,
+  onboardingParentOf,
+  onboardingRootOf,
+  onboardingRoots,
   saveBuiltinScreen,
   saveIntakeScreen,
   saveOnboardingFormChain,
+  saveScreenCondition,
   saveWizardFlowOrder,
   screenSettingsFor,
   setScreenHidden,
@@ -77,25 +87,29 @@ import {
   wizardFlow,
   type ChainedFormRef,
   type IntakeCatalog,
+  type RamassaScreen,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import {
-  allSteps,
   BOARD_LOCKED_STEPS,
+  boardNumbers,
+  boardRootCount,
   boardStep,
   isShownToHer,
   linkedFormOf,
-  movableOrder,
   routeIdOf,
   type BoardStep,
 } from './board-steps';
 import { FormMiniature, PhoneMiniature } from './phone-preview';
 import {
-  branchConditionLine,
-  detailScreenContent,
-  stepContent,
-  type Translate,
-} from './screen-content';
+  completeCondition,
+  ConditionFields,
+  conditionSources,
+  EMPTY_CONDITION,
+  type ConditionDraft,
+  type ConditionSource,
+} from './screen-condition';
+import { conditionLine, detailScreenContent, stepContent, type Translate } from './screen-content';
 import { builtinHideLockKey, teamHideLockKey } from './screen-hiding';
 
 /** Every card shares one track width, so each row's cards have one size. */
@@ -118,18 +132,126 @@ export function ScreenBoard({
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const reload = useReload();
   const createOnboardingScreen = useCreateOnboardingScreen();
-  const initial = movableOrder(catalog);
+  // Every movable step in her order, the follow-ups right after their screen (RAPP-715).
+  const order = movableOrder(catalog);
+  // The board's own cards: the screens that depend on no answer.
+  const initial = onboardingRoots(catalog, order);
   const hidden = wizardFlow(catalog).hiddenScreens;
-  // Her place in the flow, as the screen editor's phone counts it (RAPP-706).
-  const allKeys = allSteps(catalog).map((each) => each.key);
+  const numbers = boardNumbers(catalog);
+  const total = boardRootCount(catalog);
+  const rootNumber = (key: string) => Number.parseInt(numbers.get(key) ?? '0', 10);
+  const isOwnHidden = (key: string): boolean => {
+    const step = boardStep(catalog, key);
+    if (step === null) return false;
+    if (step.kind === 'builtin') return hidden.has(step.key);
+    return step.kind === 'custom' && step.screen.isHidden === true;
+  };
+  /** The screen above it that hides it (RAPP-711, RAPP-715), if any. */
+  const hidingAncestor = (key: string): string | null => {
+    let current = onboardingParentOf(catalog, key);
+    for (let depth = 0; current !== null && depth < 64; depth += 1) {
+      if (isOwnHidden(current)) return current;
+      current = onboardingParentOf(catalog, current);
+    }
+    return null;
+  };
+  const nameOf = (key: string): string => {
+    if (isDetailScreen(key)) return t(`builtinScreens.screenName.${key}`);
+    const step = boardStep(catalog, key);
+    return step === null ? '' : stepName(step, language, t);
+  };
+  const teamHide = (screen: RamassaScreen, isHidden: boolean): BoardCardHide => {
+    const lock = teamHideLockKey(catalog, 'onboarding', screen.id);
+    return {
+      isHidden,
+      canHide: lock === null || isHidden,
+      reason: lock === null ? undefined : t(lock),
+      toggle: async () => {
+        await setScreenHidden(supabase, screen.id, !isHidden);
+        await reload();
+      },
+    };
+  };
+  // A follow-up's card (RAPP-713, RAPP-715): the app's own, or a team screen
+  // that depends on an answer, at any depth.
+  const branchCard = (key: string, suffix: string, root: string): BoardCard | null => {
+    const ancestor = hidingAncestor(key);
+    const number = rootNumber(root);
+    const condition = onboardingConditionOf(catalog, key);
+    if (isDetailScreen(key)) {
+      const isHidden = ancestor !== null;
+      return {
+        key,
+        suffix,
+        name: nameOf(key),
+        miniature: (
+          <PhoneMiniature
+            content={detailScreenContent(catalog, key, language, t)}
+            language={language}
+            isDimmed={isHidden}
+            step={number}
+            total={total}
+          />
+        ),
+        status: isHidden ? t('builtinScreens.hiddenBadge') : null,
+        note: conditionLine(
+          catalog,
+          condition,
+          language,
+          t,
+          detailBranch(key).condition.repeatsPerAnswer === true,
+        ),
+        hide: {
+          ...lockedHide(t('onboardingBoard.branchFollows', { screen: nameOf(root) })),
+          isHidden,
+        },
+        link: {
+          to: '/onboarding/screens/$screenId',
+          params: { screenId: routeIdOf(root) },
+          search: { shown: key },
+        },
+      };
+    }
+    const step = boardStep(catalog, key);
+    if (step === null || step.kind !== 'custom') return null;
+    const isHidden = step.screen.isHidden === true || ancestor !== null;
+    const isOrphan = onboardingParentOf(catalog, key) === null;
+    const status = isHidden
+      ? t('builtinScreens.hiddenBadge')
+      : !isShownToHer(catalog, step.screen) || isOrphan
+        ? t('onboardingBoard.notShown')
+        : null;
+    return {
+      key,
+      suffix,
+      name: nameOf(key),
+      miniature: (
+        <PhoneMiniature
+          content={stepContent(catalog, step, language, t)}
+          language={language}
+          isDimmed={status !== null}
+          step={number}
+          total={total}
+        />
+      ),
+      status,
+      note: conditionLine(catalog, condition, language, t),
+      hide:
+        ancestor === null
+          ? teamHide(step.screen, step.screen.isHidden === true)
+          : {
+              ...lockedHide(t('onboardingBoard.branchFollowsHidden', { screen: nameOf(ancestor) })),
+              isHidden: true,
+            },
+      link: { to: '/onboarding/screens/$screenId', params: { screenId: routeIdOf(key) } },
+    };
+  };
   const card = (key: string): BoardCard | null => {
     const step = boardStep(catalog, key);
     if (step === null) return null;
     const content = stepContent(catalog, step, language, t);
     const linked = linkedFormOf(step.key);
-    const isHidden =
-      (step.kind === 'builtin' && hidden.has(step.key)) ||
-      (step.kind === 'custom' && step.screen.isHidden === true);
+    const isHidden = isOwnHidden(key);
     const status = isHidden
       ? t('builtinScreens.hiddenBadge')
       : step.kind === 'custom' && !isShownToHer(catalog, step.screen)
@@ -154,43 +276,17 @@ export function ScreenBoard({
           },
         };
       }
-      const lock = teamHideLockKey(catalog, 'onboarding', step.screen.id);
-      return {
-        isHidden,
-        canHide: lock === null || isHidden,
-        reason: lock === null ? undefined : t(lock),
-        toggle: async () => {
-          await setScreenHidden(supabase, step.screen.id, !isHidden);
-          await reload();
-        },
-      };
+      return teamHide(step.screen, isHidden);
     };
     const name = linked === null ? stepName(step, language, t) : t(linked.labelKey);
-    const number = allKeys.indexOf(step.key) + 1;
-    // Her follow-up screens (RAPP-713): drawn as the editor's second tab draws them.
-    const branches = DETAIL_SCREEN_BRANCHES.filter((branch) => branch.parent === step.key).map(
-      (branch): BoardCard => ({
-        key: branch.screen,
-        name: t(`builtinScreens.screenName.${branch.screen}`),
-        miniature: (
-          <PhoneMiniature
-            content={detailScreenContent(catalog, branch.screen, language, t)}
-            language={language}
-            isDimmed={isHidden}
-            step={number}
-            total={allKeys.length}
-          />
-        ),
-        status: isHidden ? t('builtinScreens.hiddenBadge') : null,
-        note: branchConditionLine(catalog, branch.condition, language, t),
-        hide: { ...lockedHide(t('onboardingBoard.branchFollows', { screen: name })), isHidden },
-        link: {
-          to: '/onboarding/screens/$screenId',
-          params: { screenId: routeIdOf(step.key) },
-          search: { shown: 'detail' },
-        },
-      }),
-    );
+    const number = rootNumber(step.key);
+    // Every follow-up below it, depth first (RAPP-715): 3a, 3a.1, 3b.
+    const branches = onboardingFamily(catalog, step.key, '', order)
+      .slice(1)
+      .map((member) => branchCard(member.key, member.number, step.key))
+      .filter((each): each is BoardCard => each !== null);
+    // A team screen whose question is asked nowhere keeps its own card, with its condition.
+    const condition = step.kind === 'custom' ? (step.screen.showWhen ?? null) : null;
     return {
       key: step.key,
       name,
@@ -207,12 +303,13 @@ export function ScreenBoard({
           <PhoneMiniature
             content={content}
             language={language}
-            isDimmed={status !== null}
+            isDimmed={status !== null || condition !== null}
             step={number}
-            total={allKeys.length}
+            total={total}
           />
         ),
-      status,
+      status: status ?? (condition === null ? null : t('onboardingBoard.notShown')),
+      ...(condition === null ? {} : { note: conditionLine(catalog, condition, language, t) }),
       ...(branches.length === 0 ? {} : { branches }),
       hide: hide(),
       isLinked: linked !== null,
@@ -229,15 +326,37 @@ export function ScreenBoard({
   return (
     <div className="flex flex-col gap-6">
       <FormBoard
-        key={initial.join('|')}
+        key={order.join('|')}
         label={t('onboardingBoard.listLabel')}
         movable={cards(initial)}
         trailing={cards(BOARD_LOCKED_STEPS)}
-        addCard={<AddScreenCard onCreate={(name) => createOnboardingScreen(name, initial)} />}
+        addCard={
+          <AddScreenCard
+            sources={conditionSources(
+              catalog,
+              order,
+              'onboarding',
+              (key) => ({
+                name: nameOf(key),
+                number: numbers.get(key) ?? '',
+                screenKey: routeIdOf(key),
+              }),
+              language,
+            )}
+            catalog={catalog}
+            onCreate={(name, condition) => createOnboardingScreen(catalog, name, order, condition)}
+          />
+        }
         isAddCardFirst
         onReorder={async (next) => {
-          // The same call the old order list used (`saveWizardFlowOrder`).
-          await saveWizardFlowOrder(supabase, next as readonly WizardStepKey[]);
+          // The same call the old order list used (`saveWizardFlowOrder`): each
+          // screen goes with every follow-up below it (RAPP-715).
+          await saveWizardFlowOrder(
+            supabase,
+            next.flatMap((root) =>
+              order.filter((key) => key === root || onboardingRootOf(catalog, key) === root),
+            ) as readonly WizardStepKey[],
+          );
           await reload();
         }}
       />
@@ -423,8 +542,8 @@ export type BoardCardLink =
   | {
       readonly to: '/onboarding/screens/$screenId';
       readonly params: { readonly screenId: string };
-      /** The phone's tab the editor opens on: a branch card opens the follow-up (RAPP-713). */
-      readonly search?: { readonly shown: 'detail' };
+      /** The follow-up the editor opens on: an app follow-up's card opens it (RAPP-713, RAPP-715). */
+      readonly search?: { readonly shown: string };
     }
   | {
       readonly to: '/forms/authorization/$step' | '/forms/terms/$step';
@@ -480,6 +599,8 @@ export interface BoardCard {
    * app's own follow-ups today; a branch the team makes can be one later.
    */
   readonly branches?: readonly BoardCard[];
+  /** A follow-up's number after its screen's: "a", "a.1" (RAPP-715). */
+  readonly suffix?: string;
 }
 
 /**
@@ -697,7 +818,7 @@ function CardUnit(props: ComponentProps<typeof ScreenCard>) {
           </span>
           <ScreenCard
             card={branch}
-            number={`${props.number}${String.fromCharCode(97 + index)}`}
+            number={`${props.number}${branch.suffix ?? String.fromCharCode(97 + index)}`}
             numberLabelKey={props.numberLabelKey}
             handle={null}
             isLifted={props.isLifted}
@@ -903,13 +1024,26 @@ function HideButton({
   );
 }
 
+/** A new screen's condition (RAPP-715): the screen holding the question, and the answers. */
+export interface NewScreenCondition {
+  readonly sourceKey: string;
+  readonly condition: ScreenCondition;
+}
+
 /**
  * A Ramassà screen added to Onboarding (RAPP-703): first in her order, right
- * after the add card, and the board scrolls to it.
+ * after the add card, and the board scrolls to it. One that depends on an
+ * answer (RAPP-715) is a follow-up of the screen asking it: it goes right
+ * after that screen and its follow-ups, then takes its condition.
  */
 function useCreateOnboardingScreen() {
   const reload = useReload();
-  return async (name: string, order: readonly WizardStepKey[]) => {
+  return async (
+    catalog: IntakeCatalog,
+    name: string,
+    order: readonly WizardStepKey[],
+    depends: NewScreenCondition | null,
+  ) => {
     // The title is stored in Catalan, the language every other one falls back to.
     const id = await saveIntakeScreen(supabase, {
       id: null,
@@ -918,12 +1052,34 @@ function useCreateOnboardingScreen() {
       afterScreen: 'season',
     });
     const key = customStepKey(id);
-    await saveWizardFlowOrder(supabase, [key, ...order]);
+    if (depends === null) {
+      await saveWizardFlowOrder(supabase, [key, ...order]);
+    } else {
+      const family = order.filter(
+        (step) =>
+          step === depends.sourceKey ||
+          onboardingAncestors(catalog, step).includes(depends.sourceKey),
+      );
+      const at = order.indexOf((family[family.length - 1] ?? depends.sourceKey) as WizardStepKey);
+      await saveWizardFlowOrder(supabase, [...order.slice(0, at + 1), key, ...order.slice(at + 1)]);
+      await saveScreenCondition(supabase, id, depends.condition);
+    }
     await reload();
     document
-      .querySelector(`[data-testid="board-step-${key}"]`)
+      .querySelector(`[data-testid="board-step-${key}"], [data-testid="board-branch-${key}"]`)
       ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
+}
+
+/** Every step above one on Onboarding, nearest first. */
+function onboardingAncestors(catalog: IntakeCatalog, key: string): readonly string[] {
+  const above: string[] = [];
+  let current = onboardingParentOf(catalog, key);
+  while (current !== null && above.length < 64) {
+    above.push(current);
+    current = onboardingParentOf(catalog, current);
+  }
+  return above;
 }
 
 /** A dashed card that takes its row's height: a board's add screen or add form card. */
@@ -957,12 +1113,18 @@ function AddCard({
 
 /**
  * The add screen card. Every form's board adds its screens with it
- * (RAPP-700): `onCreate` makes the screen from its Catalan name.
+ * (RAPP-700): `onCreate` makes the screen from its Catalan name, and, when it
+ * depends on an answer of another screen (RAPP-715), with that condition.
  */
 export function AddScreenCard({
+  catalog,
+  sources,
   onCreate,
 }: {
-  readonly onCreate: (name: string) => Promise<void>;
+  readonly catalog: IntakeCatalog;
+  /** The screens with a choice question the new screen can depend on. */
+  readonly sources: readonly ConditionSource[];
+  readonly onCreate: (name: string, condition: NewScreenCondition | null) => Promise<void>;
 }) {
   const { t } = useTranslation('settings');
   const [isOpen, setIsOpen] = useState(false);
@@ -973,23 +1135,35 @@ export function AddScreenCard({
         onClick={() => setIsOpen(true)}
         testId="board-add-screen"
       />
-      <AddScreenDialog onCreate={onCreate} isOpen={isOpen} onOpenChange={setIsOpen} />
+      <AddScreenDialog
+        catalog={catalog}
+        sources={sources}
+        onCreate={onCreate}
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+      />
     </>
   );
 }
 
 function AddScreenDialog({
+  catalog,
+  sources,
   onCreate,
   isOpen,
   onOpenChange,
 }: {
-  readonly onCreate: (name: string) => Promise<void>;
+  readonly catalog: IntakeCatalog;
+  readonly sources: readonly ConditionSource[];
+  readonly onCreate: (name: string, condition: NewScreenCondition | null) => Promise<void>;
   readonly isOpen: boolean;
   readonly onOpenChange: (open: boolean) => void;
 }) {
   const { t } = useTranslation('settings');
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [depends, setDepends] = useState<'no' | 'yes'>('no');
+  const [condition, setCondition] = useState<ConditionDraft>(EMPTY_CONDITION);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -998,11 +1172,23 @@ function AddScreenDialog({
       setError(t('onboardingBoard.nameNeeded'));
       return;
     }
+    const picked = depends === 'yes' ? completeCondition(condition) : null;
+    if (depends === 'yes' && (picked === null || condition.sourceKey === null)) {
+      setError(t('onboardingBoard.condition.incomplete'));
+      return;
+    }
     setIsBusy(true);
     setError(null);
     try {
-      await onCreate(name);
+      await onCreate(
+        name,
+        picked === null || condition.sourceKey === null
+          ? null
+          : { sourceKey: condition.sourceKey, condition: picked },
+      );
       onOpenChange(false);
+      setDepends('no');
+      setCondition(EMPTY_CONDITION);
     } catch {
       setError(t('onboardingBoard.createFailed'));
     } finally {
@@ -1018,7 +1204,7 @@ function AddScreenDialog({
         onOpenChange(open);
       }}
     >
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-h-[90dvh] max-w-md overflow-y-auto">
         <DialogTitle>{t('onboardingBoard.newScreen')}</DialogTitle>
         <DialogDescription className="sr-only">{t('onboardingBoard.newScreen')}</DialogDescription>
         <form className="flex flex-col gap-6" onSubmit={(event) => void submit(event)} noValidate>
@@ -1034,8 +1220,34 @@ function AddScreenDialog({
                 aria-invalid={error !== null}
                 data-testid="new-screen-name"
               />
-              {error === null ? null : <FieldError>{error}</FieldError>}
             </Field>
+            <ChoiceCards
+              legend={t('onboardingBoard.dependsQuestion')}
+              name="new-screen-depends"
+              value={depends}
+              options={[
+                { value: 'no', title: t('questions.answers.no') },
+                { value: 'yes', title: t('questions.answers.yes') },
+              ]}
+              onChange={(value) => {
+                setDepends(value);
+                setError(null);
+              }}
+              testId="new-screen-depends"
+            />
+            {depends === 'yes' ? (
+              <ConditionFields
+                catalog={catalog}
+                sources={sources}
+                draft={condition}
+                onChange={(next) => {
+                  setCondition(next);
+                  setError(null);
+                }}
+                idPrefix="new-screen"
+              />
+            ) : null}
+            {error === null ? null : <FieldError>{error}</FieldError>}
           </FieldGroup>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

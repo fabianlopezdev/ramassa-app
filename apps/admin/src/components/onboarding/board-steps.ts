@@ -24,11 +24,13 @@ import {
   flowStep,
   LOCKED_STEPS,
   movableOrder,
+  onboardingFamily,
+  onboardingRoots,
   type FlowStep,
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
 
-export { isShownToHer, movableOrder } from '@ramassa/shared/intake-builder';
+export { isShownToHer } from '@ramassa/shared/intake-builder';
 
 export type BoardStep = FlowStep;
 
@@ -83,4 +85,25 @@ export function routeIdOf(key: string): string {
 /** The wording a built-in or locked step edits, if any (the authorization has its own editor). */
 export function editableScreenOf(step: BoardStep): EditableWizardScreen | null {
   return step.kind !== 'custom' && isEditableWizardScreen(step.key) ? step.key : null;
+}
+
+/**
+ * The number each step carries on the board (RAPP-715): the screens that
+ * depend on no answer by their place ("3"), every follow-up below one by its
+ * letter and depth ("3a", "3a.1"), the app's own follow-ups included.
+ */
+export function boardNumbers(catalog: IntakeCatalog): ReadonlyMap<string, string> {
+  const order = movableOrder(catalog);
+  const numbers = new Map<string, string>();
+  [...onboardingRoots(catalog, order), ...BOARD_LOCKED_STEPS].forEach((key, index) => {
+    for (const member of onboardingFamily(catalog, key, String(index + 1), order)) {
+      numbers.set(member.key, member.number);
+    }
+  });
+  return numbers;
+}
+
+/** How many cards the board numbers: the screens that depend on no answer. */
+export function boardRootCount(catalog: IntakeCatalog): number {
+  return onboardingRoots(catalog, movableOrder(catalog)).length + BOARD_LOCKED_STEPS.length;
 }

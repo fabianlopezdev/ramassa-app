@@ -22,8 +22,18 @@ import { Page, PageHeader } from '@/components/layout/page';
 import { AudiencePicker } from '@/components/notifications/audience-picker';
 import { PhoneMiniature } from '@/components/onboarding/phone-preview';
 import { useSaveKind } from '@/components/onboarding/save-kind-dialog';
-import { AddScreenCard, FormBoard, type BoardCard } from '@/components/onboarding/screen-board';
-import { placedPhoneQuestions, staffScreenContent } from '@/components/onboarding/screen-content';
+import {
+  AddScreenCard,
+  FormBoard,
+  lockedHide,
+  type BoardCard,
+} from '@/components/onboarding/screen-board';
+import { conditionSources } from '@/components/onboarding/screen-condition';
+import {
+  conditionLine,
+  placedPhoneQuestions,
+  staffScreenContent,
+} from '@/components/onboarding/screen-content';
 import { teamHideLockKey } from '@/components/onboarding/screen-hiding';
 import { useReload } from '@/components/settings/onboarding-design-sections';
 import { Badge } from '@/components/ui/badge';
@@ -53,10 +63,15 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
   archiveCustomForm,
+  formFamily,
+  formRootOf,
+  formScreenParent,
+  formScreensInOrder,
   publishCustomForm,
   reorderCustomFormScreens,
   saveCustomForm,
   saveCustomFormScreen,
+  saveScreenCondition,
   setCustomFormRecipients,
   setScreenHidden,
   textIn,
@@ -64,6 +79,7 @@ import {
   type CustomFormChoices,
   type CustomFormRecipients,
   type CustomFormResponse,
+  type CustomFormScreen,
 } from '@ramassa/shared/intake-builder';
 import {
   fetchCustomNotificationGroups,
@@ -287,51 +303,110 @@ function FormScreensBoard({
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const reload = useReload();
   const navigate = useNavigate();
-  const cards: BoardCard[] = form.screens.map((screen) => {
-    const isHidden = screen.isHidden === true;
-    const lock = teamHideLockKey(data.intakeCatalog, 'custom_form', screen.id);
+  const catalog = data.intakeCatalog;
+  // Her order: each screen that depends on an answer right after the screen asking it (RAPP-715).
+  const ordered = formScreensInOrder(catalog, form);
+  const roots = ordered.filter((screen) => formRootOf(catalog, form, screen.id) === screen.id);
+  const numbers = formBoardNumbers(catalog, form);
+  const byId = new Map(ordered.map((screen) => [screen.id, screen]));
+  const hidingAncestor = (screen: CustomFormScreen): CustomFormScreen | null => {
+    let parent = formScreenParent(catalog, form, screen);
+    for (let depth = 0; parent !== null && depth < 64; depth += 1) {
+      const above = byId.get(parent);
+      if (above === undefined) return null;
+      if (above.isHidden === true) return above;
+      parent = formScreenParent(catalog, form, above);
+    }
+    return null;
+  };
+  const screenCard = (screen: CustomFormScreen, suffix?: string): BoardCard => {
+    const ancestor = hidingAncestor(screen);
+    const isHidden = screen.isHidden === true || ancestor !== null;
+    const isOrphan =
+      screen.showWhen !== undefined && formScreenParent(catalog, form, screen) === null;
+    const lock = teamHideLockKey(catalog, 'custom_form', screen.id);
     return {
       key: screen.id,
+      ...(suffix === undefined ? {} : { suffix }),
       name: textIn(screen.title, language),
       miniature: (
         <PhoneMiniature
           content={staffScreenContent(
             screen.title,
             screen.intro,
-            placedPhoneQuestions(data.intakeCatalog, screen.id, language, null, 'custom_form'),
+            placedPhoneQuestions(catalog, screen.id, language, null, 'custom_form'),
             language,
             t,
           )}
           language={language}
-          isDimmed={isHidden}
+          isDimmed={isHidden || isOrphan}
         />
       ),
-      status: isHidden ? t('builtinScreens.hiddenBadge') : null,
+      status: isHidden
+        ? t('builtinScreens.hiddenBadge')
+        : isOrphan
+          ? t('onboardingBoard.notShown')
+          : null,
+      ...(screen.showWhen === undefined
+        ? {}
+        : { note: conditionLine(catalog, screen.showWhen, language, t) }),
       // A draft like every change here: players see it with the next Publica (RAPP-701).
-      hide: {
-        isHidden,
-        canHide: lock === null || isHidden,
-        reason: lock === null ? undefined : t(lock),
-        toggle: async () => {
-          await setScreenHidden(supabase, screen.id, !isHidden);
-          await reload();
-        },
-      },
+      hide:
+        ancestor !== null
+          ? {
+              ...lockedHide(
+                t('onboardingBoard.branchFollowsHidden', {
+                  screen: textIn(ancestor.title, language),
+                }),
+              ),
+              isHidden: true,
+            }
+          : {
+              isHidden,
+              canHide: lock === null || isHidden,
+              reason: lock === null ? undefined : t(lock),
+              toggle: async () => {
+                await setScreenHidden(supabase, screen.id, !isHidden);
+                await reload();
+              },
+            },
       link: {
         to: '/forms/custom/$formId/screens/$screenId',
         params: { formId: form.id, screenId: screen.id },
       },
     };
+  };
+  const cards: BoardCard[] = roots.map((root) => {
+    // Every follow-up below it, depth first (RAPP-715): 3a, 3a.1, 3b.
+    const branches = formFamily(catalog, form, root.id, '')
+      .slice(1)
+      .flatMap((member) => {
+        const screen = byId.get(member.key);
+        return screen === undefined ? [] : [screenCard(screen, member.number)];
+      });
+    return { ...screenCard(root), ...(branches.length === 0 ? {} : { branches }) };
   });
   return (
     <FormBoard
       // Keyed by the saved order: a reload starts again from what the database holds.
-      key={form.screens.map((screen) => screen.id).join('|')}
+      key={ordered.map((screen) => screen.id).join('|')}
       label={textIn(form.name, language)}
       movable={cards}
       addCard={
         <AddScreenCard
-          onCreate={async (name) => {
+          catalog={catalog}
+          sources={conditionSources(
+            catalog,
+            ordered.map((screen) => screen.id),
+            'custom_form',
+            (key) => ({
+              name: textIn(byId.get(key)?.title ?? {}, language),
+              number: numbers.get(key) ?? '',
+              screenKey: key,
+            }),
+            language,
+          )}
+          onCreate={async (name, depends) => {
             // The title is stored in Catalan, the language every other one falls back to.
             const id = await saveCustomFormScreen(supabase, {
               id: null,
@@ -339,6 +414,8 @@ function FormScreensBoard({
               title: { ca: name },
               intro: null,
             });
+            // A follow-up (RAPP-715): the database puts it right after the screen asking it.
+            if (depends !== null) await saveScreenCondition(supabase, id, depends.condition);
             await navigate({
               to: '/forms/custom/$formId/screens/$screenId',
               params: { formId: form.id, screenId: id },
@@ -347,11 +424,37 @@ function FormScreensBoard({
         />
       }
       onReorder={async (keys) => {
-        await reorderCustomFormScreens(supabase, form.id, keys);
+        // Each screen goes with every follow-up below it (RAPP-715).
+        await reorderCustomFormScreens(
+          supabase,
+          form.id,
+          keys.flatMap((root) =>
+            ordered
+              .filter((screen) => formRootOf(catalog, form, screen.id) === root)
+              .map((screen) => screen.id),
+          ),
+        );
         await reload();
       }}
     />
   );
+}
+
+/** The number each screen of a form carries on its board (RAPP-715): 3, 3a, 3a.1. */
+export function formBoardNumbers(
+  catalog: CustomFormData['intakeCatalog'],
+  form: CustomForm,
+): ReadonlyMap<string, string> {
+  const ordered = formScreensInOrder(catalog, form);
+  const numbers = new Map<string, string>();
+  ordered
+    .filter((screen) => formRootOf(catalog, form, screen.id) === screen.id)
+    .forEach((root, index) => {
+      for (const member of formFamily(catalog, form, root.id, String(index + 1))) {
+        numbers.set(member.key, member.number);
+      }
+    });
+  return numbers;
 }
 
 // Configuració ----------------------------------------------------------------------------------------

@@ -7,9 +7,20 @@
  * archives the screen, like an Onboarding screen.
  */
 
-import { DRAFT_SAVE } from '@/components/custom-forms/custom-form-page';
+import { DRAFT_SAVE, formBoardNumbers } from '@/components/custom-forms/custom-form-page';
 import { Page } from '@/components/layout/page';
-import { placedPhoneQuestions } from '@/components/onboarding/screen-content';
+import { PhoneMiniature } from '@/components/onboarding/phone-preview';
+import {
+  conditionSources,
+  FamilyRow,
+  ScreenConditionSection,
+  type FamilyMember,
+} from '@/components/onboarding/screen-condition';
+import {
+  conditionLine,
+  placedPhoneQuestions,
+  staffScreenContent,
+} from '@/components/onboarding/screen-content';
 import {
   DeleteScreenButton,
   ScreenEditorHeading,
@@ -24,6 +35,10 @@ import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import {
   archiveCustomFormScreen,
+  formFamily,
+  formRootOf,
+  formScreenParent,
+  formScreensInOrder,
   saveCustomFormScreen,
   setScreenHidden,
   textIn,
@@ -44,8 +59,16 @@ export function CustomFormScreenEditor({
   const { t, i18n } = useTranslation('settings');
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const form = (data.intakeCatalog.customForms ?? []).find((each) => each.id === formId);
-  const index = form === undefined ? -1 : form.screens.findIndex((each) => each.id === screenId);
-  const screen = form === undefined || index < 0 ? undefined : form.screens[index];
+  // Her order, each follow-up after the screen asking its question (RAPP-715).
+  const ordered = form === undefined ? [] : formScreensInOrder(data.intakeCatalog, form);
+  const index = ordered.findIndex((each) => each.id === screenId);
+  const screen = index < 0 ? undefined : ordered[index];
+  const numbers =
+    form === undefined ? new Map<string, string>() : formBoardNumbers(data.intakeCatalog, form);
+  const label = screen === undefined ? '' : (numbers.get(screen.id) ?? String(index + 1));
+  const roots = ordered.filter(
+    (each) => form !== undefined && formRootOf(data.intakeCatalog, form, each.id) === each.id,
+  ).length;
   return (
     <Page data-testid="custom-form-screen-page">
       <ScreenEditorHeading
@@ -62,15 +85,15 @@ export function CustomFormScreenEditor({
           form === undefined || screen === undefined
             ? undefined
             : {
-                previous: customSibling(form.id, form.screens[index - 1], language),
-                next: customSibling(form.id, form.screens[index + 1], language),
+                previous: customSibling(form.id, ordered[index - 1], language),
+                next: customSibling(form.id, ordered[index + 1], language),
               }
         }
         title={screen === undefined ? t('customForms.notFound') : textIn(screen.title, language)}
         position={
           form === undefined || screen === undefined
             ? undefined
-            : t('customForms.screenOf', { number: index + 1, total: form.screens.length })
+            : t('customForms.screenOf', { number: label, total: roots })
         }
         actions={
           form === undefined || screen === undefined ? undefined : (
@@ -85,7 +108,9 @@ export function CustomFormScreenEditor({
           data={data}
           form={form}
           screen={screen}
-          number={index + 1}
+          number={Number.parseInt(label, 10) || index + 1}
+          total={roots}
+          numbers={numbers}
         />
       )}
     </Page>
@@ -97,20 +122,95 @@ function FormScreenBody({
   form,
   screen,
   number,
+  total,
+  numbers,
 }: {
   readonly data: CustomFormData;
   readonly form: CustomForm;
   readonly screen: CustomFormScreen;
   readonly number: number;
+  readonly total: number;
+  /** Each screen's number on the board: 3, 3a, 3a.1 (RAPP-715). */
+  readonly numbers: ReadonlyMap<string, string>;
 }) {
-  const { t } = useTranslation('settings');
+  const { t, i18n } = useTranslation(['settings', 'onboarding']);
+  const dashboardLanguage = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const catalog = data.intakeCatalog;
   const hideLock = teamHideLockKey(catalog, 'custom_form', screen.id);
+  // What it depends on (RAPP-715): a choice question of an earlier screen of this form.
+  const ordered = formScreensInOrder(catalog, form);
+  const earlier = ordered.slice(
+    0,
+    Math.max(
+      ordered.findIndex((each) => each.id === screen.id),
+      0,
+    ),
+  );
+  const sources = conditionSources(
+    catalog,
+    earlier.map((each) => each.id),
+    'custom_form',
+    (key) => ({
+      name: textIn(ordered.find((each) => each.id === key)?.title ?? {}, dashboardLanguage),
+      number: numbers.get(key) ?? '',
+      screenKey: key,
+    }),
+    dashboardLanguage,
+  );
+  const condition = screen.showWhen ?? null;
+  const root = formRootOf(catalog, form, screen.id);
+  const family = formFamily(catalog, form, root, numbers.get(root) ?? '').flatMap(
+    (member): FamilyMember[] => {
+      const each = ordered.find((candidate) => candidate.id === member.key);
+      if (each === undefined) return [];
+      return [
+        {
+          key: each.id,
+          number: member.number,
+          name: textIn(each.title, dashboardLanguage),
+          line:
+            member.depth === 0
+              ? ''
+              : conditionLine(catalog, each.showWhen ?? null, dashboardLanguage, t),
+          depth: member.depth,
+          isCurrent: each.id === screen.id,
+          picture: (
+            <PhoneMiniature
+              content={staffScreenContent(
+                each.title,
+                each.intro,
+                placedPhoneQuestions(catalog, each.id, dashboardLanguage, null, 'custom_form'),
+                dashboardLanguage,
+                t,
+              )}
+              language={dashboardLanguage}
+            />
+          ),
+          link: {
+            to: '/forms/custom/$formId/screens/$screenId',
+            params: { formId: form.id, screenId: each.id },
+          },
+        },
+      ];
+    },
+  );
   return (
     <StaffScreenEditor
       screen={screen}
       number={number}
-      total={form.screens.length}
+      total={total}
+      family={<FamilyRow members={family} />}
+      condition={
+        <ScreenConditionSection
+          key={JSON.stringify(condition)}
+          catalog={catalog}
+          screenId={screen.id}
+          condition={condition}
+          sources={sources}
+          isOrphan={condition !== null && formScreenParent(catalog, form, screen) === null}
+          line={conditionLine(catalog, condition, dashboardLanguage, t)}
+        />
+      }
       // A draft: players see it with the next Publica (RAPP-701).
       saveKind={DRAFT_SAVE}
       hide={{

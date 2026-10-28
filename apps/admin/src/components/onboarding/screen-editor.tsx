@@ -52,6 +52,7 @@ import {
   staffTextToSave,
 } from '@ramassa/shared/i18n/localized-content';
 import {
+  customStepKey,
   DETAIL_SCREEN_PARENTS,
   isOptionalScreenTextField,
   screenTextFields,
@@ -65,6 +66,13 @@ import {
 import {
   archiveIntakeScreen,
   canHideBuiltin,
+  detailBranch,
+  isDetailScreen,
+  movableOrder,
+  onboardingConditionOf,
+  onboardingFamily,
+  onboardingParentOf,
+  onboardingRootOf,
   requiredBuiltinQuestions,
   saveBuiltinScreen,
   saveIntakeScreen,
@@ -78,24 +86,32 @@ import {
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import {
   allSteps,
+  boardNumbers,
+  boardRootCount,
+  boardStep,
   editableScreenOf,
   routeIdOf,
   stepFromRouteId,
   type BoardStep,
 } from './board-steps';
 import { ConfirmDialog } from './confirm-dialog';
-import { PhoneFrame, SteppedPhone } from './phone-preview';
+import { PhoneFrame, PhoneMiniature } from './phone-preview';
 import { stepName, type BoardCardLink } from './screen-board';
+import {
+  conditionSources,
+  FamilyRow,
+  ScreenConditionSection,
+  type FamilyMember,
+} from './screen-condition';
 import {
   builtinPhoneQuestion,
   bundledScreenText,
+  conditionLine,
   detailScreenContent,
   placedPhoneQuestions,
   staffScreenContent,
   stepContent,
-  type PhoneContent,
   type PhoneQuestion,
-  type PhoneScreen,
   type ScreenTexts,
   type Translate,
   type TypedWording,
@@ -113,15 +129,19 @@ export function ScreenEditor({
 }: {
   readonly data: OnboardingDesignData;
   readonly routeId: string;
-  /** The phone's tab to open on: a branch card opens its follow-up screen (RAPP-713). */
-  readonly shown?: PhoneScreen;
+  /** The app follow-up to edit (RAPP-713, RAPP-715): its branch card and the family row open it. */
+  readonly shown?: string;
 }) {
   const { t, i18n } = useTranslation(['settings', 'onboarding']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const catalog = data.intakeCatalog;
   const step = stepFromRouteId(catalog, routeId);
   const steps = allSteps(catalog);
-  const number = step === null ? 0 : steps.findIndex((each) => each.key === step.key) + 1;
+  const index = step === null ? -1 : steps.findIndex((each) => each.key === step.key);
+  // Its number on the board: "3", or "3a" for a follow-up (RAPP-715).
+  const label = step === null ? '' : (boardNumbers(catalog).get(step.key) ?? String(index + 1));
+  const number = Number.parseInt(label, 10) || 0;
+  const total = boardRootCount(catalog);
 
   return (
     <Page data-testid="screen-editor-page">
@@ -131,14 +151,12 @@ export function ScreenEditor({
           step === null
             ? undefined
             : {
-                previous: onboardingSibling(steps[number - 2], language, t),
-                next: onboardingSibling(steps[number], language, t),
+                previous: onboardingSibling(steps[index - 1], language, t),
+                next: onboardingSibling(steps[index + 1], language, t),
               }
         }
         title={step === null ? t('onboardingBoard.notFound') : stepName(step, language, t)}
-        position={
-          step === null ? undefined : t('onboardingBoard.stepOf', { number, total: steps.length })
-        }
+        position={step === null ? undefined : t('onboardingBoard.stepOf', { number: label, total })}
         actions={
           step?.kind === 'custom' ? (
             <OnboardingDeleteScreen screen={step.screen} name={stepName(step, language, t)} />
@@ -152,7 +170,7 @@ export function ScreenEditor({
           data={data}
           step={step}
           number={number}
-          total={steps.length}
+          total={total}
           shown={shown}
         />
       )}
@@ -357,7 +375,7 @@ function EditorBody({
   readonly step: BoardStep;
   readonly number: number;
   readonly total: number;
-  readonly shown: PhoneScreen;
+  readonly shown: string | undefined;
 }) {
   if (step.kind === 'custom') {
     return (
@@ -406,15 +424,45 @@ function CustomScreenEditor({
   readonly number: number;
   readonly total: number;
 }) {
-  const { t } = useTranslation('settings');
+  const { t, i18n } = useTranslation(['settings', 'onboarding']);
+  const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const catalog = data.intakeCatalog;
   const hideLock = teamHideLockKey(catalog, 'onboarding', screen.id);
+  // What it depends on (RAPP-715): a choice question of an earlier screen.
+  const key = customStepKey(screen.id);
+  const order = movableOrder(catalog);
+  const numbers = boardNumbers(catalog);
+  const sources = conditionSources(
+    catalog,
+    order.slice(0, Math.max(order.indexOf(key), 0)),
+    'onboarding',
+    (each) => ({
+      name: onboardingStepName(catalog, each, language, t),
+      number: numbers.get(each) ?? '',
+      screenKey: routeIdOf(each),
+    }),
+    language,
+  );
+  const condition = screen.showWhen ?? null;
   return (
     <StaffScreenEditor
       screen={screen}
       number={number}
       total={total}
       saveKind={ONBOARDING_SAVES_AT_ONCE}
+      family={<FamilyRow members={onboardingFamilyMembers(catalog, key, language, t)} />}
+      condition={
+        <ScreenConditionSection
+          // A saved condition starts the section again from what is saved.
+          key={JSON.stringify(condition)}
+          catalog={catalog}
+          screenId={screen.id}
+          condition={condition}
+          sources={sources}
+          isOrphan={condition !== null && onboardingParentOf(catalog, key) === null}
+          line={conditionLine(catalog, condition, language, t)}
+        />
+      }
       hide={{
         isHidden: screen.isHidden === true,
         lockReason: hideLock === null ? null : t(hideLock),
@@ -507,6 +555,8 @@ export function StaffScreenEditor({
   onStore,
   hide,
   fields,
+  family = null,
+  condition = null,
 }: {
   readonly screen: { readonly title: BuilderText; readonly intro: BuilderText | null };
   readonly number: number;
@@ -528,6 +578,10 @@ export function StaffScreenEditor({
     readonly save: (isHidden: boolean) => Promise<void>;
   };
   readonly fields: (row: RowEditing, language: LanguageCode, screenName: string) => ReactNode;
+  /** The screen and its follow-ups as small phones, above the editor (RAPP-715). */
+  readonly family?: ReactNode;
+  /** "Quan es mostra": the answer that opens it (RAPP-715). */
+  readonly condition?: ReactNode;
 }) {
   const { t } = useTranslation(['settings', 'onboarding']);
   const reload = useReload();
@@ -606,89 +660,94 @@ export function StaffScreenEditor({
 
   const direction = getLanguageDirection(language);
   return (
-    <EditorColumns
-      language={language}
-      onLanguageChange={setLanguage}
-      previewLanguage={previewLanguage}
-      onPreviewLanguageChange={setPreviewLanguage}
-      previewLabel={t('onboardingBoard.phone')}
-      previewNote={t('onboardingBoard.phoneNote')}
-      previewLanguageLabel={t('onboardingBoard.phoneLanguage')}
-      preview={
-        <PhoneFrame
-          content={content}
-          language={previewLanguage}
-          step={number}
-          total={total}
-          highlight={row.editing ?? undefined}
-        />
-      }
-      form={
-        <>
-          {saveKind.dialog}
-          <EditorSection
-            title={t('onboardingBoard.screen')}
-            testId="screen-texts"
-            footer={
-              <Button
-                type="button"
-                disabled={isSaving}
-                onClick={() => void saveScreen()}
-                data-testid="screen-save"
-              >
-                {t('questions.saveScreen')}
-              </Button>
-            }
-          >
-            <FieldGroup>
-              <Field orientation="responsive">
-                <FieldContent>
-                  <FieldLabel htmlFor="screen-title">{t('questions.screenTitle')}</FieldLabel>
-                </FieldContent>
-                <div className={CONTROL_COLUMN}>
-                  <Input
-                    id="screen-title"
-                    dir={direction}
-                    lang={language}
-                    value={shownIn('title', language)}
-                    aria-invalid={isEmptyRequired('title', language)}
-                    onChange={(event) => edit('title', event.target.value)}
-                  />
-                  {isEmptyRequired('title', language) ? (
-                    <FieldError data-testid="screen-title-required">
-                      {t('builtinScreens.requiredText')}
-                    </FieldError>
-                  ) : null}
-                </div>
-              </Field>
-              <Field orientation="responsive">
-                <FieldContent>
-                  <FieldLabel htmlFor="screen-intro">{t('questions.screenIntro')}</FieldLabel>
-                </FieldContent>
-                <div className={CONTROL_COLUMN}>
-                  <Textarea
-                    id="screen-intro"
-                    rows={3}
-                    dir={direction}
-                    lang={language}
-                    value={shownIn('intro', language)}
-                    onChange={(event) => edit('intro', event.target.value)}
-                  />
-                </div>
-              </Field>
-              <HideScreenField
-                id="hide-screen"
-                isHidden={isHidden}
-                lockReason={hide.lockReason}
-                onChange={setIsHidden}
-              />
-            </FieldGroup>
-          </EditorSection>
+    <div className="flex flex-col gap-6">
+      {family}
+      <EditorColumns
+        language={language}
+        onLanguageChange={setLanguage}
+        previewLanguage={previewLanguage}
+        onPreviewLanguageChange={setPreviewLanguage}
+        previewLabel={t('onboardingBoard.phone')}
+        previewNote={t('onboardingBoard.phoneNote')}
+        previewLanguageLabel={t('onboardingBoard.phoneLanguage')}
+        preview={
+          <PhoneFrame
+            content={content}
+            language={previewLanguage}
+            step={number}
+            total={total}
+            highlight={row.editing ?? undefined}
+          />
+        }
+        form={
+          <>
+            {saveKind.dialog}
+            <EditorSection
+              title={t('onboardingBoard.screen')}
+              testId="screen-texts"
+              footer={
+                <Button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={() => void saveScreen()}
+                  data-testid="screen-save"
+                >
+                  {t('questions.saveScreen')}
+                </Button>
+              }
+            >
+              <FieldGroup>
+                <Field orientation="responsive">
+                  <FieldContent>
+                    <FieldLabel htmlFor="screen-title">{t('questions.screenTitle')}</FieldLabel>
+                  </FieldContent>
+                  <div className={CONTROL_COLUMN}>
+                    <Input
+                      id="screen-title"
+                      dir={direction}
+                      lang={language}
+                      value={shownIn('title', language)}
+                      aria-invalid={isEmptyRequired('title', language)}
+                      onChange={(event) => edit('title', event.target.value)}
+                    />
+                    {isEmptyRequired('title', language) ? (
+                      <FieldError data-testid="screen-title-required">
+                        {t('builtinScreens.requiredText')}
+                      </FieldError>
+                    ) : null}
+                  </div>
+                </Field>
+                <Field orientation="responsive">
+                  <FieldContent>
+                    <FieldLabel htmlFor="screen-intro">{t('questions.screenIntro')}</FieldLabel>
+                  </FieldContent>
+                  <div className={CONTROL_COLUMN}>
+                    <Textarea
+                      id="screen-intro"
+                      rows={3}
+                      dir={direction}
+                      lang={language}
+                      value={shownIn('intro', language)}
+                      onChange={(event) => edit('intro', event.target.value)}
+                    />
+                  </div>
+                </Field>
+                <HideScreenField
+                  id="hide-screen"
+                  isHidden={isHidden}
+                  lockReason={hide.lockReason}
+                  onChange={setIsHidden}
+                />
+              </FieldGroup>
+            </EditorSection>
 
-          {fields(row, language, shownIn('title', language) || textIn(screen.title, language))}
-        </>
-      }
-    />
+            {condition}
+
+            {fields(row, language, shownIn('title', language) || textIn(screen.title, language))}
+          </>
+        }
+      />
+    </div>
   );
 }
 
@@ -698,10 +757,80 @@ function isQuestionScreen(screen: string): screen is WizardQuestionScreen {
   return (WIZARD_QUESTION_SCREENS as readonly string[]).includes(screen);
 }
 
-/** The detail screen that opens from a question screen, if it has one. */
-function detailOf(screen: EditableWizardScreen): EditableWizardScreen | null {
-  const entry = Object.entries(DETAIL_SCREEN_PARENTS).find(([, parent]) => parent === screen);
-  return entry === undefined ? null : (entry[0] as EditableWizardScreen);
+/** The name staff know any Onboarding step by: an app follow-up included (RAPP-715). */
+function onboardingStepName(
+  catalog: IntakeCatalog,
+  key: string,
+  language: LanguageCode,
+  t: Translate,
+): string {
+  if (isDetailScreen(key)) return t(`builtinScreens.screenName.${key}`);
+  const step = boardStep(catalog, key);
+  return step === null ? '' : stepName(step, language, t);
+}
+
+/**
+ * The family row of an Onboarding screen (RAPP-715): the screen at the top of
+ * its family and every follow-up below it, depth first, as the board numbers
+ * them. An app follow-up opens in its screen's editor.
+ */
+function onboardingFamilyMembers(
+  catalog: IntakeCatalog,
+  current: string,
+  language: LanguageCode,
+  t: Translate,
+): readonly FamilyMember[] {
+  const order = movableOrder(catalog);
+  const numbers = boardNumbers(catalog);
+  const root = onboardingRootOf(catalog, current);
+  const total = boardRootCount(catalog);
+  return onboardingFamily(catalog, root, numbers.get(root) ?? '', order).flatMap(
+    (member): FamilyMember[] => {
+      const isDetail = isDetailScreen(member.key);
+      const step = isDetail ? null : boardStep(catalog, member.key);
+      if (!isDetail && step === null) return [];
+      const content =
+        isDetail || step === null
+          ? detailScreenContent(catalog, member.key as EditableWizardScreen, language, t)
+          : stepContent(catalog, step, language, t);
+      const line =
+        member.depth === 0
+          ? ''
+          : conditionLine(
+              catalog,
+              onboardingConditionOf(catalog, member.key),
+              language,
+              t,
+              isDetailScreen(member.key) &&
+                detailBranch(member.key).condition.repeatsPerAnswer === true,
+            );
+      return [
+        {
+          key: member.key,
+          number: member.number,
+          name: onboardingStepName(catalog, member.key, language, t),
+          line,
+          depth: member.depth,
+          isCurrent: member.key === current,
+          picture: (
+            <PhoneMiniature
+              content={content}
+              language={language}
+              step={Number.parseInt(member.number, 10) || undefined}
+              total={total}
+            />
+          ),
+          link: isDetailScreen(member.key)
+            ? {
+                to: '/onboarding/screens/$screenId',
+                params: { screenId: detailBranch(member.key).parent },
+                search: { shown: member.key },
+              }
+            : { to: '/onboarding/screens/$screenId', params: { screenId: routeIdOf(member.key) } },
+        },
+      ];
+    },
+  );
 }
 
 function AppScreenEditor({
@@ -715,16 +844,20 @@ function AppScreenEditor({
   readonly step: Exclude<BoardStep, { readonly kind: 'custom' }>;
   readonly number: number;
   readonly total: number;
-  readonly shown: PhoneScreen;
+  readonly shown: string | undefined;
 }) {
   const { t, i18n } = useTranslation(['settings', 'onboarding']);
   const catalog = data.intakeCatalog;
+  const dashboardLanguage = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const [language, setLanguage] = useState<LanguageCode>('ca');
   const [previewLanguage, setPreviewLanguage] = useState<LanguageCode>('ca');
   const screen = editableScreenOf(step);
-  const detail = screen === null ? null : detailOf(screen);
+  // The app follow-up being edited (RAPP-715): picked in the family row or on its card.
+  const detail =
+    shown !== undefined && isDetailScreen(shown) && detailBranch(shown).parent === step.key
+      ? shown
+      : null;
   const [texts, setTexts] = useState<Partial<Record<EditableWizardScreen, ScreenTexts>>>({});
-  const [shownScreen, setShownScreen] = useState<PhoneScreen>(detail === null ? 'main' : shown);
   const row = useRowEditing();
   const currentSeason = data.seasons.find((season) => season.isCurrent);
 
@@ -756,7 +889,7 @@ function AppScreenEditor({
         ]
       : [];
   const content =
-    shownScreen === 'detail' && detail !== null
+    detail !== null
       ? detailScreenContent(catalog, detail, previewLanguage, t, texts[detail])
       : stepContent(catalog, step, previewLanguage, t, {
           ...(screen === null ? {} : { texts: texts[screen] }),
@@ -769,28 +902,20 @@ function AppScreenEditor({
         });
 
   const phone = (
-    <SteppedPhone
-      steps={
-        detail === null || screen === null
-          ? []
-          : [
-              { value: 'main', label: t(`builtinScreens.screenName.${screen}`) },
-              { value: 'detail', label: t(`builtinScreens.screenName.${detail}`) },
-            ]
-      }
-      shown={shownScreen}
-      onShow={setShownScreen}
-      label={t('onboardingBoard.phone')}
+    <PhoneFrame
       content={content}
       language={previewLanguage}
       step={number}
       total={total}
-      highlight={row.editing ?? undefined}
+      highlight={detail === null ? (row.editing ?? undefined) : undefined}
     />
   );
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
+      <FamilyRow
+        members={onboardingFamilyMembers(catalog, detail ?? step.key, dashboardLanguage, t)}
+      />
       <EditorColumns
         language={language}
         onLanguageChange={setLanguage}
@@ -801,56 +926,56 @@ function AppScreenEditor({
         previewLanguageLabel={t('onboardingBoard.phoneLanguage')}
         preview={phone}
         form={
-          <>
-            {screen === null ? null : (
-              <WordingSection
-                catalog={catalog}
-                screen={screen}
-                language={language}
-                onLanguageChange={setLanguage}
-                title={t('onboardingBoard.wording')}
-                onChange={(next) => {
-                  setTexts((current) => ({ ...current, [screen]: next }));
-                  setShownScreen('main');
-                }}
-              />
-            )}
-            {detail === null ? null : (
-              <WordingSection
-                catalog={catalog}
-                screen={detail}
-                language={language}
-                onLanguageChange={setLanguage}
-                title={t(`builtinScreens.screenName.${detail}`)}
-                onChange={(next) => {
-                  setTexts((current) => ({ ...current, [detail]: next }));
-                  setShownScreen('detail');
-                }}
-              />
-            )}
-            {step.kind === 'builtin' ? (
-              <ScreenFieldsSection
-                catalog={catalog}
-                screenKey={step.key}
-                screenName={stepName(step, (i18n.resolvedLanguage ?? 'ca') as LanguageCode, t)}
-                builtinQuestions={questions}
-                language={language}
-                editing={row.editing}
-                onEdit={(id) => {
-                  row.setEditing(id);
-                  setShownScreen('main');
-                }}
-                onBuiltinLabelChange={row.setBuiltinLabel}
-                onWordingChange={row.setWording}
-              />
-            ) : null}
-            {step.key === 'documentation' ? (
-              <OnboardingDocumentSection
-                explanation={data.documentExplanation}
-                language={language}
-              />
-            ) : null}
-          </>
+          detail !== null ? (
+            <WordingSection
+              key={detail}
+              catalog={catalog}
+              screen={detail}
+              language={language}
+              onLanguageChange={setLanguage}
+              title={t(`builtinScreens.screenName.${detail}`)}
+              conditionNote={conditionLine(
+                catalog,
+                onboardingConditionOf(catalog, detail),
+                dashboardLanguage,
+                t,
+                detailBranch(detail).condition.repeatsPerAnswer === true,
+              )}
+              onChange={(next) => setTexts((current) => ({ ...current, [detail]: next }))}
+            />
+          ) : (
+            <>
+              {screen === null ? null : (
+                <WordingSection
+                  catalog={catalog}
+                  screen={screen}
+                  language={language}
+                  onLanguageChange={setLanguage}
+                  title={t('onboardingBoard.wording')}
+                  onChange={(next) => setTexts((current) => ({ ...current, [screen]: next }))}
+                />
+              )}
+              {step.kind === 'builtin' ? (
+                <ScreenFieldsSection
+                  catalog={catalog}
+                  screenKey={step.key}
+                  screenName={stepName(step, dashboardLanguage, t)}
+                  builtinQuestions={questions}
+                  language={language}
+                  editing={row.editing}
+                  onEdit={row.setEditing}
+                  onBuiltinLabelChange={row.setBuiltinLabel}
+                  onWordingChange={row.setWording}
+                />
+              ) : null}
+              {step.key === 'documentation' ? (
+                <OnboardingDocumentSection
+                  explanation={data.documentExplanation}
+                  language={language}
+                />
+              ) : null}
+            </>
+          )
         }
       />
     </div>
@@ -870,6 +995,7 @@ export function WordingSection({
   language,
   onLanguageChange,
   title,
+  conditionNote,
   onChange,
 }: {
   readonly catalog: IntakeCatalog;
@@ -878,6 +1004,8 @@ export function WordingSection({
   /** Turns the form to a language with an empty required text when saving. */
   readonly onLanguageChange?: (language: LanguageCode) => void;
   readonly title: string;
+  /** When an app follow-up opens (RAPP-715), the line its card shows. */
+  readonly conditionNote?: string;
   readonly onChange: (texts: ScreenTexts) => void;
 }) {
   const { t } = useTranslation(['settings', 'onboarding']);
@@ -969,6 +1097,11 @@ export function WordingSection({
       <FieldGroup>
         {note === null || screen === 'terms-intro' ? null : (
           <FieldDescription className="text-start">{note}</FieldDescription>
+        )}
+        {conditionNote === undefined || conditionNote === '' ? null : (
+          <FieldDescription className="text-start" data-testid="wording-condition">
+            {conditionNote}
+          </FieldDescription>
         )}
         {/* Every player checks her names first (RAPP-708): staff read why. */}
         {screen === 'identity' ? (

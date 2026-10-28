@@ -20,10 +20,11 @@ import {
   resolveAppTerms,
   screenTextFields,
   WIZARD_SCREEN_QUESTIONS,
-  type BranchCondition,
   type EditableWizardScreen,
   type IntakeQuestion,
+  type ScreenCondition,
   type ScreenTextField,
+  type SystemFieldKey,
 } from '@ramassa/shared/intake';
 import {
   builtinField,
@@ -39,6 +40,7 @@ import {
   onboardingScreenQuestions,
   placementOn,
   placementWordingIn,
+  questionOfField,
   requiredBuiltinQuestions,
   screenSettingsFor,
   textIn,
@@ -390,8 +392,12 @@ function builtinWording(
   };
 }
 
-/** The phone's two tabs on a screen with a follow-up (RAPP-695): the screen, or its follow-up. */
-export type PhoneScreen = 'main' | 'detail';
+/** The document fields each document follow-up asks (RAPP-715), as her phone does. */
+const DOCUMENT_SCREEN_FIELDS: Partial<Record<EditableWizardScreen, readonly SystemFieldKey[]>> = {
+  'documentation-nie': ['document_number'],
+  'documentation-passport': ['document_number'],
+  'documentation-other': ['document_name', 'document_number'],
+};
 
 /**
  * A follow-up screen on her phone (RAPP-713): its wording and Continue. The
@@ -411,12 +417,25 @@ export function detailScreenContent(
     language,
     t,
   );
+  // A document follow-up asks what that document needs (RAPP-715): its
+  // number, and its name for another document.
+  const documentKeys = DOCUMENT_SCREEN_FIELDS[screen] ?? [];
+  const layout = catalog.layout;
   return {
     title: wording.title,
     intro: wording.intro,
     help: wording.help,
-    questions: [],
-    lines: [],
+    questions:
+      layout === undefined
+        ? []
+        : documentKeys.flatMap((key) => {
+            const field = layout.fields.find((each) => each.systemKey === key);
+            return field === undefined
+              ? []
+              : [customPhoneQuestion(questionOfField(layout, field), language)];
+          }),
+    lines:
+      documentKeys.length === 0 ? [] : [t('onboarding:documentReassurance', { lng: language })],
     checkbox: null,
     signature: false,
     continueLabel: wording.continue_label,
@@ -425,32 +444,64 @@ export function detailScreenContent(
 }
 
 /**
- * The line under a branch card (RAPP-713), in the dashboard's language, from
- * the rule her phone reads: "Si tria NIE, Passaport o Un altre" with the
- * answers as staff named them, or one follow-up per answer she ticks.
+ * The answers of a choice question a screen can depend on (RAPP-715), as the
+ * condition stores them: its live options by id, or yes / no / maybe. An
+ * option no longer offered stays when the condition still names it.
  */
-export function branchConditionLine(
+export function conditionAnswers(
   catalog: IntakeCatalog,
-  condition: BranchCondition,
+  fieldId: string,
   language: LanguageCode,
   t: Translate,
+  keep: readonly string[] = [],
+): readonly { readonly value: string; readonly label: string }[] {
+  const field = catalog.layout === undefined ? undefined : fieldById(catalog.layout, fieldId);
+  if (field === undefined) return [];
+  if (field.type === 'yes_no' || field.type === 'yes_no_maybe') {
+    const values = field.type === 'yes_no' ? ['yes', 'no'] : ['yes', 'no', 'maybe'];
+    return values.map((value) => ({ value, label: t(`settings:questions.answers.${value}`) }));
+  }
+  return field.options
+    .filter((option) => !option.isArchived || keep.includes(option.id))
+    .map((option) => ({ value: option.id, label: textIn(option.label, language) }));
+}
+
+/**
+ * The line on a follow-up's card and in its editor (RAPP-713, RAPP-715), in
+ * the dashboard's language, from the rule her phone reads: "Si «Tipus de
+ * document» és Passaport", or one follow-up per answer she ticks. One line for
+ * the app's follow-ups and the team's.
+ */
+export function conditionLine(
+  catalog: IntakeCatalog,
+  condition: ScreenCondition | null,
+  language: LanguageCode,
+  t: Translate,
+  repeatsPerAnswer = false,
 ): string {
-  if (condition.kind === 'each-answer') {
+  if (condition === null) return '';
+  const field =
+    catalog.layout === undefined ? undefined : fieldById(catalog.layout, condition.fieldId);
+  if (repeatsPerAnswer) {
     return t(
-      condition.question === 'specific_needs'
+      field?.systemKey === 'specific_needs'
         ? 'settings:onboardingBoard.branchEachNeed'
         : 'settings:onboardingBoard.branchEachAnswer',
     );
   }
-  const field =
-    catalog.layout === undefined ? undefined : builtinField(catalog.layout, condition.question);
-  const labels = condition.values.map((value) => {
-    const option = field?.options.find((each) => each.key === value);
-    return option === undefined ? value : textIn(option.label, language);
-  });
-  return t('settings:onboardingBoard.branchIf', {
-    answers: new Intl.ListFormat(language, { type: 'disjunction' }).format(labels),
-  });
+  const offered = conditionAnswers(catalog, condition.fieldId, language, t, condition.values);
+  const labels = condition.values.map(
+    (value) => offered.find((answer) => answer.value === value)?.label ?? value,
+  );
+  return t(
+    field?.type === 'multiple_choice'
+      ? 'settings:onboardingBoard.branchWhenTicked'
+      : 'settings:onboardingBoard.branchWhen',
+    {
+      question: field === undefined ? '' : textIn(field.label, language),
+      answers: new Intl.ListFormat(language, { type: 'disjunction' }).format(labels),
+    },
+  );
 }
 
 export interface ContentOverrides {

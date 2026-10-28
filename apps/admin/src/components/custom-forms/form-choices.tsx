@@ -43,8 +43,8 @@ export function choicesProblem(
   return null;
 }
 
-/** One choice as a card: its title, and its line when it has one. */
-function ChoiceCards<Value extends string>({
+/** One choice as a card: its title, and its line when it has one. Shared by the dialogs that ask one choice. */
+export function ChoiceCards<Value extends string>({
   legend,
   name,
   value,

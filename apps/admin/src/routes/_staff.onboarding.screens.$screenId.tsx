@@ -3,8 +3,9 @@
  * board: `/onboarding/screens/<id>`, where the id is the app screen's name
  * (`identity`, `summary`, `authorization`...) or a Ramassà screen's id.
  *
- * `?shown=detail` opens the phone on the screen's follow-up, as its branch
- * card on the board does (RAPP-713).
+ * `?shown=<follow-up>` opens one of the app's follow-ups of the screen
+ * (`documentation-passport`...), as its branch card on the board and the
+ * editor's family row do (RAPP-713, RAPP-715).
  *
  * The same guard as the board: Settings' own permission or the onboarding
  * design role (RAPP-615). The app terms and the season authorization are
@@ -23,7 +24,7 @@ import { z } from 'zod';
 export const Route = createFileRoute('/_staff/onboarding/screens/$screenId')({
   ssr: false,
   validateSearch: z.object({
-    shown: z.enum(['main', 'detail']).optional().catch(undefined),
+    shown: z.string().max(64).optional().catch(undefined),
   }),
   beforeLoad: ({ params }) => {
     if (params.screenId === 'authorization') {
@@ -53,5 +54,5 @@ function Editor() {
   const data = Route.useLoaderData();
   const { screenId } = Route.useParams();
   const { shown } = Route.useSearch();
-  return <ScreenEditor data={data} routeId={screenId} shown={shown ?? 'main'} />;
+  return <ScreenEditor data={data} routeId={screenId} shown={shown} />;
 }
