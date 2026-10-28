@@ -1,13 +1,6 @@
 import { useAuthenticatedMediaUrl } from '@/components/content/authenticated-media-image';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { mediaWorkerUrl } from '@/lib/media-worker';
@@ -139,10 +132,10 @@ export function PlayerProfileBanner({
       ) : null}
       <Dialog open={open} onOpenChange={changeOpen}>
         <DialogContent>
-          <DialogHeader>
+          <div className="grid gap-2">
             <DialogTitle>{t('profileBanner.change')}</DialogTitle>
             <DialogDescription>{t('profileBanner.format')}</DialogDescription>
-          </DialogHeader>
+          </div>
           <div className="relative aspect-[4/1] overflow-hidden rounded-lg bg-primary">
             <img
               src={preview ?? imageUrl ?? DEFAULT_BANNER}
@@ -215,7 +208,7 @@ export function PlayerProfileBanner({
               {error}
             </p>
           ) : null}
-          <DialogFooter>
+          <div className="flex flex-wrap justify-end gap-2">
             <Button variant="outline" disabled={busy} onClick={() => changeOpen(false)}>
               {t('profileBanner.cancel')}
             </Button>
@@ -228,7 +221,7 @@ export function PlayerProfileBanner({
                     : 'profileBanner.save',
               )}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </>
