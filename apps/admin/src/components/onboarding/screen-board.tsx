@@ -116,6 +116,7 @@ import {
   routeIdOf,
   type BoardStep,
 } from './board-steps';
+import { CardFrame, ScreenCardFrame } from './card-frame';
 import { FormMiniature, PhoneMiniature } from './phone-preview';
 import {
   completeCondition,
@@ -128,6 +129,8 @@ import {
 import { conditionLine, detailScreenContent, stepContent, type Translate } from './screen-content';
 import { DeleteScreenAction, onboardingDeletion, type ScreenDeletion } from './screen-deletion';
 import { builtinHideLockKey, teamHideLockKey } from './screen-hiding';
+
+export { CardFrame } from './card-frame';
 
 /** Every card shares one track width, so each row's cards have one size. */
 export const BOARD_GRID =
@@ -835,23 +838,6 @@ function SortableCard({
   );
 }
 
-/** The parts every card has, so the add card keeps the same size. */
-export function CardFrame({
-  className,
-  children,
-}: {
-  readonly className?: string;
-  readonly children: ReactNode;
-}) {
-  return (
-    <article
-      className={cn('relative flex w-full flex-col gap-3 rounded-2xl border p-3', className)}
-    >
-      {children}
-    </article>
-  );
-}
-
 /** A screen with follow-ups spans two board tracks: itself and its follow-ups' card (RAPP-716). */
 function unitSpan(card: BoardCard): CSSProperties | undefined {
   return (card.branches?.length ?? 0) === 0 ? undefined : { gridColumn: 'span 2 / span 2' };
@@ -952,9 +938,8 @@ function ScreenCard({
 }) {
   const { t } = useTranslation('settings');
   return (
-    <CardFrame
+    <ScreenCardFrame
       className={cn(
-        'bg-card transition-shadow hover:shadow-md',
         isLocked && 'bg-muted/40',
         isLifted && 'rotate-1 shadow-xl ring-2 ring-primary',
       )}
@@ -1060,7 +1045,7 @@ function ScreenCard({
           )}
         </Link>
       </Button>
-    </CardFrame>
+    </ScreenCardFrame>
   );
 }
 

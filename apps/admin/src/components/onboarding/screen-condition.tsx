@@ -52,6 +52,7 @@ import {
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
+import { ScreenCardFrame } from './card-frame';
 import type { AddDependent, BoardCardLink } from './screen-board';
 import { conditionAnswers, type Translate } from './screen-content';
 
@@ -383,27 +384,29 @@ export function FamilyRow({ members }: { readonly members: readonly FamilyMember
   if (members.length < 2) return null;
   return (
     <nav aria-label={t('onboardingBoard.condition.family')} data-testid="screen-family">
-      <ol className="flex gap-3 overflow-x-auto pb-2">
+      <ol className="flex gap-4 overflow-x-auto p-1 pb-2">
         {members.map((member) => (
-          <li key={member.key} className="w-32 shrink-0">
+          <li key={member.key} className="w-46 shrink-0">
             <Link
               {...member.link}
               aria-current={member.isCurrent ? 'page' : undefined}
               aria-label={`${t('onboardingBoard.step', { number: member.number })}: ${member.name}`}
-              className={cn(
-                'flex h-full flex-col gap-2 rounded-xl border p-2 text-start transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50',
-                member.depth > 0 && 'border-dashed border-primary/40',
-                member.isCurrent && 'border-solid border-primary bg-primary/5 ring-2 ring-primary',
-              )}
+              className="block h-full rounded-2xl text-start outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
               data-testid={`screen-family-${member.key}`}
             >
-              <span className="text-xs font-medium text-muted-foreground tabular-nums">
-                {t('onboardingBoard.step', { number: member.number })}
-              </span>
-              <span className="line-clamp-2 h-8 text-xs leading-4 text-muted-foreground">
-                {member.line}
-              </span>
-              {member.picture}
+              <ScreenCardFrame
+                className={cn('h-full', member.isCurrent && 'border-primary ring-2 ring-primary')}
+              >
+                <header className="flex min-h-7 items-center">
+                  <span className="text-xs font-medium text-muted-foreground tabular-nums">
+                    {t('onboardingBoard.step', { number: member.number })}
+                  </span>
+                </header>
+                <p className="line-clamp-2 h-10 text-xs leading-5 text-muted-foreground">
+                  {member.line}
+                </p>
+                {member.picture}
+              </ScreenCardFrame>
             </Link>
           </li>
         ))}
