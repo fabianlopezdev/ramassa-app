@@ -93,6 +93,7 @@ function seedWizardDraft(intake: WizardIntake, language: LanguageCode): void {
       storedCustom: intake.customAnswers,
       blocks: intake.catalog.blocks,
       consentCatalog: intake.catalog,
+      catalog: intake.catalog,
       // A screen her answers do not open never holds her back (RAPP-715).
       answers: herWizardAnswers(intake),
     }),

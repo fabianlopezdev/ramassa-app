@@ -46,6 +46,7 @@ import {
   customStepId,
   customStepKey,
   DEFAULT_WIZARD_FLOW,
+  detailScreensOf,
   opensForAnswers,
   SEASON_WIZARD_SCREENS,
   WIZARD_SCREEN_QUESTIONS,
@@ -57,6 +58,9 @@ import {
 import {
   answerText,
   appScreenFields,
+  followUpAsking,
+  followUpGroupOf,
+  followUpOpens,
   formBlocksOn,
   formBlockText,
   isCustomQuestionVisible,
@@ -66,7 +70,11 @@ import {
   type IntakeScreen,
 } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraft } from '@ramassa/shared/onboarding-drafts';
-import type { LanguageCode } from '@ramassa/shared/schemas';
+import {
+  documentDetailAsking,
+  type DocumentType,
+  type LanguageCode,
+} from '@ramassa/shared/schemas';
 
 const DOCUMENT_TYPE_LABEL_KEYS: Readonly<Record<string, string>> = {
   nie: 'documentTypeNie',
@@ -220,6 +228,7 @@ export default function SummaryStepScreen() {
     storedCustom: customAnswers,
     blocks: catalog.blocks,
     consentCatalog: catalog,
+    catalog: catalog,
     answers: herWizardAnswers(intake),
   });
   const wording = useBuiltinWording();
@@ -252,6 +261,7 @@ export default function SummaryStepScreen() {
               storedCustom: customAnswers,
               blocks: catalog.blocks,
               consentCatalog: catalog,
+              catalog: catalog,
               answers: herWizardAnswers(intake),
             }),
       );
@@ -270,16 +280,32 @@ export default function SummaryStepScreen() {
   const shows = (question: IntakeQuestion) => !hidden.has(question);
   // The Fitxa fields placed on a built-in screen (RAPP-655), under its own rows.
   const added = (screen: WizardQuestionScreen): ReactNode => {
-    const placed = appScreenFields(customScreens, screen);
-    return placed === undefined ? null : (
-      <CustomRows
-        screen={placed}
-        answers={answers}
-        signatures={draft?.signatures}
-        language={locale}
-      />
-    );
+    // Then the fields of its follow-ups her answers open (RAPP-720).
+    const groups = [
+      appScreenFields(customScreens, screen),
+      ...detailScreensOf(screen).map((branch) =>
+        followUpOpens(catalog, branch.screen, shownAnswers)
+          ? followUpGroupOf(customScreens, branch.screen)
+          : undefined,
+      ),
+    ].filter((group): group is IntakeScreen => group !== undefined);
+    return groups.length === 0
+      ? null
+      : groups.map((group) => (
+          <CustomRows
+            key={group.id}
+            screen={group}
+            answers={answers}
+            signatures={draft?.signatures}
+            language={locale}
+          />
+        ));
   };
+  // Her document's follow-up asks its number and name as staff placed them (RAPP-720).
+  const documentAsking = documentDetailAsking(
+    followUpAsking(catalog),
+    (text(documentation.documentType) ?? undefined) as DocumentType | undefined,
+  );
   // A built-in screen whose every question staff removed has nothing to correct.
   const hasQuestions = (screen: WizardQuestionScreen) =>
     WIZARD_SCREEN_QUESTIONS[screen].some(shows) ||
@@ -446,13 +472,15 @@ export default function SummaryStepScreen() {
                 )[0]?.label ?? null),
           )}
         />
-        {documentType === 'other' ? (
+        {documentType === 'other' && documentAsking?.name !== 'not_asked' ? (
           <ReviewRow
             label={t('documentNameLabel')}
             value={show(text(documentation.documentName))}
           />
         ) : null}
-        {documentType === null || documentType === 'none' ? null : (
+        {documentType === null ||
+        documentType === 'none' ||
+        documentAsking?.number === 'not_asked' ? null : (
           <ReviewRow
             label={t('documentNumberLabel')}
             value={show(text(documentation.documentNumber))}

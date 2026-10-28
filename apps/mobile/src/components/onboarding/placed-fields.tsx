@@ -22,6 +22,7 @@ import {
 import { useScreenConsents } from '@/components/onboarding/screen-consents';
 import { useSignatureBlocks } from '@/components/onboarding/signature-blocks';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
+import { placedScreenOf } from '@/lib/follow-up-screens';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { mergedCustomAnswers, wizardDraftStep } from '@/lib/onboarding-intake';
@@ -29,9 +30,10 @@ import { useWizardIntake } from '@/lib/onboarding-intake-context';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import type { WizardQuestionScreen } from '@ramassa/shared/intake';
+import { isFollowUpScreen, type WizardQuestionScreen } from '@ramassa/shared/intake';
 import {
   appScreenFields,
+  detailBranch,
   isCustomQuestionVisible,
   updateCustomAnswer,
 } from '@ramassa/shared/intake-builder';
@@ -49,9 +51,11 @@ export interface PlacedFields {
   readonly save: () => void;
 }
 
-export function usePlacedFields(screenId: string | undefined): PlacedFields {
+export function usePlacedFields(frameId: string | undefined): PlacedFields {
   const { t } = useTranslation('onboarding');
   const { customScreens, customAnswers } = useWizardIntake();
+  // An app follow-up holds its own placements (RAPP-720); every support need shares one.
+  const screenId = placedScreenOf(frameId);
   const questions = appScreenFields(customScreens, screenId)?.questions ?? [];
   const [answers, setAnswers] = useState<CustomAnswerDraft>(() =>
     mergedCustomAnswers(customAnswers, onboardingDraftStore.loadDraft()?.custom),
@@ -75,7 +79,13 @@ export function usePlacedFields(screenId: string | undefined): PlacedFields {
     onboardingDraftStore.saveDraft({
       ...latest,
       // The screen's own Continue or Back sets the step next.
-      currentStep: latest?.currentStep ?? wizardDraftStep(screenId as WizardQuestionScreen),
+      currentStep:
+        latest?.currentStep ??
+        wizardDraftStep(
+          isFollowUpScreen(screenId)
+            ? detailBranch(screenId).parent
+            : (screenId as WizardQuestionScreen),
+        ),
       custom: { ...latest?.custom, ...mine },
       signatures: signatures.drafted(latest?.signatures),
       consents: consents.drafted(latest?.consents),

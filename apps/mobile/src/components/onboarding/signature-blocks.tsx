@@ -96,7 +96,7 @@ export function useSignatureBlocks(
         catalog.layout === undefined
           ? Number.POSITIVE_INFINITY
           : ((form === undefined
-              ? placementOn(catalog.layout, question.id, 'onboarding')
+              ? placementOn(catalog.layout, question.id, 'onboarding', screenKey)
               : catalog.layout.placements.find(
                   (placement) =>
                     placement.fieldId === question.id &&

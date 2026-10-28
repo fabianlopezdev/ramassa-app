@@ -15,6 +15,7 @@ import { useLanguage } from '@ramassa/shared/i18n';
 import {
   DEFAULT_REQUIRED_QUESTIONS,
   DEFAULT_WIZARD_FLOW,
+  documentDetailScreen,
   isRequiredQuestion,
   nextWizardScreen,
   opensDetailScreen,
@@ -34,6 +35,7 @@ import {
   builtinLabel,
   builtinOptions,
   EMPTY_INTAKE_CATALOG,
+  followUpAsksSomething,
   requiredBuiltinQuestions,
   type CustomAnswers,
   type FormBlock,
@@ -180,7 +182,7 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
     const landingFor = (previous: WizardStepKey | null) =>
       previous === null || isEditing
         ? previous
-        : landingStep(previous, onboardingDraftStore.loadDraft());
+        : landingStep(previous, onboardingDraftStore.loadDraft(), intake.catalog);
     const answers = herWizardAnswers(intake);
     const next = nextFor(answers);
     const previous = previousFor(answers);
@@ -243,18 +245,29 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
 /**
  * The step Back lands on for a previous screen: its detail screen when her
  * draft opened one (the document details, the "other" status, the last
- * support need), else the screen itself.
+ * support need) and it asks something (RAPP-720), else the screen itself.
  */
 function landingStep(
   previous: WizardStepKey,
   draft: OnboardingDraft | null,
+  catalog: IntakeCatalog,
 ): WizardStepKey | OnboardingDraftStep {
-  if (previous === 'documentation' && hasDocumentDetails(draft?.documentation?.documentType))
+  const documentScreen = documentDetailScreen(draft?.documentation?.documentType);
+  if (
+    previous === 'documentation' &&
+    hasDocumentDetails(draft?.documentation?.documentType) &&
+    documentScreen !== null &&
+    followUpAsksSomething(catalog, documentScreen)
+  )
     return 'documentation-details';
-  if (previous === 'specific-needs') return lastSupportNeedStep(draft?.season?.specificNeeds);
+  if (previous === 'specific-needs')
+    return followUpAsksSomething(catalog, 'specific-needs-details')
+      ? lastSupportNeedStep(draft?.season?.specificNeeds)
+      : 'specific-needs';
   if (
     previous === 'season' &&
-    opensDetailScreen('applicant-status-details', draft?.season?.applicantStatus)
+    opensDetailScreen('applicant-status-details', draft?.season?.applicantStatus) &&
+    followUpAsksSomething(catalog, 'applicant-status-details')
   )
     return 'applicant-status-details';
   return previous;
@@ -295,7 +308,9 @@ export function wizardBackTrail(
         herWizardAnswers(intake),
       );
     if (previous === null) break;
-    const landing = wizardDraftStep(parent === null ? landingStep(previous, draft) : previous);
+    const landing = wizardDraftStep(
+      parent === null ? landingStep(previous, draft, intake.catalog) : previous,
+    );
     if (trail.includes(landing) || landing === step) break;
     trail.unshift(landing);
     current = landing;

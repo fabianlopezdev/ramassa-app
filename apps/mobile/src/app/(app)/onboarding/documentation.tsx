@@ -9,6 +9,7 @@ import {
   hasDocumentDetails,
   type DocumentChoice,
 } from '@/lib/documentation-step';
+import { followUpShows } from '@/lib/follow-up-screens';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { useBuiltinWording, useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
@@ -17,7 +18,11 @@ import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
-import { documentExplanationFor, offersSkipAnswer } from '@ramassa/shared/intake';
+import {
+  documentDetailScreen,
+  documentExplanationFor,
+  offersSkipAnswer,
+} from '@ramassa/shared/intake';
 import { DOCUMENT_TYPES, type DocumentationStep, type LanguageCode } from '@ramassa/shared/schemas';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -34,7 +39,7 @@ export default function DocumentationStepScreen() {
   const step = useWizardStep('documentation');
   const router = useRouter();
   const wording = useBuiltinWording();
-  const { documentExplanation } = useWizardIntake();
+  const { documentExplanation, catalog } = useWizardIntake();
   const explanation = documentExplanationFor(
     documentExplanation,
     (i18n.resolvedLanguage as LanguageCode) ?? 'ca',
@@ -79,7 +84,9 @@ export default function DocumentationStepScreen() {
       playHaptic('warning');
       return;
     }
-    if (hasDocumentDetails(choice)) {
+    // A follow-up that asks nothing is skipped (RAPP-720).
+    const detail = documentDetailScreen(choice);
+    if (hasDocumentDetails(choice) && detail !== null && followUpShows(catalog, detail)) {
       persist('documentation-details');
       const route = `/onboarding/documentation-details${step.isEditing ? '?edit=1' : ''}` as Href;
       if (step.isEditing) router.replace(route);

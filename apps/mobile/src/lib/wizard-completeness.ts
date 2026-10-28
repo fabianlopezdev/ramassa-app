@@ -13,12 +13,15 @@
  */
 import {
   customStepId,
+  DEFAULT_FOLLOW_UP_ASKING,
   DEFAULT_REQUIRED_QUESTIONS,
+  detailScreensOf,
   isRequiredQuestion,
   opensForAnswers,
   WIZARD_QUESTION_SCREENS,
   wizardFlowOrder,
   type CustomWizardScreen,
+  type FollowUpAsking,
   type IntakeQuestion,
   type RequiredQuestions,
   type WizardAnswers,
@@ -29,6 +32,9 @@ import {
 import {
   appScreenFields,
   consentsOn,
+  followUpAsking,
+  followUpGroupOf,
+  followUpOpens,
   formBlocksOn,
   isCustomQuestionRequired,
   isCustomQuestionVisible,
@@ -39,6 +45,7 @@ import {
   type ConsentPlacement,
   type CustomAnswers,
   type FormBlock,
+  type IntakeCatalog,
   type IntakeScreen,
 } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraft, OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
@@ -88,6 +95,7 @@ export function isScreenComplete(
   screen: WizardQuestionScreen,
   draft: OnboardingDraft | null,
   required: RequiredQuestions = DEFAULT_REQUIRED_QUESTIONS,
+  asking: FollowUpAsking = DEFAULT_FOLLOW_UP_ASKING,
 ): boolean {
   switch (screen) {
     case 'identity':
@@ -95,7 +103,8 @@ export function isScreenComplete(
     case 'background':
       return identityFormSchemaFor(required).safeParse(section(draft?.identity)).success;
     case 'documentation':
-      return documentationFormSchemaFor(required).safeParse(section(draft?.documentation)).success;
+      return documentationFormSchemaFor(required, asking).safeParse(section(draft?.documentation))
+        .success;
     case 'logistics':
       return contactFormSchemaFor(required).safeParse(section(draft?.logistics)).success;
     case 'equipment':
@@ -139,6 +148,11 @@ export interface CompletenessContext {
    * answers do not open is never asked, so it never blocks her.
    */
   readonly answers?: WizardAnswers;
+  /**
+   * Her catalog, for the app's follow-ups (RAPP-720): what each one requires,
+   * and whether her answers open it. Without it they read as they start.
+   */
+  readonly catalog?: IntakeCatalog;
 }
 
 /**
@@ -151,6 +165,8 @@ export function firstIncompleteStep(
   context: CompletenessContext,
 ): WizardStepKey | null {
   const required = context.required ?? DEFAULT_REQUIRED_QUESTIONS;
+  const asking =
+    context.catalog === undefined ? DEFAULT_FOLLOW_UP_ASKING : followUpAsking(context.catalog);
   const answers: CustomAnswers = { ...context.storedCustom, ...draft?.custom };
   const isUnsignedOrUnticked = (screenKey: string) =>
     unsignedFormBlocks(formBlocksOn(context.blocks, 'onboarding', screenKey), draft?.signatures)
@@ -170,11 +186,21 @@ export function firstIncompleteStep(
       continue;
     }
     if (!isQuestionScreen(step) || context.flow.hiddenScreens.has(step)) continue;
-    if (!isScreenComplete(step, draft, required)) return step;
+    if (!isScreenComplete(step, draft, required, asking)) return step;
     if (isUnsignedOrUnticked(step)) return step;
     // The Fitxa fields placed on this screen (RAPP-655).
     const placed = appScreenFields(context.customScreens ?? [], step);
     if (placed !== undefined && !isCustomScreenComplete(placed, answers)) return step;
+    // And on its follow-ups her answers open (RAPP-720): she answers them from this step.
+    for (const branch of context.catalog === undefined ? [] : detailScreensOf(step)) {
+      if (
+        !followUpOpens(context.catalog as IntakeCatalog, branch.screen, context.answers ?? answers)
+      )
+        continue;
+      const onFollowUp = followUpGroupOf(context.customScreens ?? [], branch.screen);
+      if (onFollowUp !== undefined && !isCustomScreenComplete(onFollowUp, answers)) return step;
+      if (isUnsignedOrUnticked(branch.screen)) return step;
+    }
   }
   return null;
 }

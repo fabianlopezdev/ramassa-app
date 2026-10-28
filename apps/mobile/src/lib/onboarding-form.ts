@@ -12,8 +12,10 @@
 
 import { z } from 'zod';
 import {
+  DEFAULT_FOLLOW_UP_ASKING,
   DEFAULT_REQUIRED_QUESTIONS,
   isRequiredQuestion,
+  type FollowUpAsking,
   type RequiredQuestions,
 } from '@ramassa/shared/intake';
 import {
@@ -332,7 +334,14 @@ export function logisticsFormSchemaFor(required: RequiredQuestions) {
 }
 export const logisticsFormSchema = logisticsFormSchemaFor(DEFAULT_REQUIRED_QUESTIONS);
 
-/** The document step: "Not now" is no answer, refused when staff made the document required. */
-export function documentationFormSchemaFor(required: RequiredQuestions) {
-  return documentationStepSchemaFor(required);
+/**
+ * The document step: "Not now" is no answer, refused when staff made the
+ * document required. Her document's follow-up requires what staff placed
+ * there (RAPP-720).
+ */
+export function documentationFormSchemaFor(
+  required: RequiredQuestions,
+  asking: FollowUpAsking = DEFAULT_FOLLOW_UP_ASKING,
+) {
+  return documentationStepSchemaFor(required, asking);
 }

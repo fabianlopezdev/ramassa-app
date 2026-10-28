@@ -1,7 +1,11 @@
-import { documentDetailScreen } from '@ramassa/shared/intake';
+import {
+  DEFAULT_FOLLOW_UP_ASKING,
+  documentDetailScreen,
+  type FollowUpAsking,
+} from '@ramassa/shared/intake';
 import {
   documentationFields,
-  refineDocumentNumber,
+  refineDocumentDetails,
   type DocumentationStep,
   type DocumentType,
 } from '@ramassa/shared/schemas';
@@ -27,14 +31,10 @@ export function documentationForChoice(
     : { documentType: choice };
 }
 
-export const documentDetailsSchema = documentationFields.superRefine((value, context) => {
-  refineDocumentNumber(value, context);
-  if (value.documentType === 'other') {
-    if (!value.documentName) {
-      context.addIssue({ code: 'custom', path: ['documentName'], message: 'required' });
-    }
-    if (!value.documentNumber) {
-      context.addIssue({ code: 'custom', path: ['documentNumber'], message: 'required' });
-    }
-  }
-});
+/**
+ * The document follow-up's Continue check (RAPP-720): what the follow-up of
+ * her document asks and requires, as staff placed its fields.
+ */
+export function documentDetailsSchemaFor(asking: FollowUpAsking = DEFAULT_FOLLOW_UP_ASKING) {
+  return documentationFields.superRefine(refineDocumentDetails(asking, false));
+}

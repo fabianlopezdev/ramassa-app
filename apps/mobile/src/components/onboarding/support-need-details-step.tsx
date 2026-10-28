@@ -1,12 +1,15 @@
 import { FormTextArea } from '@/components/forms/form-text-area';
+import { QuestionHelp } from '@/components/onboarding/question-help';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
+import { useOwnField } from '@/lib/follow-up-screens';
+import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { useWizardStep } from '@/lib/onboarding-intake-context';
 import { mergeSupportNeedsDraft } from '@/lib/support-needs-draft';
 import { Redirect, useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { TextStyle } from 'react-native';
+import { View, type TextStyle } from 'react-native';
 import {
   selectedSupportNeeds,
   SUPPORT_NEED_CATEGORIES,
@@ -51,6 +54,9 @@ function Details({ category }: { readonly category: string | undefined }) {
         .filter(Boolean)
         .join('\n\n'),
   );
+  // Asked, and required, as staff placed it on the needs follow-up (RAPP-720).
+  const own = useOwnField('specific-needs-details', 'specific_needs_details');
+  const [isMissing, setIsMissing] = useState(false);
   if (!SUPPORT_NEED_CATEGORIES.includes(key) || !selected.includes(key))
     return <Redirect href="/onboarding/specific-needs" />;
   const labels = selected.map((item) => t(SUPPORT_NEED_LABEL_KEYS[item]));
@@ -73,6 +79,11 @@ function Details({ category }: { readonly category: string | undefined }) {
       title={selected.length > 1 ? t('supportNeedsCombinedQuestion', { needs }) : t(titleKeys[key])}
       continueLabel={t('continueAction')}
       onContinue={() => {
+        if (own.asking === 'required' && text.trim() === '') {
+          setIsMissing(true);
+          playHaptic('warning');
+          return;
+        }
         save(step.nextDraftStep);
         if (step.isEditing) router.replace('/onboarding/summary?entrance=none' as Href);
         else step.goNext();
@@ -86,14 +97,23 @@ function Details({ category }: { readonly category: string | undefined }) {
           );
       }}
     >
-      <FormTextArea
-        testID="support-need-details-combined"
-        label={t('supportNeedExplanationLabel')}
-        value={text}
-        onChangeText={setText}
-        maxLength={SUPPORT_NEED_DETAIL_MAX_LENGTH}
-        style={inputStyle}
-      />
+      {own.asking === 'not_asked' ? null : (
+        <View className="gap-sm">
+          <FormTextArea
+            testID="support-need-details-combined"
+            label={own.label(t('supportNeedExplanationLabel'))}
+            value={text}
+            onChangeText={(next) => {
+              setText(next);
+              setIsMissing(false);
+            }}
+            errorMessage={isMissing ? t('errorRequired') : undefined}
+            maxLength={SUPPORT_NEED_DETAIL_MAX_LENGTH}
+            style={inputStyle}
+          />
+          <QuestionHelp text={own.help} />
+        </View>
+      )}
     </WizardFrame>
   );
 }

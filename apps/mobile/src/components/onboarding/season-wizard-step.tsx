@@ -7,9 +7,10 @@ import {
   type SeasonAnswers,
   type SeasonQuestion,
 } from '@/components/profile/season-answer-fields';
+import { followUpShows } from '@/lib/follow-up-screens';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
-import { useBuiltinWording, useWizardStep } from '@/lib/onboarding-intake-context';
+import { useBuiltinWording, useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import {
   mergeSeasonDraft,
   referringEntityForAdditionalSupport,
@@ -32,6 +33,7 @@ export function SeasonWizardStep({ screen }: { readonly screen: SeasonWizardScre
   const step = useWizardStep(screen);
   const router = useRouter();
   const wording = useBuiltinWording();
+  const { catalog } = useWizardIntake();
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [answers, setAnswers] = useState<SeasonAnswers>(() => {
     const saved = seasonAnswerFields.safeParse(draft?.season ?? {});
@@ -85,7 +87,9 @@ export function SeasonWizardStep({ screen }: { readonly screen: SeasonWizardScre
         }
         if (
           screen === 'season' &&
-          opensDetailScreen('applicant-status-details', answers.applicantStatus)
+          opensDetailScreen('applicant-status-details', answers.applicantStatus) &&
+          // A follow-up that asks nothing is skipped (RAPP-720).
+          followUpShows(catalog, 'applicant-status-details')
         ) {
           persist('applicant-status-details');
           const route =
