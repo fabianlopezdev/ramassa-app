@@ -387,8 +387,9 @@ export function ParticipantDetail({
               ) : undefined
             }
           />
-
-          <div className="overflow-x-auto px-4 sm:px-6">
+        </div>
+        {showRegistrationTab || teamTools ? (
+          <div className="overflow-x-auto border-b">
             <TabsList
               variant="line"
               className="min-w-max justify-start gap-2 p-0 group-data-horizontal/tabs:h-14"
@@ -433,7 +434,7 @@ export function ParticipantDetail({
               ) : null}
             </TabsList>
           </div>
-        </div>
+        ) : null}
 
         {statusErrorMessage === undefined ? null : (
           <p role="alert" className="text-sm text-destructive">

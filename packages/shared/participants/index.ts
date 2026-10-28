@@ -48,4 +48,5 @@ export {
   type ParticipantPrefillUpdate,
 } from './participant-prefill';
 export * from './test-scenario';
+export * from './profile-banner';
 export { ANSWER_SOURCES, type AnswerOrigin, type AnswerSource } from './answer-sources';

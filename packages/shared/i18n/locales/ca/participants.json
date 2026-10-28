@@ -1,4 +1,20 @@
 {
+  "profileBanner": {
+    "change": "Canvia el fons",
+    "format": "Recomanat: 2400 × 600 px (4:1). JPG, PNG o WebP, màxim 5 MB. La imatge es retalla per adaptar-se a la pantalla.",
+    "preview": "Vista prèvia del fons",
+    "image": "Imatge",
+    "applyTo": "Aplica a",
+    "thisPlayer": "Només aquesta jugadora",
+    "allPlayers": "Totes les jugadores",
+    "allWarning": "Substituirà els fons de totes les jugadores, inclosos els personalitzats. També serà el fons de les jugadores noves.",
+    "invalid": "Tria una imatge JPG, PNG o WebP vàlida de fins a 5 MB.",
+    "failed": "No hem pogut desar el fons. Torna-ho a provar.",
+    "cancel": "Cancel·la",
+    "save": "Desa el fons",
+    "saveAll": "Aplica a totes les jugadores",
+    "saving": "Desant…"
+  },
   "profileDesign": {
     "invited": "Convidada",
     "edit": "Edita el perfil",

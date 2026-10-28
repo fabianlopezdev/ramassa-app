@@ -1,4 +1,5 @@
 import { useAuthenticatedMediaUrl } from '@/components/content/authenticated-media-image';
+import { PlayerProfileBanner } from '@/components/participants/player-profile-banner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,15 +32,10 @@ export function ParticipantProfileHeader({
 
   return (
     <header
-      className="relative isolate grid overflow-hidden rounded-t-xl bg-primary text-primary-foreground sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]"
+      className="relative isolate grid overflow-hidden rounded-xl bg-primary text-primary-foreground sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]"
       data-testid="participant-profile-header"
     >
-      <img
-        src="/images/profile-club-banner.webp"
-        alt=""
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 size-full object-cover rtl:-scale-x-100"
-      />
+      <PlayerProfileBanner key={participant.id} profileId={participant.id} name={name} />
       <Avatar className="mx-auto mt-6 h-24 w-36 items-center justify-center rounded-none after:hidden sm:mx-0 sm:mt-0 sm:h-72 sm:w-full">
         {photoUrl === null ? null : (
           <AvatarImage
@@ -57,7 +53,7 @@ export function ParticipantProfileHeader({
         </AvatarFallback>
       </Avatar>
 
-      <div className="flex min-w-0 flex-col justify-center gap-6 px-6 py-7 sm:ps-0 sm:pe-7">
+      <div className="flex min-w-0 flex-col justify-center gap-6 px-6 pt-7 pb-16 sm:py-7 sm:ps-0 sm:pe-7">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-3">
             <h1 className="text-start text-3xl font-semibold tracking-tight break-words text-primary-foreground xl:text-4xl">

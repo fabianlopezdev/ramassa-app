@@ -6563,6 +6563,14 @@ export type Database = {
           updated_at: string;
         }[];
       };
+      get_player_profile_banner: {
+        Args: { p_profile_id: string };
+        Returns: Json;
+      };
+      set_player_profile_banner: {
+        Args: { p_profile_id: string; p_object_key: string; p_all_players: boolean };
+        Returns: Json;
+      };
       get_participant_profile: {
         Args: { participant_id: string };
         Returns: {
