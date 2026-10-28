@@ -31,14 +31,24 @@ export function ParticipantProfileHeader({
 
   return (
     <header
-      className="flex flex-col gap-6 rounded-t-xl bg-primary px-6 py-8 text-primary-foreground sm:flex-row sm:items-center sm:gap-8 sm:px-8 lg:gap-10"
+      className="relative isolate grid overflow-hidden rounded-t-xl bg-primary text-primary-foreground sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]"
       data-testid="participant-profile-header"
     >
-      <Avatar className="size-28 rounded-xl after:rounded-xl after:border-primary-foreground/15 sm:h-52 sm:w-48 lg:h-60 lg:w-56">
+      <img
+        src="/images/profile-club-banner.webp"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 size-full object-cover rtl:-scale-x-100"
+      />
+      <Avatar className="mx-auto mt-6 h-24 w-36 items-center justify-center rounded-none after:hidden sm:mx-0 sm:mt-0 sm:h-72 sm:w-full">
         {photoUrl === null ? null : (
-          <AvatarImage src={photoUrl} alt="" className="rounded-xl object-cover" />
+          <AvatarImage
+            src={photoUrl}
+            alt=""
+            className="rounded-none object-cover object-[center_30%] sm:[mask-image:linear-gradient(to_right,black_75%,transparent)] rtl:sm:[mask-image:linear-gradient(to_left,black_75%,transparent)]"
+          />
         )}
-        <AvatarFallback className="rounded-xl bg-primary-foreground/10 text-4xl font-semibold text-primary-foreground sm:text-6xl">
+        <AvatarFallback className="size-24 rounded-full border border-primary-foreground/25 bg-primary/95 text-4xl font-semibold tracking-tight text-secondary shadow-lg sm:size-44 sm:text-7xl">
           {accountInitials({
             firstName: participant.first_name,
             lastName: participant.last_name,
@@ -47,20 +57,20 @@ export function ParticipantProfileHeader({
         </AvatarFallback>
       </Avatar>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-5">
-        <div className="flex flex-wrap items-start justify-between gap-5">
+      <div className="flex min-w-0 flex-col justify-center gap-6 px-6 py-7 sm:ps-0 sm:pe-7">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-3">
-            <h1 className="text-start text-3xl font-semibold break-words text-primary-foreground sm:text-4xl lg:text-5xl">
+            <h1 className="text-start text-3xl font-semibold tracking-tight break-words text-primary-foreground xl:text-4xl">
               {name}
             </h1>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary" className="h-auto gap-2 px-3 py-1.5 text-sm">
+              <Badge variant="secondary" className="h-auto gap-2 px-3 py-1 text-sm">
                 <UserRound aria-hidden />
                 {joined
                   ? participant.is_active
                     ? t('rowActive')
                     : t('rowInactive')
-                  : t('rowInvited')}
+                  : t('profileDesign.invited')}
               </Badge>
               {participant.is_forum_banned ? (
                 <Badge className="border-primary-foreground/30 bg-transparent text-primary-foreground">

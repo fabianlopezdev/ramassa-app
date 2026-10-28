@@ -389,30 +389,45 @@ export function ParticipantDetail({
           />
 
           <div className="overflow-x-auto px-4 sm:px-6">
-            <TabsList variant="line" className="h-14 min-w-max justify-start gap-2 p-0">
-              <TabsTrigger value="profile" className="h-full rounded-none px-3 after:bottom-0">
+            <TabsList
+              variant="line"
+              className="min-w-max justify-start gap-2 p-0 group-data-horizontal/tabs:h-14"
+            >
+              <TabsTrigger
+                value="profile"
+                className="h-full rounded-none px-3 text-base after:bg-primary group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-1 data-[state=active]:text-primary"
+              >
                 {t('sectionProfile')}
               </TabsTrigger>
               {showRegistrationTab ? (
                 <TabsTrigger
                   value="registration"
-                  className="h-full rounded-none px-3 after:bottom-0"
+                  className="h-full rounded-none px-3 text-base after:bg-primary group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-1 data-[state=active]:text-primary"
                 >
                   {t('profileDesign.registration')}
                 </TabsTrigger>
               ) : null}
               {teamTools ? (
-                <TabsTrigger value="material" className="h-full rounded-none px-3 after:bottom-0">
+                <TabsTrigger
+                  value="material"
+                  className="h-full rounded-none px-3 text-base after:bg-primary group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-1 data-[state=active]:text-primary"
+                >
                   {t('profileDesign.material')}
                 </TabsTrigger>
               ) : null}
               {teamTools && permissions.has('participants.notes') ? (
-                <TabsTrigger value="notes" className="h-full rounded-none px-3 after:bottom-0">
+                <TabsTrigger
+                  value="notes"
+                  className="h-full rounded-none px-3 text-base after:bg-primary group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-1 data-[state=active]:text-primary"
+                >
                   {t('sectionNotes')}
                 </TabsTrigger>
               ) : null}
               {teamTools ? (
-                <TabsTrigger value="activity" className="h-full rounded-none px-3 after:bottom-0">
+                <TabsTrigger
+                  value="activity"
+                  className="h-full rounded-none px-3 text-base after:bg-primary group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-1 data-[state=active]:text-primary"
+                >
                   {t('sectionActivity')}
                 </TabsTrigger>
               ) : null}

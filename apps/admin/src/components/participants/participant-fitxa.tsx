@@ -164,11 +164,11 @@ export function ParticipantFitxa({
     <div data-testid="participant-fitxa" className="flex flex-col gap-6">
       <div
         className={cn(
-          'grid items-start gap-6',
-          showChoices && 'xl:grid-cols-[minmax(0,1fr)_20rem]',
+          'grid items-start gap-5',
+          showChoices && 'xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]',
         )}
       >
-        <div className="flex min-w-0 flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-4">
           {sections.map(({ section, fields }) => (
             <ProfileSection key={section.id} section={section} fields={fields} context={context} />
           ))}
@@ -233,24 +233,28 @@ export function ParticipantFitxa({
               title={t('participants:profileDesign.registration')}
               leading={<ClipboardList aria-hidden className="size-5 text-primary" />}
               isFlush
+              className="[&>header]:mx-5 [&>header]:px-0"
               testId="profile-registration-choices"
             >
-              <div className="flex flex-col divide-y">
+              <div className="flex flex-col divide-y px-5">
                 {sections.map(({ section, fields }) => {
                   const askedFields = fields.filter((field) => questions.has(field.id));
                   if (askedFields.length === 0) return null;
                   return (
-                    <section key={section.id} className="px-5 py-4">
-                      <h3 className="mb-3 text-start text-sm font-medium text-muted-foreground">
+                    <section key={section.id} className="py-4">
+                      <h3 className="mb-2 text-start text-xs font-medium text-muted-foreground">
                         {textIn(section.title, locale as LanguageCode)}
                       </h3>
-                      <ul className="flex flex-col gap-4">
+                      <ul className="flex flex-col gap-2.5">
                         {askedFields.map((field) => {
                           const question = questions.get(field.id);
                           if (question === undefined) return null;
                           return (
-                            <li key={field.id} className="flex flex-col gap-1.5">
-                              <span className="text-start text-sm">
+                            <li
+                              key={field.id}
+                              className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] items-center gap-3"
+                            >
+                              <span className="text-start text-sm text-muted-foreground">
                                 {textIn(field.label, locale as LanguageCode)}
                               </span>
                               <ChoiceMenu

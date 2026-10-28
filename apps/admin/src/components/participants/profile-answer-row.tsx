@@ -38,6 +38,8 @@ export interface ProfileAnswerRowProps {
   /** The page shows choices: every row keeps the column, with or without one. */
   readonly hasChoiceColumn: boolean;
   readonly canEdit: boolean;
+  readonly showEditAction?: boolean;
+  readonly inset?: boolean;
   readonly isEditing: boolean;
   readonly onToggleEdit: () => void;
   /** The input, under the row while editing. */
@@ -54,6 +56,8 @@ export function ProfileAnswerRow({
   choice,
   hasChoiceColumn,
   canEdit,
+  showEditAction = true,
+  inset = false,
   isEditing,
   onToggleEdit,
   editor,
@@ -62,36 +66,44 @@ export function ProfileAnswerRow({
   const { t } = useTranslation(['participants', 'profile']);
   return (
     <li data-testid={testId} data-locked={lockedLevel ?? undefined}>
-      <div className="flex min-h-16 items-center gap-3 px-5 py-3">
-        <div className="flex min-w-0 flex-1 flex-col gap-1 sm:grid sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.2fr)] sm:items-start sm:gap-5">
+      <div className={cn('flex min-h-11 items-center gap-3 py-2.5', !inset && 'px-5')}>
+        <div className="flex min-w-0 flex-1 flex-col gap-1 sm:grid sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] sm:items-center sm:gap-5">
           <p className="text-start text-sm break-words text-muted-foreground">{name}</p>
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <div
-              className={cn(
-                'text-start text-sm break-words',
-                (value === null || lockedLevel !== null) && 'text-muted-foreground',
-              )}
-              dir="auto"
-              data-testid={`${testId}-value`}
-            >
-              {lockedLevel !== null ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <Lock aria-hidden className="size-3.5 shrink-0" />
-                  {t(`participants:fitxa.locked.${lockedLevel}`)}
-                </span>
-              ) : value === null ? (
-                t('profile:notProvided')
-              ) : (
-                value
-              )}
-            </div>
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className={cn(
+                    'text-start text-sm break-words',
+                    (value === null || lockedLevel !== null) && 'text-muted-foreground',
+                  )}
+                  dir="auto"
+                  tabIndex={source !== null && lockedLevel === null ? 0 : undefined}
+                  data-testid={`${testId}-value`}
+                >
+                  {lockedLevel !== null ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Lock aria-hidden className="size-3.5 shrink-0" />
+                      {t(`participants:fitxa.locked.${lockedLevel}`)}
+                    </span>
+                  ) : value === null ? (
+                    t('profile:notProvided')
+                  ) : (
+                    value
+                  )}
+                </div>
+              </TooltipTrigger>
+              {source !== null && lockedLevel === null ? (
+                <TooltipContent>{source}</TooltipContent>
+              ) : null}
+            </Tooltip>
             <p
-              className="flex min-w-0 items-center gap-1 text-start text-xs text-muted-foreground"
+              className="flex min-w-0 items-center gap-1 text-start text-xs text-muted-foreground empty:hidden"
               data-testid={`${testId}-source`}
             >
-              <span className="break-words">
-                {lockedLevel === null && value !== null ? (source ?? '') : ''}
-              </span>
+              {source !== null && lockedLevel === null && value !== null ? (
+                <span className="sr-only">{source}</span>
+              ) : null}
               {older.length === 0 || lockedLevel !== null ? null : (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -130,7 +142,7 @@ export function ProfileAnswerRow({
             )}
           </span>
         ) : null}
-        {canEdit ? (
+        {canEdit && showEditAction ? (
           <span className="flex shrink-0 justify-end">
             <Button
               type="button"

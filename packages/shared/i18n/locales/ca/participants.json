@@ -1,5 +1,6 @@
 {
   "profileDesign": {
+    "invited": "Convidada",
     "edit": "Edita el perfil",
     "invitedOn": "Invitació creada el {{date}}",
     "actions": "Opcions del perfil",

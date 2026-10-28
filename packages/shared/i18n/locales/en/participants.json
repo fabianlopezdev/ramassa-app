@@ -1,5 +1,6 @@
 {
   "profileDesign": {
+    "invited": "Invited",
     "edit": "Edit profile",
     "invitedOn": "Invitation created on {{date}}",
     "actions": "Profile options",

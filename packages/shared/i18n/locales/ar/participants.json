@@ -1,5 +1,6 @@
 {
   "profileDesign": {
+    "invited": "مدعوّة",
     "edit": "تعديل الملف الشخصي",
     "invitedOn": "أُنشئت الدعوة في {{date}}",
     "actions": "خيارات الملف الشخصي",

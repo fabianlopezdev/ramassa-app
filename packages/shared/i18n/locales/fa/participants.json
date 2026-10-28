@@ -1,5 +1,6 @@
 {
   "profileDesign": {
+    "invited": "دعوت‌شده",
     "edit": "ویرایش پروفایل",
     "invitedOn": "دعوت در {{date}} ایجاد شد",
     "actions": "گزینه‌های پروفایل",
