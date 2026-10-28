@@ -153,6 +153,8 @@ export function ConditionFields({
         <Select
           value={draft.sourceKey ?? undefined}
           onValueChange={(key) => {
+            // The hidden native select reports '' while its options are closed.
+            if (key === '' || key === draft.sourceKey) return;
             const picked = sources.find((each) => each.key === key);
             onChange({
               sourceKey: key,
@@ -186,7 +188,10 @@ export function ConditionFields({
         <Select
           value={draft.fieldId ?? undefined}
           disabled={source === undefined}
-          onValueChange={(fieldId) => onChange({ ...draft, fieldId, values: [] })}
+          onValueChange={(fieldId) => {
+            if (fieldId === '' || fieldId === draft.fieldId) return;
+            onChange({ ...draft, fieldId, values: [] });
+          }}
         >
           <SelectTrigger
             id={`${idPrefix}-condition-question`}
@@ -339,7 +344,7 @@ export function ScreenConditionSection({
             setDraft(next);
             setError(null);
           }}
-          idPrefix="screen"
+          idPrefix="screen-edit"
         />
         {error === null ? null : <FieldError>{error}</FieldError>}
       </FieldGroup>
