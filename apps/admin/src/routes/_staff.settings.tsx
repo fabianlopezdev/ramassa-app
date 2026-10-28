@@ -1,6 +1,5 @@
 import { RequireAuth } from '@/components/auth/require-auth';
 import { ORGANIZATION_BRANDING_CHANGED_EVENT } from '@/components/branding/organization-branding-provider';
-import { OnboardingDocumentSection } from '@/components/settings/onboarding-design-sections';
 import {
   isSettingsTab,
   OrganizationSettingsPanel,
@@ -13,7 +12,6 @@ import { supabase } from '@/lib/supabase';
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { z } from 'zod';
 import { useAuth } from '@ramassa/shared/auth';
-import { fetchDocumentStepExplanation } from '@ramassa/shared/intake';
 import {
   fetchOrganizationSettings,
   registerInternalDocument,
@@ -45,16 +43,11 @@ export const Route = createFileRoute('/_staff/settings')({
       fetchMyPermissions(supabase),
       fetchOrganizationSettings(supabase),
     ]);
-    const [documents, documentExplanation] = await Promise.all([
-      permissions.has('settings.documents')
-        ? searchInternalDocuments(supabase, deps.documentQuery)
-        : Promise.resolve([]),
-      permissions.has('settings.organization')
-        ? fetchDocumentStepExplanation(supabase)
-        : Promise.resolve(null),
-    ]);
+    // The identity document note is edited on its Onboarding screen only (RAPP-714).
+    const documents = permissions.has('settings.documents')
+      ? await searchInternalDocuments(supabase, deps.documentQuery)
+      : [];
     return {
-      documentExplanation,
       documents,
       documentQuery: deps.documentQuery,
       organization,
@@ -88,11 +81,6 @@ function OrganizationSettingsScreen() {
       organization={data.organization}
       permissions={permissions}
       photoHandoff={<PhotoHandoffButton onDone={refresh} />}
-      documentExplanation={
-        permissions.has('settings.organization') ? (
-          <OnboardingDocumentSection explanation={data.documentExplanation} />
-        ) : undefined
-      }
       accessToken={session?.access_token}
       documents={data.documents}
       documentQuery={data.documentQuery}

@@ -845,7 +845,10 @@ function AppScreenEditor({
               />
             ) : null}
             {step.key === 'documentation' ? (
-              <OnboardingDocumentSection explanation={data.documentExplanation} />
+              <OnboardingDocumentSection
+                explanation={data.documentExplanation}
+                language={language}
+              />
             ) : null}
           </>
         }

@@ -319,8 +319,6 @@
   "contrastTooLow": "Este color tiene un contraste de {{ratio}}:1 con el texto. Se necesita un mínimo de 4,5:1.",
   "colorInvalid": "Usa un color hexadecimal de seis cifras, como #0077B6.",
   "documentExplanationTitle": "Nota sobre el documento de identidad",
-  "documentExplanationIntro": "Aparece en el registro guiado, bajo el paso del documento. Explica por qué lo pedís y para qué lo usáis. El paso es opcional: si no escribís nada, no aparece ninguna nota.",
-  "documentExplanationFallback": "obligatorio si escribes la nota, es el texto que se muestra cuando falta un idioma",
   "documentExplanationSaved": "Nota guardada.",
   "documentExplanationCatalanRequired": "Escribe la nota en catalán: es el texto que se muestra cuando falta un idioma.",
   "documentExplanationTooLong": "Cada texto puede tener como máximo {{max}} caracteres.",

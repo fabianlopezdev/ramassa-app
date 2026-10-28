@@ -319,8 +319,6 @@
   "contrastTooLow": "Aquest color té un contrast de {{ratio}}:1 amb el text. Cal un mínim de 4,5:1.",
   "colorInvalid": "Fes servir un color hexadecimal de sis xifres, com #0077B6.",
   "documentExplanationTitle": "Nota sobre el document d'identitat",
-  "documentExplanationIntro": "Surt al registre guiat, sota el pas del document. Explica per què el demaneu i per a què el feu servir. El pas és opcional: si no escriviu res, no surt cap nota.",
-  "documentExplanationFallback": "obligatori si escrius la nota, és el text que es mostra quan falta un idioma",
   "documentExplanationSaved": "Nota desada.",
   "documentExplanationCatalanRequired": "Escriu la nota en català: és el text que es mostra quan falta un idioma.",
   "documentExplanationTooLong": "Cada text pot tenir com a màxim {{max}} caràcters.",

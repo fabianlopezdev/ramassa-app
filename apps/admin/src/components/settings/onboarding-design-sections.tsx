@@ -13,7 +13,7 @@ import { DocumentExplanationForm } from '@/components/settings/document-explanat
 import { supabase } from '@/lib/supabase';
 import { useRouter } from '@tanstack/react-router';
 import { saveDocumentStepExplanation } from '@ramassa/shared/intake';
-import type { LocalizedText } from '@ramassa/shared/schemas';
+import type { LanguageCode, LocalizedText } from '@ramassa/shared/schemas';
 
 export function useReload() {
   const router = useRouter();
@@ -22,13 +22,17 @@ export function useReload() {
 
 export function OnboardingDocumentSection({
   explanation,
+  language,
 }: {
   readonly explanation: LocalizedText | null;
+  /** The language the screen's editor is written in (RAPP-714). */
+  readonly language: LanguageCode;
 }) {
   const reload = useReload();
   return (
     <DocumentExplanationForm
       explanation={explanation}
+      language={language}
       onSave={async (next) => {
         await saveDocumentStepExplanation(supabase, next);
         await reload();

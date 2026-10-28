@@ -319,8 +319,6 @@
   "contrastTooLow": "This colour has {{ratio}}:1 contrast with its text. It needs at least 4.5:1.",
   "colorInvalid": "Use a six-digit hex colour such as #0077B6.",
   "documentExplanationTitle": "Note about the identity document",
-  "documentExplanationIntro": "Shown in the guided registration, under the document step. Explain why you ask for it and what you use it for. The step is optional: if you write nothing, no note is shown.",
-  "documentExplanationFallback": "required if you write a note, it is the text shown when a language is missing",
   "documentExplanationSaved": "Note saved.",
   "documentExplanationCatalanRequired": "Write the note in Catalan: it is the text shown when a language is missing.",
   "documentExplanationTooLong": "Each text can be at most {{max}} characters.",
