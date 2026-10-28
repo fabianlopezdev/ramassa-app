@@ -1785,6 +1785,7 @@ export function buildIntakeBuiltinScreen(
     screen: 'summary',
     texts: { help: { ca: "Pots canviar qualsevol resposta abans d'acceptar els termes." } },
     is_hidden: false,
+    is_deleted: false,
     updated_at: FIXTURE_TIMESTAMP,
     updated_by: null,
     ...overrides,
