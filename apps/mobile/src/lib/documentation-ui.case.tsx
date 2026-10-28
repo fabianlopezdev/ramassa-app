@@ -48,7 +48,7 @@ mock.module('@/lib/onboarding-intake-context', () => ({
     goNext,
     goBack: () => undefined,
   }),
-  useWizardIntake: () => ({ documentExplanation: null }),
+  useWizardIntake: () => ({}),
   useBuiltinWording: () => ({
     label: (_key: string, fallback: string) => fallback,
     help: () => null,

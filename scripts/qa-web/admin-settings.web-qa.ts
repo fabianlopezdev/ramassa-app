@@ -237,48 +237,6 @@ test.describe.serial('admin organization settings', () => {
 });
 
 /**
- * The note under the wizard's document step (RAPP-302). Written in Catalan and
- * Arabic, stored without the empty languages, audited, and refused without
- * Catalan. Cleared again at the end, so the wizard specs see the seeded note.
- */
-test('an admin writes the note under the wizard document step', async ({ page }) => {
-  const seeded = queryDatabase(
-    "select coalesce(document_step_explanation::text, '') from public.organizations where slug = 'ramassa'",
-  );
-  try {
-    await signIn(page, ADMIN_EMAIL);
-    await page.goto('/settings');
-    const form = page.getByTestId('document-explanation-form');
-    await expect(form).toBeVisible();
-
-    await form.locator('#document-explanation-ca').fill('');
-    await form.locator('#document-explanation-es').fill('Solo en castellano.');
-    await form.getByRole('button', { name: 'Save note' }).click();
-    await expect(form.getByText(/Catalan/)).toBeVisible();
-
-    await form.locator('#document-explanation-ca').fill(`Per als cursos ${runTag}.`);
-    await form.locator('#document-explanation-es').fill('');
-    await form.locator('#document-explanation-ar').fill('للدورات.');
-    await form.getByRole('button', { name: 'Save note' }).click();
-    await expect(form.getByText('Note saved.')).toBeVisible();
-    expect(
-      queryDatabase(
-        "select document_step_explanation::text from public.organizations where slug = 'ramassa'",
-      ),
-    ).toBe(`{"ar": "للدورات.", "ca": "Per als cursos ${runTag}."}`);
-  } finally {
-    queryDatabase(`
-      update public.organizations
-         set document_step_explanation = ${seeded === '' ? 'null' : `'${seeded.replaceAll("'", "''")}'::jsonb`}
-       where slug = 'ramassa';
-      delete from public.audit_log
-       where created_at >= '${startedAt}'::timestamptz
-         and action = 'organization.document_explanation_update';
-    `);
-  }
-});
-
-/**
  * The season authorization (RAPP-304): an admin saves a draft from the
  * current version (RAPP-614) and publishes it, after confirming, and it
  * becomes the current version. The new version is removed again, so the

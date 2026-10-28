@@ -7,8 +7,8 @@
  *     placed on it (RAPP-651). It is deleted (archived) here.
  *   - An app screen: its wording per language and its hide switch (RAPP-612),
  *     its own questions reworded, hidden or made required, then the fields
- *     placed on it. The document screen adds its note (RAPP-302), and a
- *     screen with a detail screen edits that one's wording too.
+ *     placed on it. A screen with a detail screen edits that one's wording
+ *     too. The document screen's explanation is its help (RAPP-721).
  *   - The app terms and the season authorization are forms of their own
  *     (RAPP-696): their screens open on their boards, and the terms screens'
  *     buttons (`WordingSection`) are edited there.
@@ -22,10 +22,7 @@
 import { EditorColumns } from '@/components/layout/editor-columns';
 import { EditorSection } from '@/components/layout/editor-section';
 import { Page, PageHeader } from '@/components/layout/page';
-import {
-  OnboardingDocumentSection,
-  useReload,
-} from '@/components/settings/onboarding-design-sections';
+import { useReload } from '@/components/settings/onboarding-design-sections';
 import { Button } from '@/components/ui/button';
 import {
   Field,
@@ -925,10 +922,6 @@ function AppScreenEditor({
       : stepContent(catalog, step, previewLanguage, t, {
           ...(screen === null ? {} : { texts: texts[screen] }),
           ...(step.kind === 'builtin' ? { questions: phoneQuestions } : {}),
-          documentNote:
-            data.documentExplanation === null
-              ? ''
-              : textIn(data.documentExplanation as BuilderText, previewLanguage),
           seasonName: currentSeason?.name,
         });
 
@@ -1019,12 +1012,6 @@ function AppScreenEditor({
                   onEdit={row.setEditing}
                   onBuiltinLabelChange={row.setBuiltinLabel}
                   onWordingChange={row.setWording}
-                />
-              ) : null}
-              {step.key === 'documentation' ? (
-                <OnboardingDocumentSection
-                  explanation={data.documentExplanation}
-                  language={language}
                 />
               ) : null}
             </>

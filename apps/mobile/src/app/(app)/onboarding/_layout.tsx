@@ -24,7 +24,6 @@ import { getErrorMessageKey, toAppError } from '@ramassa/shared/errors';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
   DEFAULT_WIZARD_FLOW,
-  fetchDocumentStepExplanation,
   fetchMyAnsweredQuestions,
   fetchMyQuestionsToAsk,
   nextWizardScreen,
@@ -126,31 +125,21 @@ function OnboardingScreens() {
     queryFn: async ({ signal }): Promise<WizardIntake> => {
       // The layout of her fields and her answers to them are needed: the app's
       // own screens read and write her answers by field (RAPP-663).
-      const [
-        profile,
-        answered,
-        toAsk,
-        documentExplanation,
-        fullCatalog,
-        answers,
-        asking,
-        scenarioStamp,
-        mySignatures,
-      ] = await Promise.all([
-        fetchOwnProfile(supabase, { signal }),
-        fetchMyAnsweredQuestions(supabase, { signal }),
-        fetchMyQuestionsToAsk(supabase, { signal }),
-        fetchDocumentStepExplanation(supabase, { signal }),
-        fetchIntakeCatalog(supabase),
-        fetchMyCustomAnswers(supabase),
-        loadAsking(),
-        // A test player's situation stamp (RAPP-619). It never blocks the
-        // wizard: without it, her draft is kept as for anyone.
-        fetchMyTestScenarioStamp(supabase).catch(() => null),
-        // The blocks she signed on the walk-in tablet (RAPP-691). Unread, she
-        // signs them all here, which the database accepts.
-        fetchMyFormSignatures(supabase).catch(() => []),
-      ]);
+      const [profile, answered, toAsk, fullCatalog, answers, asking, scenarioStamp, mySignatures] =
+        await Promise.all([
+          fetchOwnProfile(supabase, { signal }),
+          fetchMyAnsweredQuestions(supabase, { signal }),
+          fetchMyQuestionsToAsk(supabase, { signal }),
+          fetchIntakeCatalog(supabase),
+          fetchMyCustomAnswers(supabase),
+          loadAsking(),
+          // A test player's situation stamp (RAPP-619). It never blocks the
+          // wizard: without it, her draft is kept as for anyone.
+          fetchMyTestScenarioStamp(supabase).catch(() => null),
+          // The blocks she signed on the walk-in tablet (RAPP-691). Unread, she
+          // signs them all here, which the database accepts.
+          fetchMyFormSignatures(supabase).catch(() => []),
+        ]);
       // A block she signed, whose text has not changed since, is asked no more.
       const signedBlocks = (fullCatalog.blocks ?? []).filter((block) =>
         isFormBlockSigned(block, mySignatures),
@@ -182,7 +171,6 @@ function OnboardingScreens() {
         // screen. The staff preview of a new invitation plans with the same
         // function (RAPP-618).
         notAsked: wizardNotAsked(toAsk, hidden),
-        documentExplanation,
         catalog,
         customAnswers: answers,
         customScreens: custom.screens,

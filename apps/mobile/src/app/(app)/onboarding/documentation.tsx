@@ -18,12 +18,8 @@ import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
-import {
-  documentDetailScreen,
-  documentExplanationFor,
-  offersSkipAnswer,
-} from '@ramassa/shared/intake';
-import { DOCUMENT_TYPES, type DocumentationStep, type LanguageCode } from '@ramassa/shared/schemas';
+import { documentDetailScreen, offersSkipAnswer } from '@ramassa/shared/intake';
+import { DOCUMENT_TYPES, type DocumentationStep } from '@ramassa/shared/schemas';
 import { tokens } from '@ramassa/shared/tokens';
 
 const labelKeys = {
@@ -34,16 +30,13 @@ const labelKeys = {
 } as const;
 
 export default function DocumentationStepScreen() {
-  const { t, i18n } = useTranslation('onboarding');
+  const { t } = useTranslation('onboarding');
   const fontClass = useLanguageFontClass();
   const step = useWizardStep('documentation');
   const router = useRouter();
   const wording = useBuiltinWording();
-  const { documentExplanation, catalog } = useWizardIntake();
-  const explanation = documentExplanationFor(
-    documentExplanation,
-    (i18n.resolvedLanguage as LanguageCode) ?? 'ca',
-  );
+  // Her explanation of the document is the screen's help now, drawn by the frame (RAPP-721).
+  const { catalog } = useWizardIntake();
   const { fontScale } = useWindowDimensions();
   const rowStyle = useMemo(
     () => ({
@@ -114,14 +107,6 @@ export default function DocumentationStepScreen() {
             }
       }
     >
-      {explanation === null ? null : (
-        <Text
-          testID="onboarding-document-explanation"
-          className={`text-start text-form text-neutral-700 ${fontClass}`}
-        >
-          {explanation}
-        </Text>
-      )}
       <WizardValidationSummary isVisible={hasSubmitErrors} message={t('documentChooseError')} />
       <View
         accessibilityRole="radiogroup"

@@ -44,7 +44,6 @@ import {
   type SystemFieldIndex,
 } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraft, OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
-import type { LocalizedText } from '@ramassa/shared/schemas';
 
 export interface WizardIntake {
   /** Her names when staff or an entity gave them; none for a self-started intake. */
@@ -61,8 +60,6 @@ export interface WizardIntake {
    * this; seeding and the final payload keep reading `answered`.
    */
   readonly notAsked: AnsweredQuestions;
-  /** Staff's note under the document step (RAPP-302), or null when none is written. */
-  readonly documentExplanation: LocalizedText | null;
   /**
    * The Fitxa fields placed on her onboarding (RAPP-307, RAPP-655): the
    * catalog, her stored answers to every field (the app's included), her
@@ -103,7 +100,6 @@ const EMPTY_INTAKE: WizardIntake = {
   fields: new Map(),
   answered: new Set(),
   notAsked: new Set(),
-  documentExplanation: null,
   catalog: EMPTY_INTAKE_CATALOG,
   customAnswers: {},
   customScreens: [],

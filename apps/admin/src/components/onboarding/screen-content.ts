@@ -516,8 +516,6 @@ export interface ContentOverrides {
   readonly intro?: BuilderText;
   /** The questions as the editor shows them, in place of the saved ones. */
   readonly questions?: readonly PhoneQuestion[];
-  /** The note under the document step (RAPP-302). */
-  readonly documentNote?: string;
   /** The current season's name, for the authorization title. */
   readonly seasonName?: string;
 }
@@ -635,9 +633,6 @@ export function stepContent(
       // Then the fields staff placed on it (RAPP-642, RAPP-651).
       ...placedPhoneQuestions(catalog, step.key, language),
     ],
-    lines:
-      step.key === 'documentation' && (overrides.documentNote ?? '') !== ''
-        ? [overrides.documentNote ?? '']
-        : [],
+    lines: [],
   };
 }
