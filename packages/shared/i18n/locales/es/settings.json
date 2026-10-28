@@ -875,7 +875,7 @@
     "removeBody": "Ya no se preguntará en este formulario. El consentimiento y las decisiones ya tomadas se conservan."
   },
   "customForms": {
-    "title": "Formularios del equipo",
+    "title": "Otros formularios",
     "newForm": "Nuevo formulario",
     "empty": "Todavía no hay ningún formulario.",
     "listLabel": "Formularios",

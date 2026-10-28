@@ -875,7 +875,7 @@
     "removeBody": "Ja no es preguntarà en aquest formulari. El consentiment i les decisions ja preses es conserven."
   },
   "customForms": {
-    "title": "Formularis de l'equip",
+    "title": "Altres formularis",
     "newForm": "Nou formulari",
     "empty": "Encara no hi ha cap formulari.",
     "listLabel": "Formularis",

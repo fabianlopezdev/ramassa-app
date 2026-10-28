@@ -875,7 +875,7 @@
     "removeBody": "It will no longer be asked on this form. The consent and the decisions already made are kept."
   },
   "customForms": {
-    "title": "Team's forms",
+    "title": "Other forms",
     "newForm": "New form",
     "empty": "There are no forms yet.",
     "listLabel": "Forms",

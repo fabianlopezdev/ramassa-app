@@ -24,6 +24,7 @@ import {
   type StaffNavGroup,
   type StaffNavParentId,
 } from '@/lib/nav-items';
+import { cn } from '@/lib/utils';
 import { Link, useLocation } from '@tanstack/react-router';
 import { ChevronRight, type LucideIcon } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -217,7 +218,7 @@ function NavFold({
 }) {
   const [isOpen, setIsOpen] = useFoldState(foldKey, holdsActive);
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} asChild className="group/fold">
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} asChild>
       <SidebarMenuItem data-testid={`staff-nav-fold-${testId}`}>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton tooltip={label} className={NAV_BUTTON_CLASS}>
@@ -225,7 +226,10 @@ function NavFold({
             <span>{label}</span>
             <ChevronRight
               aria-hidden="true"
-              className="ms-auto transition-transform group-data-[state=open]/fold:rotate-90 rtl:rotate-180 rtl:group-data-[state=open]/fold:rotate-90"
+              className={cn(
+                'ms-auto transition-transform motion-reduce:transition-none',
+                isOpen ? 'rotate-90' : 'rtl:rotate-180',
+              )}
             />
           </SidebarMenuButton>
         </CollapsibleTrigger>
