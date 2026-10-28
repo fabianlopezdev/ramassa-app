@@ -12,6 +12,7 @@
  * Docs: https://zod.dev/api
  */
 import { z } from 'zod';
+import type { ScreenCondition } from '../onboarding/screen-conditions';
 import { anyLanguageTextSchema, type BuilderText } from './profile-layout';
 
 /** Who fills a form in (RAPP-701): her on the app; an entity form is not available yet. */
@@ -37,6 +38,8 @@ export interface CustomFormScreen {
   readonly sortOrder: number;
   /** Staff hid it (RAPP-711): the next published version leaves it out. Absent means shown. */
   readonly isHidden?: boolean;
+  /** The answer that opens it (RAPP-715); absent, it always shows. */
+  readonly showWhen?: ScreenCondition;
 }
 
 /** A Publica of a form (RAPP-701): its number, its season when it repeats, and whether it corrected. */
@@ -79,6 +82,9 @@ const screenSchema = z.object({
   sort_order: z.number().int(),
   // The team's draft only (RAPP-711); a published version leaves a hidden screen out.
   is_hidden: z.boolean().optional(),
+  // The answer that opens it (RAPP-715); an older version has none.
+  show_when_field_id: z.uuid().nullable().optional(),
+  show_when_values: z.array(z.string()).nullable().optional(),
 });
 
 const formSchema = z.object({
@@ -145,6 +151,14 @@ export function parseCustomForms(raw: unknown): readonly CustomForm[] {
             intro: screen.intro,
             sortOrder: screen.sort_order,
             isHidden: screen.is_hidden ?? false,
+            ...(screen.show_when_field_id == null || (screen.show_when_values ?? []).length === 0
+              ? {}
+              : {
+                  showWhen: {
+                    fieldId: screen.show_when_field_id,
+                    values: screen.show_when_values ?? [],
+                  },
+                }),
           })),
       },
     ];

@@ -48,6 +48,7 @@ import {
   type ProfileLayout,
   type ProfileSurface,
 } from './profile-layout';
+import { onboardingOpensWhen, onboardingScreenParent } from './screen-branches';
 
 /** A field as a question, worded and required as one of its placements says. */
 export function placedQuestion(
@@ -208,8 +209,8 @@ export function herOnboarding(
   asking: ReadonlyMap<string, boolean> = new Map(),
 ): HerOnboarding {
   const own = catalog.screens
-    // A screen staff hid is skipped (RAPP-711).
-    .filter((screen) => !screen.isArchived && screen.isHidden !== true)
+    // A screen staff hid is skipped (RAPP-711), and so are its follow-ups (RAPP-715).
+    .filter((screen) => onboardingOpensWhen(catalog, screen) !== null)
     .map((screen): IntakeScreen => ({
       ...screen,
       questions: onboardingScreenQuestions(catalog, screen.id),
@@ -228,15 +229,24 @@ export function herOnboarding(
     if (kept !== undefined) return [kept];
     return signs(screen) ? [{ ...screen, questions: [] }] : [];
   });
-  const plan = shown.map((screen): CustomWizardScreen => ({
-    id: screen.id,
-    afterScreen: screen.afterScreen,
-    isAnswered:
-      !signs(screen) &&
-      isScreenAnswered(screen, answers) &&
-      !screen.questions.some((question) => asking.get(question.id) === true),
-    builtinScreen: screen.builtinScreen ?? null,
-  }));
+  const plan = shown.map((screen): CustomWizardScreen => {
+    // A screen that depends on an answer (RAPP-715): it follows the step
+    // holding its question, and opens while her answers meet its conditions.
+    const own = catalog.screens.find((each) => each.id === screen.id);
+    const opensWhen = own === undefined ? null : onboardingOpensWhen(catalog, own);
+    return {
+      id: screen.id,
+      afterScreen: screen.afterScreen,
+      isAnswered:
+        !signs(screen) &&
+        isScreenAnswered(screen, answers) &&
+        !screen.questions.some((question) => asking.get(question.id) === true),
+      builtinScreen: screen.builtinScreen ?? null,
+      ...(own === undefined || own.showWhen === undefined
+        ? {}
+        : { parent: onboardingScreenParent(catalog, own), opensWhen: opensWhen ?? [] }),
+    };
+  });
   const order = wizardFlowOrder(plan, wizardFlow(catalog));
   const position = (screen: PlannedScreen) =>
     order.indexOf(screen.builtinScreen ?? customStepKey(screen.id));

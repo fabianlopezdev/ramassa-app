@@ -9,6 +9,7 @@
  * never replaced by something she was not asked.
  */
 import { z } from 'zod';
+import { branchesAfterParents, conditionsHold, type ScreenCondition } from './screen-conditions';
 
 export const INTAKE_QUESTIONS = [
   'first_name',
@@ -143,6 +144,21 @@ export interface CustomWizardScreen {
    * is unanswered that app screen shows.
    */
   readonly builtinScreen?: WizardQuestionScreen | null;
+  /**
+   * A screen that depends on an answer (RAPP-715): the step holding its
+   * question, which it follows, and the conditions of the screen and every
+   * screen above it, all of which her answers must meet.
+   */
+  readonly parent?: WizardStepKey | null;
+  readonly opensWhen?: readonly ScreenCondition[];
+}
+
+/** Her answers by field id, the stored ones under her draft (RAPP-715). */
+export type WizardAnswers = Readonly<Record<string, unknown>>;
+
+/** Whether a staff screen opens for her answers: always, or when its conditions hold. */
+export function opensForAnswers(screen: CustomWizardScreen, answers: WizardAnswers): boolean {
+  return conditionsHold(screen.opensWhen ?? [], answers);
 }
 
 /** A staff screen of its own, a step of the wizard. */
@@ -224,18 +240,30 @@ export function wizardFlowOrder(
       .find((earlier) => placed.includes(earlier));
     placed.splice(before === undefined ? 0 : placed.indexOf(before) + 1, 0, step);
   });
-  return [...placed, ...FINAL_WIZARD_SCREENS];
+  const parents = new Map(
+    custom.flatMap((screen) =>
+      screen.parent == null ? [] : [[customStepKey(screen.id), screen.parent] as const],
+    ),
+  );
+  return [
+    ...branchesAfterParents(placed, (step) => parents.get(step as CustomStepKey)),
+    ...FINAL_WIZARD_SCREENS,
+  ];
 }
 
 function isHiddenScreen(step: WizardStepKey, flow: WizardFlow): boolean {
   return !isCustomStep(step) && flow.hiddenScreens.has(step as WizardQuestionScreen);
 }
 
-/** Every screen she will see, in order: the asked ones, the summary and the terms. */
+/**
+ * Every screen she will see, in order: the asked ones, the summary and the
+ * terms. A screen that depends on an answer shows while her answers open it.
+ */
 function visibleScreens(
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[],
   flow: WizardFlow,
+  answers: WizardAnswers,
 ): WizardStepKey[] {
   const asked = new Set<WizardStepKey>([
     ...screensToAsk(answered),
@@ -245,7 +273,9 @@ function visibleScreens(
     ),
   ]);
   const answeredCustom = new Set(
-    custom.filter((screen) => screen.isAnswered).map((screen) => customStepKey(screen.id)),
+    custom
+      .filter((screen) => screen.isAnswered || !opensForAnswers(screen, answers))
+      .map((screen) => customStepKey(screen.id)),
   );
   const final = new Set<WizardStepKey>(FINAL_WIZARD_SCREENS);
   return wizardFlowOrder(custom, flow).filter((step) =>
@@ -268,14 +298,16 @@ export function nextWizardScreen(
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[],
   flow?: WizardFlow,
+  answers?: WizardAnswers,
 ): WizardStepKey;
 export function nextWizardScreen(
   from: WizardStepKey | 'start',
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[] = [],
   flow: WizardFlow = DEFAULT_WIZARD_FLOW,
+  answers: WizardAnswers = {},
 ): WizardStepKey {
-  const screens = visibleScreens(answered, custom, flow);
+  const screens = visibleScreens(answered, custom, flow, answers);
   if (from === 'start') return screens[0] ?? 'summary';
   const index = screens.indexOf(from);
   if (index === -1) {
@@ -299,15 +331,28 @@ export function previousWizardScreen(
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[],
   flow?: WizardFlow,
+  answers?: WizardAnswers,
 ): WizardStepKey | null;
 export function previousWizardScreen(
   from: WizardStepKey,
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[] = [],
   flow: WizardFlow = DEFAULT_WIZARD_FLOW,
+  answers: WizardAnswers = {},
 ): WizardStepKey | null {
-  const screens = visibleScreens(answered, custom, flow);
+  const screens = visibleScreens(answered, custom, flow, answers);
   const index = screens.indexOf(from);
+  if (index === -1) {
+    // A screen her answers no longer open (she changed one above it): the
+    // last screen she does see before it.
+    const order = wizardFlowOrder(custom, flow);
+    return (
+      order
+        .slice(0, Math.max(order.indexOf(from), 0))
+        .reverse()
+        .find((screen) => screens.includes(screen)) ?? null
+    );
+  }
   return index > 0 ? (screens[index - 1] ?? null) : null;
 }
 
@@ -317,7 +362,8 @@ export function wizardScreenPosition(
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[] = [],
   flow: WizardFlow = DEFAULT_WIZARD_FLOW,
+  answers: WizardAnswers = {},
 ): { step: number; total: number } {
-  const screens = visibleScreens(answered, custom, flow);
+  const screens = visibleScreens(answered, custom, flow, answers);
   return { step: Math.max(screens.indexOf(screen), 0) + 1, total: screens.length };
 }

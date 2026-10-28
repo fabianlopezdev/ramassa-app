@@ -1175,6 +1175,8 @@ export type Database = {
           is_archived: boolean;
           is_hidden: boolean;
           org_id: string;
+          show_when_field_id: string | null;
+          show_when_values: string[] | null;
           sort_order: number;
           title: Json;
           updated_at: string;
@@ -1187,6 +1189,8 @@ export type Database = {
           is_archived?: boolean;
           is_hidden?: boolean;
           org_id: string;
+          show_when_field_id?: string | null;
+          show_when_values?: string[] | null;
           sort_order?: number;
           title: Json;
           updated_at?: string;
@@ -1199,6 +1203,8 @@ export type Database = {
           is_archived?: boolean;
           is_hidden?: boolean;
           org_id?: string;
+          show_when_field_id?: string | null;
+          show_when_values?: string[] | null;
           sort_order?: number;
           title?: Json;
           updated_at?: string;
@@ -2826,6 +2832,8 @@ export type Database = {
           is_archived: boolean;
           is_hidden: boolean;
           org_id: string;
+          show_when_field_id: string | null;
+          show_when_values: string[] | null;
           sort_order: number;
           title: Json;
           updated_at: string;
@@ -2840,6 +2848,8 @@ export type Database = {
           is_archived?: boolean;
           is_hidden?: boolean;
           org_id: string;
+          show_when_field_id?: string | null;
+          show_when_values?: string[] | null;
           sort_order?: number;
           title: Json;
           updated_at?: string;
@@ -2854,6 +2864,8 @@ export type Database = {
           is_archived?: boolean;
           is_hidden?: boolean;
           org_id?: string;
+          show_when_field_id?: string | null;
+          show_when_values?: string[] | null;
           sort_order?: number;
           title?: Json;
           updated_at?: string;
@@ -7832,6 +7844,10 @@ export type Database = {
       save_profile_section: {
         Args: { p_id: string; p_title: Json };
         Returns: string;
+      };
+      save_screen_condition: {
+        Args: { p_field_id: string; p_screen_id: string; p_values: string[] };
+        Returns: undefined;
       };
       save_survey: {
         Args: {

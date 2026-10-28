@@ -7,5 +7,6 @@ export * from './question-labels';
 export * from './field-label';
 export * from './app-terms';
 export * from './screen-texts';
+export * from './screen-conditions';
 export * from './setup-transfer';
 export * from './system-fields';

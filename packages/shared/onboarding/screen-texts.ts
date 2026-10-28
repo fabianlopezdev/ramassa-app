@@ -16,13 +16,18 @@
  * The database mirrors `screenTextFields` in the block marked
  * `builtin-screen-text-fields` (a parity test reads it).
  */
-import type { IntakeQuestion, WizardQuestionScreen } from './intake';
+import type { WizardQuestionScreen } from './intake';
+import { conditionHolds } from './screen-conditions';
+import type { SystemFieldKey } from './system-fields';
 
 export const EDITABLE_WIZARD_SCREENS = [
   'identity',
   'background',
   'documentation',
-  'documentation-details',
+  // The document follow-up, one screen per answer (RAPP-715).
+  'documentation-nie',
+  'documentation-passport',
+  'documentation-other',
   'logistics',
   'equipment',
   'season',
@@ -85,7 +90,12 @@ export const BUNDLED_SCREEN_TEXT_KEYS: Readonly<
     intro: 'documentationIntro',
     continue_label: 'continueAction',
   },
-  'documentation-details': { title: 'documentNieNumberTitle', continue_label: 'continueAction' },
+  'documentation-nie': { title: 'documentNieNumberTitle', continue_label: 'continueAction' },
+  'documentation-passport': {
+    title: 'documentPassportNumberTitle',
+    continue_label: 'continueAction',
+  },
+  'documentation-other': { title: 'documentOtherDetailsTitle', continue_label: 'continueAction' },
   logistics: { title: 'logisticsTitle', intro: 'logisticsIntro', continue_label: 'continueAction' },
   equipment: { title: 'equipmentTitle', intro: 'equipmentIntro', continue_label: 'continueAction' },
   season: { title: 'currentSituationTitle', continue_label: 'continueAction' },
@@ -110,64 +120,87 @@ export const BUNDLED_SCREEN_TEXT_KEYS: Readonly<
 };
 
 /**
- * When a follow-up screen opens after its screen (RAPP-713): her answer to
- * `question` is one of `values`, or one follow-up for each answer she ticks.
- * The phone and the board's branch cards read the same rule, so the board's
- * condition line is what her phone does. A branch the team makes later can
- * use the same shape.
+ * When one of the app's follow-up screens opens (RAPP-713, RAPP-715): her
+ * answer to an app field is one of `answers`, by the options' stable keys.
+ * It is the model every screen uses (`screen-conditions.ts`), with the app's
+ * field and options named by key, because their ids belong to each
+ * organization: `appBranchCondition` (intake-builder) reads them as ids.
+ * `repeatsPerAnswer`: the screen shows once for each answer she ticks.
  */
-export type BranchCondition =
-  | {
-      readonly kind: 'answer-in';
-      readonly question: IntakeQuestion;
-      readonly values: readonly string[];
-    }
-  | { readonly kind: 'each-answer'; readonly question: IntakeQuestion };
+export interface AppBranchCondition {
+  readonly field: SystemFieldKey;
+  readonly answers: readonly string[];
+  readonly repeatsPerAnswer?: boolean;
+}
 
-/** A follow-up screen, the screen it opens from and when it opens. */
+/** A follow-up screen of the app, the screen it opens from and when it opens. */
 export interface DetailScreenBranch {
   readonly screen: EditableWizardScreen;
   readonly parent: WizardQuestionScreen;
-  readonly condition: BranchCondition;
+  readonly condition: AppBranchCondition;
 }
 
-/** The app's built-in follow-up screens, in her order. */
+/**
+ * The app's own follow-up screens, in her order: the board, the screen
+ * editor and her phone read them, so the three agree. The document follow-up
+ * is one screen per answer (RAPP-715).
+ */
 export const DETAIL_SCREEN_BRANCHES = [
   {
-    screen: 'documentation-details',
+    screen: 'documentation-nie',
     parent: 'documentation',
-    condition: { kind: 'answer-in', question: 'document', values: ['nie', 'passport', 'other'] },
+    condition: { field: 'document_type', answers: ['nie'] },
+  },
+  {
+    screen: 'documentation-passport',
+    parent: 'documentation',
+    condition: { field: 'document_type', answers: ['passport'] },
+  },
+  {
+    screen: 'documentation-other',
+    parent: 'documentation',
+    condition: { field: 'document_type', answers: ['other'] },
   },
   {
     screen: 'applicant-status-details',
     parent: 'season',
-    condition: { kind: 'answer-in', question: 'applicant_status', values: ['other'] },
+    condition: { field: 'applicant_status', answers: ['other'] },
   },
   {
     screen: 'specific-needs-details',
     parent: 'specific-needs',
-    condition: { kind: 'each-answer', question: 'specific_needs' },
+    condition: {
+      field: 'specific_needs',
+      answers: ['accessibility', 'health', 'communication', 'wellbeing', 'other'],
+      repeatsPerAnswer: true,
+    },
   },
 ] as const satisfies readonly DetailScreenBranch[];
+
+export type DetailScreen = (typeof DETAIL_SCREEN_BRANCHES)[number]['screen'];
 
 /** The detail screens that open from a question screen, and the screen they belong to. */
 export const DETAIL_SCREEN_PARENTS: Readonly<
   Partial<Record<EditableWizardScreen, WizardQuestionScreen>>
 > = Object.fromEntries(DETAIL_SCREEN_BRANCHES.map((branch) => [branch.screen, branch.parent]));
 
-/** Whether her answer opens the follow-up: one answer among the values, or any answer ticked. */
-export function branchOpens(condition: BranchCondition, answer: unknown): boolean {
-  if (condition.kind === 'each-answer') return Array.isArray(answer) && answer.length > 0;
-  return typeof answer === 'string' && condition.values.includes(answer);
+/** The app's follow-up screens of one screen, in her order. */
+export function detailScreensOf(parent: string): readonly DetailScreenBranch[] {
+  return DETAIL_SCREEN_BRANCHES.filter((branch) => branch.parent === parent);
 }
 
-/** Whether her answer opens this built-in follow-up screen, as her phone decides. */
-export function opensDetailScreen(
-  screen: (typeof DETAIL_SCREEN_BRANCHES)[number]['screen'],
-  answer: unknown,
-): boolean {
+/** Whether her answer (by option key, as her app screens keep it) opens this follow-up. */
+export function opensDetailScreen(screen: DetailScreen, answer: unknown): boolean {
   const branch = DETAIL_SCREEN_BRANCHES.find((each) => each.screen === screen);
-  return branch !== undefined && branchOpens(branch.condition, answer);
+  return branch !== undefined && conditionHolds(branch.condition.answers, answer);
+}
+
+/** The document follow-up her answer opens, or null for none (RAPP-715). */
+export function documentDetailScreen(answer: unknown): DetailScreen | null {
+  const branch = DETAIL_SCREEN_BRANCHES.find(
+    (each) => each.parent === 'documentation' && conditionHolds(each.condition.answers, answer),
+  );
+  return branch?.screen ?? null;
 }
 
 export function isEditableWizardScreen(screen: string): screen is EditableWizardScreen {

@@ -42,6 +42,7 @@ import {
   WIZARD_QUESTIONS,
   type RequiredQuestions,
 } from '../onboarding/question-states';
+import type { ScreenCondition } from '../onboarding/screen-conditions';
 import {
   isEditableWizardScreen,
   isOptionalScreenTextField,
@@ -144,6 +145,22 @@ export function textIn(text: BuilderText | null | undefined, language: LanguageC
 
 // The catalog ---------------------------------------------------------------------------------
 
+/** The answer that opens a screen (RAPP-715), as the catalog sends it on every screen. */
+export const screenConditionShape = {
+  show_when_field_id: z.uuid().nullable().optional(),
+  show_when_values: z.array(z.string()).nullable().optional(),
+};
+
+/** A screen's condition from the catalog; none when it always shows. */
+export function screenConditionFrom(row: {
+  readonly show_when_field_id?: string | null;
+  readonly show_when_values?: readonly string[] | null;
+}): { readonly showWhen?: ScreenCondition } {
+  return row.show_when_field_id == null || (row.show_when_values ?? []).length === 0
+    ? {}
+    : { showWhen: { fieldId: row.show_when_field_id, values: row.show_when_values ?? [] } };
+}
+
 const screenSchema = z.object({
   id: z.uuid(),
   title: anyLanguageTextSchema,
@@ -153,6 +170,8 @@ const screenSchema = z.object({
   is_archived: z.boolean(),
   // Staff hid it (RAPP-711). An older server sends none: it shows.
   is_hidden: z.boolean().optional(),
+  // The answer that opens it (RAPP-715). An older server sends none: it always shows.
+  ...screenConditionShape,
 });
 
 const overrideSchema = z.object({
@@ -237,6 +256,8 @@ export interface RamassaScreen {
   readonly isArchived: boolean;
   /** Staff hid it (RAPP-711): her phone skips it. Absent means shown. */
   readonly isHidden?: boolean;
+  /** The answer that opens it (RAPP-715); absent, it always shows. */
+  readonly showWhen?: ScreenCondition;
 }
 
 /**
@@ -319,6 +340,7 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
       afterScreen: screen.after_screen,
       isArchived: screen.is_archived,
       isHidden: screen.is_hidden ?? false,
+      ...screenConditionFrom(screen),
     })),
     overrides: raw.overrides
       .filter((override) => (WIZARD_QUESTIONS as readonly string[]).includes(override.question))
@@ -734,6 +756,25 @@ export async function saveIntakeScreen(client: Client, draft: ScreenDraft): Prom
   });
   if (error) throw databaseError(error);
   return z.uuid().parse(data);
+}
+
+/**
+ * Sets the answer that opens a screen of Onboarding or of a form (RAPP-715),
+ * or removes it with null: the screen then always shows. The database checks
+ * that the question is asked on an earlier screen of the same form and keeps
+ * the screen right after it.
+ */
+export async function saveScreenCondition(
+  client: Client,
+  screenId: string,
+  condition: ScreenCondition | null,
+): Promise<void> {
+  const { error } = await client.rpc('save_screen_condition', {
+    p_screen_id: screenId,
+    p_field_id: (condition?.fieldId ?? null) as string,
+    p_values: (condition === null ? null : [...condition.values]) as string[],
+  });
+  if (error) throw databaseError(error);
 }
 
 export async function archiveIntakeScreen(client: Client, id: string): Promise<void> {

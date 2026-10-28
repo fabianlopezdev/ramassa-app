@@ -32,6 +32,12 @@ import {
   customFormScreenQuestions,
 } from './custom-forms';
 import { flowStep, isShownToHer, movableOrder } from './player-plan';
+import {
+  formOpensWhen,
+  formScreensInOrder,
+  isOnboardingBranch,
+  onboardingOpensWhen,
+} from './screen-branches';
 
 type Client = SupabaseClient<Database>;
 
@@ -94,10 +100,11 @@ export function customFormAskingScreens(
   catalog: IntakeCatalog,
   form: Pick<CustomForm, 'screens'>,
 ): readonly CustomFormScreen[] {
-  return form.screens.filter(
+  // In her order, each follow-up after its parent (RAPP-715).
+  return formScreensInOrder(catalog, form).filter(
     (screen) =>
-      // A hidden screen is skipped (RAPP-711).
-      screen.isHidden !== true &&
+      // A hidden screen is skipped (RAPP-711), and so are its follow-ups (RAPP-715).
+      formOpensWhen(catalog, form, screen) !== null &&
       (customFormScreenQuestions(catalog, screen.id).length > 0 ||
         customFormScreenBlocks(catalog, screen.id).length > 0 ||
         customFormScreenConsents(catalog, screen.id).length > 0),
@@ -164,17 +171,24 @@ export function onboardingScreenCounts(
   chain: readonly ChainedFormRef[],
 ): OnboardingScreenCounts {
   const hidden = wizardFlow(catalog).hiddenScreens;
-  const shown = movableOrder(catalog).filter((key) => {
+  const order = movableOrder(catalog);
+  const shown = order.filter((key) => {
     const step = flowStep(catalog, key);
     if (step === null) return false;
     if (step.kind === 'builtin') return !hidden.has(step.key);
-    return step.kind !== 'custom' || isShownToHer(catalog, step.screen);
+    return (
+      step.kind !== 'custom' ||
+      (isShownToHer(catalog, step.screen) && onboardingOpensWhen(catalog, step.screen) !== null)
+    );
   });
-  const conditional = DETAIL_SCREEN_BRANCHES.filter((branch) =>
-    (shown as readonly string[]).includes(branch.parent),
-  ).length;
+  // Every follow-up, the app's and the team's, at any depth (RAPP-715).
+  const branches = shown.filter((key) => isOnboardingBranch(catalog, key, order));
+  const conditional =
+    DETAIL_SCREEN_BRANCHES.filter((branch) => (shown as readonly string[]).includes(branch.parent))
+      .length + branches.length;
+  const roots = shown.length - branches.length;
   const terms = TERMS_SCREEN_COUNT;
-  const onboarding = shown.length + 1;
+  const onboarding = roots + 1;
   const forms = chain.reduce((sum, ref) => sum + chainedFormScreenCount(catalog, ref), 0);
   return { onboarding, conditional, terms, forms, total: onboarding + conditional + terms + forms };
 }

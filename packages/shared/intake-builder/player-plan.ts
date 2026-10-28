@@ -60,6 +60,7 @@ import {
   type RamassaScreen,
 } from './builder';
 import { hasSignatureBlocks } from './form-blocks';
+import { onboardingScreenParent } from './screen-branches';
 
 // Her screens in order -------------------------------------------------------------------------------
 
@@ -86,6 +87,8 @@ export function movableOrder(catalog: IntakeCatalog): readonly WizardStepKey[] {
       id: screen.id,
       afterScreen: screen.afterScreen,
       isAnswered: false,
+      // A screen that depends on an answer follows its question's screen (RAPP-715).
+      parent: onboardingScreenParent(catalog, screen),
     })),
     wizardFlow(catalog),
   ).filter((step) => !final.has(step));
