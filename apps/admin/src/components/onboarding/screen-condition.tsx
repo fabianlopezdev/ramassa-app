@@ -374,42 +374,71 @@ export interface FamilyMember {
   readonly isCurrent: boolean;
 }
 
-/**
- * A screen and every follow-up below it, depth first, as a row of the
- * board's own small phones (RAPP-715). The one being edited is marked; a
- * click opens another. Shown only for a family of more than one screen.
- */
+/** The board card styling and selection state, shared by the parent and its descendants. */
+function FamilyCard({ member }: { readonly member: FamilyMember }) {
+  const { t } = useTranslation('settings');
+  return (
+    <Link
+      {...member.link}
+      aria-current={member.isCurrent ? 'page' : undefined}
+      aria-label={`${t('onboardingBoard.step', { number: member.number })}: ${member.name}`}
+      className="block h-full rounded-2xl text-start outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      data-testid={`screen-family-${member.key}`}
+    >
+      <ScreenCardFrame
+        className={cn('h-full', member.isCurrent && 'border-primary ring-2 ring-primary')}
+      >
+        <header className="flex min-h-7 items-center">
+          <span className="text-xs font-medium text-muted-foreground tabular-nums">
+            {t('onboardingBoard.step', { number: member.number })}
+          </span>
+        </header>
+        <p className="line-clamp-2 h-10 text-xs leading-5 text-muted-foreground">{member.line}</p>
+        {member.picture}
+      </ScreenCardFrame>
+    </Link>
+  );
+}
+
+/** The parent stands alone; its descendants share a neutral group and a branching connector. */
 export function FamilyRow({ members }: { readonly members: readonly FamilyMember[] }) {
   const { t } = useTranslation('settings');
-  if (members.length < 2) return null;
+  const [parent, ...dependents] = members;
+  if (parent === undefined || dependents.length === 0) return null;
   return (
-    <nav aria-label={t('onboardingBoard.condition.family')} data-testid="screen-family">
-      <ol className="flex gap-4 overflow-x-auto p-1 pb-2">
-        {members.map((member) => (
-          <li key={member.key} className="w-46 shrink-0">
-            <Link
-              {...member.link}
-              aria-current={member.isCurrent ? 'page' : undefined}
-              aria-label={`${t('onboardingBoard.step', { number: member.number })}: ${member.name}`}
-              className="block h-full rounded-2xl text-start outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-              data-testid={`screen-family-${member.key}`}
-            >
-              <ScreenCardFrame
-                className={cn('h-full', member.isCurrent && 'border-primary ring-2 ring-primary')}
-              >
-                <header className="flex min-h-7 items-center">
-                  <span className="text-xs font-medium text-muted-foreground tabular-nums">
-                    {t('onboardingBoard.step', { number: member.number })}
-                  </span>
-                </header>
-                <p className="line-clamp-2 h-10 text-xs leading-5 text-muted-foreground">
-                  {member.line}
-                </p>
-                {member.picture}
-              </ScreenCardFrame>
-            </Link>
-          </li>
-        ))}
+    <nav
+      aria-label={t('onboardingBoard.condition.family')}
+      className="overflow-x-auto p-1 pb-2"
+      data-testid="screen-family"
+    >
+      <ol className="w-max">
+        <li className="flex items-stretch">
+          <div className="w-46 shrink-0 pt-6 pb-3">
+            <FamilyCard member={parent} />
+          </div>
+          <span aria-hidden className="relative w-8 shrink-0">
+            <span className="absolute start-0 top-3 h-9 w-4 rounded-ee-lg border-e border-b border-foreground/20" />
+            <span className="absolute start-4 end-0 top-3 h-px bg-foreground/20" />
+          </span>
+          <ol
+            className="flex items-stretch gap-4 rounded-3xl bg-muted/50 p-3 pt-6"
+            data-testid="screen-family-dependents"
+          >
+            {dependents.map((member, index) => (
+              <li key={member.key} className="relative w-46 shrink-0">
+                <span aria-hidden className="absolute -top-3 start-1/2 h-3 w-px bg-foreground/20" />
+                <span
+                  aria-hidden
+                  className={cn(
+                    'absolute -top-3 end-1/2 h-px bg-foreground/20',
+                    index === 0 ? '-start-3' : 'w-[calc(100%+1rem)]',
+                  )}
+                />
+                <FamilyCard member={member} />
+              </li>
+            ))}
+          </ol>
+        </li>
       </ol>
     </nav>
   );
