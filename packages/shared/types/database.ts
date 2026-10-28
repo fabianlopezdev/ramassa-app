@@ -7942,10 +7942,6 @@ export type Database = {
         };
         Returns: number;
       };
-      set_document_step_explanation: {
-        Args: { p_explanation: Json };
-        Returns: Json;
-      };
       set_entity_collaborator_active: {
         Args: { p_is_active: boolean; p_profile_id: string };
         Returns: undefined;
