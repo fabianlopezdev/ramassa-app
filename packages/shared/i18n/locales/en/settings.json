@@ -693,7 +693,7 @@
       "always": "Always.",
       "screen": "Screen",
       "question": "Question",
-      "answers": "Answers",
+      "answers": "Answers that connect to the previous question",
       "pickScreen": "Choose a screen",
       "pickQuestion": "Choose a question",
       "incomplete": "Choose the screen, the question and at least one answer.",

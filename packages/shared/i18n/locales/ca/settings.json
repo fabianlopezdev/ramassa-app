@@ -693,7 +693,7 @@
       "always": "Sempre.",
       "screen": "Pantalla",
       "question": "Pregunta",
-      "answers": "Respostes",
+      "answers": "Respostes que connecten amb la pregunta anterior",
       "pickScreen": "Tria una pantalla",
       "pickQuestion": "Tria una pregunta",
       "incomplete": "Tria la pantalla, la pregunta i almenys una resposta.",
