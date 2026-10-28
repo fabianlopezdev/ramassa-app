@@ -27,6 +27,7 @@ import {
   missingLevel,
   type FieldAnswers,
 } from '@/lib/participant-fitxa';
+import { HeartPulse, MapPin, Phone, Shirt, UserRound, UsersRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { IntakeQuestionState } from '@ramassa/shared/intake';
 import {
@@ -42,6 +43,15 @@ import {
 import type { ParticipantUpdate } from '@ramassa/shared/participants';
 import type { PermissionCode } from '@ramassa/shared/permissions';
 import type { LanguageCode } from '@ramassa/shared/schemas';
+
+const PROFILE_SECTION_ICONS: Readonly<Record<string, typeof UserRound>> = {
+  identity: UserRound,
+  contact: Phone,
+  equipment: Shirt,
+  health: HeartPulse,
+  logistics: MapPin,
+  family: UsersRound,
+};
 
 /** What every row of her page reads and writes through. */
 export interface FitxaContext {
@@ -73,9 +83,11 @@ export function ProfileSection({
 }) {
   const { i18n } = useTranslation();
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
+  const Icon = PROFILE_SECTION_ICONS[section.key] ?? UserRound;
   return (
     <EditorSection
       title={textIn(section.title, language)}
+      leading={<Icon aria-hidden className="size-5 text-primary" />}
       isFlush
       testId={`fitxa-section-${section.key}`}
     >

@@ -1,4 +1,12 @@
 {
+  "profileDesign": {
+    "edit": "ویرایش پروفایل",
+    "invitedOn": "دعوت در {{date}} ایجاد شد",
+    "actions": "گزینه‌های پروفایل",
+    "registration": "ثبت‌نام",
+    "material": "تجهیزات",
+    "presets": "تنظیمات آماده ثبت‌نام"
+  },
   "listActions": "گزینه‌های شرکت‌کنندگان",
   "activeFilters": "فیلترهای فعال",
   "removeFilter": "حذف فیلتر {{filter}}",

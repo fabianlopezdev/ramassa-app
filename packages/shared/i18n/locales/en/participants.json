@@ -1,4 +1,12 @@
 {
+  "profileDesign": {
+    "edit": "Edit profile",
+    "invitedOn": "Invitation created on {{date}}",
+    "actions": "Profile options",
+    "registration": "Registration",
+    "material": "Equipment",
+    "presets": "Registration presets"
+  },
   "listActions": "Participant options",
   "activeFilters": "Active filters",
   "removeFilter": "Remove filter {{filter}}",

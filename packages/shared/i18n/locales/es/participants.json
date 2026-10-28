@@ -1,4 +1,12 @@
 {
+  "profileDesign": {
+    "edit": "Edita el perfil",
+    "invitedOn": "Invitación creada el {{date}}",
+    "actions": "Opciones del perfil",
+    "registration": "Inscripción",
+    "material": "Material",
+    "presets": "Configuraciones de inscripción"
+  },
   "listActions": "Opciones de participantes",
   "activeFilters": "Filtros activos",
   "removeFilter": "Quitar el filtro {{filter}}",

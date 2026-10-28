@@ -1,4 +1,12 @@
 {
+  "profileDesign": {
+    "edit": "تعديل الملف الشخصي",
+    "invitedOn": "أُنشئت الدعوة في {{date}}",
+    "actions": "خيارات الملف الشخصي",
+    "registration": "التسجيل",
+    "material": "المعدات",
+    "presets": "إعدادات التسجيل المسبقة"
+  },
   "listActions": "خيارات المشاركات",
   "activeFilters": "عوامل التصفية النشطة",
   "removeFilter": "إزالة عامل التصفية {{filter}}",

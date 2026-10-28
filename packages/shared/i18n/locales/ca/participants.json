@@ -1,4 +1,12 @@
 {
+  "profileDesign": {
+    "edit": "Edita el perfil",
+    "invitedOn": "Invitació creada el {{date}}",
+    "actions": "Opcions del perfil",
+    "registration": "Inscripció",
+    "material": "Material",
+    "presets": "Configuracions d'inscripció"
+  },
   "listActions": "Opcions de participants",
   "activeFilters": "Filtres actius",
   "removeFilter": "Treu el filtre {{filter}}",
