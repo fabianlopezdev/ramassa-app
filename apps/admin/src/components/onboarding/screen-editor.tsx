@@ -96,7 +96,14 @@ import {
 } from './board-steps';
 import { ConfirmDialog } from './confirm-dialog';
 import { PhoneFrame, PhoneMiniature } from './phone-preview';
-import { stepName, type BoardCardLink } from './screen-board';
+import {
+  onboardingConditionSources,
+  onboardingStepName,
+  stepName,
+  useAddDependentScreen,
+  useCreateOnboardingScreen,
+  type BoardCardLink,
+} from './screen-board';
 import {
   conditionSources,
   FamilyRow,
@@ -444,13 +451,22 @@ function CustomScreenEditor({
     language,
   );
   const condition = screen.showWhen ?? null;
+  const dependent = useOnboardingAddDependent(catalog, language, t);
   return (
     <StaffScreenEditor
       screen={screen}
       number={number}
       total={total}
       saveKind={ONBOARDING_SAVES_AT_ONCE}
-      family={<FamilyRow members={onboardingFamilyMembers(catalog, key, language, t)} />}
+      family={
+        <>
+          <FamilyRow
+            members={onboardingFamilyMembers(catalog, key, language, t)}
+            add={dependent.addFor(key)}
+          />
+          {dependent.dialog}
+        </>
+      }
       condition={
         <ScreenConditionSection
           // A saved condition starts the section again from what is saved.
@@ -757,16 +773,27 @@ function isQuestionScreen(screen: string): screen is WizardQuestionScreen {
   return (WIZARD_QUESTION_SCREENS as readonly string[]).includes(screen);
 }
 
-/** The name staff know any Onboarding step by: an app follow-up included (RAPP-715). */
-function onboardingStepName(
+/**
+ * The family row's + tile on an Onboarding screen (RAPP-717): "Afegeix una
+ * pantalla" with the screen being edited as the parent; the new screen's
+ * editor opens once it is made.
+ */
+function useOnboardingAddDependent(
   catalog: IntakeCatalog,
-  key: string,
   language: LanguageCode,
   t: Translate,
-): string {
-  if (isDetailScreen(key)) return t(`builtinScreens.screenName.${key}`);
-  const step = boardStep(catalog, key);
-  return step === null ? '' : stepName(step, language, t);
+): ReturnType<typeof useAddDependentScreen> {
+  const navigate = useNavigate();
+  const create = useCreateOnboardingScreen();
+  const order = movableOrder(catalog);
+  return useAddDependentScreen({
+    catalog,
+    sources: onboardingConditionSources(catalog, order, language, t),
+    onCreate: async (name, condition) => {
+      const key = await create(catalog, name, order, condition);
+      await navigate({ to: '/onboarding/screens/$screenId', params: { screenId: routeIdOf(key) } });
+    },
+  });
 }
 
 /**
@@ -860,6 +887,7 @@ function AppScreenEditor({
   const [texts, setTexts] = useState<Partial<Record<EditableWizardScreen, ScreenTexts>>>({});
   const row = useRowEditing();
   const currentSeason = data.seasons.find((season) => season.isCurrent);
+  const dependent = useOnboardingAddDependent(catalog, dashboardLanguage, t);
 
   const questions = step.kind === 'builtin' ? WIZARD_SCREEN_QUESTIONS[step.key] : [];
   const hiddenQuestions = new Set(
@@ -915,7 +943,10 @@ function AppScreenEditor({
     <div className="flex flex-col gap-6">
       <FamilyRow
         members={onboardingFamilyMembers(catalog, detail ?? step.key, dashboardLanguage, t)}
+        // The summary and the app terms end the onboarding: nothing depends on them.
+        add={step.kind === 'locked' ? undefined : dependent.addFor(detail ?? step.key)}
       />
+      {dependent.dialog}
       <EditorColumns
         language={language}
         onLanguageChange={setLanguage}

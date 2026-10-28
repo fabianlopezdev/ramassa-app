@@ -704,7 +704,12 @@
       "noSources": "Cap pantalla anterior té una pregunta d'opcions.",
       "orphan": "La pregunta d'aquesta condició ja no es fa en aquest formulari.",
       "family": "Aquesta pantalla i les que en depenen"
-    }
+    },
+    "addDependent": "Afegeix una pantalla dependent",
+    "addDependentNoChoice": "Aquesta pantalla no té cap pregunta amb opcions.",
+    "addDependentLockedFinal": "Tanca l'Onboarding, així que cap pantalla en pot dependre.",
+    "addDependentLockedChain": "És un formulari encadenat. Les seves pantalles s'afegeixen al seu tauler.",
+    "addDependentLockedLegal": "És una pantalla fixa d'aquest formulari, així que cap pantalla en pot dependre."
   },
   "sortable": {
     "instructions": "Per moure un element, prem espai o retorn, fes servir les fletxes i torna a prémer espai o retorn per deixar-lo. Escapada cancel·la.",

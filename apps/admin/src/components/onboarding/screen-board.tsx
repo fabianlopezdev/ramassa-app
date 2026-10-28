@@ -24,6 +24,11 @@
  * a branch card right after it, joined by a short line: numbered with a
  * letter ("Pas 3a"), the condition under it, and it opens the screen's editor
  * on the follow-up tab. A branch moves with its screen and hides with it.
+ *
+ * Beside the eye, a + adds a screen that depends on that card's screen
+ * (RAPP-717): "Afegeix una pantalla" opens with the screen already chosen.
+ * It is off, with the reason on hover, on a screen without a choice question
+ * and on the cards that never have dependents.
  */
 
 import { ChoiceCards } from '@/components/custom-forms/form-choices';
@@ -34,7 +39,7 @@ import {
 } from '@/components/ui-patterns/sortable-list';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Field, FieldError, FieldGroup, FieldLabel, FieldTitle } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/lib/supabase';
@@ -144,6 +149,11 @@ export function ScreenBoard({
   const createOnboardingScreen = useCreateOnboardingScreen();
   // Every movable step in her order, the follow-ups right after their screen (RAPP-715).
   const order = movableOrder(catalog);
+  const sources = onboardingConditionSources(catalog, order, language, t);
+  const createScreen = async (name: string, condition: NewScreenCondition | null) => {
+    await createOnboardingScreen(catalog, name, order, condition);
+  };
+  const dependent = useAddDependentScreen({ catalog, sources, onCreate: createScreen });
   // The board's own cards: the screens that depend on no answer.
   const initial = onboardingRoots(catalog, order);
   const hidden = wizardFlow(catalog).hiddenScreens;
@@ -165,11 +175,7 @@ export function ScreenBoard({
     }
     return null;
   };
-  const nameOf = (key: string): string => {
-    if (isDetailScreen(key)) return t(`builtinScreens.screenName.${key}`);
-    const step = boardStep(catalog, key);
-    return step === null ? '' : stepName(step, language, t);
-  };
+  const nameOf = (key: string): string => onboardingStepName(catalog, key, language, t);
   const teamHide = (screen: RamassaScreen, isHidden: boolean): BoardCardHide => {
     const lock = teamHideLockKey(catalog, 'onboarding', screen.id);
     return {
@@ -215,6 +221,7 @@ export function ScreenBoard({
           ...lockedHide(t('onboardingBoard.branchFollows', { screen: nameOf(root) })),
           isHidden,
         },
+        addDependent: dependent.addFor(key),
         link: {
           to: '/onboarding/screens/$screenId',
           params: { screenId: routeIdOf(root) },
@@ -253,6 +260,7 @@ export function ScreenBoard({
               ...lockedHide(t('onboardingBoard.branchFollowsHidden', { screen: nameOf(ancestor) })),
               isHidden: true,
             },
+      addDependent: dependent.addFor(key),
       link: { to: '/onboarding/screens/$screenId', params: { screenId: routeIdOf(key) } },
     };
   };
@@ -322,6 +330,11 @@ export function ScreenBoard({
       ...(condition === null ? {} : { note: conditionLine(catalog, condition, language, t) }),
       ...(branches.length === 0 ? {} : { branches }),
       hide: hide(),
+      // The summary and the app terms end the onboarding: nothing comes after them.
+      addDependent:
+        step.kind === 'locked'
+          ? lockedAddDependent(t('onboardingBoard.addDependentLockedFinal'))
+          : dependent.addFor(step.key),
       isLinked: linked !== null,
       link:
         linked === null
@@ -340,23 +353,7 @@ export function ScreenBoard({
         label={t('onboardingBoard.listLabel')}
         movable={cards(initial)}
         trailing={cards(BOARD_LOCKED_STEPS)}
-        addCard={
-          <AddScreenCard
-            sources={conditionSources(
-              catalog,
-              order,
-              'onboarding',
-              (key) => ({
-                name: nameOf(key),
-                number: numbers.get(key) ?? '',
-                screenKey: routeIdOf(key),
-              }),
-              language,
-            )}
-            catalog={catalog}
-            onCreate={(name, condition) => createOnboardingScreen(catalog, name, order, condition)}
-          />
-        }
+        addCard={<AddScreenCard sources={sources} catalog={catalog} onCreate={createScreen} />}
         isAddCardFirst
         onReorder={async (next) => {
           // The same call the old order list used (`saveWizardFlowOrder`): each
@@ -371,7 +368,41 @@ export function ScreenBoard({
         }}
       />
       <ChainBoard catalog={catalog} chain={chain} />
+      {dependent.dialog}
     </div>
+  );
+}
+
+/** The name staff know any Onboarding step by, an app follow-up included (RAPP-715). */
+export function onboardingStepName(
+  catalog: IntakeCatalog,
+  key: string,
+  language: LanguageCode,
+  t: Translate,
+): string {
+  if (isDetailScreen(key)) return t(`builtinScreens.screenName.${key}`);
+  const step = boardStep(catalog, key);
+  return step === null ? '' : stepName(step, language, t);
+}
+
+/** The Onboarding screens that ask a choice question, in her order: what a screen can depend on. */
+export function onboardingConditionSources(
+  catalog: IntakeCatalog,
+  order: readonly string[],
+  language: LanguageCode,
+  t: Translate,
+): readonly ConditionSource[] {
+  const numbers = boardNumbers(catalog);
+  return conditionSources(
+    catalog,
+    order,
+    'onboarding',
+    (key) => ({
+      name: onboardingStepName(catalog, key, language, t),
+      number: numbers.get(key) ?? '',
+      screenKey: routeIdOf(key),
+    }),
+    language,
   );
 }
 
@@ -433,6 +464,7 @@ function ChainBoard({
       status: null,
       // A chained form leaves the chain with ×; its screens hide on its own board.
       hide: lockedHide(t('onboardingBoard.hideLockedChain')),
+      addDependent: lockedAddDependent(t('onboardingBoard.addDependentLockedChain')),
       isLinked: true,
       link:
         form === undefined
@@ -587,6 +619,21 @@ export function lockedHide(reason: string): BoardCardHide {
   return { isHidden: false, canHide: false, reason, toggle: async () => undefined };
 }
 
+/**
+ * The + beside the eye (RAPP-717): adds a screen that depends on the card's
+ * screen, or is off with the reason on hover.
+ */
+export interface AddDependent {
+  readonly canAdd: boolean;
+  readonly reason?: string;
+  readonly open: () => void;
+}
+
+/** The + of a card that can never have a dependent screen, off, with the reason on hover. */
+export function lockedAddDependent(reason: string): AddDependent {
+  return { canAdd: false, reason, open: () => undefined };
+}
+
 /** One card of a form's board (RAPP-696): its screen, or a linked form. */
 export interface BoardCard {
   readonly key: string;
@@ -603,6 +650,8 @@ export interface BoardCard {
   readonly remove?: { readonly label: string; readonly run: () => Promise<void> };
   /** The eye in the header (RAPP-711); absent, the card has none. */
   readonly hide?: BoardCardHide;
+  /** The + beside the eye (RAPP-717); absent, the card has none. */
+  readonly addDependent?: AddDependent;
   /**
    * The follow-up screens her answer opens (RAPP-713), each a smaller card
    * right after this one. They move with it and are never dragged alone. The
@@ -911,6 +960,9 @@ function ScreenCard({
           )}
         </span>
         <span className="flex shrink-0 items-center">
+          {card.addDependent === undefined || isLifted ? null : (
+            <AddDependentButton add={card.addDependent} cardKey={card.key} />
+          )}
           {card.hide === undefined || isLifted ? null : (
             <HideButton hide={card.hide} name={card.name} cardKey={card.key} />
           )}
@@ -1063,6 +1115,89 @@ function HideButton({
   );
 }
 
+/**
+ * The + in a card's header (RAPP-717): opens "Afegeix una pantalla" with the
+ * card's screen already chosen. Off, the hover gives the reason.
+ */
+function AddDependentButton({
+  add,
+  cardKey,
+}: {
+  readonly add: AddDependent;
+  readonly cardKey: string;
+}) {
+  const { t } = useTranslation('settings');
+  const label = add.canAdd ? t('onboardingBoard.addDependent') : (add.reason ?? '');
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {/* A disabled button gets no hover: the wrapper carries the reason. */}
+        <span className="inline-flex" tabIndex={add.canAdd ? undefined : 0}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground"
+            disabled={!add.canAdd}
+            aria-label={label}
+            onClick={add.open}
+            data-testid={`board-add-dependent-${cardKey}`}
+          >
+            <Plus aria-hidden />
+          </Button>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+/**
+ * One "Afegeix una pantalla" dialog for every + of a board or an editor
+ * (RAPP-717). `addFor` gives a screen's +: on when the screen asks a choice
+ * question (the dialog's own rule, `sources`), and it opens the dialog with
+ * that screen as the parent. Render `dialog` once.
+ */
+export function useAddDependentScreen({
+  catalog,
+  sources,
+  onCreate,
+}: {
+  readonly catalog: IntakeCatalog;
+  readonly sources: readonly ConditionSource[];
+  readonly onCreate: (name: string, condition: NewScreenCondition | null) => Promise<void>;
+}): { readonly addFor: (key: string) => AddDependent; readonly dialog: ReactNode } {
+  const { t } = useTranslation('settings');
+  const [parent, setParent] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const addFor = (key: string): AddDependent =>
+    sources.some((source) => source.key === key)
+      ? {
+          canAdd: true,
+          open: () => {
+            setParent(key);
+            setIsOpen(true);
+          },
+        }
+      : lockedAddDependent(t('onboardingBoard.addDependentNoChoice'));
+  return {
+    addFor,
+    dialog:
+      parent === null ? null : (
+        // Keyed by the parent: each + starts from its own screen.
+        <AddScreenDialog
+          key={parent}
+          catalog={catalog}
+          sources={sources}
+          parentKey={parent}
+          onCreate={onCreate}
+          isOpen={isOpen}
+          onOpenChange={setIsOpen}
+        />
+      ),
+  };
+}
+
 /** A new screen's condition (RAPP-715): the screen holding the question, and the answers. */
 export interface NewScreenCondition {
   readonly sourceKey: string;
@@ -1075,14 +1210,14 @@ export interface NewScreenCondition {
  * answer (RAPP-715) is a follow-up of the screen asking it: it goes right
  * after that screen and its follow-ups, then takes its condition.
  */
-function useCreateOnboardingScreen() {
+export function useCreateOnboardingScreen() {
   const reload = useReload();
   return async (
     catalog: IntakeCatalog,
     name: string,
     order: readonly WizardStepKey[],
     depends: NewScreenCondition | null,
-  ) => {
+  ): Promise<WizardStepKey> => {
     // The title is stored in Catalan, the language every other one falls back to.
     const id = await saveIntakeScreen(supabase, {
       id: null,
@@ -1107,6 +1242,7 @@ function useCreateOnboardingScreen() {
     document
       .querySelector(`[data-testid="board-step-${key}"], [data-testid="board-branch-${key}"]`)
       ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return key;
   };
 }
 
@@ -1185,24 +1321,44 @@ export function AddScreenCard({
   );
 }
 
+/**
+ * "Afegeix una pantalla": its name and, if it depends on an answer of another
+ * screen (RAPP-715), that screen, its question and the answers. Opened from a
+ * card's + or an editor's + tile (RAPP-717), the parent is already chosen and
+ * shown at the top: staff pick only the question and the answers.
+ */
 function AddScreenDialog({
   catalog,
   sources,
+  parentKey = null,
   onCreate,
   isOpen,
   onOpenChange,
 }: {
   readonly catalog: IntakeCatalog;
   readonly sources: readonly ConditionSource[];
+  /** The screen the new one depends on, chosen before the dialog opens (RAPP-717). */
+  readonly parentKey?: string | null;
   readonly onCreate: (name: string, condition: NewScreenCondition | null) => Promise<void>;
   readonly isOpen: boolean;
   readonly onOpenChange: (open: boolean) => void;
 }) {
   const { t } = useTranslation('settings');
+  const parent = parentKey === null ? null : sources.find((source) => source.key === parentKey);
+  const initialDepends = parent === null ? 'no' : 'yes';
+  const initialCondition: ConditionDraft =
+    parent === null || parent === undefined
+      ? EMPTY_CONDITION
+      : {
+          sourceKey: parent.key,
+          // A screen with one choice question picks it.
+          fieldId: parent.questions.length === 1 ? (parent.questions[0]?.fieldId ?? null) : null,
+          values: [],
+        };
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [depends, setDepends] = useState<'no' | 'yes'>('no');
-  const [condition, setCondition] = useState<ConditionDraft>(EMPTY_CONDITION);
+  const [depends, setDepends] = useState<'no' | 'yes'>(initialDepends);
+  const [condition, setCondition] = useState<ConditionDraft>(initialCondition);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1226,8 +1382,8 @@ function AddScreenDialog({
           : { sourceKey: condition.sourceKey, condition: picked },
       );
       onOpenChange(false);
-      setDepends('no');
-      setCondition(EMPTY_CONDITION);
+      setDepends(initialDepends);
+      setCondition(initialCondition);
     } catch {
       setError(t('onboardingBoard.createFailed'));
     } finally {
@@ -1244,10 +1400,20 @@ function AddScreenDialog({
       }}
     >
       <DialogContent className="max-h-[90dvh] max-w-md overflow-y-auto">
-        <DialogTitle>{t('onboardingBoard.newScreen')}</DialogTitle>
+        <DialogTitle>
+          {t(parent === null ? 'onboardingBoard.newScreen' : 'onboardingBoard.addDependent')}
+        </DialogTitle>
         <DialogDescription className="sr-only">{t('onboardingBoard.newScreen')}</DialogDescription>
         <form className="flex flex-col gap-6" onSubmit={(event) => void submit(event)} noValidate>
           <FieldGroup>
+            {parent === null ? null : (
+              <Field>
+                <FieldTitle>{t('onboardingBoard.condition.screen')}</FieldTitle>
+                <p className="text-sm" data-testid="new-screen-parent">
+                  {parent === undefined ? '' : `${parent.number}. ${parent.name}`}
+                </p>
+              </Field>
+            )}
             <Field data-invalid={error !== null}>
               <FieldLabel htmlFor="new-screen-name">{t('onboardingBoard.screenName')}</FieldLabel>
               <Input
@@ -1260,24 +1426,27 @@ function AddScreenDialog({
                 data-testid="new-screen-name"
               />
             </Field>
-            <ChoiceCards
-              legend={t('onboardingBoard.dependsQuestion')}
-              name="new-screen-depends"
-              value={depends}
-              options={[
-                { value: 'no', title: t('questions.answers.no') },
-                { value: 'yes', title: t('questions.answers.yes') },
-              ]}
-              onChange={(value) => {
-                setDepends(value);
-                setError(null);
-              }}
-              testId="new-screen-depends"
-            />
+            {parent === null ? (
+              <ChoiceCards
+                legend={t('onboardingBoard.dependsQuestion')}
+                name="new-screen-depends"
+                value={depends}
+                options={[
+                  { value: 'no', title: t('questions.answers.no') },
+                  { value: 'yes', title: t('questions.answers.yes') },
+                ]}
+                onChange={(value) => {
+                  setDepends(value);
+                  setError(null);
+                }}
+                testId="new-screen-depends"
+              />
+            ) : null}
             {depends === 'yes' ? (
               <ConditionFields
                 catalog={catalog}
                 sources={sources}
+                isSourceFixed={parent !== null}
                 draft={condition}
                 onChange={(next) => {
                   setCondition(next);

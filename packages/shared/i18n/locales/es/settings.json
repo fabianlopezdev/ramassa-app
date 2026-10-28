@@ -704,7 +704,12 @@
       "noSources": "Ninguna pantalla anterior tiene una pregunta de opciones.",
       "orphan": "La pregunta de esta condición ya no se hace en este formulario.",
       "family": "Esta pantalla y las que dependen de ella"
-    }
+    },
+    "addDependent": "Añade una pantalla dependiente",
+    "addDependentNoChoice": "Esta pantalla no tiene ninguna pregunta con opciones.",
+    "addDependentLockedFinal": "Cierra el Onboarding, así que ninguna pantalla puede depender de ella.",
+    "addDependentLockedChain": "Es un formulario encadenado. Sus pantallas se añaden en su tablero.",
+    "addDependentLockedLegal": "Es una pantalla fija de este formulario, así que ninguna pantalla puede depender de ella."
   },
   "sortable": {
     "instructions": "Para mover un elemento, pulsa espacio o intro, usa las flechas y vuelve a pulsar espacio o intro para soltarlo. Escape cancela.",

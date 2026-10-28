@@ -704,7 +704,12 @@
       "noSources": "No earlier screen has a choice question.",
       "orphan": "The question of this condition is no longer asked on this form.",
       "family": "This screen and the screens that depend on it"
-    }
+    },
+    "addDependent": "Add a dependent screen",
+    "addDependentNoChoice": "This screen has no question with options.",
+    "addDependentLockedFinal": "It ends Onboarding, so no screen can depend on it.",
+    "addDependentLockedChain": "It is a chained form. Its screens are added on its own board.",
+    "addDependentLockedLegal": "It is a fixed screen of this form, so no screen can depend on it."
   },
   "sortable": {
     "instructions": "To move it, press space or enter, use the arrow keys, then press space or enter again to drop it. Escape cancels.",

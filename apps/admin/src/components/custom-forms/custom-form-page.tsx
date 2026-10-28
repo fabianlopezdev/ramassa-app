@@ -26,9 +26,11 @@ import {
   AddScreenCard,
   FormBoard,
   lockedHide,
+  useAddDependentScreen,
   type BoardCard,
+  type NewScreenCondition,
 } from '@/components/onboarding/screen-board';
-import { conditionSources } from '@/components/onboarding/screen-condition';
+import { conditionSources, type ConditionSource } from '@/components/onboarding/screen-condition';
 import {
   conditionLine,
   placedPhoneQuestions,
@@ -302,13 +304,14 @@ function FormScreensBoard({
   const { t, i18n } = useTranslation(['settings', 'onboarding']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const reload = useReload();
-  const navigate = useNavigate();
   const catalog = data.intakeCatalog;
   // Her order: each screen that depends on an answer right after the screen asking it (RAPP-715).
   const ordered = formScreensInOrder(catalog, form);
   const roots = ordered.filter((screen) => formRootOf(catalog, form, screen.id) === screen.id);
-  const numbers = formBoardNumbers(catalog, form);
   const byId = new Map(ordered.map((screen) => [screen.id, screen]));
+  const sources = formConditionSources(catalog, form, language);
+  const createScreen = useCreateFormScreen(form);
+  const dependent = useAddDependentScreen({ catalog, sources, onCreate: createScreen });
   const hidingAncestor = (screen: CustomFormScreen): CustomFormScreen | null => {
     let parent = formScreenParent(catalog, form, screen);
     for (let depth = 0; parent !== null && depth < 64; depth += 1) {
@@ -370,6 +373,7 @@ function FormScreensBoard({
                 await reload();
               },
             },
+      addDependent: dependent.addFor(screen.id),
       link: {
         to: '/forms/custom/$formId/screens/$screenId',
         params: { formId: form.id, screenId: screen.id },
@@ -387,57 +391,77 @@ function FormScreensBoard({
     return { ...screenCard(root), ...(branches.length === 0 ? {} : { branches }) };
   });
   return (
-    <FormBoard
-      // Keyed by the saved order: a reload starts again from what the database holds.
-      key={ordered.map((screen) => screen.id).join('|')}
-      label={textIn(form.name, language)}
-      movable={cards}
-      addCard={
-        <AddScreenCard
-          catalog={catalog}
-          sources={conditionSources(
-            catalog,
-            ordered.map((screen) => screen.id),
-            'custom_form',
-            (key) => ({
-              name: textIn(byId.get(key)?.title ?? {}, language),
-              number: numbers.get(key) ?? '',
-              screenKey: key,
-            }),
-            language,
-          )}
-          onCreate={async (name, depends) => {
-            // The title is stored in Catalan, the language every other one falls back to.
-            const id = await saveCustomFormScreen(supabase, {
-              id: null,
-              formId: form.id,
-              title: { ca: name },
-              intro: null,
-            });
-            // A follow-up (RAPP-715): the database puts it right after the screen asking it.
-            if (depends !== null) await saveScreenCondition(supabase, id, depends.condition);
-            await navigate({
-              to: '/forms/custom/$formId/screens/$screenId',
-              params: { formId: form.id, screenId: id },
-            });
-          }}
-        />
-      }
-      onReorder={async (keys) => {
-        // Each screen goes with every follow-up below it (RAPP-715).
-        await reorderCustomFormScreens(
-          supabase,
-          form.id,
-          keys.flatMap((root) =>
-            ordered
-              .filter((screen) => formRootOf(catalog, form, screen.id) === root)
-              .map((screen) => screen.id),
-          ),
-        );
-        await reload();
-      }}
-    />
+    <>
+      <FormBoard
+        // Keyed by the saved order: a reload starts again from what the database holds.
+        key={ordered.map((screen) => screen.id).join('|')}
+        label={textIn(form.name, language)}
+        movable={cards}
+        addCard={<AddScreenCard catalog={catalog} sources={sources} onCreate={createScreen} />}
+        onReorder={async (keys) => {
+          // Each screen goes with every follow-up below it (RAPP-715).
+          await reorderCustomFormScreens(
+            supabase,
+            form.id,
+            keys.flatMap((root) =>
+              ordered
+                .filter((screen) => formRootOf(catalog, form, screen.id) === root)
+                .map((screen) => screen.id),
+            ),
+          );
+          await reload();
+        }}
+      />
+      {dependent.dialog}
+    </>
   );
+}
+
+/** A form's screens that ask a choice question, in her order: what a screen can depend on (RAPP-715). */
+export function formConditionSources(
+  catalog: CustomFormData['intakeCatalog'],
+  form: CustomForm,
+  language: LanguageCode,
+): readonly ConditionSource[] {
+  const ordered = formScreensInOrder(catalog, form);
+  const numbers = formBoardNumbers(catalog, form);
+  return conditionSources(
+    catalog,
+    ordered.map((screen) => screen.id),
+    'custom_form',
+    (key) => ({
+      name: textIn(ordered.find((screen) => screen.id === key)?.title ?? {}, language),
+      number: numbers.get(key) ?? '',
+      screenKey: key,
+    }),
+    language,
+  );
+}
+
+/**
+ * A new screen of a form, from "Afegeix una pantalla" on its board or a +
+ * (RAPP-717): made from its Catalan name, with its condition when it depends
+ * on an answer, then its editor opens.
+ */
+export function useCreateFormScreen(
+  form: CustomForm,
+): (name: string, depends: NewScreenCondition | null) => Promise<void> {
+  const navigate = useNavigate();
+  return async (name, depends) => {
+    // The title is stored in Catalan, the language every other one falls back to.
+    const id = await saveCustomFormScreen(supabase, {
+      id: null,
+      formId: form.id,
+      title: { ca: name },
+      intro: null,
+    });
+    // A follow-up (RAPP-715): the database puts it right after the screen asking it.
+    if (depends !== null) await saveScreenCondition(supabase, id, depends.condition);
+    await navigate({
+      to: '/forms/custom/$formId/screens/$screenId',
+      params: { formId: form.id, screenId: id },
+    });
+  };
 }
 
 /** The number each screen of a form carries on its board (RAPP-715): 3, 3a, 3a.1. */

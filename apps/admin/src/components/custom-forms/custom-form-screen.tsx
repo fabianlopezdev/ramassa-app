@@ -7,9 +7,15 @@
  * archives the screen, like an Onboarding screen.
  */
 
-import { DRAFT_SAVE, formBoardNumbers } from '@/components/custom-forms/custom-form-page';
+import {
+  DRAFT_SAVE,
+  formBoardNumbers,
+  formConditionSources,
+  useCreateFormScreen,
+} from '@/components/custom-forms/custom-form-page';
 import { Page } from '@/components/layout/page';
 import { PhoneMiniature } from '@/components/onboarding/phone-preview';
+import { useAddDependentScreen } from '@/components/onboarding/screen-board';
 import {
   conditionSources,
   FamilyRow,
@@ -158,6 +164,13 @@ function FormScreenBody({
     dashboardLanguage,
   );
   const condition = screen.showWhen ?? null;
+  // The family row's + tile (RAPP-717): a screen that depends on this one.
+  const createScreen = useCreateFormScreen(form);
+  const dependent = useAddDependentScreen({
+    catalog,
+    sources: formConditionSources(catalog, form, dashboardLanguage),
+    onCreate: createScreen,
+  });
   const root = formRootOf(catalog, form, screen.id);
   const family = formFamily(catalog, form, root, numbers.get(root) ?? '').flatMap(
     (member): FamilyMember[] => {
@@ -199,7 +212,12 @@ function FormScreenBody({
       screen={screen}
       number={number}
       total={total}
-      family={<FamilyRow members={family} />}
+      family={
+        <>
+          <FamilyRow members={family} add={dependent.addFor(screen.id)} />
+          {dependent.dialog}
+        </>
+      }
       condition={
         <ScreenConditionSection
           key={JSON.stringify(condition)}

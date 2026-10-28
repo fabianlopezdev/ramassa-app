@@ -9,7 +9,8 @@
  *     section changes or removes them.
  *   - `FamilyRow`: at the top of a screen's editor, the screen and every
  *     follow-up below it as small phones, numbered as on the board (3, 3a,
- *     3a.1, 3b), each with its condition. One click opens it.
+ *     3a.1, 3b), each with its condition. One click opens it. A last +
+ *     tile adds a screen that depends on the one being edited (RAPP-717).
  *
  * Only earlier screens are offered: the database refuses a later screen, the
  * screen itself and its own follow-ups.
@@ -35,9 +36,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { Link } from '@tanstack/react-router';
+import { Plus } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -49,7 +52,7 @@ import {
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
-import type { BoardCardLink } from './screen-board';
+import type { AddDependent, BoardCardLink } from './screen-board';
 import { conditionAnswers, type Translate } from './screen-content';
 
 /** An earlier screen and the choice questions asked on it: what a screen can depend on. */
@@ -124,12 +127,15 @@ function conditionDraftOf(
 export function ConditionFields({
   catalog,
   sources,
+  isSourceFixed = false,
   draft,
   onChange,
   idPrefix,
 }: {
   readonly catalog: IntakeCatalog;
   readonly sources: readonly ConditionSource[];
+  /** The screen was chosen before (a card's or an editor's +, RAPP-717): only its question and answers are asked. */
+  readonly isSourceFixed?: boolean;
   readonly draft: ConditionDraft;
   readonly onChange: (draft: ConditionDraft) => void;
   readonly idPrefix: string;
@@ -146,41 +152,43 @@ export function ConditionFields({
   }
   return (
     <FieldGroup className="gap-4" data-testid={`${idPrefix}-condition`}>
-      <Field>
-        <FieldLabel htmlFor={`${idPrefix}-condition-screen`}>
-          {t('onboardingBoard.condition.screen')}
-        </FieldLabel>
-        <Select
-          value={draft.sourceKey ?? undefined}
-          onValueChange={(key) => {
-            // The hidden native select reports '' while its options are closed.
-            if (key === '' || key === draft.sourceKey) return;
-            const picked = sources.find((each) => each.key === key);
-            onChange({
-              sourceKey: key,
-              // A screen with one choice question picks it.
-              fieldId:
-                picked?.questions.length === 1 ? (picked.questions[0]?.fieldId ?? null) : null,
-              values: [],
-            });
-          }}
-        >
-          <SelectTrigger
-            id={`${idPrefix}-condition-screen`}
-            className="w-full"
-            data-testid={`${idPrefix}-condition-screen`}
+      {isSourceFixed ? null : (
+        <Field>
+          <FieldLabel htmlFor={`${idPrefix}-condition-screen`}>
+            {t('onboardingBoard.condition.screen')}
+          </FieldLabel>
+          <Select
+            value={draft.sourceKey ?? undefined}
+            onValueChange={(key) => {
+              // The hidden native select reports '' while its options are closed.
+              if (key === '' || key === draft.sourceKey) return;
+              const picked = sources.find((each) => each.key === key);
+              onChange({
+                sourceKey: key,
+                // A screen with one choice question picks it.
+                fieldId:
+                  picked?.questions.length === 1 ? (picked.questions[0]?.fieldId ?? null) : null,
+                values: [],
+              });
+            }}
           >
-            <SelectValue placeholder={t('onboardingBoard.condition.pickScreen')} />
-          </SelectTrigger>
-          <SelectContent>
-            {sources.map((each) => (
-              <SelectItem key={each.key} value={each.key}>
-                {`${each.number}. ${each.name}`}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Field>
+            <SelectTrigger
+              id={`${idPrefix}-condition-screen`}
+              className="w-full"
+              data-testid={`${idPrefix}-condition-screen`}
+            >
+              <SelectValue placeholder={t('onboardingBoard.condition.pickScreen')} />
+            </SelectTrigger>
+            <SelectContent>
+              {sources.map((each) => (
+                <SelectItem key={each.key} value={each.key}>
+                  {`${each.number}. ${each.name}`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+      )}
       <Field data-disabled={source === undefined}>
         <FieldLabel htmlFor={`${idPrefix}-condition-question`}>
           {t('onboardingBoard.condition.question')}
@@ -370,9 +378,16 @@ export interface FamilyMember {
  * board's own small phones (RAPP-715). The one being edited is marked; a
  * click opens another. Shown only for a family of more than one screen.
  */
-export function FamilyRow({ members }: { readonly members: readonly FamilyMember[] }) {
+export function FamilyRow({
+  members,
+  add,
+}: {
+  readonly members: readonly FamilyMember[];
+  /** The last + tile (RAPP-717): a screen that depends on the one being edited. */
+  readonly add?: AddDependent;
+}) {
   const { t } = useTranslation('settings');
-  if (members.length < 2) return null;
+  if (members.length < 2 && add === undefined) return null;
   return (
     <nav aria-label={t('onboardingBoard.condition.family')} data-testid="screen-family">
       <ol className="flex gap-3 overflow-x-auto pb-2">
@@ -399,7 +414,45 @@ export function FamilyRow({ members }: { readonly members: readonly FamilyMember
             </Link>
           </li>
         ))}
+        {add === undefined ? null : (
+          <li className="flex w-32 shrink-0">
+            <AddDependentTile add={add} />
+          </li>
+        )}
       </ol>
     </nav>
+  );
+}
+
+/** The family row's last tile (RAPP-717): dashed like a board's add card; off, the hover gives the reason. */
+function AddDependentTile({ add }: { readonly add: AddDependent }) {
+  const { t } = useTranslation('settings');
+  const label = t('onboardingBoard.addDependent');
+  const tile = (
+    <button
+      type="button"
+      disabled={!add.canAdd}
+      onClick={add.open}
+      aria-label={add.canAdd ? label : `${label}: ${add.reason ?? ''}`}
+      className="group/add flex w-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-foreground/20 bg-muted p-2 text-center text-xs font-medium text-muted-foreground transition-colors outline-none hover:border-primary/60 hover:bg-primary/5 hover:text-primary focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+      data-testid="screen-family-add"
+    >
+      <span className="flex size-9 items-center justify-center rounded-full border border-dashed border-current">
+        <Plus aria-hidden className="size-4" />
+      </span>
+      {label}
+    </button>
+  );
+  if (add.canAdd) return tile;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {/* A disabled button gets no hover: the wrapper carries the reason. */}
+        <span className="flex w-full" tabIndex={0} data-testid="screen-family-add-reason">
+          {tile}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{add.reason}</TooltipContent>
+    </Tooltip>
   );
 }
