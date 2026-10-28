@@ -25,6 +25,7 @@ import {
   type CustomWizardScreen,
   type IntakeQuestion,
   type RequiredQuestions,
+  type WizardAnswers,
   type WizardFlow,
   type WizardStepKey,
 } from '@ramassa/shared/intake';
@@ -148,30 +149,54 @@ export interface WizardStep {
   readonly isBelow: (step: WizardStepKey | OnboardingDraftStep) => boolean;
 }
 
+/**
+ * Her answers by field id (RAPP-715): the stored ones with her draft over
+ * them. They decide which screens that depend on an answer she sees, so the
+ * wizard reads them when she moves: a changed answer changes what comes next.
+ */
+export function herWizardAnswers(intake: Pick<WizardIntake, 'customAnswers'>): WizardAnswers {
+  return { ...intake.customAnswers, ...onboardingDraftStore.loadStoredDraft()?.answers };
+}
+
 export function useWizardStep(screen: WizardStepKey): WizardStep {
+  const intake = useWizardIntake();
   const {
     notAsked,
     customPlan,
     hidden,
     flow = DEFAULT_WIZARD_FLOW,
     required = DEFAULT_REQUIRED_QUESTIONS,
-  } = useWizardIntake();
+  } = intake;
   const router = useRouter();
   const navigation = useNavigation();
   const { edit } = useLocalSearchParams<{ edit?: string }>();
   const isEditing = edit === '1';
 
   return useMemo<WizardStep>(() => {
-    const next: WizardStepKey = isEditing
-      ? 'summary'
-      : nextWizardScreen(screen, notAsked, customPlan, flow);
-    const previous: WizardStepKey | null = isEditing
-      ? 'summary'
-      : previousWizardScreen(screen, notAsked, customPlan, flow);
-    const previousStep =
+    const nextFor = (answers: WizardAnswers): WizardStepKey =>
+      isEditing ? 'summary' : nextWizardScreen(screen, notAsked, customPlan, flow, answers);
+    const previousFor = (answers: WizardAnswers): WizardStepKey | null =>
+      isEditing ? 'summary' : previousWizardScreen(screen, notAsked, customPlan, flow, answers);
+    const landingFor = (previous: WizardStepKey | null) =>
       previous === null || isEditing
         ? previous
         : landingStep(previous, onboardingDraftStore.loadDraft());
+    const answers = herWizardAnswers(intake);
+    const next = nextFor(answers);
+    const previous = previousFor(answers);
+    const previousStep = landingFor(previous);
+    /**
+     * The step the draft names, as her answers saved on this screen decide:
+     * a screen persists before it moves, so a follow-up her new answer opens
+     * or closes is put right here.
+     */
+    const settle = (step: WizardStepKey | OnboardingDraftStep) => {
+      const latest = onboardingDraftStore.loadDraft();
+      const draftStep = wizardDraftStep(step);
+      if (latest !== null && latest.currentStep !== draftStep) {
+        onboardingDraftStore.saveDraft({ ...latest, currentStep: draftStep });
+      }
+    };
     // Editing from the summary goes back to that same summary, which re-reads
     // the draft on focus. Without history (a cold start mid-edit), replace.
     const isBelow = (target: WizardStepKey | OnboardingDraftStep) => {
@@ -183,12 +208,18 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
       router.canGoBack() ? router.back() : router.replace(wizardStepRoute('summary', 'back'));
     return {
       isEditing,
-      position: wizardScreenPosition(screen, notAsked, customPlan, flow),
+      position: wizardScreenPosition(screen, notAsked, customPlan, flow, answers),
       shouldAsk: (question) => !hidden.has(question) && (isEditing || !notAsked.has(question)),
       isRequired: (question) => isRequiredQuestion(question, required),
       required,
       nextDraftStep: wizardDraftStep(next),
-      goNext: isEditing ? backToSummary : () => router.push(wizardStepRoute(next)),
+      goNext: isEditing
+        ? backToSummary
+        : () => {
+            const target = nextFor(herWizardAnswers(intake));
+            settle(target);
+            router.push(wizardStepRoute(target));
+          },
       previousDraftStep: previousStep === null ? null : wizardDraftStep(previousStep),
       // Back pops to the screen under this one when it is the previous step
       // (a resume pushes them, RAPP-707); otherwise it replaces this screen
@@ -198,13 +229,15 @@ export function useWizardStep(screen: WizardStepKey): WizardStep {
         : previous === null
           ? null
           : () => {
-              const target = previousStep ?? previous;
+              const fresh = previousFor(herWizardAnswers(intake));
+              const target = landingFor(fresh) ?? fresh ?? previous;
+              settle(target);
               if (isBelow(target)) router.back();
               else router.replace(wizardStepRoute(target, 'back'));
             },
       isBelow,
     };
-  }, [notAsked, customPlan, flow, hidden, required, isEditing, router, navigation, screen]);
+  }, [intake, notAsked, customPlan, flow, hidden, required, isEditing, router, navigation, screen]);
 }
 
 /**
@@ -254,7 +287,13 @@ export function wizardBackTrail(
     const parent = detailParent(current);
     const previous =
       parent ??
-      previousWizardScreen(current as WizardStepKey, intake.notAsked, intake.customPlan, flow);
+      previousWizardScreen(
+        current as WizardStepKey,
+        intake.notAsked,
+        intake.customPlan,
+        flow,
+        herWizardAnswers(intake),
+      );
     if (previous === null) break;
     const landing = wizardDraftStep(parent === null ? landingStep(previous, draft) : previous);
     if (trail.includes(landing) || landing === step) break;

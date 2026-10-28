@@ -5,7 +5,11 @@ import {
 import { logger } from '@/lib/observability';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { draftForScenario, withSelectedLanguage, wizardDraftStep } from '@/lib/onboarding-intake';
-import { WizardIntakeProvider, type WizardIntake } from '@/lib/onboarding-intake-context';
+import {
+  herWizardAnswers,
+  WizardIntakeProvider,
+  type WizardIntake,
+} from '@/lib/onboarding-intake-context';
 import { ScreenWordingProvider } from '@/lib/screen-wording';
 import { supabase } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -89,6 +93,8 @@ function seedWizardDraft(intake: WizardIntake, language: LanguageCode): void {
       storedCustom: intake.customAnswers,
       blocks: intake.catalog.blocks,
       consentCatalog: intake.catalog,
+      // A screen her answers do not open never holds her back (RAPP-715).
+      answers: herWizardAnswers(intake),
     }),
   });
 }

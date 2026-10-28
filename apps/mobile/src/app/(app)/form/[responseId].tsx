@@ -12,6 +12,10 @@
  *
  * Right after her Onboarding it can open as a form chained to it (RAPP-703):
  * an optional one she puts off with Back leaves the walk and stays on Home.
+ *
+ * A screen that depends on an answer (RAPP-715) shows right after the screen
+ * asking it, only while her answers so far open it: changing that answer
+ * changes what comes next, and she sends only the screens she saw.
  */
 
 import {
@@ -42,6 +46,7 @@ import {
   customFormScreenQuestions,
   formSignaturesPayload,
   isCustomQuestionVisible,
+  openFormScreens,
   updateCustomAnswer,
   type CustomForm,
   type CustomFormScreen,
@@ -121,15 +126,18 @@ function FormWalk({
   const { language } = useLanguage();
   const router = useRouter();
   const answer = useAnswerCustomForm();
-  const screens = customFormAskingScreens(catalog, form);
-  const [index, setIndex] = useState(0);
+  const asking = customFormAskingScreens(catalog, form);
+  const shownFor = (answers: CustomAnswerDraft) => openFormScreens(catalog, form, asking, answers);
   const [draft, setDraft] = useState<FormDraft>({ answers: saved, signatures: {}, consents: {} });
+  const [currentId, setCurrentId] = useState(() => shownFor(saved)[0]?.id);
   const [isSending, setIsSending] = useState(false);
   const [hasFailed, setHasFailed] = useState(false);
+  const screens = shownFor(draft.answers);
+  const index = screens.findIndex((each) => each.id === currentId);
   const screen = screens[index];
   if (screen === undefined) return <Redirect href={'/' as Href} />;
 
-  async function send(final: FormDraft) {
+  async function send(final: FormDraft, screens: typeof asking) {
     const asked = screens.flatMap((each) => customFormScreenQuestions(catalog, each.id));
     const blocks = screens.flatMap((each) => customFormScreenBlocks(catalog, each.id));
     const consents = screens.flatMap((each) => customFormScreenConsents(catalog, each.id));
@@ -169,14 +177,26 @@ function FormWalk({
       number={index + 1}
       total={screens.length}
       draft={draft}
-      isLast={index === screens.length - 1}
+      // Send on the last screen her answers open, as she answers this one.
+      isLastFor={(answers) => {
+        const shown = shownFor({ ...draft.answers, ...answers });
+        return shown[shown.length - 1]?.id === screen.id;
+      }}
       isSending={isSending}
       failure={hasFailed ? t('customFormFailed') : null}
       onBack={
         index > 0
           ? (next) => {
               setDraft(next);
-              setIndex(index - 1);
+              const shown = shownFor(next.answers);
+              setCurrentId(
+                shown[
+                  Math.max(
+                    shown.findIndex((each) => each.id === screen.id),
+                    1,
+                  ) - 1
+                ]?.id,
+              );
             }
           : onPutOff !== null
             ? () => {
@@ -189,11 +209,15 @@ function FormWalk({
       }
       onContinue={(next) => {
         setDraft(next);
-        if (index < screens.length - 1) {
-          setIndex(index + 1);
+        // Her answer on this screen may open or close the next ones.
+        const shown = shownFor(next.answers);
+        const at = shown.findIndex((each) => each.id === screen.id);
+        const following = shown[at + 1];
+        if (following !== undefined) {
+          setCurrentId(following.id);
           return;
         }
-        void send(next);
+        void send(next, shown);
       }}
     />
   );
@@ -205,7 +229,7 @@ function FormStep({
   number,
   total,
   draft,
-  isLast,
+  isLastFor,
   isSending,
   failure,
   onBack,
@@ -216,7 +240,7 @@ function FormStep({
   readonly number: number;
   readonly total: number;
   readonly draft: FormDraft;
-  readonly isLast: boolean;
+  readonly isLastFor: (answers: CustomAnswerDraft) => boolean;
   readonly isSending: boolean;
   readonly failure: string | null;
   readonly onBack: ((draft: FormDraft) => void) | undefined;
@@ -247,7 +271,7 @@ function FormStep({
       title={teamTextIn(screen.title, language, false)}
       intro={intro === '' ? undefined : intro}
       scrollEnabled={!isDrawing}
-      continueLabel={isLast ? t('customFormSend') : t('continueAction')}
+      continueLabel={isLastFor(answers) ? t('customFormSend') : t('continueAction')}
       isContinueBusy={isSending}
       onContinue={() => {
         // The shared checks, as on her Onboarding (RAPP-610).

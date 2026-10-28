@@ -17,7 +17,7 @@ import {
   logisticsFormSchemaFor,
 } from '@/lib/onboarding-form';
 import { appAnswersToSave, customAnswersToSave } from '@/lib/onboarding-intake';
-import type { WizardIntake } from '@/lib/onboarding-intake-context';
+import { herWizardAnswers, type WizardIntake } from '@/lib/onboarding-intake-context';
 import { firstIncompleteStep } from '@/lib/wizard-completeness';
 import {
   DEFAULT_REQUIRED_QUESTIONS,
@@ -31,6 +31,7 @@ import {
   consentDecisionsPayload,
   formSignaturesPayload,
   liveOnboardingConsents,
+  onboardingScreenOpens,
   type FieldAnswers,
 } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraft } from '@ramassa/shared/onboarding-drafts';
@@ -63,8 +64,18 @@ export function onboardingAnswersFromDraft(
     storedCustom: intake.customAnswers,
     blocks: intake.catalog.blocks,
     consentCatalog: intake.catalog,
+    answers: herWizardAnswers(intake),
   });
   if (incomplete !== null) return { ok: false, step: incomplete };
+  // The team screens she saw (RAPP-715): one her answers do not open sends
+  // nothing, so an answer, a signature or a tick she gave before changing
+  // her mind stays off her record.
+  const answersNow = herWizardAnswers(intake);
+  const closed = new Set(
+    intake.catalog.screens
+      .filter((screen) => !onboardingScreenOpens(intake.catalog, screen, answersNow))
+      .map((screen) => screen.id),
+  );
   const required = intake.required ?? DEFAULT_REQUIRED_QUESTIONS;
   const identity = identityFormSchemaFor(required).safeParse(draft?.identity ?? {});
   if (!identity.success) return { ok: false, step: 'identity' };
@@ -103,7 +114,9 @@ export function onboardingAnswersFromDraft(
 
   // Her answers to the staff questions (RAPP-307), only the new or changed
   // ones, checked by the server before anything is kept (RAPP-611).
-  const placed = intake.customScreens.flatMap((screen) => screen.questions);
+  const placed = intake.customScreens
+    .filter((screen) => !closed.has(screen.id))
+    .flatMap((screen) => screen.questions);
   const customAnswers = customAnswersToSave(placed, draft?.custom, intake.customAnswers);
   // An app field the generic renderer asks (RAPP-665) is saved from there only.
   for (const question of placed) delete appAnswers[question.id];
@@ -111,7 +124,7 @@ export function onboardingAnswersFromDraft(
   const askedConsents = liveOnboardingConsents({
     consents: intake.catalog.consents,
     consentPlacements: intake.catalog.consentPlacements,
-    screens: intake.catalog.screens,
+    screens: intake.catalog.screens.filter((screen) => !closed.has(screen.id)),
   });
 
   return {
@@ -124,7 +137,9 @@ export function onboardingAnswersFromDraft(
       // Her signature of each block of her Onboarding (RAPP-690), with the
       // language its text was shown in.
       signatures: formSignaturesPayload(
-        (intake.catalog.blocks ?? []).filter((block) => block.surface === 'onboarding'),
+        (intake.catalog.blocks ?? []).filter(
+          (block) => block.surface === 'onboarding' && !closed.has(block.screenKey ?? ''),
+        ),
         draft?.signatures,
         language,
       ),

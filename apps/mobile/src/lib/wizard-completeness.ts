@@ -15,11 +15,13 @@ import {
   customStepId,
   DEFAULT_REQUIRED_QUESTIONS,
   isRequiredQuestion,
+  opensForAnswers,
   WIZARD_QUESTION_SCREENS,
   wizardFlowOrder,
   type CustomWizardScreen,
   type IntakeQuestion,
   type RequiredQuestions,
+  type WizardAnswers,
   type WizardFlow,
   type WizardQuestionScreen,
   type WizardStepKey,
@@ -132,6 +134,11 @@ export interface CompletenessContext {
     readonly consents?: readonly Consent[];
     readonly consentPlacements?: readonly ConsentPlacement[];
   };
+  /**
+   * Her answers by field id, the app's included (RAPP-715): a screen her
+   * answers do not open is never asked, so it never blocks her.
+   */
+  readonly answers?: WizardAnswers;
 }
 
 /**
@@ -155,6 +162,8 @@ export function firstIncompleteStep(
   for (const step of wizardFlowOrder(context.custom, context.flow)) {
     const customId = customStepId(step);
     if (customId !== null) {
+      const planned = context.custom.find((candidate) => candidate.id === customId);
+      if (planned !== undefined && !opensForAnswers(planned, context.answers ?? answers)) continue;
       const screen = context.customScreens?.find((candidate) => candidate.id === customId);
       if (screen !== undefined && !isCustomScreenComplete(screen, answers)) return step;
       if (screen !== undefined && isUnsignedOrUnticked(customId)) return step;

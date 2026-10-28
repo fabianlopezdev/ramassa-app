@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Text } from 'react-native';
+import { documentDetailScreen } from '@ramassa/shared/intake';
 import type { DocumentationStep } from '@ramassa/shared/schemas';
 
 const titleKeys = {
@@ -62,7 +63,8 @@ export default function DocumentDetailsScreen() {
   );
   return (
     <WizardFrame
-      screenId="documentation-details"
+      // Each answer is its own screen with its own wording (RAPP-715).
+      screenId={documentDetailScreen(type) ?? 'documentation-details'}
       stepNumber={step.position.step}
       totalSteps={step.position.total}
       title={t(titleKeys[type])}

@@ -35,7 +35,11 @@ import { useLocalSearchParams } from 'expo-router';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { WIZARD_QUESTION_SCREENS, type WizardStepKey } from '@ramassa/shared/intake';
+import {
+  WIZARD_QUESTION_SCREENS,
+  type DetailScreen,
+  type WizardStepKey,
+} from '@ramassa/shared/intake';
 
 /** Question screens followed by review, introduction and app terms. */
 const WIZARD_TOTAL_STEPS = WIZARD_QUESTION_SCREENS.length + 3;
@@ -43,7 +47,11 @@ const WIZARD_TOTAL_STEPS = WIZARD_QUESTION_SCREENS.length + 3;
 export interface WizardFrameProps {
   /** Stable identity, independent of language and position in a personalized wizard. */
   readonly screenId?:
-    WizardStepKey | 'documentation-details' | 'applicant-status-details' | `needs-detail:${string}`;
+    | WizardStepKey
+    | DetailScreen
+    | 'documentation-details'
+    | 'applicant-status-details'
+    | `needs-detail:${string}`;
   /**
    * Omit outside the wizard. The profile edit screen reuses this frame for its
    * header, keyboard handling and pinned action, but it is not step N of

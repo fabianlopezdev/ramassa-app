@@ -26,7 +26,12 @@ import {
   WIZARD_SCREEN_ROUTES,
   wizardStepRoute,
 } from '@/lib/onboarding-intake';
-import { useBuiltinWording, useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
+import {
+  herWizardAnswers,
+  useBuiltinWording,
+  useWizardIntake,
+  useWizardStep,
+} from '@/lib/onboarding-intake-context';
 import { useScreenTitle } from '@/lib/screen-wording';
 import { SEASON_SCREEN_TITLE_KEYS } from '@/lib/season-draft';
 import { firstIncompleteStep } from '@/lib/wizard-completeness';
@@ -41,6 +46,7 @@ import {
   customStepId,
   customStepKey,
   DEFAULT_WIZARD_FLOW,
+  opensForAnswers,
   SEASON_WIZARD_SCREENS,
   WIZARD_SCREEN_QUESTIONS,
   wizardFlowOrder,
@@ -194,6 +200,7 @@ export default function SummaryStepScreen() {
   const { t, i18n } = useTranslation('onboarding');
   const router = useRouter();
   const step = useWizardStep('summary');
+  const intake = useWizardIntake();
   const {
     customAnswers,
     hidden,
@@ -203,8 +210,9 @@ export default function SummaryStepScreen() {
     required,
     catalog,
     signedBlocks = [],
-  } = useWizardIntake();
-  const completeness = {
+  } = intake;
+  // Her answers by field decide which screens that depend on one she saw (RAPP-715).
+  const completeness = () => ({
     custom: customPlan,
     flow,
     required,
@@ -212,7 +220,8 @@ export default function SummaryStepScreen() {
     storedCustom: customAnswers,
     blocks: catalog.blocks,
     consentCatalog: catalog,
-  };
+    answers: herWizardAnswers(intake),
+  });
   const wording = useBuiltinWording();
   // A section is titled as staff worded its screen (RAPP-612), or as before.
   const screenTitle = useScreenTitle();
@@ -243,9 +252,10 @@ export default function SummaryStepScreen() {
               storedCustom: customAnswers,
               blocks: catalog.blocks,
               consentCatalog: catalog,
+              answers: herWizardAnswers(intake),
             }),
       );
-    }, [customPlan, flow, required, customScreens, customAnswers, catalog]),
+    }, [intake, customPlan, flow, required, customScreens, customAnswers, catalog]),
   );
 
   const identity: Section = draft?.identity ?? {};
@@ -255,6 +265,8 @@ export default function SummaryStepScreen() {
   const notGiven = t('summaryNotGiven');
   const show = (value: string | null) => value ?? notGiven;
   const answers = mergedCustomAnswers(customAnswers, draft?.custom);
+  // Read again with the draft: she may have changed an answer on another screen.
+  const shownAnswers = draft === null ? customAnswers : herWizardAnswers(intake);
   const shows = (question: IntakeQuestion) => !hidden.has(question);
   // The Fitxa fields placed on a built-in screen (RAPP-655), under its own rows.
   const added = (screen: WizardQuestionScreen): ReactNode => {
@@ -570,7 +582,7 @@ export default function SummaryStepScreen() {
   function confirm() {
     // A required answer is missing (staff may have moved a screen she never
     // saw): she cannot confirm, and goes to that screen to answer it.
-    const incomplete = firstIncompleteStep(onboardingDraftStore.loadDraft(), completeness);
+    const incomplete = firstIncompleteStep(onboardingDraftStore.loadDraft(), completeness());
     if (incomplete !== null) {
       setMissingStep(incomplete);
       playHaptic('warning');
@@ -617,6 +629,9 @@ export default function SummaryStepScreen() {
       />
       {wizardFlowOrder(customPlan, flow).map((step) => {
         const customId = customStepId(step);
+        // Only the screens she saw: one her answers do not open is left out (RAPP-715).
+        const planned = customPlan.find((screen) => screen.id === customId);
+        if (planned !== undefined && !opensForAnswers(planned, shownAnswers)) return null;
         const custom =
           customId === null ? undefined : customScreens.find((screen) => screen.id === customId);
         return (
