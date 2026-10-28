@@ -707,7 +707,7 @@ export function FormBoard({
           {order.map((key, index) => {
             const card = byKey.get(key);
             return card === undefined ? null : (
-              <SortableCard key={key} id={key}>
+              <SortableCard key={key} id={key} style={unitSpan(card)}>
                 {(handle) => (
                   <CardUnit
                     card={card}
@@ -792,61 +792,75 @@ export function CardFrame({
   );
 }
 
+/** A screen with follow-ups spans two board tracks: itself and its follow-ups' card (RAPP-716). */
+function unitSpan(card: BoardCard): CSSProperties | undefined {
+  return (card.branches?.length ?? 0) === 0 ? undefined : { gridColumn: 'span 2 / span 2' };
+}
+
 /**
- * A card and its follow-up screens (RAPP-716): ONE card on the board, whatever
- * the number of screens that depend on it. Arrows on both sides step through
- * the screen and its follow-ups (3, 3a, 3b, 3a.1...), and Edita opens the one
- * shown. The family moves as one by the card's grip.
+ * A screen and its follow-up screens (RAPP-716): the screen stays alone as
+ * its own card. Next to it, joined by a short line, ONE card holds every
+ * follow-up (3a, 3b, 3a.1...), with frosted arrows inside it to step through
+ * them; Edita opens the one shown. The pair moves as one by the screen's grip.
  */
 function CardUnit(props: ComponentProps<typeof ScreenCard>) {
   const { t } = useTranslation('settings');
   const branches = props.card.branches ?? [];
   const [shown, setShown] = useState(0);
   if (branches.length === 0) return <ScreenCard {...props} />;
-  const slides = [props.card, ...branches];
-  const index = Math.min(shown, slides.length - 1);
-  const slide = slides[index]!;
-  const number =
-    index === 0
-      ? props.number
-      : `${props.number}${slide.suffix ?? String.fromCharCode(96 + index)}`;
+  const index = Math.min(shown, branches.length - 1);
+  const branch = branches[index]!;
   const step = (delta: number) =>
-    setShown((current) => (current + delta + slides.length) % slides.length);
+    setShown((current) => (current + delta + branches.length) % branches.length);
+  const arrow =
+    'absolute top-1/2 z-10 size-8 -translate-y-1/2 rounded-full border border-white/50 bg-white/55 text-foreground shadow-sm backdrop-blur-md hover:bg-white/75';
   return (
-    <div className="relative w-full" data-testid={`board-family-${props.card.key}`}>
-      <ScreenCard
-        {...props}
-        card={slide}
-        number={number}
-        isBranch={index > 0}
-        position={`${index + 1}/${slides.length}`}
-      />
-      {props.isLifted ? null : (
-        <>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            className="absolute top-1/2 -start-3 z-10 -translate-y-1/2 rounded-full bg-card shadow-sm"
-            aria-label={t('onboardingBoard.previousScreen')}
-            onClick={() => step(-1)}
-            data-testid={`board-family-previous-${props.card.key}`}
-          >
-            <ChevronLeft aria-hidden className="rtl:rotate-180" />
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            className="absolute top-1/2 -end-3 z-10 -translate-y-1/2 rounded-full bg-card shadow-sm"
-            aria-label={t('onboardingBoard.nextScreen')}
-            onClick={() => step(1)}
-            data-testid={`board-family-next-${props.card.key}`}
-          >
-            <ChevronRight aria-hidden className="rtl:rotate-180" />
-          </Button>
-        </>
-      )}
+    <div className="grid w-full grid-cols-2 items-start gap-4">
+      <ScreenCard {...props} />
+      <div className="relative flex" data-testid={`board-family-${props.card.key}`}>
+        <span
+          aria-hidden
+          className="absolute top-1/2 -left-4 flex w-4 -translate-y-1/2 items-center"
+        >
+          <span className="size-1.5 shrink-0 rounded-full bg-primary/50" />
+          <span className="h-0.5 flex-1 bg-primary/50" />
+        </span>
+        <ScreenCard
+          card={branch}
+          number={`${props.number}${branch.suffix ?? String.fromCharCode(97 + index)}`}
+          numberLabelKey={props.numberLabelKey}
+          handle={null}
+          isLifted={props.isLifted}
+          isBranch
+          position={branches.length > 1 ? `${index + 1}/${branches.length}` : undefined}
+        />
+        {props.isLifted || branches.length < 2 ? null : (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className={cn(arrow, 'start-5')}
+              aria-label={t('onboardingBoard.previousScreen')}
+              onClick={() => step(-1)}
+              data-testid={`board-family-previous-${props.card.key}`}
+            >
+              <ChevronLeft aria-hidden className="rtl:rotate-180" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className={cn(arrow, 'end-5')}
+              aria-label={t('onboardingBoard.nextScreen')}
+              onClick={() => step(1)}
+              data-testid={`board-family-next-${props.card.key}`}
+            >
+              <ChevronRight aria-hidden className="rtl:rotate-180" />
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
