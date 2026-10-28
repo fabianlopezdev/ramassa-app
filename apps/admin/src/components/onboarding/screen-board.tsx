@@ -49,7 +49,17 @@ import {
 import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Link } from '@tanstack/react-router';
-import { Eye, EyeOff, GripVertical, Link2, Lock, Plus, X } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  GripVertical,
+  Link2,
+  Lock,
+  Plus,
+  X,
+} from 'lucide-react';
 import {
   useState,
   type ComponentProps,
@@ -668,12 +678,7 @@ export function FormBoard({
   }
 
   const lockedCard = (card: BoardCard, number: number) => (
-    <li
-      key={card.key}
-      className="flex"
-      style={unitSpan(card)}
-      data-testid={`board-step-${card.key}`}
-    >
+    <li key={card.key} className="flex" data-testid={`board-step-${card.key}`}>
       <CardUnit
         card={card}
         number={number}
@@ -702,7 +707,7 @@ export function FormBoard({
           {order.map((key, index) => {
             const card = byKey.get(key);
             return card === undefined ? null : (
-              <SortableCard key={key} id={key} style={unitSpan(card)}>
+              <SortableCard key={key} id={key}>
                 {(handle) => (
                   <CardUnit
                     card={card}
@@ -787,45 +792,61 @@ export function CardFrame({
   );
 }
 
-/** A card with branches spans one board track more for each (RAPP-713). */
-function unitSpan(card: BoardCard): CSSProperties | undefined {
-  const span = 1 + (card.branches?.length ?? 0);
-  return span === 1 ? undefined : { gridColumn: `span ${span} / span ${span}` };
-}
-
 /**
- * A card and its branch cards (RAPP-713): one unit on the board, dragged by
- * the card's grip. Each branch sits in the next track, smaller, joined to the
- * card by a short line, and numbered with the card's number and a letter.
+ * A card and its follow-up screens (RAPP-716): ONE card on the board, whatever
+ * the number of screens that depend on it. Arrows on both sides step through
+ * the screen and its follow-ups (3, 3a, 3b, 3a.1...), and Edita opens the one
+ * shown. The family moves as one by the card's grip.
  */
 function CardUnit(props: ComponentProps<typeof ScreenCard>) {
+  const { t } = useTranslation('settings');
   const branches = props.card.branches ?? [];
+  const [shown, setShown] = useState(0);
   if (branches.length === 0) return <ScreenCard {...props} />;
+  const slides = [props.card, ...branches];
+  const index = Math.min(shown, slides.length - 1);
+  const slide = slides[index]!;
+  const number =
+    index === 0
+      ? props.number
+      : `${props.number}${slide.suffix ?? String.fromCharCode(96 + index)}`;
+  const step = (delta: number) =>
+    setShown((current) => (current + delta + slides.length) % slides.length);
   return (
-    <div
-      className="grid w-full items-start gap-4"
-      style={{ gridTemplateColumns: `repeat(${branches.length + 1}, minmax(0, 1fr))` }}
-    >
-      <ScreenCard {...props} />
-      {branches.map((branch, index) => (
-        <div key={branch.key} className="relative flex" data-testid={`board-branch-${branch.key}`}>
-          <span
-            aria-hidden
-            className="absolute top-1/2 -left-4 flex w-4 -translate-y-1/2 items-center"
+    <div className="relative w-full" data-testid={`board-family-${props.card.key}`}>
+      <ScreenCard
+        {...props}
+        card={slide}
+        number={number}
+        isBranch={index > 0}
+        position={`${index + 1}/${slides.length}`}
+      />
+      {props.isLifted ? null : (
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            className="absolute top-1/2 -start-3 z-10 -translate-y-1/2 rounded-full bg-card shadow-sm"
+            aria-label={t('onboardingBoard.previousScreen')}
+            onClick={() => step(-1)}
+            data-testid={`board-family-previous-${props.card.key}`}
           >
-            <span className="size-1.5 shrink-0 rounded-full bg-primary/50" />
-            <span className="h-0.5 flex-1 bg-primary/50" />
-          </span>
-          <ScreenCard
-            card={branch}
-            number={`${props.number}${branch.suffix ?? String.fromCharCode(97 + index)}`}
-            numberLabelKey={props.numberLabelKey}
-            handle={null}
-            isLifted={props.isLifted}
-            isBranch
-          />
-        </div>
-      ))}
+            <ChevronLeft aria-hidden className="rtl:rotate-180" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            className="absolute top-1/2 -end-3 z-10 -translate-y-1/2 rounded-full bg-card shadow-sm"
+            aria-label={t('onboardingBoard.nextScreen')}
+            onClick={() => step(1)}
+            data-testid={`board-family-next-${props.card.key}`}
+          >
+            <ChevronRight aria-hidden className="rtl:rotate-180" />
+          </Button>
+        </>
+      )}
     </div>
   );
 }
@@ -838,6 +859,7 @@ function ScreenCard({
   isLocked = false,
   isLifted = false,
   isBranch = false,
+  position,
 }: {
   readonly card: BoardCard;
   /** "3", or "3a" for a branch card. */
@@ -847,8 +869,10 @@ function ScreenCard({
   readonly handle: Handle | null;
   readonly isLocked?: boolean;
   readonly isLifted?: boolean;
-  /** A follow-up screen's card (RAPP-713): smaller, never dragged alone. */
+  /** A follow-up screen shown in its family's card (RAPP-713, RAPP-716). */
   readonly isBranch?: boolean;
+  /** Which screen of the family is shown, such as "2/5" (RAPP-716). */
+  readonly position?: string;
 }) {
   const { t } = useTranslation('settings');
   return (
@@ -856,14 +880,13 @@ function ScreenCard({
       className={cn(
         'bg-card transition-shadow hover:shadow-md',
         isLocked && 'bg-muted/40',
-        // The same size as every card; only the dashed border marks it (RAPP-713).
-        isBranch && 'border-dashed border-primary/40',
-        isLifted && !isBranch && 'rotate-1 shadow-xl ring-2 ring-primary',
+        isLifted && 'rotate-1 shadow-xl ring-2 ring-primary',
       )}
     >
       <header className="flex h-7 items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted-foreground tabular-nums">
           {t(numberLabelKey, { number })}
+          {position === undefined ? null : <span className="font-normal">· {position}</span>}
           {card.status === null ? null : (
             <span className="inline-flex min-w-0 items-center gap-1 font-normal">
               <EyeOff aria-hidden className="size-3.5 shrink-0" />
@@ -933,13 +956,13 @@ function ScreenCard({
           'block rounded-xl',
           // A branch's two-line condition and its gap take 52px; measured on
           // the board, the phone loses 2.195px of height per px of width, so
-          // it is drawn 23.7px narrower and the card keeps every card's height.
-          isBranch && 'mx-auto w-[calc(100%-23.7px)]',
+          // it is drawn 25.35px narrower and the card keeps every card's height.
+          isBranch && 'mx-auto w-[calc(100%-25.35px)]',
         )}
       >
         {card.miniature}
       </Link>
-      <Button asChild variant="outline" size={isBranch ? 'xs' : 'sm'} className="w-full">
+      <Button asChild variant="outline" size="sm" className="w-full">
         <Link
           {...card.link}
           aria-label={t('onboardingBoard.editScreen', { screen: card.name })}
