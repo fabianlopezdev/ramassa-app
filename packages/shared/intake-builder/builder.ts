@@ -895,7 +895,8 @@ export function builtinLabel(
   question: IntakeQuestion,
   language: LanguageCode,
 ): string | null {
-  return exactText(overrideFor(catalog, question)?.label, language) || null;
+  // One rule with the screen texts (RAPP-719): the label is required.
+  return staffTextIn(overrideFor(catalog, question)?.label, language, false);
 }
 
 export function builtinHelp(
@@ -903,7 +904,8 @@ export function builtinHelp(
   question: IntakeQuestion,
   language: LanguageCode,
 ): string | null {
-  return exactText(overrideFor(catalog, question)?.help, language) || null;
+  // The help is optional and the app has none of its own: no text is null.
+  return staffTextIn(overrideFor(catalog, question)?.help, language, true) || null;
 }
 
 /**
