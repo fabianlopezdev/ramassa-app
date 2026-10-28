@@ -95,8 +95,11 @@
     "hideScreen": "پنهان کردن صفحه",
     "delete": "حذف",
     "deleteScreen": "حذف صفحه",
+    "deleteNamedScreen": "حذف {{screen}}",
+    "deleteNamedScreenTitle": "«{{screen}}» حذف شود؟",
+    "deleteDependentScreens": "با حذف این صفحه، صفحه‌های زیر که به آن وابسته‌اند نیز حذف می‌شوند:",
     "deleteScreenTitle": "این صفحه حذف شود؟",
-    "deleteScreenBody": "همراه با پرسش‌هایش دیگر در برنامه دیده نمی‌شود. پاسخ‌های داده‌شده نگه داشته می‌شوند.",
+    "deleteScreenBody": "این صفحه و پرسش‌های آن از فرم حذف می‌شوند. پاسخ‌های قبلی حفظ می‌شوند.",
     "deleted": "{{screen}} حذف شد.",
     "deleteFailed": "حذف ممکن نشد. دوباره تلاش کنید."
   },

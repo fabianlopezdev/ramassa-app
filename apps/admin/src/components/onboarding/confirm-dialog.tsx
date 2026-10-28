@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export function ConfirmDialog({
@@ -23,6 +24,8 @@ export function ConfirmDialog({
   description,
   action,
   onConfirm,
+  children,
+  isBusy,
 }: {
   readonly isOpen: boolean;
   readonly onOpenChange: (open: boolean) => void;
@@ -30,6 +33,8 @@ export function ConfirmDialog({
   readonly description: string;
   readonly action: string;
   readonly onConfirm: () => void;
+  readonly children?: ReactNode;
+  readonly isBusy?: boolean;
 }) {
   const { t } = useTranslation('settings');
   return (
@@ -39,9 +44,18 @@ export function ConfirmDialog({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
+        {children}
         <AlertDialogFooter>
-          <AlertDialogCancel>{t('onboardingBoard.cancel')}</AlertDialogCancel>
-          <AlertDialogAction variant="destructive" onClick={onConfirm} data-testid="confirm-delete">
+          <AlertDialogCancel disabled={isBusy}>{t('onboardingBoard.cancel')}</AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            disabled={isBusy}
+            onClick={(event) => {
+              if (isBusy !== undefined) event.preventDefault();
+              onConfirm();
+            }}
+            data-testid="confirm-delete"
+          >
             {action}
           </AlertDialogAction>
         </AlertDialogFooter>

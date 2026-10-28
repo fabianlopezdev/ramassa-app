@@ -99,8 +99,11 @@
     "hideScreen": "أخفِ الشاشة",
     "delete": "احذف",
     "deleteScreen": "احذف الشاشة",
+    "deleteNamedScreen": "حذف {{screen}}",
+    "deleteNamedScreenTitle": "هل تريد حذف «{{screen}}»؟",
+    "deleteDependentScreens": "سيؤدي حذف هذه الشاشة أيضًا إلى حذف الشاشات التالية التي تعتمد عليها:",
     "deleteScreenTitle": "هل تريد حذف هذه الشاشة؟",
-    "deleteScreenBody": "لن تظهر في التطبيق مع أسئلتها. تبقى الإجابات المقدَّمة محفوظة.",
+    "deleteScreenBody": "ستتم إزالة الشاشة وأسئلتها من النموذج. سيتم الاحتفاظ بالإجابات السابقة.",
     "deleted": "تم حذف {{screen}}.",
     "deleteFailed": "تعذّر الحذف. حاول مرة أخرى."
   },

@@ -37,8 +37,8 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import type { OnboardingDesignData } from '@/lib/onboarding-design';
 import { supabase } from '@/lib/supabase';
-import { Link, useNavigate, useRouter } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -61,7 +61,6 @@ import {
   type WizardQuestionScreen,
 } from '@ramassa/shared/intake';
 import {
-  archiveIntakeScreen,
   canHideBuiltin,
   detailBranch,
   isDetailScreen,
@@ -91,7 +90,6 @@ import {
   stepFromRouteId,
   type BoardStep,
 } from './board-steps';
-import { ConfirmDialog } from './confirm-dialog';
 import { PhoneFrame, PhoneMiniature } from './phone-preview';
 import {
   onboardingConditionSources,
@@ -121,6 +119,7 @@ import {
   type Translate,
   type TypedWording,
 } from './screen-content';
+import { DeleteScreenAction, onboardingDeletion } from './screen-deletion';
 import { ScreenFieldsSection } from './screen-fields';
 import { builtinHideLockKey, teamHideLockKey } from './screen-hiding';
 
@@ -147,6 +146,11 @@ export function ScreenEditor({
   const label = step === null ? '' : (boardNumbers(catalog).get(step.key) ?? String(index + 1));
   const number = Number.parseInt(label, 10) || 0;
   const total = boardRootCount(catalog);
+  const navigate = useNavigate();
+  const current =
+    isDetailScreen(shown) && detailBranch(shown).parent === step?.key ? shown : step?.key;
+  const deletion =
+    current === undefined ? undefined : onboardingDeletion(catalog, current, language, t);
 
   return (
     <Page data-testid="screen-editor-page">
@@ -162,11 +166,6 @@ export function ScreenEditor({
         }
         title={step === null ? t('onboardingBoard.notFound') : stepName(step, language, t)}
         position={step === null ? undefined : t('onboardingBoard.stepOf', { number: label, total })}
-        actions={
-          step?.kind === 'custom' ? (
-            <OnboardingDeleteScreen screen={step.screen} name={stepName(step, language, t)} />
-          ) : undefined
-        }
       />
       {step === null ? null : (
         // Keyed by the screen: another screen starts from what is saved.
@@ -178,6 +177,16 @@ export function ScreenEditor({
           total={total}
           shown={shown}
         />
+      )}
+      {deletion === undefined ? null : (
+        <div className="flex justify-end">
+          <DeleteScreenAction
+            key={deletion.key}
+            deletion={deletion}
+            variant="button"
+            onDeleted={() => navigate({ to: '/onboarding' })}
+          />
+        </div>
       )}
     </Page>
   );
@@ -299,73 +308,6 @@ export function ScreenEditorHeading({
       </div>
       <PageHeader title={title} description={position} actions={actions} />
     </div>
-  );
-}
-
-function OnboardingDeleteScreen({
-  screen,
-  name,
-}: {
-  readonly screen: RamassaScreen;
-  readonly name: string;
-}) {
-  const navigate = useNavigate();
-  return (
-    <DeleteScreenButton
-      name={name}
-      onDelete={async () => {
-        // Archived: the fields leave the screen and stay on the Fitxa with her answers (RAPP-656).
-        await archiveIntakeScreen(supabase, screen.id);
-        await navigate({ to: '/onboarding' });
-      }}
-    />
-  );
-}
-
-/**
- * Deleting a screen staff made, on Onboarding or a form the team created
- * (RAPP-700): asked once, then `onDelete` archives it and goes back.
- */
-export function DeleteScreenButton({
-  name,
-  onDelete,
-}: {
-  readonly name: string;
-  readonly onDelete: () => Promise<void>;
-}) {
-  const { t } = useTranslation('settings');
-  const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
-  async function remove() {
-    try {
-      await onDelete();
-      await router.invalidate();
-      toast.success(t('onboardingBoard.deleted', { screen: name }));
-    } catch {
-      toast.error(t('onboardingBoard.deleteFailed'));
-    }
-  }
-  return (
-    <>
-      <Button
-        type="button"
-        variant="outline"
-        className="text-destructive hover:text-destructive"
-        onClick={() => setIsOpen(true)}
-        data-testid="screen-delete"
-      >
-        <Trash2 aria-hidden data-icon="inline-start" />
-        {t('onboardingBoard.deleteScreen')}
-      </Button>
-      <ConfirmDialog
-        isOpen={isOpen}
-        onOpenChange={setIsOpen}
-        title={t('onboardingBoard.deleteScreenTitle')}
-        description={t('onboardingBoard.deleteScreenBody')}
-        action={t('onboardingBoard.delete')}
-        onConfirm={() => void remove()}
-      />
-    </>
   );
 }
 
@@ -881,7 +823,10 @@ function AppScreenEditor({
   const screen = editableScreenOf(step);
   // The app follow-up being edited (RAPP-715): picked in the family row or on its card.
   const detail =
-    shown !== undefined && isDetailScreen(shown) && detailBranch(shown).parent === step.key
+    shown !== undefined &&
+    isDetailScreen(shown) &&
+    detailBranch(shown).parent === step.key &&
+    !catalog.screenSettings?.some((s) => s.screen === shown && s.isDeleted)
       ? shown
       : null;
   const [texts, setTexts] = useState<Partial<Record<EditableWizardScreen, ScreenTexts>>>({});

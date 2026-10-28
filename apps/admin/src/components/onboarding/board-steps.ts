@@ -95,15 +95,20 @@ export function editableScreenOf(step: BoardStep): EditableWizardScreen | null {
 export function boardNumbers(catalog: IntakeCatalog): ReadonlyMap<string, string> {
   const order = movableOrder(catalog);
   const numbers = new Map<string, string>();
-  [...onboardingRoots(catalog, order), ...BOARD_LOCKED_STEPS].forEach((key, index) => {
-    for (const member of onboardingFamily(catalog, key, String(index + 1), order)) {
-      numbers.set(member.key, member.number);
-    }
-  });
+  [...onboardingRoots(catalog, order), ...BOARD_LOCKED_STEPS]
+    .filter((key) => flowStep(catalog, key) !== null)
+    .forEach((key, index) => {
+      for (const member of onboardingFamily(catalog, key, String(index + 1), order)) {
+        numbers.set(member.key, member.number);
+      }
+    });
   return numbers;
 }
 
 /** How many cards the board numbers: the screens that depend on no answer. */
 export function boardRootCount(catalog: IntakeCatalog): number {
-  return onboardingRoots(catalog, movableOrder(catalog)).length + BOARD_LOCKED_STEPS.length;
+  return (
+    onboardingRoots(catalog, movableOrder(catalog)).length +
+    BOARD_LOCKED_STEPS.filter((key) => flowStep(catalog, key) !== null).length
+  );
 }

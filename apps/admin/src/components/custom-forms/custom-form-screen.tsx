@@ -28,8 +28,8 @@ import {
   placedPhoneQuestions,
   staffScreenContent,
 } from '@/components/onboarding/screen-content';
+import { customFormDeletion, DeleteScreenAction } from '@/components/onboarding/screen-deletion';
 import {
-  DeleteScreenButton,
   ScreenEditorHeading,
   StaffScreenEditor,
   type SiblingScreen,
@@ -41,7 +41,6 @@ import { supabase } from '@/lib/supabase';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import {
-  archiveCustomFormScreen,
   formFamily,
   formRootOf,
   formScreenParent,
@@ -65,6 +64,7 @@ export function CustomFormScreenEditor({
 }) {
   const { t, i18n } = useTranslation('settings');
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
+  const navigate = useNavigate();
   const form = (data.intakeCatalog.customForms ?? []).find((each) => each.id === formId);
   // Her order, each follow-up after the screen asking its question (RAPP-715).
   const ordered = form === undefined ? [] : formScreensInOrder(data.intakeCatalog, form);
@@ -102,11 +102,6 @@ export function CustomFormScreenEditor({
             ? undefined
             : t('customForms.screenOf', { number: label, total: roots })
         }
-        actions={
-          form === undefined || screen === undefined ? undefined : (
-            <DeleteFormScreen form={form} screen={screen} name={textIn(screen.title, language)} />
-          )
-        }
       />
       {form === undefined || screen === undefined ? null : (
         // Keyed by the screen: another screen starts from what is saved.
@@ -119,6 +114,16 @@ export function CustomFormScreenEditor({
           total={roots}
           numbers={numbers}
         />
+      )}
+      {form === undefined || screen === undefined ? null : (
+        <div className="flex justify-end">
+          <DeleteScreenAction
+            key={screen.id}
+            deletion={customFormDeletion(data.intakeCatalog, form, screen.id, language, numbers)}
+            variant="button"
+            onDeleted={() => navigate({ to: '/forms/custom/$formId', params: { formId: form.id } })}
+          />
+        </div>
       )}
     </Page>
   );
@@ -263,28 +268,6 @@ function FormScreenBody({
           onWordingChange={row.setWording}
         />
       )}
-    />
-  );
-}
-
-function DeleteFormScreen({
-  form,
-  screen,
-  name,
-}: {
-  readonly form: CustomForm;
-  readonly screen: CustomFormScreen;
-  readonly name: string;
-}) {
-  const navigate = useNavigate();
-  return (
-    <DeleteScreenButton
-      name={name}
-      onDelete={async () => {
-        // Archived: the fields leave the screen and stay in Dades with her answers.
-        await archiveCustomFormScreen(supabase, screen.id);
-        await navigate({ to: '/forms/custom/$formId', params: { formId: form.id } });
-      }}
     />
   );
 }

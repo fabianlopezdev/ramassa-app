@@ -126,6 +126,7 @@ import {
   type ConditionSource,
 } from './screen-condition';
 import { conditionLine, detailScreenContent, stepContent, type Translate } from './screen-content';
+import { DeleteScreenAction, onboardingDeletion, type ScreenDeletion } from './screen-deletion';
 import { builtinHideLockKey, teamHideLockKey } from './screen-hiding';
 
 /** Every card shares one track width, so each row's cards have one size. */
@@ -227,6 +228,7 @@ export function ScreenBoard({
           ...lockedHide(t('onboardingBoard.branchFollows', { screen: nameOf(root) })),
           isHidden,
         },
+        deletion: onboardingDeletion(catalog, key, language, t),
         addDependent: dependent.addFor(key),
         link: {
           to: '/onboarding/screens/$screenId',
@@ -266,6 +268,7 @@ export function ScreenBoard({
               ...lockedHide(t('onboardingBoard.branchFollowsHidden', { screen: nameOf(ancestor) })),
               isHidden: true,
             },
+      deletion: onboardingDeletion(catalog, key, language, t),
       addDependent: dependent.addFor(key),
       link: { to: '/onboarding/screens/$screenId', params: { screenId: routeIdOf(key) } },
     };
@@ -341,6 +344,7 @@ export function ScreenBoard({
         step.kind === 'locked'
           ? lockedAddDependent(t('onboardingBoard.addDependentLockedFinal'))
           : dependent.addFor(step.key),
+      deletion: onboardingDeletion(catalog, key, language, t),
       isLinked: linked !== null,
       link:
         linked === null
@@ -656,6 +660,7 @@ export interface BoardCard {
   readonly remove?: { readonly label: string; readonly run: () => Promise<void> };
   /** The eye in the header (RAPP-711); absent, the card has none. */
   readonly hide?: BoardCardHide;
+  readonly deletion?: ScreenDeletion;
   /** The + beside the eye (RAPP-717); absent, the card has none. */
   readonly addDependent?: AddDependent;
   /**
@@ -954,7 +959,7 @@ function ScreenCard({
         isLifted && 'rotate-1 shadow-xl ring-2 ring-primary',
       )}
     >
-      <header className="flex h-7 items-center justify-between gap-2">
+      <header className="flex min-h-7 flex-wrap items-center justify-between gap-1">
         <span className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted-foreground tabular-nums">
           {t(numberLabelKey, { number })}
           {position === undefined ? null : <span className="font-normal">· {position}</span>}
@@ -971,6 +976,9 @@ function ScreenCard({
           )}
           {card.hide === undefined || isLifted ? null : (
             <HideButton hide={card.hide} name={card.name} cardKey={card.key} />
+          )}
+          {card.deletion === undefined || isLifted ? null : (
+            <DeleteScreenAction key={card.deletion.key} deletion={card.deletion} variant="icon" />
           )}
           {card.remove === undefined || isLifted ? null : (
             <Button

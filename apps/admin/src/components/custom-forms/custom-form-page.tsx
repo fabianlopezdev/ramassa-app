@@ -36,6 +36,7 @@ import {
   placedPhoneQuestions,
   staffScreenContent,
 } from '@/components/onboarding/screen-content';
+import { customFormDeletion } from '@/components/onboarding/screen-deletion';
 import { teamHideLockKey } from '@/components/onboarding/screen-hiding';
 import { useReload } from '@/components/settings/onboarding-design-sections';
 import { Badge } from '@/components/ui/badge';
@@ -373,6 +374,13 @@ function FormScreensBoard({
                 await reload();
               },
             },
+      deletion: customFormDeletion(
+        catalog,
+        form,
+        screen.id,
+        language,
+        formBoardNumbers(catalog, form),
+      ),
       addDependent: dependent.addFor(screen.id),
       link: {
         to: '/forms/custom/$formId/screens/$screenId',
