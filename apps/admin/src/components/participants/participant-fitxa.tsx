@@ -1,9 +1,8 @@
 /**
  * Her record on the Fitxa layout (RAPP-653, RAPP-664): the Fitxa's sections in
  * their order, each field with her answer, who gave it and when, inline
- * editing by the team with one editor for every field. While she has not
- * joined, a sidebar holds her per-field registration choices. Below the
- * fields, her account: app
+ * editing by the team with one editor for every field, and, while she has not
+ * joined, the per-player choice on each field. Below them, her account: app
  * language, photo consent, terms and season, which are not Fitxa fields.
  *
  * Her choices plan through the shared `playerPlan`, the one the invitation's
@@ -12,7 +11,6 @@
  */
 
 import { EditorSection } from '@/components/layout/editor-section';
-import { ChoiceMenu } from '@/components/participants/choice-menu';
 import { EditorForm } from '@/components/participants/field-answer-editor';
 import { ParticipantCustomForms } from '@/components/participants/participant-custom-forms';
 import { PlayerChoicesBar } from '@/components/participants/player-choices-bar';
@@ -20,7 +18,6 @@ import { ProfileAnswerRow } from '@/components/participants/profile-answer-row';
 import { ProfileSection, type FitxaContext } from '@/components/participants/profile-section';
 import { answersByField, fitxaSections, planQuestionsByField } from '@/lib/participant-fitxa';
 import { cn } from '@/lib/utils';
-import { ClipboardList, Settings } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n';
@@ -28,7 +25,6 @@ import type { IntakeQuestion, QuestionStates } from '@ramassa/shared/intake';
 import {
   EMPTY_PROFILE_LAYOUT,
   playerPlan,
-  textIn,
   withQuestionChoice,
   type CustomAnswers,
   type IntakeCatalog,
@@ -67,8 +63,6 @@ export interface ParticipantFitxaProps {
   readonly onOpenFile?: (objectKey: string) => Promise<void>;
   /** Her asks of the forms the team created (RAPP-700). */
   readonly customForms?: readonly ParticipantCustomForm[];
-  readonly editingId: string | null;
-  readonly onEditingChange: (id: string | null) => void;
 }
 
 export function ParticipantFitxa({
@@ -86,11 +80,10 @@ export function ParticipantFitxa({
   onDeletePreset,
   onOpenFile,
   customForms = [],
-  editingId,
-  onEditingChange,
 }: ParticipantFitxaProps) {
   const { t, i18n } = useTranslation(['participants', 'onboarding', 'profile', 'common']);
   const locale = i18n.resolvedLanguage ?? 'ca';
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [isChoiceBusy, setIsChoiceBusy] = useState(false);
   const joined = hasJoined(participant);
   const layout = catalog.layout ?? EMPTY_PROFILE_LAYOUT;
@@ -108,7 +101,6 @@ export function ParticipantFitxa({
   );
   const plan = playerPlan(catalog, answered, choices, wizardAnswers);
   const sections = fitxaSections(layout, answers, locale as LanguageCode);
-  const questions = planQuestionsByField(plan, layout.fields);
 
   async function saveChoices(next: PlayerChoices) {
     setIsChoiceBusy(true);
@@ -126,18 +118,18 @@ export function ParticipantFitxa({
     answers,
     sees,
     canEdit: sees('participants.view_personal'),
-    choices: null,
+    choices: showChoices ? planQuestionsByField(plan, layout.fields) : null,
     isChoiceBusy,
     onChoice: (question, state) => void saveChoices(withQuestionChoice(choices, question, state)),
     editingId,
-    onEditingChange,
+    onEditingChange: setEditingId,
     onSave,
     onOpenFile,
   };
   const accountRow = {
     lockedLevel: null,
     choice: null,
-    hasChoiceColumn: false,
+    hasChoiceColumn: showChoices,
     source: null,
     onToggleEdit: () => undefined,
     isEditing: false,
@@ -146,162 +138,90 @@ export function ParticipantFitxa({
   const editable = (key: 'preferred_language' | 'media_consent') => ({
     canEdit: context.canEdit,
     isEditing: editingId === key,
-    onToggleEdit: () => onEditingChange(editingId === key ? null : key),
+    onToggleEdit: () => setEditingId(editingId === key ? null : key),
     editor: (
       <AccountSettingEditor
         setting={key}
         participant={participant}
         onSave={async (update) => {
           await onSave(update);
-          onEditingChange(null);
+          setEditingId(null);
         }}
-        onCancel={() => onEditingChange(null)}
+        onCancel={() => setEditingId(null)}
       />
     ),
   });
 
   return (
-    <div data-testid="participant-fitxa" className="flex flex-col gap-6">
-      <div
-        className={cn(
-          'grid items-start gap-5',
-          showChoices && 'xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]',
-        )}
-      >
-        <div className="flex min-w-0 flex-col gap-4">
-          {sections.map(({ section, fields }) => (
-            <ProfileSection key={section.id} section={section} fields={fields} context={context} />
-          ))}
+    <div className="flex flex-col gap-6" data-testid="participant-fitxa">
+      {/* Said out loud: reading this record wrote an audit row naming this
+          staff member and this moment. */}
+      <p className="text-start text-sm text-muted-foreground">{t('participants:accessLogged')}</p>
 
-          <ParticipantCustomForms forms={customForms} />
+      {showChoices ? (
+        <PlayerChoicesBar
+          plan={plan}
+          catalog={catalog}
+          choices={choices}
+          isBusy={isChoiceBusy}
+          errorMessage={choicesError}
+          onChange={(next) => void saveChoices(next)}
+          onSavePreset={onSavePreset}
+          onDeletePreset={onDeletePreset}
+        />
+      ) : null}
 
-          <EditorSection
-            title={t('participants:fitxa.accountTitle')}
-            leading={<Settings aria-hidden className="size-5 text-primary" />}
-            isFlush
-            testId="fitxa-account"
-          >
-            <ul className="flex flex-col divide-y">
-              <ProfileAnswerRow
-                {...accountRow}
-                {...editable('preferred_language')}
-                name={t('profile:languageLabel')}
-                value={t(`common:languageName.${participant.preferred_language}`)}
-                testId="fitxa-field-preferred_language"
-              />
-              <ProfileAnswerRow
-                {...accountRow}
-                // The consent is hers to give before she joins (RAPP-300).
-                {...(joined ? editable('media_consent') : {})}
-                name={t('profile:fieldMediaConsent')}
-                value={
-                  participant.media_consent
-                    ? t('participants:mediaConsentGranted')
-                    : t('participants:mediaConsentDenied')
-                }
-                testId="fitxa-field-media_consent"
-              />
-              <ProfileAnswerRow
-                {...accountRow}
-                name={t('onboarding:termsTitle')}
-                value={
-                  participant.terms_accepted_at === null
-                    ? null
-                    : t('participants:termsAcceptedOn', {
-                        date: new Date(participant.terms_accepted_at).toLocaleDateString(locale),
-                      })
-                }
-                testId="fitxa-field-terms"
-              />
-              <ProfileAnswerRow
-                {...accountRow}
-                name={t('onboarding:seasonNumberLabel')}
-                value={
-                  participant.season_number == null
-                    ? null
-                    : t(`onboarding:seasonNumber${participant.season_number}`)
-                }
-                testId="fitxa-field-season_number"
-              />
-            </ul>
-          </EditorSection>
-        </div>
+      {sections.map(({ section, fields }) => (
+        <ProfileSection key={section.id} section={section} fields={fields} context={context} />
+      ))}
 
-        {showChoices ? (
-          <aside className="flex min-w-0 flex-col gap-6">
-            <EditorSection
-              title={t('participants:profileDesign.registration')}
-              leading={<ClipboardList aria-hidden className="size-5 text-primary" />}
-              isFlush
-              className="[&>header]:mx-5 [&>header]:px-0"
-              testId="profile-registration-choices"
-            >
-              <div className="flex flex-col divide-y px-5">
-                {sections.map(({ section, fields }) => {
-                  const askedFields = fields.filter((field) => questions.has(field.id));
-                  if (askedFields.length === 0) return null;
-                  return (
-                    <section key={section.id} className="py-4">
-                      <h3 className="mb-2 text-start text-xs font-medium text-muted-foreground">
-                        {textIn(section.title, locale as LanguageCode)}
-                      </h3>
-                      <ul className="flex flex-col gap-2.5">
-                        {askedFields.map((field) => {
-                          const question = questions.get(field.id);
-                          if (question === undefined) return null;
-                          return (
-                            <li
-                              key={field.id}
-                              className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] items-center gap-3"
-                            >
-                              <span className="text-start text-sm text-muted-foreground">
-                                {textIn(field.label, locale as LanguageCode)}
-                              </span>
-                              <ChoiceMenu
-                                question={question}
-                                name={textIn(field.label, locale as LanguageCode)}
-                                isBusy={isChoiceBusy}
-                                onChange={(state) =>
-                                  void saveChoices(withQuestionChoice(choices, question, state))
-                                }
-                                testId={`fitxa-field-${field.builtinKey ?? field.systemKey ?? field.id}-choice`}
-                              />
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </section>
-                  );
-                })}
-              </div>
-            </EditorSection>
+      <ParticipantCustomForms forms={customForms} />
 
-            <details className="group rounded-xl border bg-card">
-              <summary className="cursor-pointer px-5 py-4 text-start text-sm font-medium focus-visible:outline-ring">
-                {t('participants:profileDesign.presets')}
-              </summary>
-              <div className="border-t p-3 [&>section]:border-0 [&>section]:shadow-none">
-                <PlayerChoicesBar
-                  plan={plan}
-                  catalog={catalog}
-                  choices={choices}
-                  isBusy={isChoiceBusy}
-                  errorMessage={choicesError}
-                  onChange={(next) => void saveChoices(next)}
-                  onSavePreset={onSavePreset}
-                  onDeletePreset={onDeletePreset}
-                />
-              </div>
-            </details>
-            {choicesError === undefined ? null : (
-              <p role="alert" className="text-sm text-destructive">
-                {choicesError}
-              </p>
-            )}
-          </aside>
-        ) : null}
-      </div>
-      <p className="text-start text-xs text-muted-foreground">{t('participants:accessLogged')}</p>
+      <EditorSection title={t('participants:fitxa.accountTitle')} isFlush testId="fitxa-account">
+        <ul className="flex flex-col divide-y">
+          <ProfileAnswerRow
+            {...accountRow}
+            {...editable('preferred_language')}
+            name={t('profile:languageLabel')}
+            value={t(`common:languageName.${participant.preferred_language}`)}
+            testId="fitxa-field-preferred_language"
+          />
+          <ProfileAnswerRow
+            {...accountRow}
+            // The consent is hers to give before she joins (RAPP-300).
+            {...(joined ? editable('media_consent') : {})}
+            name={t('profile:fieldMediaConsent')}
+            value={
+              participant.media_consent
+                ? t('participants:mediaConsentGranted')
+                : t('participants:mediaConsentDenied')
+            }
+            testId="fitxa-field-media_consent"
+          />
+          <ProfileAnswerRow
+            {...accountRow}
+            name={t('onboarding:termsTitle')}
+            value={
+              participant.terms_accepted_at === null
+                ? null
+                : t('participants:termsAcceptedOn', {
+                    date: new Date(participant.terms_accepted_at).toLocaleDateString(locale),
+                  })
+            }
+            testId="fitxa-field-terms"
+          />
+          <ProfileAnswerRow
+            {...accountRow}
+            name={t('onboarding:seasonNumberLabel')}
+            value={
+              participant.season_number == null
+                ? null
+                : t(`onboarding:seasonNumber${participant.season_number}`)
+            }
+            testId="fitxa-field-season_number"
+          />
+        </ul>
+      </EditorSection>
     </div>
   );
 }

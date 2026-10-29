@@ -2,8 +2,10 @@
  * One participant, as the team works with her (RAPP-24): her record, the notes
  * the team keeps about her, and the activity timeline later phases feed.
  *
- * Her club profile header and tabs organize the existing record, registration,
- * material, notes and activity tools. Each tool keeps its own write behavior.
+ * This file owns what is SPECIFIC to a participant. How a titled block of
+ * label/value pairs looks lives in the shared `DetailSection`, exactly as how a
+ * table looks lives in the shared `DataTable`, so the entity portal and the
+ * event pages that follow inherit the behaviour instead of re-deriving it.
  *
  * Every write goes back through the route LOADER rather than patching local
  * state. That costs a round trip and buys the thing that matters on a screen
@@ -23,25 +25,18 @@ import { ParticipantConsents } from '@/components/participants/participant-conse
 import { ParticipantEquipment } from '@/components/participants/participant-equipment';
 import { ParticipantFitxa } from '@/components/participants/participant-fitxa';
 import { ParticipantNotes } from '@/components/participants/participant-notes';
-import { ParticipantProfileHeader } from '@/components/participants/participant-profile-header';
 import { ParticipantRgpd } from '@/components/participants/participant-rgpd';
 import { ParticipantSignatures } from '@/components/participants/participant-signatures';
 import { TestPlayerDelete } from '@/components/participants/test-player-delete';
 import { TestPlayerScenarioPanel } from '@/components/participants/test-player-scenario';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { mediaWorkerUrl } from '@/lib/media-worker';
 import { safeAsync } from '@/lib/observability';
-import { missingLevel, seasonAnswersLines } from '@/lib/participant-fitxa';
+import { seasonAnswersLines } from '@/lib/participant-fitxa';
 import { supabase } from '@/lib/supabase';
 import { Link, useNavigate, useRouter } from '@tanstack/react-router';
-import { ArrowLeft, MoreHorizontal } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AttendanceParticipantStats, AttendanceReportRow } from '@ramassa/shared/attendance';
@@ -69,7 +64,6 @@ import {
   deleteIntakePreset,
   EMPTY_INTAKE_CATALOG,
   EMPTY_PROFILE_LAYOUT,
-  isStaffWritable,
   saveIntakePreset,
   uploadsAvailable,
   type CustomQuestionStates,
@@ -198,8 +192,6 @@ export function ParticipantDetail({
   const teamTools = !isLimitedToTestPlayers(permissions);
   const sees = (code: PermissionCode) =>
     permissions.has(code) || (isTestPlayer && permissions.has('test_players.manage'));
-  const [activeTab, setActiveTab] = useState('profile');
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [noteErrorMessage, setNoteErrorMessage] = useState<string | undefined>(undefined);
   const [questionStatesErrorMessage, setQuestionStatesErrorMessage] = useState<string | undefined>(
     undefined,
@@ -320,263 +312,187 @@ export function ParticipantDetail({
     await router.invalidate();
   }
 
-  function editProfile() {
-    const field = intakeCatalog.layout?.fields.find(
-      (field) => !field.isArchived && isStaffWritable(field) && missingLevel(field, sees) === null,
-    );
-    setActiveTab('profile');
-    setEditingId(field?.id ?? 'preferred_language');
-  }
-
-  const canChangeStatus = teamTools && joined && permissions.has('participants.deactivate');
-  const canChangeForum = teamTools && permissions.has('forum.moderate');
-  const canReadRegistration = sees('participants.view_personal');
-  const showRegistrationTab = canReadRegistration && (teamTools || formSignatures.length > 0);
-
   return (
     <Page>
-      <Link
-        to="/participants"
-        className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft aria-hidden className="size-4 rtl:rotate-180" />
-        {t('detailBackToList')}
-      </Link>
+      <header className="flex flex-col gap-3">
+        <Link
+          to="/participants"
+          className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft aria-hidden className="size-4 rtl:rotate-180" />
+          {t('detailBackToList')}
+        </Link>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-6" dir={i18n.dir()}>
-        <div className="overflow-hidden rounded-xl border bg-card">
-          <ParticipantProfileHeader
-            participant={participant}
-            onEdit={canReadRegistration ? editProfile : undefined}
-            actions={
-              canChangeStatus || canChangeForum ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      aria-label={t('profileDesign.actions')}
-                      className="size-10 border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-                    >
-                      <MoreHorizontal aria-hidden />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-72">
-                    {canChangeStatus ? (
-                      <DropdownMenuItem
-                        disabled={isChangingStatus}
-                        onSelect={() => void toggleStatus()}
-                      >
-                        {participant.is_active
-                          ? t('statusActionDeactivate')
-                          : t('statusActionActivate')}
-                      </DropdownMenuItem>
-                    ) : null}
-                    {canChangeForum ? (
-                      <DropdownMenuItem
-                        disabled={isChangingForumStatus}
-                        onSelect={() => void toggleForumPosting()}
-                      >
-                        {participant.is_forum_banned
-                          ? t('forumPostingEnableAction')
-                          : t('forumPostingDisableAction')}
-                      </DropdownMenuItem>
-                    ) : null}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : undefined
-            }
-          />
-        </div>
-        {showRegistrationTab || teamTools ? (
-          <div className="overflow-x-auto border-b">
-            <TabsList
-              variant="line"
-              className="min-w-max justify-start gap-2 p-0 group-data-horizontal/tabs:h-14"
-            >
-              <TabsTrigger
-                value="profile"
-                className="h-full rounded-none px-3 text-base after:bg-primary group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-1 data-[state=active]:text-primary"
-              >
-                {t('sectionProfile')}
-              </TabsTrigger>
-              {showRegistrationTab ? (
-                <TabsTrigger
-                  value="registration"
-                  className="h-full rounded-none px-3 text-base after:bg-primary group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-1 data-[state=active]:text-primary"
-                >
-                  {t('profileDesign.registration')}
-                </TabsTrigger>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-start text-2xl font-semibold">
+                {`${participant.first_name} ${participant.last_name}`}
+              </h1>
+              {joined ? (
+                <Badge variant={participant.is_active ? 'secondary' : 'outline'}>
+                  {participant.is_active ? t('rowActive') : t('rowInactive')}
+                </Badge>
+              ) : (
+                <Badge variant="outline">{t('rowInvited')}</Badge>
+              )}
+              {participant.is_forum_banned ? (
+                <Badge variant="destructive">{t('forumBanned')}</Badge>
               ) : null}
-              {teamTools ? (
-                <TabsTrigger
-                  value="material"
-                  className="h-full rounded-none px-3 text-base after:bg-primary group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-1 data-[state=active]:text-primary"
-                >
-                  {t('profileDesign.material')}
-                </TabsTrigger>
-              ) : null}
-              {teamTools && permissions.has('participants.notes') ? (
-                <TabsTrigger
-                  value="notes"
-                  className="h-full rounded-none px-3 text-base after:bg-primary group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-1 data-[state=active]:text-primary"
-                >
-                  {t('sectionNotes')}
-                </TabsTrigger>
-              ) : null}
-              {teamTools ? (
-                <TabsTrigger
-                  value="activity"
-                  className="h-full rounded-none px-3 text-base after:bg-primary group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-1 data-[state=active]:text-primary"
-                >
-                  {t('sectionActivity')}
-                </TabsTrigger>
-              ) : null}
-            </TabsList>
+              {isTestPlayer ? <Badge variant="muted">{t('testBadge')}</Badge> : null}
+            </div>
+            <p className="text-start text-sm text-muted-foreground">
+              {t('detailJoinedOn', {
+                date: new Date(participant.created_at).toLocaleDateString(locale),
+              })}
+            </p>
           </div>
-        ) : null}
 
-        {statusErrorMessage === undefined ? null : (
-          <p role="alert" className="text-sm text-destructive">
-            {statusErrorMessage}
-          </p>
-        )}
+          <div className="flex flex-wrap items-center gap-3">
+            {statusErrorMessage === undefined ? null : (
+              <p aria-live="polite" className="text-start text-sm text-destructive">
+                {statusErrorMessage}
+              </p>
+            )}
+            {/* A woman who has not joined has nothing to deactivate: cancelling her
+                invitation removes her (RAPP-300). */}
+            {joined && teamTools ? (
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                disabled={isChangingStatus}
+                onClick={() => void toggleStatus()}
+              >
+                {participant.is_active ? t('statusActionDeactivate') : t('statusActionActivate')}
+              </Button>
+            ) : null}
+            {teamTools ? (
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                disabled={isChangingForumStatus}
+                onClick={() => void toggleForumPosting()}
+              >
+                {participant.is_forum_banned
+                  ? t('forumPostingEnableAction')
+                  : t('forumPostingDisableAction')}
+              </Button>
+            ) : null}
+          </div>
+        </div>
         {forumStatusErrorMessage === undefined ? null : (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-start text-sm text-destructive">
             {forumStatusErrorMessage}
           </p>
         )}
+      </header>
 
-        <TabsContent
-          value="profile"
-          forceMount
-          className="flex flex-col gap-6 data-[state=inactive]:hidden"
-        >
-          <ParticipantFitxa
-            participant={participant}
-            catalog={intakeCatalog}
-            customAnswers={customAnswers}
-            answeredQuestions={answeredQuestions}
-            choices={{ states: questionStates, customStates: customQuestionStates }}
-            showChoices={!joined && (teamTools || isTestPlayer) && canReadRegistration}
-            sees={sees}
-            onSave={saveRecord}
-            onSaveChoices={saveQuestionStates}
-            choicesError={questionStatesErrorMessage}
-            editingId={editingId}
-            onEditingChange={setEditingId}
-            onSavePreset={async (name, states) => {
-              await saveIntakePreset(supabase, { id: null, name, states });
-              await router.invalidate();
-            }}
-            onDeletePreset={(preset) => {
-              if (window.confirm(t('questionStatesDeletePreset', { name: preset.name }))) {
-                void deleteIntakePreset(supabase, preset.id).then(() => router.invalidate());
-              }
-            }}
-            onOpenFile={uploadsAvailable(mediaWorkerUrl) ? openAnswerFile : undefined}
-            customForms={customForms}
+      <ParticipantFitxa
+        participant={participant}
+        catalog={intakeCatalog}
+        customAnswers={customAnswers}
+        answeredQuestions={answeredQuestions}
+        choices={{ states: questionStates, customStates: customQuestionStates }}
+        // Set only before she joins (RAPP-301); the design role chooses a test
+        // player's too (RAPP-618). The database needs participants.view_personal.
+        showChoices={!joined && (teamTools || isTestPlayer) && sees('participants.view_personal')}
+        sees={sees}
+        onSave={saveRecord}
+        onSaveChoices={saveQuestionStates}
+        choicesError={questionStatesErrorMessage}
+        onSavePreset={async (name, states) => {
+          await saveIntakePreset(supabase, { id: null, name, states });
+          await router.invalidate();
+        }}
+        onDeletePreset={(preset) => {
+          if (window.confirm(t('questionStatesDeletePreset', { name: preset.name }))) {
+            void deleteIntakePreset(supabase, preset.id).then(() => router.invalidate());
+          }
+        }}
+        onOpenFile={uploadsAvailable(mediaWorkerUrl) ? openAnswerFile : undefined}
+        customForms={customForms}
+      />
+
+      {teamTools && permissions.has('participants.view_personal') ? (
+        <ParticipantAuthorizationPanel
+          participant={participant}
+          authorizations={authorizations}
+          onRecordPaper={async (signedOn) => {
+            await recordPaperAuthorization(supabase, participant.id, signedOn);
+            await router.invalidate();
+          }}
+          seasonAnswers={seasonAnswers}
+          onSetPriorSeasons={async (count) => {
+            await setPriorSeasons(supabase, participant.id, count);
+            await router.invalidate();
+          }}
+        />
+      ) : null}
+
+      {teamTools && permissions.has('participants.view_personal') ? (
+        <ParticipantConsents
+          history={consentHistory}
+          catalogue={intakeCatalog.consents ?? []}
+          canRecord={permissions.has('consents.collect')}
+          onRecord={async (recording) => {
+            await recordParticipantConsent(supabase, { profileId: participant.id, ...recording });
+            await router.invalidate();
+          }}
+        />
+      ) : null}
+
+      {formSignatures.length > 0 && sees('participants.view_personal') ? (
+        <ParticipantSignatures signatures={formSignatures} catalog={intakeCatalog} />
+      ) : null}
+
+      {isTestPlayer && testScenario !== null ? (
+        <TestPlayerScenarioPanel
+          scenario={testScenario}
+          customQuestions={scenarioCustomQuestions(intakeCatalog)}
+          owner={
+            testScenario.orgId === null
+              ? undefined
+              : { orgId: testScenario.orgId, profileId: participant.id }
+          }
+          onChange={async (change) => {
+            await setTestPlayerScenario(supabase, participant.id, change);
+            await router.invalidate();
+          }}
+        />
+      ) : null}
+
+      {isTestPlayer && canDeleteTestPlayer(permissions) ? (
+        <TestPlayerDelete
+          name={`${participant.first_name} ${participant.last_name}`.trim()}
+          onDelete={deleteThisTestPlayer}
+        />
+      ) : null}
+
+      {teamTools ? (
+        <>
+          <ParticipantNotes notes={notes} onAdd={addNote} errorMessage={noteErrorMessage} />
+
+          <ParticipantEquipment
+            deliveries={deliveries}
+            itemTypes={itemTypes}
+            onAdd={addDelivery}
+            errorMessage={deliveryErrorMessage}
           />
 
-          {isTestPlayer && testScenario !== null ? (
-            <TestPlayerScenarioPanel
-              scenario={testScenario}
-              customQuestions={scenarioCustomQuestions(intakeCatalog)}
-              owner={
-                testScenario.orgId === null
-                  ? undefined
-                  : { orgId: testScenario.orgId, profileId: participant.id }
-              }
-              onChange={async (change) => {
-                await setTestPlayerScenario(supabase, participant.id, change);
-                await router.invalidate();
-              }}
-            />
-          ) : null}
-          {isTestPlayer && canDeleteTestPlayer(permissions) ? (
-            <TestPlayerDelete
-              name={`${participant.first_name} ${participant.last_name}`.trim()}
-              onDelete={deleteThisTestPlayer}
-            />
-          ) : null}
-        </TabsContent>
+          <ParticipantAttendanceReport stats={attendanceStats} history={attendanceHistory} />
 
-        {showRegistrationTab ? (
-          <TabsContent
-            value="registration"
-            forceMount
-            className="flex flex-col gap-6 data-[state=inactive]:hidden"
-          >
-            {teamTools && permissions.has('participants.view_personal') ? (
-              <>
-                <ParticipantAuthorizationPanel
-                  participant={participant}
-                  authorizations={authorizations}
-                  onRecordPaper={async (signedOn) => {
-                    await recordPaperAuthorization(supabase, participant.id, signedOn);
-                    await router.invalidate();
-                  }}
-                  seasonAnswers={seasonAnswers}
-                  onSetPriorSeasons={async (count) => {
-                    await setPriorSeasons(supabase, participant.id, count);
-                    await router.invalidate();
-                  }}
-                />
-                <ParticipantConsents
-                  history={consentHistory}
-                  catalogue={intakeCatalog.consents ?? []}
-                  canRecord={permissions.has('consents.collect')}
-                  onRecord={async (recording) => {
-                    await recordParticipantConsent(supabase, {
-                      profileId: participant.id,
-                      ...recording,
-                    });
-                    await router.invalidate();
-                  }}
-                />
-              </>
-            ) : null}
-            {formSignatures.length > 0 ? (
-              <ParticipantSignatures signatures={formSignatures} catalog={intakeCatalog} />
-            ) : null}
-            {teamTools &&
-            (permissions.has('rgpd.erase') || permissions.has('participants.deactivate')) ? (
-              <ParticipantRgpd
-                participant={participant}
-                openDeletionRequestReason={openDeletionRequestReason}
-              />
-            ) : null}
-          </TabsContent>
-        ) : null}
+          <ParticipantActivity entries={activity} />
 
-        {teamTools ? (
-          <>
-            <TabsContent value="material" forceMount className="data-[state=inactive]:hidden">
-              <ParticipantEquipment
-                deliveries={deliveries}
-                itemTypes={itemTypes}
-                onAdd={addDelivery}
-                errorMessage={deliveryErrorMessage}
-              />
-            </TabsContent>
-            {permissions.has('participants.notes') ? (
-              <TabsContent value="notes" forceMount className="data-[state=inactive]:hidden">
-                <ParticipantNotes notes={notes} onAdd={addNote} errorMessage={noteErrorMessage} />
-              </TabsContent>
-            ) : null}
-            <TabsContent
-              value="activity"
-              forceMount
-              className="flex flex-col gap-6 data-[state=inactive]:hidden"
-            >
-              {permissions.has('attendance.reports') ? (
-                <ParticipantAttendanceReport stats={attendanceStats} history={attendanceHistory} />
-              ) : null}
-              <ParticipantActivity entries={activity} />
-            </TabsContent>
-          </>
-        ) : null}
-      </Tabs>
+          {/* Last on the page, deliberately. These are the two gestures nobody
+              should reach by scrolling past something else. */}
+          <ParticipantRgpd
+            participant={participant}
+            openDeletionRequestReason={openDeletionRequestReason}
+          />
+        </>
+      ) : null}
     </Page>
   );
 }

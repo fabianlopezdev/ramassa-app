@@ -21,8 +21,6 @@ import type { AppRole } from './auth';
  * object key and therefore append-only in practice: renaming one orphans
  * everything already stored under it.
  */
-export const PROFILE_BANNER_MAX_BYTES = 5 * 1024 * 1024;
-
 export const UPLOAD_FOLDERS = [
   'profile-photos',
   'announcements',
@@ -35,7 +33,6 @@ export const UPLOAD_FOLDERS = [
   'services',
   'documents',
   'organization-branding',
-  'profile-banners',
   // Photos of goods received and their receipts (RAPP-250).
   'stock',
   // Files she gives in answer to a staff question (RAPP-610): private, served
@@ -59,7 +56,6 @@ export const STAFF_ONLY_UPLOAD_FOLDERS = [
   'services',
   'documents',
   'organization-branding',
-  'profile-banners',
   'stock',
 ] as const satisfies readonly UploadFolder[];
 
@@ -77,7 +73,6 @@ export const TEAM_FOLDER_PERMISSIONS: Readonly<
   services: ['services.edit', 'services.publish', 'services.review'],
   documents: ['settings.documents'],
   'organization-branding': ['settings.branding'],
-  'profile-banners': ['participants.view_personal', 'test_players.manage'],
   stock: ['equipment.receive'],
 };
 
@@ -180,13 +175,6 @@ export const uploadUrlRequestSchema = z
   })
   .superRefine((request, context) => {
     const kind = getUploadKindForContentType(request.contentType);
-    if (request.folder === 'profile-banners' && request.contentLength > PROFILE_BANNER_MAX_BYTES) {
-      context.addIssue({
-        code: 'custom',
-        path: ['contentLength'],
-        message: 'Profile banners must be 5 MB or smaller',
-      });
-    }
     if (request.folder === 'documents' && kind === 'video') {
       context.addIssue({
         code: 'custom',
@@ -205,7 +193,7 @@ export const uploadUrlRequestSchema = z
         message: 'Answer files accept photos and PDF documents only',
       });
     }
-    if (['organization-branding', 'profile-banners'].includes(request.folder) && kind !== 'image') {
+    if (request.folder === 'organization-branding' && kind !== 'image') {
       context.addIssue({
         code: 'custom',
         path: ['contentType'],

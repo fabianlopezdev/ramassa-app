@@ -21,15 +21,12 @@ import {
   type FieldAnswerChanges,
 } from '@/components/participants/field-answer-editor';
 import { ProfileAnswerRow, type RowChoice } from '@/components/participants/profile-answer-row';
-import { Button } from '@/components/ui/button';
 import {
   fieldsEditedWith,
   isNameField,
   missingLevel,
   type FieldAnswers,
 } from '@/lib/participant-fitxa';
-import { HeartPulse, MapPin, Pencil, Phone, Shirt, UserRound, UsersRound } from 'lucide-react';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { IntakeQuestionState } from '@ramassa/shared/intake';
 import {
@@ -45,15 +42,6 @@ import {
 import type { ParticipantUpdate } from '@ramassa/shared/participants';
 import type { PermissionCode } from '@ramassa/shared/permissions';
 import type { LanguageCode } from '@ramassa/shared/schemas';
-
-const PROFILE_SECTION_ICONS: Readonly<Record<string, typeof UserRound>> = {
-  identity: UserRound,
-  contact: Phone,
-  equipment: Shirt,
-  health: HeartPulse,
-  logistics: MapPin,
-  family: UsersRound,
-};
 
 /** What every row of her page reads and writes through. */
 export interface FitxaContext {
@@ -83,50 +71,17 @@ export function ProfileSection({
   readonly fields: readonly ProfileField[];
   readonly context: FitxaContext;
 }) {
-  const { t, i18n } = useTranslation('participants');
-  const [showEditors, setShowEditors] = useState(false);
+  const { i18n } = useTranslation();
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
-  const Icon = PROFILE_SECTION_ICONS[section.key] ?? UserRound;
-  const canEditSection =
-    context.canEdit &&
-    fields.some(
-      (field) =>
-        !field.isArchived && isStaffWritable(field) && missingLevel(field, context.sees) === null,
-    );
-  const isEditingSection = showEditors || fields.some((field) => field.id === context.editingId);
   return (
     <EditorSection
       title={textIn(section.title, language)}
-      leading={<Icon aria-hidden className="size-5 text-primary" />}
-      actions={
-        canEditSection ? (
-          <Button
-            variant={isEditingSection ? 'secondary' : 'outline'}
-            size="icon-sm"
-            aria-label={t('fitxa.editNamed', { field: textIn(section.title, language) })}
-            aria-expanded={isEditingSection}
-            onClick={() => {
-              setShowEditors(!isEditingSection);
-              if (isEditingSection) context.onEditingChange(null);
-            }}
-            data-testid={`fitxa-section-${section.key}-edit`}
-          >
-            <Pencil aria-hidden className="size-3.5" />
-          </Button>
-        ) : undefined
-      }
       isFlush
-      className="[&>header]:mx-5 [&>header]:px-0"
       testId={`fitxa-section-${section.key}`}
     >
-      <ul className="flex flex-col divide-y px-5 py-2">
+      <ul className="flex flex-col divide-y">
         {fields.map((field) => (
-          <FitxaFieldRow
-            key={field.id}
-            field={field}
-            context={context}
-            showEditAction={isEditingSection}
-          />
+          <FitxaFieldRow key={field.id} field={field} context={context} />
         ))}
       </ul>
     </EditorSection>
@@ -136,11 +91,9 @@ export function ProfileSection({
 function FitxaFieldRow({
   field,
   context,
-  showEditAction,
 }: {
   readonly field: ProfileField;
   readonly context: FitxaContext;
-  readonly showEditAction: boolean;
 }) {
   const { t, i18n } = useTranslation(['participants', 'onboarding', 'profile', 'common']);
   const locale = i18n.resolvedLanguage ?? 'ca';
@@ -179,8 +132,6 @@ function FitxaFieldRow({
   return (
     <ProfileAnswerRow
       name={textIn(field.label, language)}
-      showEditAction={showEditAction}
-      inset
       lockedLevel={lockedLevel}
       choice={choice}
       hasChoiceColumn={context.choices !== null}
