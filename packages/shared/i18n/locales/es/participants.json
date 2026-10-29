@@ -1,4 +1,29 @@
 {
+  "profileBanner": {
+    "change": "Cambiar el fondo",
+    "format": "Recomendado: 2400 × 600 px (4:1). JPG, PNG o WebP, máximo 5 MB. La imagen se recorta para adaptarse a la pantalla.",
+    "preview": "Vista previa del fondo",
+    "image": "Imagen",
+    "applyTo": "Aplicar a",
+    "thisPlayer": "Solo esta jugadora",
+    "allPlayers": "Todas las jugadoras",
+    "allWarning": "Sustituirá los fondos de todas las jugadoras, incluidos los personalizados. También será el fondo de las jugadoras nuevas.",
+    "invalid": "Elige una imagen JPG, PNG o WebP válida de hasta 5 MB.",
+    "failed": "No hemos podido guardar el fondo. Inténtalo de nuevo.",
+    "cancel": "Cancelar",
+    "save": "Guardar el fondo",
+    "saveAll": "Aplicar a todas las jugadoras",
+    "saving": "Guardando…"
+  },
+  "profileDesign": {
+    "invited": "Invitada",
+    "edit": "Edita el perfil",
+    "invitedOn": "Invitación creada el {{date}}",
+    "actions": "Opciones del perfil",
+    "registration": "Inscripción",
+    "material": "Material",
+    "presets": "Configuraciones de inscripción"
+  },
   "listActions": "Opciones de participantes",
   "activeFilters": "Filtros activos",
   "removeFilter": "Quitar el filtro {{filter}}",

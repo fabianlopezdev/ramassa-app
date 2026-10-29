@@ -1,4 +1,29 @@
 {
+  "profileBanner": {
+    "change": "Change background",
+    "format": "Recommended: 2400 × 600 px (4:1). JPG, PNG or WebP, up to 5 MB. The image is cropped to fit the screen.",
+    "preview": "Background preview",
+    "image": "Image",
+    "applyTo": "Apply to",
+    "thisPlayer": "This player only",
+    "allPlayers": "All players",
+    "allWarning": "This replaces every player’s background, including custom backgrounds. New players will also use this background.",
+    "invalid": "Choose a valid JPG, PNG or WebP image up to 5 MB.",
+    "failed": "The background could not be saved. Please try again.",
+    "cancel": "Cancel",
+    "save": "Save background",
+    "saveAll": "Apply to all players",
+    "saving": "Saving…"
+  },
+  "profileDesign": {
+    "invited": "Invited",
+    "edit": "Edit profile",
+    "invitedOn": "Invitation created on {{date}}",
+    "actions": "Profile options",
+    "registration": "Registration",
+    "material": "Equipment",
+    "presets": "Registration presets"
+  },
   "listActions": "Participant options",
   "activeFilters": "Active filters",
   "removeFilter": "Remove filter {{filter}}",
