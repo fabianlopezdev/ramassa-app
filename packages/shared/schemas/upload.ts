@@ -205,11 +205,14 @@ export const uploadUrlRequestSchema = z
         message: 'Answer files accept photos and PDF documents only',
       });
     }
-    if (['organization-branding', 'profile-banners'].includes(request.folder) && kind !== 'image') {
+    if (
+      ['organization-branding', 'profile-banners', 'profile-photos'].includes(request.folder) &&
+      kind !== 'image'
+    ) {
       context.addIssue({
         code: 'custom',
         path: ['contentType'],
-        message: 'Organization branding accepts images only',
+        message: 'This folder accepts images only',
       });
     }
     const maxBytes = getMaxBytesForUploadContentType(request.contentType);

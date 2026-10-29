@@ -6625,6 +6625,14 @@ export type Database = {
           total_count: number;
         }[];
       };
+      get_person_cards: {
+        Args: { p_profile_ids: string[] };
+        Returns: { id: string; first_name: string | null; avatar_url: string | null }[];
+      };
+      set_own_profile_photo: {
+        Args: { p_profile_id: string; p_object_key: string | null };
+        Returns: undefined;
+      };
       get_staff_cards: {
         Args: { p_profile_ids: string[] };
         Returns: {

@@ -136,3 +136,16 @@ export async function fetchOwnDeletionRequest(
     ? null
     : parseRow(ownDeletionRequestSchema, data, 'deletion_requests');
 }
+
+/** A photo edit does not resubmit or validate unrelated profile answers. */
+export async function setOwnProfilePhoto(
+  client: Client,
+  profileId: string,
+  objectKey: string | null,
+): Promise<void> {
+  const { error } = await client.rpc('set_own_profile_photo', {
+    p_profile_id: profileId,
+    p_object_key: objectKey,
+  });
+  if (error) throw new AppError('DB-1', { message: error.message });
+}

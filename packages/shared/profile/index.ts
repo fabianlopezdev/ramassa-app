@@ -3,6 +3,7 @@ export {
   fetchOwnProfile,
   requestOwnDeletion,
   updateOwnProfile,
+  setOwnProfilePhoto,
   type OwnDeletionRequest,
   type RequestOwnDeletionParams,
 } from './profile-actions';
@@ -15,3 +16,4 @@ export {
   useUpdateOwnProfile,
   type OwnProfileEdit,
 } from './use-own-profile';
+export { fetchPersonCards, usePersonCards, type PersonCard } from './use-person-cards';

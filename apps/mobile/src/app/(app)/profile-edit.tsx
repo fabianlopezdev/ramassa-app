@@ -26,6 +26,7 @@ import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { CustomQuestionList } from '@/components/onboarding/custom-question-field';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { ProfileFormFields, type ProfileEditInput } from '@/components/profile/profile-form-fields';
+import { ProfilePhotoEditor } from '@/components/profile/profile-photo-editor';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { profileFormResetOptions, profileSaveCallbacks } from '@/lib/profile-save';
 import { useGenericAppFields } from '@/lib/use-generic-app-fields';
@@ -218,6 +219,7 @@ export default function ProfileEditScreen() {
       isContinueBusy={update.isPending}
       onBack={() => router.back()}
     >
+      {profile ? <ProfilePhotoEditor profile={profile} /> : null}
       <ProfileFormFields
         control={control}
         errors={errors}

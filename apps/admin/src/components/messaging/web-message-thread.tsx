@@ -1,6 +1,8 @@
+import { PersonAvatar } from '@/components/participants/person-avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useWebConversation } from '@/lib/messaging';
+import { usePersonCards } from '@/lib/person-cards';
 import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MESSAGE_CONTENT_MAX_LENGTH } from '@ramassa/shared/messaging';
@@ -78,6 +80,8 @@ function WebMessageThread({
   const { t: tErrors } = useTranslation('errors');
   const { peer, messages, state, sendState, loadErrorCode, sendErrorCode, load, send, userId } =
     useWebConversation(conversationId);
+  const senderIds = useMemo(() => messages.map((message) => message.senderId), [messages]);
+  const cards = usePersonCards(senderIds);
   const formatter = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'ca', {
@@ -135,12 +139,24 @@ function WebMessageThread({
               <ol className="flex flex-col gap-3">
                 {messages.map((message) => {
                   const isOwn = message.senderId === userId;
+                  const card = cards.get(message.senderId);
                   return (
                     <li
                       data-testid="message-row"
                       key={message.id}
                       className={`max-w-[var(--ramassa-messaging-message-bubble-max-width)] ${isOwn ? 'self-end' : 'self-start'}`}
                     >
+                      {!isOwn ? (
+                        <div className="mb-1 flex items-center gap-2">
+                          <PersonAvatar
+                            name={card?.firstName ?? peer?.firstName ?? ''}
+                            avatarKey={card?.avatarKey}
+                          />
+                          <span className="text-sm font-medium">
+                            {card?.firstName ?? peer?.firstName}
+                          </span>
+                        </div>
+                      ) : null}
                       <div
                         className={`rounded-2xl px-4 py-2 ${isOwn ? 'rounded-ee-sm bg-primary text-primary-foreground' : 'rounded-es-sm border border-border bg-background'}`}
                       >

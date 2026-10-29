@@ -19,6 +19,7 @@ import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { AttendanceHistorySection } from '@/components/profile/attendance-history-section';
 import { LanguageSwitcher } from '@/components/profile/language-switcher';
 import { MyConsentsSection } from '@/components/profile/my-consents-section';
+import { ProfilePhotoEditor } from '@/components/profile/profile-photo-editor';
 import { ProfileRow, ProfileSection } from '@/components/profile/profile-section';
 import { SeasonAnswerRows } from '@/components/profile/season-answer-rows';
 import { logout } from '@/lib/auth';
@@ -199,6 +200,7 @@ export default function ProfileScreen() {
         </ShakeOnError>
       ) : (
         <>
+          <ProfilePhotoEditor profile={profile} />
           {/* The record assembles section by section instead of arriving as a
               slab (contract rule 14). Mount-only and stagger-capped by the
               primitive, and completely flat under reduce-motion. */}

@@ -5,7 +5,7 @@ import { PERSON_AVATAR_SIZE, PersonAvatar } from '@/components/people/person-ava
 import { continuousCorners } from '@/lib/continuous-corners';
 import { messageListKeyboardDismissMode, staffConversationTitle } from '@/lib/message-thread-state';
 import { useOwnConversation, useStaffConversation } from '@/lib/messaging';
-import { useStaffCards } from '@/lib/staff-cards';
+import { usePersonCards } from '@/lib/person-cards';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
@@ -375,7 +375,7 @@ function MessageThreadView({
     () => messages.filter((message) => message.senderId !== user?.id).map((m) => m.senderId),
     [messages, user?.id],
   );
-  const staffCards = useStaffCards(otherSenderIds);
+  const personCards = usePersonCards(otherSenderIds);
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<TimelineRow>) => {
       if (item.kind === 'day') {
@@ -390,7 +390,7 @@ function MessageThreadView({
         );
       }
       const isOwn = item.message.senderId === user?.id;
-      const card = isOwn ? undefined : staffCards.get(item.message.senderId);
+      const card = isOwn ? undefined : personCards.get(item.message.senderId);
       const senderName = card?.firstName ?? title;
       return (
         <MessageBubble
@@ -418,7 +418,7 @@ function MessageThreadView({
         />
       );
     },
-    [discardMessage, fontClass, retryMessage, staffCards, t, title, user?.id],
+    [discardMessage, fontClass, retryMessage, personCards, t, title, user?.id],
   );
 
   if (isPending && isOnline) {

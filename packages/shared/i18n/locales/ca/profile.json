@@ -43,5 +43,19 @@
   "fieldMediaConsent": "Fotos i històries",
   "saveBlocked": "Falten dades. Revisa els camps marcats a dalt.",
   "consentsTitle": "Les meves autoritzacions",
-  "consentsIntro": "Pots canviar-les quan vulguis. Les obligatòries formen part de l'autorització que vas signar."
+  "consentsIntro": "Pots canviar-les quan vulguis. Les obligatòries formen part de l'autorització que vas signar.",
+  "photo": {
+    "add": "Afegeix una foto",
+    "change": "Canvia la foto",
+    "camera": "Fes una foto",
+    "library": "Tria de la galeria",
+    "remove": "Elimina la foto",
+    "removeTitle": "Vols eliminar la foto?",
+    "removeBody": "Es tornaran a mostrar les teves inicials.",
+    "cancel": "Cancel·la",
+    "saving": "Desant la foto…",
+    "cameraDenied": "Permet l’accés a la càmera des de la configuració del telèfon.",
+    "settings": "Obre la configuració",
+    "failed": "No s’ha pogut desar el canvi. Torna-ho a provar."
+  }
 }

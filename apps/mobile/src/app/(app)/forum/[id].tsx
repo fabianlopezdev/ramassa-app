@@ -11,6 +11,7 @@ import { AuthorLine } from '@/components/people/person-avatar';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { isNetworkStateOnline } from '@/lib/network-status';
+import { usePersonCards } from '@/lib/person-cards';
 import {
   useCreateForumReply,
   useDeleteForumPost,
@@ -19,7 +20,6 @@ import {
   useForumReplies,
   useOwnForumPostingStatus,
 } from '@/lib/player-forum';
-import { useStaffCards } from '@/lib/staff-cards';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
@@ -65,7 +65,7 @@ export default function ForumPostDetailScreen() {
     ],
     [postQuery.data?.author_id, repliesQuery.data],
   );
-  const staffCards = useStaffCards(authorIds);
+  const personCards = usePersonCards(authorIds);
   const createReply = useCreateForumReply(postId);
   const editPost = useEditForumPost(postId);
   const deletePost = useDeleteForumPost(postId);
@@ -175,7 +175,7 @@ export default function ForumPostDetailScreen() {
       <ForumReplyCard
         reply={item}
         authorLabel={t('forum:postBy', { name: item.author_first_name })}
-        authorAvatarKey={staffCards.get(item.author_id)?.avatarKey ?? null}
+        authorAvatarKey={personCards.get(item.author_id)?.avatarKey ?? null}
         tombstone={t('forum:deletedTombstone')}
         languageFontClass={languageFontClass}
         openLinkLabel={openLinkLabel}
@@ -185,7 +185,7 @@ export default function ForumPostDetailScreen() {
         onFlag={item.author_id === user?.id || item.visibility !== 'visible' ? null : flagReply}
       />
     ),
-    [flagReply, isOnline, languageFontClass, openLinkLabel, staffCards, t, user?.id],
+    [flagReply, isOnline, languageFontClass, openLinkLabel, personCards, t, user?.id],
   );
 
   const confirmFlag = useCallback(() => {
@@ -261,7 +261,7 @@ export default function ForumPostDetailScreen() {
               </Text>
               <AuthorLine
                 name={post.author_first_name}
-                avatarKey={staffCards.get(post.author_id)?.avatarKey ?? null}
+                avatarKey={personCards.get(post.author_id)?.avatarKey ?? null}
                 label={t('forum:postBy', { name: post.author_first_name })}
                 languageFontClass={languageFontClass}
               />

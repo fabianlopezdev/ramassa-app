@@ -1,9 +1,11 @@
 import { AuthenticatedMediaImage } from '@/components/content/authenticated-media-image';
 import { Page } from '@/components/layout/page';
+import { PersonAvatar } from '@/components/participants/person-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { safeAsync } from '@/lib/observability';
+import { usePersonCards } from '@/lib/person-cards';
 import { adminClientEnv, supabase } from '@/lib/supabase';
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { useMemo, useState, type FormEvent } from 'react';
@@ -33,6 +35,8 @@ export interface ForumModerationProps {
 
 export function ForumModeration({ queue, categories }: ForumModerationProps) {
   const { t, i18n } = useTranslation('forum');
+  const authorIds = useMemo(() => queue.map((row) => row.author_id), [queue]);
+  const cards = usePersonCards(authorIds);
   const router = useRouter();
   const navigate = useNavigate();
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -143,7 +147,13 @@ export function ForumModeration({ queue, categories }: ForumModerationProps) {
                         <Badge variant="secondary">{categoryLabel}</Badge>
                       )}
                     </div>
-                    <p className="text-sm font-medium">{row.author_first_name}</p>
+                    <div className="flex items-center gap-2">
+                      <PersonAvatar
+                        name={row.author_first_name ?? ''}
+                        avatarKey={cards.get(row.author_id)?.avatarKey}
+                      />
+                      <p className="text-sm font-medium">{row.author_first_name}</p>
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       {formatter.format(new Date(row.first_flagged_at))}
                     </p>

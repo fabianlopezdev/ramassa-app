@@ -43,5 +43,19 @@
   "fieldMediaConsent": "Photos and stories",
   "saveBlocked": "Something is missing. Check the highlighted fields above.",
   "consentsTitle": "My authorizations",
-  "consentsIntro": "You can change these whenever you want. The required ones are part of the authorization you signed."
+  "consentsIntro": "You can change these whenever you want. The required ones are part of the authorization you signed.",
+  "photo": {
+    "add": "Add a photo",
+    "change": "Change photo",
+    "camera": "Take a photo",
+    "library": "Choose from gallery",
+    "remove": "Remove photo",
+    "removeTitle": "Remove your photo?",
+    "removeBody": "Your initials will appear again.",
+    "cancel": "Cancel",
+    "saving": "Saving photo…",
+    "cameraDenied": "Allow camera access in your phone settings.",
+    "settings": "Open settings",
+    "failed": "Your change could not be saved. Please try again."
+  }
 }
