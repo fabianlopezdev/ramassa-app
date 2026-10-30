@@ -29,6 +29,37 @@
     "SENTRY_RELEASE": "",
   },
   "env": {
+    // Hosted staging (RAPP-745): the Fabulous Apps account, which RAPP-83 allows
+    // for development and preview, pointed at the staging Supabase project and
+    // Ramassà's DeepL API Free key. DEEPL_API_KEY is a Worker secret.
+    "staging": {
+      "name": "ramassa-translation-staging",
+      "vars": {
+        "TRANSLATION_PROVIDER": "deepl",
+        "SUPABASE_URL": "https://lzxqzpwetvvmybzbigly.supabase.co",
+        "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_qnTtn4m4TV11gqUDK3u3Pg_kREDYOuB",
+        "ALLOWED_ORIGINS": "https://ramassa-admin-preview.fabian-c63.workers.dev,https://preview.ramassa-player-web.pages.dev,https://ramassa-player-web.pages.dev,ramassa://",
+        "DEEPL_COST_PER_MILLION_CHARACTERS_USD": "0",
+        "SENTRY_RELEASE": "",
+      },
+      "ratelimits": [
+        {
+          "name": "TRANSLATION_RATE_LIMITER",
+          "namespace_id": "1002",
+          "simple": {
+            "limit": 20,
+            "period": 60,
+          },
+        },
+      ],
+      "observability": {
+        "enabled": true,
+        "head_sampling_rate": 1,
+      },
+      "version_metadata": {
+        "binding": "CF_VERSION_METADATA",
+      },
+    },
     "production": {
       "vars": {
         "TRANSLATION_PROVIDER": "deepl",

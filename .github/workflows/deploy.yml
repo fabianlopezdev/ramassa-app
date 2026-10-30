@@ -82,6 +82,8 @@ jobs:
           EXPO_PUBLIC_TEST_SIGN_IN: ${{ vars.EXPO_PUBLIC_TEST_SIGN_IN }}
           # The hosted media worker (RAPP-627): logo, photos and uploads.
           EXPO_PUBLIC_MEDIA_WORKER_URL: ${{ vars.EXPO_PUBLIC_MEDIA_WORKER_URL }}
+          # The hosted translation worker (RAPP-745): DeepL drafts for staff.
+          EXPO_PUBLIC_TRANSLATION_WORKER_URL: ${{ vars.EXPO_PUBLIC_TRANSLATION_WORKER_URL }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
       - name: Deploy admin
@@ -102,6 +104,8 @@ jobs:
           EXPO_PUBLIC_TEST_SIGN_IN: ${{ vars.EXPO_PUBLIC_TEST_SIGN_IN }}
           # The hosted media worker (RAPP-627): logo, photos and uploads.
           EXPO_PUBLIC_MEDIA_WORKER_URL: ${{ vars.EXPO_PUBLIC_MEDIA_WORKER_URL }}
+          # The hosted translation worker (RAPP-745): DeepL drafts for staff.
+          EXPO_PUBLIC_TRANSLATION_WORKER_URL: ${{ vars.EXPO_PUBLIC_TRANSLATION_WORKER_URL }}
 
       - name: Deploy player web
         # main branch = Pages production alias; the preview target deploys to a

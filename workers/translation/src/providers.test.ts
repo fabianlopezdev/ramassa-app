@@ -48,6 +48,23 @@ describe('translation provider contract', () => {
     expect(result.usage.estimatedCostUsd).toBe(0.0004);
   });
 
+  test('DeepL is asked for the billed characters its reply must carry', async () => {
+    let requestBody: Record<string, unknown> = {};
+    const provider = createDeepLTranslationProvider({
+      apiKey: 'deepl-key:fx',
+      costPerMillionCharactersUsd: 0,
+      fetchImplementation: async (_input, init) => {
+        requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+        return Response.json({
+          translations: [{ detected_source_language: 'CA', text: 'Hola', billed_characters: 4 }],
+        });
+      },
+    });
+
+    await provider.translate({ text: 'Hola', from: 'ca', to: ['es'] });
+    expect(requestBody.show_billed_characters).toBe(true);
+  });
+
   test('the optional hybrid routes only configured fallback languages to Claude', async () => {
     const deepLTargets: string[][] = [];
     const claudeTargets: string[][] = [];
