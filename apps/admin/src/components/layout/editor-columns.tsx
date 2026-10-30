@@ -56,22 +56,26 @@ export function EditorColumns({
         <EditingLanguageContext.Provider value={language}>{form}</EditingLanguageContext.Provider>
       </div>
       <aside
-        className="flex flex-col items-center gap-6 lg:sticky lg:top-6"
+        className="flex flex-col items-center gap-6 lg:sticky lg:top-20 lg:h-[calc(100dvh-6rem)]"
         aria-label={previewLabel}
       >
-        <LanguageTabs
-          value={previewLanguage}
-          onChange={onPreviewLanguageChange}
-          label={previewLanguageLabel}
-          testId={previewLanguageTestId}
-        />
-        {previewNote === undefined ? null : (
-          <p className="max-w-[20rem] text-center text-xs leading-5 text-muted-foreground">
-            {previewNote}
-          </p>
-        )}
-        {preview}
-        {previewFooter}
+        <div className="flex shrink-0 flex-col items-center gap-4">
+          <LanguageTabs
+            value={previewLanguage}
+            onChange={onPreviewLanguageChange}
+            label={previewLanguageLabel}
+            testId={previewLanguageTestId}
+          />
+          {previewNote === undefined ? null : (
+            <p className="max-w-[20rem] text-center text-xs leading-5 text-muted-foreground">
+              {previewNote}
+            </p>
+          )}
+        </div>
+        <div className="w-full lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:[container-type:size] lg:[--editor-phone-width:min(20rem,calc((100cqh_-_1.25rem)*9/19_+_1.25rem))]">
+          {preview}
+        </div>
+        {previewFooter == null ? null : <div className="w-full shrink-0">{previewFooter}</div>}
       </aside>
     </div>
   );
