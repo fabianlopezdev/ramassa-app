@@ -568,6 +568,25 @@ export function StaffScreenEditor({
     !isOptional(field) && shownIn(field, shownLanguage).trim() === '';
   const edit = (field: TeamScreenField, value: string) =>
     setTyped({ ...typed, [field]: { ...typed[field], [language]: value } });
+  // What is saved, read the same way (RAPP-751): Desa only for a real change.
+  const savedIn = (field: TeamScreenField, shownLanguage: LanguageCode): string =>
+    staffTextIn(saved[field], shownLanguage, isOptional(field)) ??
+    (shownLanguage === 'ca' ? '' : savedIn(field, 'ca'));
+  const TEAM_FIELDS = ['title', 'intro'] as const;
+  const isChanged =
+    isHidden !== hide.isHidden ||
+    TEAM_FIELDS.some((field) =>
+      SUPPORTED_LANGUAGES.some(
+        (each) => shownIn(field, each).trim() !== savedIn(field, each).trim(),
+      ),
+    );
+  /** The fields whose Catalan changed: only those are translated (RAPP-751). */
+  const changedCatalan = () =>
+    TEAM_FIELDS.filter(
+      (field) =>
+        shownIn(field, 'ca').trim() !== '' &&
+        shownIn(field, 'ca').trim() !== savedIn(field, 'ca').trim(),
+    );
 
   /** What is saved: a language still showing the Catalan keeps following it. */
   const toSave = (field: TeamScreenField): BuilderText | undefined =>
@@ -625,10 +644,10 @@ export function StaffScreenEditor({
         language={language}
         onLanguageChange={setLanguage}
         translatable={{
-          texts: () => [shownIn('title', 'ca'), shownIn('intro', 'ca')],
+          texts: () => changedCatalan().map((field) => shownIn(field, 'ca')),
           apply: (target, drafts) => {
             const next = { ...typed };
-            for (const field of ['title', 'intro'] as const) {
+            for (const field of changedCatalan()) {
               const draft = drafts.get(shownIn(field, 'ca').trim());
               if (draft !== undefined) next[field] = { ...typed[field], [target]: draft };
             }
@@ -658,7 +677,7 @@ export function StaffScreenEditor({
               footer={
                 <Button
                   type="button"
-                  disabled={isSaving}
+                  disabled={isSaving || !isChanged}
                   onClick={() => void saveScreen()}
                   data-testid="screen-save"
                 >
@@ -1020,10 +1039,19 @@ export function WordingSection({
   const hideable = isQuestionScreen(screen) && hideLock === null;
   const bundled = (field: ScreenTextField, shownLanguage: LanguageCode) =>
     bundledScreenText(screen, field, shownLanguage, t);
-  const shownIn = (field: ScreenTextField, shownLanguage: LanguageCode): string =>
-    typed[field]?.[shownLanguage] ??
+  // What is saved (or else the app's own text), read the same way (RAPP-751).
+  const savedIn = (field: ScreenTextField, shownLanguage: LanguageCode): string =>
     staffTextIn(savedTexts[field], shownLanguage, isOptionalScreenTextField(field)) ??
     bundled(field, shownLanguage);
+  const shownIn = (field: ScreenTextField, shownLanguage: LanguageCode): string =>
+    typed[field]?.[shownLanguage] ?? savedIn(field, shownLanguage);
+  const isChanged =
+    (hideable && isHidden !== (saved?.isHidden ?? false)) ||
+    fields.some((field) =>
+      SUPPORTED_LANGUAGES.some(
+        (each) => shownIn(field, each).trim() !== savedIn(field, each).trim(),
+      ),
+    );
   const isEmptyRequired = (field: ScreenTextField, shownLanguage: LanguageCode) =>
     !isOptionalScreenTextField(field) && shownIn(field, shownLanguage).trim() === '';
 
@@ -1039,17 +1067,17 @@ export function WordingSection({
     );
   };
   const edit = (field: ScreenTextField, value: string) => write([[field, language, value]]);
-  // The app's own Catalan has its own translations: only staff's wording is translated.
-  const staffWording = () =>
+  // Only the wording whose Catalan changed is translated (RAPP-751).
+  const changedWording = () =>
     fields.flatMap((field) => {
-      const text = shownIn(field, 'ca');
-      return text.trim() === '' || text === bundled(field, 'ca') ? [] : [[field, text] as const];
+      const text = shownIn(field, 'ca').trim();
+      return text === '' || text === savedIn(field, 'ca').trim() ? [] : [[field, text] as const];
     });
   useTranslatableTexts({
-    texts: () => staffWording().map(([, text]) => text),
+    texts: () => changedWording().map(([, text]) => text),
     apply: (target, drafts) =>
       write(
-        staffWording().flatMap(([field, text]) => {
+        changedWording().flatMap(([field, text]) => {
           const draft = drafts.get(text.trim());
           return draft === undefined ? [] : [[field, target, draft] as const];
         }),
@@ -1101,7 +1129,7 @@ export function WordingSection({
       footer={
         <Button
           type="button"
-          disabled={isSaving}
+          disabled={isSaving || !isChanged}
           onClick={() => void store()}
           data-testid={`wording-save-${screen}`}
         >

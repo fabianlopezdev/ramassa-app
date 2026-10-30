@@ -8,6 +8,7 @@
  * "Add a signature" sits next to "Add a field" and adds a block at the end.
  */
 
+import { useChangedForm } from '@/components/fields/changed-form';
 import { ErrorLine, useAction } from '@/components/fields/field-form';
 import { LanguageFields, textFromForm } from '@/components/fields/language-fields';
 import { PlacementRow } from '@/components/fields/placement-row';
@@ -48,6 +49,7 @@ export function SignatureBlockRow({
   const actions = useProfileLayoutActions();
   const action = useAction();
   const [isConfirming, setIsConfirming] = useState(false);
+  const changed = useChangedForm();
   const name = formBlockText(block, language).text;
   const close = () => {
     onTextChange?.(null);
@@ -76,11 +78,13 @@ export function SignatureBlockRow({
         testId={`block-row-${block.id}`}
       >
         <form
+          ref={changed.formRef}
           className="flex max-w-xl flex-col gap-3"
           data-testid={`block-row-${block.id}-form`}
-          onInput={(event) =>
-            onTextChange?.(textFromForm(new FormData(event.currentTarget), 'block-text'))
-          }
+          onInput={(event) => {
+            changed.track(event.currentTarget);
+            onTextChange?.(textFromForm(new FormData(event.currentTarget), 'block-text'));
+          }}
           onSubmit={(event) => {
             event.preventDefault();
             const body = textFromForm(new FormData(event.currentTarget), 'block-text');
@@ -116,7 +120,7 @@ export function SignatureBlockRow({
             </Button>
             <Button
               type="submit"
-              disabled={action.isBusy}
+              disabled={action.isBusy || !changed.isChanged}
               data-testid={`block-row-${block.id}-save`}
             >
               {t('placement.saveWording')}

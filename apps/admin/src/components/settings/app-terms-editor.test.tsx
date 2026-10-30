@@ -97,12 +97,19 @@ test('in Arabic the fields and her phone read right to left, the phone in Catala
 
 test('saving sends the draft; a draft without Catalan is not sent', async () => {
   const { view, onSaveDraft } = renderEditor([version()]);
+  // Nothing changed: nothing to save (RAPP-751).
+  expect((view.getByTestId('app-terms-save') as HTMLButtonElement).disabled).toBe(true);
+  fireEvent.change(input(view, 'app-terms-body'), { target: { value: 'Text nou dels termes.' } });
   fireEvent.click(view.getByTestId('app-terms-save'));
   await waitFor(() => expect(onSaveDraft).toHaveBeenCalledTimes(1));
-  expect(onSaveDraft.mock.calls[0]?.[0].body).toEqual({ ca: 'Text dels termes.' });
+  expect(onSaveDraft.mock.calls[0]?.[0].body).toEqual({ ca: 'Text nou dels termes.' });
 
   view.unmount();
   const empty = renderEditor([]);
+  chooseLanguage(empty.view, 'Español');
+  fireEvent.change(input(empty.view, 'app-terms-body'), {
+    target: { value: 'Solo en castellano.' },
+  });
   fireEvent.click(empty.view.getByTestId('app-terms-save'));
   expect(empty.view.getByRole('alert').textContent).toBe('appTerms.invalid');
   expect(empty.onSaveDraft).not.toHaveBeenCalled();

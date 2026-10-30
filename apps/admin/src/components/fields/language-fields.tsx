@@ -57,10 +57,19 @@ export function LanguageFields({
     boxes.current?.querySelector<HTMLInputElement | HTMLTextAreaElement>(
       `[name="${name}.${language}"]`,
     ) ?? null;
+  // Only a Catalan that changed against the saved text is translated (RAPP-751).
+  const changedCatalan = (): string | null => {
+    const now = boxIn('ca')?.value.trim() ?? '';
+    return now !== '' && now !== (value?.ca ?? '').trim() ? now : null;
+  };
   useTranslatableTexts({
-    texts: () => [boxIn('ca')?.value ?? ''],
+    texts: () => {
+      const text = changedCatalan();
+      return text === null ? [] : [text];
+    },
     apply: (target, drafts) => {
-      const draft = drafts.get(boxIn('ca')?.value.trim() ?? '');
+      const text = changedCatalan();
+      const draft = text === null ? undefined : drafts.get(text);
       const box = boxIn(target);
       if (draft !== undefined && box !== null) typeInto(box, draft);
     },

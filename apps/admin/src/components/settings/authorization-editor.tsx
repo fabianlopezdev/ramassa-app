@@ -47,7 +47,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { catalanTextsIn, withCatalanDrafts } from '@/lib/catalan-drafts';
+import { changedCatalanTexts, isSameContent, withCatalanDrafts } from '@/lib/catalan-drafts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -187,16 +187,19 @@ export function AuthorizationEditor({
   const target = targets.find((season) => season.id === chosenSeasonId) ?? targets[0] ?? null;
   const [language, setLanguage] = useState<LanguageCode>('ca');
   const [previewLanguage, setPreviewLanguage] = useState<LanguageCode>('ca');
-  const [typedContent, setContent] = useState<AuthorizationContent>(
+  // What is saved, to compare with what is typed (RAPP-751).
+  const [savedContent, setSavedContent] = useState<AuthorizationContent>(
     draft?.content ?? current?.content ?? EMPTY_CONTENT,
   );
+  const [typedContent, setContent] = useState<AuthorizationContent>(savedContent);
   // Its consents as the consents screen holds them now (RAPP-699): the phone
   // shows them and the draft takes them.
   const content: AuthorizationContent = {
     ...typedContent,
     consents: authorizationConsentsFromCatalog(catalog),
   };
-  const [isDirty, setIsDirty] = useState(false);
+  // A change is a text, or the consents as the consents screen now places them.
+  const isDirty = !isSameContent(content, savedContent);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>('idle');
   // Anyone who signed the target season's versions makes Desa ask (RAPP-696).
@@ -208,9 +211,11 @@ export function AuthorizationEditor({
   const direction = getLanguageDirection(language);
   const isBusy = status === 'saving' || status === 'publishing';
 
+  // Its consents come from the consents screen, which translates them there.
+  const ownTexts = (each: AuthorizationContent) =>
+    Object.fromEntries(Object.entries(each).filter(([key]) => key !== 'consents'));
   const edit = (next: AuthorizationContent) => {
     setContent(next);
-    setIsDirty(true);
     setStatus('idle');
   };
   const inLanguage = (text: AuthorizationText | undefined) => text?.[language] ?? '';
@@ -241,7 +246,7 @@ export function AuthorizationEditor({
     try {
       await action();
       setStatus(done);
-      setIsDirty(false);
+      setSavedContent(typedContent);
     } catch {
       setStatus('failed');
     }
@@ -314,12 +319,10 @@ export function AuthorizationEditor({
       {saveKind.dialog}
       <EditorColumns
         translatable={{
-          // Its consents come from the consents screen, which translates them there.
-          texts: () =>
-            catalanTextsIn(Object.entries(typedContent).filter(([key]) => key !== 'consents')),
+          texts: () => changedCatalanTexts(ownTexts(typedContent), ownTexts(savedContent)),
           apply: (target, drafts) =>
             edit({
-              ...withCatalanDrafts(typedContent, target, drafts),
+              ...withCatalanDrafts(typedContent, ownTexts(savedContent), target, drafts),
               consents: typedContent.consents,
             }),
         }}
@@ -612,7 +615,7 @@ export function AuthorizationEditor({
                 <Button
                   type="button"
                   variant={canPublish ? 'outline' : 'default'}
-                  disabled={isBusy}
+                  disabled={isBusy || !isDirty}
                   onClick={() => void saveDraft()}
                   data-testid="authorization-save"
                 >

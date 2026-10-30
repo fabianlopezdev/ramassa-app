@@ -20,7 +20,7 @@ import { SteppedPhone } from '@/components/onboarding/phone-preview';
 import { useSaveKind } from '@/components/onboarding/save-kind-dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { catalanTextsIn, withCatalanDrafts } from '@/lib/catalan-drafts';
+import { changedCatalanTexts, isSameContent, withCatalanDrafts } from '@/lib/catalan-drafts';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SaveKind } from '@ramassa/shared/authorization';
@@ -90,10 +90,12 @@ export function AppTermsEditor({
   const current = published[0] ?? null;
   const [language, setLanguage] = useState<LanguageCode>('ca');
   const [previewLanguage, setPreviewLanguage] = useState<LanguageCode>('ca');
-  const [content, setContent] = useState<AppTermsContent>(
+  // What is saved, to compare with what is typed (RAPP-751).
+  const [savedContent, setSavedContent] = useState<AppTermsContent>(
     draft?.content ?? current?.content ?? EMPTY_CONTENT,
   );
-  const [isDirty, setIsDirty] = useState(false);
+  const [content, setContent] = useState<AppTermsContent>(savedContent);
+  const isDirty = !isSameContent(content, savedContent);
   const [status, setStatus] = useState<Status>('idle');
   // Anyone who accepted makes Desa ask (RAPP-696).
   const saveKind = useSaveKind({
@@ -102,7 +104,6 @@ export function AppTermsEditor({
 
   const edit = (next: AppTermsContent) => {
     setContent(next);
-    setIsDirty(true);
     setStatus('idle');
   };
   const inLanguage = (text: AppTermsText) => text[language] ?? '';
@@ -116,7 +117,7 @@ export function AppTermsEditor({
     try {
       await action();
       setStatus(done);
-      setIsDirty(false);
+      setSavedContent(content);
     } catch {
       setStatus('failed');
     }
@@ -165,8 +166,8 @@ export function AppTermsEditor({
       {saveKind.dialog}
       <EditorColumns
         translatable={{
-          texts: () => catalanTextsIn(content),
-          apply: (target, drafts) => edit(withCatalanDrafts(content, target, drafts)),
+          texts: () => changedCatalanTexts(content, savedContent),
+          apply: (target, drafts) => edit(withCatalanDrafts(content, savedContent, target, drafts)),
         }}
         language={language}
         onLanguageChange={setLanguage}
@@ -314,7 +315,7 @@ export function AppTermsEditor({
                 <Button
                   type="button"
                   variant={canPublish ? 'outline' : 'default'}
-                  disabled={isBusy}
+                  disabled={isBusy || !isDirty}
                   onClick={() => void saveDraft()}
                   data-testid="app-terms-save"
                 >

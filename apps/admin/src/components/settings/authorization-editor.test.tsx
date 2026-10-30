@@ -201,6 +201,9 @@ test('with no consent placed, the draft is refused', () => {
 test('a draft saved from the Health screen carries no questions: its fields are placements (RAPP-698)', async () => {
   const { view, onSaveDraft } = renderEditor([version()], { step: 'health' });
   expect(view.getByTestId('screen-questions')).toBeTruthy();
+  fireEvent.change(field(view, 'authorization-text-health_title'), {
+    target: { value: 'La teva salut' },
+  });
   fireEvent.click(view.getByTestId('authorization-save'));
   await waitFor(() => expect(onSaveDraft).toHaveBeenCalledTimes(1));
   const saved = onSaveDraft.mock.calls[0]![0];

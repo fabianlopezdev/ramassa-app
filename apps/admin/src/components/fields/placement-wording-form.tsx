@@ -8,6 +8,7 @@
  * reports each change as typed, for a phone drawn beside it.
  */
 
+import { useChangedForm } from '@/components/fields/changed-form';
 import { ErrorLine, useAction } from '@/components/fields/field-form';
 import { LanguageFields, textFromForm } from '@/components/fields/language-fields';
 import { Button } from '@/components/ui/button';
@@ -56,11 +57,16 @@ export function PlacementWordingForm({
 }) {
   const { t } = useTranslation('settings');
   const action = useAction();
+  const changed = useChangedForm();
   return (
     <form
+      ref={changed.formRef}
       className="flex max-w-xl flex-col gap-3"
       data-testid={testId}
-      onInput={(event) => onChange?.(wordingFrom(event.currentTarget))}
+      onInput={(event) => {
+        changed.track(event.currentTarget);
+        onChange?.(wordingFrom(event.currentTarget));
+      }}
       onSubmit={(event) => {
         event.preventDefault();
         const draft = wordingFrom(event.currentTarget);
@@ -92,7 +98,11 @@ export function PlacementWordingForm({
         <Button type="button" variant="outline" onClick={onCancel}>
           {t('questions.cancel')}
         </Button>
-        <Button type="submit" disabled={action.isBusy} data-testid={`${testId}-save`}>
+        <Button
+          type="submit"
+          disabled={action.isBusy || !changed.isChanged}
+          data-testid={`${testId}-save`}
+        >
           {t('placement.saveWording')}
         </Button>
       </div>

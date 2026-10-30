@@ -11,6 +11,7 @@
  * saved empty; a cleared help shows nothing.
  */
 
+import { useChangedForm } from '@/components/fields/changed-form';
 import { ErrorLine, useAction } from '@/components/fields/field-form';
 import { LanguageFields } from '@/components/fields/language-fields';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,7 @@ export function BuiltinForm({
   const { t } = useTranslation(['settings', 'onboarding']);
   const action = useAction();
   const [emptyLabel, setEmptyLabel] = useState<string | null>(null);
+  const changed = useChangedForm();
   const lock = builtinHideLock(info.question, required);
   /** The app's own label in one language. Its help has no text of its own. */
   const appLabel = (language: LanguageCode) =>
@@ -96,10 +98,12 @@ export function BuiltinForm({
     <form
       className="flex flex-col gap-3 rounded-xl border bg-card p-4"
       data-testid="builtin-form"
+      ref={changed.formRef}
       onSubmit={(event) => void submit(event)}
-      onInput={(event) =>
-        onLabelChange?.(typedText(new FormData(event.currentTarget), 'builtin-label'))
-      }
+      onInput={(event) => {
+        changed.track(event.currentTarget);
+        onLabelChange?.(typedText(new FormData(event.currentTarget), 'builtin-label'));
+      }}
     >
       <h3 className="text-start font-semibold">{info.label}</h3>
       <LanguageFields
@@ -132,7 +136,7 @@ export function BuiltinForm({
       )}
       <ErrorLine message={emptyLabel ?? action.error} />
       <div className="flex gap-2">
-        <Button type="submit" disabled={action.isBusy}>
+        <Button type="submit" disabled={action.isBusy || !changed.isChanged}>
           {t('questions.saveBuiltin')}
         </Button>
         <Button type="button" variant="ghost" onClick={onCancel}>
