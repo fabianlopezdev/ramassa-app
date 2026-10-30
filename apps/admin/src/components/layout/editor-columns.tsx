@@ -2,10 +2,18 @@
  * An editor and its preview side by side (RAPP-641, RAPP-652): the form on
  * the start side, written in one language at a time, and the preview kept in
  * view on the end side while the form scrolls. The preview follows the
- * editing language when it changes; its own switch stays free.
+ * editing language when it changes; its own switch stays free. Next to the
+ * editing language, a button translates the screen from Catalan (RAPP-750).
  */
 
 import { EditingLanguageContext } from '@/components/fields/language-fields';
+import {
+  TranslatableRegisterProvider,
+  TranslatableSource,
+  TranslateFromCatalanButton,
+  useTranslatableRegister,
+  type TranslatableTexts,
+} from '@/components/layout/translate-from-catalan';
 import { LanguageTabs } from '@/components/onboarding/language-tabs';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,6 +31,7 @@ export function EditorColumns({
   preview,
   previewFooter,
   previewLanguageTestId = 'phone-language',
+  translatable,
 }: {
   readonly language: LanguageCode;
   readonly onLanguageChange: (language: LanguageCode) => void;
@@ -38,22 +47,31 @@ export function EditorColumns({
   /** Under the preview, such as the button that adds a dependent screen (RAPP-718). */
   readonly previewFooter?: ReactNode;
   readonly previewLanguageTestId?: string;
+  /** The texts the editor itself holds; its sections offer their own. */
+  readonly translatable?: TranslatableTexts;
 }) {
   const { t } = useTranslation('settings');
+  const register = useTranslatableRegister();
   return (
     <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,56rem)_22rem]">
       <div className="flex min-w-0 flex-col gap-6">
-        <LanguageTabs
-          value={language}
-          onChange={(next) => {
-            onLanguageChange(next);
-            // The preview follows, so staff see what they type.
-            onPreviewLanguageChange(next);
-          }}
-          label={t('onboardingBoard.editingLanguage')}
-          testId="editor-language"
-        />
-        <EditingLanguageContext.Provider value={language}>{form}</EditingLanguageContext.Provider>
+        <div className="flex flex-wrap items-center gap-3">
+          <LanguageTabs
+            value={language}
+            onChange={(next) => {
+              onLanguageChange(next);
+              // The preview follows, so staff see what they type.
+              onPreviewLanguageChange(next);
+            }}
+            label={t('onboardingBoard.editingLanguage')}
+            testId="editor-language"
+          />
+          <TranslateFromCatalanButton target={language} run={register.run} />
+        </div>
+        <TranslatableRegisterProvider register={register.register}>
+          {translatable === undefined ? null : <TranslatableSource source={translatable} />}
+          <EditingLanguageContext.Provider value={language}>{form}</EditingLanguageContext.Provider>
+        </TranslatableRegisterProvider>
       </div>
       <aside
         className="flex flex-col items-center gap-6 lg:sticky lg:top-20 lg:h-[calc(100dvh-6rem)]"

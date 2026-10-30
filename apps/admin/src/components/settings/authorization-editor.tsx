@@ -47,6 +47,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { catalanTextsIn, withCatalanDrafts } from '@/lib/catalan-drafts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -312,6 +313,16 @@ export function AuthorizationEditor({
     <div className="flex flex-col gap-6" data-testid="authorization-editor">
       {saveKind.dialog}
       <EditorColumns
+        translatable={{
+          // Its consents come from the consents screen, which translates them there.
+          texts: () =>
+            catalanTextsIn(Object.entries(typedContent).filter(([key]) => key !== 'consents')),
+          apply: (target, drafts) =>
+            edit({
+              ...withCatalanDrafts(typedContent, target, drafts),
+              consents: typedContent.consents,
+            }),
+        }}
         language={language}
         onLanguageChange={setLanguage}
         previewLanguage={previewLanguage}

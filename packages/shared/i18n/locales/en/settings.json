@@ -953,5 +953,14 @@
     "recipients": "Chosen players",
     "recipientCount": "{{count}} players",
     "recipientsSaved": "Draft saved: {{count}} players."
+  },
+  "translateFromCatalan": {
+    "working": "Translating…",
+    "to": {
+      "es": "Translate into Spanish",
+      "en": "Translate into English",
+      "ar": "Translate into Arabic",
+      "fa": "Translate into Persian"
+    }
   }
 }

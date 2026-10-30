@@ -953,5 +953,14 @@
     "recipients": "Jugadores escollides",
     "recipientCount": "{{count}} jugadores",
     "recipientsSaved": "Esborrany desat: {{count}} jugadores."
+  },
+  "translateFromCatalan": {
+    "working": "S'està traduint…",
+    "to": {
+      "es": "Tradueix al castellà",
+      "en": "Tradueix a l'anglès",
+      "ar": "Tradueix a l'àrab",
+      "fa": "Tradueix al persa"
+    }
   }
 }

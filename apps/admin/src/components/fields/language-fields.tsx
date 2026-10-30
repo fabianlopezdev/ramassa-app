@@ -5,10 +5,12 @@
  * Inside an `EditingLanguageContext` a form shows one box per text, in the
  * language being edited; the other languages stay in the form, hidden, so
  * FormData still reads all five. Without it, each text shows its five boxes.
- * Arabic and Farsi write right to left.
+ * Arabic and Farsi write right to left. Each offers its Catalan to the editor's
+ * translate button (RAPP-750).
  */
 
-import { createContext, useContext } from 'react';
+import { typeInto, useTranslatableTexts } from '@/components/layout/translate-from-catalan';
+import { createContext, useContext, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
 import type { BuilderText } from '@ramassa/shared/intake-builder';
@@ -47,10 +49,26 @@ export function LanguageFields({
 }) {
   const { t } = useTranslation('settings');
   const editing = useContext(EditingLanguageContext);
+  const boxes = useRef<HTMLElement | null>(null);
+  const holdBoxes = (node: HTMLElement | null) => {
+    boxes.current = node;
+  };
+  const boxIn = (language: LanguageCode) =>
+    boxes.current?.querySelector<HTMLInputElement | HTMLTextAreaElement>(
+      `[name="${name}.${language}"]`,
+    ) ?? null;
+  useTranslatableTexts({
+    texts: () => [boxIn('ca')?.value ?? ''],
+    apply: (target, drafts) => {
+      const draft = drafts.get(boxIn('ca')?.value.trim() ?? '');
+      const box = boxIn(target);
+      if (draft !== undefined && box !== null) typeInto(box, draft);
+    },
+  });
   const inputClass = isLong ? `${TEXT_INPUT_CLASS} h-auto min-h-16 py-2` : TEXT_INPUT_CLASS;
   if (editing !== null) {
     return (
-      <div className="flex flex-col gap-1.5">
+      <div ref={holdBoxes} className="flex flex-col gap-1.5">
         <label htmlFor={`${name}.${editing}`} className="text-start text-sm font-medium">
           {legend}
           {editing === 'ca' && isCatalanRequired ? (
@@ -79,7 +97,7 @@ export function LanguageFields({
     );
   }
   return (
-    <fieldset className="flex flex-col gap-2 rounded-lg border p-3">
+    <fieldset ref={holdBoxes} className="flex flex-col gap-2 rounded-lg border p-3">
       <legend className="px-1 text-start text-sm font-medium">{legend}</legend>
       {SUPPORTED_LANGUAGES.map((language) => {
         const id = `${name}.${language}`;

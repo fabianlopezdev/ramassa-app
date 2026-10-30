@@ -20,6 +20,7 @@ import { SteppedPhone } from '@/components/onboarding/phone-preview';
 import { useSaveKind } from '@/components/onboarding/save-kind-dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { catalanTextsIn, withCatalanDrafts } from '@/lib/catalan-drafts';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SaveKind } from '@ramassa/shared/authorization';
@@ -163,6 +164,10 @@ export function AppTermsEditor({
     <div className="flex flex-col gap-6" data-testid="app-terms-editor">
       {saveKind.dialog}
       <EditorColumns
+        translatable={{
+          texts: () => catalanTextsIn(content),
+          apply: (target, drafts) => edit(withCatalanDrafts(content, target, drafts)),
+        }}
         language={language}
         onLanguageChange={setLanguage}
         previewLanguage={previewLanguage}

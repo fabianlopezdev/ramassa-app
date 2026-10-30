@@ -22,6 +22,7 @@
 import { EditorColumns } from '@/components/layout/editor-columns';
 import { EditorSection } from '@/components/layout/editor-section';
 import { Page, PageHeader } from '@/components/layout/page';
+import { useTranslatableTexts } from '@/components/layout/translate-from-catalan';
 import { useReload } from '@/components/settings/onboarding-design-sections';
 import { Button } from '@/components/ui/button';
 import {
@@ -623,6 +624,17 @@ export function StaffScreenEditor({
         previewFooter={previewFooter}
         language={language}
         onLanguageChange={setLanguage}
+        translatable={{
+          texts: () => [shownIn('title', 'ca'), shownIn('intro', 'ca')],
+          apply: (target, drafts) => {
+            const next = { ...typed };
+            for (const field of ['title', 'intro'] as const) {
+              const draft = drafts.get(shownIn(field, 'ca').trim());
+              if (draft !== undefined) next[field] = { ...typed[field], [target]: draft };
+            }
+            setTyped(next);
+          },
+        }}
         previewLanguage={previewLanguage}
         onPreviewLanguageChange={setPreviewLanguage}
         previewLabel={t('onboardingBoard.phone')}
@@ -1015,8 +1027,9 @@ export function WordingSection({
   const isEmptyRequired = (field: ScreenTextField, shownLanguage: LanguageCode) =>
     !isOptionalScreenTextField(field) && shownIn(field, shownLanguage).trim() === '';
 
-  const edit = (field: ScreenTextField, value: string) => {
-    const next = { ...typed, [field]: { ...typed[field], [language]: value } };
+  const write = (changes: readonly (readonly [ScreenTextField, LanguageCode, string])[]) => {
+    const next = { ...typed };
+    for (const [field, each, value] of changes) next[field] = { ...next[field], [each]: value };
     setTyped(next);
     // Her phone: the saved wording with what is typed over it.
     onChange(
@@ -1025,6 +1038,23 @@ export function WordingSection({
       ) as ScreenTexts,
     );
   };
+  const edit = (field: ScreenTextField, value: string) => write([[field, language, value]]);
+  // The app's own Catalan has its own translations: only staff's wording is translated.
+  const staffWording = () =>
+    fields.flatMap((field) => {
+      const text = shownIn(field, 'ca');
+      return text.trim() === '' || text === bundled(field, 'ca') ? [] : [[field, text] as const];
+    });
+  useTranslatableTexts({
+    texts: () => staffWording().map(([, text]) => text),
+    apply: (target, drafts) =>
+      write(
+        staffWording().flatMap(([field, text]) => {
+          const draft = drafts.get(text.trim());
+          return draft === undefined ? [] : [[field, target, draft] as const];
+        }),
+      ),
+  });
 
   // Onboarding is only for players who have not joined yet (RAPP-705): a save
   // changes what they will see, so it saves at once.

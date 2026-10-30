@@ -953,5 +953,14 @@
     "recipients": "Jugadoras elegidas",
     "recipientCount": "{{count}} jugadoras",
     "recipientsSaved": "Borrador guardado: {{count}} jugadoras."
+  },
+  "translateFromCatalan": {
+    "working": "Traduciendo…",
+    "to": {
+      "es": "Traducir al castellano",
+      "en": "Traducir al inglés",
+      "ar": "Traducir al árabe",
+      "fa": "Traducir al persa"
+    }
   }
 }
