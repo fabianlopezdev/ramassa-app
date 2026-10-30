@@ -92,6 +92,8 @@ export function createDeepLTranslationProvider(options: {
                 text: [request.text],
                 source_lang: deepLLanguageByRamassaLanguage[request.from],
                 target_lang: deepLLanguageByRamassaLanguage[language],
+                // DeepL leaves billed_characters out of the reply unless asked.
+                show_billed_characters: true,
               }),
             });
           } catch (cause) {
