@@ -44,7 +44,7 @@ export function PhoneFrame({
     t(`onboarding:${key}`, { ...options, lng: language });
   return (
     <div
-      className="mx-auto w-full max-w-[20rem] rounded-[2.75rem] bg-(--ramassa-color-neutral-900) p-2.5 shadow-xl ring-1 ring-black/10"
+      className="mx-auto w-full max-w-[var(--editor-phone-width,20rem)] rounded-[2.75rem] bg-(--ramassa-color-neutral-900) p-2.5 shadow-xl ring-1 ring-black/10"
       data-testid="phone-preview"
     >
       <div
