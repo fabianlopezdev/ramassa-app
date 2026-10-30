@@ -956,6 +956,7 @@
   },
   "translateFromCatalan": {
     "working": "Translating…",
+    "nothing": "There is no Catalan text to translate. The app's own text already has its translations.",
     "to": {
       "es": "Translate into Spanish",
       "en": "Translate into English",

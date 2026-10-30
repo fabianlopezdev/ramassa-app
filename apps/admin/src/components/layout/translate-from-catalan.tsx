@@ -90,10 +90,9 @@ export function useTranslatableRegister() {
   );
   const run = useCallback(async (target: LanguageCode) => {
     const all = [...sources.current];
-    const result = await translateFromCatalan(
-      all.flatMap((source) => source.texts()),
-      target,
-    );
+    const texts = all.flatMap((source) => source.texts()).filter((text) => text.trim() !== '');
+    if (texts.length === 0) return 'nothing';
+    const result = await translateFromCatalan(texts, target);
     if (!result.ok) return result.error.code;
     for (const source of all) source.apply(target, result.value);
     return null;
@@ -121,6 +120,7 @@ export function TranslateFromCatalanButton({
   run,
 }: {
   readonly target: LanguageCode;
+  /** Null when done; 'nothing' when no Catalan text is there to translate. */
   readonly run: (target: LanguageCode) => Promise<string | null>;
 }) {
   const { t } = useTranslation(['settings', 'errors']);
@@ -137,7 +137,8 @@ export function TranslateFromCatalanButton({
         setIsTranslating(true);
         void run(target).then((errorCode) => {
           setIsTranslating(false);
-          if (errorCode !== null) toast.error(t(`errors:${errorCode}`));
+          if (errorCode === 'nothing') toast.info(t('settings:translateFromCatalan.nothing'));
+          else if (errorCode !== null) toast.error(t(`errors:${errorCode}`));
         });
       }}
     >

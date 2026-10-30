@@ -956,6 +956,7 @@
   },
   "translateFromCatalan": {
     "working": "Traduciendo…",
+    "nothing": "No hay ningún texto en catalán para traducir. El texto propio de la app ya tiene sus traducciones.",
     "to": {
       "es": "Traducir al castellano",
       "en": "Traducir al inglés",
