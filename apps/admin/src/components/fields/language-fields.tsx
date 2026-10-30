@@ -10,7 +10,7 @@
  */
 
 import { typeInto, useTranslatableTexts } from '@/components/layout/translate-from-catalan';
-import { createContext, useContext, useRef } from 'react';
+import { createContext, useContext, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
 import type { BuilderText } from '@ramassa/shared/intake-builder';
@@ -57,10 +57,11 @@ export function LanguageFields({
     boxes.current?.querySelector<HTMLInputElement | HTMLTextAreaElement>(
       `[name="${name}.${language}"]`,
     ) ?? null;
-  // Only a Catalan that changed against the saved text is translated (RAPP-751).
+  // Only a Catalan that changed since the field opened is translated (RAPP-751).
+  const [openedCatalan] = useState((value?.ca ?? '').trim());
   const changedCatalan = (): string | null => {
     const now = boxIn('ca')?.value.trim() ?? '';
-    return now !== '' && now !== (value?.ca ?? '').trim() ? now : null;
+    return now !== '' && now !== openedCatalan ? now : null;
   };
   useTranslatableTexts({
     texts: () => {

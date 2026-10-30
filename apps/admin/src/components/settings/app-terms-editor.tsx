@@ -95,6 +95,8 @@ export function AppTermsEditor({
     draft?.content ?? current?.content ?? EMPTY_CONTENT,
   );
   const [content, setContent] = useState<AppTermsContent>(savedContent);
+  // As it opened: what the translate button counts as changed, saves in between or not.
+  const [openedContent] = useState(savedContent);
   const isDirty = !isSameContent(content, savedContent);
   const [status, setStatus] = useState<Status>('idle');
   // Anyone who accepted makes Desa ask (RAPP-696).
@@ -166,8 +168,9 @@ export function AppTermsEditor({
       {saveKind.dialog}
       <EditorColumns
         translatable={{
-          texts: () => changedCatalanTexts(content, savedContent),
-          apply: (target, drafts) => edit(withCatalanDrafts(content, savedContent, target, drafts)),
+          texts: () => changedCatalanTexts(content, openedContent),
+          apply: (target, drafts) =>
+            edit(withCatalanDrafts(content, openedContent, target, drafts)),
         }}
         language={language}
         onLanguageChange={setLanguage}

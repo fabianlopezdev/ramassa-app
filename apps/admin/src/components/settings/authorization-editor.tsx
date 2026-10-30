@@ -192,6 +192,8 @@ export function AuthorizationEditor({
     draft?.content ?? current?.content ?? EMPTY_CONTENT,
   );
   const [typedContent, setContent] = useState<AuthorizationContent>(savedContent);
+  // As it opened: what the translate button counts as changed, saves in between or not.
+  const [openedContent] = useState(savedContent);
   // Its consents as the consents screen holds them now (RAPP-699): the phone
   // shows them and the draft takes them.
   const content: AuthorizationContent = {
@@ -319,10 +321,10 @@ export function AuthorizationEditor({
       {saveKind.dialog}
       <EditorColumns
         translatable={{
-          texts: () => changedCatalanTexts(ownTexts(typedContent), ownTexts(savedContent)),
+          texts: () => changedCatalanTexts(ownTexts(typedContent), ownTexts(openedContent)),
           apply: (target, drafts) =>
             edit({
-              ...withCatalanDrafts(typedContent, ownTexts(savedContent), target, drafts),
+              ...withCatalanDrafts(typedContent, ownTexts(openedContent), target, drafts),
               consents: typedContent.consents,
             }),
         }}

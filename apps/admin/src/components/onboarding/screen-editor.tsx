@@ -573,6 +573,12 @@ export function StaffScreenEditor({
     staffTextIn(saved[field], shownLanguage, isOptional(field)) ??
     (shownLanguage === 'ca' ? '' : savedIn(field, 'ca'));
   const TEAM_FIELDS = ['title', 'intro'] as const;
+  // The Catalan as the screen opened: what the translate button counts as changed,
+  // so a save in between does not hide a change (RAPP-751).
+  const [openedCatalan] = useState(() => ({
+    title: savedIn('title', 'ca').trim(),
+    intro: savedIn('intro', 'ca').trim(),
+  }));
   const isChanged =
     isHidden !== hide.isHidden ||
     TEAM_FIELDS.some((field) =>
@@ -584,8 +590,7 @@ export function StaffScreenEditor({
   const changedCatalan = () =>
     TEAM_FIELDS.filter(
       (field) =>
-        shownIn(field, 'ca').trim() !== '' &&
-        shownIn(field, 'ca').trim() !== savedIn(field, 'ca').trim(),
+        shownIn(field, 'ca').trim() !== '' && shownIn(field, 'ca').trim() !== openedCatalan[field],
     );
 
   /** What is saved: a language still showing the Catalan keeps following it. */
@@ -1045,6 +1050,14 @@ export function WordingSection({
     bundled(field, shownLanguage);
   const shownIn = (field: ScreenTextField, shownLanguage: LanguageCode): string =>
     typed[field]?.[shownLanguage] ?? savedIn(field, shownLanguage);
+  // The Catalan as the screen opened: what the translate button counts as changed,
+  // so a save in between does not hide a change (RAPP-751).
+  const [openedCatalan] = useState(
+    () =>
+      Object.fromEntries(fields.map((field) => [field, savedIn(field, 'ca').trim()])) as Readonly<
+        Partial<Record<ScreenTextField, string>>
+      >,
+  );
   const isChanged =
     (hideable && isHidden !== (saved?.isHidden ?? false)) ||
     fields.some((field) =>
@@ -1067,11 +1080,11 @@ export function WordingSection({
     );
   };
   const edit = (field: ScreenTextField, value: string) => write([[field, language, value]]);
-  // Only the wording whose Catalan changed is translated (RAPP-751).
+  // Only the wording whose Catalan changed since the screen opened is translated (RAPP-751).
   const changedWording = () =>
     fields.flatMap((field) => {
       const text = shownIn(field, 'ca').trim();
-      return text === '' || text === savedIn(field, 'ca').trim() ? [] : [[field, text] as const];
+      return text === '' || text === openedCatalan[field] ? [] : [[field, text] as const];
     });
   useTranslatableTexts({
     texts: () => changedWording().map(([, text]) => text),
