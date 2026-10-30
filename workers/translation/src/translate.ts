@@ -16,6 +16,10 @@ const TRANSLATION_PERMISSIONS = [
   'services.edit',
   'notifications.send',
   'surveys.manage',
+  // The form editors' translate button (RAPP-750): Onboarding, the legal forms,
+  // the team forms and the referral form.
+  'settings.organization',
+  'onboarding.design',
 ] as const;
 
 export interface TranslationRequestDependencies {

@@ -79,6 +79,19 @@ describe('translation request policy', () => {
     expect(await readErrorCode(response)).toBe('AUTH-3');
   });
 
+  test('the onboarding design role translates the forms she writes (RAPP-750)', async () => {
+    const response = await handleTranslationRequest(
+      buildRequest(validBody),
+      buildDependencies({
+        resolveIdentity: async () => ({
+          ...staff,
+          permissions: new Set(['onboarding.design', 'test_players.manage']),
+        }),
+      }),
+    );
+    expect(response.status).toBe(200);
+  });
+
   test('players cannot spend the staff translation quota', async () => {
     const response = await handleTranslationRequest(
       buildRequest(validBody),
