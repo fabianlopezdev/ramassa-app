@@ -1,78 +1,66 @@
 /**
  * A new version of the app terms (RAPP-613). Staff published new terms; a
- * player who already joined reads them and accepts them here, on this screen
- * alone, the next time she opens the app. Nothing of the wizard comes back.
+ * player who already joined reads them and accepts them here, the next time
+ * she opens the app. Nothing of the wizard comes back.
  *
- * It looks like the onboarding terms screen: the full text first, the
- * acceptance chip never pre-ticked, the photo and video choice separate and
- * optional (opening with her current choice, so accepting never withdraws it
- * silently), and her signature. "Not now" signs her out after asking; the
- * gate brings her back here on her next sign-in.
+ * The terms are a form staff build (RAPP-772): she walks its screens as the
+ * version froze them, with the shared form walker, and the last one sends her
+ * acceptance with her answers, her ticks and her signatures. Her photo and
+ * video choice opens as she left it, so accepting never withdraws it
+ * silently. "Ara no" signs her out after asking; the gate brings her back
+ * here on her next sign-in.
+ *
+ * Terms this build cannot read are never accepted: she is asked to try again.
  */
-import { ConsentRow } from '@/components/authorization/consent-row';
-import { SignatureSection } from '@/components/authorization/signature-section';
 import { FailureNotice } from '@/components/error-code-line';
-import { TextBlock } from '@/components/forms/text-block';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { FormWalker } from '@/components/forms/form-walker';
+import { TermsDeclineAction } from '@/components/onboarding/terms-decline-action';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
-import { appTermsWording } from '@/lib/app-terms-wording';
-import { logout } from '@/lib/auth';
-import { confirmAction } from '@/lib/confirm-action';
-import { playHaptic } from '@/lib/haptics/haptics';
 import { supabase } from '@/lib/supabase';
-import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Platform, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
-import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
-import { acceptCurrentAppTerms } from '@ramassa/shared/intake';
-import { fetchIntakeCatalog } from '@ramassa/shared/intake-builder';
-import { fetchOwnProfile } from '@ramassa/shared/profile';
+import { useLanguage } from '@ramassa/shared/i18n';
+import { acceptCurrentAppTerms, APP_TERMS_MEDIA_KEY } from '@ramassa/shared/intake';
 import {
-  termsSigningPayload,
-  termsSigningSchema,
-  type LanguageCode,
-} from '@ramassa/shared/schemas';
+  appTermsForm,
+  appTermsSubmission,
+  fetchIntakeCatalog,
+  fetchMyCustomAnswers,
+  formScreenTextsIn,
+  formWalkScreens,
+  isTermsSignScreen,
+  withAppTermsForm,
+} from '@ramassa/shared/intake-builder';
+import { fetchOwnProfile } from '@ramassa/shared/profile';
 import { tokens } from '@ramassa/shared/tokens';
 
 export default function TermsUpdateScreen() {
-  const { t, i18n } = useTranslation(['onboarding', 'common', 'errors']);
-  const languageFontClass = useLanguageFontClass();
+  const { t } = useTranslation(['onboarding', 'common', 'errors']);
+  const { language } = useLanguage();
   const { user, refreshProfile } = useAuth();
   const current = useQuery({
     queryKey: ['app-terms-update', user?.id ?? 'signed-out'],
     queryFn: async ({ signal }) => {
-      const [catalog, profile] = await Promise.all([
+      const [catalog, answers, profile] = await Promise.all([
         fetchIntakeCatalog(supabase),
+        fetchMyCustomAnswers(supabase),
         fetchOwnProfile(supabase, { signal }),
       ]);
-      return { terms: catalog.terms ?? null, mediaConsent: profile?.media_consent === true };
+      return {
+        catalog: withAppTermsForm(catalog),
+        answers,
+        mediaConsent: profile?.media_consent === true,
+      };
     },
     enabled: user !== null,
     gcTime: 0,
     refetchOnMount: 'always',
   });
 
-  if (current.data === undefined && current.isError) {
-    // Her terms could not be read: she reads the bundled text, retries, or
-    // leaves. Accepting needs the version id, so the fallback is never sent.
-    return (
-      <TermsUnavailable
-        wording={appTermsWording(
-          null,
-          (i18n.resolvedLanguage as LanguageCode | undefined) ?? 'ca',
-          (key) => t(key),
-        )}
-        failureCode={toAppError(current.error).code}
-        isRetrying={current.isFetching}
-        onRetry={() => void current.refetch()}
-      />
-    );
-  }
-  if (current.data === undefined) {
+  if (current.data === undefined && !current.isError) {
     return (
       <View
         className="flex-1 items-center justify-center bg-neutral-50"
@@ -85,28 +73,76 @@ export default function TermsUpdateScreen() {
       </View>
     );
   }
+  const catalog = current.data?.catalog;
+  const terms = catalog?.terms ?? null;
+  const form = catalog === undefined ? undefined : appTermsForm(catalog);
+  // Her terms could not be read, or this build cannot read them: she retries
+  // or leaves. Accepting needs the version she was shown.
+  if (
+    current.data === undefined ||
+    catalog === undefined ||
+    terms === null ||
+    form === undefined ||
+    formWalkScreens(catalog, form, current.data.answers).length === 0
+  ) {
+    return (
+      <TermsUnavailable
+        failureCode={current.isError ? toAppError(current.error).code : 'VALIDATION-1'}
+        isRetrying={current.isFetching}
+        onRetry={() => void current.refetch()}
+      />
+    );
+  }
   return (
-    <TermsUpdateForm
-      key={current.data.terms?.id ?? 'bundled'}
-      wording={appTermsWording(
-        current.data.terms,
-        (i18n.resolvedLanguage as LanguageCode | undefined) ?? 'ca',
-        (key) => t(key),
-      )}
-      initialMediaConsent={current.data.mediaConsent}
-      languageFontClass={languageFontClass}
-      onAccepted={refreshProfile}
+    <FormWalker
+      key={terms.id}
+      catalog={catalog}
+      form={form}
+      saved={current.data.answers}
+      savedConsents={{ [APP_TERMS_MEDIA_KEY]: current.data.mediaConsent }}
+      sendLabel={t('finishAction')}
+      failureMessage={t('completionFailed')}
+      onLeave={undefined}
+      onSubmit={async (draft, screens): Promise<AppErrorCode | null> => {
+        const submission = appTermsSubmission({
+          catalog,
+          terms,
+          screens,
+          draft,
+          language,
+          device: `${Platform.OS} ${String(Platform.Version)}`,
+        });
+        if (submission === null) return 'VALIDATION-1';
+        try {
+          await acceptCurrentAppTerms(supabase, {
+            versionId: terms.id,
+            localeShown: submission.kind === 'form' ? language : submission.localeShown,
+            signing: submission.kind === 'form' ? submission.acceptance : submission.signing,
+          });
+          // Flips `needsTermsAcceptance`; the (app) layout then opens her home.
+          await refreshProfile();
+          return null;
+        } catch (error) {
+          return toAppError(error).code;
+        }
+      }}
+      footer={(screen, isSending) =>
+        isTermsSignScreen(screen) ? (
+          <TermsDeclineAction
+            label={formScreenTextsIn(screen.texts, language).declineLabel}
+            isDisabled={isSending}
+          />
+        ) : null
+      }
     />
   );
 }
 
 function TermsUnavailable({
-  wording,
   failureCode,
   isRetrying,
   onRetry,
 }: {
-  readonly wording: ReturnType<typeof appTermsWording>;
   readonly failureCode: AppErrorCode;
   readonly isRetrying: boolean;
   readonly onRetry: () => void;
@@ -115,172 +151,13 @@ function TermsUnavailable({
   return (
     <WizardFrame
       screenId={'terms'}
-      title={wording.title}
+      title={t('termsTitle')}
       continueLabel={t('errors:retry')}
       onContinue={onRetry}
       isContinueBusy={isRetrying}
     >
       <FailureNotice code={failureCode} message={t('termsUpdateLoadFailed')} />
-      <TextBlock body={wording.body} />
-      <NotNowAction isDisabled={isRetrying} />
-    </WizardFrame>
-  );
-}
-
-/** "Not now" asks first, then signs her out; the gate brings her back here. */
-function NotNowAction({ isDisabled }: { readonly isDisabled: boolean }) {
-  const { t } = useTranslation('onboarding');
-  const languageFontClass = useLanguageFontClass();
-  return (
-    <PressableScale
-      accessibilityLabel={t('termsDeclineAction')}
-      isDisabled={isDisabled}
-      onPress={() =>
-        confirmAction({
-          title: t('termsLeaveTitle'),
-          message: t('termsLeaveBody'),
-          cancelLabel: t('termsLeaveStayAction'),
-          confirmLabel: t('termsLeaveConfirmAction'),
-          onConfirm: () => void logout(),
-        })
-      }
-      haptic="selection"
-      className="min-h-min items-center justify-center py-sm"
-    >
-      <Text className={`text-form font-medium text-neutral-700 ${languageFontClass}`}>
-        {t('termsDeclineAction')}
-      </Text>
-    </PressableScale>
-  );
-}
-
-function TermsUpdateForm({
-  wording,
-  initialMediaConsent,
-  languageFontClass,
-  onAccepted,
-}: {
-  readonly wording: ReturnType<typeof appTermsWording>;
-  readonly initialMediaConsent: boolean;
-  readonly languageFontClass: string;
-  readonly onAccepted: () => Promise<void>;
-}) {
-  const { t } = useTranslation('onboarding');
-  const [isAccepted, setIsAccepted] = useState(false);
-  const [hasMediaConsent, setHasMediaConsent] = useState(initialMediaConsent);
-  const [strokes, setStrokes] = useState<SignatureStrokes | null>(null);
-  const [unableToDraw, setUnableToDraw] = useState(false);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [hasSignatureError, setHasSignatureError] = useState(false);
-  const [hasAcceptError, setHasAcceptError] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [failureCode, setFailureCode] = useState<AppErrorCode | null>(null);
-
-  async function accept() {
-    if (!isAccepted) {
-      setHasAcceptError(true);
-      playHaptic('warning');
-      return;
-    }
-    const signing = termsSigningSchema.safeParse({
-      termsAccepted: isAccepted,
-      mediaConsent: hasMediaConsent,
-      strokes: unableToDraw ? null : strokes,
-      unableToDraw,
-    });
-    if (!signing.success) {
-      setHasSignatureError(true);
-      playHaptic('warning');
-      return;
-    }
-    // A version only the bundled text stands for cannot be accepted here: the
-    // gate opened on a version her app could not read. Reloading reads it.
-    if (wording.versionId === null) {
-      setFailureCode('DB-1');
-      return;
-    }
-    setFailureCode(null);
-    setIsSubmitting(true);
-    try {
-      await acceptCurrentAppTerms(supabase, {
-        versionId: wording.versionId,
-        localeShown: wording.localeShown,
-        signing: termsSigningPayload(signing.data, `${Platform.OS} ${String(Platform.Version)}`),
-      });
-      playHaptic('success');
-      // Flips `needsTermsAcceptance`; the (app) layout then opens her home.
-      await onAccepted();
-    } catch (error) {
-      setFailureCode(toAppError(error).code);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  return (
-    <WizardFrame
-      screenId={'terms'}
-      scrollEnabled={!isDrawing}
-      title={wording.title}
-      intro={wording.mediaHint}
-      continueLabel={t('finishAction')}
-      onContinue={() => void accept()}
-      isContinueBusy={isSubmitting}
-    >
-      <TextBlock body={wording.body} />
-
-      <ConsentRow
-        testID="terms-update-acceptance"
-        required
-        requiredMark={t('authorizationRequiredMark')}
-        label={wording.acceptLabel}
-        checked={isAccepted}
-        onToggle={() => {
-          setIsAccepted((value) => !value);
-          setHasAcceptError(false);
-          setFailureCode(null);
-        }}
-      />
-      {hasAcceptError ? (
-        <Text
-          selectable
-          accessibilityLiveRegion="polite"
-          className={`text-start text-form text-error ${languageFontClass}`}
-        >
-          {t('errorTermsRequired')}
-        </Text>
-      ) : null}
-
-      <ConsentRow
-        testID="terms-update-media-consent"
-        required={false}
-        requiredMark=""
-        label={wording.mediaLabel}
-        checked={hasMediaConsent}
-        onToggle={() => setHasMediaConsent((value) => !value)}
-      />
-
-      <SignatureSection
-        strokes={strokes}
-        onChange={(value) => {
-          setStrokes(value);
-          setHasSignatureError(false);
-        }}
-        unableToDraw={unableToDraw}
-        onUnableToDrawChange={(value) => {
-          setUnableToDraw(value);
-          setHasSignatureError(false);
-        }}
-        onDrawingChange={setIsDrawing}
-        hasError={hasSignatureError}
-        testID="terms-update-cannot-draw"
-      />
-
-      {failureCode === null ? null : (
-        <FailureNotice code={failureCode} message={t('completionFailed')} />
-      )}
-
-      <NotNowAction isDisabled={isSubmitting} />
+      <TermsDeclineAction label={null} isDisabled={isRetrying} />
     </WizardFrame>
   );
 }

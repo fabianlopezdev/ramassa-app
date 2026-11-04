@@ -23,6 +23,7 @@ import { useAuth } from '@ramassa/shared/auth';
 import { getErrorMessageKey, toAppError } from '@ramassa/shared/errors';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
+  currentTermsStep,
   DEFAULT_WIZARD_FLOW,
   fetchMyAnsweredQuestions,
   fetchMyQuestionsToAsk,
@@ -36,10 +37,11 @@ import {
   fetchMyCustomQuestionAsking,
   fetchMyFormSignatures,
   herOnboarding,
+  herWizardFlow,
   hiddenBuiltinQuestions,
   isFormBlockSigned,
   signatureBlocks,
-  wizardFlow,
+  withAppTermsForm,
   wizardFormFields,
 } from '@ramassa/shared/intake-builder';
 import { fetchMyTestScenarioStamp } from '@ramassa/shared/participants';
@@ -76,7 +78,12 @@ function seedWizardDraft(intake: WizardIntake, language: LanguageCode): void {
     names: intake.names,
     stored: intake.customAnswers,
   });
-  const draft = withSelectedLanguage(stored ?? seeded, language);
+  const chosen = withSelectedLanguage(stored ?? seeded, language);
+  // A draft saved at the terms' old screens resumes at the terms form's (RAPP-772).
+  const draft = {
+    ...chosen,
+    currentStep: currentTermsStep(chosen.currentStep, intake.flow ?? DEFAULT_WIZARD_FLOW),
+  };
   onboardingDraftStore.saveStoredDraft(draft);
   if (stored === null) return;
   // Staff may have moved a screen before the step she reached (RAPP-612): she
@@ -145,12 +152,13 @@ function OnboardingScreens() {
       const signedBlocks = signatureBlocks(fullCatalog.blocks).filter((block) =>
         isFormBlockSigned(block, mySignatures),
       );
-      const catalog = {
+      // The app terms as a form (RAPP-772), an older server's content included.
+      const catalog = withAppTermsForm({
         ...fullCatalog,
         blocks: (fullCatalog.blocks ?? []).filter(
           (block) => block.kind !== 'signature' || !signedBlocks.includes(block),
         ),
-      };
+      });
       const hidden = hiddenBuiltinQuestions(catalog);
       // Her screens from the placements (RAPP-655): a field set to Don't ask is
       // never asked, a screen with none left is skipped (RAPP-643), and one on
@@ -178,9 +186,9 @@ function OnboardingScreens() {
         customAnswers: answers,
         customScreens: custom.screens,
         customPlan: custom.plan,
-        // The order and hidden screens staff arranged (RAPP-612). The staff
-        // preview of a new invitation reads the same flow.
-        flow: wizardFlow(catalog),
+        // The order and hidden screens staff arranged (RAPP-612), ending on
+        // the terms form's screens (RAPP-772).
+        flow: herWizardFlow(catalog),
         hidden,
         // The one required list (RAPP-611): every screen, the summary and the
         // final check read it. A question off its control is the generic

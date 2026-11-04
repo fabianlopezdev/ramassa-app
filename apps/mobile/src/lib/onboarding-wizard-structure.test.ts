@@ -9,7 +9,7 @@ const backgroundSource = existsSync(backgroundPath) ? readFileSync(backgroundPat
 const documentationSource = readFileSync(join(onboardingDir, 'documentation.tsx'), 'utf8');
 const logisticsSource = readFileSync(join(onboardingDir, 'logistics.tsx'), 'utf8');
 const equipmentSource = readFileSync(join(onboardingDir, 'equipment.tsx'), 'utf8');
-const termsSource = readFileSync(join(onboardingDir, 'terms.tsx'), 'utf8');
+const termsSource = readFileSync(join(onboardingDir, 'terms/[screenId].tsx'), 'utf8');
 const summarySource = readFileSync(join(onboardingDir, 'summary.tsx'), 'utf8');
 const frameSource = readFileSync(
   join(import.meta.dir, '../components/onboarding/wizard-frame.tsx'),
@@ -49,7 +49,6 @@ describe('the onboarding welcome split', () => {
       ['logistics', logisticsSource],
       ['equipment', equipmentSource],
       ['summary', summarySource],
-      ['terms', termsSource],
     ] as const;
     for (const [screen, source] of screens) {
       expect(source).toContain(`useWizardStep('${screen}')`);
@@ -57,5 +56,8 @@ describe('the onboarding welcome split', () => {
       expect(source).toContain('totalSteps={step.position.total}');
       expect(source).not.toMatch(/stepNumber=\{\d\}/);
     }
+    // The terms form's screens are wizard steps of their own (RAPP-772).
+    expect(termsSource).toContain('useWizardStep(termsStepKey(screenId))');
+    expect(termsSource).toContain('position={step.position}');
   });
 });

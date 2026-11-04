@@ -1,3 +1,4 @@
+import { AnnouncementFeedError } from '@/components/announcements/feed-states';
 import { AttendanceSyncWorker } from '@/components/attendance/attendance-sync-worker';
 import { useAppLock } from '@/components/auth/app-lock';
 import { SecondFactorScreen } from '@/components/auth/second-factor-screen';
@@ -13,6 +14,7 @@ import { OnboardingEntranceProvider } from '@/lib/onboarding-entrance';
 import { canPromptForPush } from '@/lib/push-prompt-eligibility';
 import { useSigningSession } from '@/lib/tablet-signing';
 import { useAccountAccess } from '@/lib/use-account-access';
+import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePushRegistration } from '@/lib/use-push-registration';
 import { Redirect, usePathname, type Href } from 'expo-router';
 import { Stack } from 'expo-router/stack';
@@ -21,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, useWindowDimensions, View } from 'react-native';
 import { assuranceLevelOf, useAuth } from '@ramassa/shared/auth';
 import { needsAuthorization } from '@ramassa/shared/authorization';
+import { isAppError } from '@ramassa/shared/errors';
 import { nextChainedForm } from '@ramassa/shared/intake-builder';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -43,7 +46,8 @@ export default function AppLayout() {
 }
 
 function AppNavigator() {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation(['common', 'onboarding']);
+  const languageFontClass = useLanguageFontClass();
   const { user, session, role, needsSecondFactor, permissionsAreCurrent, needsTermsAcceptance } =
     useAuth();
   const userId = user?.id ?? null;
@@ -69,8 +73,14 @@ function AppNavigator() {
   const mustAcceptTerms = area === 'player' && needsTermsAcceptance;
   // A form the team created that keeps her from the app (RAPP-700): required to
   // use it, or required since its date. It opens after the gates below. A
-  // failed lookup lets her in.
+  // failed lookup lets her in, unless it was a legal form this build cannot
+  // read: then she tries again and is never let past it (RAPP-772).
   const forms = useMyCustomForms(area === 'player');
+  const isLegalFormUnreadable =
+    area === 'player' &&
+    forms.isError &&
+    isAppError(forms.error) &&
+    forms.error.code === 'VALIDATION-1';
   // The forms chained after Onboarding (RAPP-703): while the chain is ahead of
   // a new player, its next form that applies to her opens first, in the order
   // the team set. The gates stay the same; only their order changes. Older
@@ -173,6 +183,18 @@ function AppNavigator() {
           color={tokens.colors.primary.DEFAULT}
         />
       </View>
+    );
+  }
+  if (isLegalFormUnreadable) {
+    return (
+      <AnnouncementFeedError
+        message={t('onboarding:legalFormLoadFailed')}
+        retryLabel={t('onboarding:retryAction')}
+        code="VALIDATION-1"
+        languageFontClass={languageFontClass}
+        isLoading={forms.isFetching}
+        onRetry={() => void forms.refetch()}
+      />
     );
   }
   if (mustAcceptTerms && pathname !== '/terms-update') {

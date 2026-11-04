@@ -9,7 +9,7 @@ const background = readFileSync(join(onboardingDir, 'background.tsx'), 'utf8');
 const documentation = readFileSync(join(onboardingDir, 'documentation.tsx'), 'utf8');
 const logistics = readFileSync(join(onboardingDir, 'logistics.tsx'), 'utf8');
 const equipment = readFileSync(join(onboardingDir, 'equipment.tsx'), 'utf8');
-const terms = readFileSync(join(onboardingDir, 'terms.tsx'), 'utf8');
+const terms = readFileSync(join(onboardingDir, 'terms/[screenId].tsx'), 'utf8');
 const optionChip = readFileSync(join(root, 'components/onboarding/option-chip.tsx'), 'utf8');
 const questionHeadingPath = join(root, 'components/onboarding/onboarding-question-heading.tsx');
 const summaryPath = join(root, 'components/onboarding/wizard-validation-summary.tsx');
@@ -60,17 +60,13 @@ describe('conversational onboarding controls', () => {
     expect(logistics).not.toContain("{t('errorRequired')}");
   });
 
-  test('terms explanations precede the always-visible full legal text', () => {
-    const intro = readFileSync(join(root, 'components/onboarding/terms-introduction.tsx'), 'utf8');
-    // The points and the body come from the published terms version, or the
-    // bundled text when there is none (RAPP-613).
-    const wording = readFileSync(join(root, 'lib/app-terms-wording.ts'), 'utf8');
-    expect(wording).toContain("['Purpose', 'Protected', 'Private', 'Control']");
-    expect(wording).toContain('`termsPoint${point}Title`');
-    expect(wording).toContain("bundled('termsBody')");
-    expect(intro).toContain('<PointsBlock points={wording.points}');
-    expect(intro).toContain("'termsReadFullAction'");
-    expect(terms).toContain('<TextBlock body={wording.body} />');
+  test('the terms are the terms form, walked screen by screen with the shared walker (RAPP-772)', () => {
+    // Its texts, points, consents and signatures come from the version she is
+    // shown; terms this build cannot read never let her through.
+    expect(terms).toContain('<FormWalkStep');
+    expect(terms).toContain('appTermsSubmission(');
+    expect(terms).toContain('<TermsDeclineAction');
+    expect(terms).toContain('AnnouncementFeedError');
     expect(terms).not.toContain('isFullTermsVisible');
     expect(terms).not.toContain('termsHideFullAction');
   });

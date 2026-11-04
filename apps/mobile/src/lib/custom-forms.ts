@@ -13,6 +13,7 @@ import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@ramassa/shared/auth';
+import type { AppErrorCode } from '@ramassa/shared/errors';
 import {
   completeCustomForm,
   dismissCustomForm,
@@ -56,20 +57,19 @@ export function useCustomFormSource(enabled: boolean) {
   });
 }
 
-/** Sends her answers to a form, then reads her pending forms again. False when it failed. */
+/** Sends her answers to a form, then reads her pending forms again. The failure's code, else null. */
 export function useAnswerCustomForm() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  return async (responseId: string, answers: CustomFormAnswers): Promise<boolean> => {
+  return async (responseId: string, answers: CustomFormAnswers): Promise<AppErrorCode | null> => {
     const result = await safeAsync(() => completeCustomForm(supabase, responseId, answers), {
       code: 'DB-1',
     });
-    if (result.ok) {
-      await queryClient.invalidateQueries({
-        queryKey: [PLAYER_FORMS_QUERY_ROOT, user?.id ?? 'signed-out'],
-      });
-    }
-    return result.ok;
+    if (!result.ok) return result.error.code;
+    await queryClient.invalidateQueries({
+      queryKey: [PLAYER_FORMS_QUERY_ROOT, user?.id ?? 'signed-out'],
+    });
+    return null;
   };
 }
 

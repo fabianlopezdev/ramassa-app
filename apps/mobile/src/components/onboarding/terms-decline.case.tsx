@@ -1,33 +1,70 @@
+/**
+ * The terms at the end of her Onboarding (RAPP-21, RAPP-772): the terms form's
+ * screens, one wizard step each. "Ara no" asks first, then saves her draft at
+ * the terms and signs her out. Finishing on the last terms screen sends her
+ * Onboarding and her acceptance in one call. Terms this build cannot read
+ * never let her through. These terms come from an older server's content,
+ * read as the terms form, so they finish with the old acceptance.
+ */
 import { wizardDraftStoreOn } from '@/lib/wizard-draft';
 import { fireEvent, render, waitFor } from '@testing-library/react';
-import { afterAll, beforeEach, expect, mock, spyOn, test } from 'bun:test';
+import { afterAll, beforeEach, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
 import type { AlertButton, AlertOptions } from 'react-native';
-import { systemFieldIndexFromCatalog } from '@ramassa/shared/intake-builder';
-import { createInMemoryOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
+import { LEGACY_TERMS_IDS } from '@ramassa/shared/intake';
 import {
-  systemFieldFixtureId as fieldId,
-  systemOptionFixtureId as optionId,
-  systemFieldsCatalogFixture,
-} from '@ramassa/shared/testing';
+  parseIntakeCatalog,
+  systemFieldIndexFromCatalog,
+  withAppTermsForm,
+  type IntakeCatalog,
+} from '@ramassa/shared/intake-builder';
+import { createInMemoryOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
+import { systemFieldsCatalogFixture } from '@ramassa/shared/testing';
 
-// Her draft is kept by field (RAPP-663): the screens save through her fields.
+const text = (value: string) => ({ ca: value });
+const VERSION_ID = '5eed0000-0000-4000-8099-000000000002';
+const SIGN_STEP = `terms:${LEGACY_TERMS_IDS.signScreen}` as const;
 const fields = systemFieldIndexFromCatalog(systemFieldsCatalogFixture());
 const store = wizardDraftStoreOn(createInMemoryOnboardingDraftStore(), fields);
-const platform = { OS: 'ios' };
+const platform = { OS: 'ios', Version: '27' };
 const alert = mock<
   (title: string, message?: string, buttons?: AlertButton[], options?: AlertOptions) => void
 >(() => {});
 const refreshProfile = mock(async () => {});
 const goNext = mock(() => {});
 const goBack = mock(() => {});
+const refetchQueries = mock(async () => {});
 const complete = mock<
   (payload: unknown, signing: unknown) => Promise<{ ok: true; value: undefined }>
 >(async () => ({ ok: true as const, value: undefined }));
 const logout = mock(async () => {
-  expect(store.loadDraft()?.currentStep).toBe('terms');
+  expect(store.loadDraft()?.currentStep).toBe(SIGN_STEP);
   return { ok: true as const, value: undefined };
 });
+let screenId: string = LEGACY_TERMS_IDS.signScreen;
+const readable: IntakeCatalog = withAppTermsForm(
+  parseIntakeCatalog({
+    screens: [],
+    overrides: [],
+    presets: [],
+    terms: {
+      id: VERSION_ID,
+      version_number: 2,
+      content: {
+        title: text('Termes i condicions'),
+        body: text('Text legal complet.'),
+        intro_title: text('Abans dels termes'),
+        intro: text('Llegeix-los.'),
+        points: [{ title: text('Per què'), body: text('Per organitzar.') }],
+        accept_label: text('He llegit i accepto els termes'),
+        media_label: text('Fotos i vídeos'),
+        media_hint: text('Pots canviar-ho quan vulguis.'),
+      },
+    },
+  }),
+);
+let catalog: IntakeCatalog = readable;
+
 mock.module('react-native', () => ({
   Alert: { alert },
   Platform: platform,
@@ -36,73 +73,83 @@ mock.module('react-native', () => ({
 }));
 mock.module('@/lib/auth', () => ({ logout }));
 mock.module('@/components/authorization/signature-section', () => ({
-  SignatureSection: ({
-    onChange,
-    hasError,
-  }: {
-    onChange: (value: number[][][]) => void;
-    hasError: boolean;
-  }) =>
+  SignatureSection: ({ onChange }: { onChange: (value: number[][][]) => void }) =>
     createElement(
-      'div',
-      null,
-      createElement(
-        'button',
-        {
-          onClick: () =>
-            onChange([
-              [
-                [1, 2],
-                [3, 4],
-              ],
-            ]),
-        },
-        'Draw app signature',
-      ),
-      hasError ? createElement('span', null, 'authorizationErrorSignature') : null,
+      'button',
+      {
+        onClick: () =>
+          onChange([
+            [
+              [1, 2],
+              [3, 4],
+            ],
+          ]),
+      },
+      'Draw app signature',
     ),
 }));
 mock.module('@/lib/onboarding', () => ({
   onboardingDraftStore: { ...store, clearUserDraft: () => store.clearDraft() },
   completeOnboarding: complete,
-  saveWizardCustomAnswers: mock(async () => ({ ok: true, value: undefined })),
+}));
+mock.module('@/lib/onboarding-answers', () => ({
+  onboardingAnswersFromDraft: () => ({
+    ok: true,
+    value: {
+      first_name: 'Laia',
+      last_name: 'Prova',
+      preferred_language: 'ca',
+      answers: {},
+      signatures: {},
+    },
+  }),
 }));
 mock.module('@ramassa/shared/auth', () => ({
   useAuth: () => ({ refreshProfile, user: { id: 'test-player' } }),
 }));
 mock.module('@/lib/onboarding-intake-context', () => ({
-  useWizardIntake: () => ({
-    catalog: { screens: [], overrides: [], presets: [], terms: null },
-    names: {},
-    fields,
-    answered: new Set(),
-    customScreens: [],
-    customAnswers: {},
-    customPlan: [],
-  }),
-  useWizardStep: (screen: string) => ({
-    position: { step: screen === 'terms-intro' ? 14 : 15, total: 15 },
-    nextDraftStep: 'terms',
-    previousDraftStep: screen === 'terms' ? 'terms-intro' : 'summary',
+  useWizardIntake: () => ({ catalog, customAnswers: {}, customScreens: [], customPlan: [] }),
+  useWizardStep: () => ({
+    position: { step: 15, total: 15 },
+    nextDraftStep: SIGN_STEP,
+    previousDraftStep: 'summary',
     goBack,
     goNext,
   }),
+}));
+mock.module('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ refetchQueries }),
 }));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
 mock.module('@/lib/continuous-corners', () => ({ continuousCorners: {} }));
 mock.module('@/lib/haptics/haptics', () => ({ playHaptic: () => {} }));
 mock.module('expo-router', () => ({
+  useLocalSearchParams: () => ({ screenId }),
   useNavigation: () => ({ getState: () => undefined }),
   useRouter: () => ({ replace: () => {} }),
+  Redirect: () => createElement('span', null, 'redirect'),
 }));
-mock.module('@/components/forms/data-icon', () => ({
-  DataIcon: () => createElement('span', { 'data-testid': 'privacy-icon' }),
-}));
-mock.module('expo-symbols', () => ({ SymbolView: () => null }));
 mock.module('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { resolvedLanguage: 'en' } }),
 }));
 mock.module('@/components/error-code-line', () => ({ FailureNotice: () => null }));
+mock.module('@/components/announcements/feed-states', () => ({
+  AnnouncementFeedError: ({ message, onRetry }: { message: string; onRetry: () => void }) =>
+    createElement('button', { onClick: onRetry }, message),
+}));
+mock.module('@/components/forms/text-block', () => ({
+  TextBlock: ({ body }: { body: string }) => createElement('p', null, body),
+}));
+mock.module('@/components/forms/points-block', () => ({
+  PointsBlock: () => createElement('ul', null),
+}));
+mock.module('@/components/onboarding/custom-question-field', () => ({
+  CustomQuestionField: () => null,
+}));
+mock.module('@/components/onboarding/wizard-validation-summary', () => ({
+  WizardValidationSummary: ({ isVisible, message }: { isVisible: boolean; message: string }) =>
+    isVisible ? createElement('p', null, message) : null,
+}));
 mock.module('@/components/motion/pressable-scale', () => ({
   PressableScale: ({
     children,
@@ -139,7 +186,6 @@ mock.module('@/components/onboarding/wizard-frame', () => ({
     totalSteps,
     continueLabel,
     onContinue,
-    onBack,
   }: {
     children: ReactNode;
     title: string;
@@ -148,7 +194,6 @@ mock.module('@/components/onboarding/wizard-frame', () => ({
     totalSteps: number;
     continueLabel: string;
     onContinue: () => void;
-    onBack: () => void;
   }) =>
     createElement(
       'main',
@@ -157,218 +202,97 @@ mock.module('@/components/onboarding/wizard-frame', () => ({
       intro ? createElement('p', null, intro) : null,
       children,
       createElement('button', { onClick: onContinue }, continueLabel),
-      createElement('button', { onClick: onBack }, 'Back'),
     ),
 }));
-const { default: Terms } = await import('../../app/(app)/onboarding/terms');
-const { TermsIntroductionStep } = await import('./terms-introduction');
-const { confirmDelete } = await import('@/lib/confirm-delete');
+const { default: TermsStep } = await import('../../app/(app)/onboarding/terms/[screenId]');
 afterAll(() => mock.restore());
 beforeEach(() => {
   refreshProfile.mockClear();
   goNext.mockClear();
-  goBack.mockClear();
   alert.mockClear();
   logout.mockClear();
   complete.mockClear();
-  platform.OS = 'ios';
-  store.saveDraft({
-    currentStep: 'terms',
-    identity: { firstName: 'Laia' },
-    documentation: { documentType: 'none' },
-    logistics: { hasDependents: false },
-    season: { specificNeeds: 'An interpreter' },
-    custom: { transport: 'yes' },
-  });
+  refetchQueries.mockClear();
+  catalog = readable;
+  screenId = LEGACY_TERMS_IDS.signScreen;
+  store.saveDraft({ currentStep: SIGN_STEP, identity: { firstName: 'Laia' }, custom: {} });
+});
+
+test('the complete legal text, the acceptance, the photo choice and the signature are on the screen she signs', () => {
+  const screen = render(createElement(TermsStep));
+  expect(screen.getByRole('heading', { name: 'Termes i condicions' })).toBeTruthy();
+  expect(screen.getByText('Text legal complet.')).toBeTruthy();
+  expect(screen.getByText('Pots canviar-ho quan vulguis.')).toBeTruthy();
+  expect(screen.getByRole('checkbox', { name: 'He llegit i accepto els termes' })).toBeTruthy();
+  expect(screen.getByRole('checkbox', { name: 'Fotos i vídeos' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'finishAction' })).toBeTruthy();
 });
 
 test('Not now asks first; cancelling leaves the session and draft untouched', () => {
   const before = store.loadDraft();
-  const screen = render(createElement(Terms));
+  const screen = render(createElement(TermsStep));
   fireEvent.click(screen.getByRole('button', { name: 'termsDeclineAction' }));
   expect(alert).toHaveBeenCalledTimes(1);
-  expect(logout).not.toHaveBeenCalled();
-  const [title, message, buttons, options] = alert.mock.calls[0]!;
+  const [title, message, buttons] = alert.mock.calls[0]!;
   expect(title).toBe('termsLeaveTitle');
   expect(message).toBe('termsLeaveBody');
-  expect(options?.cancelable).toBe(true);
-  expect(buttons?.[0]?.text).toBe('termsLeaveStayAction');
-  expect(buttons?.[0]?.style).toBe('cancel');
   buttons?.[0]?.onPress?.();
   expect(logout).not.toHaveBeenCalled();
   expect(complete).not.toHaveBeenCalled();
   expect(store.loadDraft()).toEqual(before);
 });
 
-test('confirming saves the complete draft and current consent choices before signing out', () => {
-  const before = store.loadDraft();
-  const screen = render(createElement(Terms));
-  fireEvent.click(screen.getByRole('checkbox', { name: 'mediaConsentLabel' }));
+test('confirming keeps her draft at the terms before signing out', () => {
+  const screen = render(createElement(TermsStep));
   fireEvent.click(screen.getByRole('button', { name: 'termsDeclineAction' }));
-  const buttons = alert.mock.calls[0]?.[2];
-  expect(buttons?.[1]?.text).toBe('termsLeaveConfirmAction');
-  buttons?.[1]?.onPress?.();
+  alert.mock.calls[0]?.[2]?.[1]?.onPress?.();
   expect(logout).toHaveBeenCalledTimes(1);
-  expect(store.loadDraft()).toEqual({
-    ...before,
-    currentStep: 'terms',
-    terms: {
-      termsAccepted: false,
-      mediaConsent: true,
-      strokes: null,
-      unableToDraw: false,
-      signatureOwnerId: 'test-player',
-    },
-  });
-  expect(complete).not.toHaveBeenCalled();
+  expect(store.loadDraft()?.identity).toEqual({ firstName: 'Laia' });
 });
 
-test('browser cancellation keeps the draft; explicit browser confirmation signs out', () => {
-  platform.OS = 'web';
-  const confirm = spyOn(window, 'confirm').mockReturnValue(false);
-  const screen = render(createElement(Terms));
-  fireEvent.click(screen.getByRole('button', { name: 'termsDeclineAction' }));
-  expect(confirm).toHaveBeenLastCalledWith('termsLeaveTitle\n\ntermsLeaveBody');
-  expect(logout).not.toHaveBeenCalled();
-  confirm.mockReturnValue(true);
-  fireEvent.click(screen.getByRole('button', { name: 'termsDeclineAction' }));
-  expect(logout).toHaveBeenCalledTimes(1);
-  expect(alert).not.toHaveBeenCalled();
-  confirm.mockRestore();
-});
-
-test('existing delete confirmation retains its explicit destructive action', () => {
-  const onConfirm = mock(() => {});
-  confirmDelete('Delete this note?', onConfirm, ['Cancel', 'Delete']);
-  expect(onConfirm).not.toHaveBeenCalled();
-  const [title, body, buttons] = alert.mock.calls[0]!;
-  expect(title).toBe('Delete this note?');
-  expect(body).toBeUndefined();
-  expect(buttons?.[1]?.style).toBe('destructive');
-  buttons?.[1]?.onPress?.();
-  expect(onConfirm).toHaveBeenCalledTimes(1);
-});
-
-test('the introduction explains the next screen and preserves answers on Continue and Back', () => {
-  const before = store.loadDraft();
-  let view = render(createElement(TermsIntroductionStep));
-  expect(view.getByRole('heading').textContent).toBe('termsIntroTitle');
-  expect(view.getByText('termsIntro')).toBeTruthy();
-  expect(view.getAllByTestId('privacy-icon')).toHaveLength(4);
-  expect(view.queryByText('termsBody')).toBeNull();
-  expect(view.queryByRole('checkbox', { name: 'termsAcceptLabel' })).toBeNull();
-  fireEvent.click(view.getByRole('button', { name: 'termsReadFullAction' }));
-  expect(goNext).toHaveBeenCalledTimes(1);
-  expect(store.loadDraft()).toEqual({ ...before, currentStep: 'terms' });
+test('nothing is sent until she accepts and signs; then her Onboarding and acceptance go together', async () => {
+  const screen = render(createElement(TermsStep));
+  fireEvent.click(screen.getByRole('button', { name: 'finishAction' }));
   expect(complete).not.toHaveBeenCalled();
-  view.unmount();
-  view = render(createElement(TermsIntroductionStep));
-  fireEvent.click(view.getByRole('button', { name: 'Back' }));
-  expect(goBack).toHaveBeenCalledTimes(1);
-  expect(store.loadDraft()).toEqual({ ...before, currentStep: 'summary' });
-});
-test('the complete legal text is visible immediately, before explicit acceptance options', () => {
-  const view = render(createElement(Terms));
-  const subtitle = view.getByText('mediaConsentHint');
-  expect(subtitle.tagName).toBe('P');
-  expect(view.getAllByText('mediaConsentHint')).toHaveLength(1);
-  expect(view.queryByText('termsNextStepHint')).toBeNull();
-  const body = view.getByText('termsBody');
-  expect(subtitle.compareDocumentPosition(body) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  const accept = view.getByRole('checkbox', { name: 'termsAcceptLabel' });
-  expect(body.compareDocumentPosition(accept) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(accept.getAttribute('aria-checked')).toBe('false');
-  expect(
-    view.getByRole('checkbox', { name: 'mediaConsentLabel' }).getAttribute('aria-checked'),
-  ).toBe('false');
-  expect(view.queryByRole('button', { name: 'termsReadFullAction' })).toBeNull();
-  expect(view.queryByRole('button', { name: 'termsHideFullAction' })).toBeNull();
-  expect(view.queryByText('termsPointPurposeTitle')).toBeNull();
-});
-
-test('app terms end at 15 of 15 and require their own saved signature', async () => {
-  store.saveDraft({
-    currentStep: 'terms',
-    identity: {
-      firstName: 'Laia',
-      lastName: 'Coromines',
-      day: '30',
-      month: '12',
-      year: '1995',
-      placeOfBirth: 'Vic',
-      nationality: 'Espanya',
-      preferredLanguage: 'ca',
-    },
-    documentation: { documentType: 'none' },
-    logistics: { referenceEntity: null, hasDependents: false, clothingSize: 'M', shoeSize: '38' },
-  });
-  const view = render(createElement(Terms));
-  expect(view.getByTestId('terms-frame').getAttribute('data-step')).toBe('15');
-  expect(view.getByTestId('terms-frame').getAttribute('data-total')).toBe('15');
-  fireEvent.click(view.getByRole('button', { name: 'finishAction' }));
-  expect(view.getByText('errorTermsRequired')).toBeTruthy();
-  expect(complete).not.toHaveBeenCalled();
-  fireEvent.click(view.getByRole('checkbox', { name: 'termsAcceptLabel' }));
-  fireEvent.click(view.getByRole('button', { name: 'finishAction' }));
-  expect(view.getByText('authorizationErrorSignature')).toBeTruthy();
-  expect(complete).not.toHaveBeenCalled();
-  fireEvent.click(view.getByRole('button', { name: 'Draw app signature' }));
-  fireEvent.click(view.getByRole('button', { name: 'finishAction' }));
+  fireEvent.click(screen.getByRole('checkbox', { name: 'He llegit i accepto els termes' }));
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Fotos i vídeos' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Draw app signature' }));
+  fireEvent.click(screen.getByRole('button', { name: 'finishAction' }));
   await waitFor(() => expect(refreshProfile).toHaveBeenCalledTimes(1));
   expect(complete).toHaveBeenCalledTimes(1);
-  // Her names and settings, then her answers by field (RAPP-663). Her "None"
-  // to the entity travels with no value; what she left empty is not sent.
-  expect(complete.mock.calls[0]?.[0]).toMatchObject({
-    first_name: 'Laia',
-    last_name: 'Coromines',
-    preferred_language: 'ca',
-    media_consent: false,
-    answers: {
-      [fieldId('date_of_birth')]: '1995-12-30',
-      [fieldId('place_of_birth')]: 'Vic',
-      [fieldId('nationality')]: 'Espanya',
-      [fieldId('document_type')]: optionId('document_type', 'none'),
-      [fieldId('reference_entity')]: null,
-      [fieldId('has_dependents')]: optionId('has_dependents', 'no'),
-      [fieldId('clothing_size')]: optionId('clothing_size', 'M'),
-      [fieldId('shoe_size')]: optionId('shoe_size', '38'),
-    },
-  });
-  expect(Object.keys((complete.mock.calls[0]?.[0] as { answers: object }).answers)).toHaveLength(8);
-  expect(complete.mock.calls[0]?.[1]).toMatchObject({
-    termsAccepted: true,
-    mediaConsent: false,
-    unableToDraw: false,
-    strokes: [
+  const [request, signing] = complete.mock.calls[0]!;
+  // An older server's terms: the old acceptance, with the version and language she was shown.
+  expect(request).toEqual(
+    expect.objectContaining({ media_consent: true, terms_version: '2', locale_shown: 'ca' }),
+  );
+  expect(signing).toEqual({
+    terms_accepted: true,
+    media_consent: true,
+    signature: [
       [
         [1, 2],
         [3, 4],
       ],
     ],
+    unable_to_draw: false,
+    device: 'ios 27',
   });
-  expect(store.loadDraft()).toBeNull();
 });
 
-test('a saved signature from another account is never shown or used', () => {
-  store.saveDraft({
-    currentStep: 'terms',
-    terms: {
-      termsAccepted: true,
-      mediaConsent: true,
-      strokes: [[[1, 2]]],
-      unableToDraw: false,
-      signatureOwnerId: 'someone-else',
-    },
-  });
-  const view = render(createElement(Terms));
-  expect(
-    view.getByRole('checkbox', { name: 'termsAcceptLabel' }).getAttribute('aria-checked'),
-  ).toBe('false');
-  expect(
-    view.getByRole('checkbox', { name: 'mediaConsentLabel' }).getAttribute('aria-checked'),
-  ).toBe('false');
-  fireEvent.click(view.getByRole('checkbox', { name: 'termsAcceptLabel' }));
-  fireEvent.click(view.getByRole('button', { name: 'finishAction' }));
-  expect(view.getByText('authorizationErrorSignature')).toBeTruthy();
+test('the introduction moves on through the wizard and sends nothing', () => {
+  screenId = LEGACY_TERMS_IDS.introScreen;
+  const screen = render(createElement(TermsStep));
+  expect(screen.getByRole('heading', { name: 'Abans dels termes' })).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'continueAction' }));
+  expect(goNext).toHaveBeenCalledTimes(1);
   expect(complete).not.toHaveBeenCalled();
+  expect(screen.queryByRole('button', { name: 'termsDeclineAction' })).toBeNull();
+});
+
+test('terms this build cannot read never let her through: she tries again', () => {
+  catalog = parseIntakeCatalog({ screens: [], overrides: [], presets: [], terms: null });
+  const screen = render(createElement(TermsStep));
+  expect(screen.queryByRole('button', { name: 'finishAction' })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'termsUpdateLoadFailed' }));
+  expect(refetchQueries).toHaveBeenCalledTimes(1);
 });

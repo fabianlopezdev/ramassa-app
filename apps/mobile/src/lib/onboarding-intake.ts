@@ -7,6 +7,8 @@ import type { Href } from 'expo-router';
 import {
   customStepId,
   isCustomStep,
+  isTermsStep,
+  termsStepId,
   type WizardScreen,
   type WizardStepKey,
 } from '@ramassa/shared/intake';
@@ -66,10 +68,13 @@ export function wizardStepRoute(
   if (step === 'documentation-details')
     return `/onboarding/documentation-details${direction === 'back' ? '?entrance=none' : ''}` as Href;
   const screenId = customStepId(step);
+  const termsScreenId = termsStepId(step);
   const route =
-    screenId === null
-      ? WIZARD_SCREEN_ROUTES[step as WizardScreen]
-      : `/onboarding/custom/${screenId}`;
+    termsScreenId !== null
+      ? `/onboarding/terms/${termsScreenId}`
+      : screenId === null
+        ? WIZARD_SCREEN_ROUTES[step as WizardScreen]
+        : `/onboarding/custom/${screenId}`;
   return (direction === 'back' ? `${route}?entrance=none` : route) as Href;
 }
 
@@ -91,6 +96,10 @@ export function wizardStackRoute(
     };
   const screenId = customStepId(step);
   if (screenId !== null) return { name: 'custom/[screenId]', params: { ...entrance, screenId } };
+  // A screen of the app terms (RAPP-772).
+  const termsScreenId = termsStepId(step);
+  if (termsScreenId !== null)
+    return { name: 'terms/[screenId]', params: { ...entrance, screenId: termsScreenId } };
   return { name: step === 'identity' ? 'index' : step, params: entrance };
 }
 
@@ -116,7 +125,9 @@ export function wizardDraftStep(step: WizardStepKey | OnboardingDraftStep): Onbo
     step.startsWith('needs-detail:')
   )
     return step as OnboardingDraftStep;
-  return isCustomStep(step) ? step : WIZARD_SCREEN_DRAFT_STEP[step as WizardScreen];
+  return isCustomStep(step) || isTermsStep(step)
+    ? step
+    : WIZARD_SCREEN_DRAFT_STEP[step as WizardScreen];
 }
 
 /** Her answers as the wizard shows them: the stored ones, with her draft on top. */

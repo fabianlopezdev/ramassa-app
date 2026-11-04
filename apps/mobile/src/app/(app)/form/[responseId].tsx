@@ -3,75 +3,40 @@
  * or by the gate when it keeps her from the app. The address names her
  * response: the ask she is answering.
  *
- * Its screens are walked with the Onboarding wizard's own pieces: the frame
- * and its progress, the generic field renderer, the answer checks, the
- * signature blocks and the consent ticks, each in the order the screen
- * shares. Every question shows her saved answer to confirm or change. The
- * last screen sends everything through the Onboarding writers; until then her
- * answers stay on this screen.
+ * Its screens are walked with the shared form walker (`FormWalker`), which
+ * draws each screen with the Onboarding wizard's own pieces. The last screen
+ * sends everything through the Onboarding writers; until then her answers
+ * stay on the form.
  *
  * Right after her Onboarding it can open as a form chained to it (RAPP-703):
  * an optional one she puts off with Back leaves the walk and stays on Home.
- *
- * A screen that depends on an answer (RAPP-715) shows right after the screen
- * asking it, only while her answers so far open it: changing that answer
- * changes what comes next, and she sends only the screens she saw.
  */
 
-import {
-  CustomQuestionField,
-  type CustomAnswerDraft,
-} from '@/components/onboarding/custom-question-field';
-import { useFormBlocks } from '@/components/onboarding/form-blocks';
-import { useScreenConsents } from '@/components/onboarding/screen-consents';
-import { WizardFrame } from '@/components/onboarding/wizard-frame';
-import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
-import { checkCustomAnswers } from '@/lib/custom-answer-errors';
+import { FormWalker } from '@/components/forms/form-walker';
 import { useAnswerCustomForm, useCustomFormSource, useMyCustomForms } from '@/lib/custom-forms';
-import { playHaptic } from '@/lib/haptics/haptics';
 import { useMyOnboardingChain, usePassChainedForm } from '@/lib/onboarding-chain';
 import { Redirect, useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, View } from 'react-native';
 import { useLanguage } from '@ramassa/shared/i18n';
-import { teamTextIn } from '@ramassa/shared/i18n/localized-content';
 import {
-  customFormAskingScreens,
   customFormById,
   customFormRef,
-  customFormScreenBlocks,
-  customFormScreenConsents,
-  customFormScreenQuestions,
-  formScreenTextsIn,
-  formSignaturesPayload,
-  isCustomQuestionVisible,
-  openFormScreens,
-  updateCustomAnswer,
-  type CustomForm,
-  type CustomFormScreen,
-  type FormSignatureDrafts,
-  type IntakeCatalog,
+  formWalkPayload,
+  formWalkScreens,
 } from '@ramassa/shared/intake-builder';
 import { tokens } from '@ramassa/shared/tokens';
 
-/** Her strokes or "No puc signar" (RAPP-771), by block id. */
-type Strokes = FormSignatureDrafts;
-type Ticks = Readonly<Record<string, boolean>>;
-
-/** What she gave on the form so far, kept across its screens. */
-interface FormDraft {
-  readonly answers: CustomAnswerDraft;
-  readonly signatures: Strokes;
-  readonly consents: Ticks;
-}
-
 export default function CustomFormRoute() {
+  const { t } = useTranslation('onboarding');
+  const { language } = useLanguage();
+  const router = useRouter();
   const { responseId = '' } = useLocalSearchParams<{ responseId: string }>();
   const pending = useMyCustomForms(true);
   const source = useCustomFormSource(true);
   const chain = useMyOnboardingChain(true);
   const passChainedForm = usePassChainedForm();
+  const answer = useAnswerCustomForm();
 
   if (pending.isPending || source.isPending) {
     return (
@@ -88,251 +53,44 @@ export default function CustomFormRoute() {
     asked === undefined || source.data === undefined
       ? undefined
       : customFormById(source.data.catalog, asked.formId);
-  // Answered, dismissed, archived or not hers: Home shows what is left.
-  if (asked === undefined || form === undefined || source.data === undefined) {
+  // Answered, dismissed, archived, someone else's, or with nothing left to ask: Home shows what is left.
+  if (
+    asked === undefined ||
+    form === undefined ||
+    source.data === undefined ||
+    formWalkScreens(source.data.catalog, form, source.data.answers).length === 0
+  ) {
     return <Redirect href={'/' as Href} />;
   }
+  const { catalog, answers: saved } = source.data;
   const ref = customFormRef(form.id);
   const isChained = chain.data?.includes(ref) === true;
+  // A legal form is never put off (RAPP-771): Back on its first screen goes nowhere.
+  const isBlocking = asked.isBlocking || asked.kind === 'legal';
   return (
-    <FormWalk
+    <FormWalker
       key={responseId}
-      responseId={responseId}
-      form={form}
-      catalog={source.data.catalog}
-      saved={source.data.answers}
-      // A legal form is never put off (RAPP-771): Back on its first screen goes nowhere.
-      isBlocking={asked.isBlocking || asked.kind === 'legal'}
-      // An optional chained form she puts off leaves the walk (RAPP-703).
-      onPutOff={
-        isChained && !asked.isBlocking && asked.kind !== 'legal' ? () => passChainedForm(ref) : null
-      }
-    />
-  );
-}
-
-function FormWalk({
-  responseId,
-  form,
-  catalog,
-  saved,
-  isBlocking,
-  onPutOff,
-}: {
-  readonly responseId: string;
-  readonly form: CustomForm;
-  readonly catalog: IntakeCatalog;
-  readonly saved: CustomAnswerDraft;
-  readonly isBlocking: boolean;
-  /** Back on the first screen of a chained form: the walk goes on without it. */
-  readonly onPutOff: (() => void) | null;
-}) {
-  const { t } = useTranslation('onboarding');
-  const { language } = useLanguage();
-  const router = useRouter();
-  const answer = useAnswerCustomForm();
-  const asking = customFormAskingScreens(catalog, form);
-  const shownFor = (answers: CustomAnswerDraft) => openFormScreens(catalog, form, asking, answers);
-  const [draft, setDraft] = useState<FormDraft>({ answers: saved, signatures: {}, consents: {} });
-  const [currentId, setCurrentId] = useState(() => shownFor(saved)[0]?.id);
-  const [isSending, setIsSending] = useState(false);
-  const [hasFailed, setHasFailed] = useState(false);
-  const screens = shownFor(draft.answers);
-  const index = screens.findIndex((each) => each.id === currentId);
-  const screen = screens[index];
-  if (screen === undefined) return <Redirect href={'/' as Href} />;
-
-  async function send(final: FormDraft, screens: typeof asking) {
-    const asked = screens.flatMap((each) => customFormScreenQuestions(catalog, each.id));
-    const blocks = screens.flatMap((each) => customFormScreenBlocks(catalog, each.id));
-    const consents = screens.flatMap((each) => customFormScreenConsents(catalog, each.id));
-    setIsSending(true);
-    setHasFailed(false);
-    const isSent = await answer(responseId, {
-      answers: Object.fromEntries(
-        asked
-          .filter((question) => isCustomQuestionVisible(question, final.answers))
-          .map((question) => [question.id, final.answers[question.id] ?? null]),
-      ),
-      signatures: formSignaturesPayload(blocks, final.signatures, language),
-      ...(consents.length === 0
-        ? {}
-        : {
-            consents: Object.fromEntries(
-              consents.map((consent) => [consent.key, final.consents[consent.key] === true]),
-            ),
-          }),
-      language,
-    });
-    setIsSending(false);
-    if (!isSent) {
-      setHasFailed(true);
-      playHaptic('warning');
-      return;
-    }
-    playHaptic('success');
-    router.replace('/' as Href);
-  }
-
-  return (
-    <FormStep
-      key={screen.id}
       catalog={catalog}
-      screen={screen}
-      number={index + 1}
-      total={screens.length}
-      draft={draft}
-      // Send on the last screen her answers open, as she answers this one.
-      isLastFor={(answers) => {
-        const shown = shownFor({ ...draft.answers, ...answers });
-        return shown[shown.length - 1]?.id === screen.id;
+      form={form}
+      saved={saved}
+      sendLabel={t('customFormSend')}
+      failureMessage={t('customFormFailed')}
+      onSubmit={async (draft, screens) => {
+        const code = await answer(responseId, formWalkPayload(catalog, screens, draft, language));
+        if (code === null) router.replace('/' as Href);
+        return code;
       }}
-      isSending={isSending}
-      failure={hasFailed ? t('customFormFailed') : null}
-      onBack={
-        index > 0
-          ? (next) => {
-              setDraft(next);
-              const shown = shownFor(next.answers);
-              setCurrentId(
-                shown[
-                  Math.max(
-                    shown.findIndex((each) => each.id === screen.id),
-                    1,
-                  ) - 1
-                ]?.id,
-              );
+      onLeave={
+        // An optional chained form she puts off leaves the walk (RAPP-703).
+        isChained && !isBlocking
+          ? () => {
+              passChainedForm(ref);
+              router.replace('/' as Href);
             }
-          : onPutOff !== null
-            ? () => {
-                onPutOff();
-                router.replace('/' as Href);
-              }
-            : isBlocking
-              ? undefined
-              : () => router.back()
+          : isBlocking
+            ? undefined
+            : () => router.back()
       }
-      onContinue={(next) => {
-        setDraft(next);
-        // Her answer on this screen may open or close the next ones.
-        const shown = shownFor(next.answers);
-        const at = shown.findIndex((each) => each.id === screen.id);
-        const following = shown[at + 1];
-        if (following !== undefined) {
-          setCurrentId(following.id);
-          return;
-        }
-        void send(next, shown);
-      }}
     />
-  );
-}
-
-function FormStep({
-  catalog,
-  screen,
-  number,
-  total,
-  draft,
-  isLastFor,
-  isSending,
-  failure,
-  onBack,
-  onContinue,
-}: {
-  readonly catalog: IntakeCatalog;
-  readonly screen: CustomFormScreen;
-  readonly number: number;
-  readonly total: number;
-  readonly draft: FormDraft;
-  readonly isLastFor: (answers: CustomAnswerDraft) => boolean;
-  readonly isSending: boolean;
-  readonly failure: string | null;
-  readonly onBack: ((draft: FormDraft) => void) | undefined;
-  readonly onContinue: (draft: FormDraft) => void;
-}) {
-  const { t } = useTranslation('onboarding');
-  const { language } = useLanguage();
-  const questions = customFormScreenQuestions(catalog, screen.id);
-  const [answers, setAnswers] = useState<CustomAnswerDraft>(draft.answers);
-  const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
-  const [isDrawing, setIsDrawing] = useState(false);
-  const source = { catalog, signatures: draft.signatures, consents: draft.consents };
-  const signatures = useFormBlocks(screen.id, setIsDrawing, source);
-  const consents = useScreenConsents(screen.id, source);
-  // One rule with the admin (RAPP-710): a language never written follows the Catalan.
-  const intro = teamTextIn(screen.intro, language, true);
-  const own = formScreenTextsIn(screen.texts, language);
-
-  const current = (checked: CustomAnswerDraft): FormDraft => ({
-    answers: { ...draft.answers, ...checked },
-    signatures: signatures.drafted(draft.signatures),
-    consents: consents.drafted(draft.consents),
-  });
-
-  return (
-    <WizardFrame
-      stepNumber={number}
-      totalSteps={total}
-      title={teamTextIn(screen.title, language, false)}
-      intro={intro === '' ? undefined : intro}
-      scrollEnabled={!isDrawing}
-      // The screen's own help line and main button (RAPP-771).
-      help={own.help}
-      continueLabel={
-        own.continueLabel ?? (isLastFor(answers) ? t('customFormSend') : t('continueAction'))
-      }
-      isContinueBusy={isSending}
-      onContinue={() => {
-        // The shared checks, as on her Onboarding (RAPP-610).
-        const checked = checkCustomAnswers(questions, answers, t);
-        setAnswers(checked.answers);
-        setErrors(checked.errors);
-        const isSigned = signatures.check();
-        const isTicked = consents.check();
-        if (Object.keys(checked.errors).length > 0 || !isSigned || !isTicked) {
-          playHaptic('warning');
-          return;
-        }
-        onContinue(current(checked.answers));
-      }}
-      onBack={onBack === undefined ? undefined : () => onBack(current(answers))}
-    >
-      <WizardValidationSummary
-        isVisible={Object.keys(errors).length > 0 || signatures.hasErrors || consents.hasErrors}
-        message={t('errorSummary')}
-      />
-      <WizardValidationSummary
-        testID="custom-form-failed"
-        isVisible={failure !== null}
-        message={failure ?? ''}
-      />
-      <View testID={`custom-form-screen-${screen.id}`} className="gap-lg">
-        {signatures.interleave(
-          questions.filter((question) => isCustomQuestionVisible(question, answers)),
-          (question) => (
-            <CustomQuestionField
-              key={question.id}
-              question={question}
-              value={answers[question.id]}
-              errorMessage={errors[question.id]}
-              onChange={(value) => {
-                setAnswers((existing) =>
-                  updateCustomAnswer(questions, existing, question.id, value),
-                );
-                if (errors[question.id] !== undefined) {
-                  setErrors((existing) =>
-                    Object.fromEntries(
-                      Object.entries(existing).filter(([id]) => id !== question.id),
-                    ),
-                  );
-                }
-              }}
-            />
-          ),
-          consents.entries,
-        )}
-      </View>
-    </WizardFrame>
   );
 }
