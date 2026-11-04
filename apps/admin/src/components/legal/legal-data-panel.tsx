@@ -7,8 +7,8 @@
  *     app's features still read it.
  *   - Signatures: the signature blocks of every form, read only, each opening
  *     its form.
- *   - Documents accepted: the app terms and the season authorization, read
- *     only, each opening its form.
+ *   - Documents accepted: every legal form (RAPP-771), the app terms and the
+ *     season authorization first, read only, each opening its form.
  *
  * Each row says where it is asked with the chips the fields use. A text
  * saved here reaches players with the form's next Desa.
@@ -203,7 +203,7 @@ export function LegalDataPanel({
   const documentRow = (
     id: string,
     name: string,
-    surface: 'authorization' | 'terms',
+    surface: 'authorization' | 'terms' | 'custom_form',
     to: string,
   ): { readonly id: string; readonly row: ReactNode } => ({
     id,
@@ -218,6 +218,10 @@ export function LegalDataPanel({
       />
     ),
   });
+  // The legal forms the team created (RAPP-771); the app's two keep their own rows.
+  const legalForms = (catalog.customForms ?? []).filter(
+    (form) => form.kind === 'legal' && form.systemKey === null && !form.isArchived,
+  );
 
   return (
     <Page data-testid="legal-data">
@@ -268,6 +272,14 @@ export function LegalDataPanel({
             t('nav:staff.authorization'),
             'authorization',
             '/forms/authorization',
+          ),
+          ...legalForms.map((form) =>
+            documentRow(
+              form.id,
+              textIn(form.name, language),
+              'custom_form',
+              `/forms/custom/${form.id}`,
+            ),
           ),
         ]}
       />

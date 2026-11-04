@@ -36,7 +36,8 @@ function isOnboardingPath(pathname: string): boolean {
 
 /**
  * The legal forms (RAPP-696): the authorization and terms drafts she writes,
- * each a board with its screens. The old Textos legals address (RAPP-694)
+ * each a board with its screens, and Condicions legals, the page listing
+ * every legal form (RAPP-771). The old Textos legals address (RAPP-694)
  * stays open so it forwards her there.
  */
 function isLegalPath(pathname: string): boolean {
@@ -47,7 +48,7 @@ function isLegalPath(pathname: string): boolean {
   );
 }
 
-const LEGAL_FORM_PATHS = ['/forms/authorization', '/forms/terms'] as const;
+const LEGAL_FORM_PATHS = ['/forms/authorization', '/forms/terms', '/forms/legal'] as const;
 
 /** The forms the team creates (RAPP-700): the list, each form and its screens. */
 function isCustomFormPath(pathname: string): boolean {

@@ -10,6 +10,11 @@
  */
 
 import { useStepUp } from '@/components/auth/step-up';
+import {
+  FormVersions,
+  type FormVersionGroup,
+  type FormVersionRow,
+} from '@/components/custom-forms/form-versions';
 import { Page, PageHeader } from '@/components/layout/page';
 import {
   AUTHORIZATION_PHONE_STEPS,
@@ -154,7 +159,7 @@ export function AuthorizationBoard({ data }: { readonly data: LegalFormsData }) 
   );
 }
 
-/** The published versions by season (newest season first), and the draft (RAPP-694). */
+/** The published versions by season (newest season first), and the draft (RAPP-694), in the one versions panel. */
 function AuthorizationVersions({
   versions,
   seasons,
@@ -162,84 +167,43 @@ function AuthorizationVersions({
   readonly versions: readonly AuthorizationVersion[];
   readonly seasons: LegalFormsData['seasons'];
 }) {
-  const { t, i18n } = useTranslation('settings');
+  const { t } = useTranslation('settings');
   const draft = versions.find((version) => version.publishedAt === null) ?? null;
   const currentSeasonId = seasons.find((season) => season.isCurrent)?.id ?? null;
-  const groups: { seasonId: string; seasonName: string; versions: AuthorizationVersion[] }[] = [];
+  const groups: FormVersionGroup[] = [];
   for (const version of versions) {
-    if (version.publishedAt === null) continue;
+    if (version.publishedAt === null || version.versionNumber === null) continue;
     const seasonId = version.seasonId ?? '';
-    const group = groups.find((each) => each.seasonId === seasonId);
+    const row: FormVersionRow = {
+      key: version.id,
+      number: version.versionNumber,
+      publishedAt: version.publishedAt,
+      isCorrection: version.isCorrection,
+      isCurrent: version.isCurrent,
+    };
+    const group = groups.find((each) => each.key === seasonId);
     if (group === undefined) {
-      groups.push({ seasonId, seasonName: version.seasonName ?? '', versions: [version] });
+      groups.push({
+        key: seasonId,
+        season: { name: version.seasonName ?? '', isCurrent: seasonId === currentSeasonId },
+        versions: [row],
+      });
     } else {
-      group.versions.push(version);
+      groups[groups.indexOf(group)] = { ...group, versions: [...group.versions, row] };
     }
   }
   return (
-    <section className="flex flex-col gap-2 rounded-xl border bg-card p-5">
-      <h2 className="text-start text-base font-semibold">{t('authorizationVersionsTitle')}</h2>
-      {versions.length === 0 ? (
-        <p className="text-start text-sm text-muted-foreground">{t('authorizationNoVersions')}</p>
-      ) : (
-        <ul className="flex flex-col gap-1" data-testid="authorization-versions">
-          {draft === null ? null : (
-            <li className="text-start text-sm" data-testid="authorization-draft-row">
-              {t('authorizationEditor.draftRow', {
-                date: new Date(draft.updatedAt ?? Date.now()).toLocaleDateString(
-                  i18n.resolvedLanguage,
-                ),
-              })}
-              <span
-                className="ms-2 rounded border border-dashed px-1.5 py-0.5 text-xs"
-                data-testid="authorization-draft-note"
-              >
-                {t('draftSeenByTestPlayers')}
-              </span>
-            </li>
-          )}
-          {groups.map((group) => (
-            <li
-              key={group.seasonId}
-              className="flex flex-col gap-1 pt-2"
-              data-testid={`authorization-season-${group.seasonId}`}
-            >
-              <span className="text-start text-sm font-medium">
-                {group.seasonName}
-                {group.seasonId === currentSeasonId ? (
-                  <span className="ms-2 rounded bg-muted px-1.5 py-0.5 text-xs font-normal">
-                    {t('authorizationCurrentSeasonBadge')}
-                  </span>
-                ) : null}
-              </span>
-              <ul className="flex flex-col gap-1 ps-3">
-                {group.versions.map((version) => (
-                  <li key={version.id} className="text-start text-sm">
-                    {t('authorizationVersionInSeason', {
-                      number: version.versionNumber,
-                      date: new Date(version.publishedAt ?? '').toLocaleDateString(
-                        i18n.resolvedLanguage,
-                      ),
-                    })}
-                    {version.isCorrection ? (
-                      <VersionBadge label={t('saveDialog.correction')} />
-                    ) : null}
-                    {version.isCurrent ? (
-                      <VersionBadge label={t('authorizationCurrentBadge')} />
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+    <FormVersions
+      title={t('authorizationVersionsTitle')}
+      draft={
+        draft === null
+          ? null
+          : { updatedAt: draft.updatedAt ?? new Date().toISOString(), isSeenByTestPlayers: true }
+      }
+      groups={groups}
+      testId="authorization-versions"
+    />
   );
-}
-
-function VersionBadge({ label }: { readonly label: string }) {
-  return <span className="ms-2 rounded bg-muted px-1.5 py-0.5 text-xs">{label}</span>;
 }
 
 /** One screen of the authorization, opened from its card. */
@@ -346,41 +310,31 @@ export function TermsBoard({ data }: { readonly data: LegalFormsData }) {
 }
 
 function TermsVersions({ data }: { readonly data: LegalFormsData }) {
-  const { t, i18n } = useTranslation('settings');
+  const { t } = useTranslation('settings');
   const draft = data.termsVersions.find((version) => version.versionNumber === null) ?? null;
-  const published = data.termsVersions.filter((version) => version.versionNumber !== null);
+  const published = data.termsVersions.flatMap((version, index): FormVersionRow[] =>
+    version.versionNumber === null
+      ? []
+      : [
+          {
+            key: version.id,
+            number: version.versionNumber,
+            publishedAt: version.publishedAt ?? version.updatedAt,
+            isCorrection: version.isCorrection,
+            // The newest published version is the one in force.
+            isCurrent:
+              index === data.termsVersions.findIndex((each) => each.versionNumber !== null),
+            count: version.acceptanceCount,
+          },
+        ],
+  );
   return (
-    <section className="flex flex-col gap-2 rounded-xl border bg-card p-5">
-      <h2 className="text-start text-base font-semibold">{t('appTerms.versionsTitle')}</h2>
-      <ul className="flex flex-col gap-1" data-testid="app-terms-versions">
-        {draft === null ? null : (
-          <li className="text-start text-sm">
-            {t('appTerms.draftRow', {
-              date: new Date(draft.updatedAt).toLocaleDateString(i18n.resolvedLanguage),
-            })}
-            <span
-              className="ms-2 rounded border border-dashed px-1.5 py-0.5 text-xs"
-              data-testid="app-terms-draft-note"
-            >
-              {t('draftSeenByTestPlayers')}
-            </span>
-          </li>
-        )}
-        {published.map((version, index) => (
-          <li key={version.id} className="text-start text-sm">
-            {t('appTerms.versionRow', {
-              number: version.versionNumber,
-              date: new Date(version.publishedAt ?? version.updatedAt).toLocaleDateString(
-                i18n.resolvedLanguage,
-              ),
-              count: version.acceptanceCount,
-            })}
-            {version.isCorrection ? <VersionBadge label={t('saveDialog.correction')} /> : null}
-            {index === 0 ? <VersionBadge label={t('appTerms.currentBadge')} /> : null}
-          </li>
-        ))}
-      </ul>
-    </section>
+    <FormVersions
+      title={t('appTerms.versionsTitle')}
+      draft={draft === null ? null : { updatedAt: draft.updatedAt, isSeenByTestPlayers: true }}
+      groups={[{ key: 'all', season: null, versions: published }]}
+      testId="app-terms-versions"
+    />
   );
 }
 

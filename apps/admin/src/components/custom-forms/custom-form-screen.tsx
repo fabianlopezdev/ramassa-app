@@ -201,6 +201,7 @@ function FormScreenBody({
                 placedPhoneQuestions(catalog, each.id, dashboardLanguage, null, 'custom_form'),
                 dashboardLanguage,
                 t,
+                each.texts,
               )}
               language={dashboardLanguage}
             />
@@ -246,8 +247,8 @@ function FormScreenBody({
       phoneQuestions={(language, wording) =>
         placedPhoneQuestions(catalog, screen.id, language, wording, 'custom_form')
       }
-      onStore={(title, intro) =>
-        saveCustomFormScreen(supabase, { id: screen.id, formId: form.id, title, intro })
+      onStore={(title, intro, texts) =>
+        saveCustomFormScreen(supabase, { id: screen.id, formId: form.id, title, intro, texts })
       }
       fields={(row, language, name) => (
         <ScreenFieldsSection

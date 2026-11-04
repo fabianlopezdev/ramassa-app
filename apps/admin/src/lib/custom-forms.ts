@@ -24,6 +24,8 @@ export async function loadCustomForms() {
   const access = {
     canDesign: canDesignOnboarding(permissions),
     canReadResponses: permissions.has('participants.view'),
+    // A legal form asks every player again: an admin publishes it (RAPP-771).
+    canPublishLegal: permissions.has('settings.organization'),
   };
   if (!access.canDesign && !access.canReadResponses) {
     return { intakeCatalog: EMPTY_INTAKE_CATALOG, seasons: [], ...access };

@@ -28,6 +28,7 @@ import { AddBlockMenu, FormBlockRow } from '@/components/fields/form-block-row';
 import { PlacementRow } from '@/components/fields/placement-row';
 import {
   PlacementWordingForm,
+  WordingOverrideForm,
   type PlacementWordingDraft,
 } from '@/components/fields/placement-wording-form';
 import { EditorSection } from '@/components/layout/editor-section';
@@ -407,6 +408,8 @@ export function ScreenFieldsSection({
                 isEditing={editing === item.consent.placementId}
                 onToggleEdit={() => toggle(item.consent.placementId)}
                 onClose={close}
+                // A form words a consent its own way (RAPP-771).
+                isRewordedHere={isForm}
               />
             ) : item.kind === 'block' ? (
               <FormBlockRow
@@ -488,7 +491,12 @@ export function ScreenFieldsSection({
   );
 }
 
-/** A consent asked on the screen (RAPP-699): required here or not, reworded for every form. */
+/**
+ * A consent asked on the screen (RAPP-699): required here or not. On
+ * Onboarding and the authorization it is reworded for every form; on a form
+ * (RAPP-771) the row rewords it for that form only, as a field's row does,
+ * and the form's next version freezes that text.
+ */
 function ConsentPlacementRow({
   consent,
   handle,
@@ -497,6 +505,7 @@ function ConsentPlacementRow({
   isEditing,
   onToggleEdit,
   onClose,
+  isRewordedHere,
 }: {
   readonly consent: PlacedConsent;
   readonly handle: SortableHandle;
@@ -505,6 +514,7 @@ function ConsentPlacementRow({
   readonly isEditing: boolean;
   readonly onToggleEdit: () => void;
   readonly onClose: () => void;
+  readonly isRewordedHere: boolean;
 }) {
   const { t } = useTranslation('settings');
   const actions = useProfileLayoutActions();
@@ -547,13 +557,37 @@ function ConsentPlacementRow({
         {...(canRemove ? { onRemove: () => setIsConfirming(true) } : {})}
         testId={`consent-row-${consent.key}`}
       >
-        <ConsentForm
-          key={consent.id}
-          consent={consent}
-          onSave={(draft) => actions.saveConsent({ id: consent.id, ...draft })}
-          onCancel={onClose}
-          testId={`consent-row-${consent.key}-form`}
-        />
+        {isRewordedHere ? (
+          <WordingOverrideForm
+            key={consent.placementId}
+            texts={[
+              {
+                name: 'consent-body',
+                legend: t('legalData.formWording'),
+                value: consent.bodyOverride,
+                isLong: true,
+                placeholder: (shown) => textIn(consent.ownBody, shown),
+              },
+            ]}
+            onSave={(draft) =>
+              actions.saveConsentPlacementWording(
+                consent.placementId,
+                Object.keys(draft['consent-body']).length === 0 ? null : draft['consent-body'],
+              )
+            }
+            onCancel={onClose}
+            testId={`consent-row-${consent.key}-wording`}
+          />
+        ) : (
+          <ConsentForm
+            key={consent.id}
+            // The consent's own text: Dades legals keeps one for every form.
+            consent={{ name: consent.name, body: consent.ownBody }}
+            onSave={(draft) => actions.saveConsent({ id: consent.id, ...draft })}
+            onCancel={onClose}
+            testId={`consent-row-${consent.key}-form`}
+          />
+        )}
       </PlacementRow>
       <ConfirmDialog
         isOpen={isConfirming}

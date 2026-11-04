@@ -74,10 +74,14 @@ export interface StaffNavItem extends NavItem {
   readonly parent?: StaffNavParentId;
 }
 
-/** The rows that hold items, with their own label and icon. */
+/**
+ * The rows that hold items, with their own label and icon. A row with a page
+ * of its own (`to`) opens it, and its chevron folds what it holds: Condicions
+ * legals lists every legal form (RAPP-771).
+ */
 export const STAFF_NAV_PARENTS = {
-  legal: { labelKey: 'nav:staff.legal', icon: Scale },
-} as const satisfies Record<StaffNavParentId, { labelKey: string; icon: LucideIcon }>;
+  legal: { labelKey: 'nav:staff.legal', icon: Scale, to: '/forms/legal' },
+} as const satisfies Record<StaffNavParentId, { labelKey: string; icon: LucideIcon; to?: string }>;
 
 /** The groups in menu order; the top group has no label. */
 export const STAFF_NAV_GROUPS = [

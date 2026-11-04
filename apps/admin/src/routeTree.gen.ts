@@ -75,6 +75,7 @@ import { Route as StaffContentServicesNewRouteImport } from './routes/_staff.con
 import { Route as StaffFormsAuthorizationIndexRouteImport } from './routes/_staff.forms.authorization.index'
 import { Route as StaffFormsAuthorizationStepRouteImport } from './routes/_staff.forms.authorization.$step'
 import { Route as StaffFormsCustomIndexRouteImport } from './routes/_staff.forms.custom.index'
+import { Route as StaffFormsLegalIndexRouteImport } from './routes/_staff.forms.legal.index'
 import { Route as StaffFormsTermsIndexRouteImport } from './routes/_staff.forms.terms.index'
 import { Route as StaffFormsTermsStepRouteImport } from './routes/_staff.forms.terms.$step'
 import { Route as StaffOnboardingScreensScreenIdRouteImport } from './routes/_staff.onboarding.screens.$screenId'
@@ -438,6 +439,12 @@ const StaffFormsCustomIndexRoute = StaffFormsCustomIndexRouteImport.update({
   path: '/forms/custom/',
   getParentRoute: () => StaffRoute,
 } as any)
+
+const StaffFormsLegalIndexRoute = StaffFormsLegalIndexRouteImport.update({
+  id: '/forms/legal/',
+  path: '/forms/legal/',
+  getParentRoute: () => StaffRoute,
+} as any)
 const StaffFormsTermsIndexRoute = StaffFormsTermsIndexRouteImport.update({
   id: '/forms/terms/',
   path: '/forms/terms/',
@@ -546,6 +553,7 @@ export interface FileRoutesByFullPath {
   '/content/services/': typeof StaffContentServicesIndexRoute
   '/forms/authorization/': typeof StaffFormsAuthorizationIndexRoute
   '/forms/custom/': typeof StaffFormsCustomIndexRoute
+  '/forms/legal/': typeof StaffFormsLegalIndexRoute
   '/forms/terms/': typeof StaffFormsTermsIndexRoute
   '/content/services/reviews/$serviceId': typeof StaffContentServicesReviewsServiceIdRoute
   '/content/services/reviews/': typeof StaffContentServicesReviewsIndexRoute
@@ -614,6 +622,7 @@ export interface FileRoutesByTo {
   '/content/services': typeof StaffContentServicesIndexRoute
   '/forms/authorization': typeof StaffFormsAuthorizationIndexRoute
   '/forms/custom': typeof StaffFormsCustomIndexRoute
+  '/forms/legal': typeof StaffFormsLegalIndexRoute
   '/forms/terms': typeof StaffFormsTermsIndexRoute
   '/content/services/reviews/$serviceId': typeof StaffContentServicesReviewsServiceIdRoute
   '/content/services/reviews': typeof StaffContentServicesReviewsIndexRoute
@@ -690,6 +699,7 @@ export interface FileRoutesById {
   '/_staff/content/services/': typeof StaffContentServicesIndexRoute
   '/_staff/forms/authorization/': typeof StaffFormsAuthorizationIndexRoute
   '/_staff/forms/custom/': typeof StaffFormsCustomIndexRoute
+  '/_staff/forms/legal/': typeof StaffFormsLegalIndexRoute
   '/_staff/forms/terms/': typeof StaffFormsTermsIndexRoute
   '/_staff/content/services/reviews/$serviceId': typeof StaffContentServicesReviewsServiceIdRoute
   '/_staff/content/services/reviews/': typeof StaffContentServicesReviewsIndexRoute
@@ -765,6 +775,7 @@ export interface FileRouteTypes {
     | '/content/services/'
     | '/forms/authorization/'
     | '/forms/custom/'
+    | '/forms/legal/'
     | '/forms/terms/'
     | '/content/services/reviews/$serviceId'
     | '/content/services/reviews/'
@@ -833,6 +844,7 @@ export interface FileRouteTypes {
     | '/content/services'
     | '/forms/authorization'
     | '/forms/custom'
+    | '/forms/legal'
     | '/forms/terms'
     | '/content/services/reviews/$serviceId'
     | '/content/services/reviews'
@@ -908,6 +920,7 @@ export interface FileRouteTypes {
     | '/_staff/content/services/'
     | '/_staff/forms/authorization/'
     | '/_staff/forms/custom/'
+    | '/_staff/forms/legal/'
     | '/_staff/forms/terms/'
     | '/_staff/content/services/reviews/$serviceId'
     | '/_staff/content/services/reviews/'
@@ -1386,6 +1399,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffFormsCustomIndexRouteImport
       parentRoute: typeof StaffRoute
     }
+    '/_staff/forms/legal/': {
+      id: '/_staff/forms/legal/'
+      path: '/forms/legal'
+      fullPath: '/forms/legal/'
+      preLoaderRoute: typeof StaffFormsLegalIndexRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/_staff/forms/terms/': {
       id: '/_staff/forms/terms/'
       path: '/forms/terms'
@@ -1598,6 +1618,7 @@ interface StaffRouteChildren {
   StaffOnboardingScreensScreenIdRoute: typeof StaffOnboardingScreensScreenIdRoute
   StaffFormsAuthorizationIndexRoute: typeof StaffFormsAuthorizationIndexRoute
   StaffFormsCustomIndexRoute: typeof StaffFormsCustomIndexRoute
+  StaffFormsLegalIndexRoute: typeof StaffFormsLegalIndexRoute
   StaffFormsTermsIndexRoute: typeof StaffFormsTermsIndexRoute
   StaffFormsCustomFormIdIndexRoute: typeof StaffFormsCustomFormIdIndexRoute
   StaffFormsCustomFormIdScreensScreenIdRoute: typeof StaffFormsCustomFormIdScreensScreenIdRoute
@@ -1639,6 +1660,7 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffOnboardingScreensScreenIdRoute: StaffOnboardingScreensScreenIdRoute,
   StaffFormsAuthorizationIndexRoute: StaffFormsAuthorizationIndexRoute,
   StaffFormsCustomIndexRoute: StaffFormsCustomIndexRoute,
+  StaffFormsLegalIndexRoute: StaffFormsLegalIndexRoute,
   StaffFormsTermsIndexRoute: StaffFormsTermsIndexRoute,
   StaffFormsCustomFormIdIndexRoute: StaffFormsCustomFormIdIndexRoute,
   StaffFormsCustomFormIdScreensScreenIdRoute:

@@ -1,5 +1,5 @@
 /**
- * Formularis de l'equip (RAPP-700): the forms the team created, with Nou
+ * Altres formularis (RAPP-700, RAPP-771): the forms of kind Altre, with Nou
  * formulari. The people who design Onboarding build them; the team who reads
  * the participants opens them to send them and see who answered.
  * `ssr: false` for the reason every staff screen gives (the session lives in
@@ -21,7 +21,7 @@ export const Route = createFileRoute('/_staff/forms/custom/')({
 function CustomFormsPage() {
   return (
     <RequireAuth allow={['staff', 'admin']} anyPermission={CUSTOM_FORMS_PERMISSIONS}>
-      <CustomFormsList data={Route.useLoaderData()} />
+      <CustomFormsList data={Route.useLoaderData()} kind="other" />
     </RequireAuth>
   );
 }

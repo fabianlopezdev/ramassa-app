@@ -16,7 +16,9 @@ import { useTranslation } from 'react-i18next';
 import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import {
   formBlockText,
+  UNABLE_TO_DRAW,
   type EntityFormItem,
+  type FormSignatureDraft,
   type FormSignatureDrafts,
   type SignatureFormBlock,
 } from '@ramassa/shared/intake-builder';
@@ -106,7 +108,8 @@ export function ReferralFormFields({
             {/* The editor's preview draws the pad and keeps it still. */}
             <div inert={onSignatureChange === undefined}>
               <WebSignaturePad
-                strokes={signatures[item.id] ?? null}
+                // The entity always draws: "No puc signar" is hers on her phone (RAPP-771).
+                strokes={strokesOf(signatures[item.id])}
                 onChange={(next) => onSignatureChange?.(item.id, next)}
                 label={t('referrals:signatureLabel')}
                 prompt={t('referrals:signaturePrompt')}
@@ -237,4 +240,9 @@ export function ReferralFormFields({
       />
     </>
   );
+}
+
+/** The strokes drawn on a block; none while it is unsigned. */
+function strokesOf(given: FormSignatureDraft | null | undefined): SignatureStrokes | null {
+  return given === undefined || given === null || given === UNABLE_TO_DRAW ? null : given;
 }

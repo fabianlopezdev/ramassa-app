@@ -1,6 +1,7 @@
 /**
- * The name and the choices of a form the team creates (RAPP-700, RAPP-701):
- * who fills it, when it must be answered (with its date), who it is for, and
+ * The kind and the name and the choices of a form the team creates (RAPP-700,
+ * RAPP-701, RAPP-771): Legal or Altre first, preset by the page the dialog
+ * opened from, then who fills it, when it must be answered (with its date), who it is for, and
  * whether it repeats every season. The new form dialog asks them, and the
  * form's Configuració tab edits them.
  *
@@ -27,6 +28,7 @@ import { getLanguageDirection } from '@ramassa/shared/i18n/languages';
 import {
   CUSTOM_FORM_AUDIENCES,
   CUSTOM_FORM_FILLERS,
+  CUSTOM_FORM_KINDS,
   CUSTOM_FORM_MANDATORY_LEVELS,
   type CustomFormChoices,
 } from '@ramassa/shared/intake-builder';
@@ -110,6 +112,7 @@ export function FormChoicesFields({
   onChange,
   error,
   isRepeatLocked = false,
+  isKindLocked = false,
   hasLanguages = false,
   idPrefix,
 }: {
@@ -118,6 +121,8 @@ export function FormChoicesFields({
   readonly error: string | null;
   /** Whether it repeats stays once it was published: its versions belong to seasons or not. */
   readonly isRepeatLocked?: boolean;
+  /** The kind stays once it was published, and on the app's own legal forms (RAPP-771). */
+  readonly isKindLocked?: boolean;
   /** The name in every language; the new form dialog asks it in Catalan. */
   readonly hasLanguages?: boolean;
   readonly idPrefix: string;
@@ -127,6 +132,18 @@ export function FormChoicesFields({
   const nameLanguage = hasLanguages ? language : 'ca';
   return (
     <FieldGroup>
+      <ChoiceCards
+        legend={t('customForms.kind')}
+        name={`${idPrefix}-kind`}
+        value={choices.kind}
+        isDisabled={isKindLocked}
+        options={CUSTOM_FORM_KINDS.map((kind) => ({
+          value: kind,
+          title: t(`customForms.kindOption.${kind}`),
+        }))}
+        onChange={(kind) => onChange({ ...choices, kind })}
+        testId={`${idPrefix}-kind`}
+      />
       <Field data-invalid={error !== null}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <FieldLabel htmlFor={`${idPrefix}-name`}>{t('customForms.name')}</FieldLabel>

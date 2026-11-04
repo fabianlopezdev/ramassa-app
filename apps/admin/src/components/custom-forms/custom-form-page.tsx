@@ -14,9 +14,15 @@
  * asks Correcció or Nova versió (the shared Desa dialog), and a repeating
  * form is published to a season, the current one or a future one, as the
  * season authorization is. Arxiva takes it off every phone.
+ *
+ * A legal form (RAPP-771) sits under Condicions legals: an admin publishes
+ * it, with a fresh authenticator code, and the app's own legal forms are
+ * never archived. The versions panel lists what each Publica published.
  */
 
+import { useStepUp } from '@/components/auth/step-up';
 import { choicesProblem, FormChoicesFields } from '@/components/custom-forms/form-choices';
+import { FormVersions } from '@/components/custom-forms/form-versions';
 import { EditorSection } from '@/components/layout/editor-section';
 import { Page, PageHeader } from '@/components/layout/page';
 import { AudiencePicker } from '@/components/notifications/audience-picker';
@@ -64,6 +70,7 @@ import { ChevronLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { isAppError } from '@ramassa/shared/errors';
 import {
   archiveCustomForm,
   formFamily,
@@ -138,9 +145,10 @@ export function CustomFormPage({
     <Page data-testid="custom-form-page">
       <div className="flex flex-col gap-2">
         <Button asChild variant="ghost" size="sm" className="-ms-2.5 w-fit text-muted-foreground">
-          <Link to="/forms/custom" data-testid="custom-form-back">
+          {/* A legal form is listed under Condicions legals (RAPP-771). */}
+          <Link to={formListPath(form)} data-testid="custom-form-back">
             <ChevronLeft aria-hidden data-icon="inline-start" className="rtl:rotate-180" />
-            {t('nav:staff.customForms')}
+            {form?.kind === 'legal' ? t('nav:staff.legal') : t('nav:staff.customForms')}
           </Link>
         </Button>
         <PageHeader
@@ -181,8 +189,9 @@ export function CustomFormPage({
           </TabsList>
           {data.canDesign ? (
             <>
-              <TabsContent value="screens">
+              <TabsContent value="screens" className="flex flex-col gap-6">
                 <FormScreensBoard data={data} form={form} />
+                <CustomFormVersions data={data} form={form} />
               </TabsContent>
               <TabsContent value="settings" className="flex flex-col gap-6">
                 <FormSettings form={form} />
@@ -201,9 +210,69 @@ export function CustomFormPage({
   );
 }
 
+/** The page that lists a form: Condicions legals for a legal one (RAPP-771). */
+export function formListPath(
+  form: Pick<CustomForm, 'kind'> | undefined,
+): '/forms/legal' | '/forms/custom' {
+  return form?.kind === 'legal' ? '/forms/legal' : '/forms/custom';
+}
+
+/** What each Publica published, in the one versions panel (RAPP-771). */
+function CustomFormVersions({
+  data,
+  form,
+}: {
+  readonly data: CustomFormData;
+  readonly form: CustomForm;
+}) {
+  const { t } = useTranslation('settings');
+  const current = data.seasons.find((season) => season.isCurrent);
+  const groups = form.repeatsEachSeason
+    ? data.seasons.flatMap((season) => {
+        const versions = form.versions.filter((version) => version.seasonId === season.id);
+        return versions.length === 0
+          ? []
+          : [
+              {
+                key: season.id,
+                season: { name: season.name, isCurrent: season.isCurrent },
+                versions,
+              },
+            ];
+      })
+    : [{ key: 'all', season: null, versions: form.versions }];
+  return (
+    <FormVersions
+      title={t('authorizationVersionsTitle')}
+      // Every save is a draft; a legal form's reaches the test players.
+      draft={{ updatedAt: null, isSeenByTestPlayers: form.kind === 'legal' }}
+      groups={groups.map((group) => {
+        // The live one: the newest, of the current season when it repeats.
+        const live =
+          group.season === null || group.key === current?.id ? group.versions[0] : undefined;
+        return {
+          ...group,
+          versions: group.versions.map((version) => ({
+            key: String(version.version),
+            number: version.version,
+            publishedAt: version.publishedAt,
+            isCorrection: version.isCorrection,
+            isCurrent: version === live,
+          })),
+        };
+      })}
+      testId="custom-form-versions"
+    />
+  );
+}
+
 function FormActions({ data, form }: { readonly data: CustomFormData; readonly form: CustomForm }) {
   const { t } = useTranslation('settings');
   const reload = useReload();
+  const withStepUp = useStepUp();
+  const isLegal = form.kind === 'legal';
+  // Publishing a legal form is an admin decision, as the app terms (RAPP-771).
+  const canPublish = !isLegal || data.canPublishLegal;
   const [isBusy, setIsBusy] = useState(false);
   // A repeating form is published to the current season or a future one.
   const current = data.seasons.find((season) => season.isCurrent);
@@ -225,8 +294,13 @@ function FormActions({ data, form }: { readonly data: CustomFormData; readonly f
     try {
       await action();
       await reload();
-    } catch {
-      toast.error(t('customForms.actionFailed'));
+    } catch (thrown) {
+      // A Correcció may not ask more of whoever answered (RAPP-771).
+      toast.error(
+        isAppError(thrown) && thrown.message.includes('a correction adds no required')
+          ? t('customForms.correctionAddsRequirement')
+          : t('customForms.actionFailed'),
+      );
     } finally {
       setIsBusy(false);
     }
@@ -256,7 +330,8 @@ function FormActions({ data, form }: { readonly data: CustomFormData; readonly f
       {data.canDesign && !form.isArchived ? (
         <Button
           type="button"
-          disabled={isBusy || (form.repeatsEachSeason && seasonId === null)}
+          disabled={isBusy || !canPublish || (form.repeatsEachSeason && seasonId === null)}
+          title={canPublish ? undefined : t('customForms.legalPublishNeedsAdmin')}
           onClick={() => {
             // A hidden screen is left out of the version (RAPP-711).
             if (form.screens.every((screen) => screen.isHidden === true)) {
@@ -265,10 +340,13 @@ function FormActions({ data, form }: { readonly data: CustomFormData; readonly f
             }
             void saveKind.request((kind) =>
               run(async () => {
-                const count = await publishCustomForm(supabase, form.id, {
-                  isCorrection: kind === 'correction',
-                  seasonId: form.repeatsEachSeason ? seasonId : null,
-                });
+                const publish = () =>
+                  publishCustomForm(supabase, form.id, {
+                    isCorrection: kind === 'correction',
+                    seasonId: form.repeatsEachSeason ? seasonId : null,
+                  });
+                // A fresh authenticator code, as the app terms' Publica (RAPP-235).
+                const count = isLegal ? await withStepUp(publish) : await publish();
                 toast.success(t('customForms.published', { count }));
               }),
             );
@@ -278,7 +356,8 @@ function FormActions({ data, form }: { readonly data: CustomFormData; readonly f
           {t('customForms.publish')}
         </Button>
       ) : null}
-      {data.canDesign ? (
+      {/* The app's own legal forms are never archived (RAPP-771). */}
+      {data.canDesign && form.systemKey === null ? (
         <Button
           type="button"
           variant="outline"
@@ -341,6 +420,7 @@ function FormScreensBoard({
             placedPhoneQuestions(catalog, screen.id, language, null, 'custom_form'),
             language,
             t,
+            screen.texts,
           )}
           language={language}
           isDimmed={isHidden || isOrphan}
@@ -495,6 +575,7 @@ function FormSettings({ form }: { readonly form: CustomForm }) {
   const { t } = useTranslation('settings');
   const reload = useReload();
   const [choices, setChoices] = useState<CustomFormChoices>({
+    kind: form.kind,
     name: form.name,
     filledBy: form.filledBy,
     mandatory: form.mandatory,
@@ -542,6 +623,7 @@ function FormSettings({ form }: { readonly form: CustomForm }) {
         error={error}
         hasLanguages
         isRepeatLocked={form.publishedAt !== null}
+        isKindLocked={form.publishedAt !== null || form.systemKey !== null}
         idPrefix="form-settings"
       />
     </EditorSection>

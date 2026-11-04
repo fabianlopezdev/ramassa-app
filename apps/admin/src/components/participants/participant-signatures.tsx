@@ -108,6 +108,12 @@ export function ParticipantSignatures({
                   })}
                 </dd>
               </dl>
+              {/* "No puc signar" (RAPP-771): the text she accepted, with no strokes. */}
+              {signature.unableToDraw ? (
+                <p className="text-start text-xs text-muted-foreground">
+                  {t('participants:authorizationUnableToDraw')}
+                </p>
+              ) : null}
               {signature.strokes === null ? null : (
                 <SignatureDrawing
                   strokes={signature.strokes}

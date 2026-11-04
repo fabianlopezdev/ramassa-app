@@ -21,6 +21,7 @@ import {
   reorderPlacements,
   saveConsent,
   saveConsentPlacement,
+  saveConsentPlacementWording,
   saveFormBlock,
   savePlacement,
   saveProfileField,
@@ -154,6 +155,14 @@ export function useProfileLayoutActions() {
     },
     async saveConsentPlacement(placementId: string, required: boolean): Promise<void> {
       await saveConsentPlacement(supabase, placementId, required);
+      await reload();
+    },
+    /** A form's own wording of a consent (RAPP-771); null gives back the consent's text. */
+    async saveConsentPlacementWording(
+      placementId: string,
+      body: BuilderText | null,
+    ): Promise<void> {
+      await saveConsentPlacementWording(supabase, placementId, body);
       await reload();
     },
     async removeConsentPlacement(placementId: string): Promise<void> {

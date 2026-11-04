@@ -80,6 +80,7 @@ import {
   setScreenHidden,
   textIn,
   type BuilderText,
+  type FormScreenTexts,
   type IntakeCatalog,
   type RamassaScreen,
 } from '@ramassa/shared/intake-builder';
@@ -429,12 +430,13 @@ function CustomScreenEditor({
       phoneQuestions={(language, wording) =>
         placedPhoneQuestions(catalog, screen.id, language, wording)
       }
-      onStore={(title, intro) =>
+      onStore={(title, intro, texts) =>
         saveIntakeScreen(supabase, {
           id: screen.id,
           title,
           intro,
           afterScreen: screen.afterScreen,
+          texts,
         })
       }
       fields={(row, language, name) => (
@@ -458,7 +460,9 @@ function CustomScreenEditor({
 export type RowEditing = ReturnType<typeof useRowEditing>;
 
 /** The texts of a screen the team made: its title (required) and intro (optional). */
-type TeamScreenField = 'title' | 'intro';
+/** The texts of a screen staff made: its Text box (RAPP-771), as an app screen's. */
+type TeamScreenField = 'title' | 'intro' | 'help' | 'continue_label';
+const TEAM_FIELDS = ['title', 'intro', 'help', 'continue_label'] as const;
 
 /**
  * The hide switch of a screen (RAPP-711), on every screen editor: the app's
@@ -499,8 +503,9 @@ function HideScreenField({
 }
 
 /**
- * A screen staff made, beside her phone (RAPP-641): its title and intro, then
- * its fields, consents and signature blocks. A Ramassà screen of Onboarding and
+ * A screen staff made, beside her phone (RAPP-641): its Text box (title,
+ * intro, help and main button, RAPP-771, as an app screen's), then its
+ * fields, consents and signature blocks. A Ramassà screen of Onboarding and
  * a screen of a form the team created (RAPP-700) are both edited here; each
  * says how it saves and which Desa dialog it asks.
  */
@@ -517,7 +522,11 @@ export function StaffScreenEditor({
   previewFooter,
   condition = null,
 }: {
-  readonly screen: { readonly title: BuilderText; readonly intro: BuilderText | null };
+  readonly screen: {
+    readonly title: BuilderText;
+    readonly intro: BuilderText | null;
+    readonly texts?: FormScreenTexts;
+  };
   readonly number: number;
   readonly total: number;
   readonly saveKind: {
@@ -529,7 +538,11 @@ export function StaffScreenEditor({
     language: LanguageCode,
     wording: TypedWording | null,
   ) => readonly PhoneQuestion[];
-  readonly onStore: (title: BuilderText, intro: BuilderText | null) => Promise<unknown>;
+  readonly onStore: (
+    title: BuilderText,
+    intro: BuilderText | null,
+    texts: FormScreenTexts,
+  ) => Promise<unknown>;
   /** The hide switch (RAPP-711): saved with the texts, the setting the board's eye saves. */
   readonly hide: {
     readonly isHidden: boolean;
@@ -552,6 +565,8 @@ export function StaffScreenEditor({
   const [typed, setTyped] = useState<Readonly<Record<TeamScreenField, BuilderText>>>({
     title: {},
     intro: {},
+    help: {},
+    continue_label: {},
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isHidden, setIsHidden] = useState(hide.isHidden);
@@ -559,14 +574,23 @@ export function StaffScreenEditor({
   const saved: Readonly<Record<TeamScreenField, BuilderText>> = {
     title: screen.title,
     intro: screen.intro ?? {},
+    help: screen.texts?.help ?? {},
+    continue_label: screen.texts?.continue_label ?? {},
   };
-  const isOptional = (field: TeamScreenField) => field === 'intro';
+  const isOptional = (field: TeamScreenField) => field === 'intro' || field === 'help';
+  // The main button reads the app's own label where staff wrote none, as an app screen's.
+  const appLabel = (shownLanguage: LanguageCode) =>
+    t('onboarding:continueAction', { lng: shownLanguage });
   // The saved text with what is typed over it: her phone reads it by the shared rule.
   const current = (field: TeamScreenField): BuilderText => ({ ...saved[field], ...typed[field] });
   const shownIn = (field: TeamScreenField, shownLanguage: LanguageCode): string =>
     typed[field][shownLanguage] ??
     staffTextIn(saved[field], shownLanguage, isOptional(field)) ??
-    (shownLanguage === 'ca' ? '' : shownIn(field, 'ca'));
+    (field === 'continue_label'
+      ? appLabel(shownLanguage)
+      : shownLanguage === 'ca'
+        ? ''
+        : shownIn(field, 'ca'));
   const isEmptyRequired = (field: TeamScreenField, shownLanguage: LanguageCode) =>
     !isOptional(field) && shownIn(field, shownLanguage).trim() === '';
   const edit = (field: TeamScreenField, value: string) =>
@@ -574,14 +598,19 @@ export function StaffScreenEditor({
   // What is saved, read the same way (RAPP-751): Desa only for a real change.
   const savedIn = (field: TeamScreenField, shownLanguage: LanguageCode): string =>
     staffTextIn(saved[field], shownLanguage, isOptional(field)) ??
-    (shownLanguage === 'ca' ? '' : savedIn(field, 'ca'));
-  const TEAM_FIELDS = ['title', 'intro'] as const;
+    (field === 'continue_label'
+      ? appLabel(shownLanguage)
+      : shownLanguage === 'ca'
+        ? ''
+        : savedIn(field, 'ca'));
   // The Catalan as the screen opened: what the translate button counts as changed,
   // so a save in between does not hide a change (RAPP-751).
-  const [openedCatalan] = useState(() => ({
-    title: savedIn('title', 'ca').trim(),
-    intro: savedIn('intro', 'ca').trim(),
-  }));
+  const [openedCatalan] = useState(
+    () =>
+      Object.fromEntries(
+        TEAM_FIELDS.map((field) => [field, savedIn(field, 'ca').trim()]),
+      ) as Readonly<Record<TeamScreenField, string>>,
+  );
   const isChanged =
     isHidden !== hide.isHidden ||
     TEAM_FIELDS.some((field) =>
@@ -602,7 +631,7 @@ export function StaffScreenEditor({
       Object.fromEntries(
         SUPPORTED_LANGUAGES.map((each) => [each, shownIn(field, each)]),
       ) as BuilderText,
-      followedTeamText(shownIn(field, 'ca')),
+      field === 'continue_label' ? appLabel : followedTeamText(shownIn(field, 'ca')),
       isOptional(field),
     );
 
@@ -621,7 +650,16 @@ export function StaffScreenEditor({
   async function storeScreen(): Promise<boolean> {
     setIsSaving(true);
     try {
-      await onStore(toSave('title') ?? {}, toSave('intro') ?? null);
+      const help = toSave('help');
+      const continueLabel = toSave('continue_label');
+      await onStore(toSave('title') ?? {}, toSave('intro') ?? null, {
+        // The leave button is not edited here: it stays as saved.
+        ...(screen.texts?.decline_label === undefined
+          ? {}
+          : { decline_label: screen.texts.decline_label }),
+        ...(help === undefined ? {} : { help }),
+        ...(continueLabel === undefined ? {} : { continue_label: continueLabel }),
+      });
       if (isHidden !== hide.isHidden) await hide.save(isHidden);
       await reload();
       toast.success(t('onboardingBoard.saved'));
@@ -641,6 +679,7 @@ export function StaffScreenEditor({
     phoneQuestions(previewLanguage, row.wording),
     previewLanguage,
     t,
+    { help: current('help'), continue_label: current('continue_label') },
   );
 
   const direction = getLanguageDirection(language);
@@ -726,6 +765,40 @@ export function StaffScreenEditor({
                       lang={language}
                       value={shownIn('intro', language)}
                       onChange={(event) => edit('intro', event.target.value)}
+                    />
+                  </div>
+                </Field>
+                {/* Ajuda and Botó principal, as an app screen's Text box (RAPP-771). */}
+                <Field orientation="responsive">
+                  <FieldContent>
+                    <FieldLabel htmlFor="screen-help">{t('builtinScreens.field.help')}</FieldLabel>
+                  </FieldContent>
+                  <div className={CONTROL_COLUMN}>
+                    <Textarea
+                      id="screen-help"
+                      rows={3}
+                      dir={direction}
+                      lang={language}
+                      value={shownIn('help', language)}
+                      onChange={(event) => edit('help', event.target.value)}
+                      data-testid="screen-help"
+                    />
+                  </div>
+                </Field>
+                <Field orientation="responsive">
+                  <FieldContent>
+                    <FieldLabel htmlFor="screen-continue-label">
+                      {t('builtinScreens.field.continue_label')}
+                    </FieldLabel>
+                  </FieldContent>
+                  <div className={CONTROL_COLUMN}>
+                    <Input
+                      id="screen-continue-label"
+                      dir={direction}
+                      lang={language}
+                      value={shownIn('continue_label', language)}
+                      onChange={(event) => edit('continue_label', event.target.value)}
+                      data-testid="screen-continue-label"
                     />
                   </div>
                 </Field>

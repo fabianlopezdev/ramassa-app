@@ -10,6 +10,7 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -19,18 +20,23 @@ import {
 import { useUnreadMessageCount } from '@/lib/messaging';
 import {
   activeStaffNavPath,
+  CUSTOM_FORMS_PERMISSIONS,
+  holdsAnyPermission,
   STAFF_NAV_PARENTS,
   visibleStaffNavGroups,
   type StaffNavGroup,
   type StaffNavParentId,
 } from '@/lib/nav-items';
+import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { Link, useLocation } from '@tanstack/react-router';
-import { ChevronRight, type LucideIcon } from 'lucide-react';
+import { ChevronRight, Scale, type LucideIcon } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
 import type { LayoutDirection } from '@ramassa/shared/i18n';
+import { fetchLegalFormEntries, textIn, type LegalFormEntry } from '@ramassa/shared/intake-builder';
+import type { LanguageCode } from '@ramassa/shared/schemas';
 
 /**
  * A menu row on the navy sidebar (RAPP-631): white text, a lighter row on
@@ -66,10 +72,19 @@ export function StaffSidebar() {
   // Only for someone with the inbox, so the design role asks nothing.
   const unread = useUnreadMessageCount(permissions.has('messages.inbox'));
   const groups = visibleStaffNavGroups(permissions);
-  const activePath = activeStaffNavPath(
+  // The legal forms the team created, under Condicions legals (RAPP-771).
+  const legalForms = useLegalFormEntries(
+    holdsAnyPermission(permissions, CUSTOM_FORMS_PERMISSIONS) &&
+      groups.some((group) =>
+        group.items.some((item) => 'parent' in item && item.parent === 'legal'),
+      ),
     pathname,
-    groups.flatMap((group) => group.items),
   );
+  const activePath = activeStaffNavPath(pathname, [
+    ...groups.flatMap((group) => group.items),
+    ...Object.values(STAFF_NAV_PARENTS),
+    ...legalForms.map((form) => ({ to: legalFormPath(form.id) })),
+  ]);
 
   return (
     <Sidebar collapsible="icon" side={sidebarSideForDirection(i18n.dir())}>
@@ -92,6 +107,7 @@ export function StaffSidebar() {
               group={group}
               activePath={activePath}
               unread={unread}
+              legalForms={legalForms}
             />
           ))}
         </nav>
@@ -110,14 +126,43 @@ export function StaffSidebar() {
   );
 }
 
+/** Where a created legal form opens: its board, the engine of every form (RAPP-771). */
+function legalFormPath(id: string): string {
+  return `/forms/custom/${id}`;
+}
+
+/**
+ * The legal forms the team created, read again as she moves around, so a form
+ * she just created or archived shows in the menu.
+ */
+function useLegalFormEntries(enabled: boolean, pathname: string): readonly LegalFormEntry[] {
+  const [forms, setForms] = useState<readonly LegalFormEntry[]>([]);
+  useEffect(() => {
+    if (!enabled) {
+      setForms([]);
+      return;
+    }
+    const controller = new AbortController();
+    void fetchLegalFormEntries(supabase, controller.signal)
+      .then((loaded) => {
+        if (!controller.signal.aborted) setForms(loaded);
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [enabled, pathname]);
+  return forms;
+}
+
 function StaffNavGroupSection({
   group,
   activePath,
   unread,
+  legalForms,
 }: {
   readonly group: StaffNavGroup;
   readonly activePath: string | null;
   readonly unread: number;
+  readonly legalForms: readonly LegalFormEntry[];
 }) {
   const { t } = useTranslation('nav');
   const { state, isMobile } = useSidebar();
@@ -148,7 +193,7 @@ function StaffNavGroupSection({
             icon={group.icon}
             holdsActive={group.items.some((item) => item.to === activePath)}
           >
-            <NavRows rows={rows} activePath={activePath} unread={unread} />
+            <NavRows rows={rows} activePath={activePath} unread={unread} legalForms={legalForms} />
           </NavFold>
         </SidebarMenu>
       </SidebarGroupContent>
@@ -161,12 +206,15 @@ function NavRows({
   rows,
   activePath,
   unread,
+  legalForms,
 }: {
   readonly rows: readonly MenuRow[];
   readonly activePath: string | null;
   readonly unread: number;
+  readonly legalForms: readonly LegalFormEntry[];
 }) {
-  const { t } = useTranslation('nav');
+  const { t, i18n } = useTranslation('nav');
+  const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   return (
     <>
       {rows.map((row) => {
@@ -176,6 +224,7 @@ function NavRows({
           );
         }
         const parent = STAFF_NAV_PARENTS[row.parent];
+        const created = row.parent === 'legal' ? legalForms : [];
         return (
           <NavFold
             key={row.parent}
@@ -183,10 +232,26 @@ function NavRows({
             testId={row.parent}
             label={t(parent.labelKey)}
             icon={parent.icon}
-            holdsActive={row.items.some((item) => item.to === activePath)}
+            page={{ to: parent.to, isActive: parent.to === activePath }}
+            holdsActive={
+              row.items.some((item) => item.to === activePath) ||
+              created.some((form) => legalFormPath(form.id) === activePath)
+            }
           >
             {row.items.map((item) => (
               <NavItemRow key={item.to} item={item} activePath={activePath} unread={unread} />
+            ))}
+            {created.map((form) => (
+              <NavItemRow
+                key={form.id}
+                item={{
+                  to: legalFormPath(form.id),
+                  icon: Scale,
+                  label: textIn(form.name, language),
+                }}
+                activePath={activePath}
+                unread={unread}
+              />
             ))}
           </NavFold>
         );
@@ -199,13 +264,15 @@ function NavRows({
  * One fold of the menu (RAPP-702), shared by the groups and by a row that
  * holds pages: a row drawn like any page, with its icon and a chevron, that
  * opens and closes on a click anywhere on it; what it holds sits indented
- * under it.
+ * under it. A row with a page of its own (RAPP-771, Condicions legals) opens
+ * that page, and only its chevron folds.
  */
 function NavFold({
   foldKey,
   testId,
   label,
   icon: Icon,
+  page,
   holdsActive,
   children,
 }: {
@@ -213,10 +280,54 @@ function NavFold({
   readonly testId: string;
   readonly label: string;
   readonly icon: LucideIcon | null;
+  readonly page?: { readonly to: string; readonly isActive: boolean };
   readonly holdsActive: boolean;
   readonly children: ReactNode;
 }) {
-  const [isOpen, setIsOpen] = useFoldState(foldKey, holdsActive);
+  const { t } = useTranslation('nav');
+  const [isOpen, setIsOpen] = useFoldState(foldKey, holdsActive || page?.isActive === true);
+  if (page !== undefined) {
+    return (
+      <Collapsible open={isOpen} onOpenChange={setIsOpen} asChild>
+        <SidebarMenuItem data-testid={`staff-nav-fold-${testId}`}>
+          <SidebarMenuButton
+            asChild
+            isActive={page.isActive}
+            tooltip={label}
+            className={cn(NAV_BUTTON_CLASS, 'pe-8')}
+          >
+            <Link
+              to={page.to}
+              activeOptions={{ exact: true, includeSearch: false }}
+              aria-current={page.isActive ? 'page' : undefined}
+            >
+              {Icon === null ? null : <Icon aria-hidden="true" />}
+              <span>{label}</span>
+            </Link>
+          </SidebarMenuButton>
+          <CollapsibleTrigger asChild>
+            <SidebarMenuAction
+              aria-label={t('a11y.toggleFold', { name: label })}
+              aria-expanded={isOpen}
+              className="top-2 text-sidebar-foreground"
+              data-testid={`staff-nav-fold-${testId}-toggle`}
+            >
+              <ChevronRight
+                aria-hidden="true"
+                className={cn(
+                  'transition-transform motion-reduce:transition-none',
+                  isOpen ? 'rotate-90' : 'rtl:rotate-180',
+                )}
+              />
+            </SidebarMenuAction>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <SidebarMenuSub className="me-0 pe-0">{children}</SidebarMenuSub>
+          </CollapsibleContent>
+        </SidebarMenuItem>
+      </Collapsible>
+    );
+  }
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} asChild>
       <SidebarMenuItem data-testid={`staff-nav-fold-${testId}`}>
@@ -247,12 +358,14 @@ function NavItemRow({
   activePath,
   unread,
 }: {
-  readonly item: GroupItem;
+  /** A page of the menu, or a legal form the team created, named as typed (RAPP-771). */
+  readonly item:
+    GroupItem | { readonly to: string; readonly icon: LucideIcon; readonly label: string };
   readonly activePath: string | null;
   readonly unread: number;
 }) {
   const { t } = useTranslation(['nav', 'messaging']);
-  const label = t(item.labelKey);
+  const label = 'label' in item ? item.label : t(item.labelKey);
   const isActive = item.to === activePath;
   const Icon = item.icon;
   return (

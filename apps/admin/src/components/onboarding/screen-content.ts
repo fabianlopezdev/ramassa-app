@@ -33,6 +33,7 @@ import {
   customFormScreenQuestions,
   fieldById,
   formBlocksOn,
+  formScreenTextsIn,
   hiddenBuiltinQuestions,
   isCustomQuestionRequired,
   liveOptions,
@@ -50,6 +51,7 @@ import {
   type CustomQuestionType,
   type FormBlock,
   type FormBlockContent,
+  type FormScreenTexts,
   type IntakeCatalog,
   type ResolvedFormBlock,
 } from '@ramassa/shared/intake-builder';
@@ -548,17 +550,20 @@ export function staffScreenContent(
   questions: readonly PhoneQuestion[],
   language: LanguageCode,
   t: Translate,
+  texts: FormScreenTexts = {},
 ): PhoneContent {
-  // One rule with her phone (RAPP-710): a language never written follows the Catalan.
+  // One rule with her phone (RAPP-710): a language never written follows the
+  // Catalan; the main button reads the app's own label where staff wrote none.
+  const own = formScreenTextsIn(texts, language);
   return {
     title: teamTextIn(title, language, false),
     intro: teamTextIn(intro, language, true),
-    help: '',
+    help: own.help,
     questions,
     lines: [],
     checkbox: null,
     signature: false,
-    continueLabel: t('onboarding:continueAction', { lng: language }),
+    continueLabel: own.continueLabel ?? t('onboarding:continueAction', { lng: language }),
     declineLabel: null,
   };
 }

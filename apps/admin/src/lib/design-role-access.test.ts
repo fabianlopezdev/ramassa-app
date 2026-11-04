@@ -23,6 +23,8 @@ describe('the onboarding design role reaches its two areas only (RAPP-615)', () 
       '/forms/authorization/document',
       '/forms/terms',
       '/forms/terms/terms-intro',
+      // Condicions legals, every legal form (RAPP-771).
+      '/forms/legal',
       // The forms the team creates (RAPP-700).
       '/forms/custom',
       '/forms/custom/5eed0000-0000-4000-8100-000000000001',
