@@ -25,6 +25,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { ZodError } from 'zod';
 import { AppError, type AppError as AppErrorType } from '../errors';
 import { fetchTermsAcceptanceNeeded } from '../onboarding/app-terms';
 import { fetchMyPermissions, type PermissionCode } from '../permissions';
@@ -180,8 +181,13 @@ export function AuthProvider({ client, children, onError }: AuthProviderProps) {
           readSecondFactorWaiver(summary?.role ?? null, nextSession),
         ]);
         const joinedPlayer = summary?.role === 'player' && summary.termsAcceptedAt !== null;
+        // A failed lookup lets her in, as before: a network flake never locks
+        // out a player who accepted. An answer this build cannot read keeps
+        // her at the terms, where she can try again (RAPP-772).
         const termsNeeded = joinedPlayer
-          ? await fetchTermsAcceptanceNeeded(client).catch(() => false)
+          ? await fetchTermsAcceptanceNeeded(client).catch(
+              (error: unknown) => error instanceof ZodError,
+            )
           : false;
         if (isSubscribed && latestChangeRef.current === changeId) {
           setRole(summary?.role ?? null);

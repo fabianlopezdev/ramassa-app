@@ -25,6 +25,9 @@ import { z } from 'zod';
 import type { SaveKind } from '../authorization/authorization';
 import { AppError, databaseErrorCode } from '../errors';
 import { resolveLocalizedText } from '../i18n/localized-content';
+import type { Consent, ConsentPlacement } from '../intake-builder/consents';
+import type { CustomForm } from '../intake-builder/custom-form-model';
+import type { FormBlock } from '../intake-builder/form-blocks';
 import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
 
@@ -174,33 +177,174 @@ export interface CurrentAppTerms {
   /** Null for a draft. */
   readonly versionNumber: number | null;
   readonly isDraft: boolean;
-  readonly content: AppTermsContent;
+  /**
+   * The old content an older build reads (RAPP-613); null when this build
+   * cannot read it. Her phone reads the terms form instead (RAPP-772).
+   */
+  readonly content: AppTermsContent | null;
+  /**
+   * The terms form (RAPP-772): its screens, as the version froze them, are in
+   * the catalog's forms. Null from an older server, which knows the old
+   * content only (`appTermsAsForm`).
+   */
+  readonly formId: string | null;
 }
 
 const catalogTermsSchema = z
   .object({
     id: z.uuid(),
     version_number: z.number().int().min(1).nullable(),
-    content: appTermsDraftSchema,
+    content: appTermsDraftSchema.nullable().catch(null),
     // Older servers omit it: every version they send is published.
     is_draft: z.boolean().optional().default(false),
+    // The terms form (RAPP-772); an older server sends none.
+    form_id: z.uuid().nullable().optional().catch(null),
   })
   .refine((terms) => terms.is_draft === (terms.version_number === null), {
     message: 'a published version has its number and a draft has none',
   });
 
 /**
- * The catalog's `terms`. A version this build cannot read gives null, and the
- * phone shows the bundled text: the screen is never blank.
+ * The catalog's `terms`. A version this build cannot read gives null: her
+ * phone then asks her to try again and never lets her past the terms.
  */
 export function appTermsFromCatalog(raw: unknown): CurrentAppTerms | null {
   const parsed = catalogTermsSchema.safeParse(raw);
   if (!parsed.success) return null;
+  if (parsed.data.content === null && (parsed.data.form_id ?? null) === null) return null;
   return {
     id: parsed.data.id,
     versionNumber: parsed.data.version_number,
     isDraft: parsed.data.is_draft,
     content: parsed.data.content,
+    formId: parsed.data.form_id ?? null,
+  };
+}
+
+// The old content as a form -------------------------------------------------------------------------
+
+/**
+ * Ids of the terms form an older server's content stands for. They are never
+ * sent: what she gives on them travels as the old acceptance.
+ */
+export const LEGACY_TERMS_IDS = {
+  form: '00000000-0000-4000-8000-00000000a770',
+  introScreen: '00000000-0000-4000-8000-00000000a771',
+  signScreen: '00000000-0000-4000-8000-00000000a772',
+  pointsBlock: '00000000-0000-4000-8000-00000000a773',
+  textBlock: '00000000-0000-4000-8000-00000000a774',
+  signatureBlock: '00000000-0000-4000-8000-00000000a775',
+  acceptConsent: '00000000-0000-4000-8000-00000000a776',
+  mediaConsent: '00000000-0000-4000-8000-00000000a777',
+} as const;
+
+/** The consent keys the terms ask (RAPP-772): her acceptance, and her photo and video choice. */
+export const APP_TERMS_ACCEPTANCE_KEY = 'app_terms';
+export const APP_TERMS_MEDIA_KEY = 'image_rights';
+
+/** The terms form as the catalog lists its parts. */
+export interface AppTermsAsForm {
+  readonly form: CustomForm;
+  readonly blocks: readonly FormBlock[];
+  readonly consents: readonly Consent[];
+  readonly consentPlacements: readonly ConsentPlacement[];
+}
+
+/**
+ * An older server's content as the terms form (RAPP-772), the way the
+ * migration converts it: the introduction with its points, then the screen
+ * she signs (the text, her acceptance, her photo and video choice, her
+ * signature). Null when the content could not be read.
+ */
+export function appTermsAsForm(
+  terms: CurrentAppTerms,
+  signatureText: AppTermsText,
+): AppTermsAsForm | null {
+  const content = terms.content;
+  if (content === null) return null;
+  const ids = LEGACY_TERMS_IDS;
+  const place = (screenKey: string, sortOrder: number) => ({
+    surface: 'custom_form' as const,
+    screenKey,
+    customFormId: ids.form,
+    sortOrder,
+  });
+  const consent = (id: string, key: string, body: AppTermsText): Consent => ({
+    id,
+    key,
+    systemKey: key,
+    name: body,
+    body,
+    isArchived: false,
+  });
+  return {
+    form: {
+      id: ids.form,
+      name: content.title,
+      filledBy: 'player',
+      mandatory: 'required_to_use_app',
+      deadline: null,
+      audience: 'all',
+      repeatsEachSeason: false,
+      kind: 'legal',
+      systemKey: 'app_terms',
+      recipientCount: null,
+      version: terms.versionNumber ?? 1,
+      publishedAt: null,
+      isArchived: false,
+      versions: [],
+      screens: [
+        {
+          id: ids.introScreen,
+          title: content.intro_title,
+          intro: content.intro,
+          sortOrder: 0,
+          texts: {},
+        },
+        {
+          id: ids.signScreen,
+          title: content.title,
+          intro: content.media_hint,
+          sortOrder: 1,
+          texts: {},
+          systemScreen: 'terms_sign',
+        },
+      ],
+    },
+    blocks: [
+      { id: ids.pointsBlock, kind: 'points', points: content.points, ...place(ids.introScreen, 0) },
+      {
+        id: ids.textBlock,
+        kind: 'text',
+        title: null,
+        body: content.body,
+        ...place(ids.signScreen, 0),
+      },
+      {
+        id: ids.signatureBlock,
+        kind: 'signature',
+        body: signatureText,
+        ...place(ids.signScreen, 3),
+      },
+    ],
+    consents: [
+      consent(ids.acceptConsent, APP_TERMS_ACCEPTANCE_KEY, content.accept_label),
+      consent(ids.mediaConsent, APP_TERMS_MEDIA_KEY, content.media_label),
+    ],
+    consentPlacements: [
+      {
+        id: ids.acceptConsent,
+        consentId: ids.acceptConsent,
+        required: true,
+        ...place(ids.signScreen, 1),
+      },
+      {
+        id: ids.mediaConsent,
+        consentId: ids.mediaConsent,
+        required: false,
+        ...place(ids.signScreen, 2),
+      },
+    ],
   };
 }
 
@@ -318,7 +462,11 @@ export async function fetchTermsAcceptanceNeeded(client: Client): Promise<boolea
 export interface AcceptCurrentAppTermsInput {
   readonly versionId: string;
   readonly localeShown: LanguageCode;
-  /** `termsSigningPayload` output: the acceptance, the photo choice and the signature. */
+  /**
+   * What she gave on the terms form (`appTermsSubmission`): her answers, her
+   * consents and her signatures (RAPP-772); for an older server, the old
+   * acceptance, photo choice and signature.
+   */
   readonly signing: Readonly<Record<string, unknown>>;
 }
 

@@ -312,13 +312,23 @@ const pendingSchema = z.object({
   kind: z.enum(['legal', 'other']).optional().catch('other'),
 });
 
-/** Her pending forms, the ones that keep her from the app first. A row this build cannot read is left out. */
+/**
+ * Her pending forms, the ones that keep her from the app first. A row this
+ * build cannot read is left out, except a legal one: that fails the read
+ * (VALIDATION-1), so her phone asks her to try again and never lets her past
+ * it (RAPP-772).
+ */
 export async function fetchMyCustomForms(client: Client): Promise<readonly PendingCustomForm[]> {
   const { data, error } = await client.rpc('my_custom_forms');
   if (error) throw databaseError(error);
   return (Array.isArray(data) ? data : []).flatMap((row): PendingCustomForm[] => {
     const parsed = pendingSchema.safeParse(row);
-    if (!parsed.success) return [];
+    if (!parsed.success) {
+      if (z.object({ kind: z.literal('legal') }).safeParse(row).success) {
+        throw new AppError('VALIDATION-1', { message: 'a legal form this build cannot read' });
+      }
+      return [];
+    }
     const form = parsed.data;
     return [
       {

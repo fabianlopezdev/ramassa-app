@@ -72,16 +72,22 @@ export function parseFormScreenTexts(raw: unknown): FormScreenTexts {
 /**
  * A screen's own texts in one language, by the rule her phone and the Control
  * Center preview share (RAPP-710): a help never written follows the Catalan
- * ('' shows none); a main button never written is null, so the app's own
- * label shows.
+ * ('' shows none); a button never written is null, so the app's own label
+ * shows.
  */
 export function formScreenTextsIn(
   texts: FormScreenTexts | undefined,
   language: LanguageCode,
-): { readonly help: string; readonly continueLabel: string | null } {
+): {
+  readonly help: string;
+  readonly continueLabel: string | null;
+  /** The decline button of a screen that has one (the terms she signs, RAPP-772). */
+  readonly declineLabel: string | null;
+} {
   return {
     help: teamTextIn(texts?.help, language, true),
     continueLabel: staffTextIn(texts?.continue_label, language, false),
+    declineLabel: staffTextIn(texts?.decline_label, language, false),
   };
 }
 

@@ -49,13 +49,21 @@ export const ONBOARDING_STEPS = [
 ] as const;
 export type OnboardingStepName = (typeof ONBOARDING_STEPS)[number];
 
-/** A step the draft can resume at: a built-in one, or a staff screen as `custom:<id>` (RAPP-307). */
+/**
+ * A step the draft can resume at: a built-in one, a staff screen as
+ * `custom:<id>` (RAPP-307), or a screen of the app terms as `terms:<id>`
+ * (RAPP-772). 'terms-intro' and 'terms' are what a draft saved before then names.
+ */
 export type OnboardingDraftStep =
-  OnboardingStepName | `custom:${string}` | `needs-detail:${SupportNeedCategory}`;
+  | OnboardingStepName
+  | `custom:${string}`
+  | `terms:${string}`
+  | `needs-detail:${SupportNeedCategory}`;
 
 const currentStepSchema = z.union([
   z.enum(ONBOARDING_STEPS),
   z.templateLiteral(['custom:', z.string()]),
+  z.templateLiteral(['terms:', z.string()]),
   z.templateLiteral(['needs-detail:', z.enum(SUPPORT_NEED_CATEGORIES)]),
 ]);
 

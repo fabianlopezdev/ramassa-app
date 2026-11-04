@@ -166,9 +166,11 @@ function isOwnStep(screen: CustomWizardScreen): boolean {
   return screen.builtinScreen == null;
 }
 
-/** A wizard step: a built-in screen, or a staff screen as `custom:<id>`. */
+/** A wizard step: a built-in screen, a staff screen as `custom:<id>`, or a screen of the app terms. */
 export type CustomStepKey = `custom:${string}`;
-export type WizardStepKey = WizardScreen | CustomStepKey;
+/** A screen of the app terms form at the end of her Onboarding (RAPP-772): `terms:<screen id>`. */
+export type TermsStepKey = `terms:${string}`;
+export type WizardStepKey = WizardScreen | CustomStepKey | TermsStepKey;
 
 const CUSTOM_STEP_PREFIX = 'custom:';
 
@@ -185,9 +187,35 @@ export function customStepId(step: string): string | null {
   return isCustomStep(step) ? step.slice(CUSTOM_STEP_PREFIX.length) : null;
 }
 
+const TERMS_STEP_PREFIX = 'terms:';
+
+export function termsStepKey(screenId: string): TermsStepKey {
+  return `${TERMS_STEP_PREFIX}${screenId}`;
+}
+
+export function isTermsStep(step: string): step is TermsStepKey {
+  return step.startsWith(TERMS_STEP_PREFIX);
+}
+
+/** The terms form's screen id of a step, or null for any other step. */
+export function termsStepId(step: string): string | null {
+  return isTermsStep(step) ? step.slice(TERMS_STEP_PREFIX.length) : null;
+}
+
 /**
- * The screens that always end the wizard, in this order: the summary of what
- * she gave, then the terms (legal). Staff never move or hide them (RAPP-612).
+ * One screen of the app terms form as her wizard walks it (RAPP-772), in the
+ * form's order: it shows while her answers meet its conditions (RAPP-715).
+ */
+export interface TermsWizardStep {
+  readonly key: TermsStepKey;
+  readonly opensWhen?: readonly ScreenCondition[];
+}
+
+/**
+ * The screens that end the wizard of a catalog with no terms form (an older
+ * server): the summary of what she gave, then the terms' two screens. Staff
+ * never move or hide them (RAPP-612). The terms form's own screens take their
+ * place (RAPP-772, `finalWizardSteps`).
  */
 export const FINAL_WIZARD_SCREENS = ['summary', 'terms-intro', 'terms'] as const;
 
@@ -202,6 +230,12 @@ export interface WizardFlow {
   readonly deletedScreens?: ReadonlySet<string>;
   readonly order: readonly WizardStepKey[];
   readonly hiddenScreens: ReadonlySet<WizardQuestionScreen>;
+  /**
+   * The app terms form's screens, in its order (RAPP-772); they end the wizard
+   * after the summary. Absent for a catalog with no terms form: the terms'
+   * two built-in screens end it.
+   */
+  readonly termsSteps?: readonly TermsWizardStep[];
 }
 
 export const DEFAULT_WIZARD_FLOW: WizardFlow = { order: [], hiddenScreens: new Set() };
@@ -216,6 +250,29 @@ function defaultFlowOrder(custom: readonly CustomWizardScreen[]): WizardStepKey[
       .filter((customScreen) => isOwnStep(customScreen) && customScreen.afterScreen === screen)
       .map((customScreen) => customStepKey(customScreen.id)),
   ]);
+}
+
+/** The steps that end the wizard: the summary, then the terms form's screens (RAPP-772). */
+export function finalWizardSteps(flow: WizardFlow = DEFAULT_WIZARD_FLOW): WizardStepKey[] {
+  return flow.termsSteps === undefined
+    ? [...FINAL_WIZARD_SCREENS]
+    : ['summary', ...flow.termsSteps.map((step) => step.key)];
+}
+
+/**
+ * Where a step saved before the terms became a form resumes (RAPP-772): the
+ * introduction at the first terms screen, the terms at the last. Any other
+ * step stays as it is.
+ */
+export function currentTermsStep<Step extends string>(
+  step: Step,
+  flow: WizardFlow = DEFAULT_WIZARD_FLOW,
+): Step | TermsStepKey {
+  const steps = flow.termsSteps ?? [];
+  if (steps.length === 0) return step;
+  if (step === 'terms-intro') return steps[0]?.key ?? step;
+  if (step === 'terms') return steps[steps.length - 1]?.key ?? step;
+  return step;
 }
 
 /**
@@ -248,7 +305,7 @@ export function wizardFlowOrder(
   );
   return [
     ...branchesAfterParents(placed, (step) => parents.get(step as CustomStepKey)),
-    ...FINAL_WIZARD_SCREENS,
+    ...finalWizardSteps(flow),
   ].filter((key) => !flow.deletedScreens?.has(key));
 }
 
@@ -281,11 +338,19 @@ function visibleScreens(
       .filter((screen) => screen.isAnswered || !opensForAnswers(screen, answers))
       .map((screen) => customStepKey(screen.id)),
   );
-  const final = new Set<WizardStepKey>(FINAL_WIZARD_SCREENS);
+  const final = new Set<WizardStepKey>(finalWizardSteps(flow));
+  // A terms screen that depends on an answer shows while her answers open it (RAPP-772).
+  const closedTerms = new Set(
+    (flow.termsSteps ?? [])
+      .filter((step) => !conditionsHold(step.opensWhen ?? [], answers))
+      .map((step) => step.key),
+  );
   return wizardFlowOrder(custom, flow).filter((step) =>
     isCustomStep(step)
       ? !answeredCustom.has(step)
-      : final.has(step) || (asked.has(step) && !isHiddenScreen(step, flow)),
+      : isTermsStep(step)
+        ? !closedTerms.has(step)
+        : final.has(step) || (asked.has(step) && !isHiddenScreen(step, flow)),
   );
 }
 
@@ -322,7 +387,7 @@ export function nextWizardScreen(
       order.slice(order.indexOf(from) + 1).find((screen) => screens.includes(screen)) ?? 'summary'
     );
   }
-  return screens[index + 1] ?? 'terms';
+  return screens[index + 1] ?? finalWizardSteps(flow).at(-1) ?? 'terms';
 }
 
 /** The screen before `from`, or null on the first one she sees. */

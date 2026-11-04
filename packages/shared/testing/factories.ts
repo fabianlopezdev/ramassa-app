@@ -1401,6 +1401,9 @@ export function buildAppTermsVersion(
     updated_at: FIXTURE_TIMESTAMP,
     updated_by: null,
     is_correction: false,
+    // A published version keeps the form it showed (RAPP-772).
+    form_snapshot: {},
+    legacy_compatible: true,
     ...overrides,
   };
 }

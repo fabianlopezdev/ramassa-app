@@ -354,7 +354,7 @@ describe('the catalog carries the app terms (RAPP-613)', () => {
       },
     });
     expect(withTerms.terms?.versionNumber).toBe(2);
-    expect(withTerms.terms?.content.body.ca).toBe('Text.');
+    expect(withTerms.terms?.content?.body.ca).toBe('Text.');
   });
 });
 
