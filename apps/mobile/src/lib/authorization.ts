@@ -11,8 +11,7 @@ import {
   setOptionalConsent,
   signAuthorization,
   type AuthorizationConsentKey,
-  type AuthorizationContent,
-  type AuthorizationSigning,
+  type buildSignPayload,
 } from '@ramassa/shared/authorization';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { supabase } from './supabase';
@@ -26,8 +25,8 @@ export function useAuthorizationStatus(enabled: boolean) {
     queryKey: statusKey(user?.id ?? 'signed-out'),
     queryFn: ({ signal }) => fetchMyAuthorizationStatus(supabase, { signal }),
     enabled: enabled && user !== null,
-    // A failed read lets her in (the gate never locks her out on a network
-    // error), so it is not retried in a loop behind a spinner.
+    // A failed read asks her to try again (the gate fails closed, RAPP-773);
+    // it is not retried in a loop behind a spinner.
     retry: 1,
     refetchOnMount: 'always',
   });
@@ -37,17 +36,12 @@ export function useSignAuthorization() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
+    // The payload of the form she walked (`buildSignPayload`, RAPP-773).
     mutationFn: (input: {
       readonly versionId: string;
-      readonly content: AuthorizationContent;
-      readonly signing: AuthorizationSigning;
-      readonly language: LanguageCode;
-      readonly device: string | null;
+      readonly payload: NonNullable<ReturnType<typeof buildSignPayload>>;
     }) =>
-      signAuthorization(supabase, input.versionId, input.content, input.signing, {
-        language: input.language,
-        device: input.device,
-      }),
+      signAuthorization(supabase, input.versionId, input.payload),
     onSuccess: async () => {
       const userId = user?.id ?? 'signed-out';
       await Promise.all([

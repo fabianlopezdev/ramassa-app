@@ -18,6 +18,7 @@
  */
 
 import { FailureNotice } from '@/components/error-code-line';
+import { FormAttachments } from '@/components/forms/form-attachments';
 import {
   CustomQuestionField,
   type CustomAnswerDraft,
@@ -72,6 +73,10 @@ export interface FormWalkerProps {
   readonly onLeave: (() => void) | undefined;
   /** What a screen shows under its blocks beside the walk: the terms' "Ara no". */
   readonly footer?: (screen: CustomFormScreen, isSending: boolean) => ReactNode;
+  /** Above every screen's progress: the staff tablet's own controls (RAPP-773). */
+  readonly header?: ReactNode;
+  /** A text staff wrote, filled in: the authorization names its season (RAPP-773). */
+  readonly fillText?: (text: string) => string;
 }
 
 export function FormWalker({
@@ -84,6 +89,8 @@ export function FormWalker({
   sendLabel,
   onLeave,
   footer,
+  header,
+  fillText,
 }: FormWalkerProps) {
   const shownFor = (answers: CustomAnswerDraft) => formWalkScreens(catalog, form, answers);
   const [draft, setDraft] = useState<FormWalkDraft>({
@@ -127,6 +134,8 @@ export function FormWalker({
       isSending={isSending}
       failure={failureCode === null ? null : { code: failureCode, message: failureMessage }}
       footer={footer?.(screen, isSending)}
+      header={header}
+      fillText={fillText}
       onBack={
         index > 0
           ? (next) => {
@@ -176,6 +185,10 @@ export interface FormWalkStepProps {
   readonly frameId?: WizardFrameProps['screenId'];
   /** What the screen shows after its blocks: the terms' "Ara no". */
   readonly footer?: ReactNode;
+  /** Above the progress: the staff tablet's own controls. */
+  readonly header?: ReactNode;
+  /** A text staff wrote, filled in (`{{season}}`). */
+  readonly fillText?: (text: string) => string;
 }
 
 export function FormWalkStep({
@@ -190,6 +203,8 @@ export function FormWalkStep({
   onContinue,
   frameId,
   footer,
+  header,
+  fillText = (text: string) => text,
 }: FormWalkStepProps) {
   const { t } = useTranslation('onboarding');
   const { language } = useLanguage();
@@ -215,12 +230,13 @@ export function FormWalkStep({
       screenId={frameId}
       stepNumber={position.step}
       totalSteps={position.total}
-      title={teamTextIn(screen.title, language, false)}
-      intro={intro === '' ? undefined : intro}
+      title={fillText(teamTextIn(screen.title, language, false))}
+      intro={intro === '' ? undefined : fillText(intro)}
       scrollEnabled={!isDrawing}
+      header={header}
       // The screen's own help line and main button (RAPP-771).
-      help={own.help}
-      continueLabel={own.continueLabel ?? continueLabelFor(answers) ?? t('continueAction')}
+      help={own.help === '' ? own.help : fillText(own.help)}
+      continueLabel={fillText(own.continueLabel ?? continueLabelFor(answers) ?? t('continueAction'))}
       isContinueBusy={isSending}
       onContinue={() => {
         // The shared checks, as on her Onboarding (RAPP-610).
@@ -266,6 +282,8 @@ export function FormWalkStep({
           ),
           consents.entries,
         )}
+        {/* The authorization's season documents (RAPP-773). */}
+        <FormAttachments attachments={screen.attachments ?? []} />
       </View>
       {/* Mounted only while there IS a failure, so it never takes a slot in the gap. */}
       {failure === null ? null : (

@@ -35,6 +35,7 @@ const logout = mock(async () => ({ ok: true as const, value: undefined }));
 const alert = mock<(title: string, message?: string, buttons?: AlertButton[]) => void>(() => {});
 
 mock.module('react-native', () => ({
+  Linking: { openURL: () => Promise.resolve() },
   Alert: { alert },
   Platform: { OS: 'android', Version: 35 },
   ActivityIndicator: () => createElement('span', null, 'loading'),

@@ -61,7 +61,8 @@ describe('the signing mode screen', () => {
   });
 
   test("leaving ends the session only after the coach's device check", () => {
-    const leave = screen.slice(screen.indexOf('const leave = async'), screen.indexOf('const t = '));
+    const start = screen.indexOf('const leave = async');
+    const leave = screen.slice(start, screen.indexOf('const t = ', start));
     expect(leave.indexOf('await confirmOwner()')).toBeGreaterThan(-1);
     expect(leave.indexOf('await confirmOwner()')).toBeLessThan(leave.indexOf('end()'));
   });
@@ -71,20 +72,25 @@ describe('the signing mode screen', () => {
   });
 
   test('a signing with no drawing needs the coach to confirm she agreed', () => {
-    expect(screen).toContain('signing.unableToDraw && !(await confirmOwner())');
+    expect(screen).toContain(
+      'Object.values(draft.signatures).includes(UNABLE_TO_DRAW) &&\n                !(await confirmOwner())',
+    );
+    expect(screen).toContain(
+      'Object.values(strokes).includes(UNABLE_TO_DRAW) && !(await confirmOwner())',
+    );
   });
 });
 
 describe('signing mode for a screen reader (RAPP-530)', () => {
-  const form = readFileSync(
-    resolve(import.meta.dir, '../components/authorization/authorization-form.tsx'),
-    'utf8',
-  );
-
-  test('sections say whether they are open, and the reader uses her language', () => {
-    expect(form).toContain('isExpanded={isOpen}');
-    expect(form).toContain('accessibilityLanguage={language}');
+  test('the language question is read in each language', () => {
     expect(screen).toContain('accessibilityLanguage={candidate}');
+  });
+
+  test("the form reads her language, the way back reads the coach's", () => {
+    expect(screen).toContain('i18n.cloneInstance({ lng: language })');
+    expect(screen).toContain('<I18nextProvider i18n={herI18n}>');
+    expect(screen).toContain('<ScreenLanguageContext.Provider value={language}>');
+    expect(screen).toContain('i18n.getFixedT(coachLanguage, \'participants\')');
   });
 
   test('the signature pad tells a screen reader user how to sign without drawing', () => {
@@ -92,8 +98,12 @@ describe('signing mode for a screen reader (RAPP-530)', () => {
       resolve(import.meta.dir, '../components/authorization/signature-section.tsx'),
       'utf8',
     );
-    expect(form).toContain('<SignatureSection');
-    // The version may reword the hint (RAPP-614); the app's own hint is the fallback.
+    const blockField = readFileSync(
+      resolve(import.meta.dir, '../components/onboarding/signature-block-field.tsx'),
+      'utf8',
+    );
+    expect(blockField).toContain('<SignatureSection');
+    // A legal form may reword the hint (RAPP-773); the app's own hint is the fallback.
     expect(signatureSection).toContain(
       "accessibilityHint={texts.hint ?? t('authorizationSignatureHint')}",
     );

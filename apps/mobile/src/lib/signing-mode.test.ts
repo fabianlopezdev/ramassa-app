@@ -62,6 +62,8 @@ describe('the version kept for offline signing', () => {
       seasonName: '2026/27',
       versionNumber: 1,
       content: authorizationContentSchema.parse(version.content),
+      formId: null,
+      formSnapshot: null,
     };
     saveAuthorizationForSigning(storage, 'coach-1', authorization);
     expect(readAuthorizationForSigning(storage, 'coach-1')).toEqual(authorization);

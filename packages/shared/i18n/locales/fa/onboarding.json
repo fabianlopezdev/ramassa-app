@@ -1,5 +1,6 @@
 {
   "appRegistrationFlow": "ثبت‌نام در برنامه",
+  "seasonAuthorizationTitle": "مجوز فصل",
   "seasonAuthorizationFlow": "مجوز فصل {{season}}",
   "stepOf": "مرحله {{current}} از {{total}}",
   "continueAction": "ادامه",

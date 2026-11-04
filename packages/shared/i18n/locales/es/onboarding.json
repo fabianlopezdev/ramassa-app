@@ -1,5 +1,6 @@
 {
   "appRegistrationFlow": "Registro en la aplicación",
+  "seasonAuthorizationTitle": "Autorización de la temporada",
   "seasonAuthorizationFlow": "Autorización {{season}}",
   "stepOf": "Paso {{current}} de {{total}}",
   "continueAction": "Continuar",

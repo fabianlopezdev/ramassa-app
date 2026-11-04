@@ -14,6 +14,7 @@ import { fontClassForLanguage } from '@/lib/language-font-class';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { Text, View } from 'react-native';
 import { useLanguage, type SupportedLanguage } from '@ramassa/shared/i18n';
+import { staffTextIn } from '@ramassa/shared/i18n/localized-content';
 import {
   formBlockText,
   UNABLE_TO_DRAW,
@@ -48,6 +49,10 @@ export function SignatureBlockField({
   const fontClass =
     shownLanguage === undefined ? appFontClass : fontClassForLanguage(shownLanguage);
   const isUnable = given === UNABLE_TO_DRAW;
+  // A legal form's own signature has its texts (RAPP-773): a text left out
+  // shows the app's own; a help staff cleared shows none.
+  const own = (field: keyof NonNullable<SignatureFormBlock['texts']>, isOptional: boolean) =>
+    staffTextIn(block.texts?.[field], language, isOptional) ?? undefined;
   return (
     <View className="gap-sm" testID={`signature-block-${block.id}`}>
       <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
@@ -61,6 +66,13 @@ export function SignatureBlockField({
         onDrawingChange={(isDrawing) => onDrawingChange?.(isDrawing)}
         language={language}
         canSayUnable={canSayUnable}
+        texts={{
+          title: own('signature_title', false),
+          prompt: own('signature_prompt', false),
+          hint: own('signature_hint', true),
+          cannotDraw: own('cannot_draw_label', false),
+          cannotDrawHint: own('cannot_draw_hint', true),
+        }}
         testID={`signature-block-${block.id}-cannot-draw`}
       />
       <FieldErrorText message={errorMessage} />

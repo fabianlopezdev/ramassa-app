@@ -64,10 +64,10 @@ function AppNavigator() {
   const { width } = useWindowDimensions();
   const home = areaHome(area, permissions, width);
   // The season authorization gate (RAPP-304): a player who has not signed the
-  // current version sees only the authorization screen. A failed lookup lets
-  // her in, as the onboarding gate does (RAPP-21): a network flake must never
-  // lock out a player who already signed.
+  // current version sees only the authorization screen. A failed lookup asks
+  // her to try again and never lets her past it, as the legal forms (RAPP-773).
   const authorization = useAuthorizationStatus(area === 'player');
+  const isAuthorizationUnreadable = area === 'player' && authorization.isError;
   // A new app terms version (RAPP-613) comes first: she accepts it on the terms
   // screen alone, then the season authorization if it is due.
   const mustAcceptTerms = area === 'player' && needsTermsAcceptance;
@@ -183,6 +183,18 @@ function AppNavigator() {
           color={tokens.colors.primary.DEFAULT}
         />
       </View>
+    );
+  }
+  if (isAuthorizationUnreadable) {
+    return (
+      <AnnouncementFeedError
+        message={t('onboarding:authorizationLoadFailed')}
+        retryLabel={t('onboarding:retryAction')}
+        code={isAppError(authorization.error) ? authorization.error.code : 'DB-1'}
+        languageFontClass={languageFontClass}
+        isLoading={authorization.isFetching}
+        onRetry={() => void authorization.refetch()}
+      />
     );
   }
   if (isLegalFormUnreadable) {

@@ -66,6 +66,7 @@ const readable: IntakeCatalog = withAppTermsForm(
 let catalog: IntakeCatalog = readable;
 
 mock.module('react-native', () => ({
+  Linking: { openURL: () => Promise.resolve() },
   Alert: { alert },
   Platform: platform,
   Text: ({ children }: { children: ReactNode }) => createElement('span', null, children),

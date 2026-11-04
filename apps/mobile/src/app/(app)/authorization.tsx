@@ -1,42 +1,70 @@
 /**
  * Ramassà's participation authorization for the season (RAPP-304).
  *
- * A player without a valid authorization sees only this screen. She reads the
- * text staff published (always visible), ticks each consent, gives the
- * medical answer, optionally an emergency contact, and draws her signature with
- * her finger. A player who cannot draw (a screen reader, a motor impairment)
- * signs with the ticks alone, and the record says so.
+ * A player without a valid authorization sees only this screen. Since
+ * RAPP-773 the authorization is a legal form staff build: she walks its
+ * screens as the version she is shown froze them, with the shared form
+ * walker (the text she reads, the questions, the consents, the signatures),
+ * and the last one, with her own signature ("No puc signar" allowed), sends
+ * it. A returning player first checks her details and answers the season's
+ * questions on the app's own re-registration screens (RAPP-306).
+ *
+ * An authorization this build cannot read is never signed: she is asked to
+ * try again.
  */
 
-import { AuthorizationForm } from '@/components/authorization/authorization-form';
 import { ReregistrationSteps } from '@/components/authorization/reregistration-steps';
+import { FailureNotice } from '@/components/error-code-line';
+import { FormWalker } from '@/components/forms/form-walker';
+import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { useAuthorizationStatus, useSignAuthorization } from '@/lib/authorization';
-import { useAuthorizationFields } from '@/lib/authorization-fields';
-import { playHaptic } from '@/lib/haptics/haptics';
-import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { supabase } from '@/lib/supabase';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Platform, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import type { LanguageCode } from '@ramassa/shared/schemas';
+import { ActivityIndicator, Platform, View } from 'react-native';
+import { useAuth } from '@ramassa/shared/auth';
+import { buildSignPayload } from '@ramassa/shared/authorization';
+import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
+import { useLanguage } from '@ramassa/shared/i18n';
+import {
+  authorizationForm,
+  authorizationWalkForm,
+  fetchIntakeCatalog,
+  fetchMyCustomAnswers,
+  formWalkScreens,
+  withSeasonName,
+} from '@ramassa/shared/intake-builder';
 import { tokens } from '@ramassa/shared/tokens';
 
 export default function AuthorizationScreen() {
-  const { t, i18n } = useTranslation('onboarding');
-  const fontClass = useLanguageFontClass();
+  const { t } = useTranslation(['onboarding', 'common']);
   const router = useRouter();
-  const language = (i18n.resolvedLanguage as LanguageCode | undefined) ?? 'ca';
+  const { language } = useLanguage();
+  const { user } = useAuth();
   const status = useAuthorizationStatus(true);
   const sign = useSignAuthorization();
-  // The Health screen's fields, her saved answers filled in (RAPP-698).
-  const fields = useAuthorizationFields(true, true);
-  const [hasFailed, setHasFailed] = useState(false);
+  // Her catalog holds the form as the version she is shown froze it, and her
+  // saved answers fill in its questions for her to confirm or change.
+  const walk = useQuery({
+    queryKey: ['authorization-walk', user?.id ?? 'signed-out', status.data?.versionId ?? 'none'],
+    queryFn: async () => {
+      const [catalog, answers] = await Promise.all([
+        fetchIntakeCatalog(supabase),
+        fetchMyCustomAnswers(supabase),
+      ]);
+      return { catalog, answers };
+    },
+    enabled: user !== null && status.data != null,
+    gcTime: 0,
+  });
   // A returning player checks her details and answers the season questions
   // first (RAPP-306); a new player signs straight away.
   const [hasReregistered, setHasReregistered] = useState(false);
 
-  if (status.isPending || fields.isPending) {
+  const current = status.data;
+  if (status.isPending || (current != null && walk.isPending)) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-50">
         <ActivityIndicator
@@ -46,14 +74,27 @@ export default function AuthorizationScreen() {
       </View>
     );
   }
-  const current = status.data;
-  if (status.isError || current === null || current === undefined) {
+  const catalog = walk.data?.catalog;
+  const found = catalog === undefined ? undefined : authorizationForm(catalog);
+  const form = found === undefined ? undefined : authorizationWalkForm(found);
+  if (
+    status.isError ||
+    current == null ||
+    current.formId === null ||
+    catalog === undefined ||
+    form === undefined ||
+    formWalkScreens(catalog, form, walk.data?.answers ?? {}).length === 0
+  ) {
+    const error = status.error ?? walk.error;
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-neutral-50 p-lg">
-        <Text selectable className={`text-center text-form text-neutral-700 ${fontClass}`}>
-          {t('authorizationLoadFailed')}
-        </Text>
-      </SafeAreaView>
+      <AuthorizationUnavailable
+        failureCode={error == null ? 'VALIDATION-1' : toAppError(error).code}
+        isRetrying={status.isFetching || walk.isFetching}
+        onRetry={() => {
+          void status.refetch();
+          void walk.refetch();
+        }}
+      />
     );
   }
   if (current.isReturning && !hasReregistered) {
@@ -67,38 +108,56 @@ export default function AuthorizationScreen() {
   }
 
   return (
-    <AuthorizationForm
-      testID="authorization-screen"
-      content={current.content}
-      seasonName={current.seasonName}
-      questions={fields.data?.questions ?? []}
-      initialAnswers={fields.data?.answers ?? {}}
-      healthFieldId={fields.data?.healthFieldId ?? null}
-      language={language}
-      isBusy={sign.isPending}
-      hasFailed={hasFailed}
-      onSubmit={(signing) => {
-        setHasFailed(false);
-        sign.mutate(
-          {
-            versionId: current.versionId,
-            content: current.content,
-            signing,
-            language,
-            device: `${Platform.OS} ${String(Platform.Version)}`,
-          },
-          {
-            onSuccess: () => {
-              playHaptic('success');
-              router.replace('/' as Href);
-            },
-            onError: () => {
-              playHaptic('error');
-              setHasFailed(true);
-            },
-          },
-        );
+    <FormWalker
+      key={current.versionId}
+      catalog={catalog}
+      form={form}
+      saved={walk.data?.answers ?? {}}
+      sendLabel={t('authorizationSignAndEnterAction')}
+      failureMessage={t('authorizationSignFailed')}
+      onLeave={undefined}
+      fillText={(text) => withSeasonName(text, current.seasonName)}
+      onSubmit={async (draft, screens): Promise<AppErrorCode | null> => {
+        const payload = buildSignPayload({
+          catalog,
+          screens,
+          draft,
+          language,
+          device: `${Platform.OS} ${String(Platform.Version)}`,
+        });
+        if (payload === null) return 'VALIDATION-1';
+        try {
+          await sign.mutateAsync({ versionId: current.versionId, payload });
+          router.replace('/' as Href);
+          return null;
+        } catch (error) {
+          return toAppError(error).code;
+        }
       }}
     />
+  );
+}
+
+function AuthorizationUnavailable({
+  failureCode,
+  isRetrying,
+  onRetry,
+}: {
+  readonly failureCode: AppErrorCode;
+  readonly isRetrying: boolean;
+  readonly onRetry: () => void;
+}) {
+  const { t } = useTranslation(['onboarding', 'errors']);
+  return (
+    <WizardFrame
+      title={t('seasonAuthorizationTitle')}
+      continueLabel={t('errors:retry')}
+      onContinue={onRetry}
+      isContinueBusy={isRetrying}
+    >
+      <View testID="authorization-unavailable">
+        <FailureNotice code={failureCode} message={t('authorizationLoadFailed')} />
+      </View>
+    </WizardFrame>
   );
 }

@@ -1,5 +1,6 @@
 {
   "appRegistrationFlow": "التسجيل في التطبيق",
+  "seasonAuthorizationTitle": "تفويض الموسم",
   "seasonAuthorizationFlow": "تفويض موسم {{season}}",
   "stepOf": "الخطوة {{current}} من {{total}}",
   "continueAction": "متابعة",

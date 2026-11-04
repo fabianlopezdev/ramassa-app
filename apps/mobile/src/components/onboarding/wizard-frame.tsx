@@ -79,6 +79,8 @@ export interface WizardFrameProps {
   readonly onBack?: () => void;
   /** A Ramassà or form screen's own help line (RAPP-771); its button comes as `continueLabel`. */
   readonly help?: string;
+  /** Above the progress: the staff tablet's way back to the coach and her language (RAPP-773). */
+  readonly header?: ReactNode;
 }
 
 export function WizardFrame(props: WizardFrameProps) {
@@ -98,6 +100,7 @@ function WizardFrameContent({
   isContinueBusy,
   onBack,
   help,
+  header,
 }: WizardFrameProps) {
   const { entrance, edit } = useLocalSearchParams<{ entrance?: string; edit?: string }>();
   const showProgress = stepNumber !== undefined && edit !== '1';
@@ -111,18 +114,21 @@ function WizardFrameContent({
       entrance={entranceMode}
       scrollEnabled={added.isDrawing ? false : scrollEnabled}
       navigation={
-        <WizardProgress
-          step={showProgress ? stepNumber : undefined}
-          total={totalSteps}
-          onBack={
-            onBack === undefined || !added.hasQuestions
-              ? onBack
-              : () => {
-                  added.save();
-                  onBack();
-                }
-          }
-        />
+        <View>
+          {header === undefined ? null : <View className="px-lg pt-sm">{header}</View>}
+          <WizardProgress
+            step={showProgress ? stepNumber : undefined}
+            total={totalSteps}
+            onBack={
+              onBack === undefined || !added.hasQuestions
+                ? onBack
+                : () => {
+                    added.save();
+                    onBack();
+                  }
+            }
+          />
+        </View>
       }
       heading={
         <AuthTitle

@@ -13,12 +13,16 @@ import { useAuth } from '@ramassa/shared/auth';
 import {
   fetchAuthorizationForSigning,
   sendTabletSigning,
+  type AuthorizationForSigning,
   type TabletSigner,
   type TabletSigning,
 } from '@ramassa/shared/authorization';
 import { AppError } from '@ramassa/shared/errors';
 import {
+  EMPTY_INTAKE_CATALOG,
   fetchIntakeCatalog,
+  parseCatalogWithFormVersion,
+  type IntakeCatalog,
   liveOnboardingBlocks,
   liveOnboardingConsents,
   type PlacedConsent,
@@ -179,6 +183,39 @@ export function useAuthorizationForSigning(enabled: boolean) {
         : (readAuthorizationForSigning(privateStorage, userId) ?? undefined),
     initialDataUpdatedAt: 0,
     enabled: enabled && userId !== null,
+    retry: false,
+  });
+}
+
+const signingCatalogKey = (userId: string) => `ramassa.signing-catalog.v1:${userId}`;
+
+/**
+ * Her catalog for the version the tablet collects (RAPP-773): the
+ * authorization form as that version froze it, with the fields, consents and
+ * blocks it asks. Read online and kept on the tablet, like the version, so
+ * signing mode opens with no connection.
+ */
+export function useSigningCatalog(version: AuthorizationForSigning | null | undefined) {
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+  return useQuery({
+    queryKey: ['signing-catalog', userId ?? 'signed-out', version?.versionId ?? 'none'],
+    queryFn: async (): Promise<IntakeCatalog> => {
+      if (userId === null || version == null) return EMPTY_INTAKE_CATALOG;
+      let raw: unknown;
+      try {
+        const { data, error } = await supabase.rpc('intake_catalog');
+        if (error) throw new Error(error.message);
+        raw = data;
+        privateStorage.set(signingCatalogKey(userId), JSON.stringify(data));
+      } catch (error) {
+        const kept = privateStorage.getString(signingCatalogKey(userId));
+        if (kept === undefined) throw error;
+        raw = JSON.parse(kept) as unknown;
+      }
+      return parseCatalogWithFormVersion(raw, version);
+    },
+    enabled: userId !== null && version != null,
     retry: false,
   });
 }
