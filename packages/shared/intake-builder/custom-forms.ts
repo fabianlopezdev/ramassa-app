@@ -75,7 +75,7 @@ export function customFormScreenQuestions(
   });
 }
 
-/** The signature blocks of a form's screen, in order. */
+/** The blocks of a form's screen, in order: signatures, texts and points (RAPP-770). */
 export function customFormScreenBlocks(
   catalog: IntakeCatalog,
   screenId: string,

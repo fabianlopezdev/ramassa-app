@@ -12,7 +12,7 @@ import { AppError, databaseErrorCode } from '../errors';
 import type { Database } from '../types/database';
 import type { IntakeCatalog } from './builder';
 import { consentsOn } from './consents';
-import { formBlocksOn } from './form-blocks';
+import { formBlocksOn, signatureBlocks } from './form-blocks';
 import { placementsOnSurface } from './profile-layout';
 
 type Client = SupabaseClient<Database>;
@@ -26,7 +26,10 @@ export function screenHideLock(
   surface: 'onboarding' | 'custom_form',
   screenKey: string,
 ): ScreenHideLock | null {
-  if (formBlocksOn(catalog.blocks, surface, screenKey).length > 0) return 'signature';
+  // A text or points block asks nothing (RAPP-770): only a signature keeps it shown.
+  if (signatureBlocks(formBlocksOn(catalog.blocks, surface, screenKey)).length > 0) {
+    return 'signature';
+  }
   const requiredField =
     catalog.layout !== undefined &&
     placementsOnSurface(catalog.layout, surface, screenKey).some((placement) => placement.required);

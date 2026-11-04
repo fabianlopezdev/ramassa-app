@@ -370,6 +370,8 @@
       "country": "País",
       "municipality": "Municipi de Catalunya",
       "signature": "Signatura",
+      "text_block": "Text",
+      "points_block": "Punts",
       "consent": "Consentiment",
       "document": "Document"
     },
@@ -809,7 +811,9 @@
     "add_one": "Afegeix {{count}} camp",
     "add_other": "Afegeix {{count}} camps",
     "addNone": "Afegeix",
-    "failed": "No s'han pogut afegir tots els camps. Torna-ho a provar."
+    "failed": "No s'han pogut afegir tots els camps. Torna-ho a provar.",
+    "playerData": "Dades de les jugadores",
+    "legalData": "Dades legals"
   },
   "placement": {
     "askHer": "Com li ho preguntem (opcional)",
@@ -840,6 +844,18 @@
     "removeTitle": "Vols treure aquesta signatura?",
     "removeBody": "Les signatures ja donades es conserven.",
     "defaultText": "Accepto"
+  },
+  "formBlock": {
+    "add": "Afegeix un bloc",
+    "heading": "Títol",
+    "text": "Text",
+    "removeNamed": "Treu el bloc",
+    "removeTitle": "Vols treure aquest bloc?",
+    "removeBody": "Es treu d'aquesta pantalla.",
+    "defaultText": "Text nou",
+    "defaultPointTitle": "Punt nou",
+    "defaultPointText": "Text del punt",
+    "pointsNeedCatalan": "Cada punt necessita el títol i el text en català."
   },
   "saveDialog": {
     "title": "Desa els canvis",

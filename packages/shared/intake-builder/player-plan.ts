@@ -59,7 +59,7 @@ import {
   type IntakeCatalog,
   type RamassaScreen,
 } from './builder';
-import { hasSignatureBlocks } from './form-blocks';
+import { hasFormBlocks, hasSignatureBlocks } from './form-blocks';
 import { onboardingScreenParent } from './screen-branches';
 
 // Her screens in order -------------------------------------------------------------------------------
@@ -134,14 +134,14 @@ export function flowStepName(
 }
 
 /**
- * A Ramassà screen her phone shows: a live field or a signature block
- * (RAPP-690) is on it, and staff did not hide it (RAPP-711).
+ * A Ramassà screen her phone shows: a live field or a block (a signature,
+ * RAPP-690, or a text or points, RAPP-770) is on it, and staff did not hide
+ * it (RAPP-711).
  */
 export function isShownToHer(catalog: IntakeCatalog, screen: RamassaScreen): boolean {
   return (
     screen.isHidden !== true &&
-    (placedQuestions(catalog, screen.id).length > 0 ||
-      hasSignatureBlocks(catalog.blocks, screen.id))
+    (placedQuestions(catalog, screen.id).length > 0 || hasFormBlocks(catalog.blocks, screen.id))
   );
 }
 
@@ -256,27 +256,35 @@ export function playerPlan(
     });
 
   const screens = flowSteps(catalog)
-    .flatMap((step): { step: FlowStep; questions: PlanQuestion[]; signs: boolean }[] => {
-      if (step.kind === 'locked') return [{ step, questions: [], signs: false }];
-      if (step.kind === 'builtin' && flow.hiddenScreens.has(step.key)) return [];
-      if (step.kind === 'custom' && step.screen.isHidden === true) return [];
-      const questions =
-        step.kind === 'custom'
-          ? customQuestions(placedQuestions(catalog, step.screen.id))
-          : [...builtinQuestions(step.key), ...customQuestions(placedQuestions(catalog, step.key))];
-      const signs = hasSignatureBlocks(
-        catalog.blocks,
-        step.kind === 'custom' ? step.screen.id : step.key,
-      );
-      return questions.length === 0 && !signs ? [] : [{ step, questions, signs }];
-    })
-    .map(({ step, questions, signs }, index): PlanScreen => ({
+    .flatMap(
+      (step): { step: FlowStep; questions: PlanQuestion[]; signs: boolean; shows: boolean }[] => {
+        if (step.kind === 'locked') return [{ step, questions: [], signs: false, shows: false }];
+        if (step.kind === 'builtin' && flow.hiddenScreens.has(step.key)) return [];
+        if (step.kind === 'custom' && step.screen.isHidden === true) return [];
+        const questions =
+          step.kind === 'custom'
+            ? customQuestions(placedQuestions(catalog, step.screen.id))
+            : [
+                ...builtinQuestions(step.key),
+                ...customQuestions(placedQuestions(catalog, step.key)),
+              ];
+        const signs = hasSignatureBlocks(
+          catalog.blocks,
+          step.kind === 'custom' ? step.screen.id : step.key,
+        );
+        // A Ramassà screen shows for a text or points block too (RAPP-770).
+        const shows =
+          signs || (step.kind === 'custom' && hasFormBlocks(catalog.blocks, step.screen.id));
+        return questions.length === 0 && !shows ? [] : [{ step, questions, signs, shows }];
+      },
+    )
+    .map(({ step, questions, signs, shows }, index): PlanScreen => ({
       step,
       number: index + 1,
       questions,
       isSkipped:
-        !signs && questions.length > 0 && questions.every((question) => question.state === 'skip'),
-      mustAsk: signs || questions.some((question) => !question.canSkip),
+        !shows && questions.length > 0 && questions.every((question) => question.state === 'skip'),
+      mustAsk: shows || questions.some((question) => !question.canSkip),
       askedCount: questions.filter((question) => question.asking !== 'not-asked').length,
       hasSignature: signs,
     }));

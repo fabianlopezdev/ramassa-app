@@ -370,6 +370,8 @@
       "country": "País",
       "municipality": "Municipio de Cataluña",
       "signature": "Firma",
+      "text_block": "Texto",
+      "points_block": "Puntos",
       "consent": "Consentimiento",
       "document": "Documento"
     },
@@ -809,7 +811,9 @@
     "add_one": "Añade {{count}} campo",
     "add_other": "Añade {{count}} campos",
     "addNone": "Añade",
-    "failed": "No se han podido añadir todos los campos. Vuelve a intentarlo."
+    "failed": "No se han podido añadir todos los campos. Vuelve a intentarlo.",
+    "playerData": "Datos de las jugadoras",
+    "legalData": "Datos legales"
   },
   "placement": {
     "askHer": "Cómo se lo preguntamos (opcional)",
@@ -840,6 +844,18 @@
     "removeTitle": "¿Quieres quitar esta firma?",
     "removeBody": "Las firmas ya dadas se conservan.",
     "defaultText": "Acepto"
+  },
+  "formBlock": {
+    "add": "Añade un bloque",
+    "heading": "Título",
+    "text": "Texto",
+    "removeNamed": "Quita el bloque",
+    "removeTitle": "¿Quieres quitar este bloque?",
+    "removeBody": "Se quita de esta pantalla.",
+    "defaultText": "Texto nuevo",
+    "defaultPointTitle": "Punto nuevo",
+    "defaultPointText": "Texto del punto",
+    "pointsNeedCatalan": "Cada punto necesita el título y el texto en catalán."
   },
   "saveDialog": {
     "title": "Guardar los cambios",

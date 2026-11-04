@@ -34,7 +34,7 @@ function databaseError(error: { readonly message: string; readonly code?: string
   return new AppError(databaseErrorCode(error.message, error.code), { message: error.message });
 }
 
-/** At most this many introduction points: the screen stays one read. */
+/** At most this many points, on the terms' introduction or a points block: the screen stays one read. */
 export const APP_TERMS_MAX_POINTS = 8;
 
 const termsTextSchema = z.object({
@@ -50,7 +50,15 @@ const catalanRequired = termsTextSchema.refine((text) => (text.ca ?? '').trim().
   message: 'catalan required',
 });
 
-const pointSchema = z.object({ title: catalanRequired, body: catalanRequired });
+/** One point: a title and a text, each with its Catalan written. */
+export const localizedPointSchema = z.object({ title: catalanRequired, body: catalanRequired });
+export type LocalizedPoint = z.infer<typeof localizedPointSchema>;
+
+/**
+ * The points of the app terms' introduction and of a points block of a form
+ * (RAPP-770): one rule, `private.form_points_valid`.
+ */
+export const localizedPointsSchema = z.array(localizedPointSchema).min(1).max(APP_TERMS_MAX_POINTS);
 
 /** A version's content as stored. Mirrors `private.app_terms_content_valid`. */
 export const appTermsDraftSchema = z.object({
@@ -58,7 +66,7 @@ export const appTermsDraftSchema = z.object({
   body: catalanRequired,
   intro_title: catalanRequired,
   intro: catalanRequired,
-  points: z.array(pointSchema).min(1).max(APP_TERMS_MAX_POINTS),
+  points: localizedPointsSchema,
   accept_label: catalanRequired,
   media_label: catalanRequired,
   media_hint: catalanRequired,
@@ -246,6 +254,14 @@ function cleanTermsText(text: AppTermsText): AppTermsText {
   ) as AppTermsText;
 }
 
+/** Points with empty languages dropped: the terms' and a points block's (RAPP-770). */
+export function cleanLocalizedPoints(points: readonly LocalizedPoint[]): LocalizedPoint[] {
+  return points.map((point) => ({
+    title: cleanTermsText(point.title),
+    body: cleanTermsText(point.body),
+  }));
+}
+
 /** The content with empty languages dropped, so "" never hides the Catalan fallback. */
 export function cleanAppTermsContent(content: AppTermsContent): AppTermsContent {
   return {
@@ -253,10 +269,7 @@ export function cleanAppTermsContent(content: AppTermsContent): AppTermsContent 
     body: cleanTermsText(content.body),
     intro_title: cleanTermsText(content.intro_title),
     intro: cleanTermsText(content.intro),
-    points: content.points.map((point) => ({
-      title: cleanTermsText(point.title),
-      body: cleanTermsText(point.body),
-    })),
+    points: cleanLocalizedPoints(content.points),
     accept_label: cleanTermsText(content.accept_label),
     media_label: cleanTermsText(content.media_label),
     media_hint: cleanTermsText(content.media_hint),

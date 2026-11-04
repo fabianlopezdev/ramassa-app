@@ -2318,39 +2318,48 @@ export type Database = {
       };
       form_blocks: {
         Row: {
-          body: Json;
+          body: Json | null;
           created_at: string;
           custom_form_id: string | null;
           id: string;
           kind: string;
           org_id: string;
+          points: Json | null;
           screen_key: string | null;
+          settings: Json;
           sort_order: number;
           surface: string;
+          title: Json | null;
           updated_at: string;
         };
         Insert: {
-          body: Json;
+          body?: Json | null;
           created_at?: string;
           custom_form_id?: string | null;
           id?: string;
           kind?: string;
           org_id: string;
+          points?: Json | null;
           screen_key?: string | null;
+          settings?: Json;
           sort_order?: number;
           surface: string;
+          title?: Json | null;
           updated_at?: string;
         };
         Update: {
-          body?: Json;
+          body?: Json | null;
           created_at?: string;
           custom_form_id?: string | null;
           id?: string;
           kind?: string;
           org_id?: string;
+          points?: Json | null;
           screen_key?: string | null;
+          settings?: Json;
           sort_order?: number;
           surface?: string;
+          title?: Json | null;
           updated_at?: string;
         };
         Relationships: [
@@ -7772,15 +7781,28 @@ export type Database = {
         Returns: string;
       };
       save_entity_service: { Args: { p_payload: Json }; Returns: string };
-      save_form_block: {
-        Args: {
-          p_body: Json;
-          p_id: string;
-          p_screen_key: string;
-          p_surface: string;
-        };
-        Returns: string;
-      };
+      save_form_block:
+        | {
+            Args: {
+              p_body: Json;
+              p_id: string;
+              p_screen_key: string;
+              p_surface: string;
+            };
+            Returns: string;
+          }
+        | {
+            Args: {
+              p_body: Json;
+              p_id: string;
+              p_kind: string;
+              p_points: Json;
+              p_screen_key: string;
+              p_surface: string;
+              p_title: Json;
+            };
+            Returns: string;
+          };
       save_forum_category: {
         Args: {
           p_category_id: string;

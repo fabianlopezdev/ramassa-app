@@ -18,7 +18,7 @@ import { authorizationContentSchema } from '../authorization/authorization';
 import { AppError, databaseErrorCode } from '../errors';
 import { languageCodeSchema } from '../schemas/language';
 import type { Database, Json } from '../types/database';
-import { appTermsDraftSchema } from './app-terms';
+import { appTermsDraftSchema, localizedPointsSchema } from './app-terms';
 
 type Client = SupabaseClient<Database>;
 
@@ -167,14 +167,18 @@ export const onboardingSetupDocumentSchema = z
       ),
       draft: z.strictObject({ content: authorizationContentSchema }).nullable(),
     }),
-    // The signature blocks of the screens and the entity form (RAPP-690). An
-    // older file has none.
+    // The blocks of the screens and the entity form (RAPP-690): a signature,
+    // a text or points (RAPP-770). An older file has none, and a file from
+    // before RAPP-770 holds signatures with no kind. The key keeps its name.
     signature_blocks: z
       .array(
         z.strictObject({
           surface: z.enum(['onboarding', 'entity_form']),
           screen_key: z.string().min(1).nullable(),
-          body: catalanText,
+          kind: z.enum(['signature', 'text', 'points']).optional(),
+          body: catalanText.nullable().optional(),
+          title: anyLanguageText.nullable().optional(),
+          points: localizedPointsSchema.nullable().optional(),
           sort_order: position,
         }),
       )
@@ -288,6 +292,15 @@ export const onboardingSetupDocumentSchema = z
       // An Onboarding block names its screen; the entity form names none.
       if ((block.surface === 'onboarding') !== (block.screen_key !== null)) {
         context.addIssue({ code: 'custom', message: 'a signature block names its screen' });
+      }
+      // Each kind holds its own content, as the database checks it.
+      const kind = block.kind ?? 'signature';
+      const holds =
+        kind === 'points'
+          ? block.points != null && block.body == null && block.title == null
+          : block.body != null && block.points == null && (kind === 'text' || block.title == null);
+      if (!holds) {
+        context.addIssue({ code: 'custom', message: 'a block holds what its kind holds' });
       }
     }
   });

@@ -39,7 +39,7 @@ import {
   type IntakeCatalog,
   type IntakeScreen,
 } from './builder';
-import { hasSignatureBlocks } from './form-blocks';
+import { hasFormBlocks, hasSignatureBlocks } from './form-blocks';
 import {
   fieldById,
   fieldsOfSection,
@@ -262,9 +262,12 @@ export function herOnboarding(
     const group = followUpGroup(catalog, branch);
     return group === null ? [] : [group];
   });
+  // A Ramassà screen with no field left to ask still shows for any of its
+  // blocks (RAPP-770); the fields on an app screen, for a signature only.
   const signs = (screen: IntakeScreen) =>
-    hasSignatureBlocks(catalog.blocks, screen.builtinScreen ?? screen.id);
-  // A screen with no field left to ask still shows for its signature blocks.
+    screen.builtinScreen == null
+      ? hasFormBlocks(catalog.blocks, screen.id)
+      : hasSignatureBlocks(catalog.blocks, screen.builtinScreen);
   const all = [...own, ...onAppScreens, ...onFollowUps];
   const asked = new Map(withCustomAsking(all, asking).map((screen) => [screen.id, screen]));
   const shown = all.flatMap((screen) => {

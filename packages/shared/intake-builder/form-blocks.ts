@@ -1,18 +1,26 @@
 /**
- * The blocks of a form (RAPP-690): today the signature block.
+ * The blocks of a form (RAPP-690, RAPP-770): a signature, a text, or points.
  *
- * A signature is no data about her. It is the act of agreeing to a text inside
- * a given form, so it is a block of the form builders: an Onboarding screen or
- * the entity form. A block holds the text to accept in five languages (Catalan
- * required) and asks for a signature under it. It is always required where it
- * sits, a form can hold several, and it shares one order with the fields
- * placed there (`reorder_placements` orders both).
+ * A block sits on an Onboarding screen (an app screen or a Ramassà screen), on
+ * a screen of a form the team created, or on the entity form, and shares one
+ * order with the fields and consents placed there (`reorder_placements`
+ * orders them all). Each kind holds its own content, in five languages with
+ * the Catalan written; another language left empty shows the Catalan:
  *
- * The form sends each signature with its own submit, by block id:
- * `{[blockId]: {strokes, language}}`, the strokes in the format of the
- * authorization pad and the language the text was shown in. The database
- * keeps the text exactly as shown, who signed and when
- * (`public.form_signatures`), and refuses the form while a block is unsigned.
+ *   - `signature`: the text to accept and a box she signs in. It is no data
+ *     about her: it is the act of agreeing to a text inside a given form. It
+ *     is always required where it sits;
+ *   - `text`: a text she reads, under an optional heading;
+ *   - `points`: one to eight points, each a title and a text, by the app
+ *     terms' points rule (`localizedPointsSchema`).
+ *
+ * Only a signature block asks something: every signature check reads
+ * `signatureBlocks` first. The form sends each signature with its own submit,
+ * by block id: `{[blockId]: {strokes, language}}`, the strokes in the format
+ * of the authorization pad and the language the text was shown in. The
+ * database keeps the text exactly as shown, who signed and when
+ * (`public.form_signatures`), and refuses the form while a signature block is
+ * unsigned. An older build leaves out a kind it cannot read.
  *
  * Docs: https://zod.dev/api
  */
@@ -21,6 +29,11 @@ import { z } from 'zod';
 import { signatureStrokesSchema, type SignatureStrokes } from '../equipment/handover';
 import { AppError, databaseErrorCode } from '../errors';
 import { resolveLocalizedText } from '../i18n/localized-content';
+import {
+  cleanLocalizedPoints,
+  localizedPointsSchema,
+  type LocalizedPoint,
+} from '../onboarding/app-terms';
 import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
 import { anyLanguageTextSchema, type BuilderText } from './profile-layout';
@@ -30,48 +43,128 @@ type Client = SupabaseClient<Database>;
 export const FORM_BLOCK_SURFACES = ['onboarding', 'entity_form', 'custom_form'] as const;
 export type FormBlockSurface = (typeof FORM_BLOCK_SURFACES)[number];
 
-/** A signature block of a form. */
-export interface FormBlock {
+export const FORM_BLOCK_KINDS = ['signature', 'text', 'points'] as const;
+export type FormBlockKind = (typeof FORM_BLOCK_KINDS)[number];
+
+/** Where a block sits and its place in the order it shares with the fields. */
+interface FormBlockPlace {
   readonly id: string;
   readonly surface: FormBlockSurface;
   /** The screen of her Onboarding or of a form it sits on; null on the entity form. */
   readonly screenKey: string | null;
   /** The form the team created it sits on (RAPP-700); null everywhere else. */
   readonly customFormId?: string | null;
-  readonly kind: 'signature';
-  /** The text to accept, in five languages, Catalan required. */
-  readonly body: BuilderText;
   readonly sortOrder: number;
 }
 
-const blockRowSchema = z.object({
+/** A signature block: the text to accept, then a box she signs in. */
+export interface SignatureFormBlock extends FormBlockPlace {
+  readonly kind: 'signature';
+  /** The text to accept, in five languages, Catalan required. */
+  readonly body: BuilderText;
+}
+
+/** A text block (RAPP-770): a text she reads, under an optional heading. */
+export interface TextFormBlock extends FormBlockPlace {
+  readonly kind: 'text';
+  readonly title: BuilderText | null;
+  /** The text, in five languages, Catalan required. */
+  readonly body: BuilderText;
+}
+
+/** A points block (RAPP-770): one to eight points, each a title and a text. */
+export interface PointsFormBlock extends FormBlockPlace {
+  readonly kind: 'points';
+  readonly points: readonly LocalizedPoint[];
+}
+
+/** A block of a form, by its kind. */
+export type FormBlock = SignatureFormBlock | TextFormBlock | PointsFormBlock;
+
+/** What a block holds, by kind: what staff write and the database checks. */
+export type FormBlockContent =
+  | { readonly kind: 'signature'; readonly body: BuilderText }
+  | { readonly kind: 'text'; readonly title: BuilderText | null; readonly body: BuilderText }
+  | { readonly kind: 'points'; readonly points: readonly LocalizedPoint[] };
+
+const placeRowSchema = z.object({
   id: z.uuid(),
   surface: z.enum(FORM_BLOCK_SURFACES),
   screen_key: z.string().nullable(),
   custom_form_id: z.uuid().nullable().optional(),
-  kind: z.literal('signature'),
-  body: anyLanguageTextSchema,
   sort_order: z.number().int(),
 });
+
+const signatureBlockRowSchema = placeRowSchema.extend({
+  kind: z.literal('signature'),
+  body: anyLanguageTextSchema,
+});
+
+const textRowSchema = placeRowSchema.extend({
+  kind: z.literal('text'),
+  title: anyLanguageTextSchema.nullable().optional(),
+  body: anyLanguageTextSchema,
+});
+
+const pointsRowSchema = placeRowSchema.extend({
+  kind: z.literal('points'),
+  points: localizedPointsSchema,
+});
+
+function placeOf(row: z.infer<typeof placeRowSchema>): FormBlockPlace {
+  return {
+    id: row.id,
+    surface: row.surface,
+    screenKey: row.screen_key,
+    customFormId: row.custom_form_id ?? null,
+    sortOrder: row.sort_order,
+  };
+}
+
+/** One parser per kind; a row none of them reads is left out. */
+const BLOCK_PARSERS: readonly ((row: unknown) => FormBlock | null)[] = [
+  (row) => {
+    const parsed = signatureBlockRowSchema.safeParse(row);
+    return parsed.success
+      ? { ...placeOf(parsed.data), kind: 'signature', body: parsed.data.body }
+      : null;
+  },
+  (row) => {
+    const parsed = textRowSchema.safeParse(row);
+    return parsed.success
+      ? {
+          ...placeOf(parsed.data),
+          kind: 'text',
+          title: parsed.data.title ?? null,
+          body: parsed.data.body,
+        }
+      : null;
+  },
+  (row) => {
+    const parsed = pointsRowSchema.safeParse(row);
+    return parsed.success
+      ? { ...placeOf(parsed.data), kind: 'points', points: parsed.data.points }
+      : null;
+  },
+];
 
 /** The blocks of the catalog; a row this build cannot read is left out. */
 export function parseFormBlocks(raw: unknown): readonly FormBlock[] {
   if (!Array.isArray(raw)) return [];
   return raw.flatMap((row): FormBlock[] => {
-    const parsed = blockRowSchema.safeParse(row);
-    if (!parsed.success) return [];
-    return [
-      {
-        id: parsed.data.id,
-        surface: parsed.data.surface,
-        screenKey: parsed.data.screen_key,
-        customFormId: parsed.data.custom_form_id ?? null,
-        kind: parsed.data.kind,
-        body: parsed.data.body,
-        sortOrder: parsed.data.sort_order,
-      },
-    ];
+    for (const parse of BLOCK_PARSERS) {
+      const block = parse(row);
+      if (block !== null) return [block];
+    }
+    return [];
   });
+}
+
+/** The signature blocks among these: the only blocks that ask her something. */
+export function signatureBlocks(
+  blocks: readonly FormBlock[] | undefined,
+): readonly SignatureFormBlock[] {
+  return (blocks ?? []).filter((block): block is SignatureFormBlock => block.kind === 'signature');
 }
 
 /** The blocks of one screen of her Onboarding, or of the entity form (`screenKey` null), in order. */
@@ -90,18 +183,68 @@ export function hasSignatureBlocks(
   blocks: readonly FormBlock[] | undefined,
   screenKey: string,
 ): boolean {
+  return signatureBlocks(formBlocksOn(blocks, 'onboarding', screenKey)).length > 0;
+}
+
+/**
+ * Whether a screen of her Onboarding holds any block. A Ramassà screen with
+ * only a text or points block shows (RAPP-770); an app screen shows for its
+ * signatures only (`hasSignatureBlocks`), so a text never brings back a
+ * screen she would skip.
+ */
+export function hasFormBlocks(
+  blocks: readonly FormBlock[] | undefined,
+  screenKey: string,
+): boolean {
   return formBlocksOn(blocks, 'onboarding', screenKey).length > 0;
 }
 
-/** The text of a block as she reads it, and the language it is shown in. */
+/** A localized text as she reads it, and the language it is shown in: hers, else the Catalan. */
 export function formBlockText(
-  block: Pick<FormBlock, 'body'>,
+  block: { readonly body: BuilderText },
   language: LanguageCode,
 ): { readonly text: string; readonly language: LanguageCode } {
   const resolved = resolveLocalizedText(block.body, language);
   return resolved === undefined
     ? { text: '', language: 'ca' }
     : { text: resolved.text, language: resolved.language as LanguageCode };
+}
+
+/** What a block shows, in one language: a heading and a text, or the points. */
+export type ResolvedFormBlock =
+  | { readonly kind: 'signature'; readonly body: string }
+  | { readonly kind: 'text'; readonly title: string; readonly body: string }
+  | {
+      readonly kind: 'points';
+      readonly points: readonly { readonly title: string; readonly body: string }[];
+    };
+
+/** A block's content as she reads it in `language`. */
+export function resolveFormBlock(
+  block: FormBlockContent,
+  language: LanguageCode,
+): ResolvedFormBlock {
+  const text = (value: BuilderText | null) =>
+    value === null ? '' : formBlockText({ body: value }, language).text;
+  switch (block.kind) {
+    case 'signature':
+      return { kind: 'signature', body: text(block.body) };
+    case 'text':
+      return { kind: 'text', title: text(block.title), body: text(block.body) };
+    case 'points':
+      return {
+        kind: 'points',
+        points: block.points.map((point) => ({ title: text(point.title), body: text(point.body) })),
+      };
+  }
+}
+
+/** A block's name in a list: its heading or its text, or its first point. */
+export function formBlockName(block: FormBlockContent, language: LanguageCode): string {
+  const shown = resolveFormBlock(block, language);
+  if (shown.kind === 'points') return shown.points[0]?.title ?? '';
+  if (shown.kind === 'text' && shown.title !== '') return shown.title;
+  return shown.body;
 }
 
 /** One signature as a form sends it. */
@@ -115,12 +258,12 @@ export type FormSignatureDrafts = Readonly<Record<string, SignatureStrokes | nul
 
 export const formSignatureDraftsSchema = z.record(z.string(), signatureStrokesSchema.nullable());
 
-/** The blocks with no signature yet: the form does not go while any is left. */
+/** The signature blocks with no signature yet: the form does not go while any is left. */
 export function unsignedFormBlocks(
   blocks: readonly FormBlock[],
   drafts: FormSignatureDrafts | undefined,
 ): readonly string[] {
-  return blocks.flatMap((block) => (drafts?.[block.id] ? [] : [block.id]));
+  return signatureBlocks(blocks).flatMap((block) => (drafts?.[block.id] ? [] : [block.id]));
 }
 
 /**
@@ -133,7 +276,7 @@ export function formSignaturesPayload(
   language: LanguageCode,
 ): Json {
   return Object.fromEntries(
-    blocks.flatMap((block) => {
+    signatureBlocks(blocks).flatMap((block) => {
       const strokes = drafts?.[block.id];
       if (!strokes) return [];
       const signature: FormSignature = {
@@ -149,21 +292,36 @@ function databaseError(error: { readonly message: string; readonly code?: string
   return new AppError(databaseErrorCode(error.message, error.code), { message: error.message });
 }
 
-/** Adds a signature block to a screen or to the entity form, or saves its text (`id` set). */
+/** A localized text with its empty languages dropped, so "" never hides the Catalan. */
+function cleanText(text: BuilderText): BuilderText {
+  return Object.fromEntries(
+    Object.entries(text).flatMap(([language, value]) =>
+      typeof value === 'string' && value.trim() !== '' ? [[language, value.trim()]] : [],
+    ),
+  ) as BuilderText;
+}
+
+/**
+ * Adds a block to a screen or to the entity form (`id` null), or saves its
+ * texts. A block keeps its kind; the entity form holds signatures only.
+ */
 export async function saveFormBlock(
   client: Pick<Client, 'rpc'>,
   block: {
     readonly id: string | null;
     readonly surface: FormBlockSurface;
     readonly screenKey: string | null;
-    readonly body: BuilderText;
-  },
+  } & FormBlockContent,
 ): Promise<string> {
+  const title = block.kind === 'text' && block.title !== null ? cleanText(block.title) : null;
   const { data, error } = await client.rpc('save_form_block', {
     p_id: block.id as string,
     p_surface: block.surface,
     p_screen_key: block.screenKey as string,
-    p_body: block.body as Json,
+    p_kind: block.kind,
+    p_body: (block.kind === 'points' ? null : cleanText(block.body)) as Json,
+    p_title: (title === null || Object.keys(title).length === 0 ? null : title) as Json,
+    p_points: (block.kind === 'points' ? cleanLocalizedPoints(block.points) : null) as Json,
   });
   if (error) throw databaseError(error);
   return z.uuid().parse(data);
@@ -176,15 +334,15 @@ export async function removeFormBlock(client: Pick<Client, 'rpc'>, id: string): 
 }
 
 /**
- * The Onboarding blocks of the live screens: an app screen's, or a Ramassà
- * screen's that is not archived. The walk-in tablet asks these (RAPP-691).
+ * The Onboarding signature blocks of the live screens: an app screen's, or a
+ * Ramassà screen's that is not archived. The walk-in tablet asks these (RAPP-691).
  */
 export function liveOnboardingBlocks(catalog: {
   readonly blocks?: readonly FormBlock[];
   readonly screens: readonly { readonly id: string; readonly isArchived: boolean }[];
-}): readonly FormBlock[] {
+}): readonly SignatureFormBlock[] {
   const live = new Set(catalog.screens.filter((screen) => !screen.isArchived).map((s) => s.id));
-  return (catalog.blocks ?? [])
+  return signatureBlocks(catalog.blocks)
     .filter(
       (block) =>
         block.surface === 'onboarding' &&
@@ -212,7 +370,10 @@ export interface MySignedBlock {
  * it in. A changed text asks for a new signature; the database reads the same
  * rule (`private.unsigned_form_blocks`).
  */
-export function isFormBlockSigned(block: FormBlock, signed: readonly MySignedBlock[]): boolean {
+export function isFormBlockSigned(
+  block: SignatureFormBlock,
+  signed: readonly MySignedBlock[],
+): boolean {
   return signed.some(
     (signature) =>
       signature.blockId === block.id && block.body[signature.language] === signature.body,

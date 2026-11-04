@@ -370,6 +370,8 @@
       "country": "Country",
       "municipality": "Municipality of Catalonia",
       "signature": "Signature",
+      "text_block": "Text",
+      "points_block": "Points",
       "consent": "Consent",
       "document": "Document"
     },
@@ -809,7 +811,9 @@
     "add_one": "Add {{count}} field",
     "add_other": "Add {{count}} fields",
     "addNone": "Add",
-    "failed": "Some fields could not be added. Try again."
+    "failed": "Some fields could not be added. Try again.",
+    "playerData": "Player data",
+    "legalData": "Legal data"
   },
   "placement": {
     "askHer": "How we ask her (optional)",
@@ -840,6 +844,18 @@
     "removeTitle": "Remove this signature?",
     "removeBody": "Signatures already given are kept.",
     "defaultText": "I accept"
+  },
+  "formBlock": {
+    "add": "Add a block",
+    "heading": "Heading",
+    "text": "Text",
+    "removeNamed": "Remove the block",
+    "removeTitle": "Remove this block?",
+    "removeBody": "It is removed from this screen.",
+    "defaultText": "New text",
+    "defaultPointTitle": "New point",
+    "defaultPointText": "Point text",
+    "pointsNeedCatalan": "Each point needs its title and text in Catalan."
   },
   "saveDialog": {
     "title": "Save changes",
