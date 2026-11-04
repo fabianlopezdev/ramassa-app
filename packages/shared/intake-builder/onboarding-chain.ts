@@ -24,6 +24,7 @@ import { FINAL_WIZARD_SCREENS } from '../onboarding/intake';
 import { DETAIL_SCREEN_BRANCHES } from '../onboarding/screen-texts';
 import type { Database } from '../types/database';
 import { authorizationQuestions } from './authorization-fields';
+import { authorizationForm, isReregistrationScreen } from './authorization-form';
 import { wizardFlow, type IntakeCatalog } from './builder';
 import type { CustomForm, CustomFormScreen } from './custom-form-model';
 import {
@@ -113,11 +114,17 @@ export function customFormAskingScreens(
 }
 
 /**
- * The season authorization's screens for a new player: the document, the
- * health screen while a field is placed on it, then the consents and the
- * signature. The re-registration screens are for returning players only.
+ * The season authorization's screens for a new player: its form's screens
+ * she is shown (RAPP-773), the re-registration ones left out, which are for
+ * returning players only. A server before RAPP-773: the document, the health
+ * screen while a field is placed on it, then the consents and the signature.
  */
 export function authorizationScreenCount(catalog: IntakeCatalog): number {
+  const form = authorizationForm(catalog);
+  if (form !== undefined) {
+    return form.screens.filter((screen) => screen.isHidden !== true && !isReregistrationScreen(screen))
+      .length;
+  }
   return 2 + (authorizationQuestions(catalog).length > 0 ? 1 : 0);
 }
 

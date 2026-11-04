@@ -30,12 +30,18 @@ function databaseError(error: { readonly message: string; readonly code?: string
   return new AppError(databaseErrorCode(error.message, error.code), { message: error.message });
 }
 
-/** The version a player signs on the tablet: the current season's latest. */
+/**
+ * The version a player signs on the tablet: the current season's latest,
+ * with its form (RAPP-773) as the version froze it. A server before RAPP-773
+ * sends no form, and this build cannot collect it.
+ */
 export interface AuthorizationForSigning {
   readonly versionId: string;
   readonly seasonName: string;
   readonly versionNumber: number;
   readonly content: AuthorizationContent;
+  readonly formId: string | null;
+  readonly formSnapshot: unknown;
 }
 
 export const authorizationForSigningSchema = z.object({
@@ -43,6 +49,8 @@ export const authorizationForSigningSchema = z.object({
   seasonName: z.string(),
   versionNumber: z.number().int(),
   content: authorizationContentSchema,
+  formId: z.uuid().nullable().optional().default(null),
+  formSnapshot: z.unknown().optional().default(null),
 });
 
 export async function fetchAuthorizationForSigning(
@@ -57,6 +65,8 @@ export async function fetchAuthorizationForSigning(
         season_name: z.string(),
         version_number: z.number().int(),
         content: authorizationContentSchema,
+        form_id: z.uuid().nullable().optional().default(null),
+        form_snapshot: z.unknown().optional().default(null),
       }),
     )
     .max(1)
@@ -67,6 +77,8 @@ export async function fetchAuthorizationForSigning(
     seasonName: row.season_name,
     versionNumber: row.version_number,
     content: row.content,
+    formId: row.form_id,
+    formSnapshot: row.form_snapshot,
   };
 }
 
@@ -86,7 +98,12 @@ export interface TabletSigning {
   readonly id: string;
   readonly signer: TabletSigner;
   readonly versionId: string;
-  /** The payload built by `buildSignPayload`, with the tablet's language and device. */
+  /**
+   * The payload built by `buildSignPayload`, with her language and the
+   * tablet's device. An entry saved by an older build holds the old payload
+   * (`signature`, `unable_to_draw`, no `signatures`); the server takes it for
+   * a version an older build could show.
+   */
   readonly payload: Json;
   readonly signedAt: string;
   /** A walk-in's Onboarding block signatures, `{block: {strokes, language}}` (RAPP-691). */

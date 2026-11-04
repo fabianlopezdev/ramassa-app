@@ -16,14 +16,25 @@
  * Her health and her emergency contact are fields since RAPP-698, placed on
  * the Health screen (`authorizationQuestions`): she answers them by field.
  * A version published before keeps its `questions`, which nothing reads now.
+ *
+ * Since RAPP-773 the authorization is a legal form of the form engine
+ * (`season_authorization`): staff build its screens, a version freezes the
+ * form, and she walks it with the shared form walker. This module is its
+ * adapter: her status names the form and the snapshot she walks, and
+ * `buildSignPayload` turns what she gave on the walk into the payload the
+ * database checks against the version. `authorizationContentSchema` reads
+ * the old content only, which every version keeps for older builds.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { signatureStrokesSchema, type SignatureStrokes } from '../equipment/handover';
 import { AppError, databaseErrorCode } from '../errors';
 import { staffTextIn } from '../i18n/localized-content';
-import { answerPayload } from '../intake-builder/builder';
-import { customAnswerValueSchema } from '../intake-builder/question-types';
+import { answerPayload, type IntakeCatalog } from '../intake-builder/builder';
+import type { CustomFormScreen } from '../intake-builder/custom-form-model';
+import { customFormScreenBlocks } from '../intake-builder/custom-forms';
+import { signatureBlocks, UNABLE_TO_DRAW } from '../intake-builder/form-blocks';
+import { formWalkPayload, type FormWalkDraft } from '../intake-builder/form-walk';
 import { withCancellation, type CancellableRequest } from '../lib/cancellation';
 import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
@@ -54,13 +65,8 @@ export const authorizationTextSchema = languageTextsSchema.refine((text) =>
 
 export type AuthorizationText = z.infer<typeof authorizationTextSchema>;
 
-/**
- * The authorization's screens staff may reorder (RAPP-696), in their default
- * order. The consents and signature screen always ends the form.
- */
-export const AUTHORIZATION_MOVABLE_SCREENS = ['document', 'health'] as const;
-
-export type AuthorizationMovableScreen = (typeof AUTHORIZATION_MOVABLE_SCREENS)[number];
+/** The two screens old content may reorder (RAPP-696), in their default order. */
+const AUTHORIZATION_MOVABLE_SCREENS = ['document', 'health'] as const;
 
 /** A wording override: as above, at most 2000 characters per language. */
 const overrideTextSchema = authorizationTextSchema.refine((text) =>
@@ -112,11 +118,11 @@ export const OPTIONAL_AUTHORIZATION_TEXT_FIELDS: readonly string[] = [
   'reregistration_season_intro',
 ];
 
-export function isOptionalAuthorizationTextField(field: string): boolean {
+function isOptionalAuthorizationTextField(field: string): boolean {
   return OPTIONAL_AUTHORIZATION_TEXT_FIELDS.includes(field);
 }
-export type HealthTextField = (typeof AUTHORIZATION_TEXT_FIELDS.health)[number];
-export type EmergencyTextField = (typeof AUTHORIZATION_TEXT_FIELDS.emergency_contact)[number];
+type HealthTextField = (typeof AUTHORIZATION_TEXT_FIELDS.health)[number];
+type EmergencyTextField = (typeof AUTHORIZATION_TEXT_FIELDS.emergency_contact)[number];
 
 /**
  * The app's own text for each field, as `onboarding` translation keys: what
@@ -164,9 +170,6 @@ export const AUTHORIZATION_BUNDLED_TEXT_KEYS = {
   readonly emergency_contact: Record<EmergencyTextField, string>;
 };
 
-/** The app's title for a required emergency contact, without "(optional)". */
-export const EMERGENCY_TITLE_REQUIRED_KEY = 'authorizationEmergencyTitleRequired';
-
 /** An optional text staff may clear (RAPP-710): blank in every language is allowed. */
 const optionalOverrideTextSchema = languageTextsSchema.refine((text) =>
   Object.values(text).every((value) => (value ?? '').length <= 2000),
@@ -210,8 +213,6 @@ const emergencyQuestionSchema = z.object({
   privacy: z.enum(['personal', 'sensitive']),
   texts: textsOf(AUTHORIZATION_TEXT_FIELDS.emergency_contact),
 });
-
-export type EmergencyContactPrivacy = z.infer<typeof emergencyQuestionSchema>['privacy'];
 
 export const authorizationContentSchema = z
   .object({
@@ -299,29 +300,6 @@ export function orderedConsents(
 }
 
 /**
- * The authorization's screens her form walks, in order (RAPP-696): the
- * document and the health screen in the version's order, then the consents
- * and her signature, always last.
- */
-export function authorizationScreenOrder(
-  content: Pick<AuthorizationContent, 'screen_order'>,
-): readonly (AuthorizationMovableScreen | 'consents')[] {
-  return [...(content.screen_order ?? AUTHORIZATION_MOVABLE_SCREENS), 'consents'];
-}
-
-/** The Health screen shows while staff place any field on it (RAPP-698). */
-export function isHealthScreenShown(questions: readonly unknown[]): boolean {
-  return questions.length > 0;
-}
-
-/** A key for a consent staff add, used by no consent of the version. */
-export function newConsentKey(content: AuthorizationContent): AuthorizationConsentKey {
-  let number = Object.keys(content.consents).length + 1;
-  while (`consent_${number}` in content.consents) number += 1;
-  return `consent_${number}`;
-}
-
-/**
  * Staff wording of a field in her language, '' for an optional text staff
  * cleared, or undefined: the caller shows the app's own text in her language
  * then, so a required text is never blank (RAPP-710, `staffTextIn`).
@@ -347,6 +325,8 @@ const statusRowSchema = z.object({
   // Returning: she signed an earlier season (RAPP-306). Older servers omit it.
   is_returning: z.boolean().optional().default(false),
   is_draft: z.boolean().optional().default(false),
+  // The form she walks (RAPP-773); a server before it sends none.
+  form_id: z.uuid().nullable().optional().default(null),
 });
 
 export interface AuthorizationStatus {
@@ -361,6 +341,11 @@ export interface AuthorizationStatus {
   readonly isReturning: boolean;
   /** A test player is shown the organization's draft (RAPP-619). */
   readonly isDraft: boolean;
+  /**
+   * The authorization form (RAPP-773): her catalog holds it as this version
+   * froze it. Null from a server before it, which this build cannot sign.
+   */
+  readonly formId: string | null;
 }
 
 /**
@@ -387,6 +372,7 @@ export async function fetchMyAuthorizationStatus(
     content: row.content,
     isReturning: row.is_returning,
     isDraft: row.is_draft,
+    formId: row.form_id,
   };
 }
 
@@ -395,91 +381,47 @@ export function needsAuthorization(status: AuthorizationStatus | null): boolean 
   return status?.required === true;
 }
 
-/** What she gives when she signs, before the version's own rules. */
-const signingShape = z.object({
-  // Partial: an optional consent she never touched is simply absent.
-  consents: z.partialRecord(consentKeySchema, z.boolean()),
-  /** Her answers on the Health screen, by field (RAPP-698); the form checks each against its field. */
-  answers: z.record(z.string(), customAnswerValueSchema),
-  strokes: signatureStrokesSchema.nullable(),
-  unableToDraw: z.boolean(),
-});
-
-export type AuthorizationSigning = z.infer<typeof signingShape>;
-
 /**
- * Her signing, checked against the version she signs: its required consents,
- * and the health data consent her health answer needs (the health field's id,
- * when the organization has it). The database checks the same
- * (`private.validate_signing_payload`, `private.check_signing_answers`).
+ * What she sends when she signs (RAPP-773): what she gave on the screens of
+ * the authorization she saw (her answers by field, her ticks by consent key,
+ * every signature by block, the language she read) and the device. Her
+ * signature of the form's own block also goes as `signature` and
+ * `unable_to_draw`, the way an older server reads it. Null while that
+ * signature is missing: the walk asks her for it first.
  */
-export function authorizationSigningSchemaFor(
-  content: AuthorizationContent,
-  healthFieldId: string | null = null,
-) {
-  return signingShape.superRefine((signing, context) => {
-    for (const consent of orderedConsents(content)) {
-      if (consent.required && signing.consents[consent.key] !== true) {
-        context.addIssue({ code: 'custom', path: ['consents', consent.key], message: 'required' });
-      }
-    }
-    for (const key of Object.keys(signing.consents)) {
-      if (!(key in content.consents)) {
-        context.addIssue({
-          code: 'custom',
-          path: ['consents', key],
-          message: 'not in the version',
-        });
-      }
-    }
-    const health = healthFieldId === null ? undefined : signing.answers[healthFieldId];
-    if (
-      typeof health === 'string' &&
-      health.trim() !== '' &&
-      HEALTH_DATA_CONSENT in content.consents &&
-      signing.consents[HEALTH_DATA_CONSENT] !== true
-    ) {
-      context.addIssue({
-        code: 'custom',
-        path: ['consents', HEALTH_DATA_CONSENT],
-        message: 'the health answer needs its consent',
-      });
-    }
-    const hasDrawing = signing.strokes !== null && signing.strokes.length > 0;
-    if (hasDrawing === signing.unableToDraw) {
-      context.addIssue({ code: 'custom', path: ['strokes'], message: 'draw or say you cannot' });
-    }
-  });
-}
-
-/** The payload: every consent of the version, ticked or not, and only those. */
-export function buildSignPayload(
-  signing: AuthorizationSigning,
-  context: { readonly language: LanguageCode; readonly device: string | null },
-  content: AuthorizationContent,
-): Json {
+export function buildSignPayload(input: {
+  readonly catalog: IntakeCatalog;
+  readonly screens: readonly Pick<CustomFormScreen, 'id'>[];
+  readonly draft: FormWalkDraft;
+  readonly language: LanguageCode;
+  readonly device: string | null;
+}): Json | null {
+  const payload = formWalkPayload(input.catalog, input.screens, input.draft, input.language);
+  const own = signatureBlocks(
+    input.screens.flatMap((screen) => customFormScreenBlocks(input.catalog, screen.id)),
+  ).find((block) => block.system === 'authorization_signature');
+  const given = own === undefined ? null : (input.draft.signatures[own.id] ?? null);
+  if (given === null) return null;
   return {
-    consents: Object.fromEntries(
-      orderedConsents(content).map(({ key }) => [key, signing.consents[key] === true]),
-    ),
-    answers: answerPayload(signing.answers),
-    signature: signing.unableToDraw ? null : ((signing.strokes as Json | null) ?? null),
-    unable_to_draw: signing.unableToDraw,
-    language: context.language,
-    device: context.device,
+    consents: payload.consents ?? {},
+    answers: answerPayload(payload.answers),
+    signatures: payload.signatures,
+    signature: given === UNABLE_TO_DRAW ? null : (given as Json),
+    unable_to_draw: given === UNABLE_TO_DRAW,
+    language: payload.language,
+    device: input.device,
   };
 }
 
+/** Her signature of the version she was shown. */
 export async function signAuthorization(
   client: Client,
   versionId: string,
-  content: AuthorizationContent,
-  signing: AuthorizationSigning,
-  context: { readonly language: LanguageCode; readonly device: string | null },
+  payload: Json,
 ): Promise<void> {
   const { error } = await client.rpc('sign_authorization', {
     p_version_id: versionId,
-    p_payload: buildSignPayload(signing, context, content),
+    p_payload: payload,
   });
   if (error) throw new AppError(databaseErrorCode(error.message), { message: error.message });
 }
@@ -595,18 +537,6 @@ export async function fetchAuthorizationVersions(
       isCorrection: row.is_correction,
       signatureCount: row.signature_count,
     }));
-}
-
-/** Saves the one draft (onboarding designers). */
-export async function saveAuthorizationDraft(
-  client: Client,
-  content: AuthorizationContent,
-): Promise<string> {
-  const { data, error } = await client.rpc('save_authorization_draft', {
-    p_content: content as unknown as Json,
-  });
-  if (error) throw new AppError(databaseErrorCode(error.message), { message: error.message });
-  return z.string().parse(data);
 }
 
 export async function discardAuthorizationDraft(client: Client): Promise<void> {

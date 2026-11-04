@@ -1369,6 +1369,8 @@ export function buildAuthorizationVersion(
     updated_at: FIXTURE_TIMESTAMP,
     updated_by: null,
     is_correction: false,
+    form_snapshot: null,
+    legacy_compatible: true,
     ...overrides,
   };
 }
@@ -1616,6 +1618,7 @@ export function buildWalkInFormSignature(
     body: 'Accepto les normes de convivència.',
     language: 'ca',
     strokes: SEED_STROKES,
+    unable_to_draw: false,
     signed_at: FIXTURE_TIMESTAMP,
     witnessed_by: seedUserId(2),
     ...overrides,
@@ -1840,6 +1843,7 @@ export function buildCustomFormScreen(
     id: '5eed0000-0000-4000-8101-000000000001',
     texts: {},
     system_screen: null,
+    attachments: null,
     org_id: SEED_ORGANIZATION_ID,
     form_id: buildCustomForm().id,
     title: { ca: 'Transport', es: 'Transporte', en: 'Transport' },

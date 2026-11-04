@@ -35,6 +35,7 @@ import type {
   CustomFormFiller,
   CustomFormKind,
   CustomFormMandatory,
+  FormAttachment,
   FormScreenTexts,
 } from './custom-form-model';
 import { formBlocksOn, type FormBlock } from './form-blocks';
@@ -232,6 +233,22 @@ export async function saveCustomFormScreen(
   });
   if (error) throw databaseError(error);
   return z.uuid().parse(data);
+}
+
+/**
+ * The season documents of the authorization's document screen (RAPP-773):
+ * up to ten https links, each with its label. Only that screen holds them.
+ */
+export async function saveFormScreenAttachments(
+  client: Client,
+  screenId: string,
+  attachments: readonly FormAttachment[],
+): Promise<void> {
+  const { error } = await client.rpc('save_form_screen_attachments', {
+    p_screen_id: screenId,
+    p_attachments: attachments as unknown as Json,
+  });
+  if (error) throw databaseError(error);
 }
 
 export async function archiveCustomFormScreen(client: Client, id: string): Promise<void> {

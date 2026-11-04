@@ -95,6 +95,16 @@ export function formScreenTextsIn(
 export const CUSTOM_FORM_AUDIENCES = ['all', 'chosen'] as const;
 export type CustomFormAudience = (typeof CUSTOM_FORM_AUDIENCES)[number];
 
+/** A season document (RAPP-773): an https link with its label. */
+export interface FormAttachment {
+  readonly label: BuilderText;
+  readonly url: string;
+}
+
+const attachmentsSchema = z
+  .array(z.object({ label: anyLanguageTextSchema, url: z.url().startsWith('https://') }))
+  .max(10);
+
 /** One screen of a form, in the order she walks them. */
 export interface CustomFormScreen {
   readonly id: string;
@@ -109,6 +119,11 @@ export interface CustomFormScreen {
   readonly texts?: FormScreenTexts;
   /** Its locked part of a legal form (RAPP-771); absent on every other screen. */
   readonly systemScreen?: FormSystemScreen;
+  /**
+   * The season documents of the authorization's document screen (RAPP-773);
+   * absent on every other screen.
+   */
+  readonly attachments?: readonly FormAttachment[];
 }
 
 /** A Publica of a form (RAPP-701): its number, its season when it repeats, and whether it corrected. */
@@ -161,6 +176,8 @@ const screenSchema = z.object({
   // Its help line and buttons, and its locked part (RAPP-771); an older server sends none.
   texts: z.unknown().optional(),
   system_screen: z.enum(FORM_SYSTEM_SCREENS).nullable().optional().catch(null),
+  // The authorization's season documents (RAPP-773); a list this build cannot read is left out.
+  attachments: attachmentsSchema.nullable().optional().catch(null),
 });
 
 const formSchema = z.object({
@@ -233,6 +250,7 @@ export function parseCustomForms(raw: unknown): readonly CustomForm[] {
             isHidden: screen.is_hidden ?? false,
             texts: parseFormScreenTexts(screen.texts),
             ...(screen.system_screen == null ? {} : { systemScreen: screen.system_screen }),
+            ...(screen.attachments == null ? {} : { attachments: screen.attachments }),
             ...(screen.show_when_field_id == null || (screen.show_when_values ?? []).length === 0
               ? {}
               : {

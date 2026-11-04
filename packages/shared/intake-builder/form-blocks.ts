@@ -57,11 +57,33 @@ interface FormBlockPlace {
   readonly sortOrder: number;
 }
 
+/**
+ * The texts around a legal form's own signature (RAPP-773): its title, the
+ * line asking her to sign, its help, and "No puc signar" with its help. A
+ * text left out shows the app's own; a help may be cleared.
+ */
+export const SIGNATURE_TEXT_FIELDS = [
+  'signature_title',
+  'signature_prompt',
+  'signature_hint',
+  'cannot_draw_label',
+  'cannot_draw_hint',
+] as const;
+export type SignatureTextField = (typeof SIGNATURE_TEXT_FIELDS)[number];
+export type SignatureTexts = Readonly<Partial<Record<SignatureTextField, BuilderText>>>;
+
 /** A signature block: the text to accept, then a box she signs in. */
 export interface SignatureFormBlock extends FormBlockPlace {
   readonly kind: 'signature';
   /** The text to accept, in five languages, Catalan required. */
   readonly body: BuilderText;
+  /**
+   * A legal form's own signature (RAPP-772, RAPP-773): `terms_signature` or
+   * `authorization_signature`, locked on its screen. Absent on every other.
+   */
+  readonly system?: string;
+  /** Its texts, on a legal form's own signature (RAPP-773). */
+  readonly texts?: SignatureTexts;
 }
 
 /** A text block (RAPP-770): a text she reads, under an optional heading. */
@@ -95,9 +117,23 @@ const placeRowSchema = z.object({
   sort_order: z.number().int(),
 });
 
+const signatureTextsSchema = z
+  .object(
+    Object.fromEntries(
+      SIGNATURE_TEXT_FIELDS.map((field) => [field, anyLanguageTextSchema.optional()]),
+    ) as Record<SignatureTextField, z.ZodOptional<typeof anyLanguageTextSchema>>,
+  )
+  .catch({});
+
 const signatureBlockRowSchema = placeRowSchema.extend({
   kind: z.literal('signature'),
   body: anyLanguageTextSchema,
+  // A legal form's own signature and its texts (RAPP-773); an older server sends none.
+  settings: z
+    .object({ system: z.string().optional(), texts: signatureTextsSchema.optional() })
+    .nullable()
+    .optional()
+    .catch(null),
 });
 
 const textRowSchema = placeRowSchema.extend({
@@ -125,9 +161,16 @@ function placeOf(row: z.infer<typeof placeRowSchema>): FormBlockPlace {
 const BLOCK_PARSERS: readonly ((row: unknown) => FormBlock | null)[] = [
   (row) => {
     const parsed = signatureBlockRowSchema.safeParse(row);
-    return parsed.success
-      ? { ...placeOf(parsed.data), kind: 'signature', body: parsed.data.body }
-      : null;
+    if (!parsed.success) return null;
+    const system = parsed.data.settings?.system;
+    const texts = parsed.data.settings?.texts;
+    return {
+      ...placeOf(parsed.data),
+      kind: 'signature',
+      body: parsed.data.body,
+      ...(system === undefined ? {} : { system }),
+      ...(texts === undefined || Object.keys(texts).length === 0 ? {} : { texts }),
+    };
   },
   (row) => {
     const parsed = textRowSchema.safeParse(row);
@@ -310,6 +353,22 @@ function cleanText(text: BuilderText): BuilderText {
       typeof value === 'string' && value.trim() !== '' ? [[language, value.trim()]] : [],
     ),
   ) as BuilderText;
+}
+
+/**
+ * The texts around a legal form's own signature (RAPP-773). A text left out
+ * shows the app's own; a help may be cleared (every language empty).
+ */
+export async function saveFormBlockTexts(
+  client: Pick<Client, 'rpc'>,
+  blockId: string,
+  texts: SignatureTexts,
+): Promise<void> {
+  const { error } = await client.rpc('save_form_block_texts', {
+    p_block_id: blockId,
+    p_texts: texts as Json,
+  });
+  if (error) throw databaseError(error);
 }
 
 /**

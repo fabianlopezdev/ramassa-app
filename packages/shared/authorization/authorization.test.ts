@@ -7,26 +7,24 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, test } from 'bun:test';
+import { EMPTY_INTAKE_CATALOG, type IntakeCatalog } from '../intake-builder/builder';
+import type { SignatureStrokes } from '../equipment/handover';
+import { UNABLE_TO_DRAW } from '../intake-builder/form-blocks';
 import { buildAuthorizationVersion } from '../testing/factories';
 import {
   AUTHORIZATION_BUNDLED_TEXT_KEYS,
   AUTHORIZATION_TEXT_FIELDS,
   authorizationContentSchema,
-  authorizationScreenOrder,
-  authorizationSigningSchemaFor,
   authorizationWording,
   buildSignPayload,
   discardAuthorizationDraft,
   fetchAuthorizationVersions,
   fetchMyAuthorizationStatus,
   fetchParticipantConsents,
-  isHealthScreenShown,
   needsAuthorization,
-  newConsentKey,
   orderedConsents,
   publishAuthorizationDraft,
   recordPaperAuthorization,
-  saveAuthorizationDraft,
   setOptionalConsent,
   type AuthorizationContent,
 } from './authorization';
@@ -139,8 +137,6 @@ describe('a version', () => {
     // A version without questions is valid (RAPP-698): the Health screen asks fields.
     const { questions: _questions, ...withoutQuestions } = content;
     expect(authorizationContentSchema.safeParse(withoutQuestions).success).toBe(true);
-    expect(isHealthScreenShown([])).toBe(false);
-    expect(isHealthScreenShown(['health'])).toBe(true);
   });
 
   test('consent keys are lowercase letters, digits and underscores, and places are unique', () => {
@@ -167,13 +163,6 @@ describe('a version', () => {
       authorizationContentSchema.safeParse({ ...version1(), texts: { error_message: { ca: 'x' } } })
         .success,
     ).toBe(false);
-  });
-
-  test('a new consent gets a key no consent of the version uses', () => {
-    const content = version1();
-    const key = newConsentKey(content);
-    expect(key).toMatch(/^[a-z][a-z0-9_]{0,39}$/);
-    expect(Object.keys(content.consents)).not.toContain(key);
   });
 });
 
@@ -221,99 +210,78 @@ describe('the wording', () => {
   });
 });
 
-const HEALTH = '5eed0000-0000-4000-8045-00000000aaaa';
+const SIGN_SCREEN = '5eed0000-0000-4000-8101-00000000a001';
+const OWN_BLOCK = '5eed0000-0000-4000-8101-00000000a002';
+const CLUB_BLOCK = '5eed0000-0000-4000-8101-00000000a003';
+const FORM = '5eed0000-0000-4000-8101-00000000a000';
 
-describe('signing against the version', () => {
-  test('she signs with only the required consents; the optional ones may stay untouched', () => {
-    const schema = authorizationSigningSchemaFor(version1(), HEALTH);
-    expect(
-      schema.safeParse({
-        consents: requiredOf1,
-        answers: { [HEALTH]: 'No' },
-        strokes: drawing,
-        unableToDraw: false,
-      }).success,
-    ).toBe(true);
-  });
+/** The authorization's last screen: one consent and its own signature, and a club rules signature. */
+function signingCatalog(): IntakeCatalog {
+  const place = { surface: 'custom_form' as const, screenKey: SIGN_SCREEN, customFormId: FORM };
+  return {
+    ...EMPTY_INTAKE_CATALOG,
+    blocks: [
+      { ...place, id: OWN_BLOCK, kind: 'signature', body: { ca: 'Signo.' }, sortOrder: 2, system: 'authorization_signature' },
+      { ...place, id: CLUB_BLOCK, kind: 'signature', body: { ca: 'Normes.' }, sortOrder: 3 },
+    ],
+    consents: [
+      { id: 'c1', key: 'participation', systemKey: 'participation', name: { ca: 'P' }, body: { ca: 'Hi participo.' }, isArchived: false },
+    ],
+    consentPlacements: [
+      { ...place, id: 'p1', consentId: 'c1', sortOrder: 1, required: true },
+    ],
+  };
+}
 
-  test('a required consent staff added must be ticked', () => {
-    const schema = authorizationSigningSchemaFor(version2(), HEALTH);
-    const base = {
-      consents: { participation: true, data_processing: true, code_of_conduct: true },
-      answers: {},
-      strokes: null,
-      unableToDraw: true,
-    };
-    const refused = schema.safeParse(base);
-    expect(refused.success).toBe(false);
-    expect(refused.error?.issues[0]?.path).toEqual(['consents', 'team_photos']);
-    expect(
-      schema.safeParse({ ...base, consents: { ...base.consents, team_photos: true } }).success,
-    ).toBe(true);
-  });
-
-  test('a health answer needs the health data consent (RAPP-698)', () => {
-    const optional = authorizationSigningSchemaFor(version2(), HEALTH);
-    const answer = {
-      consents: {
-        participation: true,
-        data_processing: true,
-        code_of_conduct: true,
-        team_photos: true,
+describe('signing the form (RAPP-773)', () => {
+  test('the payload carries her ticks and every signature, and her own one as an older server reads it', () => {
+    const payload = buildSignPayload({
+      catalog: signingCatalog(),
+      screens: [{ id: SIGN_SCREEN }],
+      draft: {
+        answers: {},
+        consents: { participation: true },
+        signatures: { [OWN_BLOCK]: UNABLE_TO_DRAW, [CLUB_BLOCK]: drawing as SignatureStrokes },
       },
-      answers: { [HEALTH]: 'Asma' },
-      strokes: null,
-      unableToDraw: true,
-    };
-    const refused = optional.safeParse(answer);
-    expect(refused.error?.issues[0]?.path).toEqual(['consents', 'health_data']);
-    expect(
-      optional.safeParse({ ...answer, consents: { ...answer.consents, health_data: true } })
-        .success,
-    ).toBe(true);
-    expect(optional.safeParse({ ...answer, answers: { [HEALTH]: ' ' } }).success).toBe(true);
-  });
-
-  test('she signs with a drawing, or records that she could not draw', () => {
-    const schema = authorizationSigningSchemaFor(version1(), HEALTH);
-    const signing = { consents: requiredOf1, answers: {}, strokes: null, unableToDraw: false };
-    expect(schema.safeParse(signing).success).toBe(false);
-    expect(schema.safeParse({ ...signing, unableToDraw: true }).success).toBe(true);
-  });
-
-  test('the payload names every consent of the version and only those, and her answers by field', () => {
-    const content = version2();
-    const payload = buildSignPayload(
-      authorizationSigningSchemaFor(content, HEALTH).parse({
-        consents: {
-          participation: true,
-          data_processing: true,
-          code_of_conduct: true,
-          team_photos: true,
-        },
-        answers: { [HEALTH]: ' ', other: ' Olena ' },
-        strokes: null,
-        unableToDraw: true,
-      }),
-      { language: 'ca', device: 'iPhone' },
-      content,
-    ) as Record<string, unknown>;
-    expect(payload.consents).toEqual({
-      participation: true,
-      data_processing: true,
-      code_of_conduct: true,
-      health_data: false,
-      image_rights: false,
-      messaging_groups: false,
-      team_photos: true,
-    });
+      language: 'es',
+      device: 'iPhone',
+    }) as Record<string, unknown>;
     expect(payload).toMatchObject({
-      answers: { [HEALTH]: null, other: 'Olena' },
-      unable_to_draw: true,
+      consents: { participation: true },
       signature: null,
-      language: 'ca',
+      unable_to_draw: true,
+      language: 'es',
+      device: 'iPhone',
+      signatures: {
+        [OWN_BLOCK]: { unable_to_draw: true, language: 'ca' },
+        [CLUB_BLOCK]: { strokes: drawing, language: 'ca' },
+      },
     });
-    expect('health_info' in payload).toBe(false);
+  });
+
+  test('a drawing of her own signature goes as her signature', () => {
+    const payload = buildSignPayload({
+      catalog: signingCatalog(),
+      screens: [{ id: SIGN_SCREEN }],
+      draft: { answers: {}, consents: {}, signatures: { [OWN_BLOCK]: drawing as SignatureStrokes } },
+      language: 'ca',
+      device: null,
+    }) as Record<string, unknown>;
+    expect(payload.signature).toEqual(drawing);
+    expect(payload.unable_to_draw).toBe(false);
+    expect(payload.consents).toEqual({ participation: false });
+  });
+
+  test('without her own signature there is nothing to send', () => {
+    expect(
+      buildSignPayload({
+        catalog: signingCatalog(),
+        screens: [{ id: SIGN_SCREEN }],
+        draft: { answers: {}, consents: {}, signatures: {} },
+        language: 'ca',
+        device: null,
+      }),
+    ).toBeNull();
   });
 });
 
@@ -451,12 +419,10 @@ describe('staff', () => {
     const { client, calls } = clientReturning({ data: 'id', error: null });
     await setOptionalConsent(client, 'image_rights', false, 'ar');
     await recordPaperAuthorization(client, 'p1', '2026-09-20');
-    await saveAuthorizationDraft(client, version1());
     await discardAuthorizationDraft(client);
     expect(calls.map((call) => (call as unknown[])[0])).toEqual([
       'set_optional_consent',
       'record_paper_authorization',
-      'save_authorization_draft',
       'discard_authorization_draft',
     ]);
     expect((calls[0] as unknown[])[1]).toEqual({
@@ -483,13 +449,7 @@ describe('staff', () => {
     expect(published.calls).toEqual([['publish_authorization_draft', { p_is_correction: true }]]);
   });
 
-  test('the form walks its screens in the stored order, the signature last (RAPP-696)', () => {
-    expect(authorizationScreenOrder({})).toEqual(['document', 'health', 'consents']);
-    expect(authorizationScreenOrder({ screen_order: ['health', 'document'] })).toEqual([
-      'health',
-      'document',
-      'consents',
-    ]);
+  test('old content names each of its two movable screens once (RAPP-696)', () => {
     expect(
       authorizationContentSchema.safeParse({ ...version1(), screen_order: ['health', 'health'] })
         .success,
