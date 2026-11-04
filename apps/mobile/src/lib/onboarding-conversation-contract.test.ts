@@ -68,10 +68,9 @@ describe('conversational onboarding controls', () => {
     expect(wording).toContain("['Purpose', 'Protected', 'Private', 'Control']");
     expect(wording).toContain('`termsPoint${point}Title`');
     expect(wording).toContain("bundled('termsBody')");
-    expect(intro).toContain('wording.points.map');
-    expect(intro).toContain('<DataIcon');
+    expect(intro).toContain('<PointsBlock points={wording.points}');
     expect(intro).toContain("'termsReadFullAction'");
-    expect(terms).toContain('<TermsBody body={wording.body} />');
+    expect(terms).toContain('<TextBlock body={wording.body} />');
     expect(terms).not.toContain('isFullTermsVisible');
     expect(terms).not.toContain('termsHideFullAction');
   });

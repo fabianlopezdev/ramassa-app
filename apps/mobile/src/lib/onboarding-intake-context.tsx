@@ -38,9 +38,9 @@ import {
   followUpAsksSomething,
   requiredBuiltinQuestions,
   type CustomAnswers,
-  type FormBlock,
   type IntakeCatalog,
   type IntakeScreen,
+  type SignatureFormBlock,
   type SystemFieldIndex,
 } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraft, OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
@@ -92,7 +92,7 @@ export interface WizardIntake {
    * whose text has not changed since. They are out of `catalog.blocks`, so no
    * screen asks them again; the summary lists them as signed.
    */
-  readonly signedBlocks?: readonly FormBlock[];
+  readonly signedBlocks?: readonly SignatureFormBlock[];
 }
 
 const EMPTY_INTAKE: WizardIntake = {

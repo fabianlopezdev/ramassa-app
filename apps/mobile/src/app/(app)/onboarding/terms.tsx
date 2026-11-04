@@ -14,8 +14,8 @@
 import { ConsentRow } from '@/components/authorization/consent-row';
 import { SignatureSection } from '@/components/authorization/signature-section';
 import { FailureNotice } from '@/components/error-code-line';
+import { TextBlock } from '@/components/forms/text-block';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { TermsBody } from '@/components/onboarding/terms-body';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { appTermsWording } from '@/lib/app-terms-wording';
 import { logout } from '@/lib/auth';
@@ -177,7 +177,7 @@ export default function TermsStepScreen() {
         step.goBack?.();
       }}
     >
-      <TermsBody body={wording.body} />
+      <TextBlock body={wording.body} />
 
       <ConsentRow
         testID="terms-acceptance"

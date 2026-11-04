@@ -12,8 +12,8 @@
 import { ConsentRow } from '@/components/authorization/consent-row';
 import { SignatureSection } from '@/components/authorization/signature-section';
 import { FailureNotice } from '@/components/error-code-line';
+import { TextBlock } from '@/components/forms/text-block';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { TermsBody } from '@/components/onboarding/terms-body';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { appTermsWording } from '@/lib/app-terms-wording';
 import { logout } from '@/lib/auth';
@@ -121,7 +121,7 @@ function TermsUnavailable({
       isContinueBusy={isRetrying}
     >
       <FailureNotice code={failureCode} message={t('termsUpdateLoadFailed')} />
-      <TermsBody body={wording.body} />
+      <TextBlock body={wording.body} />
       <NotNowAction isDisabled={isRetrying} />
     </WizardFrame>
   );
@@ -227,7 +227,7 @@ function TermsUpdateForm({
       onContinue={() => void accept()}
       isContinueBusy={isSubmitting}
     >
-      <TermsBody body={wording.body} />
+      <TextBlock body={wording.body} />
 
       <ConsentRow
         testID="terms-update-acceptance"

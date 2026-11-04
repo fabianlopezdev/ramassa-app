@@ -22,8 +22,8 @@ import {
   CustomQuestionField,
   type CustomAnswerDraft,
 } from '@/components/onboarding/custom-question-field';
+import { useFormBlocks } from '@/components/onboarding/form-blocks';
 import { useScreenConsents } from '@/components/onboarding/screen-consents';
-import { useSignatureBlocks } from '@/components/onboarding/signature-blocks';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
@@ -253,7 +253,7 @@ function FormStep({
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
   const [isDrawing, setIsDrawing] = useState(false);
   const source = { catalog, signatures: draft.signatures, consents: draft.consents };
-  const signatures = useSignatureBlocks(screen.id, setIsDrawing, source);
+  const signatures = useFormBlocks(screen.id, setIsDrawing, source);
   const consents = useScreenConsents(screen.id, source);
   // One rule with the admin (RAPP-710): a language never written follows the Catalan.
   const intro = teamTextIn(screen.intro, language, true);

@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import { useLanguage, type SupportedLanguage } from '@ramassa/shared/i18n';
-import { formBlockText, type FormBlock } from '@ramassa/shared/intake-builder';
+import { formBlockText, type SignatureFormBlock } from '@ramassa/shared/intake-builder';
 
 export function SignatureBlockField({
   block,
@@ -25,7 +25,7 @@ export function SignatureBlockField({
   errorMessage,
   language: shownLanguage,
 }: {
-  readonly block: FormBlock;
+  readonly block: SignatureFormBlock;
   readonly strokes: SignatureStrokes | null;
   readonly onChange: (strokes: SignatureStrokes | null) => void;
   /** The screen stops scrolling while she draws. */

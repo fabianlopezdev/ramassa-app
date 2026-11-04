@@ -6,7 +6,7 @@ import faOnboarding from '../../../../packages/shared/i18n/locales/fa/onboarding
 
 // The body both terms screens show (RAPP-613: onboarding and a new version).
 const termsBodySource = readFileSync(
-  join(import.meta.dir, '../components/onboarding/terms-body.tsx'),
+  join(import.meta.dir, '../components/forms/text-block.tsx'),
   'utf8',
 );
 const termsBodyElement = termsBodySource.match(
@@ -15,7 +15,7 @@ const termsBodyElement = termsBodySource.match(
 
 test('both terms screens show the body through that component', () => {
   for (const screen of ['../app/(app)/onboarding/terms.tsx', '../app/(app)/terms-update.tsx']) {
-    expect(readFileSync(join(import.meta.dir, screen), 'utf8')).toContain('<TermsBody body=');
+    expect(readFileSync(join(import.meta.dir, screen), 'utf8')).toContain('<TextBlock body=');
   }
 });
 

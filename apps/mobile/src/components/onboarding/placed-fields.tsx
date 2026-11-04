@@ -10,8 +10,9 @@
  * Continue checks them first and saves them before the screen's own Continue
  * runs, which reads the draft afresh; Back saves them unchecked.
  *
- * The signature blocks staff put on the screen (RAPP-690) show among them in
- * their order, each required, their strokes kept in the draft the same way.
+ * The blocks staff put on the screen show among them in their order: a
+ * signature (RAPP-690), required, its strokes kept in the draft the same way,
+ * and a text or points to read (RAPP-770).
  * So do the consents placed there (RAPP-699), their ticks kept by key.
  */
 
@@ -19,8 +20,8 @@ import {
   CustomQuestionField,
   type CustomAnswerDraft,
 } from '@/components/onboarding/custom-question-field';
+import { useFormBlocks } from '@/components/onboarding/form-blocks';
 import { useScreenConsents } from '@/components/onboarding/screen-consents';
-import { useSignatureBlocks } from '@/components/onboarding/signature-blocks';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
 import { placedScreenOf } from '@/lib/follow-up-screens';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -62,7 +63,7 @@ export function usePlacedFields(frameId: string | undefined): PlacedFields {
   );
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
   const [isDrawing, setIsDrawing] = useState(false);
-  const signatures = useSignatureBlocks(screenId, setIsDrawing);
+  const signatures = useFormBlocks(screenId, setIsDrawing);
   const consents = useScreenConsents(screenId);
   const hasQuestions =
     questions.length > 0 || signatures.blocks.length > 0 || consents.consents.length > 0;

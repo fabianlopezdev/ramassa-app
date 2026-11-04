@@ -8,15 +8,16 @@
  * Her answers stay in the draft until the terms step sends them, and so do
  * her strokes on the screen's signature blocks, which show among the fields in
  * their order, each required (RAPP-690), and her ticks of the screen's
- * consents (RAPP-699).
+ * consents (RAPP-699). A text or points block shows in its place too
+ * (RAPP-770).
  */
 
 import {
   CustomQuestionField,
   type CustomAnswerDraft,
 } from '@/components/onboarding/custom-question-field';
+import { useFormBlocks } from '@/components/onboarding/form-blocks';
 import { useScreenConsents } from '@/components/onboarding/screen-consents';
-import { useSignatureBlocks } from '@/components/onboarding/signature-blocks';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
@@ -46,7 +47,7 @@ export default function CustomStepScreen() {
   );
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
   const [isDrawing, setIsDrawing] = useState(false);
-  const signatures = useSignatureBlocks(screenId, setIsDrawing);
+  const signatures = useFormBlocks(screenId, setIsDrawing);
   const consents = useScreenConsents(screenId);
   const screen = customScreens.find((candidate) => candidate.id === screenId);
 

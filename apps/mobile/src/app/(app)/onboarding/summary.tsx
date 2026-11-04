@@ -65,6 +65,7 @@ import {
   formBlockText,
   isCustomQuestionVisible,
   isEmptyAnswer,
+  signatureBlocks,
   textIn,
   type CustomAnswers,
   type IntakeScreen,
@@ -138,7 +139,9 @@ function CustomRows({
 }) {
   const { t } = useTranslation('onboarding');
   const { catalog } = useWizardIntake();
-  const signed = formBlocksOn(catalog.blocks, 'onboarding', screen.builtinScreen ?? screen.id)
+  const signed = signatureBlocks(
+    formBlocksOn(catalog.blocks, 'onboarding', screen.builtinScreen ?? screen.id),
+  )
     .filter((block) => signatures?.[block.id] != null)
     .map((block) => (
       <ReviewRow

@@ -21,8 +21,8 @@ import {
   fetchIntakeCatalog,
   liveOnboardingBlocks,
   liveOnboardingConsents,
-  type FormBlock,
   type PlacedConsent,
+  type SignatureFormBlock,
 } from '@ramassa/shared/intake-builder';
 import { isNetworkStateOnline } from './network-status';
 import { finishesWithin, SCREEN_SEND_WAIT_MS } from './outbox-drain-loop';
@@ -195,7 +195,7 @@ export function useWalkInOnboardingAsks(enabled: boolean) {
   return useQuery({
     queryKey: ['walk-in-onboarding-asks', userId ?? 'signed-out'],
     queryFn: async (): Promise<{
-      readonly blocks: readonly FormBlock[];
+      readonly blocks: readonly SignatureFormBlock[];
       readonly consents: readonly PlacedConsent[];
     }> => {
       try {

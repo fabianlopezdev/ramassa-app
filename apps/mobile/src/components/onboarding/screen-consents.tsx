@@ -14,7 +14,7 @@
  */
 
 import { ConsentRow } from '@/components/authorization/consent-row';
-import type { FormScreenSource } from '@/components/onboarding/signature-blocks';
+import type { FormScreenSource } from '@/components/onboarding/form-blocks';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { useWizardIntake } from '@/lib/onboarding-intake-context';
 import { useState, type ReactNode } from 'react';

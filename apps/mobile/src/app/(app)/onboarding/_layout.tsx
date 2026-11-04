@@ -38,6 +38,7 @@ import {
   herOnboarding,
   hiddenBuiltinQuestions,
   isFormBlockSigned,
+  signatureBlocks,
   wizardFlow,
   wizardFormFields,
 } from '@ramassa/shared/intake-builder';
@@ -141,12 +142,14 @@ function OnboardingScreens() {
           fetchMyFormSignatures(supabase).catch(() => []),
         ]);
       // A block she signed, whose text has not changed since, is asked no more.
-      const signedBlocks = (fullCatalog.blocks ?? []).filter((block) =>
+      const signedBlocks = signatureBlocks(fullCatalog.blocks).filter((block) =>
         isFormBlockSigned(block, mySignatures),
       );
       const catalog = {
         ...fullCatalog,
-        blocks: (fullCatalog.blocks ?? []).filter((block) => !signedBlocks.includes(block)),
+        blocks: (fullCatalog.blocks ?? []).filter(
+          (block) => block.kind !== 'signature' || !signedBlocks.includes(block),
+        ),
       };
       const hidden = hiddenBuiltinQuestions(catalog);
       // Her screens from the placements (RAPP-655): a field set to Don't ask is

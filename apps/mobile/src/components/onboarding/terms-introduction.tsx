@@ -1,12 +1,10 @@
-import { DataIcon } from '@/components/forms/data-icon';
+import { PointsBlock } from '@/components/forms/points-block';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { appTermsWording } from '@/lib/app-terms-wording';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
-import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import type { SymbolViewProps } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
@@ -30,31 +28,6 @@ const controlSymbol: SymbolViewProps['name'] = {
   android: 'tune',
   web: 'tune',
 };
-
-function TermsTrustPoint({
-  title,
-  body,
-  symbol,
-}: {
-  readonly title: string;
-  readonly body: string;
-  readonly symbol: SymbolViewProps['name'];
-}) {
-  const languageFontClass = useLanguageFontClass();
-  return (
-    <View className="flex-row items-start gap-sm">
-      <DataIcon name={symbol} />
-      <View className="flex-1 gap-xs">
-        <Text className={`text-start text-form font-bold text-neutral-900 ${languageFontClass}`}>
-          {title}
-        </Text>
-        <Text className={`text-start text-form leading-body text-neutral-700 ${languageFontClass}`}>
-          {body}
-        </Text>
-      </View>
-    </View>
-  );
-}
 
 /** The point icons in order; a version with more points repeats the last one. */
 const POINT_SYMBOLS = [purposeSymbol, protectedSymbol, privateSymbol, controlSymbol] as const;
@@ -91,16 +64,7 @@ export function TermsIntroductionStep() {
             }
       }
     >
-      <View className="gap-lg">
-        {wording.points.map((point, index) => (
-          <TermsTrustPoint
-            key={index}
-            title={point.title}
-            body={point.body}
-            symbol={POINT_SYMBOLS[Math.min(index, POINT_SYMBOLS.length - 1)]!}
-          />
-        ))}
-      </View>
+      <PointsBlock points={wording.points} symbols={POINT_SYMBOLS} />
     </WizardFrame>
   );
 }
