@@ -323,21 +323,13 @@
   "authorizationNoVersions": "Todavía no se ha publicado ninguna versión.",
   "authorizationVersionInSeason": "Versión {{number}}, publicada el {{date}}",
   "authorizationCurrentBadge": "Vigente",
-  "authorizationNoSeasonToPublish": "Ninguna temporada vigente o futura",
-  "authorizationPublishSeasonCurrent": "{{season}} (vigente)",
-  "authorizationPublishSeason": "Temporada",
   "authorizationCurrentSeasonBadge": "Temporada vigente",
-  "authorizationDocumentTitle": "Título del documento",
-  "authorizationSections": "Apartados",
-  "authorizationSectionTitle": "Título del apartado {{number}}",
-  "authorizationSectionBody": "Texto",
-  "authorizationRemoveSection": "Quitar el apartado",
-  "authorizationAddSection": "Añadir un apartado",
   "authorizationAttachments": "Documentos de la temporada (enlaces)",
   "authorizationAttachmentLabel": "Nombre del documento",
   "authorizationAttachmentUrl": "Enlace (https://)",
   "authorizationAddAttachment": "Añadir un documento",
-  "authorizationPublishFailed": "No se ha podido publicar. Vuelve a intentarlo.",
+  "authorizationRemoveAttachment": "Quitar el documento",
+  "authorizationAttachmentInvalid": "Cada documento necesita el nombre en catalán y un enlace que empiece por https://.",
   "seasonsTitle": "Temporadas",
   "seasonsIntro": "Publicar la autorización de la temporada vigente hace que las jugadoras que vuelven se inscriban de nuevo.",
   "seasonName": "Nombre (por ejemplo 2027/28)",
@@ -512,37 +504,14 @@
     "countWithConditional": "En total, {{total}} pantallas: {{onboarding}} de Onboarding (+{{conditional}} condicionales) · {{terms}} de condiciones de la app · {{forms}} de formularios"
   },
   "appTerms": {
-    "sectionTitle": "Términos de la app",
-    "sectionIntro": "El texto que todas las jugadoras aceptan antes de entrar en la app, con la pantalla de introducción. Una versión publicada ya no cambia; cuando publicáis una nueva, cada jugadora la acepta al abrir la app.",
     "versionsTitle": "Versiones",
     "versionRow": "Versión {{number}}, publicada el {{date}}: {{count}} aceptaciones",
     "draftRow": "Borrador, guardado el {{date}}",
-    "currentBadge": "Vigente",
-    "editorTitle": "Borrador de la versión siguiente",
-    "editorIntro": "Escribe cada texto en cada idioma. El catalán es obligatorio; un idioma vacío muestra el texto en catalán.",
-    "field": {
-      "intro_title": "Título de la pantalla de introducción",
-      "intro": "Texto de la pantalla de introducción",
-      "title": "Título de los términos",
-      "body": "Texto de los términos",
-      "accept_label": "Texto para aceptar los términos",
-      "media_label": "Texto del permiso de fotos y vídeos",
-      "media_hint": "Nota sobre el permiso de fotos y vídeos"
-    },
-    "points": "Puntos de la introducción",
     "pointTitle": "Punto {{number}}: título",
     "pointBody": "Punto {{number}}: texto",
     "addPoint": "Añade un punto",
     "removePoint": "Quita este punto",
-    "saveDraft": "Guarda el borrador",
     "discardDraft": "Descarta el borrador",
-    "publishAction": "Publica la versión",
-    "publishConfirm": "Una vez publicada, la versión no se puede cambiar y cada jugadora tendrá que aceptarla al abrir la app.",
-    "publishConfirmAction": "Sí, publica la versión {{number}}",
-    "publishNeedsAdmin": "Solo quien gestiona la configuración de la organización puede publicar. Guarda el borrador y avísales.",
-    "invalid": "Cada texto necesita la versión en catalán.",
-    "failed": "No se ha podido guardar. Vuelve a intentarlo.",
-    "saved": "Borrador guardado.",
     "discarded": "Borrador descartado.",
     "published": "Versión publicada. Cada jugadora la aceptará al abrir la app."
   },
@@ -585,46 +554,8 @@
     "requiredText": "Este texto es obligatorio."
   },
   "authorizationEditor": {
-    "draftRow": "Borrador, guardado el {{date}}",
-    "intro": "Empieza desde el borrador o la versión vigente. Edita idioma por idioma: cada campo muestra el texto que verá la jugadora.",
     "imageRightsLock": "Los derechos de imagen siempre son opcionales: deciden el permiso de fotos, que ella puede retirar.",
-    "textsTitle": "Textos del formulario",
-    "textsIntro": "La introducción, los títulos de cada paso, los botones, el paso final de firma y la reinscripción. Puedes escribir {{season}} para poner el nombre de la temporada.",
-    "textField": {
-      "intro": "Introducción",
-      "flow_label": "Nombre del proceso en la barra de progreso",
-      "documents_title": "Título de los documentos de la temporada",
-      "health_title": "Título del paso de salud",
-      "consents_title": "Título del paso de autorizaciones",
-      "continue_label": "Botón para continuar",
-      "sign_and_enter_label": "Botón final en su app (Firma y entra)",
-      "sign_label": "Botón final en la tableta (Firma la autorización)",
-      "required_mark": "Marca de obligatoria",
-      "signature_title": "Título de la firma",
-      "signature_prompt": "Indicación dentro del espacio para firmar",
-      "signature_hint": "Ayuda de lector de pantalla del espacio para firmar",
-      "cannot_draw_label": "Opción si no puede dibujar",
-      "cannot_draw_hint": "Explicación si no puede dibujar",
-      "reregistration_title": "Título de la reinscripción",
-      "reregistration_intro": "Introducción de la reinscripción",
-      "reregistration_correct_label": "Botón: los datos son correctos",
-      "reregistration_edit_label": "Botón: corregir los datos",
-      "reregistration_season_intro": "Introducción de las preguntas de temporada"
-    },
-    "invalid": "Faltan textos o hay una regla incumplida: título, apartados y cada autorización con texto en algún idioma; la pregunta de salud necesita su autorización; una pregunta obligatoria se debe preguntar; cada documento necesita un enlace https.",
-    "saveDraft": "Guarda el borrador",
-    "discardDraft": "Descarta el borrador",
-    "publishNeedsAdmin": "Solo una persona con permiso de configuración de la organización puede publicar el borrador.",
-    "saved": "Borrador guardado.",
-    "discarded": "Borrador descartado.",
-    "published": "Versión publicada.",
-    "phoneStep": {
-      "document": "Documento",
-      "health": "Salud",
-      "consents": "Autorizaciones y firma",
-      "reregistration": "Reinscripción",
-      "reregistrationSeason": "Preguntas de la temporada"
-    }
+    "published": "Versión publicada."
   },
   "draftSeenByTestPlayers": "Versión en borrador (solo la ven las jugadoras de prueba)",
   "onboardingBoard": {
@@ -673,7 +604,6 @@
     "deleteNamedScreen": "Eliminar {{screen}}",
     "deleteNamedScreenTitle": "¿Quieres eliminar «{{screen}}»?",
     "deleteDependentScreens": "Si eliminas esta pantalla, también se eliminarán las siguientes pantallas que dependen de ella:",
-    "deleteScreenTitle": "¿Eliminar esta pantalla?",
     "deleteScreenBody": "La pantalla y sus preguntas dejarán de aparecer en el formulario. Las respuestas ya dadas se conservan.",
     "deleted": "Se ha eliminado {{screen}}.",
     "deleteFailed": "No se ha podido eliminar. Vuelve a intentarlo.",
@@ -708,8 +638,7 @@
     "addDependent": "Añade una pantalla dependiente",
     "addDependentNoChoice": "Esta pantalla no tiene ninguna pregunta con opciones.",
     "addDependentLockedFinal": "Cierra el Onboarding, así que ninguna pantalla puede depender de ella.",
-    "addDependentLockedChain": "Es un formulario encadenado. Sus pantallas se añaden en su tablero.",
-    "addDependentLockedLegal": "Es una pantalla fija de este formulario, así que ninguna pantalla puede depender de ella."
+    "addDependentLockedChain": "Es un formulario encadenado. Sus pantallas se añaden en su tablero."
   },
   "sortable": {
     "instructions": "Para mover un elemento, pulsa espacio o intro, usa las flechas y vuelve a pulsar espacio o intro para soltarlo. Escape cancela.",
@@ -843,7 +772,14 @@
     "removeNamed": "Quita la firma",
     "removeTitle": "¿Quieres quitar esta firma?",
     "removeBody": "Las firmas ya dadas se conservan.",
-    "defaultText": "Acepto"
+    "defaultText": "Acepto",
+    "textField": {
+      "signature_title": "Título de la firma",
+      "signature_prompt": "Texto dentro del recuadro para firmar",
+      "signature_hint": "Ayuda para firmar (opcional)",
+      "cannot_draw_label": "Opción \"No puedo firmar\"",
+      "cannot_draw_hint": "Ayuda de \"No puedo firmar\" (opcional)"
+    }
   },
   "formBlock": {
     "add": "Añade un bloque",
@@ -977,7 +913,8 @@
       "other": "Otro"
     },
     "correctionAddsRequirement": "Una corrección no puede añadir preguntas, consentimientos ni firmas obligatorios. Publícalo como versión nueva.",
-    "legalPublishNeedsAdmin": "Solo quien gestiona la configuración de la organización puede publicar un formulario legal."
+    "legalPublishNeedsAdmin": "Solo quien gestiona la configuración de la organización puede publicar un formulario legal.",
+    "reregistrationEditLabel": "Botón para corregir los datos"
   },
   "translateFromCatalan": {
     "working": "Traduciendo…",

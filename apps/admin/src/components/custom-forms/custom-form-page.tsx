@@ -23,11 +23,22 @@
  * own ledger (Correcció or Nova versió), the panel counts who accepted each,
  * their draft can be discarded, only their name is a setting, and their last
  * screen, the one she signs, stays last.
+ *
+ * So is the season authorization (RAPP-773): Publica numbers a version in its
+ * ledger in the season picked (the current one or a future one), as a
+ * Correcció or a Nova versió, the panel lists its versions by season with
+ * who signed each, its draft can be discarded, the seasons are created here,
+ * its two re-registration screens open the board and its screen she signs
+ * closes it.
  */
 
 import { useStepUp } from '@/components/auth/step-up';
 import { choicesProblem, FormChoicesFields } from '@/components/custom-forms/form-choices';
-import { FormVersions } from '@/components/custom-forms/form-versions';
+import {
+  FormVersions,
+  type FormVersionGroup,
+  type FormVersionRow,
+} from '@/components/custom-forms/form-versions';
 import { EditorSection } from '@/components/layout/editor-section';
 import { Page, PageHeader } from '@/components/layout/page';
 import { AudiencePicker } from '@/components/notifications/audience-picker';
@@ -45,13 +56,14 @@ import {
 import { conditionSources, type ConditionSource } from '@/components/onboarding/screen-condition';
 import {
   conditionLine,
-  hasDeclineAction,
+  formScreenButtons,
   placedPhoneQuestions,
   staffScreenContent,
 } from '@/components/onboarding/screen-content';
 import { customFormDeletion } from '@/components/onboarding/screen-deletion';
 import { teamHideLockKey } from '@/components/onboarding/screen-hiding';
 import { useReload } from '@/components/settings/onboarding-design-sections';
+import { SeasonsPanel } from '@/components/settings/seasons-panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -77,6 +89,11 @@ import { ChevronLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import {
+  discardAuthorizationDraft,
+  publishAuthorizationDraft,
+  type AuthorizationVersion,
+} from '@ramassa/shared/authorization';
 import { isAppError } from '@ramassa/shared/errors';
 import { discardAppTermsDraft, publishAppTermsDraft } from '@ramassa/shared/intake';
 import {
@@ -107,6 +124,7 @@ import {
   type NotificationAudienceOptions,
 } from '@ramassa/shared/notifications';
 import type { LanguageCode } from '@ramassa/shared/schemas';
+import { createSeason, setCurrentSeason, type Season } from '@ramassa/shared/seasons';
 
 /** Draft, live or archived, as a badge. */
 export function FormStatusBadge({
@@ -148,9 +166,9 @@ export function CustomFormPage({
   const { t, i18n } = useTranslation(['settings', 'nav']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const form = (data.intakeCatalog.customForms ?? []).find((each) => each.id === formId);
-  // The app terms are accepted in their ledger: no responses here (RAPP-772).
-  const isAppTerms = form?.systemKey === 'app_terms';
-  const hasResponses = data.canReadResponses && !isAppTerms;
+  // The app's legal forms are answered in their ledgers: no responses here (RAPP-772, RAPP-773).
+  const isSystemForm = form !== undefined && form.systemKey !== null;
+  const hasResponses = data.canReadResponses && !isSystemForm;
   const firstTab = data.canDesign ? 'screens' : 'responses';
   return (
     <Page data-testid="custom-form-page">
@@ -202,11 +220,20 @@ export function CustomFormPage({
             <>
               <TabsContent value="screens" className="flex flex-col gap-6">
                 <FormScreensBoard data={data} form={form} />
-                <CustomFormVersions data={data} form={form} />
+                {form.systemKey === 'season_authorization' ? (
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    <CustomFormVersions data={data} form={form} />
+                    <AuthorizationSeasons seasons={data.seasons} />
+                  </div>
+                ) : (
+                  <CustomFormVersions data={data} form={form} />
+                )}
               </TabsContent>
               <TabsContent value="settings" className="flex flex-col gap-6">
                 <FormSettings form={form} />
-                {form.audience === 'chosen' && !isAppTerms ? <FormRecipients form={form} /> : null}
+                {form.audience === 'chosen' && !isSystemForm ? (
+                  <FormRecipients form={form} />
+                ) : null}
               </TabsContent>
             </>
           ) : null}
@@ -238,6 +265,9 @@ function CustomFormVersions({
 }) {
   const { t } = useTranslation('settings');
   if (form.systemKey === 'app_terms') return <AppTermsVersions data={data} />;
+  if (form.systemKey === 'season_authorization') {
+    return <AuthorizationVersions versions={data.authorizationVersions} seasons={data.seasons} />;
+  }
   const current = data.seasons.find((season) => season.isCurrent);
   const groups = form.repeatsEachSeason
     ? data.seasons.flatMap((season) => {
@@ -311,9 +341,221 @@ function AppTermsVersions({ data }: { readonly data: CustomFormData }) {
   );
 }
 
+/**
+ * The season authorization's versions (RAPP-694, RAPP-773): its ledger's, by
+ * season (the newest season first), each with how many real players signed
+ * it, and the draft when there is one.
+ */
+function AuthorizationVersions({
+  versions,
+  seasons,
+}: {
+  readonly versions: readonly AuthorizationVersion[];
+  readonly seasons: readonly Season[];
+}) {
+  const { t } = useTranslation('settings');
+  const draft = versions.find((version) => version.publishedAt === null) ?? null;
+  const currentSeasonId = seasons.find((season) => season.isCurrent)?.id ?? null;
+  const groups: FormVersionGroup[] = [];
+  for (const version of versions) {
+    if (version.publishedAt === null || version.versionNumber === null) continue;
+    const seasonId = version.seasonId ?? '';
+    const row: FormVersionRow = {
+      key: version.id,
+      number: version.versionNumber,
+      publishedAt: version.publishedAt,
+      isCorrection: version.isCorrection,
+      isCurrent: version.isCurrent,
+      count: version.signatureCount,
+    };
+    const at = groups.findIndex((each) => each.key === seasonId);
+    const group = groups[at];
+    if (group === undefined) {
+      groups.push({
+        key: seasonId,
+        season: { name: version.seasonName ?? '', isCurrent: seasonId === currentSeasonId },
+        versions: [row],
+      });
+    } else {
+      groups[at] = { ...group, versions: [...group.versions, row] };
+    }
+  }
+  return (
+    <FormVersions
+      title={t('authorizationVersionsTitle')}
+      draft={
+        draft === null
+          ? null
+          : { updatedAt: draft.updatedAt ?? new Date().toISOString(), isSeenByTestPlayers: true }
+      }
+      groups={groups}
+      testId="custom-form-versions"
+    />
+  );
+}
+
+/** The organization's seasons (RAPP-306), where the authorization is published to. */
+function AuthorizationSeasons({ seasons }: { readonly seasons: readonly Season[] }) {
+  const reload = useReload();
+  const withStepUp = useStepUp();
+  return (
+    <SeasonsPanel
+      seasons={seasons}
+      onCreate={async (input) => {
+        await withStepUp(() => createSeason(supabase, input));
+        await reload();
+      }}
+      onSetCurrent={async (seasonId) => {
+        await withStepUp(() => setCurrentSeason(supabase, seasonId));
+        await reload();
+      }}
+    />
+  );
+}
+
 function FormActions({ data, form }: { readonly data: CustomFormData; readonly form: CustomForm }) {
   if (form.systemKey === 'app_terms') return <AppTermsActions data={data} form={form} />;
+  if (form.systemKey === 'season_authorization') {
+    return <AuthorizationActions data={data} form={form} />;
+  }
   return <TeamFormActions data={data} form={form} />;
+}
+
+/**
+ * The seasons a repeating form is published to (RAPP-701): the current one
+ * and the future ones, the current one first picked.
+ */
+function usePublishSeason(seasons: readonly Season[]) {
+  const current = seasons.find((season) => season.isCurrent);
+  const targets = seasons.filter(
+    (season) => season.isCurrent || current === undefined || season.startsOn > current.startsOn,
+  );
+  const [seasonId, setSeasonId] = useState<string | null>(current?.id ?? targets[0]?.id ?? null);
+  return { targets, seasonId, setSeasonId };
+}
+
+/** The season picker beside Publica, for a form published to a season. */
+function PublishSeasonPicker({
+  targets,
+  seasonId,
+  onChange,
+}: {
+  readonly targets: readonly Season[];
+  readonly seasonId: string | null;
+  readonly onChange: (seasonId: string) => void;
+}) {
+  const { t } = useTranslation('settings');
+  return (
+    <Select value={seasonId ?? ''} onValueChange={onChange} disabled={targets.length === 0}>
+      <SelectTrigger
+        className="w-48"
+        aria-label={t('customForms.publishSeason')}
+        data-testid="custom-form-publish-season"
+      >
+        <SelectValue placeholder={t('customForms.publishSeason')} />
+      </SelectTrigger>
+      <SelectContent>
+        {targets.map((season) => (
+          <SelectItem key={season.id} value={season.id}>
+            {season.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+/**
+ * Publica of the season authorization (RAPP-773): its draft becomes a
+ * version of the season picked, numbered in that season, a Correcció (whoever
+ * signed is not asked again) or a Nova versió (every player of that season
+ * signs again), with a fresh authenticator code. Its draft can be discarded:
+ * the form goes back to the version in force.
+ */
+function AuthorizationActions({
+  data,
+  form,
+}: {
+  readonly data: CustomFormData;
+  readonly form: CustomForm;
+}) {
+  const { t } = useTranslation('settings');
+  const reload = useReload();
+  const withStepUp = useStepUp();
+  const [isBusy, setIsBusy] = useState(false);
+  const { targets, seasonId, setSeasonId } = usePublishSeason(data.seasons);
+  const draft = data.authorizationVersions.find((version) => version.publishedAt === null) ?? null;
+  const signed = data.authorizationVersions
+    .filter((version) => version.publishedAt !== null && version.seasonId === seasonId)
+    .reduce((total, version) => total + version.signatureCount, 0);
+  const saveKind = useSaveKind({
+    hasAnswers: data.authorizationVersions.some(
+      (version) => version.publishedAt !== null && version.seasonId === seasonId,
+    ),
+    newVersionNote: t('saveDialog.newVersionCount', { count: signed }),
+  });
+
+  async function run(action: () => Promise<void>) {
+    setIsBusy(true);
+    try {
+      await action();
+      await reload();
+    } catch (thrown) {
+      toast.error(
+        isAppError(thrown) && thrown.message.includes('a correction adds no required')
+          ? t('customForms.correctionAddsRequirement')
+          : t('customForms.actionFailed'),
+      );
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  if (!data.canDesign) return null;
+  return (
+    <>
+      {saveKind.dialog}
+      <PublishSeasonPicker targets={targets} seasonId={seasonId} onChange={setSeasonId} />
+      {draft === null ? null : (
+        <Button
+          type="button"
+          variant="outline"
+          disabled={isBusy}
+          onClick={() =>
+            void run(async () => {
+              await discardAuthorizationDraft(supabase);
+              toast.success(t('appTerms.discarded'));
+            })
+          }
+          data-testid="custom-form-discard"
+        >
+          {t('appTerms.discardDraft')}
+        </Button>
+      )}
+      <Button
+        type="button"
+        disabled={isBusy || draft === null || seasonId === null || !data.canPublishLegal}
+        title={data.canPublishLegal ? undefined : t('customForms.legalPublishNeedsAdmin')}
+        onClick={() => {
+          if (form.screens.every((screen) => screen.isHidden === true)) {
+            toast.error(t('customForms.needsScreen'));
+            return;
+          }
+          void saveKind.request((kind) =>
+            run(async () => {
+              const number = await withStepUp(() =>
+                publishAuthorizationDraft(supabase, seasonId, kind),
+              );
+              toast.success(t('authorizationEditor.published', { number }));
+            }),
+          );
+        }}
+        data-testid="custom-form-publish"
+      >
+        {t('customForms.publish')}
+      </Button>
+    </>
+  );
 }
 
 /**
@@ -418,11 +660,7 @@ function TeamFormActions({
   const canPublish = !isLegal || data.canPublishLegal;
   const [isBusy, setIsBusy] = useState(false);
   // A repeating form is published to the current season or a future one.
-  const current = data.seasons.find((season) => season.isCurrent);
-  const targets = data.seasons.filter(
-    (season) => season.isCurrent || current === undefined || season.startsOn > current.startsOn,
-  );
-  const [seasonId, setSeasonId] = useState<string | null>(current?.id ?? targets[0]?.id ?? null);
+  const { targets, seasonId, setSeasonId } = usePublishSeason(data.seasons);
   const hasVersion = form.versions.some(
     (version) => !form.repeatsEachSeason || version.seasonId === seasonId,
   );
@@ -453,22 +691,7 @@ function TeamFormActions({
     <>
       {saveKind.dialog}
       {data.canDesign && form.repeatsEachSeason && !form.isArchived ? (
-        <Select value={seasonId ?? ''} onValueChange={setSeasonId} disabled={targets.length === 0}>
-          <SelectTrigger
-            className="w-48"
-            aria-label={t('customForms.publishSeason')}
-            data-testid="custom-form-publish-season"
-          >
-            <SelectValue placeholder={t('customForms.publishSeason')} />
-          </SelectTrigger>
-          <SelectContent>
-            {targets.map((season) => (
-              <SelectItem key={season.id} value={season.id}>
-                {season.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <PublishSeasonPicker targets={targets} seasonId={seasonId} onChange={setSeasonId} />
       ) : null}
       {data.canDesign && !form.isArchived ? (
         <Button
@@ -566,6 +789,8 @@ function FormScreensBoard({
             language,
             t,
             screen.texts,
+            formScreenButtons(screen),
+            screen.attachments,
           )}
           language={language}
           isDimmed={isHidden || isOrphan}
@@ -613,7 +838,9 @@ function FormScreensBoard({
       },
     };
   };
-  // The screen she signs stays last: it opens, it never moves, hides or goes (RAPP-772).
+  // A legal form's fixed screen: the re-registration screens open the
+  // authorization, the screen she signs closes it. Each opens; none moves,
+  // hides or goes (RAPP-772, RAPP-773).
   const fixedScreenCard = (screen: CustomFormScreen): BoardCard => ({
     key: screen.id,
     name: textIn(screen.title, language),
@@ -626,7 +853,8 @@ function FormScreensBoard({
           language,
           t,
           screen.texts,
-          hasDeclineAction(screen),
+          formScreenButtons(screen),
+          screen.attachments,
         )}
         language={language}
       />
@@ -639,9 +867,10 @@ function FormScreensBoard({
       params: { formId: form.id, screenId: screen.id },
     },
   });
+  const opening = roots.filter((root) => isOpeningScreen(root));
   const closing = roots.filter((root) => isClosingScreen(root));
   const cards: BoardCard[] = roots
-    .filter((root) => !isClosingScreen(root))
+    .filter((root) => !isOpeningScreen(root) && !isClosingScreen(root))
     .map((root) => {
       // Every follow-up below it, depth first (RAPP-715): 3a, 3a.1, 3b.
       const branches = formFamily(catalog, form, root.id, '')
@@ -658,16 +887,21 @@ function FormScreensBoard({
         // Keyed by the saved order: a reload starts again from what the database holds.
         key={ordered.map((screen) => screen.id).join('|')}
         label={textIn(form.name, language)}
+        leading={opening.map((screen) => screenCard(screen))}
         movable={cards}
         // The add card comes before the screen she signs: a new screen goes there (RAPP-772).
         addCard={<AddScreenCard catalog={catalog} sources={sources} onCreate={createScreen} />}
         trailing={closing.map((screen) => screenCard(screen))}
         onReorder={async (keys) => {
-          // Each screen goes with every follow-up below it (RAPP-715); the last stays last.
+          // Each screen goes with every follow-up below it (RAPP-715); the fixed ones stay put.
           await reorderCustomFormScreens(
             supabase,
             form.id,
-            [...keys, ...closing.map((screen) => screen.id)].flatMap((root) =>
+            [
+              ...opening.map((screen) => screen.id),
+              ...keys,
+              ...closing.map((screen) => screen.id),
+            ].flatMap((root) =>
               ordered
                 .filter((screen) => formRootOf(catalog, form, screen.id) === root)
                 .map((screen) => screen.id),
@@ -681,7 +915,14 @@ function FormScreensBoard({
   );
 }
 
-/** The screen that closes a legal form and stays last: the app terms' screen she signs (RAPP-772). */
+/** The screens that open the authorization and stay first: its re-registration (RAPP-773). */
+function isOpeningScreen(screen: CustomFormScreen): boolean {
+  return (
+    screen.systemScreen === 'reregistration' || screen.systemScreen === 'reregistration_season'
+  );
+}
+
+/** The screen that closes a legal form and stays last: the screen she signs (RAPP-772, RAPP-773). */
 function isClosingScreen(screen: CustomFormScreen): boolean {
   return screen.systemScreen === 'terms_sign' || screen.systemScreen === 'authorization_sign';
 }
@@ -805,8 +1046,8 @@ function FormSettings({ form }: { readonly form: CustomForm }) {
         hasLanguages
         isRepeatLocked={form.publishedAt !== null}
         isKindLocked={form.publishedAt !== null || form.systemKey !== null}
-        // The app terms are asked of every player, to use the app: only their name changes (RAPP-772).
-        isNameOnly={form.systemKey === 'app_terms'}
+        // The app's legal forms are asked as they always were: only their name changes (RAPP-772, RAPP-773).
+        isNameOnly={form.systemKey !== null}
         idPrefix="form-settings"
       />
     </EditorSection>

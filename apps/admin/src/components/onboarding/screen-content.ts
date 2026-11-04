@@ -49,6 +49,7 @@ import {
   type BuilderText,
   type CustomQuestion,
   type CustomQuestionType,
+  type FormAttachment,
   type FormBlock,
   type FormBlockContent,
   type FormScreenTexts,
@@ -551,8 +552,10 @@ export function staffScreenContent(
   language: LanguageCode,
   t: Translate,
   texts: FormScreenTexts = {},
-  /** The screen has a decline (the app terms' screen she signs, RAPP-772): its label shows. */
-  hasDecline = false,
+  /** Its buttons where staff wrote none, and its second one (RAPP-772, RAPP-773). */
+  buttons: ScreenButtons = CONTINUE_ONLY,
+  /** The season documents of the authorization's document screen (RAPP-773). */
+  attachments: readonly FormAttachment[] = [],
 ): PhoneContent {
   // One rule with her phone (RAPP-710): a language never written follows the
   // Catalan; the main button reads the app's own label where staff wrote none.
@@ -562,23 +565,61 @@ export function staffScreenContent(
     intro: teamTextIn(intro, language, true),
     help: own.help,
     questions,
-    lines: [],
+    lines: attachments.map((attachment) => teamTextIn(attachment.label, language, false)),
     checkbox: null,
     signature: false,
-    // The screen she signs finishes, as it always did ("Signa i continua").
-    continueLabel:
-      own.continueLabel ??
-      t(hasDecline ? 'onboarding:finishAction' : 'onboarding:continueAction', { lng: language }),
-    declineLabel: hasDecline
-      ? (staffTextIn(texts.decline_label, language, false) ??
-        t('onboarding:termsDeclineAction', { lng: language }))
-      : null,
+    continueLabel: own.continueLabel ?? t(buttons.continueKey, { lng: language }),
+    declineLabel:
+      buttons.declineKey === null
+        ? null
+        : (staffTextIn(texts.decline_label, language, false) ??
+          t(buttons.declineKey, { lng: language })),
   };
 }
 
-/** Whether a form's screen has a decline: the app terms' screen she signs (RAPP-772). */
-export function hasDeclineAction(screen: { readonly systemScreen?: string }): boolean {
-  return screen.systemScreen === 'terms_sign';
+/**
+ * A form screen's buttons where staff wrote none: the app's own main button
+ * and, on a screen that has one, its second button with the field that names
+ * it in the editor.
+ */
+export interface ScreenButtons {
+  readonly continueKey: string;
+  readonly declineKey: string | null;
+  readonly declineFieldKey: string | null;
+}
+
+/** A screen with Continue only. */
+export const CONTINUE_ONLY: ScreenButtons = {
+  continueKey: 'onboarding:continueAction',
+  declineKey: null,
+  declineFieldKey: null,
+};
+
+/**
+ * The buttons of a form's screen: the app terms' screen she signs finishes
+ * with "Ara no" beside it (RAPP-772); the authorization's re-registration
+ * screen asks whether her details are correct, with the button to correct
+ * them, and its screen she signs signs (RAPP-773).
+ */
+export function formScreenButtons(screen: { readonly systemScreen?: string }): ScreenButtons {
+  switch (screen.systemScreen) {
+    case 'terms_sign':
+      return {
+        continueKey: 'onboarding:finishAction',
+        declineKey: 'onboarding:termsDeclineAction',
+        declineFieldKey: 'builtinScreens.field.decline_label',
+      };
+    case 'reregistration':
+      return {
+        continueKey: 'onboarding:reregistrationCorrect',
+        declineKey: 'onboarding:reregistrationEdit',
+        declineFieldKey: 'customForms.reregistrationEditLabel',
+      };
+    case 'authorization_sign':
+      return { ...CONTINUE_ONLY, continueKey: 'onboarding:authorizationSignAndEnterAction' };
+    default:
+      return CONTINUE_ONLY;
+  }
 }
 
 export function stepContent(

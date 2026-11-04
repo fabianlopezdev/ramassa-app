@@ -156,8 +156,9 @@ export function LegalDataPanel({
         ];
   };
   const signatureRows = [
+    // The app's legal forms keep their own rows below (RAPP-772, RAPP-773).
     ...signatureBlocks(catalog.blocks)
-      .filter((block) => block.surface === 'custom_form')
+      .filter((block) => block.surface === 'custom_form' && block.system === undefined)
       .flatMap(formSignatureRow),
     ...signatureBlocks(catalog.blocks)
       .filter(

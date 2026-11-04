@@ -10,6 +10,10 @@
  */
 
 import { supabase } from '@/lib/supabase';
+import {
+  fetchAuthorizationVersions,
+  type AuthorizationVersion,
+} from '@ramassa/shared/authorization';
 import { fetchAppTermsVersions, type AppTermsVersion } from '@ramassa/shared/intake';
 import {
   customFormById,
@@ -17,6 +21,7 @@ import {
   fetchCustomFormResponses,
   fetchIntakeCatalog,
   type CustomFormResponse,
+  type CustomFormSystemKey,
 } from '@ramassa/shared/intake-builder';
 import { canDesignOnboarding, fetchMyPermissions } from '@ramassa/shared/permissions';
 import { fetchSeasons } from '@ramassa/shared/seasons';
@@ -44,32 +49,40 @@ export type CustomFormsData = Awaited<ReturnType<typeof loadCustomForms>>;
 
 /**
  * One form's page: the shared data and, for the team who reads them, its
- * responses. The app terms (RAPP-772) are accepted in their own ledger: their
- * page reads its versions, with how many accepted each, and has no responses.
+ * responses. The app's two legal forms are answered in their own ledgers:
+ * the app terms' page reads their versions with how many accepted each
+ * (RAPP-772), the season authorization's its versions by season with how
+ * many signed each (RAPP-773). Neither has responses here.
  */
 export async function loadCustomForm(formId: string) {
   const data = await loadCustomForms();
-  const isAppTerms = customFormById(data.intakeCatalog, formId)?.systemKey === 'app_terms';
-  const [responses, termsVersions] = await Promise.all([
-    data.canReadResponses && !isAppTerms
+  const systemKey = customFormById(data.intakeCatalog, formId)?.systemKey ?? null;
+  const [responses, termsVersions, authorizationVersions] = await Promise.all([
+    data.canReadResponses && systemKey === null
       ? fetchCustomFormResponses(supabase, formId)
       : Promise.resolve<readonly CustomFormResponse[]>([]),
-    data.canDesign && isAppTerms
+    data.canDesign && systemKey === 'app_terms'
       ? fetchAppTermsVersions(supabase)
       : Promise.resolve<readonly AppTermsVersion[]>([]),
+    data.canDesign && systemKey === 'season_authorization'
+      ? fetchAuthorizationVersions(supabase)
+      : Promise.resolve<readonly AuthorizationVersion[]>([]),
   ]);
-  return { ...data, responses, termsVersions };
+  return { ...data, responses, termsVersions, authorizationVersions };
 }
 
 export type CustomFormData = Awaited<ReturnType<typeof loadCustomForm>>;
 
 /**
- * The app terms' form (RAPP-772): where `/forms/terms` and the menu open it.
- * A small read of the forms table, as the menu's legal forms; null on a
- * database before RAPP-772.
+ * One of the app's legal forms (RAPP-772, RAPP-773): where `/forms/terms`,
+ * `/forms/authorization` and the menu open it. A small read of the forms
+ * table, as the menu's legal forms; null on a database before it.
  */
-export async function fetchAppTermsFormId(signal?: AbortSignal): Promise<string | null> {
-  let query = supabase.from('custom_forms').select('id').eq('system_key', 'app_terms').limit(1);
+export async function fetchSystemFormId(
+  systemKey: CustomFormSystemKey,
+  signal?: AbortSignal,
+): Promise<string | null> {
+  let query = supabase.from('custom_forms').select('id').eq('system_key', systemKey).limit(1);
   if (signal !== undefined) query = query.abortSignal(signal);
   const { data, error } = await query;
   if (error) return null;

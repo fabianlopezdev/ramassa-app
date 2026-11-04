@@ -1,47 +1,57 @@
 /**
- * One screen of the season authorization (RAPP-696), opened from its card:
- * `/forms/authorization/<screen>`. An address naming no screen goes back to
- * the board.
- *
- * The same guard as the board. `ssr: false` for the reason every staff
- * screen gives (the session lives in localStorage, ADR-005).
+ * The old addresses of the season authorization's screens (RAPP-696):
+ * `/forms/authorization/<step>`. The authorization is a form of the engine
+ * since RAPP-773: `reregistration` and `reregistrationSeason` open its two
+ * re-registration screens, `document` the screen holding the season
+ * documents, `health` its first other screen, `consents` the screen she
+ * signs. Anything else opens the form's page.
+ * `ssr: false` for the reason every staff screen gives (the session lives in
+ * localStorage, ADR-005).
  */
 
-import { RequireAuth } from '@/components/auth/require-auth';
-import { AuthorizationScreen } from '@/components/legal/legal-forms';
-import {
-  AUTHORIZATION_PHONE_STEPS,
-  type AuthorizationPhoneStep,
-} from '@/components/legal/legal-phone-content';
-import { loadLegalForms } from '@/lib/legal-forms';
-import { LEGAL_FORMS_PERMISSIONS } from '@/lib/nav-items';
+import { supabase } from '@/lib/supabase';
 import { createFileRoute, redirect } from '@tanstack/react-router';
+import {
+  authorizationForm,
+  fetchIntakeCatalog,
+  type CustomFormScreen,
+} from '@ramassa/shared/intake-builder';
 
-function isStep(step: string): step is AuthorizationPhoneStep {
-  return (AUTHORIZATION_PHONE_STEPS as readonly string[]).includes(step);
+/** The screen an old step name stands for, among the form's screens. */
+function screenOfStep(
+  screens: readonly CustomFormScreen[],
+  step: string,
+): CustomFormScreen | undefined {
+  const own = screens.filter((screen) => screen.systemScreen === undefined);
+  switch (step) {
+    case 'reregistration':
+      return screens.find((screen) => screen.systemScreen === 'reregistration');
+    case 'reregistrationSeason':
+      return screens.find((screen) => screen.systemScreen === 'reregistration_season');
+    case 'consents':
+      return screens.find((screen) => screen.systemScreen === 'authorization_sign');
+    case 'document':
+      return own.find((screen) => screen.attachments !== undefined);
+    case 'health':
+      return own.find((screen) => screen.attachments === undefined);
+    default:
+      return undefined;
+  }
 }
 
 export const Route = createFileRoute('/_staff/forms/authorization/$step')({
   ssr: false,
-  beforeLoad: ({ params }) => {
-    if (!isStep(params.step)) {
-      throw redirect({ to: '/forms/authorization', replace: true });
-    }
+  beforeLoad: async ({ params }) => {
+    const catalog = await fetchIntakeCatalog(supabase).catch(() => null);
+    const form = catalog === null ? undefined : authorizationForm(catalog);
+    if (form === undefined) throw redirect({ to: '/forms/legal', replace: true });
+    const screen = screenOfStep(form.screens, params.step);
+    throw screen === undefined
+      ? redirect({ to: '/forms/custom/$formId', params: { formId: form.id }, replace: true })
+      : redirect({
+          to: '/forms/custom/$formId/screens/$screenId',
+          params: { formId: form.id, screenId: screen.id },
+          replace: true,
+        });
   },
-  loader: loadLegalForms,
-  component: AuthorizationScreenPage,
 });
-
-function AuthorizationScreenPage() {
-  return (
-    <RequireAuth allow={['staff', 'admin']} anyPermission={LEGAL_FORMS_PERMISSIONS}>
-      <Screen />
-    </RequireAuth>
-  );
-}
-
-function Screen() {
-  const data = Route.useLoaderData();
-  const { step } = Route.useParams();
-  return isStep(step) ? <AuthorizationScreen key={step} data={data} step={step} /> : null;
-}

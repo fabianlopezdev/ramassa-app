@@ -80,6 +80,7 @@ import {
   setScreenHidden,
   textIn,
   type BuilderText,
+  type FormAttachment,
   type FormScreenTexts,
   type IntakeCatalog,
   type RamassaScreen,
@@ -115,11 +116,13 @@ import {
   builtinPhoneQuestion,
   bundledScreenText,
   conditionLine,
+  CONTINUE_ONLY,
   detailScreenContent,
   placedPhoneQuestions,
   staffScreenContent,
   stepContent,
   type PhoneQuestion,
+  type ScreenButtons,
   type ScreenTexts,
   type Translate,
   type TypedWording,
@@ -523,7 +526,8 @@ export function StaffScreenEditor({
   family = null,
   previewFooter,
   condition = null,
-  hasDecline = false,
+  buttons = CONTINUE_ONLY,
+  attachments = [],
 }: {
   readonly screen: {
     readonly title: BuilderText;
@@ -559,10 +563,17 @@ export function StaffScreenEditor({
   readonly previewFooter?: ReactNode;
   /** "Quan es mostra": the answer that opens it (RAPP-715). */
   readonly condition?: ReactNode;
-  /** The screen has a decline, the app terms' screen she signs (RAPP-772): its label is edited. */
-  readonly hasDecline?: boolean;
+  /**
+   * Its buttons where staff wrote none, and its second one: the app terms'
+   * "Ara no" (RAPP-772), the re-registration's button to correct her details
+   * (RAPP-773). A second button's label is edited.
+   */
+  readonly buttons?: ScreenButtons;
+  /** The season documents her phone lists on the authorization's document screen (RAPP-773). */
+  readonly attachments?: readonly FormAttachment[];
 }) {
   const { t } = useTranslation(['settings', 'onboarding']);
+  const hasDecline = buttons.declineKey !== null;
   const fieldsEdited: readonly TeamScreenField[] = hasDecline
     ? [...TEAM_FIELDS, 'decline_label']
     : TEAM_FIELDS;
@@ -588,15 +599,12 @@ export function StaffScreenEditor({
     decline_label: screen.texts?.decline_label ?? {},
   };
   const isOptional = (field: TeamScreenField) => field === 'intro' || field === 'help';
-  // A button reads the app's own label where staff wrote none, as an app screen's. The
-  // screen she signs finishes ("Signa i continua"), and its decline is "Ara no".
+  // A button reads the app's own label where staff wrote none, as an app screen's.
   const appLabel = (field: ButtonField) => (shownLanguage: LanguageCode) =>
     t(
-      field === 'decline_label'
-        ? 'onboarding:termsDeclineAction'
-        : hasDecline
-          ? 'onboarding:finishAction'
-          : 'onboarding:continueAction',
+      field === 'decline_label' && buttons.declineKey !== null
+        ? buttons.declineKey
+        : buttons.continueKey,
       { lng: shownLanguage },
     );
   const isButton = (field: TeamScreenField): field is ButtonField =>
@@ -703,7 +711,8 @@ export function StaffScreenEditor({
       continue_label: current('continue_label'),
       decline_label: current('decline_label'),
     },
-    hasDecline,
+    buttons,
+    attachments,
   );
 
   const direction = getLanguageDirection(language);
@@ -830,7 +839,7 @@ export function StaffScreenEditor({
                   <Field orientation="responsive">
                     <FieldContent>
                       <FieldLabel htmlFor="screen-decline-label">
-                        {t('builtinScreens.field.decline_label')}
+                        {t(buttons.declineFieldKey ?? 'builtinScreens.field.decline_label')}
                       </FieldLabel>
                     </FieldContent>
                     <div className={CONTROL_COLUMN}>

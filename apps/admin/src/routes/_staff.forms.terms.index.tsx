@@ -6,13 +6,13 @@
  * localStorage, ADR-005).
  */
 
-import { fetchAppTermsFormId } from '@/lib/custom-forms';
+import { fetchSystemFormId } from '@/lib/custom-forms';
 import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_staff/forms/terms/')({
   ssr: false,
   beforeLoad: async () => {
-    const formId = await fetchAppTermsFormId();
+    const formId = await fetchSystemFormId('app_terms');
     throw formId === null
       ? redirect({ to: '/forms/legal', replace: true })
       : redirect({ to: '/forms/custom/$formId', params: { formId }, replace: true });

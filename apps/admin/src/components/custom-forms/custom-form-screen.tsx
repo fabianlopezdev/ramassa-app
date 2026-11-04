@@ -5,6 +5,11 @@
  * blocks are placed with the same picker as Onboarding. Every change is the
  * form's draft (RAPP-701): players see it with the next Publica. Deleting
  * archives the screen, like an Onboarding screen.
+ *
+ * The season authorization's screens (RAPP-773): its two re-registration
+ * screens are drawn by the app and hold nothing, so only their texts and
+ * buttons are edited here; its document screen also lists the season
+ * documents; its screen she signs keeps its own signature.
  */
 
 import {
@@ -13,6 +18,7 @@ import {
   formConditionSources,
   useCreateFormScreen,
 } from '@/components/custom-forms/custom-form-page';
+import { FormAttachmentsSection } from '@/components/custom-forms/form-attachments';
 import { Page } from '@/components/layout/page';
 import { PhoneMiniature } from '@/components/onboarding/phone-preview';
 import { lockedAddDependent, useAddDependentScreen } from '@/components/onboarding/screen-board';
@@ -25,7 +31,7 @@ import {
 } from '@/components/onboarding/screen-condition';
 import {
   conditionLine,
-  hasDeclineAction,
+  formScreenButtons,
   placedPhoneQuestions,
   staffScreenContent,
 } from '@/components/onboarding/screen-content';
@@ -160,7 +166,9 @@ function FormScreenBody({
   const hideLock = isFixed
     ? 'onboardingBoard.hideLockedLegal'
     : teamHideLockKey(catalog, 'custom_form', screen.id);
-  const hasDecline = hasDeclineAction(screen);
+  // The re-registration screens are drawn by the app: nothing is placed on them (RAPP-773).
+  const holdsNothing =
+    screen.systemScreen === 'reregistration' || screen.systemScreen === 'reregistration_season';
   // What it depends on (RAPP-715): a choice question of an earlier screen of this form.
   const ordered = formScreensInOrder(catalog, form);
   const earlier = ordered.slice(
@@ -214,7 +222,8 @@ function FormScreenBody({
                 dashboardLanguage,
                 t,
                 each.texts,
-                hasDeclineAction(each),
+                formScreenButtons(each),
+                each.attachments,
               )}
               language={dashboardLanguage}
             />
@@ -241,7 +250,8 @@ function FormScreenBody({
           }
         />
       }
-      hasDecline={hasDecline}
+      buttons={formScreenButtons(screen)}
+      {...(screen.attachments === undefined ? {} : { attachments: screen.attachments })}
       family={
         <>
           <FamilyRow members={family} />
@@ -274,27 +284,32 @@ function FormScreenBody({
       onStore={(title, intro, texts) =>
         saveCustomFormScreen(supabase, { id: screen.id, formId: form.id, title, intro, texts })
       }
-      fields={(row, language, name) => (
-        <ScreenFieldsSection
-          surface="custom_form"
-          form={{
-            id: form.id,
-            filledBy: form.filledBy,
-            screenIds: form.screens.map((each) => each.id),
-          }}
-          catalog={catalog}
-          screenKey={screen.id}
-          screenName={name}
-          // The app terms' signature and acceptance stay on the screen she signs (RAPP-772).
-          isFixedLegalScreen={screen.systemScreen === 'terms_sign'}
-          builtinQuestions={[]}
-          language={language}
-          editing={row.editing}
-          onEdit={row.setEditing}
-          onBuiltinLabelChange={row.setBuiltinLabel}
-          onWordingChange={row.setWording}
-        />
-      )}
+      fields={(row, language, name) =>
+        holdsNothing ? null : (
+          <>
+            <ScreenFieldsSection
+              surface="custom_form"
+              form={{
+                id: form.id,
+                filledBy: form.filledBy,
+                screenIds: form.screens.map((each) => each.id),
+              }}
+              catalog={catalog}
+              screenKey={screen.id}
+              screenName={name}
+              builtinQuestions={[]}
+              language={language}
+              editing={row.editing}
+              onEdit={row.setEditing}
+              onBuiltinLabelChange={row.setBuiltinLabel}
+              onWordingChange={row.setWording}
+            />
+            {screen.attachments === undefined ? null : (
+              <FormAttachmentsSection screenId={screen.id} attachments={screen.attachments} />
+            )}
+          </>
+        )
+      }
     />
   );
 }

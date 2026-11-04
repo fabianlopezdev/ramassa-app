@@ -71,27 +71,32 @@ export type LinkedFormLink =
 
 /**
  * The form a step's card opens (RAPP-696): the app terms and the season
- * authorization are forms of their own. The app terms are a form of the
- * engine since RAPP-772: the card opens its page. Null for a screen of the
- * Onboarding.
+ * authorization are forms of their own, of the engine since RAPP-772 and
+ * RAPP-773: the card opens its page. Null for a screen of the Onboarding.
  */
 export function linkedFormOf(
   key: string,
   catalog: IntakeCatalog,
 ): { readonly link: LinkedFormLink; readonly labelKey: string } | null {
-  if (key === 'authorization')
-    return { link: { to: '/forms/authorization' }, labelKey: 'nav:staff.authorization' };
-  if (key === 'terms') {
-    const form = (catalog.customForms ?? []).find((each) => each.systemKey === 'app_terms');
-    return {
-      link:
-        form === undefined
-          ? { to: '/forms/terms' }
-          : { to: '/forms/custom/$formId', params: { formId: form.id } },
-      labelKey: 'nav:staff.appTerms',
-    };
-  }
-  return null;
+  const system =
+    key === 'authorization'
+      ? ({
+          systemKey: 'season_authorization',
+          to: '/forms/authorization',
+          labelKey: 'nav:staff.authorization',
+        } as const)
+      : key === 'terms'
+        ? ({ systemKey: 'app_terms', to: '/forms/terms', labelKey: 'nav:staff.appTerms' } as const)
+        : null;
+  if (system === null) return null;
+  const form = (catalog.customForms ?? []).find((each) => each.systemKey === system.systemKey);
+  return {
+    link:
+      form === undefined
+        ? { to: system.to }
+        : { to: '/forms/custom/$formId', params: { formId: form.id } },
+    labelKey: system.labelKey,
+  };
 }
 
 /** How many screens the app terms show her (RAPP-772): its form's, the hidden ones left out. */

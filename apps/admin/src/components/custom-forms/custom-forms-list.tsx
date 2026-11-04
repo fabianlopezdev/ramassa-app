@@ -1,8 +1,8 @@
 /**
  * The pages that list forms (RAPP-700, RAPP-771): Altres formularis lists the
  * forms of kind Altre, Condicions legals the legal ones, the app's two legal
- * forms first: the season authorization's board, and the app terms' form
- * (RAPP-772). Each page has Nou formulari; both open the same dialog, which
+ * forms first: the season authorization (RAPP-773) and the app terms
+ * (RAPP-772), forms of the engine like the rest. Each page has Nou formulari; both open the same dialog, which
  * asks the kind first (preset by the page), the name and the choices
  * (RAPP-701), creates the form as a draft and opens its board. Each row opens
  * its form.
@@ -35,6 +35,8 @@ import {
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
+const SYSTEM_FORM_ORDER = ['season_authorization', 'app_terms'] as const;
+
 export function CustomFormsList({
   data,
   kind,
@@ -45,20 +47,17 @@ export function CustomFormsList({
   const { t, i18n } = useTranslation(['settings', 'nav']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const [isCreating, setIsCreating] = useState(false);
-  // The authorization opens its own board until it moves onto this engine.
   const forms = (data.intakeCatalog.customForms ?? []).filter(
     (form) => form.kind === kind && form.systemKey === null,
   );
-  // The app terms are a form of the engine (RAPP-772), listed with the app's own.
-  const appTerms =
+  // The app's own legal forms come first: the authorization, then the terms.
+  const systemForms =
     kind === 'legal' && data.canDesign
-      ? (data.intakeCatalog.customForms ?? []).find((form) => form.systemKey === 'app_terms')
-      : undefined;
-  const title = kind === 'legal' ? t('nav:staff.legal') : t('customForms.title');
-  const appLegalForms =
-    kind === 'legal' && data.canDesign
-      ? [{ to: '/forms/authorization', icon: FileSignature, name: t('nav:staff.authorization') }]
+      ? SYSTEM_FORM_ORDER.flatMap((key) =>
+          (data.intakeCatalog.customForms ?? []).filter((form) => form.systemKey === key),
+        )
       : [];
+  const title = kind === 'legal' ? t('nav:staff.legal') : t('customForms.title');
   return (
     <Page data-testid={kind === 'legal' ? 'legal-forms-page' : 'custom-forms-page'}>
       <PageHeader
@@ -73,41 +72,29 @@ export function CustomFormsList({
         }
       />
       <EditorSection title={t('customForms.listLabel')} isFlush testId="custom-forms-list">
-        {forms.length + appLegalForms.length + (appTerms === undefined ? 0 : 1) === 0 ? (
+        {forms.length + systemForms.length === 0 ? (
           <p className="px-5 py-5 text-start text-sm text-muted-foreground">
             {t('customForms.empty')}
           </p>
         ) : (
           <ol className="flex flex-col divide-y" aria-label={t('customForms.listLabel')}>
-            {appLegalForms.map((form) => (
-              <li key={form.to} className="bg-card">
-                <Link to={form.to} className={ROW_CLASS} data-testid={`legal-form-row-${form.to}`}>
+            {systemForms.map((form) => (
+              <li key={form.id} className="bg-card">
+                <Link
+                  to="/forms/custom/$formId"
+                  params={{ formId: form.id }}
+                  className={ROW_CLASS}
+                  data-testid={`legal-form-row-${form.systemKey ?? form.id}`}
+                >
                   <FormRowContent
-                    icon={form.icon}
-                    name={form.name}
+                    icon={form.systemKey === 'app_terms' ? ScrollText : FileSignature}
+                    name={textIn(form.name, language)}
                     line={t('customForms.kindOption.legal')}
-                    badge={null}
+                    badge={<FormStatusBadge form={form} />}
                   />
                 </Link>
               </li>
             ))}
-            {appTerms === undefined ? null : (
-              <li className="bg-card">
-                <Link
-                  to="/forms/custom/$formId"
-                  params={{ formId: appTerms.id }}
-                  className={ROW_CLASS}
-                  data-testid="legal-form-row-app-terms"
-                >
-                  <FormRowContent
-                    icon={ScrollText}
-                    name={textIn(appTerms.name, language)}
-                    line={t('customForms.kindOption.legal')}
-                    badge={<FormStatusBadge form={appTerms} />}
-                  />
-                </Link>
-              </li>
-            )}
             {forms.map((form) => (
               <li key={form.id} className="bg-card">
                 <Link

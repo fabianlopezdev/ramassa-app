@@ -323,21 +323,13 @@
   "authorizationNoVersions": "No version has been published yet.",
   "authorizationVersionInSeason": "Version {{number}}, published on {{date}}",
   "authorizationCurrentBadge": "Current",
-  "authorizationNoSeasonToPublish": "No current or future season",
-  "authorizationPublishSeasonCurrent": "{{season}} (current)",
-  "authorizationPublishSeason": "Season",
   "authorizationCurrentSeasonBadge": "Current season",
-  "authorizationDocumentTitle": "Document title",
-  "authorizationSections": "Sections",
-  "authorizationSectionTitle": "Section {{number}} title",
-  "authorizationSectionBody": "Text",
-  "authorizationRemoveSection": "Remove the section",
-  "authorizationAddSection": "Add a section",
   "authorizationAttachments": "Season documents (links)",
   "authorizationAttachmentLabel": "Document name",
   "authorizationAttachmentUrl": "Link (https://)",
   "authorizationAddAttachment": "Add a document",
-  "authorizationPublishFailed": "The version could not be published. Try again.",
+  "authorizationRemoveAttachment": "Remove the document",
+  "authorizationAttachmentInvalid": "Each document needs its name in Catalan and a link that starts with https://.",
   "seasonsTitle": "Seasons",
   "seasonsIntro": "Publishing the current season's authorization makes returning players register again.",
   "seasonName": "Name (for example 2027/28)",
@@ -512,37 +504,14 @@
     "countWithConditional": "{{total}} screens in total: {{onboarding}} in Onboarding (+{{conditional}} conditional) · {{terms}} in the app terms · {{forms}} in forms"
   },
   "appTerms": {
-    "sectionTitle": "App terms",
-    "sectionIntro": "The text every player accepts before entering the app, with the introduction screen before it. A published version never changes; when you publish a new one, every player accepts it when she opens the app.",
     "versionsTitle": "Versions",
     "versionRow": "Version {{number}}, published {{date}}: {{count}} acceptances",
     "draftRow": "Draft, saved {{date}}",
-    "currentBadge": "Current",
-    "editorTitle": "Draft of the next version",
-    "editorIntro": "Write each text in each language. Catalan is required; an empty language shows the Catalan text.",
-    "field": {
-      "intro_title": "Introduction screen title",
-      "intro": "Introduction screen text",
-      "title": "Terms title",
-      "body": "Terms text",
-      "accept_label": "Text to accept the terms",
-      "media_label": "Photo and video permission text",
-      "media_hint": "Note about the photo and video permission"
-    },
-    "points": "Introduction points",
     "pointTitle": "Point {{number}}: title",
     "pointBody": "Point {{number}}: text",
     "addPoint": "Add a point",
     "removePoint": "Remove this point",
-    "saveDraft": "Save the draft",
     "discardDraft": "Discard the draft",
-    "publishAction": "Publish the version",
-    "publishConfirm": "Once published, the version cannot change and every player will have to accept it when she opens the app.",
-    "publishConfirmAction": "Yes, publish version {{number}}",
-    "publishNeedsAdmin": "Only people who manage the organization settings can publish. Save the draft and tell them.",
-    "invalid": "Every text needs its Catalan version.",
-    "failed": "Could not save. Try again.",
-    "saved": "Draft saved.",
     "discarded": "Draft discarded.",
     "published": "Version published. Every player will accept it when she opens the app."
   },
@@ -585,46 +554,8 @@
     "requiredText": "This text is required."
   },
   "authorizationEditor": {
-    "draftRow": "Draft, saved on {{date}}",
-    "intro": "Start from the draft or the current version. Edit language by language: each field shows the text she will see.",
     "imageRightsLock": "Image rights are always optional: they decide the photo consent, which she can withdraw.",
-    "textsTitle": "Form wording",
-    "textsIntro": "The introduction, each step's title, the buttons, the final signing step and re-registration. Write {{season}} to show the season's name.",
-    "textField": {
-      "intro": "Introduction",
-      "flow_label": "Process name on the progress bar",
-      "documents_title": "Season documents title",
-      "health_title": "Health step title",
-      "consents_title": "Consents step title",
-      "continue_label": "Continue button",
-      "sign_and_enter_label": "Final button in her app (Sign and enter)",
-      "sign_label": "Final button on the tablet (Sign the authorization)",
-      "required_mark": "Required mark",
-      "signature_title": "Signature title",
-      "signature_prompt": "Prompt inside the signing space",
-      "signature_hint": "Screen reader hint for the signing space",
-      "cannot_draw_label": "Option if she cannot draw",
-      "cannot_draw_hint": "Explanation if she cannot draw",
-      "reregistration_title": "Re-registration title",
-      "reregistration_intro": "Re-registration introduction",
-      "reregistration_correct_label": "Button: the details are correct",
-      "reregistration_edit_label": "Button: correct the details",
-      "reregistration_season_intro": "Season questions introduction"
-    },
-    "invalid": "Some text is missing or a rule is broken: the title, sections and each consent need text in some language; the health question needs its consent; a required question must be asked; each document needs an https link.",
-    "saveDraft": "Save the draft",
-    "discardDraft": "Discard the draft",
-    "publishNeedsAdmin": "Only someone with the organization settings permission can publish the draft.",
-    "saved": "Draft saved.",
-    "discarded": "Draft discarded.",
-    "published": "Version published.",
-    "phoneStep": {
-      "document": "Document",
-      "health": "Health",
-      "consents": "Consents and signature",
-      "reregistration": "Re-registration",
-      "reregistrationSeason": "Season questions"
-    }
+    "published": "Version published."
   },
   "draftSeenByTestPlayers": "Draft version (only test players see it)",
   "onboardingBoard": {
@@ -673,7 +604,6 @@
     "deleteNamedScreen": "Delete {{screen}}",
     "deleteNamedScreenTitle": "Delete “{{screen}}”?",
     "deleteDependentScreens": "Deleting this screen will also delete the following screens that depend on it:",
-    "deleteScreenTitle": "Delete this screen?",
     "deleteScreenBody": "The screen and its questions will be removed from the form. Existing answers will be kept.",
     "deleted": "{{screen}} was deleted.",
     "deleteFailed": "It could not be deleted. Try again.",
@@ -708,8 +638,7 @@
     "addDependent": "Add a dependent screen",
     "addDependentNoChoice": "This screen has no question with options.",
     "addDependentLockedFinal": "It ends Onboarding, so no screen can depend on it.",
-    "addDependentLockedChain": "It is a chained form. Its screens are added on its own board.",
-    "addDependentLockedLegal": "It is a fixed screen of this form, so no screen can depend on it."
+    "addDependentLockedChain": "It is a chained form. Its screens are added on its own board."
   },
   "sortable": {
     "instructions": "To move it, press space or enter, use the arrow keys, then press space or enter again to drop it. Escape cancels.",
@@ -843,7 +772,14 @@
     "removeNamed": "Remove the signature",
     "removeTitle": "Remove this signature?",
     "removeBody": "Signatures already given are kept.",
-    "defaultText": "I accept"
+    "defaultText": "I accept",
+    "textField": {
+      "signature_title": "Signature title",
+      "signature_prompt": "Text inside the signing box",
+      "signature_hint": "Signing help (optional)",
+      "cannot_draw_label": "\"I cannot sign\" option",
+      "cannot_draw_hint": "\"I cannot sign\" help (optional)"
+    }
   },
   "formBlock": {
     "add": "Add a block",
@@ -977,7 +913,8 @@
       "other": "Other"
     },
     "correctionAddsRequirement": "A correction cannot add required questions, consents or signatures. Publish it as a new version.",
-    "legalPublishNeedsAdmin": "Only people who manage the organization settings can publish a legal form."
+    "legalPublishNeedsAdmin": "Only people who manage the organization settings can publish a legal form.",
+    "reregistrationEditLabel": "Button to correct her details"
   },
   "translateFromCatalan": {
     "working": "Translating…",

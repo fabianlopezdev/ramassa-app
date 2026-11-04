@@ -17,7 +17,7 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { fetchAppTermsFormId } from '@/lib/custom-forms';
+import { fetchSystemFormId } from '@/lib/custom-forms';
 import { useUnreadMessageCount } from '@/lib/messaging';
 import {
   activeStaffNavPath,
@@ -75,16 +75,17 @@ export function StaffSidebar() {
   const hasLegalRows = visibleStaffNavGroups(permissions).some((group) =>
     group.items.some((item) => 'parent' in item && item.parent === 'legal'),
   );
-  // The app terms are a form of the engine (RAPP-772): their row opens its page.
-  const appTermsFormId = useAppTermsFormId(hasLegalRows);
+  // The app's legal forms are forms of the engine (RAPP-772, RAPP-773): each row opens its page.
+  const systemFormIds = useSystemFormIds(hasLegalRows);
   const groups = visibleStaffNavGroups(permissions).map((group) => ({
     ...group,
-    items: group.items.map((item) =>
-      item.to === APP_TERMS_PATH && appTermsFormId !== null
-        ? // The row's own address, read at run time: the menu links by string.
-          ({ ...item, to: legalFormPath(appTermsFormId) } as unknown as typeof item)
-        : item,
-    ),
+    items: group.items.map((item) => {
+      const formId = systemFormIds[item.to] ?? null;
+      return formId === null
+        ? item
+        : // The row's own address, read at run time: the menu links by string.
+          ({ ...item, to: legalFormPath(formId) } as unknown as typeof item);
+    }),
   }));
   // The legal forms the team created, under Condicions legals (RAPP-771).
   const legalForms = useLegalFormEntries(
@@ -142,21 +143,29 @@ function legalFormPath(id: string): string {
   return `/forms/custom/${id}`;
 }
 
-/** The menu's app terms row, which opens the terms form once its id is read (RAPP-772). */
-const APP_TERMS_PATH = '/forms/terms';
+/** The menu's rows of the app's legal forms, which open their forms once read (RAPP-772, RAPP-773). */
+const SYSTEM_FORM_PATHS = {
+  '/forms/terms': 'app_terms',
+  '/forms/authorization': 'season_authorization',
+} as const;
 
-/** The app terms' form, read once for the menu; null until read, and on an older database. */
-function useAppTermsFormId(enabled: boolean): string | null {
-  const [formId, setFormId] = useState<string | null>(null);
+/** The app's legal forms by their menu row, read once; empty until read, and on an older database. */
+function useSystemFormIds(enabled: boolean): Readonly<Record<string, string | null>> {
+  const [formIds, setFormIds] = useState<Readonly<Record<string, string | null>>>({});
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
-    void fetchAppTermsFormId(controller.signal).then((loaded) => {
-      if (!controller.signal.aborted) setFormId(loaded);
+    void Promise.all(
+      Object.entries(SYSTEM_FORM_PATHS).map(async ([path, key]) => [
+        path,
+        await fetchSystemFormId(key, controller.signal),
+      ]),
+    ).then((loaded) => {
+      if (!controller.signal.aborted) setFormIds(Object.fromEntries(loaded));
     });
     return () => controller.abort();
   }, [enabled]);
-  return formId;
+  return formIds;
 }
 
 /**

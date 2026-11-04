@@ -11,6 +11,11 @@
  *   - Points: one to eight points, each a title and a text, edited as the app
  *     terms' points are.
  *
+ * A legal form's own signature (the app terms', the season authorization's,
+ * RAPP-772, RAPP-773) is never removed, and the authorization's also edits
+ * the texts around it: its title, the line asking her to sign, its help, and
+ * "No puc signar" with its help. A text left empty shows the app's own.
+ *
  * A text or points block asks nothing, so its row has no Required switch.
  * "Afegeix un bloc" sits next to "Add a field" and adds a block of the kind
  * picked at the end; the entity form takes signatures only.
@@ -34,6 +39,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { changedCatalanTexts, isSameContent, withCatalanDrafts } from '@/lib/catalan-drafts';
 import { useProfileLayoutActions } from '@/lib/profile-layout-actions';
+import { supabase } from '@/lib/supabase';
 import { ChevronDown, Plus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -45,10 +51,15 @@ import {
 } from '@ramassa/shared/intake';
 import {
   formBlockName,
+  saveFormBlockTexts,
+  SIGNATURE_TEXT_FIELDS,
+  type BuilderText,
   type FormBlock,
   type FormBlockContent,
   type FormBlockKind,
   type FormBlockSurface,
+  type SignatureTextField,
+  type SignatureTexts,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
@@ -76,7 +87,7 @@ export function FormBlockRow({
   readonly onToggleEdit: () => void;
   /** The content as typed, for a preview drawn beside it; null when the row closes. */
   readonly onContentChange?: (content: FormBlockContent | null) => void;
-  /** Off for a block a legal form keeps, the app terms' signature (RAPP-772). */
+  /** Off for a block the screen keeps. A legal form's own signature is never removed (RAPP-772). */
   readonly canRemove?: boolean;
 }) {
   const { t } = useTranslation('settings');
@@ -84,22 +95,22 @@ export function FormBlockRow({
   const action = useAction();
   const [isConfirming, setIsConfirming] = useState(false);
   const isSignature = block.kind === 'signature';
+  const isRemovable = canRemove && !(block.kind === 'signature' && block.system !== undefined);
   const close = () => {
     onContentChange?.(null);
     onToggleEdit();
   };
-  const save = (content: FormBlockContent) =>
+  const save = (content: FormBlockContent, texts?: SignatureTexts) =>
     void action
-      .run(() =>
-        actions
-          .saveBlock({
-            id: block.id,
-            surface: block.surface,
-            screenKey: block.screenKey,
-            ...content,
-          })
-          .then(() => undefined),
-      )
+      .run(async () => {
+        await actions.saveBlock({
+          id: block.id,
+          surface: block.surface,
+          screenKey: block.screenKey,
+          ...content,
+        });
+        if (texts !== undefined) await saveFormBlockTexts(supabase, block.id, texts);
+      })
       .then((saved) => {
         if (saved) close();
       });
@@ -125,7 +136,7 @@ export function FormBlockRow({
         isBusy={action.isBusy}
         isEditing={isEditing}
         onToggleEdit={isEditing ? close : onToggleEdit}
-        {...(canRemove ? { onRemove: () => setIsConfirming(true) } : {})}
+        {...(isRemovable ? { onRemove: () => setIsConfirming(true) } : {})}
         removeLabel={isSignature ? t('signatureBlock.removeNamed') : t('formBlock.removeNamed')}
         testId={`block-row-${block.id}`}
       >
@@ -206,10 +217,15 @@ function TextBlockForm({
   readonly isBusy: boolean;
   readonly onChange: (content: FormBlockContent) => void;
   readonly onCancel: () => void;
-  readonly onSave: (content: FormBlockContent) => void;
+  readonly onSave: (content: FormBlockContent, texts?: SignatureTexts) => void;
 }) {
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'onboarding']);
   const changed = useChangedForm();
+  // The season authorization's own signature edits the texts around it (RAPP-773).
+  const ownTexts =
+    block.kind === 'signature' && block.system === 'authorization_signature'
+      ? (block.texts ?? {})
+      : null;
   const contentOf = (form: HTMLFormElement): FormBlockContent => {
     const fields = new FormData(form);
     const body = textFromForm(fields, 'block-text');
@@ -233,7 +249,12 @@ function TextBlockForm({
           toast.error(t('questions.catalanNeeded'));
           return;
         }
-        onSave(content);
+        onSave(
+          content,
+          ownTexts === null
+            ? undefined
+            : signatureTextsFromForm(new FormData(event.currentTarget), ownTexts),
+        );
       }}
     >
       {block.kind === 'text' ? (
@@ -251,6 +272,21 @@ function TextBlockForm({
         isCatalanRequired
         isLong
       />
+      {ownTexts === null
+        ? null
+        : SIGNATURE_TEXT_FIELDS.map((field) => (
+            <LanguageFields
+              key={field}
+              name={`block-${field}`}
+              legend={t(`signatureBlock.textField.${field}`)}
+              value={ownTexts[field]}
+              isCatalanRequired={false}
+              isLong={field === 'signature_hint' || field === 'cannot_draw_hint'}
+              placeholder={(language) =>
+                t(`onboarding:${SIGNATURE_APP_TEXT_KEYS[field]}`, { lng: language })
+              }
+            />
+          ))}
       <FormButtons
         error={error}
         isBusy={isBusy}
@@ -260,6 +296,32 @@ function TextBlockForm({
       />
     </form>
   );
+}
+
+/** The app's own text of each signature text, shown where staff wrote none. */
+const SIGNATURE_APP_TEXT_KEYS: Readonly<Record<SignatureTextField, string>> = {
+  signature_title: 'authorizationSignatureTitle',
+  signature_prompt: 'authorizationSignaturePrompt',
+  signature_hint: 'authorizationSignatureHint',
+  cannot_draw_label: 'authorizationCannotDraw',
+  cannot_draw_hint: 'authorizationCannotDrawHint',
+};
+
+/**
+ * The signature's texts as typed: a text left empty shows the app's own, and
+ * a help staff cleared before stays cleared.
+ */
+function signatureTextsFromForm(fields: FormData, saved: SignatureTexts): SignatureTexts {
+  const isCleared = (text: BuilderText | undefined) =>
+    text !== undefined && Object.values(text).every((value) => (value ?? '').trim() === '');
+  return Object.fromEntries(
+    SIGNATURE_TEXT_FIELDS.flatMap((field): [SignatureTextField, BuilderText][] => {
+      const typed = textFromForm(fields, `block-${field}`);
+      if (Object.keys(typed).length > 0) return [[field, typed]];
+      const before = saved[field];
+      return before !== undefined && isCleared(before) ? [[field, before]] : [];
+    }),
+  ) as SignatureTexts;
 }
 
 /** A points block's points, as the app terms' introduction edits its own. */

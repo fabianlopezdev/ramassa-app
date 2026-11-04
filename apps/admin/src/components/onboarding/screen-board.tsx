@@ -77,6 +77,7 @@ import { toast } from 'sonner';
 import { customStepKey, type ScreenCondition, type WizardStepKey } from '@ramassa/shared/intake';
 import {
   AUTHORIZATION_FORM_REF,
+  authorizationForm,
   authorizationScreenCount,
   chainedCustomForm,
   chainedFormScreenCount,
@@ -85,6 +86,7 @@ import {
   flowStepName,
   followUpAsksSomething,
   isDetailScreen,
+  isReregistrationScreen,
   movableOrder,
   onboardingConditionOf,
   onboardingFamily,
@@ -423,8 +425,15 @@ export function onboardingConditionSources(
 function chainableForms(catalog: IntakeCatalog): readonly ChainedFormRef[] {
   return [
     AUTHORIZATION_FORM_REF,
+    // The app's legal forms are asked by their own gates: the authorization is its ref above.
     ...(catalog.customForms ?? [])
-      .filter((form) => form.filledBy === 'player' && !form.isArchived && form.publishedAt !== null)
+      .filter(
+        (form) =>
+          form.filledBy === 'player' &&
+          !form.isArchived &&
+          form.publishedAt !== null &&
+          form.systemKey === null,
+      )
       .map((form) => customFormRef(form.id)),
   ];
 }
@@ -445,7 +454,11 @@ function ChainBoard({
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const reload = useReload();
   const nameOf = (ref: ChainedFormRef): string | null => {
-    if (ref === AUTHORIZATION_FORM_REF) return t('nav:staff.authorization');
+    if (ref === AUTHORIZATION_FORM_REF) {
+      // The chain's 'authorization' is the system form (RAPP-773).
+      const own = authorizationForm(catalog);
+      return own === undefined ? t('nav:staff.authorization') : textIn(own.name, language);
+    }
     const form = chainedCustomForm(catalog, ref);
     return form === undefined ? null : textIn(form.name, language);
   };
@@ -457,12 +470,18 @@ function ChainBoard({
   };
   const card = (ref: ChainedFormRef): BoardCard => {
     const name = nameOf(ref) ?? '';
-    const form = chainedCustomForm(catalog, ref);
+    const form =
+      ref === AUTHORIZATION_FORM_REF ? authorizationForm(catalog) : chainedCustomForm(catalog, ref);
     const repeats = form === undefined || form.repeatsEachSeason;
     const count =
-      ref === AUTHORIZATION_FORM_REF
-        ? authorizationScreenCount(catalog)
-        : chainedFormScreenCount(catalog, ref);
+      ref !== AUTHORIZATION_FORM_REF
+        ? chainedFormScreenCount(catalog, ref)
+        : form === undefined
+          ? authorizationScreenCount(catalog)
+          : // A new player walks its screens; re-registration is for a returning one.
+            form.screens.filter(
+              (screen) => screen.isHidden !== true && !isReregistrationScreen(screen),
+            ).length;
     return {
       key: ref,
       name,
@@ -599,10 +618,6 @@ export type BoardCardLink =
       readonly params: { readonly screenId: string };
       /** The follow-up the editor opens on: an app follow-up's card opens it (RAPP-713, RAPP-715). */
       readonly search?: { readonly shown: string };
-    }
-  | {
-      readonly to: '/forms/authorization/$step';
-      readonly params: { readonly step: string };
     }
   | { readonly to: '/forms/authorization' | '/forms/terms' }
   | {

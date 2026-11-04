@@ -58,6 +58,7 @@ import {
 } from '@ramassa/shared/intake';
 import {
   authorizationFieldId,
+  authorizationForm,
   builtinField,
   builtinRequiredLock,
   canHideBuiltin,
@@ -141,7 +142,7 @@ function screenItems(
  */
 function placedFields(
   layout: ProfileLayout,
-  surface: 'onboarding' | 'authorization' | 'custom_form',
+  surface: 'onboarding' | 'custom_form',
   screenKey: string | null,
   offTheirControl: ReadonlySet<IntakeQuestion>,
 ): readonly Placed[] {
@@ -161,10 +162,10 @@ function placedFields(
 }
 
 /**
- * The screens this section edits: an Onboarding screen, the authorization's
- * Health screen (RAPP-698), or its consents screen (`consents`, RAPP-699).
+ * The screens this section edits: an Onboarding screen, or a screen of a
+ * form, the app's legal forms included (RAPP-700, RAPP-773).
  */
-type FieldsSurface = 'onboarding' | 'authorization' | 'consents' | 'custom_form';
+type FieldsSurface = 'onboarding' | 'custom_form';
 
 /** The form a screen of a form the team created belongs to (RAPP-700). */
 export interface ScreenFieldsForm {
@@ -186,9 +187,8 @@ export function ScreenFieldsSection({
   onEdit,
   onBuiltinLabelChange,
   onWordingChange,
-  isFixedLegalScreen = false,
 }: {
-  /** Onboarding by default; the authorization's Health screen is its surface's one screen. */
+  /** Onboarding by default. */
   readonly surface?: FieldsSurface;
   /** On a form the team created: the form. */
   readonly form?: ScreenFieldsForm;
@@ -205,8 +205,6 @@ export function ScreenFieldsSection({
   readonly onEdit: (id: string | null) => void;
   readonly onBuiltinLabelChange: (label: BuilderText | undefined) => void;
   readonly onWordingChange: (wording: TypedWording | null) => void;
-  /** The app terms' screen she signs (RAPP-772): its signatures stay. */
-  readonly isFixedLegalScreen?: boolean;
 }) {
   const { t, i18n } = useTranslation(['settings', 'onboarding']);
   const uiLanguage = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
@@ -215,19 +213,14 @@ export function ScreenFieldsSection({
   const [isPicking, setIsPicking] = useState(false);
   const offTheirControl = questionsOffTheirControl(layout);
   const isOnboarding = surface === 'onboarding';
-  const isConsents = surface === 'consents';
   const isForm = surface === 'custom_form';
   // A form she fills in asks consents and signatures too; a team form, fields only (RAPP-700).
   const isHerForm = isForm && form?.filledBy === 'player';
-  // The Health and consents screens are their surface's one screen: their placements name none.
-  const placementKey = isOnboarding || isForm ? screenKey : null;
-  // The consents screen is the authorization's surface for consents (RAPP-699).
-  const orderSurface = surface === 'consents' ? 'authorization' : surface;
-  const placed = isConsents
-    ? []
-    : placedFields(layout, orderSurface, placementKey, offTheirControl);
-  const consentSurface = isOnboarding ? 'onboarding' : isForm ? 'custom_form' : 'authorization';
-  const asksConsents = isOnboarding || isConsents || isHerForm;
+  const placementKey = screenKey;
+  const orderSurface = surface;
+  const placed = placedFields(layout, orderSurface, placementKey, offTheirControl);
+  const consentSurface = isOnboarding ? 'onboarding' : 'custom_form';
+  const asksConsents = isOnboarding || isHerForm;
   const blockSurface = isOnboarding ? 'onboarding' : isHerForm ? 'custom_form' : null;
   const consents = asksConsents ? consentsOn(catalog, consentSurface, placementKey) : [];
   const items = screenItems(
@@ -241,11 +234,18 @@ export function ScreenFieldsSection({
     items,
     (item) => item.id,
   );
-  // The authorization asks her health: its consent stays (RAPP-698).
+  // The season authorization asks her health: its consent stays, and it keeps
+  // one consent at least (RAPP-698, RAPP-773).
+  const isAuthorization = form !== undefined && form.id === authorizationForm(catalog)?.id;
   const healthFieldId = authorizationFieldId(catalog, 'health_info');
-  const asksHealth = placementsOnSurface(layout, 'authorization').some(
-    (placement) => placement.fieldId === healthFieldId,
-  );
+  const asksHealth =
+    isAuthorization &&
+    placementsOnSurface(layout, 'custom_form').some(
+      (placement) => placement.customFormId === form.id && placement.fieldId === healthFieldId,
+    );
+  const formConsentCount = isAuthorization
+    ? (catalog.consentPlacements ?? []).filter((each) => each.customFormId === form.id).length
+    : 0;
   const sectionOf = (field: ProfileField) =>
     layout.sections.find((section) => section.id === field.sectionId);
   // Sections and the picker are the team's words, in the staff member's language.
@@ -283,14 +283,6 @@ export function ScreenFieldsSection({
         return { kind: 'blocked', note: t('customForms.herFieldOnly') };
       }
       return { kind: 'free' };
-    }
-    if (!isOnboarding) {
-      // A field is asked once per surface: here, or free to place.
-      return placementsOnSurface(layout, orderSurface).some(
-        (placement) => placement.fieldId === field.id,
-      )
-        ? { kind: 'placed', note: t('fieldPicker.here') }
-        : { kind: 'free' };
     }
     const pick = onboardingPick(layout, field, screenKey);
     if (pick.kind === 'here') return { kind: 'placed', note: t('fieldPicker.here') };
@@ -408,8 +400,8 @@ export function ScreenFieldsSection({
                 handle={handle}
                 language={language}
                 canRemove={
-                  !(isConsents && item.consent.key === 'health_data' && asksHealth) &&
-                  !(isConsents && consents.length === 1) &&
+                  !(item.consent.key === 'health_data' && asksHealth) &&
+                  !(isAuthorization && formConsentCount === 1) &&
                   // The acceptance of the app terms stays on their form (RAPP-772).
                   item.consent.key !== APP_TERMS_CONSENT
                 }
@@ -426,7 +418,6 @@ export function ScreenFieldsSection({
                 language={language}
                 isEditing={editing === item.block.id}
                 onToggleEdit={() => toggle(item.block.id)}
-                canRemove={!(isFixedLegalScreen && item.block.kind === 'signature')}
                 onContentChange={(block) =>
                   onWordingChange(
                     block === null ? null : { fieldId: item.block.id, label: {}, help: {}, block },
@@ -461,10 +452,10 @@ export function ScreenFieldsSection({
           variant="outline"
           size="sm"
           onClick={() => setIsPicking(true)}
-          data-testid={isConsents ? 'screen-consents-add' : 'screen-questions-add'}
+          data-testid="screen-questions-add"
         >
           <Plus aria-hidden data-icon="inline-start" />
-          {isConsents ? t('legalData.addConsent') : t('profileLayout.addField')}
+          {t('profileLayout.addField')}
         </Button>
         {blockSurface === null ? null : (
           <AddBlockMenu surface={blockSurface} screenKey={screenKey} onAdded={(id) => toggle(id)} />
@@ -475,13 +466,7 @@ export function ScreenFieldsSection({
         isOpen={isPicking}
         onOpenChange={setIsPicking}
         title={t('fieldPicker.title', { screen: screenName })}
-        initialSectionId={
-          isOnboarding
-            ? pickerSectionFor(layout, screenKey)
-            : isForm
-              ? null
-              : (layout.sections.find((section) => section.key === 'health_needs')?.id ?? null)
-        }
+        initialSectionId={isOnboarding ? pickerSectionFor(layout, screenKey) : null}
         stateOf={stateOf}
         onConfirm={(ids) => actions.placeFields(orderSurface, placementKey, ids)}
         onCreateField={(section, draft) => actions.saveField(null, section, draft)}
@@ -491,7 +476,6 @@ export function ScreenFieldsSection({
                 items: (catalog.consents ?? []).filter((consent) => !consent.isArchived),
                 stateOf: consentStateOf,
                 onConfirm: (ids) => actions.placeConsents(consentSurface, placementKey, ids),
-                isOnly: isConsents,
               },
             }
           : {})}

@@ -1,7 +1,7 @@
 /**
  * The published versions of a form (RAPP-771): one panel for every form. A
- * form the team created shows it on its page; the season authorization and
- * the app terms show it on their boards until they move onto the form engine.
+ * form shows it on its page, the app's legal forms with their ledgers'
+ * versions (RAPP-772, RAPP-773).
  *
  * The draft comes first, with the note that test players see it on a legal
  * form. Then the versions, newest first: by season when the form belongs to

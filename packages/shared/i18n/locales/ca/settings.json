@@ -323,21 +323,13 @@
   "authorizationNoVersions": "Encara no s'ha publicat cap versió.",
   "authorizationVersionInSeason": "Versió {{number}}, publicada el {{date}}",
   "authorizationCurrentBadge": "Vigent",
-  "authorizationNoSeasonToPublish": "Cap temporada vigent o futura",
-  "authorizationPublishSeasonCurrent": "{{season}} (vigent)",
-  "authorizationPublishSeason": "Temporada",
   "authorizationCurrentSeasonBadge": "Temporada vigent",
-  "authorizationDocumentTitle": "Títol del document",
-  "authorizationSections": "Apartats",
-  "authorizationSectionTitle": "Títol de l'apartat {{number}}",
-  "authorizationSectionBody": "Text",
-  "authorizationRemoveSection": "Treu l'apartat",
-  "authorizationAddSection": "Afegeix un apartat",
   "authorizationAttachments": "Documents de la temporada (enllaços)",
   "authorizationAttachmentLabel": "Nom del document",
   "authorizationAttachmentUrl": "Enllaç (https://)",
   "authorizationAddAttachment": "Afegeix un document",
-  "authorizationPublishFailed": "No s'ha pogut publicar. Torna-ho a provar.",
+  "authorizationRemoveAttachment": "Treu el document",
+  "authorizationAttachmentInvalid": "Cada document necessita el nom en català i un enllaç que comenci per https://.",
   "seasonsTitle": "Temporades",
   "seasonsIntro": "Publicar l'autorització de la temporada vigent fa que les jugadores que tornen es tornin a inscriure.",
   "seasonName": "Nom (per exemple 2027/28)",
@@ -512,37 +504,14 @@
     "countWithConditional": "En total, {{total}} pantalles: {{onboarding}} d'Onboarding (+{{conditional}} condicionals) · {{terms}} de condicions de l'app · {{forms}} de formularis"
   },
   "appTerms": {
-    "sectionTitle": "Termes de l'app",
-    "sectionIntro": "El text que totes les jugadores accepten abans d'entrar a l'app, amb la pantalla d'introducció. Una versió publicada ja no canvia; quan en publiqueu una de nova, cada jugadora l'accepta en obrir l'app.",
     "versionsTitle": "Versions",
     "versionRow": "Versió {{number}}, publicada el {{date}}: {{count}} acceptacions",
     "draftRow": "Esborrany, desat el {{date}}",
-    "currentBadge": "Vigent",
-    "editorTitle": "Esborrany de la versió següent",
-    "editorIntro": "Escriu cada text en cada llengua. El català és obligatori; una llengua buida mostra el text en català.",
-    "field": {
-      "intro_title": "Títol de la pantalla d'introducció",
-      "intro": "Text de la pantalla d'introducció",
-      "title": "Títol dels termes",
-      "body": "Text dels termes",
-      "accept_label": "Text per acceptar els termes",
-      "media_label": "Text del permís de fotos i vídeos",
-      "media_hint": "Nota sobre el permís de fotos i vídeos"
-    },
-    "points": "Punts de la introducció",
     "pointTitle": "Punt {{number}}: títol",
     "pointBody": "Punt {{number}}: text",
     "addPoint": "Afegeix un punt",
     "removePoint": "Treu aquest punt",
-    "saveDraft": "Desa l'esborrany",
     "discardDraft": "Descarta l'esborrany",
-    "publishAction": "Publica la versió",
-    "publishConfirm": "Un cop publicada, la versió no es pot canviar i cada jugadora l'haurà d'acceptar en obrir l'app.",
-    "publishConfirmAction": "Sí, publica la versió {{number}}",
-    "publishNeedsAdmin": "Només qui gestiona la configuració de l'organització pot publicar. Desa l'esborrany i avisa'ls.",
-    "invalid": "Cada text necessita la versió en català.",
-    "failed": "No s'ha pogut desar. Torna-ho a provar.",
-    "saved": "Esborrany desat.",
     "discarded": "Esborrany descartat.",
     "published": "Versió publicada. Cada jugadora l'acceptarà en obrir l'app."
   },
@@ -585,46 +554,8 @@
     "requiredText": "Aquest text és obligatori."
   },
   "authorizationEditor": {
-    "draftRow": "Esborrany, desat el {{date}}",
-    "intro": "Comença des de l'esborrany o la versió vigent. Edita idioma per idioma: cada camp mostra el text que veurà la jugadora.",
     "imageRightsLock": "Els drets d'imatge sempre són opcionals: decideixen el permís de fotos, que ella pot retirar.",
-    "textsTitle": "Textos del formulari",
-    "textsIntro": "La introducció, els títols de cada pas, els botons, el pas final de signatura i la reinscripció. Pots escriure {{season}} per posar el nom de la temporada.",
-    "textField": {
-      "intro": "Introducció",
-      "flow_label": "Nom del procés a la barra de progrés",
-      "documents_title": "Títol dels documents de la temporada",
-      "health_title": "Títol del pas de salut",
-      "consents_title": "Títol del pas d'autoritzacions",
-      "continue_label": "Botó per continuar",
-      "sign_and_enter_label": "Botó final a la seva app (Signa i entra)",
-      "sign_label": "Botó final a la tauleta (Signa l'autorització)",
-      "required_mark": "Marca d'obligatòria",
-      "signature_title": "Títol de la signatura",
-      "signature_prompt": "Indicació dins l'espai per signar",
-      "signature_hint": "Ajuda de lectura de pantalla de l'espai per signar",
-      "cannot_draw_label": "Opció si no pot dibuixar",
-      "cannot_draw_hint": "Explicació si no pot dibuixar",
-      "reregistration_title": "Títol de la reinscripció",
-      "reregistration_intro": "Introducció de la reinscripció",
-      "reregistration_correct_label": "Botó: les dades són correctes",
-      "reregistration_edit_label": "Botó: corregir les dades",
-      "reregistration_season_intro": "Introducció de les preguntes de temporada"
-    },
-    "invalid": "Falten textos o hi ha una regla incomplerta: títol, apartats i cada autorització amb text en algun idioma; la pregunta de salut necessita la seva autorització; una pregunta obligatòria s'ha de preguntar; cada document necessita un enllaç https.",
-    "saveDraft": "Desa l'esborrany",
-    "discardDraft": "Descarta l'esborrany",
-    "publishNeedsAdmin": "Només una persona amb permís de configuració de l'organització pot publicar l'esborrany.",
-    "saved": "Esborrany desat.",
-    "discarded": "Esborrany descartat.",
-    "published": "Versió publicada.",
-    "phoneStep": {
-      "document": "Document",
-      "health": "Salut",
-      "consents": "Autoritzacions i signatura",
-      "reregistration": "Reinscripció",
-      "reregistrationSeason": "Preguntes de la temporada"
-    }
+    "published": "Versió publicada."
   },
   "draftSeenByTestPlayers": "Versió en esborrany (només la veuen les jugadores de prova)",
   "onboardingBoard": {
@@ -673,7 +604,6 @@
     "deleteNamedScreen": "Elimina {{screen}}",
     "deleteNamedScreenTitle": "Vols eliminar «{{screen}}»?",
     "deleteDependentScreens": "Si elimines aquesta pantalla, també s’eliminaran les pantalles següents que en depenen:",
-    "deleteScreenTitle": "Vols eliminar aquesta pantalla?",
     "deleteScreenBody": "La pantalla i les seves preguntes deixaran de sortir al formulari. Les respostes ja donades es mantenen.",
     "deleted": "S'ha eliminat {{screen}}.",
     "deleteFailed": "No s'ha pogut eliminar. Torna-ho a provar.",
@@ -708,8 +638,7 @@
     "addDependent": "Afegeix una pantalla dependent",
     "addDependentNoChoice": "Aquesta pantalla no té cap pregunta amb opcions.",
     "addDependentLockedFinal": "Tanca l'Onboarding, així que cap pantalla en pot dependre.",
-    "addDependentLockedChain": "És un formulari encadenat. Les seves pantalles s'afegeixen al seu tauler.",
-    "addDependentLockedLegal": "És una pantalla fixa d'aquest formulari, així que cap pantalla en pot dependre."
+    "addDependentLockedChain": "És un formulari encadenat. Les seves pantalles s'afegeixen al seu tauler."
   },
   "sortable": {
     "instructions": "Per moure un element, prem espai o retorn, fes servir les fletxes i torna a prémer espai o retorn per deixar-lo. Escapada cancel·la.",
@@ -843,7 +772,14 @@
     "removeNamed": "Treu la signatura",
     "removeTitle": "Vols treure aquesta signatura?",
     "removeBody": "Les signatures ja donades es conserven.",
-    "defaultText": "Accepto"
+    "defaultText": "Accepto",
+    "textField": {
+      "signature_title": "Títol de la signatura",
+      "signature_prompt": "Text dins del requadre per signar",
+      "signature_hint": "Ajuda per signar (opcional)",
+      "cannot_draw_label": "Opció \"No puc signar\"",
+      "cannot_draw_hint": "Ajuda de \"No puc signar\" (opcional)"
+    }
   },
   "formBlock": {
     "add": "Afegeix un bloc",
@@ -977,7 +913,8 @@
       "other": "Altre"
     },
     "correctionAddsRequirement": "Una correcció no pot afegir preguntes, consentiments ni signatures obligatoris. Publica-ho com a versió nova.",
-    "legalPublishNeedsAdmin": "Només qui gestiona la configuració de l'organització pot publicar un formulari legal."
+    "legalPublishNeedsAdmin": "Només qui gestiona la configuració de l'organització pot publicar un formulari legal.",
+    "reregistrationEditLabel": "Botó per corregir les dades"
   },
   "translateFromCatalan": {
     "working": "S'està traduint…",
