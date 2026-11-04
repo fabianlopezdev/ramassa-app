@@ -45,7 +45,6 @@ import {
   signerName,
   type AuthorizationSigning,
 } from '@ramassa/shared/authorization';
-import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import {
   isRtlLanguage,
   LANGUAGE_NATIVE_NAMES,
@@ -58,6 +57,7 @@ import {
   formSignaturesPayload,
   unsignedFormBlocks,
   untickedRequiredConsents,
+  type FormSignatureDrafts,
 } from '@ramassa/shared/intake-builder';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -115,7 +115,7 @@ export default function SigningModeScreen() {
   const [ticks, setTicks] = useState<Readonly<Record<string, boolean>>>({});
   const [unticked, setUnticked] = useState<ReadonlySet<string>>(new Set());
   const [signed, setSigned] = useState<AuthorizationSigning | null>(null);
-  const [strokes, setStrokes] = useState<Readonly<Record<string, SignatureStrokes | null>>>({});
+  const [strokes, setStrokes] = useState<FormSignatureDrafts>({});
   const [unsigned, setUnsigned] = useState<ReadonlySet<string>>(new Set());
   const [isDrawing, setIsDrawing] = useState(false);
   // The Health screen's fields (RAPP-698), kept on the tablet like the version.
@@ -306,6 +306,8 @@ export default function SigningModeScreen() {
                 block={block}
                 language={language}
                 strokes={strokes[block.id] ?? null}
+                // The walk-in's signatures are kept with strokes only for now.
+                canSayUnable={false}
                 onDrawingChange={setIsDrawing}
                 errorMessage={unsigned.has(block.id) ? t('customErrorSignature') : undefined}
                 onChange={(next) => {

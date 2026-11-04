@@ -1,7 +1,8 @@
 /**
  * Her first pending form on Home (RAPP-700), the first card she sees, in the
  * survey prompt's pattern: what it is, its name, its date when it has one,
- * and Respon. An optional form also has "Ara no", which takes it off her Home.
+ * and Respon. An optional form also has "Ara no", which takes it off her Home;
+ * a legal one never does (RAPP-771).
  */
 
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -65,7 +66,8 @@ export function PendingFormPrompt() {
           {t('pendingForm.answer')}
         </Text>
       </PressableScale>
-      {form.mandatory === 'optional' ? (
+      {/* A legal form is never put off (RAPP-771). */}
+      {form.mandatory === 'optional' && form.kind !== 'legal' ? (
         <PressableScale
           testID="pending-form-dismiss"
           accessibilityLabel={t('pendingForm.dismiss')}

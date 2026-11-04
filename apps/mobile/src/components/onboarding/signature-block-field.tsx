@@ -1,73 +1,68 @@
 /**
- * A signature block of her Onboarding (RAPP-690): the text staff ask her to
- * accept, in her language, and the authorization pad under it. A signature is
- * no question of the Fitxa: the strokes stay in her draft and travel with her
- * registration, where the database keeps the text as she read it. Every block
- * is required where it sits.
+ * A signature block of a form (RAPP-690): the text staff ask her to accept,
+ * in her language, and under it the signing every form uses
+ * (`SignatureSection`, the season authorization's): the pad, and "No puc
+ * signar" when she cannot draw (RAPP-771). A signature is no question of the
+ * Fitxa: what she gave stays in her draft and travels with the form, where
+ * the database keeps the text as she read it. Every block is required where
+ * it sits: strokes or "No puc signar".
  */
 
-import { SignaturePad } from '@/components/equipment/signature-pad';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { SignatureSection } from '@/components/authorization/signature-section';
 import { FieldErrorText } from '@/components/onboarding/field-error-text';
 import { fontClassForLanguage } from '@/lib/language-font-class';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import { useLanguage, type SupportedLanguage } from '@ramassa/shared/i18n';
-import { formBlockText, type SignatureFormBlock } from '@ramassa/shared/intake-builder';
+import {
+  formBlockText,
+  UNABLE_TO_DRAW,
+  type FormSignatureDraft,
+  type SignatureFormBlock,
+} from '@ramassa/shared/intake-builder';
 
 export function SignatureBlockField({
   block,
-  strokes,
+  strokes: given,
   onChange,
   onDrawingChange,
   errorMessage,
   language: shownLanguage,
+  canSayUnable = true,
 }: {
   readonly block: SignatureFormBlock;
-  readonly strokes: SignatureStrokes | null;
-  readonly onChange: (strokes: SignatureStrokes | null) => void;
+  /** Her strokes, "No puc signar", or nothing yet. */
+  readonly strokes: FormSignatureDraft | null;
+  readonly onChange: (given: FormSignatureDraft | null) => void;
   /** The screen stops scrolling while she draws. */
   readonly onDrawingChange?: (isDrawing: boolean) => void;
   readonly errorMessage?: string;
   /** Her language when it is not the app's: the walk-in tablet (RAPP-691). */
   readonly language?: SupportedLanguage;
+  /** The walk-in tablet keeps strokes only until it sends "No puc signar" too. */
+  readonly canSayUnable?: boolean;
 }) {
-  const { i18n } = useTranslation('onboarding');
   const { language: appLanguage } = useLanguage();
   const appFontClass = useLanguageFontClass();
   const language = shownLanguage ?? appLanguage;
-  const t = i18n.getFixedT(language, 'onboarding');
   const fontClass =
     shownLanguage === undefined ? appFontClass : fontClassForLanguage(shownLanguage);
-  const testID = `signature-block-${block.id}`;
+  const isUnable = given === UNABLE_TO_DRAW;
   return (
-    <View className="gap-sm" testID={testID}>
+    <View className="gap-sm" testID={`signature-block-${block.id}`}>
       <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
         {formBlockText(block, language).text}
       </Text>
-      <SignaturePad
-        strokes={strokes}
+      <SignatureSection
+        strokes={given === null || isUnable ? null : given}
         onChange={onChange}
-        onDrawingChange={onDrawingChange}
-        prompt={t('authorizationSignaturePrompt')}
-        promptClassName={fontClass}
-        accessibilityLabel={t('authorizationSignatureLabel')}
+        unableToDraw={isUnable}
+        onUnableToDrawChange={(unable) => onChange(unable ? UNABLE_TO_DRAW : null)}
+        onDrawingChange={(isDrawing) => onDrawingChange?.(isDrawing)}
+        language={language}
+        canSayUnable={canSayUnable}
+        testID={`signature-block-${block.id}-cannot-draw`}
       />
-      {strokes === null ? null : (
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel={t('authorizationClearSignature')}
-          onPress={() => onChange(null)}
-          haptic="tapLight"
-          className="min-h-recommended justify-center self-start"
-        >
-          <Text className={`text-form font-semibold text-primary-dark ${fontClass}`}>
-            {t('authorizationClearSignature')}
-          </Text>
-        </PressableScale>
-      )}
       <FieldErrorText message={errorMessage} />
     </View>
   );

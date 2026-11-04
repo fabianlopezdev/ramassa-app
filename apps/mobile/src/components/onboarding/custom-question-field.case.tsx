@@ -406,7 +406,7 @@ test('without the upload service a file question says so and offers nothing to p
 test('a signature block shows its text in her language over the pad and keeps her strokes (RAPP-690)', () => {
   let strokes: unknown = 'none';
   function Block() {
-    const [value, setValue] = useState<[number, number][][] | null>(null);
+    const [value, setValue] = useState<[number, number][][] | 'unable_to_draw' | null>(null);
     return createElement(SignatureBlockField, {
       block: {
         id: 'b1',
@@ -417,7 +417,7 @@ test('a signature block shows its text in her language over the pad and keeps he
         sortOrder: 0,
       },
       strokes: value,
-      onChange: (next: [number, number][][] | null) => {
+      onChange: (next: [number, number][][] | 'unable_to_draw' | null) => {
         strokes = next;
         setValue(next);
       },
@@ -436,6 +436,9 @@ test('a signature block shows its text in her language over the pad and keeps he
   ]);
   fireEvent.click(view.getByRole('button', { name: ca.authorizationClearSignature }));
   expect(strokes).toBeNull();
+  // "No puc signar" on every signature block (RAPP-771).
+  fireEvent.click(view.getByTestId('signature-block-b1-cannot-draw'));
+  expect(strokes).toBe('unable_to_draw');
 });
 
 test('an answer that does not fit shows its message under the control', () => {

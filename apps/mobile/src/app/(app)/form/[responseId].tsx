@@ -34,7 +34,6 @@ import { Redirect, useLocalSearchParams, useRouter, type Href } from 'expo-route
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, View } from 'react-native';
-import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import { useLanguage } from '@ramassa/shared/i18n';
 import { teamTextIn } from '@ramassa/shared/i18n/localized-content';
 import {
@@ -44,17 +43,20 @@ import {
   customFormScreenBlocks,
   customFormScreenConsents,
   customFormScreenQuestions,
+  formScreenTextsIn,
   formSignaturesPayload,
   isCustomQuestionVisible,
   openFormScreens,
   updateCustomAnswer,
   type CustomForm,
   type CustomFormScreen,
+  type FormSignatureDrafts,
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
 import { tokens } from '@ramassa/shared/tokens';
 
-type Strokes = Readonly<Record<string, SignatureStrokes | null>>;
+/** Her strokes or "No puc signar" (RAPP-771), by block id. */
+type Strokes = FormSignatureDrafts;
 type Ticks = Readonly<Record<string, boolean>>;
 
 /** What she gave on the form so far, kept across its screens. */
@@ -99,9 +101,12 @@ export default function CustomFormRoute() {
       form={form}
       catalog={source.data.catalog}
       saved={source.data.answers}
-      isBlocking={asked.isBlocking}
+      // A legal form is never put off (RAPP-771): Back on its first screen goes nowhere.
+      isBlocking={asked.isBlocking || asked.kind === 'legal'}
       // An optional chained form she puts off leaves the walk (RAPP-703).
-      onPutOff={isChained && !asked.isBlocking ? () => passChainedForm(ref) : null}
+      onPutOff={
+        isChained && !asked.isBlocking && asked.kind !== 'legal' ? () => passChainedForm(ref) : null
+      }
     />
   );
 }
@@ -257,6 +262,7 @@ function FormStep({
   const consents = useScreenConsents(screen.id, source);
   // One rule with the admin (RAPP-710): a language never written follows the Catalan.
   const intro = teamTextIn(screen.intro, language, true);
+  const own = formScreenTextsIn(screen.texts, language);
 
   const current = (checked: CustomAnswerDraft): FormDraft => ({
     answers: { ...draft.answers, ...checked },
@@ -271,7 +277,11 @@ function FormStep({
       title={teamTextIn(screen.title, language, false)}
       intro={intro === '' ? undefined : intro}
       scrollEnabled={!isDrawing}
-      continueLabel={isLastFor(answers) ? t('customFormSend') : t('continueAction')}
+      // The screen's own help line and main button (RAPP-771).
+      help={own.help}
+      continueLabel={
+        own.continueLabel ?? (isLastFor(answers) ? t('customFormSend') : t('continueAction'))
+      }
       isContinueBusy={isSending}
       onContinue={() => {
         // The shared checks, as on her Onboarding (RAPP-610).

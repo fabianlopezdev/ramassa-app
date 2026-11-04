@@ -7,7 +7,7 @@
  * order they share (a field first on a tie): a signature with its pad, a text
  * (`TextBlock`) or points (`PointsBlock`), the visuals the terms screens use.
  * Only a signature asks something, and it is required: Continue refuses while
- * one is unsigned. The strokes stay in her draft (`signatures`, by block id)
+ * one has neither strokes nor "No puc signar" (RAPP-771). The strokes stay in her draft (`signatures`, by block id)
  * on Continue and on Back, so saved progress keeps them until the terms step
  * sends them with her registration.
  *
@@ -22,7 +22,6 @@ import { onboardingDraftStore } from '@/lib/onboarding';
 import { useWizardIntake } from '@/lib/onboarding-intake-context';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
   formBlocksOn,
@@ -32,10 +31,12 @@ import {
   unsignedFormBlocks,
   type CustomQuestion,
   type FormBlock,
+  type FormSignatureDrafts,
   type IntakeCatalog,
 } from '@ramassa/shared/intake-builder';
 
-type Drafts = Readonly<Record<string, SignatureStrokes | null>>;
+/** Her strokes or "No puc signar" (RAPP-771), by block id. */
+type Drafts = FormSignatureDrafts;
 
 export interface FormBlocks {
   /** Every block of the screen, in order: signatures, texts and points. */

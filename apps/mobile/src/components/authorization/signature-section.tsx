@@ -1,6 +1,7 @@
 import { ConsentRow } from '@/components/authorization/consent-row';
 import { SignaturePad } from '@/components/equipment/signature-pad';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { fontClassForLanguage } from '@/lib/language-font-class';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -16,7 +17,10 @@ export interface SignatureTexts {
   readonly cannotDrawHint?: string;
 }
 
-/** Same signing interaction for app terms and the separate season authorization. */
+/**
+ * Same signing interaction for the app terms, the season authorization and
+ * every signature block of a form (RAPP-771): the pad, and "No puc signar".
+ */
 export function SignatureSection({
   strokes,
   onChange,
@@ -27,6 +31,7 @@ export function SignatureSection({
   language,
   testID = 'authorization-cannot-draw',
   texts = {},
+  canSayUnable = true,
 }: {
   readonly strokes: SignatureStrokes | null;
   readonly onChange: (strokes: SignatureStrokes | null) => void;
@@ -37,10 +42,14 @@ export function SignatureSection({
   readonly testID?: string;
   readonly language?: SupportedLanguage;
   readonly texts?: SignatureTexts;
+  /** Off where the signature cannot be sent without strokes yet (the walk-in tablet). */
+  readonly canSayUnable?: boolean;
 }) {
   const { t: translate, i18n } = useTranslation('onboarding');
   const t = language === undefined ? translate : i18n.getFixedT(language, 'onboarding');
-  const fontClass = useLanguageFontClass();
+  const appFontClass = useLanguageFontClass();
+  // Her language's font when it is not the app's (the walk-in tablet).
+  const fontClass = language === undefined ? appFontClass : fontClassForLanguage(language);
   return (
     <View className="gap-sm">
       <Text className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}>
@@ -72,14 +81,16 @@ export function SignatureSection({
           )}
         </>
       )}
-      <ConsentRow
-        testID={testID}
-        label={texts.cannotDraw ?? t('authorizationCannotDraw')}
-        required={false}
-        requiredMark=""
-        checked={unableToDraw}
-        onToggle={() => onUnableToDrawChange(!unableToDraw)}
-      />
+      {canSayUnable ? (
+        <ConsentRow
+          testID={testID}
+          label={texts.cannotDraw ?? t('authorizationCannotDraw')}
+          required={false}
+          requiredMark=""
+          checked={unableToDraw}
+          onToggle={() => onUnableToDrawChange(!unableToDraw)}
+        />
+      ) : null}
       {/* Staff may clear the hint (RAPP-710): then there is none. */}
       {unableToDraw && texts.cannotDrawHint !== '' ? (
         <Text className={`text-start text-form text-neutral-700 ${fontClass}`}>

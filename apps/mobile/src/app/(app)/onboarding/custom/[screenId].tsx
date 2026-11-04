@@ -32,7 +32,11 @@ import { View } from 'react-native';
 import { useLanguage } from '@ramassa/shared/i18n';
 import { teamTextIn } from '@ramassa/shared/i18n/localized-content';
 import { customStepKey } from '@ramassa/shared/intake';
-import { isCustomQuestionVisible, updateCustomAnswer } from '@ramassa/shared/intake-builder';
+import {
+  formScreenTextsIn,
+  isCustomQuestionVisible,
+  updateCustomAnswer,
+} from '@ramassa/shared/intake-builder';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 
 export default function CustomStepScreen() {
@@ -83,7 +87,9 @@ export default function CustomStepScreen() {
       title={teamTextIn(screen.title, language, false)}
       intro={intro === '' ? undefined : intro}
       scrollEnabled={!isDrawing}
-      continueLabel={t('continueAction')}
+      // The screen's own help line and main button (RAPP-771).
+      help={formScreenTextsIn(screen.texts, language).help}
+      continueLabel={formScreenTextsIn(screen.texts, language).continueLabel ?? t('continueAction')}
       onContinue={() => {
         // The shared schema checks each answer before she leaves the screen,
         // as the database will (RAPP-610); a phone or an email is tidied first.

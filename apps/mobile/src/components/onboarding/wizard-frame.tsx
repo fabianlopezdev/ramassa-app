@@ -17,6 +17,10 @@
  * help line staff wrote shows first in the body. Validation messages are the
  * screens' own and never change.
  *
+ * A Ramassà screen and a form's screen (RAPP-771) pass their own help line
+ * and main button (`formScreenTextsIn`, the rule the Control Center
+ * previews).
+ *
  * The Fitxa fields placed on a built-in screen (RAPP-655) follow the screen's
  * own questions. Continue checks and saves them before the screen's own
  * Continue runs; Back saves them.
@@ -73,6 +77,8 @@ export interface WizardFrameProps {
   readonly isContinueBusy?: boolean;
   /** Omit on the first step: there is nowhere to go back to. */
   readonly onBack?: () => void;
+  /** A Ramassà or form screen's own help line (RAPP-771); its button comes as `continueLabel`. */
+  readonly help?: string;
 }
 
 export function WizardFrame(props: WizardFrameProps) {
@@ -91,6 +97,7 @@ function WizardFrameContent({
   onContinue,
   isContinueBusy,
   onBack,
+  help,
 }: WizardFrameProps) {
   const { entrance, edit } = useLocalSearchParams<{ entrance?: string; edit?: string }>();
   const showProgress = stepNumber !== undefined && edit !== '1';
@@ -139,7 +146,7 @@ function WizardFrameContent({
       }
     >
       <View className="gap-lg">
-        <QuestionHelp text={wording.help} />
+        <QuestionHelp text={wording.help ?? help ?? null} />
         {children}
         <WizardValidationSummary
           testID="wizard-added-errors"
