@@ -17,8 +17,8 @@ import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import {
   formBlockText,
   type EntityFormItem,
-  type FormBlock,
   type FormSignatureDrafts,
+  type SignatureFormBlock,
 } from '@ramassa/shared/intake-builder';
 import { DOCUMENTATION_STATUSES, type CreateReferralInput } from '@ramassa/shared/referrals';
 import { SEASON_NUMBERS, type LanguageCode } from '@ramassa/shared/schemas';
@@ -44,7 +44,7 @@ export interface ReferralFormFieldsProps {
   /** The required fields left empty, by field id. */
   readonly missing: ReadonlySet<string>;
   /** The form's signature blocks (RAPP-690), each required. */
-  readonly blocks?: readonly FormBlock[];
+  readonly blocks?: readonly SignatureFormBlock[];
   /** The strokes drawn on each block, by block id. */
   readonly signatures?: FormSignatureDrafts;
   readonly onSignatureChange?: (blockId: string, strokes: SignatureStrokes | null) => void;
@@ -55,20 +55,20 @@ export interface ReferralFormFieldsProps {
 /** The fields and the blocks in the order they share, a field first on a tie. */
 function withBlocks(
   items: readonly EntityFormItem[],
-  blocks: readonly FormBlock[],
-): readonly (EntityFormItem | FormBlock)[] {
+  blocks: readonly SignatureFormBlock[],
+): readonly (EntityFormItem | SignatureFormBlock)[] {
   const left = [...blocks].sort((a, b) => a.sortOrder - b.sortOrder);
-  const shown: (EntityFormItem | FormBlock)[] = [];
+  const shown: (EntityFormItem | SignatureFormBlock)[] = [];
   for (const item of items) {
     while (left.length > 0 && (left[0]?.sortOrder ?? 0) < item.placement.sortOrder) {
-      shown.push(left.shift() as FormBlock);
+      shown.push(left.shift() as SignatureFormBlock);
     }
     shown.push(item);
   }
   return [...shown, ...left];
 }
 
-function isBlock(entry: EntityFormItem | FormBlock): entry is FormBlock {
+function isBlock(entry: EntityFormItem | SignatureFormBlock): entry is SignatureFormBlock {
   return 'body' in entry;
 }
 

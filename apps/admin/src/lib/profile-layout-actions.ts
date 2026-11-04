@@ -28,6 +28,7 @@ import {
   type BuilderText,
   type ConsentSurface,
   type FieldChangePreview,
+  type FormBlockContent,
   type FormBlockSurface,
   type ProfileField,
   type ProfileSection,
@@ -107,13 +108,14 @@ export function useProfileLayoutActions() {
       await reorderPlacements(supabase, surface, screenKey, ids);
       await reload();
     },
-    /** Adds a signature block to a screen or the entity form, or saves its text (RAPP-690). */
-    async saveBlock(block: {
-      readonly id: string | null;
-      readonly surface: FormBlockSurface;
-      readonly screenKey: string | null;
-      readonly body: BuilderText;
-    }): Promise<string> {
+    /** Adds a block to a screen or the entity form, or saves its texts (RAPP-690, RAPP-770). */
+    async saveBlock(
+      block: {
+        readonly id: string | null;
+        readonly surface: FormBlockSurface;
+        readonly screenKey: string | null;
+      } & FormBlockContent,
+    ): Promise<string> {
       const id = await saveFormBlock(supabase, block);
       await reload();
       return id;

@@ -32,10 +32,12 @@ import { customStepKey } from '@ramassa/shared/intake';
 import {
   flowStepName,
   formBlockText,
+  signatureBlocks,
   surfacesOfConsent,
   textIn,
   type Consent,
   type IntakeCatalog,
+  type SignatureFormBlock,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
@@ -138,7 +140,7 @@ export function LegalDataPanel({
   // A signature of a form the team created (RAPP-700) opens its screen there.
   const formOfScreen = (key: string | null) =>
     (catalog.customForms ?? []).find((form) => form.screens.some((screen) => screen.id === key));
-  const formSignatureRow = (block: NonNullable<IntakeCatalog['blocks']>[number]) => {
+  const formSignatureRow = (block: SignatureFormBlock) => {
     const form = formOfScreen(block.screenKey);
     const screen = form?.screens.find((each) => each.id === block.screenKey);
     return form === undefined || screen === undefined
@@ -154,10 +156,10 @@ export function LegalDataPanel({
         ];
   };
   const signatureRows = [
-    ...(catalog.blocks ?? [])
+    ...signatureBlocks(catalog.blocks)
       .filter((block) => block.surface === 'custom_form')
       .flatMap(formSignatureRow),
-    ...(catalog.blocks ?? [])
+    ...signatureBlocks(catalog.blocks)
       .filter(
         (block) =>
           block.surface !== 'custom_form' &&

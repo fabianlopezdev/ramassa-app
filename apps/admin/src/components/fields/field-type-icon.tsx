@@ -14,6 +14,7 @@ import {
   FileText,
   Globe,
   Hash,
+  LayoutList,
   List,
   ListChecks,
   Mail,
@@ -21,6 +22,7 @@ import {
   Paperclip,
   PenLine,
   Phone,
+  Pilcrow,
   Search,
   ShieldCheck,
   ToggleLeft,
@@ -30,8 +32,12 @@ import {
 import { useTranslation } from 'react-i18next';
 import type { CustomQuestionType } from '@ramassa/shared/intake-builder';
 
-/** A field's type, a signature block (RAPP-690) or a consent of Dades legals (RAPP-699). */
-export type CatalogItemType = CustomQuestionType | 'signature' | 'consent' | 'document';
+/**
+ * A field's type, a block of a form (a signature, RAPP-690; a text or points,
+ * RAPP-770) or a consent of Dades legals (RAPP-699).
+ */
+export type CatalogItemType =
+  CustomQuestionType | 'signature' | 'text_block' | 'points_block' | 'consent' | 'document';
 
 const TYPE_ICONS: Readonly<Record<CatalogItemType, LucideIcon>> = {
   short_text: Type,
@@ -50,9 +56,16 @@ const TYPE_ICONS: Readonly<Record<CatalogItemType, LucideIcon>> = {
   country: Globe,
   municipality: MapPin,
   signature: PenLine,
+  text_block: Pilcrow,
+  points_block: LayoutList,
   consent: ShieldCheck,
   document: FileText,
 };
+
+/** The icon of a type, for a menu that lists types. */
+export function catalogItemIcon(type: CatalogItemType): LucideIcon {
+  return TYPE_ICONS[type];
+}
 
 export function FieldTypeIcon({
   type,

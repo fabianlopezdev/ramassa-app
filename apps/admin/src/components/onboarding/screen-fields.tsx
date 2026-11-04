@@ -9,9 +9,10 @@
  *     the field off the screen. The field stays on the Fitxa.
  *   - "Add a field" opens the picker on the Fitxa; "New field…" in it makes a
  *     field there with the field form and ticks it.
- *   - "Add a signature" adds a signature block (RAPP-690): the text she
- *     accepts and a box to sign in. It moves among the fields, always
- *     required, and is edited and removed in its own row.
+ *   - "Afegeix un bloc" adds a block (RAPP-690, RAPP-770): a signature (the
+ *     text she accepts and a box to sign in, always required), a text, or
+ *     points. It moves among the fields and is edited and removed in its own
+ *     row.
  *   - Consents of Dades legals (RAPP-699) are picked in the same picker,
  *     placed among the fields, required or not, reworded in their row. The
  *     authorization's consents screen lists consents alone (`consents`).
@@ -23,12 +24,12 @@
  */
 
 import { FieldPicker, type FieldPickState } from '@/components/fields/field-picker';
+import { AddBlockMenu, FormBlockRow } from '@/components/fields/form-block-row';
 import { PlacementRow } from '@/components/fields/placement-row';
 import {
   PlacementWordingForm,
   type PlacementWordingDraft,
 } from '@/components/fields/placement-wording-form';
-import { AddSignatureButton, SignatureBlockRow } from '@/components/fields/signature-block-row';
 import { EditorSection } from '@/components/layout/editor-section';
 import { ConsentForm } from '@/components/legal/consent-form';
 import { BuiltinForm } from '@/components/onboarding/builtin-question-form';
@@ -61,8 +62,8 @@ import {
   canHideBuiltin,
   consentsOn,
   fieldById,
+  formBlockName,
   formBlocksOn,
-  formBlockText,
   isAskedGenerically,
   isNameField,
   isStaffWritable,
@@ -95,7 +96,7 @@ interface Placed {
   readonly field: ProfileField;
 }
 
-/** One row of the list: a placed field, a signature block (RAPP-690) or a consent (RAPP-699). */
+/** One row of the list: a placed field, a block (RAPP-690, RAPP-770) or a consent (RAPP-699). */
 type ScreenItem =
   | { readonly kind: 'field'; readonly id: string; readonly placed: Placed }
   | { readonly kind: 'block'; readonly id: string; readonly block: FormBlock }
@@ -379,7 +380,7 @@ export function ScreenFieldsSection({
               ? textIn(item.placed.field.label, language)
               : item.kind === 'consent'
                 ? textIn(item.consent.name, language)
-                : formBlockText(item.block, language).text
+                : formBlockName(item.block, language)
           }
           onReorder={(ids) => void reorder(ids)}
           leading={builtinRows}
@@ -408,15 +409,15 @@ export function ScreenFieldsSection({
                 onClose={close}
               />
             ) : item.kind === 'block' ? (
-              <SignatureBlockRow
+              <FormBlockRow
                 block={item.block}
                 handle={handle}
                 language={language}
                 isEditing={editing === item.block.id}
                 onToggleEdit={() => toggle(item.block.id)}
-                onTextChange={(body) =>
+                onContentChange={(block) =>
                   onWordingChange(
-                    body === null ? null : { fieldId: item.block.id, label: body, help: {} },
+                    block === null ? null : { fieldId: item.block.id, label: {}, help: {}, block },
                   )
                 }
               />
@@ -454,11 +455,7 @@ export function ScreenFieldsSection({
           {isConsents ? t('legalData.addConsent') : t('profileLayout.addField')}
         </Button>
         {blockSurface === null ? null : (
-          <AddSignatureButton
-            surface={blockSurface}
-            screenKey={screenKey}
-            onAdded={(id) => toggle(id)}
-          />
+          <AddBlockMenu surface={blockSurface} screenKey={screenKey} onAdded={(id) => toggle(id)} />
         )}
       </div>
       <FieldPicker

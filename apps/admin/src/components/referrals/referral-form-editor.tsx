@@ -12,8 +12,8 @@
  */
 
 import { FieldPicker, type FieldPickState } from '@/components/fields/field-picker';
+import { AddBlockMenu, FormBlockRow } from '@/components/fields/form-block-row';
 import type { PlacementWordingDraft } from '@/components/fields/placement-wording-form';
-import { AddSignatureButton, SignatureBlockRow } from '@/components/fields/signature-block-row';
 import { EditorColumns } from '@/components/layout/editor-columns';
 import { EditorSection } from '@/components/layout/editor-section';
 import { SortableList } from '@/components/ui-patterns/sortable-list';
@@ -29,13 +29,14 @@ import {
   entityFormPick,
   formBlocksOn,
   formBlockText,
+  signatureBlocks,
   textIn,
   type BuilderText,
   type EntityFormItem,
-  type FormBlock,
   type IntakeCatalog,
   type ProfileField,
   type ProfileLayout,
+  type SignatureFormBlock,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { EntityPlacementRow } from './entity-placement-row';
@@ -60,10 +61,13 @@ function withTypedWording(
 /** One row of the list: a placed field, or a signature block (RAPP-690). */
 type FormRow =
   | { readonly kind: 'field'; readonly id: string; readonly item: EntityFormItem }
-  | { readonly kind: 'block'; readonly id: string; readonly block: FormBlock };
+  | { readonly kind: 'block'; readonly id: string; readonly block: SignatureFormBlock };
 
 /** The fields and the blocks in the order they share, a field first on a tie. */
-function formRows(items: readonly EntityFormItem[], blocks: readonly FormBlock[]): FormRow[] {
+function formRows(
+  items: readonly EntityFormItem[],
+  blocks: readonly SignatureFormBlock[],
+): FormRow[] {
   return [
     ...items.map((item) => ({
       row: { kind: 'field', id: item.placement.id, item } as FormRow,
@@ -100,7 +104,8 @@ export function ReferralFormEditor({
   >(null);
   const [isPicking, setIsPicking] = useState(false);
   const items = entityFormItems(layout);
-  const blocks = formBlocksOn(catalog.blocks, 'entity_form', null);
+  // The entity form holds signature blocks only (RAPP-770).
+  const blocks = signatureBlocks(formBlocksOn(catalog.blocks, 'entity_form', null));
   const [typedBlock, setTypedBlock] = useState<{
     readonly id: string;
     readonly body: BuilderText;
@@ -147,7 +152,7 @@ export function ReferralFormEditor({
       >
         {(row, handle) =>
           row.kind === 'block' ? (
-            <SignatureBlockRow
+            <FormBlockRow
               block={row.block}
               handle={handle}
               language={language}
@@ -155,8 +160,12 @@ export function ReferralFormEditor({
               onToggleEdit={() =>
                 setEditing((open) => (open === row.block.id ? null : row.block.id))
               }
-              onTextChange={(body) =>
-                setTypedBlock(body === null ? null : { id: row.block.id, body })
+              onContentChange={(content) =>
+                setTypedBlock(
+                  content === null || content.kind !== 'signature'
+                    ? null
+                    : { id: row.block.id, body: content.body },
+                )
               }
             />
           ) : (
@@ -190,7 +199,12 @@ export function ReferralFormEditor({
           <Plus aria-hidden data-icon="inline-start" />
           {t('profileLayout.addField')}
         </Button>
-        <AddSignatureButton surface="entity_form" screenKey={null} onAdded={setEditing} />
+        <AddBlockMenu
+          surface="entity_form"
+          screenKey={null}
+          kinds={['signature']}
+          onAdded={setEditing}
+        />
       </div>
       <FieldPicker
         layout={layout}

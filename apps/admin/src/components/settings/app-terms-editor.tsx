@@ -17,6 +17,7 @@
  * live with either save), then the points or the legal text.
  */
 
+import { AddPointButton, canAddPoint, PointsEditor } from '@/components/fields/points-editor';
 import { EditorColumns } from '@/components/layout/editor-columns';
 import { EditorSection } from '@/components/layout/editor-section';
 import { TranslatableSource } from '@/components/layout/translate-from-catalan';
@@ -36,7 +37,6 @@ import { toast } from 'sonner';
 import type { SaveKind } from '@ramassa/shared/authorization';
 import { getLanguageDirection } from '@ramassa/shared/i18n/languages';
 import {
-  APP_TERMS_MAX_POINTS,
   appTermsDraftSchema,
   cleanAppTermsContent,
   resolveAppTerms,
@@ -297,99 +297,20 @@ export function AppTermsEditor({
                 title={t('appTerms.points')}
                 testId="app-terms-points"
                 footer={
-                  content.points.length < APP_TERMS_MAX_POINTS ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() =>
-                        edit({ ...content, points: [...content.points, { title: {}, body: {} }] })
-                      }
-                    >
-                      {t('appTerms.addPoint')}
-                    </Button>
+                  canAddPoint(content.points) ? (
+                    <AddPointButton
+                      points={content.points}
+                      onChange={(points) => edit({ ...content, points })}
+                    />
                   ) : undefined
                 }
               >
-                <div className="flex flex-col gap-3">
-                  {content.points.map((point, index) => (
-                    <div key={index} className="flex flex-col gap-3 rounded-lg border p-4">
-                      <FieldGroup>
-                        <Field orientation="responsive">
-                          <FieldContent>
-                            <FieldLabel htmlFor={`app-terms-point-title-${index}`}>
-                              {t('appTerms.pointTitle', { number: index + 1 })}
-                            </FieldLabel>
-                          </FieldContent>
-                          <div className={CONTROL_COLUMN}>
-                            <Input
-                              id={`app-terms-point-title-${index}`}
-                              dir={direction}
-                              lang={language}
-                              value={inLanguage(point.title)}
-                              onChange={(event) =>
-                                edit({
-                                  ...content,
-                                  points: content.points.map((entry, at) =>
-                                    at === index
-                                      ? {
-                                          ...entry,
-                                          title: withLanguage(entry.title, event.target.value),
-                                        }
-                                      : entry,
-                                  ),
-                                })
-                              }
-                            />
-                          </div>
-                        </Field>
-                        <Field orientation="responsive">
-                          <FieldContent>
-                            <FieldLabel htmlFor={`app-terms-point-body-${index}`}>
-                              {t('appTerms.pointBody', { number: index + 1 })}
-                            </FieldLabel>
-                          </FieldContent>
-                          <div className={CONTROL_COLUMN}>
-                            <Textarea
-                              id={`app-terms-point-body-${index}`}
-                              rows={2}
-                              dir={direction}
-                              lang={language}
-                              value={inLanguage(point.body)}
-                              onChange={(event) =>
-                                edit({
-                                  ...content,
-                                  points: content.points.map((entry, at) =>
-                                    at === index
-                                      ? {
-                                          ...entry,
-                                          body: withLanguage(entry.body, event.target.value),
-                                        }
-                                      : entry,
-                                  ),
-                                })
-                              }
-                            />
-                          </div>
-                        </Field>
-                      </FieldGroup>
-                      {content.points.length > 1 ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-fit self-end"
-                          onClick={() =>
-                            edit({
-                              ...content,
-                              points: content.points.filter((_, at) => at !== index),
-                            })
-                          }
-                        >
-                          {t('appTerms.removePoint')}
-                        </Button>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
+                <PointsEditor
+                  idPrefix="app-terms"
+                  points={content.points}
+                  language={language}
+                  onChange={(points) => edit({ ...content, points })}
+                />
               </EditorSection>
             )}
 

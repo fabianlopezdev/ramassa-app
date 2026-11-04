@@ -10,8 +10,8 @@ import { useTranslation } from 'react-i18next';
 import { getLanguageDirection } from '@ramassa/shared/i18n/languages';
 import {
   entityFormItems,
-  type FormBlock,
   type ProfileLayout,
+  type SignatureFormBlock,
 } from '@ramassa/shared/intake-builder';
 import type { CreateReferral, CreateReferralInput } from '@ramassa/shared/referrals';
 import type { LanguageCode } from '@ramassa/shared/schemas';
@@ -30,7 +30,7 @@ export function ReferralFormPreview({
   readonly language: LanguageCode;
   readonly entityNames: readonly string[];
   /** The form's signature blocks (RAPP-690), the text being typed as typed. */
-  readonly blocks?: readonly FormBlock[];
+  readonly blocks?: readonly SignatureFormBlock[];
 }) {
   const { t } = useTranslation('referrals', { lng: language });
   const { control, formState } = useForm<CreateReferralInput, unknown, CreateReferral>({

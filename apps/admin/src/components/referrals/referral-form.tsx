@@ -33,6 +33,7 @@ import {
   internationalPhone,
   PHONE_PATTERN,
   requiredEntityFormFieldsLeftEmpty,
+  signatureBlocks,
   systemFieldsOf,
   unsignedFormBlocks,
   type FormSignatureDrafts,
@@ -143,7 +144,8 @@ export function ReferralForm({
   // Each Ramassà answer that does not fit its field, in her wizard's words (RAPP-610).
   const [customErrors, setCustomErrors] = useState<Readonly<Record<string, string>>>({});
   const [missing, setMissing] = useState<ReadonlySet<string>>(new Set());
-  const blocks = formBlocksOn(catalog.blocks, 'entity_form', null);
+  // The entity form holds signature blocks only (RAPP-770).
+  const blocks = signatureBlocks(formBlocksOn(catalog.blocks, 'entity_form', null));
   const [signatures, setSignatures] = useState<FormSignatureDrafts>({});
   const [unsigned, setUnsigned] = useState<ReadonlySet<string>>(new Set());
   const {

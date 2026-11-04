@@ -33,7 +33,6 @@ import {
   customFormScreenQuestions,
   fieldById,
   formBlocksOn,
-  formBlockText,
   hiddenBuiltinQuestions,
   isCustomQuestionRequired,
   liveOptions,
@@ -43,13 +42,16 @@ import {
   placementOn,
   placementWordingIn,
   requiredBuiltinQuestions,
+  resolveFormBlock,
   screenSettingsFor,
   textIn,
   type BuilderText,
   type CustomQuestion,
   type CustomQuestionType,
   type FormBlock,
+  type FormBlockContent,
   type IntakeCatalog,
+  type ResolvedFormBlock,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import type { BoardStep } from './board-steps';
@@ -64,6 +66,8 @@ export interface PhoneQuestion {
   readonly draft: PreviewDraft;
   /** A signature block (RAPP-690): its text, then an empty box to sign in. */
   readonly isSignature?: boolean;
+  /** A text or points block (RAPP-770): drawn as the terms draw theirs, with no control. */
+  readonly block?: Exclude<ResolvedFormBlock, { readonly kind: 'signature' }>;
   /** A heading drawn above it: the emergency contact's title (RAPP-695). */
   readonly heading?: string;
 }
@@ -242,12 +246,14 @@ export function customPhoneQuestion(
 
 /**
  * A wording typed in an open placement row, in place of the saved one. For a
- * signature block (RAPP-690) `fieldId` is the block's id and `label` its text.
+ * block (RAPP-690, RAPP-770) `fieldId` is the block's id and `block` its
+ * content as typed.
  */
 export interface TypedWording {
   readonly fieldId: string;
   readonly label: BuilderText;
   readonly help: BuilderText;
+  readonly block?: FormBlockContent;
 }
 
 /**
@@ -303,45 +309,56 @@ export function placedPhoneQuestions(
       },
     };
   });
-  // Her signature blocks among the fields, in the order they share (RAPP-690).
+  // Her blocks among the fields, in the order they share (RAPP-690, RAPP-770).
   const order = (id: string) => placementOf(id)?.sortOrder ?? Number.POSITIVE_INFINITY;
   const shown: PhoneQuestion[] = [];
   const blocks = [...formBlocksOn(catalog.blocks, surface, screenKey)];
   for (const question of fields) {
     while (blocks.length > 0 && (blocks[0]?.sortOrder ?? 0) < order(question.id)) {
-      shown.push(signaturePhoneQuestion(blocks.shift() as FormBlock, language, typed));
+      shown.push(blockPhoneQuestion(blocks.shift() as FormBlock, language, typed));
     }
     shown.push(question);
   }
-  return [...shown, ...blocks.map((block) => signaturePhoneQuestion(block, language, typed))];
+  return [...shown, ...blocks.map((block) => blockPhoneQuestion(block, language, typed))];
 }
 
-/** The signature blocks of one screen on her phone, in their order (RAPP-690). */
-export function signaturePhoneQuestions(
+/** The blocks of one Onboarding screen on her phone, in their order (RAPP-690, RAPP-770). */
+export function blockPhoneQuestions(
   catalog: IntakeCatalog,
   screenKey: string,
   language: LanguageCode,
 ): PhoneQuestion[] {
   return formBlocksOn(catalog.blocks, 'onboarding', screenKey).map((block) =>
-    signaturePhoneQuestion(block, language, null),
+    blockPhoneQuestion(block, language, null),
   );
 }
 
-/** A signature block on her phone: its text, typed or saved, and the box. */
-function signaturePhoneQuestion(
+const NO_CONTROL: PreviewDraft = {
+  type: 'short_text',
+  label: {},
+  help: {},
+  settings: {},
+  options: [],
+};
+
+/**
+ * A block on her phone, as typed in its open row or as saved: a signature's
+ * text and the box, or a text or points drawn as the terms draw theirs.
+ */
+function blockPhoneQuestion(
   block: FormBlock,
   language: LanguageCode,
   typed: TypedWording | null,
 ): PhoneQuestion {
-  const body = typed?.fieldId === block.id ? typed.label : block.body;
-  return {
-    id: block.id,
-    label: formBlockText({ body }, language).text,
-    help: '',
-    isRequired: true,
-    isSignature: true,
-    draft: { type: 'short_text', label: {}, help: {}, settings: {}, options: [] },
-  };
+  const typedBlock = typed?.fieldId === block.id ? typed.block : undefined;
+  const shown = resolveFormBlock(
+    typedBlock !== undefined && typedBlock.kind === block.kind ? typedBlock : block,
+    language,
+  );
+  const base = { id: block.id, help: '', draft: NO_CONTROL };
+  return shown.kind === 'signature'
+    ? { ...base, label: shown.body, isRequired: true, isSignature: true }
+    : { ...base, label: '', isRequired: false, block: shown };
 }
 
 /** The built-in questions a screen asks, without the ones staff hid. */

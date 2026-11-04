@@ -107,17 +107,8 @@ export function PhoneFrame({
               ))}
             </div>
           )}
-          {content.body === undefined ? null : (
-            <p className="rounded-md bg-muted/60 p-3 text-start text-sm leading-5 whitespace-pre-line">
-              {content.body}
-            </p>
-          )}
-          {(content.blocks ?? []).map((block, index) => (
-            <div key={index} className="flex flex-col gap-0.5">
-              <p className="text-start text-sm font-semibold">{block.title}</p>
-              <p className="text-start text-sm leading-5 text-muted-foreground">{block.body}</p>
-            </div>
-          ))}
+          {content.body === undefined ? null : <PhoneText body={content.body} />}
+          {content.blocks === undefined ? null : <PhonePoints points={content.blocks} />}
           {(content.details ?? []).map((group, index) => (
             <div key={index} className="flex flex-col gap-1.5">
               <p className="text-start text-sm font-semibold">{group.title}</p>
@@ -133,43 +124,63 @@ export function PhoneFrame({
               </div>
             </div>
           ))}
-          {content.questions.map((question) => (
-            <div
-              key={question.id}
-              className={cn(
-                'flex flex-col gap-1.5 rounded-lg transition-[box-shadow]',
-                highlight === question.id && 'ring-2 ring-primary ring-offset-4 ring-offset-canvas',
-              )}
-              data-testid={`phone-question-${question.id}`}
-            >
-              {question.heading === undefined ? null : (
-                <p className="pb-1 text-start text-base font-semibold">{question.heading}</p>
-              )}
-              <p className="text-start text-sm font-medium">
-                {question.label === '' ? ' ' : question.label}
-                {question.isRequired ? (
-                  <span className="text-primary" aria-label={t('onboardingBoard.required')}>
-                    {' *'}
-                  </span>
-                ) : null}
-              </p>
-              {question.help === '' ? null : (
-                <p className="text-start text-xs text-muted-foreground">{question.help}</p>
-              )}
-              {question.isSignature === true ? (
-                // A signature block (RAPP-690): her text above, the box she signs in.
-                <PhoneSignatureBox prompt={phone('authorizationSignaturePrompt')} />
-              ) : (
-                <div inert className="pointer-events-none">
-                  <QuestionControl
-                    draft={question.draft}
-                    language={language}
-                    showOptionCount={false}
-                  />
-                </div>
-              )}
-            </div>
-          ))}
+          {content.questions.map((question) =>
+            question.block !== undefined ? (
+              // A text or points block (RAPP-770): the terms' own visuals, in its place.
+              <div
+                key={question.id}
+                className={cn(
+                  'rounded-lg transition-[box-shadow]',
+                  highlight === question.id &&
+                    'ring-2 ring-primary ring-offset-4 ring-offset-canvas',
+                )}
+                data-testid={`phone-question-${question.id}`}
+              >
+                {question.block.kind === 'text' ? (
+                  <PhoneText title={question.block.title} body={question.block.body} />
+                ) : (
+                  <PhonePoints points={question.block.points} />
+                )}
+              </div>
+            ) : (
+              <div
+                key={question.id}
+                className={cn(
+                  'flex flex-col gap-1.5 rounded-lg transition-[box-shadow]',
+                  highlight === question.id &&
+                    'ring-2 ring-primary ring-offset-4 ring-offset-canvas',
+                )}
+                data-testid={`phone-question-${question.id}`}
+              >
+                {question.heading === undefined ? null : (
+                  <p className="pb-1 text-start text-base font-semibold">{question.heading}</p>
+                )}
+                <p className="text-start text-sm font-medium">
+                  {question.label === '' ? ' ' : question.label}
+                  {question.isRequired ? (
+                    <span className="text-primary" aria-label={t('onboardingBoard.required')}>
+                      {' *'}
+                    </span>
+                  ) : null}
+                </p>
+                {question.help === '' ? null : (
+                  <p className="text-start text-xs text-muted-foreground">{question.help}</p>
+                )}
+                {question.isSignature === true ? (
+                  // A signature block (RAPP-690): her text above, the box she signs in.
+                  <PhoneSignatureBox prompt={phone('authorizationSignaturePrompt')} />
+                ) : (
+                  <div inert className="pointer-events-none">
+                    <QuestionControl
+                      draft={question.draft}
+                      language={language}
+                      showOptionCount={false}
+                    />
+                  </div>
+                )}
+              </div>
+            ),
+          )}
           {content.lines.map((line, index) => (
             <p key={index} className="text-start text-sm leading-5 text-muted-foreground">
               {line}
@@ -250,6 +261,39 @@ export function SteppedPhone<Step extends string>({
         </Tabs>
       )}
       <PhoneFrame {...frame} />
+    </div>
+  );
+}
+
+/**
+ * A text she reads (RAPP-695, RAPP-770): the terms' legal text, and a text
+ * block of any form, under its heading when it has one.
+ */
+function PhoneText({ title = '', body }: { readonly title?: string; readonly body: string }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {title === '' ? null : <p className="text-start text-base font-semibold">{title}</p>}
+      <p className="rounded-md bg-muted/60 p-3 text-start text-sm leading-5 whitespace-pre-line">
+        {body === '' ? ' ' : body}
+      </p>
+    </div>
+  );
+}
+
+/** Points, each a title and a text (RAPP-695, RAPP-770): the terms' and a points block's. */
+function PhonePoints({
+  points,
+}: {
+  readonly points: readonly { readonly title: string; readonly body: string }[];
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      {points.map((point, index) => (
+        <div key={index} className="flex flex-col gap-0.5">
+          <p className="text-start text-sm font-semibold">{point.title}</p>
+          <p className="text-start text-sm leading-5 text-muted-foreground">{point.body}</p>
+        </div>
+      ))}
     </div>
   );
 }

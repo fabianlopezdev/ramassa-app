@@ -19,9 +19,9 @@
 import { PhoneMiniature } from '@/components/onboarding/phone-preview';
 import { BOARD_GRID, CardFrame, stepName } from '@/components/onboarding/screen-board';
 import {
+  blockPhoneQuestions,
   builtinPhoneQuestion,
   customPhoneQuestion,
-  signaturePhoneQuestions,
   stepContent,
 } from '@/components/onboarding/screen-content';
 import { CHOICE_LABEL_KEYS } from '@/components/participants/choice-menu';
@@ -239,8 +239,8 @@ function PlayerScreenCard({
     : !isLocked && askedCount === 0 && !hasSignature
       ? t('participants:inviteScreenNotAsked')
       : null;
-  // The miniature draws only what she will be asked, her signature blocks
-  // included (RAPP-690): a screen with only a block shows it.
+  // The miniature draws only what she will be asked, the screen's blocks
+  // included (RAPP-690, RAPP-770): a screen with only a block shows it.
   const content = stepContent(catalog, step, language, t, {
     ...(isLocked
       ? {}
@@ -253,7 +253,7 @@ function PlayerScreenCard({
                   ? builtinPhoneQuestion(catalog, question.question, language, t)
                   : customPhoneQuestion(question.question, language),
               ),
-            ...signaturePhoneQuestions(
+            ...blockPhoneQuestions(
               catalog,
               step.kind === 'custom' ? step.screen.id : step.key,
               language,

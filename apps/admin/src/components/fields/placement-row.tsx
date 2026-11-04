@@ -69,7 +69,8 @@ export interface PlacementRowProps {
   readonly privacy: QuestionPrivacy | null;
   /** The grip; null for a row that keeps its place (an app screen's own questions). */
   readonly handle: SortableHandle | null;
-  readonly required: {
+  /** Required on this surface; left out for a block that asks nothing (RAPP-770). */
+  readonly required?: {
     readonly id: string;
     readonly checked: boolean;
     readonly lockReason?: string;
@@ -120,13 +121,23 @@ export function PlacementRow({
         <span className="hidden w-20 shrink-0 justify-start sm:flex">
           {privacy === null ? null : <PrivacyBadge level={privacy} />}
         </span>
-        <RequiredToggle
-          id={required.id}
-          checked={required.checked}
-          lockReason={required.lockReason}
-          disabled={isBusy}
-          onChange={required.onChange}
-        />
+        {required === undefined ? (
+          // The switch's room, so the columns line up with the rows that have one.
+          <span aria-hidden className="invisible flex shrink-0 items-center gap-2">
+            <span className="h-[18.4px] w-[32px]" />
+            <span className="hidden text-xs font-medium whitespace-nowrap sm:inline">
+              {t('questions.requiredSwitch')}
+            </span>
+          </span>
+        ) : (
+          <RequiredToggle
+            id={required.id}
+            checked={required.checked}
+            lockReason={required.lockReason}
+            disabled={isBusy}
+            onChange={required.onChange}
+          />
+        )}
         <Button
           type="button"
           variant="outline"

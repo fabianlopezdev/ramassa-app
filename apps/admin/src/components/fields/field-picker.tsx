@@ -17,9 +17,11 @@
  * a field, Enter adds the picked ones, Escape closes. Down from the search
  * goes to the fields.
  *
- * A surface that asks consents (RAPP-699) passes them: Dades legals is one
- * more section here, picked and added the same way. The authorization's
- * consents screen shows that section alone.
+ * A surface that asks consents (RAPP-699) passes them: they are one more
+ * section, picked and added the same way. The sections come in two labelled
+ * groups (RAPP-770): Dades de les jugadores (the Fitxa's sections) and Dades
+ * legals (the consents). The authorization's consents screen shows the
+ * consents alone.
  */
 
 import type { FieldFormDraft } from '@/components/fields/field-form';
@@ -301,6 +303,12 @@ function PickerBody({
             className="flex max-h-36 flex-col gap-0.5 overflow-y-auto sm:max-h-none"
             onKeyDown={onSectionKey}
           >
+            {/* Two groups (RAPP-770): the players' data, then the legal data. */}
+            {isConsentsOnly ? null : (
+              <p className="flex h-7 shrink-0 items-end px-3 text-start text-xs font-semibold text-muted-foreground uppercase">
+                {t('fieldPicker.playerData')}
+              </p>
+            )}
             {(isConsentsOnly ? [] : layout.sections).map((each) => {
               const isCurrent = !isSearching && each.id === section?.id;
               return (
@@ -334,6 +342,11 @@ function PickerBody({
               );
             })}
             {consents === undefined ? null : (
+              <p className="mt-2 flex h-7 shrink-0 items-end px-3 text-start text-xs font-semibold text-muted-foreground uppercase">
+                {t('fieldPicker.legalData')}
+              </p>
+            )}
+            {consents === undefined ? null : (
               <button
                 type="button"
                 data-picker-item=""
@@ -355,7 +368,7 @@ function PickerBody({
                 )}
                 data-testid={`${testId}-section-consents`}
               >
-                <span className="truncate">{t('legalData.title')}</span>
+                <span className="truncate">{t('legalData.consents')}</span>
                 <span className="text-xs font-normal text-muted-foreground tabular-nums">
                   {consents.items.length}
                 </span>
@@ -371,7 +384,7 @@ function PickerBody({
             isSearching
               ? t('fieldPicker.results')
               : isConsentsSection
-                ? t('legalData.title')
+                ? t('legalData.consents')
                 : section === undefined
                   ? ''
                   : sectionName(section)
@@ -422,7 +435,7 @@ function PickerBody({
                 id={`${ids}-group-consents`}
                 className="flex h-8 items-center px-5 text-start text-xs font-semibold text-muted-foreground uppercase"
               >
-                {t('legalData.title')}
+                {t('legalData.consents')}
               </p>
               {shownConsents.map((consent, index) => (
                 <ConsentOption
