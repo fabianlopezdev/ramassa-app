@@ -149,8 +149,10 @@ export type Database = {
       app_terms_versions: {
         Row: {
           content: Json;
+          form_snapshot: Json | null;
           id: string;
           is_correction: boolean;
+          legacy_compatible: boolean | null;
           org_id: string;
           published_at: string | null;
           published_by: string | null;
@@ -160,8 +162,10 @@ export type Database = {
         };
         Insert: {
           content: Json;
+          form_snapshot?: Json | null;
           id?: string;
           is_correction?: boolean;
+          legacy_compatible?: boolean | null;
           org_id: string;
           published_at?: string | null;
           published_by?: string | null;
@@ -171,8 +175,10 @@ export type Database = {
         };
         Update: {
           content?: Json;
+          form_snapshot?: Json | null;
           id?: string;
           is_correction?: boolean;
+          legacy_compatible?: boolean | null;
           org_id?: string;
           published_at?: string | null;
           published_by?: string | null;
