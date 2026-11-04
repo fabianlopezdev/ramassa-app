@@ -15,6 +15,7 @@ import {
   customPhoneQuestion,
   stepContent,
   type PhoneContent,
+  type ScreenTexts,
   type Translate,
 } from '@/components/onboarding/screen-content';
 import {
@@ -245,13 +246,17 @@ export function termsPhoneScreen(
   language: LanguageCode,
   t: Translate,
   catalog: IntakeCatalog,
+  /** The screen's wording as typed (its help and buttons), RAPP-761. */
+  texts?: ScreenTexts,
+  /** The screens the form shows: the introduction can be deleted (RAPP-761). */
+  steps: readonly TermsPhoneStep[] = TERMS_PHONE_STEPS,
 ): PhoneScreen {
   const flow = boardStep(catalog, step);
-  const position = { step: TERMS_PHONE_STEPS.indexOf(step) + 1, total: TERMS_PHONE_STEPS.length };
+  const position = { step: steps.indexOf(step) + 1, total: steps.length };
   const base =
     flow === null
       ? { ...EMPTY, title: '', continueLabel: '' }
-      : stepContent(catalog, flow, language, t);
+      : stepContent(catalog, flow, language, t, texts === undefined ? {} : { texts });
   if (step === 'terms-intro') {
     return {
       ...position,

@@ -748,6 +748,8 @@ export function FormBoard({
         numberLabelKey={numberLabelKey}
         handle={null}
         isLocked
+        // The fixed mark only means something beside cards that move.
+        showFixedMark={movable.length > 0}
       />
     </li>
   );
@@ -921,6 +923,7 @@ function ScreenCard({
   isLocked = false,
   isLifted = false,
   isBranch = false,
+  showFixedMark = true,
   position,
 }: {
   readonly card: BoardCard;
@@ -933,6 +936,8 @@ function ScreenCard({
   readonly isLifted?: boolean;
   /** A follow-up screen shown in its family's card (RAPP-713, RAPP-716). */
   readonly isBranch?: boolean;
+  /** The lock of a card that cannot move; off on a board where no card moves. */
+  readonly showFixedMark?: boolean;
   /** Which screen of the family is shown, such as "2/5" (RAPP-716). */
   readonly position?: string;
 }) {
@@ -980,7 +985,7 @@ function ScreenCard({
             </Button>
           )}
           {handle === null ? (
-            isLifted || isBranch ? null : (
+            isLifted || isBranch || !showFixedMark ? null : (
               <span
                 className="flex size-7 items-center justify-center text-muted-foreground"
                 title={t('onboardingBoard.fixed')}

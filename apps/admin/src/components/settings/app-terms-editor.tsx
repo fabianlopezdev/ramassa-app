@@ -11,18 +11,28 @@
  * settings.organization: a published version never changes. Once anyone
  * accepted, Desa asks whether this is a correction (her acceptance still
  * covers it) or a new version (everyone accepts again), RAPP-696.
+ *
+ * Laid out as an Onboarding screen (RAPP-761): one Text box on top with the
+ * screen's texts and its help and buttons (the screen's wording, which goes
+ * live with either save), then the points or the legal text.
  */
 
-import { AdminAuthField } from '@/components/auth/admin-auth-field';
 import { EditorColumns } from '@/components/layout/editor-columns';
+import { EditorSection } from '@/components/layout/editor-section';
+import { TranslatableSource } from '@/components/layout/translate-from-catalan';
 import { termsPhoneScreen, type TermsPhoneStep } from '@/components/legal/legal-phone-content';
 import { SteppedPhone } from '@/components/onboarding/phone-preview';
 import { useSaveKind } from '@/components/onboarding/save-kind-dialog';
+import type { ScreenTexts } from '@/components/onboarding/screen-content';
+import { CONTROL_COLUMN, useScreenWording } from '@/components/onboarding/screen-editor';
 import { Button } from '@/components/ui/button';
+import { Field, FieldContent, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { changedCatalanTexts, isSameContent, withCatalanDrafts } from '@/lib/catalan-drafts';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import type { SaveKind } from '@ramassa/shared/authorization';
 import { getLanguageDirection } from '@ramassa/shared/i18n/languages';
 import {
@@ -68,15 +78,15 @@ export interface AppTermsEditorProps {
   readonly onDiscardDraft: () => Promise<void>;
   /** Desa: publishes the draft as a correction or a new version (RAPP-696). */
   readonly onPublish: (kind: SaveKind) => Promise<number>;
-  /** Her onboarding's screens: the terms screens' buttons. */
+  /** Her onboarding's screens: the terms screens' help and buttons. */
   readonly catalog?: IntakeCatalog;
-  /** The screen's own wording (its buttons), under the terms' fields, in the language being edited. */
-  readonly renderWording?: (language: LanguageCode) => ReactNode;
+  /** The screens the form shows, for the phone's "step X of Y" (RAPP-761). */
+  readonly steps?: readonly TermsPhoneStep[];
 }
 
 export function AppTermsEditor({
   step,
-  renderWording,
+  steps,
   versions,
   canPublish,
   onSaveDraft,
@@ -97,12 +107,26 @@ export function AppTermsEditor({
   const [content, setContent] = useState<AppTermsContent>(savedContent);
   // As it opened: what the translate button counts as changed, saves in between or not.
   const [openedContent] = useState(savedContent);
-  const isDirty = !isSameContent(content, savedContent);
+  const isContentDirty = !isSameContent(content, savedContent);
   const [status, setStatus] = useState<Status>('idle');
   // Anyone who accepted makes Desa ask (RAPP-696).
   const saveKind = useSaveKind({
     hasAnswers: published.some((version) => version.acceptanceCount > 0),
   });
+  // The screen's help and buttons, as typed, for her phone (RAPP-761).
+  const [typedWording, setTypedWording] = useState<ScreenTexts | undefined>(undefined);
+  // The help and buttons are the screen's wording: they share the Text box and its save (RAPP-761).
+  const wording = useScreenWording({
+    catalog,
+    screen: step,
+    language,
+    onLanguageChange: setLanguage,
+    onChange: (texts) => {
+      setTypedWording(texts);
+      setStatus('idle');
+    },
+  });
+  const isDirty = isContentDirty || wording.isChanged;
 
   const edit = (next: AppTermsContent) => {
     setContent(next);
@@ -131,15 +155,30 @@ export function AppTermsEditor({
     return parsed.success ? parsed.data : null;
   }
 
+  /** The help and buttons go live with either save: Onboarding has no draft (RAPP-705). */
+  async function saveWording(): Promise<boolean> {
+    return !wording.isChanged || (await wording.store({ announce: false }));
+  }
+
   async function saveDraft() {
     const parsed = parsedContent();
-    if (parsed !== null) await run('saving', () => onSaveDraft(parsed), 'saved');
+    if (parsed === null || !(await saveWording())) return;
+    if (!isContentDirty) {
+      toast.success(t('builtinScreens.saved'));
+      return;
+    }
+    await run('saving', () => onSaveDraft(parsed), 'saved');
   }
 
   // Desa (RAPP-696): the draft as typed, published.
   async function save() {
     const parsed = parsedContent();
-    if (parsed === null) return;
+    if (parsed === null || !(await saveWording())) return;
+    // Only the help or a button changed: nothing to publish.
+    if (draft === null && !isContentDirty) {
+      toast.success(t('builtinScreens.saved'));
+      return;
+    }
     setStatus('saving');
     try {
       await onSaveDraft(parsed);
@@ -158,10 +197,48 @@ export function AppTermsEditor({
     previewLanguage,
     t,
     catalog,
+    typedWording,
+    steps,
   );
   const direction = getLanguageDirection(language);
-  const isBusy = status === 'saving' || status === 'publishing';
+  const isBusy = status === 'saving' || status === 'publishing' || wording.isSaving;
   const canSave = draft !== null || isDirty;
+
+  /** One text of the terms, laid out as the wording's own fields. */
+  const textRow = (field: AppTermsTextField | 'body') => {
+    const id = `app-terms-${field}`;
+    const shared = {
+      id,
+      dir: direction,
+      lang: language,
+      value: inLanguage(content[field]),
+    } as const;
+    return (
+      <Field key={field} orientation="responsive">
+        <FieldContent>
+          <FieldLabel htmlFor={id}>{t(`appTerms.field.${field}`)}</FieldLabel>
+        </FieldContent>
+        <div className={CONTROL_COLUMN}>
+          {field === 'intro' || field === 'body' || field === 'media_hint' ? (
+            <Textarea
+              {...shared}
+              rows={field === 'body' ? 10 : 3}
+              onChange={(event) =>
+                edit({ ...content, [field]: withLanguage(content[field], event.target.value) })
+              }
+            />
+          ) : (
+            <Input
+              {...shared}
+              onChange={(event) =>
+                edit({ ...content, [field]: withLanguage(content[field], event.target.value) })
+              }
+            />
+          )}
+        </div>
+      </Field>
+    );
+  };
 
   return (
     <div className="flex flex-col gap-6" data-testid="app-terms-editor">
@@ -192,82 +269,114 @@ export function AppTermsEditor({
         }
         form={
           <>
-            <section className="flex flex-col gap-4 rounded-xl border bg-card p-5">
-              {LINE_FIELDS[step].map((field) => (
-                <AdminAuthField
-                  key={field}
-                  id={`app-terms-${field}`}
-                  label={t(`appTerms.field.${field}`)}
+            <TranslatableSource source={wording.translatable} />
+            {/* The screen's texts in one box on top, as an Onboarding screen's (RAPP-761). */}
+            <EditorSection title={t('onboardingBoard.wording')} testId={`app-terms-text-${step}`}>
+              <FieldGroup>
+                {LINE_FIELDS[step].map(textRow)}
+                {wording.content}
+              </FieldGroup>
+            </EditorSection>
+
+            {step === 'terms' ? (
+              <EditorSection title={t('appTerms.field.body')} testId="app-terms-body-section">
+                <Textarea
+                  id="app-terms-body"
+                  aria-label={t('appTerms.field.body')}
+                  rows={14}
                   dir={direction}
-                  value={inLanguage(content[field])}
+                  lang={language}
+                  value={inLanguage(content.body)}
                   onChange={(event) =>
-                    edit({ ...content, [field]: withLanguage(content[field], event.target.value) })
+                    edit({ ...content, body: withLanguage(content.body, event.target.value) })
                   }
                 />
-              ))}
-
-              {step === 'terms' ? (
-                <label className="flex flex-col gap-1.5 text-sm font-medium">
-                  <span>{t('appTerms.field.body')}</span>
-                  <Textarea
-                    id="app-terms-body"
-                    rows={10}
-                    dir={direction}
-                    value={inLanguage(content.body)}
-                    onChange={(event) =>
-                      edit({ ...content, body: withLanguage(content.body, event.target.value) })
-                    }
-                  />
-                </label>
-              ) : null}
-
-              {step === 'terms-intro' ? (
-                <fieldset className="flex flex-col gap-3">
-                  <legend className="text-start text-sm font-semibold">
-                    {t('appTerms.points')}
-                  </legend>
+              </EditorSection>
+            ) : (
+              <EditorSection
+                title={t('appTerms.points')}
+                testId="app-terms-points"
+                footer={
+                  content.points.length < APP_TERMS_MAX_POINTS ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() =>
+                        edit({ ...content, points: [...content.points, { title: {}, body: {} }] })
+                      }
+                    >
+                      {t('appTerms.addPoint')}
+                    </Button>
+                  ) : undefined
+                }
+              >
+                <div className="flex flex-col gap-3">
                   {content.points.map((point, index) => (
-                    <div key={index} className="flex flex-col gap-2 rounded-lg border p-3">
-                      <AdminAuthField
-                        id={`app-terms-point-title-${index}`}
-                        label={t('appTerms.pointTitle', { number: index + 1 })}
-                        dir={direction}
-                        value={inLanguage(point.title)}
-                        onChange={(event) =>
-                          edit({
-                            ...content,
-                            points: content.points.map((entry, at) =>
-                              at === index
-                                ? { ...entry, title: withLanguage(entry.title, event.target.value) }
-                                : entry,
-                            ),
-                          })
-                        }
-                      />
-                      <label className="flex flex-col gap-1.5 text-sm font-medium">
-                        <span>{t('appTerms.pointBody', { number: index + 1 })}</span>
-                        <Textarea
-                          id={`app-terms-point-body-${index}`}
-                          rows={2}
-                          dir={direction}
-                          value={inLanguage(point.body)}
-                          onChange={(event) =>
-                            edit({
-                              ...content,
-                              points: content.points.map((entry, at) =>
-                                at === index
-                                  ? { ...entry, body: withLanguage(entry.body, event.target.value) }
-                                  : entry,
-                              ),
-                            })
-                          }
-                        />
-                      </label>
+                    <div key={index} className="flex flex-col gap-3 rounded-lg border p-4">
+                      <FieldGroup>
+                        <Field orientation="responsive">
+                          <FieldContent>
+                            <FieldLabel htmlFor={`app-terms-point-title-${index}`}>
+                              {t('appTerms.pointTitle', { number: index + 1 })}
+                            </FieldLabel>
+                          </FieldContent>
+                          <div className={CONTROL_COLUMN}>
+                            <Input
+                              id={`app-terms-point-title-${index}`}
+                              dir={direction}
+                              lang={language}
+                              value={inLanguage(point.title)}
+                              onChange={(event) =>
+                                edit({
+                                  ...content,
+                                  points: content.points.map((entry, at) =>
+                                    at === index
+                                      ? {
+                                          ...entry,
+                                          title: withLanguage(entry.title, event.target.value),
+                                        }
+                                      : entry,
+                                  ),
+                                })
+                              }
+                            />
+                          </div>
+                        </Field>
+                        <Field orientation="responsive">
+                          <FieldContent>
+                            <FieldLabel htmlFor={`app-terms-point-body-${index}`}>
+                              {t('appTerms.pointBody', { number: index + 1 })}
+                            </FieldLabel>
+                          </FieldContent>
+                          <div className={CONTROL_COLUMN}>
+                            <Textarea
+                              id={`app-terms-point-body-${index}`}
+                              rows={2}
+                              dir={direction}
+                              lang={language}
+                              value={inLanguage(point.body)}
+                              onChange={(event) =>
+                                edit({
+                                  ...content,
+                                  points: content.points.map((entry, at) =>
+                                    at === index
+                                      ? {
+                                          ...entry,
+                                          body: withLanguage(entry.body, event.target.value),
+                                        }
+                                      : entry,
+                                  ),
+                                })
+                              }
+                            />
+                          </div>
+                        </Field>
+                      </FieldGroup>
                       {content.points.length > 1 ? (
                         <Button
                           type="button"
                           variant="outline"
-                          className="w-fit"
+                          className="w-fit self-end"
                           onClick={() =>
                             edit({
                               ...content,
@@ -280,23 +389,9 @@ export function AppTermsEditor({
                       ) : null}
                     </div>
                   ))}
-                  {content.points.length < APP_TERMS_MAX_POINTS ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-fit"
-                      onClick={() =>
-                        edit({ ...content, points: [...content.points, { title: {}, body: {} }] })
-                      }
-                    >
-                      {t('appTerms.addPoint')}
-                    </Button>
-                  ) : null}
-                </fieldset>
-              ) : null}
-            </section>
-
-            {renderWording?.(language)}
+                </div>
+              </EditorSection>
+            )}
 
             <div className="sticky bottom-0 z-10 flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm">
               {status === 'invalid' ? (

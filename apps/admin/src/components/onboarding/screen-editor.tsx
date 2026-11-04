@@ -22,7 +22,10 @@
 import { EditorColumns } from '@/components/layout/editor-columns';
 import { EditorSection } from '@/components/layout/editor-section';
 import { Page, PageHeader } from '@/components/layout/page';
-import { useTranslatableTexts } from '@/components/layout/translate-from-catalan';
+import {
+  useTranslatableTexts,
+  type TranslatableTexts,
+} from '@/components/layout/translate-from-catalan';
 import { useReload } from '@/components/settings/onboarding-design-sections';
 import { Button } from '@/components/ui/button';
 import {
@@ -125,7 +128,7 @@ import { ScreenFieldsSection } from './screen-fields';
 import { builtinHideLockKey, teamHideLockKey } from './screen-hiding';
 
 /** The control column of a setting row, as on the account page: one width, natural controls. */
-const CONTROL_COLUMN = 'flex w-full flex-col gap-2 @md/field-group:w-100!';
+export const CONTROL_COLUMN = 'flex w-full flex-col gap-2 @md/field-group:w-100!';
 
 export function ScreenEditor({
   data,
@@ -1010,25 +1013,29 @@ function AppScreenEditor({
  * the app's own. Clearing an optional text removes it from her phone in that
  * language; a required text cannot be saved empty.
  */
-export function WordingSection({
-  catalog,
-  screen,
-  language,
-  onLanguageChange,
-  title,
-  conditionNote,
-  onChange,
-}: {
+export interface ScreenWordingOptions {
   readonly catalog: IntakeCatalog;
   readonly screen: EditableWizardScreen;
   readonly language: LanguageCode;
   /** Turns the form to a language with an empty required text when saving. */
   readonly onLanguageChange?: (language: LanguageCode) => void;
-  readonly title: string;
   /** When an app follow-up opens (RAPP-715), the line its card shows. */
   readonly conditionNote?: string;
   readonly onChange: (texts: ScreenTexts) => void;
-}) {
+}
+
+/**
+ * The wording's fields and their save, for a box that holds more than the
+ * wording: the app terms put their own texts in the same box (RAPP-761).
+ */
+export function useScreenWording({
+  catalog,
+  screen,
+  language,
+  onLanguageChange,
+  conditionNote,
+  onChange,
+}: ScreenWordingOptions) {
   const { t } = useTranslation(['settings', 'onboarding']);
   const reload = useReload();
   const saved = screenSettingsFor(catalog, screen);
@@ -1086,7 +1093,9 @@ export function WordingSection({
       const text = shownIn(field, 'ca').trim();
       return text === '' || text === openedCatalan[field] ? [] : [[field, text] as const];
     });
-  useTranslatableTexts({
+  // Registered here inside an editor's columns; a host outside them renders
+  // `TranslatableSource` with it (the app terms, RAPP-761).
+  const translatable: TranslatableTexts = {
     texts: () => changedWording().map(([, text]) => text),
     apply: (target, drafts) =>
       write(
@@ -1095,18 +1104,21 @@ export function WordingSection({
           return draft === undefined ? [] : [[field, target, draft] as const];
         }),
       ),
-  });
+  };
+  useTranslatableTexts(translatable);
 
   // Onboarding is only for players who have not joined yet (RAPP-705): a save
   // changes what they will see, so it saves at once.
-  async function store() {
+  async function store({
+    announce = true,
+  }: { readonly announce?: boolean } = {}): Promise<boolean> {
     const empty = SUPPORTED_LANGUAGES.find((each) =>
       fields.some((field) => isEmptyRequired(field, each)),
     );
     if (empty !== undefined) {
       onLanguageChange?.(empty);
       toast.error(t('builtinScreens.requiredText'));
-      return;
+      return false;
     }
     const texts = Object.fromEntries(
       fields.flatMap((field) => {
@@ -1125,9 +1137,11 @@ export function WordingSection({
     try {
       await saveBuiltinScreen(supabase, { screen, texts, isHidden: hideable && isHidden });
       await reload();
-      toast.success(t('builtinScreens.saved'));
+      if (announce) toast.success(t('builtinScreens.saved'));
+      return true;
     } catch {
       toast.error(t('builtinScreens.failed'));
+      return false;
     } finally {
       setIsSaving(false);
     }
@@ -1135,85 +1149,98 @@ export function WordingSection({
 
   const note = DETAIL_SCREEN_PARENTS[screen] === undefined ? null : t('builtinScreens.detailNote');
 
+  const content = (
+    <>
+      {note === null || screen === 'terms-intro' ? null : (
+        <FieldDescription className="text-start">{note}</FieldDescription>
+      )}
+      {conditionNote === undefined || conditionNote === '' ? null : (
+        <FieldDescription className="text-start" data-testid="wording-condition">
+          {conditionNote}
+        </FieldDescription>
+      )}
+      {/* Every player checks her names first (RAPP-708): staff read why. */}
+      {screen === 'identity' ? (
+        <FieldDescription className="text-start" data-testid="identity-note">
+          {t('builtinScreens.identityNote')}
+        </FieldDescription>
+      ) : null}
+      {fields.map((field) => {
+        const id = `wording-${screen}-${field}`;
+        const isInvalid = isEmptyRequired(field, language);
+        const shared = {
+          id,
+          dir: direction,
+          lang: language,
+          value: shownIn(field, language),
+          'aria-invalid': isInvalid,
+        } as const;
+        return (
+          <Field key={field} orientation="responsive" data-invalid={isInvalid}>
+            <FieldContent>
+              <FieldLabel htmlFor={id}>{t(`builtinScreens.field.${field}`)}</FieldLabel>
+            </FieldContent>
+            <div className={CONTROL_COLUMN}>
+              {field === 'help' ? (
+                <Textarea
+                  {...shared}
+                  rows={3}
+                  onChange={(event) => edit(field, event.target.value)}
+                />
+              ) : (
+                <Input {...shared} onChange={(event) => edit(field, event.target.value)} />
+              )}
+              {isInvalid ? (
+                <FieldError data-testid={`wording-required-${field}`}>
+                  {t('builtinScreens.requiredText')}
+                </FieldError>
+              ) : null}
+            </div>
+          </Field>
+        );
+      })}
+      {isQuestionScreen(screen) ? (
+        <HideScreenField
+          id={`hide-${screen}`}
+          isHidden={hideable && isHidden}
+          lockReason={hideLock === null ? null : t(hideLock)}
+          note={
+            // Re-registration follows the same hide (RAPP-612): one rule for both.
+            hideable && (SEASON_WIZARD_SCREENS as readonly string[]).includes(screen) ? (
+              <FieldDescription>{t('builtinScreens.hideReregistrationNote')}</FieldDescription>
+            ) : null
+          }
+          onChange={setIsHidden}
+        />
+      ) : null}
+    </>
+  );
+  return { content, isChanged, isSaving, store, translatable };
+}
+
+/** An app screen's wording in its own box, saved by its own button. */
+export function WordingSection({
+  title,
+  ...options
+}: ScreenWordingOptions & { readonly title: string }) {
+  const { t } = useTranslation('settings');
+  const wording = useScreenWording(options);
   return (
     <EditorSection
       title={title}
-      testId={`wording-${screen}`}
+      testId={`wording-${options.screen}`}
       footer={
         <Button
           type="button"
-          disabled={isSaving || !isChanged}
-          onClick={() => void store()}
-          data-testid={`wording-save-${screen}`}
+          disabled={wording.isSaving || !wording.isChanged}
+          onClick={() => void wording.store()}
+          data-testid={`wording-save-${options.screen}`}
         >
           {t('builtinScreens.save')}
         </Button>
       }
     >
-      <FieldGroup>
-        {note === null || screen === 'terms-intro' ? null : (
-          <FieldDescription className="text-start">{note}</FieldDescription>
-        )}
-        {conditionNote === undefined || conditionNote === '' ? null : (
-          <FieldDescription className="text-start" data-testid="wording-condition">
-            {conditionNote}
-          </FieldDescription>
-        )}
-        {/* Every player checks her names first (RAPP-708): staff read why. */}
-        {screen === 'identity' ? (
-          <FieldDescription className="text-start" data-testid="identity-note">
-            {t('builtinScreens.identityNote')}
-          </FieldDescription>
-        ) : null}
-        {fields.map((field) => {
-          const id = `wording-${screen}-${field}`;
-          const isInvalid = isEmptyRequired(field, language);
-          const shared = {
-            id,
-            dir: direction,
-            lang: language,
-            value: shownIn(field, language),
-            'aria-invalid': isInvalid,
-          } as const;
-          return (
-            <Field key={field} orientation="responsive" data-invalid={isInvalid}>
-              <FieldContent>
-                <FieldLabel htmlFor={id}>{t(`builtinScreens.field.${field}`)}</FieldLabel>
-              </FieldContent>
-              <div className={CONTROL_COLUMN}>
-                {field === 'help' ? (
-                  <Textarea
-                    {...shared}
-                    rows={3}
-                    onChange={(event) => edit(field, event.target.value)}
-                  />
-                ) : (
-                  <Input {...shared} onChange={(event) => edit(field, event.target.value)} />
-                )}
-                {isInvalid ? (
-                  <FieldError data-testid={`wording-required-${field}`}>
-                    {t('builtinScreens.requiredText')}
-                  </FieldError>
-                ) : null}
-              </div>
-            </Field>
-          );
-        })}
-        {isQuestionScreen(screen) ? (
-          <HideScreenField
-            id={`hide-${screen}`}
-            isHidden={hideable && isHidden}
-            lockReason={hideLock === null ? null : t(hideLock)}
-            note={
-              // Re-registration follows the same hide (RAPP-612): one rule for both.
-              hideable && (SEASON_WIZARD_SCREENS as readonly string[]).includes(screen) ? (
-                <FieldDescription>{t('builtinScreens.hideReregistrationNote')}</FieldDescription>
-              ) : null
-            }
-            onChange={setIsHidden}
-          />
-        ) : null}
-      </FieldGroup>
+      <FieldGroup>{wording.content}</FieldGroup>
     </EditorSection>
   );
 }
