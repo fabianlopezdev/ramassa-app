@@ -888,7 +888,8 @@
     "openNamed": "Abre {{name}}",
     "authorizationSignature": "Firma de la autorización",
     "termsSignature": "Firma de las condiciones",
-    "removeBody": "Ya no se preguntará en este formulario. El consentimiento y las decisiones ya tomadas se conservan."
+    "removeBody": "Ya no se preguntará en este formulario. El consentimiento y las decisiones ya tomadas se conservan.",
+    "formWording": "Texto en este formulario"
   },
   "customForms": {
     "title": "Otros formularios",
@@ -968,7 +969,14 @@
     "publishSeason": "Temporada",
     "recipients": "Jugadoras elegidas",
     "recipientCount": "{{count}} jugadoras",
-    "recipientsSaved": "Borrador guardado: {{count}} jugadoras."
+    "recipientsSaved": "Borrador guardado: {{count}} jugadoras.",
+    "kind": "Tipo",
+    "kindOption": {
+      "legal": "Legal",
+      "other": "Otro"
+    },
+    "correctionAddsRequirement": "Una corrección no puede añadir preguntas, consentimientos ni firmas obligatorios. Publícalo como versión nueva.",
+    "legalPublishNeedsAdmin": "Solo quien gestiona la configuración de la organización puede publicar un formulario legal."
   },
   "translateFromCatalan": {
     "working": "Traduciendo…",

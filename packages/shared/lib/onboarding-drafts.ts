@@ -21,9 +21,8 @@
  */
 
 import { z } from 'zod';
-import type { SignatureStrokes } from '../equipment/handover';
 import { AppError } from '../errors';
-import { formSignatureDraftsSchema } from '../intake-builder/form-blocks';
+import { formSignatureDraftsSchema, type FormSignatureDraft } from '../intake-builder/form-blocks';
 import { customAnswerValueSchema, type CustomAnswerValue } from '../intake-builder/question-types';
 import { SUPPORT_NEED_CATEGORIES, type SupportNeedCategory } from '../schemas/support-needs';
 import type { MmkvLike } from './supabase';
@@ -128,8 +127,8 @@ export interface OnboardingDraft {
   season?: Record<string, unknown>;
   terms?: Record<string, unknown>;
   custom?: Record<string, CustomAnswerValue>;
-  /** The strokes she drew on each signature block, by block id (RAPP-690). */
-  signatures?: Record<string, SignatureStrokes | null>;
+  /** The strokes she drew on each signature block, or "No puc signar" (RAPP-690, RAPP-771). */
+  signatures?: Record<string, FormSignatureDraft | null>;
   /** Her ticks of the consents placed on her screens, by consent key (RAPP-699). */
   consents?: Record<string, boolean>;
   scenarioStamp?: string;
@@ -143,7 +142,7 @@ export interface StoredOnboardingDraft {
   answers?: Record<string, CustomAnswerValue>;
   screen?: Record<string, unknown>;
   terms?: Record<string, unknown>;
-  signatures?: Record<string, SignatureStrokes | null>;
+  signatures?: Record<string, FormSignatureDraft | null>;
   consents?: Record<string, boolean>;
   scenarioStamp?: string;
 }

@@ -888,7 +888,8 @@
     "openNamed": "Obre {{name}}",
     "authorizationSignature": "Signatura de l'autorització",
     "termsSignature": "Signatura de les condicions",
-    "removeBody": "Ja no es preguntarà en aquest formulari. El consentiment i les decisions ja preses es conserven."
+    "removeBody": "Ja no es preguntarà en aquest formulari. El consentiment i les decisions ja preses es conserven.",
+    "formWording": "Text en aquest formulari"
   },
   "customForms": {
     "title": "Altres formularis",
@@ -968,7 +969,14 @@
     "publishSeason": "Temporada",
     "recipients": "Jugadores escollides",
     "recipientCount": "{{count}} jugadores",
-    "recipientsSaved": "Esborrany desat: {{count}} jugadores."
+    "recipientsSaved": "Esborrany desat: {{count}} jugadores.",
+    "kind": "Tipus",
+    "kindOption": {
+      "legal": "Legal",
+      "other": "Altre"
+    },
+    "correctionAddsRequirement": "Una correcció no pot afegir preguntes, consentiments ni signatures obligatoris. Publica-ho com a versió nova.",
+    "legalPublishNeedsAdmin": "Només qui gestiona la configuració de l'organització pot publicar un formulari legal."
   },
   "translateFromCatalan": {
     "working": "S'està traduint…",

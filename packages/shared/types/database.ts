@@ -639,6 +639,7 @@ export type Database = {
       };
       consent_placements: {
         Row: {
+          body_override: Json | null;
           consent_id: string;
           created_at: string;
           custom_form_id: string | null;
@@ -651,6 +652,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          body_override?: Json | null;
           consent_id: string;
           created_at?: string;
           custom_form_id?: string | null;
@@ -663,6 +665,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          body_override?: Json | null;
           consent_id?: string;
           created_at?: string;
           custom_form_id?: string | null;
@@ -1168,6 +1171,8 @@ export type Database = {
       };
       custom_form_screens: {
         Row: {
+          system_screen: string | null;
+          texts: Json;
           created_at: string;
           form_id: string;
           id: string;
@@ -1182,6 +1187,8 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          system_screen?: string | null;
+          texts?: Json;
           created_at?: string;
           form_id: string;
           id?: string;
@@ -1196,6 +1203,8 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          system_screen?: string | null;
+          texts?: Json;
           created_at?: string;
           form_id?: string;
           id?: string;
@@ -1293,6 +1302,8 @@ export type Database = {
       };
       custom_forms: {
         Row: {
+          kind: string;
+          system_key: string | null;
           audience: string;
           created_at: string;
           created_by: string | null;
@@ -1309,6 +1320,8 @@ export type Database = {
           version: number;
         };
         Insert: {
+          kind?: string;
+          system_key?: string | null;
           audience?: string;
           created_at?: string;
           created_by?: string | null;
@@ -1325,6 +1338,8 @@ export type Database = {
           version?: number;
         };
         Update: {
+          kind?: string;
+          system_key?: string | null;
           audience?: string;
           created_at?: string;
           created_by?: string | null;
@@ -2381,6 +2396,7 @@ export type Database = {
       };
       form_signatures: {
         Row: {
+          unable_to_draw: boolean;
           block_id: string | null;
           body: string;
           custom_form_id: string | null;
@@ -2395,11 +2411,12 @@ export type Database = {
           signer_kind: string;
           signer_name: string;
           signer_user_id: string | null;
-          strokes: Json;
+          strokes: Json | null;
           surface: string;
           witnessed_by: string | null;
         };
         Insert: {
+          unable_to_draw?: boolean;
           block_id?: string | null;
           body: string;
           custom_form_id?: string | null;
@@ -2414,11 +2431,12 @@ export type Database = {
           signer_kind: string;
           signer_name: string;
           signer_user_id?: string | null;
-          strokes: Json;
+          strokes?: Json | null;
           surface: string;
           witnessed_by?: string | null;
         };
         Update: {
+          unable_to_draw?: boolean;
           block_id?: string | null;
           body?: string;
           custom_form_id?: string | null;
@@ -2838,6 +2856,7 @@ export type Database = {
       };
       intake_screens: {
         Row: {
+          texts: Json;
           after_screen: string;
           created_at: string;
           home_after_screen: string;
@@ -2854,6 +2873,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          texts?: Json;
           after_screen: string;
           created_at?: string;
           home_after_screen: string;
@@ -2870,6 +2890,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          texts?: Json;
           after_screen?: string;
           created_at?: string;
           home_after_screen?: string;
@@ -6272,6 +6293,7 @@ export type Database = {
           p_deadline: string;
           p_filled_by: string;
           p_mandatory: string;
+          p_kind?: string;
           p_name: Json;
           p_repeats_each_season: boolean;
         };
@@ -7221,6 +7243,7 @@ export type Database = {
           deadline: string;
           form_id: string;
           is_blocking: boolean;
+          kind: string;
           mandatory: string;
           name: Json;
           response_id: string;
@@ -7400,6 +7423,7 @@ export type Database = {
           signer_name: string;
           strokes: Json;
           surface: string;
+          unable_to_draw: boolean;
           witnessed_by_name: string;
         }[];
       };
@@ -7760,12 +7784,17 @@ export type Database = {
         Args: { p_placement_id: string; p_required: boolean };
         Returns: undefined;
       };
+      save_consent_placement_wording: {
+        Args: { p_body: Json; p_placement_id: string };
+        Returns: undefined;
+      };
       save_custom_form: {
         Args: {
           p_audience: string;
           p_deadline: string;
           p_filled_by: string;
           p_id: string;
+          p_kind?: string;
           p_mandatory: string;
           p_name: Json;
           p_repeats_each_season: boolean;
@@ -7773,7 +7802,7 @@ export type Database = {
         Returns: undefined;
       };
       save_custom_form_screen: {
-        Args: { p_form_id: string; p_id: string; p_intro: Json; p_title: Json };
+        Args: { p_form_id: string; p_id: string; p_intro: Json; p_texts?: Json; p_title: Json };
         Returns: string;
       };
       save_custom_notification_group: {
@@ -7823,6 +7852,7 @@ export type Database = {
           p_after_screen: string;
           p_id: string;
           p_intro: Json;
+          p_texts?: Json;
           p_title: Json;
         };
         Returns: string;

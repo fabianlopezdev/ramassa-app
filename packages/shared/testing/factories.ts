@@ -1481,6 +1481,7 @@ export function buildConsentPlacement(
 ): ConsentPlacementRow {
   return {
     id: '5eed0000-0000-4000-8099-000000000002',
+    body_override: null,
     org_id: SEED_ORGANIZATION_ID,
     consent_id: SEED_STAFF_CONSENT_ID,
     surface: 'onboarding',
@@ -1578,6 +1579,7 @@ export function buildFormBlock(overrides: Partial<FormBlockRow> = {}): FormBlock
 export function buildFormSignature(overrides: Partial<FormSignatureRow> = {}): FormSignatureRow {
   return {
     id: '5eed0000-0000-4000-8090-000000000003',
+    unable_to_draw: false,
     org_id: SEED_ORGANIZATION_ID,
     profile_id: seedUserId(11),
     referral_id: null,
@@ -1636,6 +1638,7 @@ const NO_SEASON_KEY = '00000000-0000-0000-0000-000000000000';
 export function buildIntakeScreen(overrides: Partial<IntakeScreenRow> = {}): IntakeScreenRow {
   return {
     id: SEED_INTAKE_SCREEN_ID,
+    texts: {},
     org_id: SEED_ORGANIZATION_ID,
     title: { ca: 'Com arribes als entrenaments' },
     intro: null,
@@ -1801,6 +1804,8 @@ export type CustomFormRow = PublicRow<'custom_forms'>;
 export function buildCustomForm(overrides: Partial<CustomFormRow> = {}): CustomFormRow {
   return {
     id: '5eed0000-0000-4000-8100-000000000001',
+    kind: 'other',
+    system_key: null,
     org_id: SEED_ORGANIZATION_ID,
     name: {
       ca: 'Com véns als entrenaments',
@@ -1830,6 +1835,8 @@ export function buildCustomFormScreen(
 ): CustomFormScreenRow {
   return {
     id: '5eed0000-0000-4000-8101-000000000001',
+    texts: {},
+    system_screen: null,
     org_id: SEED_ORGANIZATION_ID,
     form_id: buildCustomForm().id,
     title: { ca: 'Transport', es: 'Transporte', en: 'Transport' },

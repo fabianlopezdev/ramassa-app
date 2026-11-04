@@ -33,7 +33,9 @@ import type {
   CustomForm,
   CustomFormAudience,
   CustomFormFiller,
+  CustomFormKind,
   CustomFormMandatory,
+  FormScreenTexts,
 } from './custom-form-model';
 import { formBlocksOn, type FormBlock } from './form-blocks';
 import { placedQuestion } from './her-onboarding';
@@ -102,10 +104,43 @@ export function isBlockingForm(
   );
 }
 
+/** A legal form the team created, for the menu under Condicions legals (RAPP-771). */
+export interface LegalFormEntry {
+  readonly id: string;
+  readonly name: BuilderText;
+}
+
+/**
+ * The legal forms the team created, oldest first, for the menu: a small read
+ * of the forms table (who may read it is the table's own rule). The app's two
+ * legal forms are not listed: they keep their own pages.
+ */
+export async function fetchLegalFormEntries(
+  client: Client,
+  signal?: AbortSignal,
+): Promise<readonly LegalFormEntry[]> {
+  let query = client
+    .from('custom_forms')
+    .select('id, name')
+    .eq('kind', 'legal')
+    .eq('is_archived', false)
+    .is('system_key', null)
+    .order('created_at', { ascending: true });
+  if (signal !== undefined) query = query.abortSignal(signal);
+  const { data, error } = await query;
+  if (error) throw databaseError(error);
+  return (data ?? []).flatMap((row): LegalFormEntry[] => {
+    const name = anyLanguageTextSchema.safeParse(row.name);
+    return name.success ? [{ id: row.id, name: name.data }] : [];
+  });
+}
+
 // Designing a form ------------------------------------------------------------------------------------
 
-/** The name and the choices of a form (RAPP-701). */
+/** The name and the choices of a form (RAPP-701), and its kind (RAPP-771). */
 export interface CustomFormChoices {
+  /** Legal or other; it changes while the form was never published. */
+  readonly kind: CustomFormKind;
   readonly name: BuilderText;
   readonly filledBy: CustomFormFiller;
   readonly mandatory: CustomFormMandatory;
@@ -124,6 +159,7 @@ function choicesArgs(choices: CustomFormChoices) {
     p_deadline: (choices.mandatory === 'required_from_date' ? choices.deadline : null) as string,
     p_audience: choices.audience,
     p_repeats_each_season: choices.repeatsEachSeason,
+    p_kind: choices.kind,
   };
 }
 
@@ -183,6 +219,8 @@ export async function saveCustomFormScreen(
     readonly formId: string;
     readonly title: BuilderText;
     readonly intro: BuilderText | null;
+    /** Its help line and button labels (RAPP-771); left out, they stay as they are. */
+    readonly texts?: FormScreenTexts;
   },
 ): Promise<string> {
   const { data, error } = await client.rpc('save_custom_form_screen', {
@@ -190,6 +228,7 @@ export async function saveCustomFormScreen(
     p_form_id: screen.formId,
     p_title: screen.title as Json,
     p_intro: screen.intro as Json,
+    ...(screen.texts === undefined ? {} : { p_texts: screen.texts as Json }),
   });
   if (error) throw databaseError(error);
   return z.uuid().parse(data);
@@ -258,6 +297,8 @@ export interface PendingCustomForm {
   readonly deadline: string | null;
   /** It keeps her from the app until she answers. */
   readonly isBlocking: boolean;
+  /** A legal form is never put off (RAPP-771); an older server sends none: other. */
+  readonly kind: CustomFormKind;
 }
 
 const pendingSchema = z.object({
@@ -268,6 +309,7 @@ const pendingSchema = z.object({
   mandatory: z.enum(['optional', 'required_to_use_app', 'required_from_date']),
   deadline: z.string().nullable(),
   is_blocking: z.boolean(),
+  kind: z.enum(['legal', 'other']).optional().catch('other'),
 });
 
 /** Her pending forms, the ones that keep her from the app first. A row this build cannot read is left out. */
@@ -287,6 +329,7 @@ export async function fetchMyCustomForms(client: Client): Promise<readonly Pendi
         mandatory: form.mandatory,
         deadline: form.deadline,
         isBlocking: form.is_blocking,
+        kind: form.kind ?? 'other',
       },
     ];
   });

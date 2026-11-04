@@ -130,6 +130,15 @@ const placementSchema = z.object({
   required: z.boolean(),
   label_override: anyLanguageTextSchema.nullable(),
   help_override: anyLanguageTextSchema.nullable(),
+  // The question as a published version froze it (schema 2, RAPP-771).
+  field: z
+    .object({
+      label: anyLanguageTextSchema,
+      help: anyLanguageTextSchema.nullable(),
+      options: z.array(z.object({ id: z.uuid(), label: anyLanguageTextSchema })).catch([]),
+    })
+    .optional()
+    .catch(undefined),
 });
 
 export interface ProfileSection {
@@ -204,6 +213,11 @@ export interface FieldPlacement {
   readonly required: boolean;
   readonly labelOverride: BuilderText | null;
   readonly helpOverride: BuilderText | null;
+  /**
+   * Each option's label as a published version froze it (schema 2, RAPP-771),
+   * by option id. Absent on a draft and on an older version.
+   */
+  readonly frozenOptionLabels?: Readonly<Record<string, BuilderText>>;
 }
 
 /** Sections, fields and placements, each list in its stored order. */
@@ -307,8 +321,16 @@ export function parseProfileLayout(raw: {
       customFormId: placement.custom_form_id ?? null,
       sortOrder: placement.sort_order,
       required: placement.required,
-      labelOverride: placement.label_override,
-      helpOverride: placement.help_override,
+      // A published version's wording is what she reads (RAPP-771); a draft reads the Fitxa.
+      labelOverride: placement.field?.label ?? placement.label_override,
+      helpOverride: placement.field === undefined ? placement.help_override : placement.field.help,
+      ...(placement.field === undefined
+        ? {}
+        : {
+            frozenOptionLabels: Object.fromEntries(
+              placement.field.options.map((option) => [option.id, option.label]),
+            ),
+          }),
     })),
   };
 }

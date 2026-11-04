@@ -52,7 +52,8 @@
     "entityPortal": "Navegació del portal",
     "toggleSidebar": "Mostra o amaga el menú lateral",
     "sidebarLabel": "Menú lateral",
-    "sidebarDescription": "Menú de navegació lateral"
+    "sidebarDescription": "Menú de navegació lateral",
+    "toggleFold": "Mostra o amaga {{name}}"
   },
   "team": {
     "today": "Avui",

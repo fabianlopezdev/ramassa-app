@@ -52,7 +52,8 @@
     "entityPortal": "Portal navigation",
     "toggleSidebar": "Toggle sidebar",
     "sidebarLabel": "Sidebar",
-    "sidebarDescription": "Sidebar navigation menu"
+    "sidebarDescription": "Sidebar navigation menu",
+    "toggleFold": "Show or hide {{name}}"
   },
   "team": {
     "today": "Today",

@@ -64,10 +64,21 @@ export function placedQuestion(
   placement: FieldPlacement,
 ): CustomQuestion {
   const wording = placementWording(placement, field);
+  const question = questionFromField(field, placement);
+  const frozen = placement.frozenOptionLabels;
   return {
-    ...questionFromField(field, placement),
+    ...question,
     label: wording.label,
     help: wording.help,
+    // A published version's option labels (RAPP-771); an option it did not have keeps its own.
+    ...(frozen === undefined
+      ? {}
+      : {
+          options: question.options.map((option) => ({
+            ...option,
+            label: frozen[option.id] ?? option.label,
+          })),
+        }),
   };
 }
 

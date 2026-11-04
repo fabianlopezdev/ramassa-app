@@ -52,7 +52,8 @@
     "entityPortal": "ناوبری پورتال",
     "toggleSidebar": "نمایش یا پنهان‌کردن نوار کناری",
     "sidebarLabel": "نوار کناری",
-    "sidebarDescription": "منوی ناوبری کناری"
+    "sidebarDescription": "منوی ناوبری کناری",
+    "toggleFold": "نمایش یا پنهان کردن {{name}}"
   },
   "team": {
     "today": "امروز",

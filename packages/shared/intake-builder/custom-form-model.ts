@@ -9,10 +9,15 @@
  * signature blocks, the way Onboarding's screens do; the catalog sends those
  * with the other placements, each naming its form.
  *
+ * A form is Legal or Altre (RAPP-771); a screen has a help line and its own
+ * button labels.
+ *
  * Docs: https://zod.dev/api
  */
 import { z } from 'zod';
+import { staffTextIn, teamTextIn } from '../i18n/localized-content';
 import type { ScreenCondition } from '../onboarding/screen-conditions';
+import type { LanguageCode } from '../schemas/language';
 import { anyLanguageTextSchema, type BuilderText } from './profile-layout';
 
 /** Who fills a form in (RAPP-701): her on the app; an entity form is not available yet. */
@@ -25,6 +30,60 @@ export const CUSTOM_FORM_MANDATORY_LEVELS = [
   'required_from_date',
 ] as const;
 export type CustomFormMandatory = (typeof CUSTOM_FORM_MANDATORY_LEVELS)[number];
+
+/**
+ * Legal (listed under Condicions legals, published by an admin, never put off)
+ * or other (under Altres formularis), RAPP-771.
+ */
+export const CUSTOM_FORM_KINDS = ['legal', 'other'] as const;
+export type CustomFormKind = (typeof CUSTOM_FORM_KINDS)[number];
+
+/** The app's own legal forms as forms of their own (RAPP-771): one each, never archived. */
+export const CUSTOM_FORM_SYSTEM_KEYS = ['app_terms', 'season_authorization'] as const;
+export type CustomFormSystemKey = (typeof CUSTOM_FORM_SYSTEM_KEYS)[number];
+
+/** A screen's locked part of a legal form (RAPP-771): never deleted, never moved. */
+export const FORM_SYSTEM_SCREENS = [
+  'terms_sign',
+  'authorization_sign',
+  'reregistration',
+  'reregistration_season',
+] as const;
+export type FormSystemScreen = (typeof FORM_SYSTEM_SCREENS)[number];
+
+/** A screen's help line and button labels (RAPP-771), as an app screen's. */
+export const FORM_SCREEN_TEXT_FIELDS = ['help', 'continue_label', 'decline_label'] as const;
+export type FormScreenTextField = (typeof FORM_SCREEN_TEXT_FIELDS)[number];
+export type FormScreenTexts = Readonly<Partial<Record<FormScreenTextField, BuilderText>>>;
+
+const formScreenTextsSchema = z
+  .object({
+    help: anyLanguageTextSchema.optional(),
+    continue_label: anyLanguageTextSchema.optional(),
+    decline_label: anyLanguageTextSchema.optional(),
+  })
+  .catch({});
+
+/** A screen's texts as the database sends them; anything this build cannot read is left out. */
+export function parseFormScreenTexts(raw: unknown): FormScreenTexts {
+  return formScreenTextsSchema.parse(raw ?? {});
+}
+
+/**
+ * A screen's own texts in one language, by the rule her phone and the Control
+ * Center preview share (RAPP-710): a help never written follows the Catalan
+ * ('' shows none); a main button never written is null, so the app's own
+ * label shows.
+ */
+export function formScreenTextsIn(
+  texts: FormScreenTexts | undefined,
+  language: LanguageCode,
+): { readonly help: string; readonly continueLabel: string | null } {
+  return {
+    help: teamTextIn(texts?.help, language, true),
+    continueLabel: staffTextIn(texts?.continue_label, language, false),
+  };
+}
 
 /** Who a form is for (RAPP-701): every player, including those who join later, or the players picked. */
 export const CUSTOM_FORM_AUDIENCES = ['all', 'chosen'] as const;
@@ -40,6 +99,10 @@ export interface CustomFormScreen {
   readonly isHidden?: boolean;
   /** The answer that opens it (RAPP-715); absent, it always shows. */
   readonly showWhen?: ScreenCondition;
+  /** Its help line and button labels (RAPP-771); empty shows the app's own. */
+  readonly texts?: FormScreenTexts;
+  /** Its locked part of a legal form (RAPP-771); absent on every other screen. */
+  readonly systemScreen?: FormSystemScreen;
 }
 
 /** A Publica of a form (RAPP-701): its number, its season when it repeats, and whether it corrected. */
@@ -63,6 +126,10 @@ export interface CustomForm {
   readonly deadline: string | null;
   readonly audience: CustomFormAudience;
   readonly repeatsEachSeason: boolean;
+  /** Legal or other (RAPP-771); a server before it sends none: other. */
+  readonly kind: CustomFormKind;
+  /** One of the app's own legal forms (RAPP-771); null for every form the team created. */
+  readonly systemKey: CustomFormSystemKey | null;
   /** How many players were picked, for the team; null on her phone. */
   readonly recipientCount: number | null;
   /** The latest published version's number. */
@@ -85,6 +152,9 @@ const screenSchema = z.object({
   // The answer that opens it (RAPP-715); an older version has none.
   show_when_field_id: z.uuid().nullable().optional(),
   show_when_values: z.array(z.string()).nullable().optional(),
+  // Its help line and buttons, and its locked part (RAPP-771); an older server sends none.
+  texts: z.unknown().optional(),
+  system_screen: z.enum(FORM_SYSTEM_SCREENS).nullable().optional().catch(null),
 });
 
 const formSchema = z.object({
@@ -100,6 +170,8 @@ const formSchema = z.object({
   appears: z.enum(['once', 'every_season', 'sent']).optional(),
   audience: z.enum(CUSTOM_FORM_AUDIENCES).optional(),
   repeats_each_season: z.boolean().optional(),
+  kind: z.enum(CUSTOM_FORM_KINDS).optional().catch('other'),
+  system_key: z.enum(CUSTOM_FORM_SYSTEM_KEYS).nullable().optional().catch(null),
   recipient_count: z.number().int().optional(),
   version: z.number().int().min(1),
   published_at: z.string().nullable(),
@@ -133,6 +205,8 @@ export function parseCustomForms(raw: unknown): readonly CustomForm[] {
         deadline: form.deadline,
         audience: form.audience ?? (form.appears === 'sent' ? 'chosen' : 'all'),
         repeatsEachSeason: form.repeats_each_season ?? form.appears === 'every_season',
+        kind: form.kind ?? 'other',
+        systemKey: form.system_key ?? null,
         recipientCount: form.recipient_count ?? null,
         version: form.version,
         publishedAt: form.published_at,
@@ -151,6 +225,8 @@ export function parseCustomForms(raw: unknown): readonly CustomForm[] {
             intro: screen.intro,
             sortOrder: screen.sort_order,
             isHidden: screen.is_hidden ?? false,
+            texts: parseFormScreenTexts(screen.texts),
+            ...(screen.system_screen == null ? {} : { systemScreen: screen.system_screen }),
             ...(screen.show_when_field_id == null || (screen.show_when_values ?? []).length === 0
               ? {}
               : {

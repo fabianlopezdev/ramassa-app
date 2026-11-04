@@ -247,16 +247,26 @@ export function formBlockName(block: FormBlockContent, language: LanguageCode): 
   return shown.body;
 }
 
+/**
+ * What she gave on a signature block while she fills in the form: her
+ * strokes, or "No puc signar" (RAPP-771), when she cannot draw. The text she
+ * accepts is kept either way.
+ */
+export const UNABLE_TO_DRAW = 'unable_to_draw';
+export type FormSignatureDraft = SignatureStrokes | typeof UNABLE_TO_DRAW;
+
 /** One signature as a form sends it. */
-export interface FormSignature {
-  readonly strokes: SignatureStrokes;
-  readonly language: LanguageCode;
-}
+export type FormSignature =
+  | { readonly strokes: SignatureStrokes; readonly language: LanguageCode }
+  | { readonly unable_to_draw: true; readonly language: LanguageCode };
 
-/** The strokes she drew, by block id, while she fills in the form. */
-export type FormSignatureDrafts = Readonly<Record<string, SignatureStrokes | null>>;
+/** What she gave on each block, by block id, while she fills in the form. */
+export type FormSignatureDrafts = Readonly<Record<string, FormSignatureDraft | null>>;
 
-export const formSignatureDraftsSchema = z.record(z.string(), signatureStrokesSchema.nullable());
+export const formSignatureDraftsSchema = z.record(
+  z.string(),
+  z.union([signatureStrokesSchema, z.literal(UNABLE_TO_DRAW)]).nullable(),
+);
 
 /** The signature blocks with no signature yet: the form does not go while any is left. */
 export function unsignedFormBlocks(
@@ -277,12 +287,13 @@ export function formSignaturesPayload(
 ): Json {
   return Object.fromEntries(
     signatureBlocks(blocks).flatMap((block) => {
-      const strokes = drafts?.[block.id];
-      if (!strokes) return [];
-      const signature: FormSignature = {
-        strokes,
-        language: formBlockText(block, language).language,
-      };
+      const given = drafts?.[block.id];
+      if (!given) return [];
+      const shown = formBlockText(block, language).language;
+      const signature: FormSignature =
+        given === UNABLE_TO_DRAW
+          ? { unable_to_draw: true, language: shown }
+          : { strokes: given, language: shown };
       return [[block.id, signature as unknown as Json]];
     }),
   ) as Json;
@@ -411,6 +422,8 @@ export interface ParticipantFormSignature {
   readonly signerKind: 'player' | 'entity';
   readonly signerName: string;
   readonly strokes: SignatureStrokes | null;
+  /** She said she cannot draw (RAPP-771): the text she accepted, with no strokes. */
+  readonly unableToDraw: boolean;
   readonly signedAt: string;
   /** Signed on the walk-in tablet (RAPP-691), with the team member present. */
   readonly signedOnTablet: boolean;
@@ -429,6 +442,7 @@ const signatureRowSchema = z.object({
   signed_at: z.string(),
   signed_on_tablet: z.boolean().optional(),
   witnessed_by_name: z.string().nullable().optional(),
+  unable_to_draw: z.boolean().optional(),
 });
 
 /** Her signatures of the form blocks, for staff with participants.view_personal. */
@@ -454,6 +468,7 @@ export async function fetchParticipantFormSignatures(
         signerKind: row.signer_kind,
         signerName: row.signer_name,
         strokes: strokes.success ? strokes.data : null,
+        unableToDraw: row.unable_to_draw ?? false,
         signedAt: row.signed_at,
         signedOnTablet: row.signed_on_tablet ?? false,
         witnessedByName: row.witnessed_by_name ?? null,

@@ -888,7 +888,8 @@
     "openNamed": "Open {{name}}",
     "authorizationSignature": "Authorization signature",
     "termsSignature": "Terms signature",
-    "removeBody": "It will no longer be asked on this form. The consent and the decisions already made are kept."
+    "removeBody": "It will no longer be asked on this form. The consent and the decisions already made are kept.",
+    "formWording": "Text on this form"
   },
   "customForms": {
     "title": "Other forms",
@@ -968,7 +969,14 @@
     "publishSeason": "Season",
     "recipients": "Chosen players",
     "recipientCount": "{{count}} players",
-    "recipientsSaved": "Draft saved: {{count}} players."
+    "recipientsSaved": "Draft saved: {{count}} players.",
+    "kind": "Type",
+    "kindOption": {
+      "legal": "Legal",
+      "other": "Other"
+    },
+    "correctionAddsRequirement": "A correction cannot add required questions, consents or signatures. Publish it as a new version.",
+    "legalPublishNeedsAdmin": "Only people who manage the organization settings can publish a legal form."
   },
   "translateFromCatalan": {
     "working": "Translating…",

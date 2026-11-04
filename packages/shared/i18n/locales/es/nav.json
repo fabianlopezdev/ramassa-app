@@ -52,7 +52,8 @@
     "entityPortal": "Navegación del portal",
     "toggleSidebar": "Mostrar u ocultar el menú lateral",
     "sidebarLabel": "Menú lateral",
-    "sidebarDescription": "Menú de navegación lateral"
+    "sidebarDescription": "Menú de navegación lateral",
+    "toggleFold": "Mostrar u ocultar {{name}}"
   },
   "team": {
     "today": "Hoy",

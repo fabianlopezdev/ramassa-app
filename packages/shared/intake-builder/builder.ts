@@ -62,7 +62,12 @@ import {
   type Consent,
   type ConsentPlacement,
 } from './consents';
-import { parseCustomForms, type CustomForm } from './custom-form-model';
+import {
+  parseCustomForms,
+  parseFormScreenTexts,
+  type CustomForm,
+  type FormScreenTexts,
+} from './custom-form-model';
 import { systemFieldIndexFromCatalog, type SystemFieldIndex } from './field-answers';
 import { parseFormBlocks, type FormBlock } from './form-blocks';
 import {
@@ -173,6 +178,8 @@ const screenSchema = z.object({
   is_hidden: z.boolean().optional(),
   // The answer that opens it (RAPP-715). An older server sends none: it always shows.
   ...screenConditionShape,
+  // Its help line and buttons (RAPP-771). An older server sends none.
+  texts: z.unknown().optional(),
 });
 
 const overrideSchema = z.object({
@@ -260,6 +267,8 @@ export interface RamassaScreen {
   readonly isHidden?: boolean;
   /** The answer that opens it (RAPP-715); absent, it always shows. */
   readonly showWhen?: ScreenCondition;
+  /** Its help line and button labels (RAPP-771); empty shows the app's own. */
+  readonly texts?: FormScreenTexts;
 }
 
 /**
@@ -343,6 +352,7 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
       afterScreen: screen.after_screen,
       isArchived: screen.is_archived,
       isHidden: screen.is_hidden ?? false,
+      texts: parseFormScreenTexts(screen.texts),
       ...screenConditionFrom(screen),
     })),
     overrides: raw.overrides
@@ -748,6 +758,8 @@ export interface ScreenDraft {
   readonly title: BuilderText;
   readonly intro: BuilderText | null;
   readonly afterScreen: BuiltinScreen;
+  /** Its help line and button labels (RAPP-771); left out, they stay as they are. */
+  readonly texts?: FormScreenTexts;
 }
 
 export async function saveIntakeScreen(client: Client, draft: ScreenDraft): Promise<string> {
@@ -757,6 +769,7 @@ export async function saveIntakeScreen(client: Client, draft: ScreenDraft): Prom
     p_title: cleanText(draft.title) as Json,
     p_intro: (intro !== null && Object.keys(intro).length > 0 ? intro : null) as Json,
     p_after_screen: draft.afterScreen,
+    ...(draft.texts === undefined ? {} : { p_texts: draft.texts as Json }),
   });
   if (error) throw databaseError(error);
   return z.uuid().parse(data);

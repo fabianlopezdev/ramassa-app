@@ -65,6 +65,17 @@ export interface ConsentPlacement {
   readonly customFormId?: string | null;
   readonly sortOrder: number;
   readonly required: boolean;
+  /** A form's own wording of the consent (RAPP-771); null keeps the consent's text. */
+  readonly bodyOverride?: BuilderText | null;
+  /**
+   * The consent as a published version froze it (schema 2, RAPP-771): her
+   * phone reads this one. Absent on a draft and on an older version.
+   */
+  readonly frozen?: {
+    readonly key: string;
+    readonly name: BuilderText;
+    readonly body: BuilderText;
+  };
 }
 
 /** A consent as a screen asks it: the consent and its placement there. */
@@ -74,6 +85,10 @@ export interface PlacedConsent extends Consent {
   readonly screenKey: string | null;
   readonly required: boolean;
   readonly sortOrder: number;
+  /** The consent's own text in Dades legals; `body` is what she reads here. */
+  readonly ownBody: BuilderText;
+  /** This form's own wording (RAPP-771); null when it keeps the consent's text. */
+  readonly bodyOverride: BuilderText | null;
 }
 
 const consentRowSchema = z.object({
@@ -93,6 +108,12 @@ const placementRowSchema = z.object({
   custom_form_id: z.uuid().nullable().optional(),
   sort_order: z.number().int(),
   required: z.boolean(),
+  // A form's own wording, and what a published version froze (RAPP-771).
+  body_override: anyLanguageTextSchema.nullable().optional().catch(null),
+  consent: z
+    .object({ key: z.string(), name: anyLanguageTextSchema, body: anyLanguageTextSchema })
+    .optional()
+    .catch(undefined),
 });
 
 /** The catalogue's consents; a row this build cannot read is left out. */
@@ -129,9 +150,20 @@ export function parseConsentPlacements(raw: unknown): readonly ConsentPlacement[
         customFormId: parsed.data.custom_form_id ?? null,
         sortOrder: parsed.data.sort_order,
         required: parsed.data.required,
+        bodyOverride: parsed.data.body_override ?? null,
+        ...(parsed.data.consent === undefined ? {} : { frozen: parsed.data.consent }),
       },
     ];
   });
+}
+
+/** A text with another written over it, language by language; an empty one keeps the first. */
+function writtenOver(own: BuilderText, over: BuilderText | null | undefined): BuilderText {
+  if (over === null || over === undefined) return own;
+  const written = Object.fromEntries(
+    Object.entries(over).filter(([, text]) => typeof text === 'string' && text.trim() !== ''),
+  );
+  return { ...own, ...written };
 }
 
 /** The consents a screen asks, in its order: the authorization's (`screenKey` null) or an Onboarding screen's. */
@@ -154,6 +186,12 @@ export function consentsOn(
         : [
             {
               ...consent,
+              // What she reads: the version's frozen consent, else this form's wording over the consent's.
+              key: placement.frozen?.key ?? consent.key,
+              name: placement.frozen?.name ?? consent.name,
+              body: placement.frozen?.body ?? writtenOver(consent.body, placement.bodyOverride),
+              ownBody: consent.body,
+              bodyOverride: placement.bodyOverride ?? null,
               placementId: placement.id,
               screenKey: placement.screenKey,
               required: placement.required,
@@ -284,6 +322,19 @@ export async function saveConsentPlacement(
   const { error } = await client.rpc('save_consent_placement', {
     p_placement_id: placementId,
     p_required: required,
+  });
+  if (error) throw databaseError(error);
+}
+
+/** A form's own wording of a consent (RAPP-771); null gives back the consent's text. */
+export async function saveConsentPlacementWording(
+  client: Pick<Client, 'rpc'>,
+  placementId: string,
+  body: BuilderText | null,
+): Promise<void> {
+  const { error } = await client.rpc('save_consent_placement_wording', {
+    p_placement_id: placementId,
+    p_body: body as Json,
   });
   if (error) throw databaseError(error);
 }

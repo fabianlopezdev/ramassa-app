@@ -52,7 +52,8 @@
     "entityPortal": "تنقل البوابة",
     "toggleSidebar": "إظهار أو إخفاء الشريط الجانبي",
     "sidebarLabel": "الشريط الجانبي",
-    "sidebarDescription": "قائمة التنقل الجانبية"
+    "sidebarDescription": "قائمة التنقل الجانبية",
+    "toggleFold": "إظهار أو إخفاء {{name}}"
   },
   "team": {
     "today": "اليوم",
