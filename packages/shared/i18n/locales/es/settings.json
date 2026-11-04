@@ -889,7 +889,8 @@
     "authorizationSignature": "Firma de la autorización",
     "termsSignature": "Firma de las condiciones",
     "removeBody": "Ya no se preguntará en este formulario. El consentimiento y las decisiones ya tomadas se conservan.",
-    "formWording": "Texto en este formulario"
+    "formWording": "Texto en este formulario",
+    "appTermsAcceptanceLock": "La aceptación de las condiciones siempre es obligatoria: es lo que ella firma."
   },
   "customForms": {
     "title": "Otros formularios",

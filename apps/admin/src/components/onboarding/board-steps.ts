@@ -64,17 +64,40 @@ export function stepFromRouteId(catalog: IntakeCatalog, routeId: string): BoardS
   return flowStep(catalog, customStepKey(routeId));
 }
 
+/** Where a linked form's card opens: the authorization's board or a form's page. */
+export type LinkedFormLink =
+  | { readonly to: '/forms/authorization' | '/forms/terms' }
+  | { readonly to: '/forms/custom/$formId'; readonly params: { readonly formId: string } };
+
 /**
  * The form a step's card opens (RAPP-696): the app terms and the season
- * authorization are forms of their own. Null for a screen of the Onboarding.
+ * authorization are forms of their own. The app terms are a form of the
+ * engine since RAPP-772: the card opens its page. Null for a screen of the
+ * Onboarding.
  */
 export function linkedFormOf(
   key: string,
-): { readonly to: '/forms/terms' | '/forms/authorization'; readonly labelKey: string } | null {
+  catalog: IntakeCatalog,
+): { readonly link: LinkedFormLink; readonly labelKey: string } | null {
   if (key === 'authorization')
-    return { to: '/forms/authorization', labelKey: 'nav:staff.authorization' };
-  if (key === 'terms') return { to: '/forms/terms', labelKey: 'nav:staff.appTerms' };
+    return { link: { to: '/forms/authorization' }, labelKey: 'nav:staff.authorization' };
+  if (key === 'terms') {
+    const form = (catalog.customForms ?? []).find((each) => each.systemKey === 'app_terms');
+    return {
+      link:
+        form === undefined
+          ? { to: '/forms/terms' }
+          : { to: '/forms/custom/$formId', params: { formId: form.id } },
+      labelKey: 'nav:staff.appTerms',
+    };
+  }
   return null;
+}
+
+/** How many screens the app terms show her (RAPP-772): its form's, the hidden ones left out. */
+export function appTermsScreenCount(catalog: IntakeCatalog): number {
+  const form = (catalog.customForms ?? []).find((each) => each.systemKey === 'app_terms');
+  return form === undefined ? 2 : form.screens.filter((screen) => screen.isHidden !== true).length;
 }
 
 /** The address segment of a step. */

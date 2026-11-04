@@ -551,6 +551,8 @@ export function staffScreenContent(
   language: LanguageCode,
   t: Translate,
   texts: FormScreenTexts = {},
+  /** The screen has a decline (the app terms' screen she signs, RAPP-772): its label shows. */
+  hasDecline = false,
 ): PhoneContent {
   // One rule with her phone (RAPP-710): a language never written follows the
   // Catalan; the main button reads the app's own label where staff wrote none.
@@ -563,9 +565,20 @@ export function staffScreenContent(
     lines: [],
     checkbox: null,
     signature: false,
-    continueLabel: own.continueLabel ?? t('onboarding:continueAction', { lng: language }),
-    declineLabel: null,
+    // The screen she signs finishes, as it always did ("Signa i continua").
+    continueLabel:
+      own.continueLabel ??
+      t(hasDecline ? 'onboarding:finishAction' : 'onboarding:continueAction', { lng: language }),
+    declineLabel: hasDecline
+      ? (staffTextIn(texts.decline_label, language, false) ??
+        t('onboarding:termsDeclineAction', { lng: language }))
+      : null,
   };
+}
+
+/** Whether a form's screen has a decline: the app terms' screen she signs (RAPP-772). */
+export function hasDeclineAction(screen: { readonly systemScreen?: string }): boolean {
+  return screen.systemScreen === 'terms_sign';
 }
 
 export function stepContent(
@@ -622,10 +635,8 @@ export function stepContent(
 
   if (step.key === 'terms-intro' || step.key === 'terms') {
     // Their title and intro are the app terms' own (RAPP-613).
-    const terms =
-      catalog.terms === null || catalog.terms === undefined
-        ? null
-        : resolveAppTerms(catalog.terms.content, language);
+    const content = catalog.terms?.content ?? null;
+    const terms = content === null ? null : resolveAppTerms(content, language);
     return step.key === 'terms'
       ? {
           ...base,

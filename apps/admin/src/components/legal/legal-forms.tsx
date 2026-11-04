@@ -1,9 +1,9 @@
 /**
- * The two legal forms (RAPP-696), each a board of screens like Onboarding:
- * the season authorization with its seasons (RAPP-304, RAPP-614, RAPP-694)
- * and the app terms (RAPP-613). The board is Onboarding's own (`FormBoard`),
- * and each card opens its screen in the screen editor's layout, the form
- * beside her phone.
+ * The season authorization (RAPP-696), a board of screens like Onboarding,
+ * with its seasons (RAPP-304, RAPP-614, RAPP-694). The board is Onboarding's
+ * own (`FormBoard`), and each card opens its screen in the screen editor's
+ * layout, the form beside her phone. The app terms are a form of the engine
+ * since RAPP-772 (`CustomFormPage`).
  *
  * Each form owns its writes: through the RPC, then a reload of the route,
  * with a fresh authenticator code where the database asks for one (RAPP-235).
@@ -19,22 +19,16 @@ import { Page, PageHeader } from '@/components/layout/page';
 import {
   AUTHORIZATION_PHONE_STEPS,
   authorizationPhoneScreen,
-  TERMS_PHONE_STEPS,
-  termsPhoneScreen,
   type AuthorizationPhoneStep,
-  type TermsPhoneStep,
 } from '@/components/legal/legal-phone-content';
 import { PhoneMiniature } from '@/components/onboarding/phone-preview';
 import { FormBoard, type BoardCard } from '@/components/onboarding/screen-board';
-import { DeleteScreenAction, type ScreenDeletion } from '@/components/onboarding/screen-deletion';
 import { ScreenEditorHeading, type SiblingScreen } from '@/components/onboarding/screen-editor';
-import { AppTermsEditor } from '@/components/settings/app-terms-editor';
 import { AuthorizationEditor } from '@/components/settings/authorization-editor';
 import { useReload } from '@/components/settings/onboarding-design-sections';
 import { SeasonsPanel } from '@/components/settings/seasons-panel';
 import type { LegalFormsData } from '@/lib/legal-forms';
 import { supabase } from '@/lib/supabase';
-import { Navigate, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import {
   AUTHORIZATION_MOVABLE_SCREENS,
@@ -47,18 +41,7 @@ import {
   type AuthorizationVersion,
 } from '@ramassa/shared/authorization';
 import { AppError } from '@ramassa/shared/errors';
-import {
-  cleanAppTermsContent,
-  discardAppTermsDraft,
-  publishAppTermsDraft,
-  resolveAppTerms,
-  saveAppTermsDraft,
-} from '@ramassa/shared/intake';
-import {
-  authorizationQuestions,
-  deleteBuilderScreen,
-  type IntakeCatalog,
-} from '@ramassa/shared/intake-builder';
+import { authorizationQuestions } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { createSeason, setCurrentSeason } from '@ramassa/shared/seasons';
 
@@ -258,165 +241,6 @@ export function AuthorizationScreen({
   );
 }
 
-// The app terms -------------------------------------------------------------------------------------
-
-export function TermsBoard({ data }: { readonly data: LegalFormsData }) {
-  const { t, i18n } = useTranslation(['settings', 'onboarding', 'nav']);
-  const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
-  const shown =
-    data.termsVersions.find((version) => version.versionNumber === null) ??
-    data.termsVersions[0] ??
-    null;
-  const steps = termsSteps(data.intakeCatalog);
-  const card = (step: TermsPhoneStep): BoardCard => ({
-    key: step,
-    name: t(`builtinScreens.screenName.${step}`),
-    miniature:
-      shown === null ? null : (
-        <PhoneMiniature
-          content={
-            termsPhoneScreen(
-              resolveAppTerms(cleanAppTermsContent(shown.content), language),
-              step,
-              language,
-              t,
-              data.intakeCatalog,
-              undefined,
-              steps,
-            ).content
-          }
-          language={language}
-          isDimmed={false}
-        />
-      ),
-    status: null,
-    // The introduction can go (RAPP-761); the terms she signs always stay.
-    ...(step === 'terms-intro' ? { deletion: termsIntroDeletion(t) } : {}),
-    link: { to: '/forms/terms/$step', params: { step } },
-  });
-  return (
-    <Page data-testid="terms-board-page">
-      <PageHeader title={t('nav:staff.appTerms')} />
-      {/* The introduction comes before the terms she signs: both stay in place. */}
-      <FormBoard
-        label={t('nav:staff.appTerms')}
-        movable={[]}
-        trailing={steps.map(card)}
-        onReorder={async () => undefined}
-      />
-      <TermsVersions data={data} />
-    </Page>
-  );
-}
-
-function TermsVersions({ data }: { readonly data: LegalFormsData }) {
-  const { t } = useTranslation('settings');
-  const draft = data.termsVersions.find((version) => version.versionNumber === null) ?? null;
-  const published = data.termsVersions.flatMap((version, index): FormVersionRow[] =>
-    version.versionNumber === null
-      ? []
-      : [
-          {
-            key: version.id,
-            number: version.versionNumber,
-            publishedAt: version.publishedAt ?? version.updatedAt,
-            isCorrection: version.isCorrection,
-            // The newest published version is the one in force.
-            isCurrent:
-              index === data.termsVersions.findIndex((each) => each.versionNumber !== null),
-            count: version.acceptanceCount,
-          },
-        ],
-  );
-  return (
-    <FormVersions
-      title={t('appTerms.versionsTitle')}
-      draft={draft === null ? null : { updatedAt: draft.updatedAt, isSeenByTestPlayers: true }}
-      groups={[{ key: 'all', season: null, versions: published }]}
-      testId="app-terms-versions"
-    />
-  );
-}
-
-/** One screen of the app terms, opened from its card, with the screen's own buttons. */
-export function TermsScreen({
-  data,
-  step,
-}: {
-  readonly data: LegalFormsData;
-  readonly step: TermsPhoneStep;
-}) {
-  const { t } = useTranslation(['settings', 'nav']);
-  const reload = useReload();
-  const withStepUp = useStepUp();
-  const navigate = useNavigate();
-  const steps = termsSteps(data.intakeCatalog);
-  // A deleted introduction has no editor: back to the board.
-  if (!steps.includes(step)) return <Navigate to="/forms/terms" replace />;
-  const index = steps.indexOf(step);
-  return (
-    <Page data-testid="terms-screen-page">
-      <ScreenEditorHeading
-        back={{ to: '/forms/terms', label: t('nav:staff.appTerms') }}
-        siblings={{
-          previous: termsSibling(steps[index - 1], t),
-          next: termsSibling(steps[index + 1], t),
-        }}
-        title={t(`builtinScreens.screenName.${step}`)}
-        position={t('onboardingBoard.stepOf', { number: index + 1, total: steps.length })}
-      />
-      <AppTermsEditor
-        key={step}
-        step={step}
-        steps={steps}
-        versions={data.termsVersions}
-        canPublish={data.canPublish}
-        catalog={data.intakeCatalog}
-        onSaveDraft={async (content) => {
-          await saveAppTermsDraft(supabase, content);
-          await reload();
-        }}
-        onDiscardDraft={async () => {
-          await discardAppTermsDraft(supabase);
-          await reload();
-        }}
-        onPublish={async (kind) => {
-          const number = await withStepUp(() => publishAppTermsDraft(supabase, kind));
-          await reload();
-          return number;
-        }}
-      />
-      {step === 'terms-intro' ? (
-        <div className="flex justify-end">
-          <DeleteScreenAction
-            deletion={termsIntroDeletion(t)}
-            variant="button"
-            onDeleted={() => navigate({ to: '/forms/terms' })}
-          />
-        </div>
-      ) : null}
-    </Page>
-  );
-}
-
-/** The terms' screens she meets: the introduction unless staff deleted it (RAPP-761). */
-function termsSteps(catalog: IntakeCatalog): readonly TermsPhoneStep[] {
-  const isIntroDeleted = (catalog.screenSettings ?? []).some(
-    (settings) => settings.screen === 'terms-intro' && settings.isDeleted,
-  );
-  return TERMS_PHONE_STEPS.filter((step) => step !== 'terms-intro' || !isIntroDeleted);
-}
-
-/** The introduction's delete, as an Onboarding screen's (RAPP-761): nothing depends on it. */
-function termsIntroDeletion(t: (key: string) => string): ScreenDeletion {
-  return {
-    key: 'terms-intro',
-    name: t('builtinScreens.screenName.terms-intro'),
-    dependents: [],
-    run: () => deleteBuilderScreen(supabase, 'onboarding', 'terms-intro', ['terms-intro']),
-  };
-}
-
 /** An authorization screen next to this one, opening its editor (RAPP-709). */
 function authorizationSibling(
   step: AuthorizationPhoneStep | undefined,
@@ -427,18 +251,5 @@ function authorizationSibling(
     : {
         name: t(`authorizationEditor.phoneStep.${step}`),
         link: { to: '/forms/authorization/$step', params: { step } },
-      };
-}
-
-/** An app terms screen next to this one, opening its editor (RAPP-709). */
-function termsSibling(
-  step: TermsPhoneStep | undefined,
-  t: (key: string) => string,
-): SiblingScreen | null {
-  return step === undefined
-    ? null
-    : {
-        name: t(`builtinScreens.screenName.${step}`),
-        link: { to: '/forms/terms/$step', params: { step } },
       };
 }

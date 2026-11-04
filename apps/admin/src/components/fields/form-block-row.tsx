@@ -66,6 +66,7 @@ export function FormBlockRow({
   isEditing,
   onToggleEdit,
   onContentChange,
+  canRemove = true,
 }: {
   readonly block: FormBlock;
   readonly handle: SortableHandle | null;
@@ -75,6 +76,8 @@ export function FormBlockRow({
   readonly onToggleEdit: () => void;
   /** The content as typed, for a preview drawn beside it; null when the row closes. */
   readonly onContentChange?: (content: FormBlockContent | null) => void;
+  /** Off for a block a legal form keeps, the app terms' signature (RAPP-772). */
+  readonly canRemove?: boolean;
 }) {
   const { t } = useTranslation('settings');
   const actions = useProfileLayoutActions();
@@ -122,7 +125,7 @@ export function FormBlockRow({
         isBusy={action.isBusy}
         isEditing={isEditing}
         onToggleEdit={isEditing ? close : onToggleEdit}
-        onRemove={() => setIsConfirming(true)}
+        {...(canRemove ? { onRemove: () => setIsConfirming(true) } : {})}
         removeLabel={isSignature ? t('signatureBlock.removeNamed') : t('formBlock.removeNamed')}
         testId={`block-row-${block.id}`}
       >

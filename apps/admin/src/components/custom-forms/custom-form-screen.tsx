@@ -15,7 +15,7 @@ import {
 } from '@/components/custom-forms/custom-form-page';
 import { Page } from '@/components/layout/page';
 import { PhoneMiniature } from '@/components/onboarding/phone-preview';
-import { useAddDependentScreen } from '@/components/onboarding/screen-board';
+import { lockedAddDependent, useAddDependentScreen } from '@/components/onboarding/screen-board';
 import {
   AddDependentButton,
   conditionSources,
@@ -25,6 +25,7 @@ import {
 } from '@/components/onboarding/screen-condition';
 import {
   conditionLine,
+  hasDeclineAction,
   placedPhoneQuestions,
   staffScreenContent,
 } from '@/components/onboarding/screen-content';
@@ -76,6 +77,11 @@ export function CustomFormScreenEditor({
   const roots = ordered.filter(
     (each) => form !== undefined && formRootOf(data.intakeCatalog, form, each.id) === each.id,
   ).length;
+  // A legal form's fixed screen is never deleted (RAPP-772).
+  const deletion =
+    form === undefined || screen === undefined
+      ? undefined
+      : customFormDeletion(data.intakeCatalog, form, screen.id, language, numbers);
   return (
     <Page data-testid="custom-form-screen-page">
       <ScreenEditorHeading
@@ -115,11 +121,11 @@ export function CustomFormScreenEditor({
           numbers={numbers}
         />
       )}
-      {form === undefined || screen === undefined ? null : (
+      {deletion === undefined || form === undefined ? null : (
         <div className="flex justify-end">
           <DeleteScreenAction
-            key={screen.id}
-            deletion={customFormDeletion(data.intakeCatalog, form, screen.id, language, numbers)}
+            key={deletion.key}
+            deletion={deletion}
             variant="button"
             onDeleted={() => navigate({ to: '/forms/custom/$formId', params: { formId: form.id } })}
           />
@@ -148,7 +154,13 @@ function FormScreenBody({
   const { t, i18n } = useTranslation(['settings', 'onboarding']);
   const dashboardLanguage = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const catalog = data.intakeCatalog;
-  const hideLock = teamHideLockKey(catalog, 'custom_form', screen.id);
+  // A legal form's fixed screen (the app terms' screen she signs, RAPP-772) always
+  // shows, depends on no answer, and nothing comes after it.
+  const isFixed = screen.systemScreen !== undefined;
+  const hideLock = isFixed
+    ? 'onboardingBoard.hideLockedLegal'
+    : teamHideLockKey(catalog, 'custom_form', screen.id);
+  const hasDecline = hasDeclineAction(screen);
   // What it depends on (RAPP-715): a choice question of an earlier screen of this form.
   const ordered = formScreensInOrder(catalog, form);
   const earlier = ordered.slice(
@@ -202,6 +214,7 @@ function FormScreenBody({
                 dashboardLanguage,
                 t,
                 each.texts,
+                hasDeclineAction(each),
               )}
               language={dashboardLanguage}
             />
@@ -219,7 +232,16 @@ function FormScreenBody({
       screen={screen}
       number={number}
       total={total}
-      previewFooter={<AddDependentButton add={dependent.addFor(screen.id)} />}
+      previewFooter={
+        <AddDependentButton
+          add={
+            isFixed
+              ? lockedAddDependent(t('onboardingBoard.addDependentLockedFinal'))
+              : dependent.addFor(screen.id)
+          }
+        />
+      }
+      hasDecline={hasDecline}
       family={
         <>
           <FamilyRow members={family} />
@@ -227,15 +249,17 @@ function FormScreenBody({
         </>
       }
       condition={
-        <ScreenConditionSection
-          key={JSON.stringify(condition)}
-          catalog={catalog}
-          screenId={screen.id}
-          condition={condition}
-          sources={sources}
-          isOrphan={condition !== null && formScreenParent(catalog, form, screen) === null}
-          line={conditionLine(catalog, condition, dashboardLanguage, t)}
-        />
+        isFixed ? null : (
+          <ScreenConditionSection
+            key={JSON.stringify(condition)}
+            catalog={catalog}
+            screenId={screen.id}
+            condition={condition}
+            sources={sources}
+            isOrphan={condition !== null && formScreenParent(catalog, form, screen) === null}
+            line={conditionLine(catalog, condition, dashboardLanguage, t)}
+          />
+        )
       }
       // A draft: players see it with the next Publica (RAPP-701).
       saveKind={DRAFT_SAVE}
@@ -261,6 +285,8 @@ function FormScreenBody({
           catalog={catalog}
           screenKey={screen.id}
           screenName={name}
+          // The app terms' signature and acceptance stay on the screen she signs (RAPP-772).
+          isFixedLegalScreen={screen.systemScreen === 'terms_sign'}
           builtinQuestions={[]}
           language={language}
           editing={row.editing}

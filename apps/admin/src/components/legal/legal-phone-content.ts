@@ -1,21 +1,19 @@
 /**
- * The legal forms on her phone (RAPP-695): each screen of the season
- * authorization and of the app terms as `PhoneFrame` draws it, so their
- * boards and screen editors (RAPP-696) preview them as Onboarding does.
+ * The season authorization on her phone (RAPP-695): each of its screens as
+ * `PhoneFrame` draws it, so its board and screen editors (RAPP-696) preview
+ * them as Onboarding does. The app terms are a form of the engine since
+ * RAPP-772 and preview as any form's screen.
  *
  * The order and the content follow her app: re-registration's two screens
  * for a returning player, then the authorization form's screens in the
  * version's order (document, health when it asks something), the consents and
- * signature last; the terms' introduction, then the terms screen.
+ * signature last.
  */
 
-import { boardStep } from '@/components/onboarding/board-steps';
 import {
   builtinPhoneQuestion,
   customPhoneQuestion,
-  stepContent,
   type PhoneContent,
-  type ScreenTexts,
   type Translate,
 } from '@/components/onboarding/screen-content';
 import {
@@ -30,7 +28,6 @@ import {
   type AuthorizationTextField,
 } from '@ramassa/shared/authorization';
 import { resolveLocalizedText } from '@ramassa/shared/i18n';
-import type { resolveAppTerms } from '@ramassa/shared/intake';
 import {
   authorizationQuestions,
   reregistrationAsks,
@@ -227,65 +224,6 @@ export function authorizationPhoneScreen(
         ...seasonFormQuestions(catalog).map((question) => customPhoneQuestion(question, language)),
       ],
       continueLabel: words('continue_label'),
-    },
-  };
-}
-
-/** The app terms' two screens, in her onboarding's order. */
-export const TERMS_PHONE_STEPS = ['terms-intro', 'terms'] as const;
-
-export type TermsPhoneStep = (typeof TERMS_PHONE_STEPS)[number];
-
-/**
- * One screen of the app terms with the draft's words: the screen's buttons are
- * the onboarding screen's own, its place is its place on the terms board.
- */
-export function termsPhoneScreen(
-  terms: ReturnType<typeof resolveAppTerms>,
-  step: TermsPhoneStep,
-  language: LanguageCode,
-  t: Translate,
-  catalog: IntakeCatalog,
-  /** The screen's wording as typed (its help and buttons), RAPP-761. */
-  texts?: ScreenTexts,
-  /** The screens the form shows: the introduction can be deleted (RAPP-761). */
-  steps: readonly TermsPhoneStep[] = TERMS_PHONE_STEPS,
-): PhoneScreen {
-  const flow = boardStep(catalog, step);
-  const position = { step: steps.indexOf(step) + 1, total: steps.length };
-  const base =
-    flow === null
-      ? { ...EMPTY, title: '', continueLabel: '' }
-      : stepContent(catalog, flow, language, t, texts === undefined ? {} : { texts });
-  if (step === 'terms-intro') {
-    return {
-      ...position,
-      content: {
-        ...base,
-        title: terms.introTitle,
-        intro: terms.intro,
-        lines: [],
-        blocks: terms.points,
-      },
-    };
-  }
-  return {
-    ...position,
-    content: {
-      ...base,
-      title: terms.title,
-      intro: terms.mediaHint,
-      lines: [],
-      body: terms.body,
-      checkbox: null,
-      checkboxes: [
-        {
-          label: terms.acceptLabel,
-          requiredMark: t('onboarding:authorizationRequiredMark', { lng: language }),
-        },
-        { label: terms.mediaLabel, requiredMark: null },
-      ],
-      signature: true,
     },
   };
 }

@@ -114,6 +114,7 @@ export function FormChoicesFields({
   isRepeatLocked = false,
   isKindLocked = false,
   hasLanguages = false,
+  isNameOnly = false,
   idPrefix,
 }: {
   readonly choices: CustomFormChoices;
@@ -125,11 +126,42 @@ export function FormChoicesFields({
   readonly isKindLocked?: boolean;
   /** The name in every language; the new form dialog asks it in Catalan. */
   readonly hasLanguages?: boolean;
+  /** Only the name: the app terms' choices are fixed (RAPP-772). */
+  readonly isNameOnly?: boolean;
   readonly idPrefix: string;
 }) {
   const { t } = useTranslation('settings');
   const [language, setLanguage] = useState<LanguageCode>('ca');
   const nameLanguage = hasLanguages ? language : 'ca';
+  const nameField = (
+    <Field data-invalid={error !== null}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <FieldLabel htmlFor={`${idPrefix}-name`}>{t('customForms.name')}</FieldLabel>
+        {hasLanguages ? (
+          <LanguageTabs
+            value={language}
+            onChange={setLanguage}
+            label={t('onboardingBoard.phoneLanguage')}
+          />
+        ) : null}
+      </div>
+      <Input
+        id={`${idPrefix}-name`}
+        lang={nameLanguage}
+        dir={getLanguageDirection(nameLanguage)}
+        autoComplete="off"
+        value={choices.name[nameLanguage] ?? ''}
+        placeholder={nameLanguage === 'ca' ? '' : (choices.name.ca ?? '')}
+        aria-invalid={error !== null}
+        onChange={(event) =>
+          onChange({ ...choices, name: { ...choices.name, [nameLanguage]: event.target.value } })
+        }
+        data-testid={`${idPrefix}-name`}
+      />
+      {error === null ? null : <FieldError>{error}</FieldError>}
+    </Field>
+  );
+  if (isNameOnly) return <FieldGroup>{nameField}</FieldGroup>;
   return (
     <FieldGroup>
       <ChoiceCards
@@ -144,32 +176,7 @@ export function FormChoicesFields({
         onChange={(kind) => onChange({ ...choices, kind })}
         testId={`${idPrefix}-kind`}
       />
-      <Field data-invalid={error !== null}>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <FieldLabel htmlFor={`${idPrefix}-name`}>{t('customForms.name')}</FieldLabel>
-          {hasLanguages ? (
-            <LanguageTabs
-              value={language}
-              onChange={setLanguage}
-              label={t('onboardingBoard.phoneLanguage')}
-            />
-          ) : null}
-        </div>
-        <Input
-          id={`${idPrefix}-name`}
-          lang={nameLanguage}
-          dir={getLanguageDirection(nameLanguage)}
-          autoComplete="off"
-          value={choices.name[nameLanguage] ?? ''}
-          placeholder={nameLanguage === 'ca' ? '' : (choices.name.ca ?? '')}
-          aria-invalid={error !== null}
-          onChange={(event) =>
-            onChange({ ...choices, name: { ...choices.name, [nameLanguage]: event.target.value } })
-          }
-          data-testid={`${idPrefix}-name`}
-        />
-        {error === null ? null : <FieldError>{error}</FieldError>}
-      </Field>
+      {nameField}
       <ChoiceCards
         legend={t('customForms.filledBy')}
         name={`${idPrefix}-filled-by`}

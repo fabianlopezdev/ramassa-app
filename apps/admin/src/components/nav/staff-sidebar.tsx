@@ -17,6 +17,7 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { fetchAppTermsFormId } from '@/lib/custom-forms';
 import { useUnreadMessageCount } from '@/lib/messaging';
 import {
   activeStaffNavPath,
@@ -71,13 +72,23 @@ export function StaffSidebar() {
   const { permissions } = useAuth();
   // Only for someone with the inbox, so the design role asks nothing.
   const unread = useUnreadMessageCount(permissions.has('messages.inbox'));
-  const groups = visibleStaffNavGroups(permissions);
+  const hasLegalRows = visibleStaffNavGroups(permissions).some((group) =>
+    group.items.some((item) => 'parent' in item && item.parent === 'legal'),
+  );
+  // The app terms are a form of the engine (RAPP-772): their row opens its page.
+  const appTermsFormId = useAppTermsFormId(hasLegalRows);
+  const groups = visibleStaffNavGroups(permissions).map((group) => ({
+    ...group,
+    items: group.items.map((item) =>
+      item.to === APP_TERMS_PATH && appTermsFormId !== null
+        ? // The row's own address, read at run time: the menu links by string.
+          ({ ...item, to: legalFormPath(appTermsFormId) } as unknown as typeof item)
+        : item,
+    ),
+  }));
   // The legal forms the team created, under Condicions legals (RAPP-771).
   const legalForms = useLegalFormEntries(
-    holdsAnyPermission(permissions, CUSTOM_FORMS_PERMISSIONS) &&
-      groups.some((group) =>
-        group.items.some((item) => 'parent' in item && item.parent === 'legal'),
-      ),
+    holdsAnyPermission(permissions, CUSTOM_FORMS_PERMISSIONS) && hasLegalRows,
     pathname,
   );
   const activePath = activeStaffNavPath(pathname, [
@@ -129,6 +140,23 @@ export function StaffSidebar() {
 /** Where a created legal form opens: its board, the engine of every form (RAPP-771). */
 function legalFormPath(id: string): string {
   return `/forms/custom/${id}`;
+}
+
+/** The menu's app terms row, which opens the terms form once its id is read (RAPP-772). */
+const APP_TERMS_PATH = '/forms/terms';
+
+/** The app terms' form, read once for the menu; null until read, and on an older database. */
+function useAppTermsFormId(enabled: boolean): string | null {
+  const [formId, setFormId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!enabled) return;
+    const controller = new AbortController();
+    void fetchAppTermsFormId(controller.signal).then((loaded) => {
+      if (!controller.signal.aborted) setFormId(loaded);
+    });
+    return () => controller.abort();
+  }, [enabled]);
+  return formId;
 }
 
 /**

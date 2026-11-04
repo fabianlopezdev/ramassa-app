@@ -1,7 +1,8 @@
 /**
  * The pages that list forms (RAPP-700, RAPP-771): Altres formularis lists the
  * forms of kind Altre, Condicions legals the legal ones, the app's two legal
- * forms first. Each page has Nou formulari; both open the same dialog, which
+ * forms first: the season authorization's board, and the app terms' form
+ * (RAPP-772). Each page has Nou formulari; both open the same dialog, which
  * asks the kind first (preset by the page), the name and the choices
  * (RAPP-701), creates the form as a draft and opens its board. Each row opens
  * its form.
@@ -44,17 +45,19 @@ export function CustomFormsList({
   const { t, i18n } = useTranslation(['settings', 'nav']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const [isCreating, setIsCreating] = useState(false);
-  // The app's own legal forms open their own boards until they move onto this engine.
+  // The authorization opens its own board until it moves onto this engine.
   const forms = (data.intakeCatalog.customForms ?? []).filter(
     (form) => form.kind === kind && form.systemKey === null,
   );
+  // The app terms are a form of the engine (RAPP-772), listed with the app's own.
+  const appTerms =
+    kind === 'legal' && data.canDesign
+      ? (data.intakeCatalog.customForms ?? []).find((form) => form.systemKey === 'app_terms')
+      : undefined;
   const title = kind === 'legal' ? t('nav:staff.legal') : t('customForms.title');
   const appLegalForms =
     kind === 'legal' && data.canDesign
-      ? [
-          { to: '/forms/authorization', icon: FileSignature, name: t('nav:staff.authorization') },
-          { to: '/forms/terms', icon: ScrollText, name: t('nav:staff.appTerms') },
-        ]
+      ? [{ to: '/forms/authorization', icon: FileSignature, name: t('nav:staff.authorization') }]
       : [];
   return (
     <Page data-testid={kind === 'legal' ? 'legal-forms-page' : 'custom-forms-page'}>
@@ -70,7 +73,7 @@ export function CustomFormsList({
         }
       />
       <EditorSection title={t('customForms.listLabel')} isFlush testId="custom-forms-list">
-        {forms.length + appLegalForms.length === 0 ? (
+        {forms.length + appLegalForms.length + (appTerms === undefined ? 0 : 1) === 0 ? (
           <p className="px-5 py-5 text-start text-sm text-muted-foreground">
             {t('customForms.empty')}
           </p>
@@ -88,6 +91,23 @@ export function CustomFormsList({
                 </Link>
               </li>
             ))}
+            {appTerms === undefined ? null : (
+              <li className="bg-card">
+                <Link
+                  to="/forms/custom/$formId"
+                  params={{ formId: appTerms.id }}
+                  className={ROW_CLASS}
+                  data-testid="legal-form-row-app-terms"
+                >
+                  <FormRowContent
+                    icon={ScrollText}
+                    name={textIn(appTerms.name, language)}
+                    line={t('customForms.kindOption.legal')}
+                    badge={<FormStatusBadge form={appTerms} />}
+                  />
+                </Link>
+              </li>
+            )}
             {forms.map((form) => (
               <li key={form.id} className="bg-card">
                 <Link

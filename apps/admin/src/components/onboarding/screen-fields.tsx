@@ -97,6 +97,9 @@ interface Placed {
   readonly field: ProfileField;
 }
 
+/** The acceptance of the app terms (RAPP-772): always required, never removed. */
+const APP_TERMS_CONSENT = 'app_terms';
+
 /** One row of the list: a placed field, a block (RAPP-690, RAPP-770) or a consent (RAPP-699). */
 type ScreenItem =
   | { readonly kind: 'field'; readonly id: string; readonly placed: Placed }
@@ -183,6 +186,7 @@ export function ScreenFieldsSection({
   onEdit,
   onBuiltinLabelChange,
   onWordingChange,
+  isFixedLegalScreen = false,
 }: {
   /** Onboarding by default; the authorization's Health screen is its surface's one screen. */
   readonly surface?: FieldsSurface;
@@ -201,6 +205,8 @@ export function ScreenFieldsSection({
   readonly onEdit: (id: string | null) => void;
   readonly onBuiltinLabelChange: (label: BuilderText | undefined) => void;
   readonly onWordingChange: (wording: TypedWording | null) => void;
+  /** The app terms' screen she signs (RAPP-772): its signatures stay. */
+  readonly isFixedLegalScreen?: boolean;
 }) {
   const { t, i18n } = useTranslation(['settings', 'onboarding']);
   const uiLanguage = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
@@ -403,7 +409,9 @@ export function ScreenFieldsSection({
                 language={language}
                 canRemove={
                   !(isConsents && item.consent.key === 'health_data' && asksHealth) &&
-                  !(isConsents && consents.length === 1)
+                  !(isConsents && consents.length === 1) &&
+                  // The acceptance of the app terms stays on their form (RAPP-772).
+                  item.consent.key !== APP_TERMS_CONSENT
                 }
                 isEditing={editing === item.consent.placementId}
                 onToggleEdit={() => toggle(item.consent.placementId)}
@@ -418,6 +426,7 @@ export function ScreenFieldsSection({
                 language={language}
                 isEditing={editing === item.block.id}
                 onToggleEdit={() => toggle(item.block.id)}
+                canRemove={!(isFixedLegalScreen && item.block.kind === 'signature')}
                 onContentChange={(block) =>
                   onWordingChange(
                     block === null ? null : { fieldId: item.block.id, label: {}, help: {}, block },
@@ -547,6 +556,10 @@ function ConsentPlacementRow({
           // Image rights drive the photo consent, which she can always refuse.
           ...(consent.key === 'image_rights'
             ? { lockReason: t('authorizationEditor.imageRightsLock') }
+            : {}),
+          // The acceptance of the app terms is what she signs (RAPP-772).
+          ...(consent.key === APP_TERMS_CONSENT
+            ? { lockReason: t('legalData.appTermsAcceptanceLock') }
             : {}),
           onChange: (next) =>
             void run(() => actions.saveConsentPlacement(consent.placementId, next)),

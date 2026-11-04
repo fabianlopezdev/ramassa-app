@@ -94,7 +94,7 @@ export function customFormDeletion(
   key: string,
   language: LanguageCode,
   numbers: ReadonlyMap<string, string>,
-): ScreenDeletion {
+): ScreenDeletion | undefined {
   const nameOf = (each: string) =>
     textIn(form.screens.find((screen) => screen.id === each)?.title ?? {}, language);
   const family = new Set([key]);
@@ -102,6 +102,10 @@ export function customFormDeletion(
     for (const screen of form.screens) {
       if (formScreenParent(catalog, form, screen) === parent) family.add(screen.id);
     }
+  }
+  // A legal form's fixed screen is never deleted, such as the app terms' screen she signs (RAPP-772).
+  if (form.screens.some((screen) => family.has(screen.id) && screen.systemScreen !== undefined)) {
+    return undefined;
   }
   return {
     key,

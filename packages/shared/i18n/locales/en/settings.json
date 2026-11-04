@@ -889,7 +889,8 @@
     "authorizationSignature": "Authorization signature",
     "termsSignature": "Terms signature",
     "removeBody": "It will no longer be asked on this form. The consent and the decisions already made are kept.",
-    "formWording": "Text on this form"
+    "formWording": "Text on this form",
+    "appTermsAcceptanceLock": "Accepting the terms is always required: it is what she signs."
   },
   "customForms": {
     "title": "Other forms",

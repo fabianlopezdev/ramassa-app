@@ -461,8 +461,10 @@ export type RowEditing = ReturnType<typeof useRowEditing>;
 
 /** The texts of a screen the team made: its title (required) and intro (optional). */
 /** The texts of a screen staff made: its Text box (RAPP-771), as an app screen's. */
-type TeamScreenField = 'title' | 'intro' | 'help' | 'continue_label';
+type TeamScreenField = 'title' | 'intro' | 'help' | 'continue_label' | 'decline_label';
 const TEAM_FIELDS = ['title', 'intro', 'help', 'continue_label'] as const;
+/** A button label: the app's own label shows where staff wrote none. */
+type ButtonField = 'continue_label' | 'decline_label';
 
 /**
  * The hide switch of a screen (RAPP-711), on every screen editor: the app's
@@ -521,6 +523,7 @@ export function StaffScreenEditor({
   family = null,
   previewFooter,
   condition = null,
+  hasDecline = false,
 }: {
   readonly screen: {
     readonly title: BuilderText;
@@ -556,8 +559,13 @@ export function StaffScreenEditor({
   readonly previewFooter?: ReactNode;
   /** "Quan es mostra": the answer that opens it (RAPP-715). */
   readonly condition?: ReactNode;
+  /** The screen has a decline, the app terms' screen she signs (RAPP-772): its label is edited. */
+  readonly hasDecline?: boolean;
 }) {
   const { t } = useTranslation(['settings', 'onboarding']);
+  const fieldsEdited: readonly TeamScreenField[] = hasDecline
+    ? [...TEAM_FIELDS, 'decline_label']
+    : TEAM_FIELDS;
   const reload = useReload();
   const [language, setLanguage] = useState<LanguageCode>('ca');
   const [previewLanguage, setPreviewLanguage] = useState<LanguageCode>('ca');
@@ -567,6 +575,7 @@ export function StaffScreenEditor({
     intro: {},
     help: {},
     continue_label: {},
+    decline_label: {},
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isHidden, setIsHidden] = useState(hide.isHidden);
@@ -576,18 +585,29 @@ export function StaffScreenEditor({
     intro: screen.intro ?? {},
     help: screen.texts?.help ?? {},
     continue_label: screen.texts?.continue_label ?? {},
+    decline_label: screen.texts?.decline_label ?? {},
   };
   const isOptional = (field: TeamScreenField) => field === 'intro' || field === 'help';
-  // The main button reads the app's own label where staff wrote none, as an app screen's.
-  const appLabel = (shownLanguage: LanguageCode) =>
-    t('onboarding:continueAction', { lng: shownLanguage });
+  // A button reads the app's own label where staff wrote none, as an app screen's. The
+  // screen she signs finishes ("Signa i continua"), and its decline is "Ara no".
+  const appLabel = (field: ButtonField) => (shownLanguage: LanguageCode) =>
+    t(
+      field === 'decline_label'
+        ? 'onboarding:termsDeclineAction'
+        : hasDecline
+          ? 'onboarding:finishAction'
+          : 'onboarding:continueAction',
+      { lng: shownLanguage },
+    );
+  const isButton = (field: TeamScreenField): field is ButtonField =>
+    field === 'continue_label' || field === 'decline_label';
   // The saved text with what is typed over it: her phone reads it by the shared rule.
   const current = (field: TeamScreenField): BuilderText => ({ ...saved[field], ...typed[field] });
   const shownIn = (field: TeamScreenField, shownLanguage: LanguageCode): string =>
     typed[field][shownLanguage] ??
     staffTextIn(saved[field], shownLanguage, isOptional(field)) ??
-    (field === 'continue_label'
-      ? appLabel(shownLanguage)
+    (isButton(field)
+      ? appLabel(field)(shownLanguage)
       : shownLanguage === 'ca'
         ? ''
         : shownIn(field, 'ca'));
@@ -598,8 +618,8 @@ export function StaffScreenEditor({
   // What is saved, read the same way (RAPP-751): Desa only for a real change.
   const savedIn = (field: TeamScreenField, shownLanguage: LanguageCode): string =>
     staffTextIn(saved[field], shownLanguage, isOptional(field)) ??
-    (field === 'continue_label'
-      ? appLabel(shownLanguage)
+    (isButton(field)
+      ? appLabel(field)(shownLanguage)
       : shownLanguage === 'ca'
         ? ''
         : savedIn(field, 'ca'));
@@ -608,19 +628,19 @@ export function StaffScreenEditor({
   const [openedCatalan] = useState(
     () =>
       Object.fromEntries(
-        TEAM_FIELDS.map((field) => [field, savedIn(field, 'ca').trim()]),
+        fieldsEdited.map((field) => [field, savedIn(field, 'ca').trim()]),
       ) as Readonly<Record<TeamScreenField, string>>,
   );
   const isChanged =
     isHidden !== hide.isHidden ||
-    TEAM_FIELDS.some((field) =>
+    fieldsEdited.some((field) =>
       SUPPORTED_LANGUAGES.some(
         (each) => shownIn(field, each).trim() !== savedIn(field, each).trim(),
       ),
     );
   /** The fields whose Catalan changed: only those are translated (RAPP-751). */
   const changedCatalan = () =>
-    TEAM_FIELDS.filter(
+    fieldsEdited.filter(
       (field) =>
         shownIn(field, 'ca').trim() !== '' && shownIn(field, 'ca').trim() !== openedCatalan[field],
     );
@@ -631,7 +651,7 @@ export function StaffScreenEditor({
       Object.fromEntries(
         SUPPORTED_LANGUAGES.map((each) => [each, shownIn(field, each)]),
       ) as BuilderText,
-      field === 'continue_label' ? appLabel : followedTeamText(shownIn(field, 'ca')),
+      isButton(field) ? appLabel(field) : followedTeamText(shownIn(field, 'ca')),
       isOptional(field),
     );
 
@@ -652,11 +672,10 @@ export function StaffScreenEditor({
     try {
       const help = toSave('help');
       const continueLabel = toSave('continue_label');
+      // The decline is edited on a screen that has one; elsewhere it stays as saved.
+      const declineLabel = hasDecline ? toSave('decline_label') : screen.texts?.decline_label;
       await onStore(toSave('title') ?? {}, toSave('intro') ?? null, {
-        // The leave button is not edited here: it stays as saved.
-        ...(screen.texts?.decline_label === undefined
-          ? {}
-          : { decline_label: screen.texts.decline_label }),
+        ...(declineLabel === undefined ? {} : { decline_label: declineLabel }),
         ...(help === undefined ? {} : { help }),
         ...(continueLabel === undefined ? {} : { continue_label: continueLabel }),
       });
@@ -679,7 +698,12 @@ export function StaffScreenEditor({
     phoneQuestions(previewLanguage, row.wording),
     previewLanguage,
     t,
-    { help: current('help'), continue_label: current('continue_label') },
+    {
+      help: current('help'),
+      continue_label: current('continue_label'),
+      decline_label: current('decline_label'),
+    },
+    hasDecline,
   );
 
   const direction = getLanguageDirection(language);
@@ -802,6 +826,25 @@ export function StaffScreenEditor({
                     />
                   </div>
                 </Field>
+                {hasDecline ? (
+                  <Field orientation="responsive">
+                    <FieldContent>
+                      <FieldLabel htmlFor="screen-decline-label">
+                        {t('builtinScreens.field.decline_label')}
+                      </FieldLabel>
+                    </FieldContent>
+                    <div className={CONTROL_COLUMN}>
+                      <Input
+                        id="screen-decline-label"
+                        dir={direction}
+                        lang={language}
+                        value={shownIn('decline_label', language)}
+                        onChange={(event) => edit('decline_label', event.target.value)}
+                        data-testid="screen-decline-label"
+                      />
+                    </div>
+                  </Field>
+                ) : null}
                 <HideScreenField
                   id="hide-screen"
                   isHidden={isHidden}

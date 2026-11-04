@@ -98,7 +98,6 @@ import {
   saveWizardFlowOrder,
   screenSettingsFor,
   setScreenHidden,
-  TERMS_SCREEN_COUNT,
   textIn,
   wizardFlow,
   type ChainedFormRef,
@@ -107,6 +106,7 @@ import {
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import {
+  appTermsScreenCount,
   BOARD_LOCKED_STEPS,
   boardNumbers,
   boardRootCount,
@@ -280,7 +280,7 @@ export function ScreenBoard({
     const step = boardStep(catalog, key);
     if (step === null) return null;
     const content = stepContent(catalog, step, language, t);
-    const linked = linkedFormOf(step.key);
+    const linked = linkedFormOf(step.key, catalog);
     const isHidden = isOwnHidden(key);
     const status = isHidden
       ? t('builtinScreens.hiddenBadge')
@@ -326,7 +326,7 @@ export function ScreenBoard({
           <FormMiniature
             name={t('nav:staff.appTerms')}
             kind={t('onboardingChain.termsLine')}
-            screens={t('onboardingChain.screens', { count: TERMS_SCREEN_COUNT })}
+            screens={t('onboardingChain.screens', { count: appTermsScreenCount(catalog) })}
             language={language}
           />
         ) : (
@@ -352,7 +352,7 @@ export function ScreenBoard({
       link:
         linked === null
           ? { to: '/onboarding/screens/$screenId', params: { screenId: routeIdOf(step.key) } }
-          : { to: linked.to },
+          : linked.link,
     };
   };
   const cards = (keys: readonly string[]) =>
@@ -601,7 +601,7 @@ export type BoardCardLink =
       readonly search?: { readonly shown: string };
     }
   | {
-      readonly to: '/forms/authorization/$step' | '/forms/terms/$step';
+      readonly to: '/forms/authorization/$step';
       readonly params: { readonly step: string };
     }
   | { readonly to: '/forms/authorization' | '/forms/terms' }

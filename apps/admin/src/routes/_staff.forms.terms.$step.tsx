@@ -1,45 +1,37 @@
 /**
- * One screen of the app terms (RAPP-696), opened from its card:
- * `/forms/terms/terms-intro` or `/forms/terms/terms`, with the terms' text and
- * the screen's own buttons. An address naming no screen goes back to the
- * board.
- *
- * The same guard as the board. `ssr: false` for the reason every staff
- * screen gives (the session lives in localStorage, ADR-005).
+ * The old addresses of the app terms' two screens (RAPP-696):
+ * `/forms/terms/terms-intro` and `/forms/terms/terms`. The app terms are a
+ * form of the engine since RAPP-772: `terms` opens its screen she signs, and
+ * `terms-intro` its first screen when that one comes before it. Anything else
+ * opens the form's page.
+ * `ssr: false` for the reason every staff screen gives (the session lives in
+ * localStorage, ADR-005).
  */
 
-import { RequireAuth } from '@/components/auth/require-auth';
-import { TermsScreen } from '@/components/legal/legal-forms';
-import { TERMS_PHONE_STEPS, type TermsPhoneStep } from '@/components/legal/legal-phone-content';
-import { loadLegalForms } from '@/lib/legal-forms';
-import { LEGAL_FORMS_PERMISSIONS } from '@/lib/nav-items';
+import { supabase } from '@/lib/supabase';
 import { createFileRoute, redirect } from '@tanstack/react-router';
-
-function isStep(step: string): step is TermsPhoneStep {
-  return (TERMS_PHONE_STEPS as readonly string[]).includes(step);
-}
+import { fetchIntakeCatalog } from '@ramassa/shared/intake-builder';
 
 export const Route = createFileRoute('/_staff/forms/terms/$step')({
   ssr: false,
-  beforeLoad: ({ params }) => {
-    if (!isStep(params.step)) {
-      throw redirect({ to: '/forms/terms', replace: true });
-    }
+  beforeLoad: async ({ params }) => {
+    const catalog = await fetchIntakeCatalog(supabase).catch(() => null);
+    const form = (catalog?.customForms ?? []).find((each) => each.systemKey === 'app_terms');
+    if (form === undefined) throw redirect({ to: '/forms/legal', replace: true });
+    const screens = form.screens.filter((screen) => screen.isHidden !== true);
+    const first = screens[0];
+    const screen =
+      params.step === 'terms'
+        ? screens.find((each) => each.systemScreen === 'terms_sign')
+        : params.step === 'terms-intro' && first?.systemScreen === undefined
+          ? first
+          : undefined;
+    throw screen === undefined
+      ? redirect({ to: '/forms/custom/$formId', params: { formId: form.id }, replace: true })
+      : redirect({
+          to: '/forms/custom/$formId/screens/$screenId',
+          params: { formId: form.id, screenId: screen.id },
+          replace: true,
+        });
   },
-  loader: loadLegalForms,
-  component: TermsScreenPage,
 });
-
-function TermsScreenPage() {
-  return (
-    <RequireAuth allow={['staff', 'admin']} anyPermission={LEGAL_FORMS_PERMISSIONS}>
-      <Screen />
-    </RequireAuth>
-  );
-}
-
-function Screen() {
-  const data = Route.useLoaderData();
-  const { step } = Route.useParams();
-  return isStep(step) ? <TermsScreen data={data} step={step} /> : null;
-}

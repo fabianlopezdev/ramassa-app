@@ -18,6 +18,11 @@
  * A legal form (RAPP-771) sits under Condicions legals: an admin publishes
  * it, with a fresh authenticator code, and the app's own legal forms are
  * never archived. The versions panel lists what each Publica published.
+ *
+ * The app terms (RAPP-772) are such a form: Publica numbers a version in their
+ * own ledger (Correcció or Nova versió), the panel counts who accepted each,
+ * their draft can be discarded, only their name is a setting, and their last
+ * screen, the one she signs, stays last.
  */
 
 import { useStepUp } from '@/components/auth/step-up';
@@ -31,6 +36,7 @@ import { useSaveKind } from '@/components/onboarding/save-kind-dialog';
 import {
   AddScreenCard,
   FormBoard,
+  lockedAddDependent,
   lockedHide,
   useAddDependentScreen,
   type BoardCard,
@@ -39,6 +45,7 @@ import {
 import { conditionSources, type ConditionSource } from '@/components/onboarding/screen-condition';
 import {
   conditionLine,
+  hasDeclineAction,
   placedPhoneQuestions,
   staffScreenContent,
 } from '@/components/onboarding/screen-content';
@@ -71,6 +78,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { isAppError } from '@ramassa/shared/errors';
+import { discardAppTermsDraft, publishAppTermsDraft } from '@ramassa/shared/intake';
 import {
   archiveCustomForm,
   formFamily,
@@ -140,6 +148,9 @@ export function CustomFormPage({
   const { t, i18n } = useTranslation(['settings', 'nav']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const form = (data.intakeCatalog.customForms ?? []).find((each) => each.id === formId);
+  // The app terms are accepted in their ledger: no responses here (RAPP-772).
+  const isAppTerms = form?.systemKey === 'app_terms';
+  const hasResponses = data.canReadResponses && !isAppTerms;
   const firstTab = data.canDesign ? 'screens' : 'responses';
   return (
     <Page data-testid="custom-form-page">
@@ -181,7 +192,7 @@ export function CustomFormPage({
                 <TabsTrigger value="settings">{t('customForms.tab.settings')}</TabsTrigger>
               </>
             ) : null}
-            {data.canReadResponses ? (
+            {hasResponses ? (
               <TabsTrigger value="responses" data-testid="custom-form-responses-tab">
                 {t('customForms.tab.responses')}
               </TabsTrigger>
@@ -195,11 +206,11 @@ export function CustomFormPage({
               </TabsContent>
               <TabsContent value="settings" className="flex flex-col gap-6">
                 <FormSettings form={form} />
-                {form.audience === 'chosen' ? <FormRecipients form={form} /> : null}
+                {form.audience === 'chosen' && !isAppTerms ? <FormRecipients form={form} /> : null}
               </TabsContent>
             </>
           ) : null}
-          {data.canReadResponses ? (
+          {hasResponses ? (
             <TabsContent value="responses">
               <FormResponses form={form} responses={data.responses} />
             </TabsContent>
@@ -226,6 +237,7 @@ function CustomFormVersions({
   readonly form: CustomForm;
 }) {
   const { t } = useTranslation('settings');
+  if (form.systemKey === 'app_terms') return <AppTermsVersions data={data} />;
   const current = data.seasons.find((season) => season.isCurrent);
   const groups = form.repeatsEachSeason
     ? data.seasons.flatMap((season) => {
@@ -266,7 +278,138 @@ function CustomFormVersions({
   );
 }
 
+/**
+ * The app terms' versions (RAPP-772): their ledger's, newest first, each with
+ * how many accepted it, and the draft when there is one.
+ */
+function AppTermsVersions({ data }: { readonly data: CustomFormData }) {
+  const { t } = useTranslation('settings');
+  const draft = data.termsVersions.find((version) => version.versionNumber === null) ?? null;
+  const newest = data.termsVersions.find((version) => version.versionNumber !== null);
+  const published = data.termsVersions.flatMap((version) =>
+    version.versionNumber === null
+      ? []
+      : [
+          {
+            key: version.id,
+            number: version.versionNumber,
+            publishedAt: version.publishedAt ?? version.updatedAt,
+            isCorrection: version.isCorrection,
+            // The newest published version is the one in force.
+            isCurrent: version === newest,
+            count: version.acceptanceCount,
+          },
+        ],
+  );
+  return (
+    <FormVersions
+      title={t('appTerms.versionsTitle')}
+      draft={draft === null ? null : { updatedAt: draft.updatedAt, isSeenByTestPlayers: true }}
+      groups={[{ key: 'all', season: null, versions: published }]}
+      testId="custom-form-versions"
+    />
+  );
+}
+
 function FormActions({ data, form }: { readonly data: CustomFormData; readonly form: CustomForm }) {
+  if (form.systemKey === 'app_terms') return <AppTermsActions data={data} form={form} />;
+  return <TeamFormActions data={data} form={form} />;
+}
+
+/**
+ * Publica of the app terms (RAPP-772): their draft becomes a version of their
+ * ledger, a Correcció (nobody is asked again) or a Nova versió (every player
+ * accepts it again), with a fresh authenticator code. Their draft can be
+ * discarded: the form goes back to the version in force.
+ */
+function AppTermsActions({
+  data,
+  form,
+}: {
+  readonly data: CustomFormData;
+  readonly form: CustomForm;
+}) {
+  const { t } = useTranslation('settings');
+  const reload = useReload();
+  const withStepUp = useStepUp();
+  const [isBusy, setIsBusy] = useState(false);
+  const draft = data.termsVersions.find((version) => version.versionNumber === null) ?? null;
+  const current = data.termsVersions.find((version) => version.versionNumber !== null);
+  const saveKind = useSaveKind({
+    hasAnswers: current !== undefined,
+    newVersionNote:
+      current === undefined
+        ? null
+        : t('saveDialog.newVersionCount', { count: current.acceptanceCount }),
+  });
+
+  async function run(action: () => Promise<void>) {
+    setIsBusy(true);
+    try {
+      await action();
+      await reload();
+    } catch (thrown) {
+      toast.error(
+        isAppError(thrown) && thrown.message.includes('a correction adds no required')
+          ? t('customForms.correctionAddsRequirement')
+          : t('customForms.actionFailed'),
+      );
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  if (!data.canDesign) return null;
+  return (
+    <>
+      {saveKind.dialog}
+      {draft === null ? null : (
+        <Button
+          type="button"
+          variant="outline"
+          disabled={isBusy}
+          onClick={() =>
+            void run(async () => {
+              await discardAppTermsDraft(supabase);
+              toast.success(t('appTerms.discarded'));
+            })
+          }
+          data-testid="custom-form-discard"
+        >
+          {t('appTerms.discardDraft')}
+        </Button>
+      )}
+      <Button
+        type="button"
+        disabled={isBusy || draft === null || !data.canPublishLegal}
+        title={data.canPublishLegal ? undefined : t('customForms.legalPublishNeedsAdmin')}
+        onClick={() => {
+          if (form.screens.every((screen) => screen.isHidden === true)) {
+            toast.error(t('customForms.needsScreen'));
+            return;
+          }
+          void saveKind.request((kind) =>
+            run(async () => {
+              await withStepUp(() => publishAppTermsDraft(supabase, kind));
+              toast.success(t('appTerms.published'));
+            }),
+          );
+        }}
+        data-testid="custom-form-publish"
+      >
+        {t('customForms.publish')}
+      </Button>
+    </>
+  );
+}
+
+function TeamFormActions({
+  data,
+  form,
+}: {
+  readonly data: CustomFormData;
+  readonly form: CustomForm;
+}) {
   const { t } = useTranslation('settings');
   const reload = useReload();
   const withStepUp = useStepUp();
@@ -403,6 +546,8 @@ function FormScreensBoard({
     return null;
   };
   const screenCard = (screen: CustomFormScreen, suffix?: string): BoardCard => {
+    // A legal form's fixed screen, such as the app terms' screen she signs (RAPP-772).
+    if (screen.systemScreen !== undefined) return fixedScreenCard(screen);
     const ancestor = hidingAncestor(screen);
     const isHidden = screen.isHidden === true || ancestor !== null;
     const isOrphan =
@@ -468,16 +613,45 @@ function FormScreensBoard({
       },
     };
   };
-  const cards: BoardCard[] = roots.map((root) => {
-    // Every follow-up below it, depth first (RAPP-715): 3a, 3a.1, 3b.
-    const branches = formFamily(catalog, form, root.id, '')
-      .slice(1)
-      .flatMap((member) => {
-        const screen = byId.get(member.key);
-        return screen === undefined ? [] : [screenCard(screen, member.number)];
-      });
-    return { ...screenCard(root), ...(branches.length === 0 ? {} : { branches }) };
+  // The screen she signs stays last: it opens, it never moves, hides or goes (RAPP-772).
+  const fixedScreenCard = (screen: CustomFormScreen): BoardCard => ({
+    key: screen.id,
+    name: textIn(screen.title, language),
+    miniature: (
+      <PhoneMiniature
+        content={staffScreenContent(
+          screen.title,
+          screen.intro,
+          placedPhoneQuestions(catalog, screen.id, language, null, 'custom_form'),
+          language,
+          t,
+          screen.texts,
+          hasDeclineAction(screen),
+        )}
+        language={language}
+      />
+    ),
+    status: null,
+    hide: lockedHide(t('onboardingBoard.hideLockedLegal')),
+    addDependent: lockedAddDependent(t('onboardingBoard.addDependentLockedFinal')),
+    link: {
+      to: '/forms/custom/$formId/screens/$screenId',
+      params: { formId: form.id, screenId: screen.id },
+    },
   });
+  const closing = roots.filter((root) => isClosingScreen(root));
+  const cards: BoardCard[] = roots
+    .filter((root) => !isClosingScreen(root))
+    .map((root) => {
+      // Every follow-up below it, depth first (RAPP-715): 3a, 3a.1, 3b.
+      const branches = formFamily(catalog, form, root.id, '')
+        .slice(1)
+        .flatMap((member) => {
+          const screen = byId.get(member.key);
+          return screen === undefined ? [] : [screenCard(screen, member.number)];
+        });
+      return { ...screenCard(root), ...(branches.length === 0 ? {} : { branches }) };
+    });
   return (
     <>
       <FormBoard
@@ -485,13 +659,15 @@ function FormScreensBoard({
         key={ordered.map((screen) => screen.id).join('|')}
         label={textIn(form.name, language)}
         movable={cards}
+        // The add card comes before the screen she signs: a new screen goes there (RAPP-772).
         addCard={<AddScreenCard catalog={catalog} sources={sources} onCreate={createScreen} />}
+        trailing={closing.map((screen) => screenCard(screen))}
         onReorder={async (keys) => {
-          // Each screen goes with every follow-up below it (RAPP-715).
+          // Each screen goes with every follow-up below it (RAPP-715); the last stays last.
           await reorderCustomFormScreens(
             supabase,
             form.id,
-            keys.flatMap((root) =>
+            [...keys, ...closing.map((screen) => screen.id)].flatMap((root) =>
               ordered
                 .filter((screen) => formRootOf(catalog, form, screen.id) === root)
                 .map((screen) => screen.id),
@@ -503,6 +679,11 @@ function FormScreensBoard({
       {dependent.dialog}
     </>
   );
+}
+
+/** The screen that closes a legal form and stays last: the app terms' screen she signs (RAPP-772). */
+function isClosingScreen(screen: CustomFormScreen): boolean {
+  return screen.systemScreen === 'terms_sign' || screen.systemScreen === 'authorization_sign';
 }
 
 /** A form's screens that ask a choice question, in her order: what a screen can depend on (RAPP-715). */
@@ -624,6 +805,8 @@ function FormSettings({ form }: { readonly form: CustomForm }) {
         hasLanguages
         isRepeatLocked={form.publishedAt !== null}
         isKindLocked={form.publishedAt !== null || form.systemKey !== null}
+        // The app terms are asked of every player, to use the app: only their name changes (RAPP-772).
+        isNameOnly={form.systemKey === 'app_terms'}
         idPrefix="form-settings"
       />
     </EditorSection>

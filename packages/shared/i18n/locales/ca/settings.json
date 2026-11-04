@@ -889,7 +889,8 @@
     "authorizationSignature": "Signatura de l'autorització",
     "termsSignature": "Signatura de les condicions",
     "removeBody": "Ja no es preguntarà en aquest formulari. El consentiment i les decisions ja preses es conserven.",
-    "formWording": "Text en aquest formulari"
+    "formWording": "Text en aquest formulari",
+    "appTermsAcceptanceLock": "L'acceptació de les condicions sempre és obligatòria: és el que ella signa."
   },
   "customForms": {
     "title": "Altres formularis",
