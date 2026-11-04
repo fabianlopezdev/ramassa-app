@@ -420,8 +420,10 @@ export type Database = {
       authorization_versions: {
         Row: {
           content: Json;
+          form_snapshot: Json | null;
           id: string;
           is_correction: boolean;
+          legacy_compatible: boolean | null;
           org_id: string;
           published_at: string | null;
           published_by: string | null;
@@ -432,8 +434,10 @@ export type Database = {
         };
         Insert: {
           content: Json;
+          form_snapshot?: Json | null;
           id?: string;
           is_correction?: boolean;
+          legacy_compatible?: boolean | null;
           org_id: string;
           published_at?: string | null;
           published_by?: string | null;
@@ -444,8 +448,10 @@ export type Database = {
         };
         Update: {
           content?: Json;
+          form_snapshot?: Json | null;
           id?: string;
           is_correction?: boolean;
+          legacy_compatible?: boolean | null;
           org_id?: string;
           published_at?: string | null;
           published_by?: string | null;
@@ -1179,6 +1185,7 @@ export type Database = {
         Row: {
           system_screen: string | null;
           texts: Json;
+          attachments: Json | null;
           created_at: string;
           form_id: string;
           id: string;
@@ -1195,6 +1202,7 @@ export type Database = {
         Insert: {
           system_screen?: string | null;
           texts?: Json;
+          attachments?: Json | null;
           created_at?: string;
           form_id: string;
           id?: string;
@@ -1211,6 +1219,7 @@ export type Database = {
         Update: {
           system_screen?: string | null;
           texts?: Json;
+          attachments?: Json | null;
           created_at?: string;
           form_id?: string;
           id?: string;
@@ -5775,7 +5784,8 @@ export type Database = {
           org_id: string;
           screen_key: string | null;
           signed_at: string;
-          strokes: Json;
+          strokes: Json | null;
+          unable_to_draw: boolean;
           walk_in_id: string;
           witnessed_by: string | null;
         };
@@ -5787,7 +5797,8 @@ export type Database = {
           org_id: string;
           screen_key?: string | null;
           signed_at: string;
-          strokes: Json;
+          strokes?: Json | null;
+          unable_to_draw?: boolean;
           walk_in_id: string;
           witnessed_by?: string | null;
         };
@@ -5799,7 +5810,8 @@ export type Database = {
           org_id?: string;
           screen_key?: string | null;
           signed_at?: string;
-          strokes?: Json;
+          strokes?: Json | null;
+          unable_to_draw?: boolean;
           walk_in_id?: string;
           witnessed_by?: string | null;
         };
@@ -6389,6 +6401,9 @@ export type Database = {
         Args: never;
         Returns: {
           content: Json;
+          form_id: string;
+          form_snapshot: Json;
+          legacy_compatible: boolean;
           season_name: string;
           version_id: string;
           version_number: number;
@@ -7213,7 +7228,10 @@ export type Database = {
         Args: never;
         Returns: {
           content: Json;
+          form_id: string;
+          form_snapshot: Json;
           is_draft: boolean;
+          legacy_compatible: boolean;
           is_returning: boolean;
           required: boolean;
           season_id: string;
@@ -7816,6 +7834,14 @@ export type Database = {
         Returns: string;
       };
       save_entity_service: { Args: { p_payload: Json }; Returns: string };
+      save_form_block_texts: {
+        Args: { p_block_id: string; p_texts: Json };
+        Returns: undefined;
+      };
+      save_form_screen_attachments: {
+        Args: { p_attachments: Json; p_screen_id: string };
+        Returns: undefined;
+      };
       save_form_block:
         | {
             Args: {
