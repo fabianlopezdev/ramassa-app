@@ -7,6 +7,7 @@
  */
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { isWaitingForNetwork, retryAfterNetworkCheck } from '@/lib/network-status';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -23,7 +24,7 @@ interface LoadingQuery {
 
 /** Whether the screen has no data because its load failed or waits for a connection. */
 export function hasLoadFailed(query: LoadingQuery): boolean {
-  return query.data === undefined && (query.isError || query.fetchStatus === 'paused');
+  return (query.data === undefined && query.isError) || isWaitingForNetwork([query]);
 }
 
 export function EntityLoadFailure({ query }: { readonly query: LoadingQuery }) {
@@ -46,7 +47,7 @@ export function EntityLoadFailure({ query }: { readonly query: LoadingQuery }) {
       <AuthSubmitButton
         testID="entity-load-retry"
         label={t('retry')}
-        onPress={() => void query.refetch()}
+        onPress={() => void retryAfterNetworkCheck(query.refetch)}
         isLoading={query.fetchStatus === 'fetching'}
       />
     </View>

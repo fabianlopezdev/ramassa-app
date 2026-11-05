@@ -2,7 +2,16 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { onlineManager, QueryClient, QueryObserver } from '@tanstack/react-query';
 import { expect, test } from 'bun:test';
-import { configureNetworkStatus, isNetworkStateOnline } from './network-status';
+import {
+  configureNetworkStatus,
+  isNetworkStateOnline,
+  isWaitingForNetwork,
+  recheckNetworkStatus,
+  retryAfterNetworkCheck,
+  watchDeviceNetwork,
+  type DeviceNetwork,
+  type NetworkStateLike,
+} from './network-status';
 
 const mobileRoot = fileURLToPath(new URL('../', import.meta.url));
 
@@ -71,4 +80,177 @@ test('a paused onboarding query starts over USB without another login', async ()
     onlineManager.setEventListener(() => () => {});
     onlineManager.setOnline(true);
   }
+});
+
+/** A phone whose network the test controls; Android only reports changes, so `set` alone sends no event. */
+function fakePhone(initial: NetworkStateLike) {
+  let state = initial;
+  const networkListeners = new Set<(next: NetworkStateLike) => void>();
+  const foregroundListeners = new Set<() => void>();
+  const calls: string[] = [];
+  let pendingRead: (() => void) | null = null;
+  let holdReads = false;
+  const network: DeviceNetwork = {
+    getNetworkStateAsync: () => {
+      calls.push('read');
+      const read = state;
+      if (!holdReads) return Promise.resolve(read);
+      return new Promise((resolve) => {
+        pendingRead = () => resolve(read);
+      });
+    },
+    addNetworkStateListener: (listener) => {
+      calls.push('listen');
+      networkListeners.add(listener);
+      return { remove: () => networkListeners.delete(listener) };
+    },
+    addForegroundListener: (listener) => {
+      foregroundListeners.add(listener);
+      return { remove: () => foregroundListeners.delete(listener) };
+    },
+  };
+  return {
+    load: async () => network,
+    calls,
+    set: (next: NetworkStateLike) => {
+      state = next;
+    },
+    emit: (next: NetworkStateLike) => {
+      state = next;
+      for (const listener of networkListeners) listener(next);
+    },
+    foreground: () => {
+      for (const listener of foregroundListeners) listener();
+    },
+    holdReads: () => {
+      holdReads = true;
+    },
+    releaseRead: () => pendingRead?.(),
+    listenerCount: () => networkListeners.size + foregroundListeners.size,
+  };
+}
+
+const offline = { isConnected: false, isInternetReachable: false };
+const online = { isConnected: true, isInternetReachable: true };
+const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+function pausedOnboardingQuery() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  client.mount();
+  let calls = 0;
+  const observer = new QueryObserver(client, {
+    queryKey: ['onboarding-intake', 'test-player'],
+    queryFn: async () => {
+      calls += 1;
+      return { ready: true };
+    },
+  });
+  const unsubscribe = observer.subscribe(() => {});
+  return {
+    observer,
+    calls: () => calls,
+    dispose: () => {
+      unsubscribe();
+      client.unmount();
+      client.clear();
+      onlineManager.setEventListener(() => () => {});
+      onlineManager.setOnline(true);
+    },
+  };
+}
+
+test('the change listener is added before the first read, and a change during the read wins', async () => {
+  const phone = fakePhone(offline);
+  phone.holdReads();
+  const states: boolean[] = [];
+  const stop = watchDeviceNetwork((value) => states.push(value), phone.load);
+  await settle();
+  expect(phone.calls).toEqual(['listen', 'read']);
+  phone.emit(online);
+  phone.releaseRead();
+  await settle();
+  expect(states).toEqual([true]);
+  stop();
+});
+
+test('coming back to the app reads the network again and starts a paused query (RAPP-775)', async () => {
+  const phone = fakePhone(offline);
+  configureNetworkStatus(undefined, phone.load);
+  await settle();
+  const query = pausedOnboardingQuery();
+  try {
+    expect(query.observer.getCurrentResult().fetchStatus).toBe('paused');
+    // Back online with no change event, as after a background network block.
+    phone.set(online);
+    await settle();
+    expect(query.calls()).toBe(0);
+    phone.foreground();
+    await settle();
+    expect(query.observer.getCurrentResult().status).toBe('success');
+    expect(query.calls()).toBe(1);
+  } finally {
+    query.dispose();
+  }
+});
+
+test('Try again reads the network again, where a refetch alone kept waiting (RAPP-775)', async () => {
+  const phone = fakePhone(offline);
+  configureNetworkStatus(undefined, phone.load);
+  await settle();
+  const query = pausedOnboardingQuery();
+  try {
+    phone.set(online);
+    void query.observer.refetch();
+    await settle();
+    expect(query.observer.getCurrentResult().fetchStatus).toBe('paused');
+    expect(query.calls()).toBe(0);
+    await retryAfterNetworkCheck(() => query.observer.refetch());
+    expect(query.observer.getCurrentResult().status).toBe('success');
+    expect(query.observer.getCurrentResult().data).toEqual({ ready: true });
+    expect(query.calls()).toBe(1);
+  } finally {
+    query.dispose();
+  }
+});
+
+test('Try again while the phone is really offline keeps the query waiting', async () => {
+  const phone = fakePhone(offline);
+  configureNetworkStatus(undefined, phone.load);
+  await settle();
+  const query = pausedOnboardingQuery();
+  try {
+    void retryAfterNetworkCheck(() => query.observer.refetch());
+    await settle();
+    expect(query.observer.getCurrentResult().fetchStatus).toBe('paused');
+    expect(query.calls()).toBe(0);
+    phone.emit(online);
+    await settle();
+    expect(query.observer.getCurrentResult().status).toBe('success');
+  } finally {
+    query.dispose();
+  }
+});
+
+test('stopping the watch removes its listeners and its recheck', async () => {
+  const phone = fakePhone(online);
+  const states: boolean[] = [];
+  const stop = watchDeviceNetwork((value) => states.push(value), phone.load);
+  await settle();
+  expect(phone.listenerCount()).toBe(2);
+  stop();
+  expect(phone.listenerCount()).toBe(0);
+  phone.set(offline);
+  await recheckNetworkStatus();
+  expect(states).toEqual([true]);
+});
+
+test('a screen waits for the network only while a query without data is paused', () => {
+  expect(isWaitingForNetwork([{ data: undefined, fetchStatus: 'paused' }])).toBe(true);
+  expect(isWaitingForNetwork([{ data: { cached: true }, fetchStatus: 'paused' }])).toBe(false);
+  expect(
+    isWaitingForNetwork([
+      { data: undefined, fetchStatus: 'fetching' },
+      { data: undefined, fetchStatus: 'idle' },
+    ]),
+  ).toBe(false);
 });

@@ -2,6 +2,7 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { isWaitingForNetwork, retryAfterNetworkCheck } from '@/lib/network-status';
 import { logger } from '@/lib/observability';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { draftForScenario, withSelectedLanguage, wizardDraftStep } from '@/lib/onboarding-intake';
@@ -220,7 +221,7 @@ function OnboardingScreens() {
     [],
   );
 
-  const isPaused = intake.data === undefined && intake.fetchStatus === 'paused';
+  const isPaused = isWaitingForNetwork([intake]);
   if (intake.data === undefined && (intake.isError || isPaused)) {
     return (
       <AnnouncementFeedError
@@ -228,7 +229,9 @@ function OnboardingScreens() {
         retryLabel={t('retryAction')}
         code={isPaused ? 'NETWORK-1' : toAppError(intake.error).code}
         languageFontClass={languageFontClass}
-        onRetry={() => void intake.refetch()}
+        // The network is read again first: a paused load only starts once the
+        // phone reads as online (RAPP-775).
+        onRetry={() => void retryAfterNetworkCheck(intake.refetch)}
         isLoading={intake.isFetching}
       />
     );
