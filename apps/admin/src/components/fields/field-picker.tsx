@@ -258,6 +258,10 @@ function PickerBody({
   }
 
   const count = [...picked].filter(canPick).length;
+  const isSectionFull = isConsentsSection
+    ? shownConsents.length > 0 &&
+      shownConsents.every((consent) => consents?.stateOf(consent).kind !== 'free')
+    : shown.length > 0 && shown.every((field) => stateOf(field).kind !== 'free');
 
   return (
     <>
@@ -450,6 +454,15 @@ function PickerBody({
               ))}
             </div>
           )}
+          {/* A section whose fields are all asked already says so (RAPP-778). */}
+          {!isSearching && isSectionFull ? (
+            <p
+              className="px-5 pt-1 pb-3 text-start text-sm text-muted-foreground"
+              data-testid={`${testId}-none-free`}
+            >
+              {t('fieldPicker.noneFree')}
+            </p>
+          ) : null}
           {!isSearching &&
           ((section !== undefined && shown.length === 0) ||
             (isConsentsSection && shownConsents.length === 0)) ? (
@@ -580,20 +593,27 @@ function FieldOption({
       >
         {isTicked ? <Check className="size-3" /> : null}
       </span>
-      <span
-        className={cn(
-          'flex min-w-0 flex-1 items-center gap-3',
-          state.kind !== 'free' && 'opacity-50',
-        )}
-      >
-        <FieldTypeIcon type={field.type} />
+      {/* Dimmed when it cannot be picked; the line saying why stays readable (RAPP-778). */}
+      <span className="flex min-w-0 flex-1 items-center gap-3">
+        <span className={cn('contents', state.kind !== 'free' && '[&>*]:opacity-50')}>
+          <FieldTypeIcon type={field.type} />
+        </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="truncate text-sm font-medium">{textIn(field.label, language)}</span>
+          <span
+            className={cn(
+              'truncate text-sm font-medium',
+              state.kind !== 'free' && 'text-muted-foreground',
+            )}
+          >
+            {textIn(field.label, language)}
+          </span>
           <span className="truncate text-xs text-muted-foreground">
             {sectionName === null ? line : `${sectionName} · ${line}`}
           </span>
         </span>
-        <span className="flex w-20 shrink-0 justify-end">
+        <span
+          className={cn('flex w-20 shrink-0 justify-end', state.kind !== 'free' && 'opacity-50')}
+        >
           <PrivacyBadge level={field.privacy} />
         </span>
       </span>
@@ -654,15 +674,19 @@ function ConsentOption({
       >
         {isTicked ? <Check className="size-3" /> : null}
       </span>
-      <span
-        className={cn(
-          'flex min-w-0 flex-1 items-center gap-3',
-          state.kind !== 'free' && 'opacity-50',
-        )}
-      >
-        <FieldTypeIcon type="consent" />
+      <span className="flex min-w-0 flex-1 items-center gap-3">
+        <span className={cn('contents', state.kind !== 'free' && '[&>*]:opacity-50')}>
+          <FieldTypeIcon type="consent" />
+        </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="truncate text-sm font-medium">{textIn(consent.name, language)}</span>
+          <span
+            className={cn(
+              'truncate text-sm font-medium',
+              state.kind !== 'free' && 'text-muted-foreground',
+            )}
+          >
+            {textIn(consent.name, language)}
+          </span>
           <span className="truncate text-xs text-muted-foreground">{line}</span>
         </span>
         <span aria-hidden className="w-20 shrink-0" />

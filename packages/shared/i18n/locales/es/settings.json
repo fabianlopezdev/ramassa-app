@@ -733,6 +733,7 @@
     "sections": "Secciones",
     "results": "Resultados",
     "noResults": "Ningún campo coincide.",
+    "noneFree": "Ningún campo de esta sección se puede añadir a esta pantalla. Bajo cada nombre se indica dónde se pregunta ya. Puedes crear un campo nuevo.",
     "here": "Ya está en esta pantalla",
     "elsewhere": "Ya se pregunta en el paso {{number}}",
     "elsewhereApp": "Ya se pregunta en otra pantalla",

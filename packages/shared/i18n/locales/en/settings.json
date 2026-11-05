@@ -733,6 +733,7 @@
     "sections": "Sections",
     "results": "Results",
     "noResults": "No field matches.",
+    "noneFree": "No field in this section can be added to this screen. Each name shows where it is already asked. You can create a new field.",
     "here": "Already on this screen",
     "elsewhere": "Already asked on step {{number}}",
     "elsewhereApp": "Already asked on another screen",

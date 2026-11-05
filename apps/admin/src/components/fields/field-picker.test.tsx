@@ -103,3 +103,11 @@ test('the search looks across every section', () => {
   expect(view.queryByTestId('field-picker-field-gloves')).toBeNull();
   expect(view.getByTestId('field-picker-field-allergies')).toBeTruthy();
 });
+
+test('a section with no field to add says so, and the reasons stay on the rows', () => {
+  const view = open(async () => undefined);
+  expect(view.getByTestId('field-picker-none-free')).toBeTruthy();
+  expect(view.getByTestId('field-picker-field-shoes').textContent).toContain('step 6');
+  fireEvent.click(view.getByTestId('field-picker-section-health_needs'));
+  expect(view.queryByTestId('field-picker-none-free')).toBeNull();
+});

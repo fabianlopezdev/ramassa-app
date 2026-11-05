@@ -733,6 +733,7 @@
     "sections": "Seccions",
     "results": "Resultats",
     "noResults": "Cap camp coincideix.",
+    "noneFree": "Cap camp d'aquesta secció es pot afegir a aquesta pantalla. Sota cada nom hi diu on ja es pregunta. Pots crear un camp nou.",
     "here": "Ja és en aquesta pantalla",
     "elsewhere": "Ja es pregunta a Pas {{number}}",
     "elsewhereApp": "Ja es pregunta en una altra pantalla",
