@@ -9,6 +9,7 @@ import { PushPermissionRationale } from '@/components/push-permission-rationale'
 import { areaHome, awaitsSecondFactor, teamScreens } from '@/lib/account-area';
 import { useAuthorizationStatus } from '@/lib/authorization';
 import { useMyCustomForms } from '@/lib/custom-forms';
+import { isWaitingForNetwork, retryAfterNetworkCheck } from '@/lib/network-status';
 import { useFinishOnboardingChain, useMyOnboardingChain } from '@/lib/onboarding-chain';
 import { OnboardingEntranceProvider } from '@/lib/onboarding-entrance';
 import { canPromptForPush } from '@/lib/push-prompt-eligibility';
@@ -23,7 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, useWindowDimensions, View } from 'react-native';
 import { assuranceLevelOf, useAuth } from '@ramassa/shared/auth';
 import { needsAuthorization } from '@ramassa/shared/authorization';
-import { isAppError } from '@ramassa/shared/errors';
+import { getErrorMessageKey, isAppError } from '@ramassa/shared/errors';
 import { nextChainedForm } from '@ramassa/shared/intake-builder';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -172,6 +173,24 @@ function AppNavigator() {
   if (isSigning && pathname !== '/signing-mode') {
     return <Redirect href={'/signing-mode' as Href} />;
   }
+  // The gates wait for the network the same way her Onboarding does: offline
+  // she sees why and can try again, instead of a spinner that never ends, and
+  // she is still never let past them (RAPP-775).
+  if (area === 'player' && isWaitingForNetwork([authorization, forms, chain])) {
+    return (
+      <AnnouncementFeedError
+        message={t(getErrorMessageKey('NETWORK-1'))}
+        retryLabel={t('onboarding:retryAction')}
+        code="NETWORK-1"
+        languageFontClass={languageFontClass}
+        onRetry={() =>
+          void retryAfterNetworkCheck(() =>
+            Promise.all([authorization.refetch(), forms.refetch(), chain.refetch()]),
+          )
+        }
+      />
+    );
+  }
   if (area === 'player' && (authorization.isPending || forms.isPending || chain.isPending)) {
     return (
       <View
@@ -193,7 +212,7 @@ function AppNavigator() {
         code={isAppError(authorization.error) ? authorization.error.code : 'DB-1'}
         languageFontClass={languageFontClass}
         isLoading={authorization.isFetching}
-        onRetry={() => void authorization.refetch()}
+        onRetry={() => void retryAfterNetworkCheck(authorization.refetch)}
       />
     );
   }
@@ -205,7 +224,7 @@ function AppNavigator() {
         code="VALIDATION-1"
         languageFontClass={languageFontClass}
         isLoading={forms.isFetching}
-        onRetry={() => void forms.refetch()}
+        onRetry={() => void retryAfterNetworkCheck(forms.refetch)}
       />
     );
   }
