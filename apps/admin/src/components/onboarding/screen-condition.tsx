@@ -36,12 +36,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { isConditionFieldType, type ScreenCondition } from '@ramassa/shared/intake';
@@ -446,18 +445,21 @@ export function FamilyRow({ members }: { readonly members: readonly FamilyMember
 
 /**
  * Under the phone preview of a screen's editor (RAPP-718): adds a screen that
- * depends on this one; the dialog asks which answers open it. Off, with the
- * reason on hover, for a screen with no question with options.
+ * depends on this one; the dialog asks which answers open it. Off for a
+ * screen with no question with options, with the reason written under it
+ * (RAPP-779): a reason only on hover was missed.
  */
 export function AddDependentButton({ add }: { readonly add: AddDependent }) {
   const { t } = useTranslation('settings');
   const label = t('onboardingBoard.addDependent');
+  const reasonId = useId();
   const button = (
     <Button
       type="button"
       variant="outline"
       className="w-full"
       disabled={!add.canAdd}
+      aria-describedby={add.canAdd ? undefined : reasonId}
       onClick={add.open}
       data-testid="screen-add-dependent"
     >
@@ -467,18 +469,15 @@ export function AddDependentButton({ add }: { readonly add: AddDependent }) {
   );
   if (add.canAdd) return <div className="w-full max-w-[20rem]">{button}</div>;
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        {/* A disabled button gets no hover: the wrapper carries the reason. */}
-        <span
-          className="flex w-full max-w-[20rem]"
-          tabIndex={0}
-          data-testid="screen-add-dependent-reason"
-        >
-          {button}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>{add.reason}</TooltipContent>
-    </Tooltip>
+    <div className="flex w-full max-w-[20rem] flex-col gap-1.5">
+      {button}
+      <p
+        id={reasonId}
+        className="text-center text-xs text-muted-foreground"
+        data-testid="screen-add-dependent-reason"
+      >
+        {add.reason}
+      </p>
+    </div>
   );
 }
