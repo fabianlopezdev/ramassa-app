@@ -30,6 +30,8 @@ import {
   builtinField,
   builtinHelp,
   builtinLabel,
+  consentsOn,
+  consentText,
   customFormScreenQuestions,
   fieldById,
   formBlocksOn,
@@ -69,6 +71,17 @@ export interface PhoneQuestion {
   readonly draft: PreviewDraft;
   /** A signature block (RAPP-690): its text, then an empty box to sign in. */
   readonly isSignature?: boolean;
+  /**
+   * A legal form's own wording around its signature (RAPP-773, RAPP-777):
+   * the texts staff wrote; one left out shows the app's own.
+   */
+  readonly signatureTexts?: {
+    readonly title?: string;
+    readonly prompt?: string;
+    readonly cannotDraw?: string;
+  };
+  /** A consent of Dades legals placed on the screen (RAPP-699): her tick and its text. */
+  readonly isConsent?: boolean;
   /** A text or points block (RAPP-770): drawn as the terms draw theirs, with no control. */
   readonly block?: Exclude<ResolvedFormBlock, { readonly kind: 'signature' }>;
   /** A heading drawn above it: the emergency contact's title (RAPP-695). */
@@ -186,21 +199,31 @@ function builtinOptionLabels(
     .map((option) => textIn(option.label, language));
 }
 
-/** A built-in question on her phone. `label` is a label typed in an open form, if any. */
+/** A built-in question's label and help as typed in its open form (RAPP-777). */
+export interface TypedBuiltinWording {
+  readonly label: BuilderText;
+  readonly help: BuilderText;
+}
+
+/** A built-in question on her phone. `typed` is its wording typed in an open form, if any. */
 export function builtinPhoneQuestion(
   catalog: IntakeCatalog,
   question: IntakeQuestion,
   language: LanguageCode,
   t: Translate,
-  label?: BuilderText,
+  typed?: TypedBuiltinWording,
 ): PhoneQuestion {
   const inLanguage: Translate = (key, options) => t(key, { ...options, lng: language });
   const appLabel = inLanguage(INTAKE_QUESTION_LABEL_KEYS[question] ?? question);
   // As typed in an open form, else as saved, by the rule her phone reads (RAPP-719).
   const shownLabel =
-    label === undefined
+    typed === undefined
       ? (builtinLabel(catalog, question, language) ?? appLabel)
-      : (staffTextIn(label, language, false) ?? appLabel);
+      : (staffTextIn(typed.label, language, false) ?? appLabel);
+  const shownHelp =
+    typed === undefined
+      ? (builtinHelp(catalog, question, language) ?? '')
+      : (staffTextIn(typed.help, language, true) ?? '');
   const field = catalog.layout === undefined ? undefined : builtinField(catalog.layout, question);
   const look = BUILTIN_LOOKS[question];
   const required = requiredBuiltinQuestions(catalog);
@@ -211,7 +234,7 @@ export function builtinPhoneQuestion(
   return {
     id: question,
     label: shownLabel,
-    help: builtinHelp(catalog, question, language) ?? '',
+    help: shownHelp,
     isRequired: isRequiredQuestion(question, required),
     draft: {
       // Her field's own type, as its row shows it: a country picker, a yes or no.
@@ -312,17 +335,34 @@ export function placedPhoneQuestions(
       },
     };
   });
-  // Her blocks among the fields, in the order they share (RAPP-690, RAPP-770).
+  // Her blocks and consents among the fields, in the order they share (RAPP-690,
+  // RAPP-770); the consents as her ticks (RAPP-777).
   const order = (id: string) => placementOf(id)?.sortOrder ?? Number.POSITIVE_INFINITY;
   const shown: PhoneQuestion[] = [];
-  const blocks = [...formBlocksOn(catalog.blocks, surface, screenKey)];
+  const others = [
+    ...formBlocksOn(catalog.blocks, surface, screenKey).map((block) => ({
+      sortOrder: block.sortOrder,
+      question: () => blockPhoneQuestion(block, language, typed),
+    })),
+    ...consentsOn(catalog, surface, screenKey).map((consent) => ({
+      sortOrder: consent.sortOrder,
+      question: (): PhoneQuestion => ({
+        id: consent.placementId,
+        label: consentText(consent.body, language).text,
+        help: '',
+        isRequired: consent.required,
+        draft: NO_CONTROL,
+        isConsent: true,
+      }),
+    })),
+  ].sort((a, b) => a.sortOrder - b.sortOrder);
   for (const question of fields) {
-    while (blocks.length > 0 && (blocks[0]?.sortOrder ?? 0) < order(question.id)) {
-      shown.push(blockPhoneQuestion(blocks.shift() as FormBlock, language, typed));
+    while (others.length > 0 && (others[0]?.sortOrder ?? 0) < order(question.id)) {
+      shown.push((others.shift() as (typeof others)[number]).question());
     }
     shown.push(question);
   }
-  return [...shown, ...blocks.map((block) => blockPhoneQuestion(block, language, typed))];
+  return [...shown, ...others.map((other) => other.question())];
 }
 
 /** The blocks of one Onboarding screen on her phone, in their order (RAPP-690, RAPP-770). */
@@ -359,9 +399,23 @@ function blockPhoneQuestion(
     language,
   );
   const base = { id: block.id, help: '', draft: NO_CONTROL };
-  return shown.kind === 'signature'
-    ? { ...base, label: shown.body, isRequired: true, isSignature: true }
-    : { ...base, label: '', isRequired: false, block: shown };
+  if (shown.kind !== 'signature') return { ...base, label: '', isRequired: false, block: shown };
+  // Its texts as her phone reads them: a help staff cleared shows none.
+  const own = (field: 'signature_title' | 'signature_prompt' | 'cannot_draw_label') =>
+    block.kind === 'signature'
+      ? (staffTextIn(block.texts?.[field], language, false) ?? undefined)
+      : undefined;
+  return {
+    ...base,
+    label: shown.body,
+    isRequired: true,
+    isSignature: true,
+    signatureTexts: {
+      title: own('signature_title'),
+      prompt: own('signature_prompt'),
+      cannotDraw: own('cannot_draw_label'),
+    },
+  };
 }
 
 /** The built-in questions a screen asks, without the ones staff hid. */

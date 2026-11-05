@@ -31,6 +31,7 @@ import {
   type BuiltinOverride,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
+import type { TypedBuiltinWording } from './screen-content';
 
 export interface BuiltinQuestionInfo {
   readonly question: IntakeQuestion;
@@ -52,8 +53,8 @@ export function BuiltinForm({
   readonly required: RequiredQuestions;
   readonly onSave: (override: BuiltinOverride) => Promise<void>;
   readonly onCancel: () => void;
-  /** The label as typed, for a phone preview beside the form (RAPP-641). */
-  readonly onLabelChange?: (label: BuilderText) => void;
+  /** The label and help as typed, for a phone preview beside the form (RAPP-641, RAPP-777). */
+  readonly onLabelChange?: (typed: TypedBuiltinWording) => void;
 }) {
   const { t } = useTranslation(['settings', 'onboarding']);
   const action = useAction();
@@ -102,7 +103,11 @@ export function BuiltinForm({
       onSubmit={(event) => void submit(event)}
       onInput={(event) => {
         changed.track(event.currentTarget);
-        onLabelChange?.(typedText(new FormData(event.currentTarget), 'builtin-label'));
+        const fields = new FormData(event.currentTarget);
+        onLabelChange?.({
+          label: typedText(fields, 'builtin-label'),
+          help: typedText(fields, 'builtin-help'),
+        });
       }}
     >
       <h3 className="text-start font-semibold">{info.label}</h3>

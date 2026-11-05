@@ -125,6 +125,7 @@ import {
   type ScreenButtons,
   type ScreenTexts,
   type Translate,
+  type TypedBuiltinWording,
   type TypedWording,
 } from './screen-content';
 import { DeleteScreenAction, onboardingDeletion } from './screen-deletion';
@@ -350,7 +351,7 @@ function EditorBody({
 /** What an open row shows on her phone while staff type. */
 function useRowEditing() {
   const [editing, setEditing] = useState<string | null>(null);
-  const [builtinLabel, setBuiltinLabel] = useState<BuilderText | undefined>(undefined);
+  const [builtinLabel, setBuiltinLabel] = useState<TypedBuiltinWording | undefined>(undefined);
   const [wording, setWording] = useState<TypedWording | null>(null);
   return { editing, setEditing, builtinLabel, setBuiltinLabel, wording, setWording };
 }

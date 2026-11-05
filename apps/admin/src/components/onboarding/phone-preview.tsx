@@ -125,7 +125,42 @@ export function PhoneFrame({
             </div>
           ))}
           {content.questions.map((question) =>
-            question.block !== undefined ? (
+            question.isConsent === true || question.isSignature === true ? (
+              // A consent tick or a signature as her phone draws them (RAPP-777).
+              <div
+                key={question.id}
+                className={cn(
+                  'flex flex-col gap-2 rounded-lg transition-[box-shadow]',
+                  highlight === question.id &&
+                    'ring-2 ring-primary ring-offset-4 ring-offset-canvas',
+                )}
+                data-testid={`phone-question-${question.id}`}
+              >
+                {question.isConsent === true ? (
+                  <PhoneTick
+                    label={question.label}
+                    requiredMark={question.isRequired ? phone('authorizationRequiredMark') : null}
+                  />
+                ) : (
+                  <>
+                    <p className="text-start text-sm font-medium">
+                      {question.label === '' ? ' ' : question.label}
+                    </p>
+                    <PhoneSignature
+                      title={
+                        question.signatureTexts?.title ?? phone('authorizationSignatureTitle')
+                      }
+                      prompt={
+                        question.signatureTexts?.prompt ?? phone('authorizationSignaturePrompt')
+                      }
+                      cannotDraw={
+                        question.signatureTexts?.cannotDraw ?? phone('authorizationCannotDraw')
+                      }
+                    />
+                  </>
+                )}
+              </div>
+            ) : question.block !== undefined ? (
               // A text or points block (RAPP-770): the terms' own visuals, in its place.
               <div
                 key={question.id}
@@ -166,18 +201,13 @@ export function PhoneFrame({
                 {question.help === '' ? null : (
                   <p className="text-start text-xs text-muted-foreground">{question.help}</p>
                 )}
-                {question.isSignature === true ? (
-                  // A signature block (RAPP-690): her text above, the box she signs in.
-                  <PhoneSignatureBox prompt={phone('authorizationSignaturePrompt')} />
-                ) : (
-                  <div inert className="pointer-events-none">
-                    <QuestionControl
-                      draft={question.draft}
-                      language={language}
-                      showOptionCount={false}
-                    />
-                  </div>
-                )}
+                <div inert className="pointer-events-none">
+                  <QuestionControl
+                    draft={question.draft}
+                    language={language}
+                    showOptionCount={false}
+                  />
+                </div>
               </div>
             ),
           )}
@@ -193,11 +223,7 @@ export function PhoneFrame({
             <PhoneTick key={index} label={checkbox.label} requiredMark={checkbox.requiredMark} />
           ))}
           {content.signatureTexts === undefined ? null : (
-            <div className="flex flex-col gap-2">
-              <p className="text-start text-base font-semibold">{content.signatureTexts.title}</p>
-              <PhoneSignatureBox prompt={content.signatureTexts.prompt} />
-              <PhoneTick label={content.signatureTexts.cannotDraw} requiredMark={null} />
-            </div>
+            <PhoneSignature {...content.signatureTexts} />
           )}
           {content.signature ? (
             <PhoneSignatureBox prompt={phone('authorizationSignaturePrompt')} />
@@ -299,6 +325,25 @@ function PhonePoints({
 }
 
 /** The empty box she signs in, its prompt inside. */
+/** The signing her phone shows under a signature's text: its title, the box, "No puc signar". */
+function PhoneSignature({
+  title,
+  prompt,
+  cannotDraw,
+}: {
+  readonly title: string;
+  readonly prompt: string;
+  readonly cannotDraw: string;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-start text-base font-semibold">{title}</p>
+      <PhoneSignatureBox prompt={prompt} />
+      <PhoneTick label={cannotDraw} requiredMark={null} />
+    </div>
+  );
+}
+
 function PhoneSignatureBox({ prompt }: { readonly prompt: string }) {
   return (
     <div className="flex h-20 items-center justify-center rounded-md border border-dashed border-input bg-background text-sm text-muted-foreground">

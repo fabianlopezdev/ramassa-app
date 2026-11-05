@@ -91,7 +91,11 @@ import {
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { allSteps } from './board-steps';
 import { ConfirmDialog } from './confirm-dialog';
-import { builtinQuestionType, type TypedWording } from './screen-content';
+import {
+  builtinQuestionType,
+  type TypedBuiltinWording,
+  type TypedWording,
+} from './screen-content';
 
 interface Placed {
   readonly placement: FieldPlacement;
@@ -203,7 +207,7 @@ export function ScreenFieldsSection({
   /** The row open: a field's id, or a built-in question. */
   readonly editing: string | null;
   readonly onEdit: (id: string | null) => void;
-  readonly onBuiltinLabelChange: (label: BuilderText | undefined) => void;
+  readonly onBuiltinLabelChange: (typed: TypedBuiltinWording | undefined) => void;
   readonly onWordingChange: (wording: TypedWording | null) => void;
 }) {
   const { t, i18n } = useTranslation(['settings', 'onboarding']);
@@ -754,7 +758,7 @@ function BuiltinPlacementRow({
   readonly isEditing: boolean;
   readonly onToggleEdit: () => void;
   readonly onClose: () => void;
-  readonly onLabelChange: (label: BuilderText) => void;
+  readonly onLabelChange: (typed: TypedBuiltinWording) => void;
 }) {
   const { t } = useTranslation(['settings', 'onboarding']);
   const reload = useReload();
