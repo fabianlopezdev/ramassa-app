@@ -1261,12 +1261,16 @@ values ('5eed0000-0000-4000-8040-000000000001', '5eed0000-0000-4000-8000-0000000
         '2026/27', '2026-09-01', true)
 on conflict (org_id, name) where not is_test_fixture do nothing;
 
-insert into public.authorization_versions (id, org_id, season_id, version_number, content, published_at, published_by)
-values (
-  '5eed0000-0000-4000-8041-000000000001',
-  '5eed0000-0000-4000-8000-000000000000',
-  (select id from public.seasons where org_id = '5eed0000-0000-4000-8000-000000000000' and name = '2026/27'),
-  1,
+-- The authorization is a legal form (RAPP-773): the version is written the way
+-- `20261104160000_authorization_as_legal_form.sql` converts a published one.
+-- Its form gets the version's screens, texts and consents, keeping the Health
+-- screen's questions, and the version freezes that form as its snapshot.
+declare
+  seed_org constant uuid := '5eed0000-0000-4000-8000-000000000000';
+  seed_form uuid;
+  seed_content jsonb;
+begin
+seed_content :=
   -- The addresses are written with [at] so they are not read as seeded accounts.
   replace($auth${
   "title": {
@@ -1526,11 +1530,33 @@ values (
     }
   },
   "texts": {}
-}$auth$, '[at]', '@')::jsonb,
+}$auth$, '[at]', '@')::jsonb;
+seed_form := private.ensure_authorization_form(seed_org);
+perform private.consents_from_authorization(seed_org, seed_content);
+-- The seed's own writes open no draft.
+perform set_config('ramassa.app_terms_form_sync', 'on', true);
+perform private.restore_legal_form(seed_form, private.authorization_snapshot_from_content(
+  seed_org, seed_form, seed_content, private.custom_form_content(seed_form) -> 'placements', null));
+update public.custom_forms
+   set version = 1, published_at = timestamptz '2026-09-01 09:00:00+02'
+ where id = seed_form;
+insert into public.authorization_versions (id, org_id, season_id, version_number, content, published_at,
+                                           published_by, form_snapshot, legacy_compatible)
+values (
+  '5eed0000-0000-4000-8041-000000000001',
+  seed_org,
+  (select id from public.seasons where org_id = seed_org and name = '2026/27'),
+  1,
+  seed_content,
   '2026-09-01 09:00:00+02',
-  '5eed0000-0000-4000-8000-000000000001'
+  '5eed0000-0000-4000-8000-000000000001',
+  private.authorization_snapshot_from_content(
+    seed_org, seed_form, seed_content, private.custom_form_content(seed_form) -> 'placements', null),
+  true
 )
 on conflict (id) do nothing;
+perform set_config('ramassa.app_terms_form_sync', '', true);
+end;
 
 insert into public.authorization_signatures (org_id, profile_id, season_id, method, paper_signed_on, recorded_by, signed_at)
 select p.org_id, p.id,
@@ -1646,7 +1672,7 @@ values
   ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000001', 'entity_form', null, 0),
   ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000003', 'season', null, 1),
   ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000005', 'season', null, 0)
-on conflict (field_id, surface, custom_form_id) do nothing;
+on conflict (field_id, surface, custom_form_id, shared_screen) do nothing;
 
 insert into public.custom_question_options (id, org_id, question_id, label, sort_order, is_archived)
 values
