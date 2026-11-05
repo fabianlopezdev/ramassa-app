@@ -123,13 +123,29 @@ $$;
 
 -- The ids of the parts the converter writes: the same for every version of an
 -- organization, so the form and each version's snapshot name the same screens.
+-- A uuid that is always the same for one source text and that every uuid
+-- reader accepts: the md5 of the text with the version (5, name based) and
+-- the RFC 4122 variant set, as a strict reader such as zod's checks both.
+create or replace function private.stable_uuid(p_source text)
+returns uuid
+language sql
+immutable
+set search_path = ''
+as $$
+  select (substr(h, 1, 12) || '5' || substr(h, 14, 3)
+          || substr('89ab', (('x' || substr(h, 17, 1))::bit(4)::integer % 4) + 1, 1)
+          || substr(h, 18))::uuid
+    from (select md5(p_source) as h) source;
+$$;
+revoke all on function private.stable_uuid(text) from public, anon, authenticated;
+
 create or replace function private.app_terms_stable_id(p_org_id uuid, p_part text)
 returns uuid
 language sql
 immutable
 set search_path = ''
 as $$
-  select md5(p_org_id::text || ':app_terms:' || p_part)::uuid;
+  select private.stable_uuid(p_org_id::text || ':app_terms:' || p_part);
 $$;
 revoke all on function private.app_terms_stable_id(uuid, text) from public, anon, authenticated;
 

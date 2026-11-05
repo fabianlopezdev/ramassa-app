@@ -157,6 +157,47 @@ describe('forms the team creates (RAPP-700)', () => {
     ).toBe(true);
   });
 
+  // Ids as `private.stable_uuid` builds them for the seeded organization (RAPP-773):
+  // a md5 with version 5 and the RFC variant, which z.uuid() accepts.
+  test('both legal forms of the app are read, with their stable screen ids', () => {
+    const systemForm = (id: string, systemKey: string, screenIds: readonly string[]) => ({
+      id,
+      name: { ca: systemKey },
+      filled_by: 'player',
+      mandatory: 'required_to_use_app',
+      deadline: null,
+      audience: 'all',
+      repeats_each_season: systemKey === 'season_authorization',
+      kind: 'legal',
+      system_key: systemKey,
+      version: 1,
+      published_at: '2026-09-01T07:00:00+00:00',
+      is_archived: false,
+      screens: screenIds.map((screenId, index) => ({
+        id: screenId,
+        title: { ca: `Pantalla ${index + 1}` },
+        intro: null,
+        sort_order: index,
+        texts: {},
+      })),
+    });
+    const forms = parseCustomForms([
+      systemForm('d9d59810-aeac-4214-8e00-f74202c7f065', 'app_terms', [
+        'e943103f-4325-5d8f-8bcd-5b70f463d791',
+        '19519363-5c28-54b0-a328-04f4769a37c8',
+      ]),
+      systemForm('83fb6e9a-ef68-46a4-bf92-2917f0f4aa5f', 'season_authorization', [
+        '6e4796cc-458f-5158-992e-078d263160cf',
+        '8786863e-632b-56a1-8adc-9d13bcfb1d5c',
+        '5be9f46c-dac0-5211-a1ce-3eb9e8bd08a4',
+        '5b9dabf8-7757-5aad-b66c-4554b1e056f4',
+        '09e655f0-55f8-5fd0-a380-d7960fc50b1b',
+      ]),
+    ]);
+    expect(forms.map((form) => form.systemKey)).toEqual(['app_terms', 'season_authorization']);
+    expect(forms.map((form) => form.screens.length)).toEqual([2, 5]);
+  });
+
   test('a row this build cannot read is left out', () => {
     expect(parseCustomForms([{ id: 'nope' }])).toEqual([]);
     expect(parseCustomForms(undefined)).toEqual([]);

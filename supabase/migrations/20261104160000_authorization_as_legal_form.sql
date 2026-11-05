@@ -240,7 +240,7 @@ language sql
 immutable
 set search_path = ''
 as $$
-  select md5(p_org_id::text || ':season_authorization:' || p_part)::uuid;
+  select private.stable_uuid(p_org_id::text || ':season_authorization:' || p_part);
 $$;
 revoke all on function private.authorization_stable_id(uuid, text) from public, anon, authenticated;
 
@@ -2620,7 +2620,7 @@ declare
   -- authorization she is shown (RAPP-773). Designers read the form itself.
   old_health_json jsonb := case when with_archived then '[]'::jsonb else coalesce((
     select jsonb_agg(jsonb_build_object(
-             'id', md5((x.p ->> 'id') || ':authorization')::uuid, 'field_id', x.p -> 'field_id',
+             'id', private.stable_uuid((x.p ->> 'id') || ':authorization'), 'field_id', x.p -> 'field_id',
              'surface', 'authorization', 'screen_key', null, 'sort_order', x.place,
              'required', x.p -> 'required', 'label_override', x.p -> 'label_override',
              'help_override', x.p -> 'help_override')
