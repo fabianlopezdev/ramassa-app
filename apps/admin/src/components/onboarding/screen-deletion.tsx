@@ -117,6 +117,17 @@ export function customFormDeletion(
   };
 }
 
+/** The message for a delete the database refused for a known reason (RAPP-780). */
+function deleteFailureKey(
+  error: unknown,
+): 'deleteStale' | 'deleteGone' | 'deleteConditional' | 'deleteFailed' {
+  const message = error instanceof Error ? error.message : '';
+  if (message.includes('the screen dependencies changed')) return 'deleteStale';
+  if (message.includes('a conditional field prevented screen deletion')) return 'deleteConditional';
+  if (message.includes('no such') && message.includes('screen')) return 'deleteGone';
+  return 'deleteFailed';
+}
+
 /** One confirmation for the board's trash icon and the editor's destructive button. */
 export function DeleteScreenAction({
   deletion,
@@ -140,8 +151,11 @@ export function DeleteScreenAction({
       await router.invalidate({ sync: true });
       setIsOpen(false);
       toast.success(t('onboardingBoard.deleted', { screen: deletion.name }));
-    } catch {
-      toast.error(t('onboardingBoard.deleteFailed'));
+    } catch (error) {
+      const reason = deleteFailureKey(error);
+      // A stale or vanished screen list is read again, so reopening shows the current one.
+      if (reason !== 'deleteFailed') void router.invalidate();
+      toast.error(t(`onboardingBoard.${reason}`));
     } finally {
       setIsBusy(false);
     }
