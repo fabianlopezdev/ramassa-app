@@ -65,6 +65,12 @@
   "seasonCreated": "فصل ساخته شد.",
   "seasonCreateFailed": "فصل ساخته نشد.",
   "seasonSetCurrent": "فعلی شود",
+  "onboardingChain": {
+    "remove": "حذف {{form}} از بعد از ثبت‌نام",
+    "removeTitle": "«{{form}}» از بعد از ثبت‌نام حذف شود؟",
+    "removeBody": "فقط از این فهرست خارج می‌شود. فرم همچنان طبق تنظیماتش به بازیکنان می‌رسد.",
+    "removeAction": "حذف"
+  },
   "onboardingBoard": {
     "authorization": "مجوز فصل",
     "listLabel": "صفحه‌های ثبت‌نام",

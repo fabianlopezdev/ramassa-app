@@ -119,6 +119,7 @@ import {
   type BoardStep,
 } from './board-steps';
 import { CardFrame, ScreenCardFrame } from './card-frame';
+import { ConfirmDialog } from './confirm-dialog';
 import { FormMiniature, PhoneMiniature } from './phone-preview';
 import {
   completeCondition,
@@ -504,6 +505,8 @@ function ChainBoard({
           : { to: '/forms/custom/$formId', params: { formId: form.id } },
       remove: {
         label: t('onboardingChain.remove', { form: name }),
+        confirmTitle: t('onboardingChain.removeTitle', { form: name }),
+        confirmBody: t('onboardingChain.removeBody'),
         run: async () => {
           try {
             await save(shown.filter((each) => each !== ref));
@@ -675,7 +678,13 @@ export interface BoardCard {
   /** One line under the picture, such as why the app terms are there (RAPP-703). */
   readonly note?: string;
   /** × on the card: takes a chained form out of the chain (RAPP-703). */
-  readonly remove?: { readonly label: string; readonly run: () => Promise<void> };
+  readonly remove?: {
+    readonly label: string;
+    /** Asked before it goes (RAPP-776). */
+    readonly confirmTitle: string;
+    readonly confirmBody: string;
+    readonly run: () => Promise<void>;
+  };
   /** The eye in the header (RAPP-711); absent, the card has none. */
   readonly hide?: BoardCardHide;
   readonly deletion?: ScreenDeletion;
@@ -986,18 +995,7 @@ function ScreenCard({
             <DeleteScreenAction key={card.deletion.key} deletion={card.deletion} variant="icon" />
           )}
           {card.remove === undefined || isLifted ? null : (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="text-muted-foreground"
-              aria-label={card.remove.label}
-              title={card.remove.label}
-              onClick={() => void card.remove?.run()}
-              data-testid={`board-remove-${card.key}`}
-            >
-              <X aria-hidden />
-            </Button>
+            <RemoveCardButton remove={card.remove} cardKey={card.key} />
           )}
           {handle === null ? (
             isLifted || isBranch || !showFixedMark ? null : (
@@ -1487,5 +1485,54 @@ function AddScreenDialog({
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** × on a chained form's card, with the board's confirmation first (RAPP-776). */
+function RemoveCardButton({
+  remove,
+  cardKey,
+}: {
+  readonly remove: NonNullable<BoardCard['remove']>;
+  readonly cardKey: string;
+}) {
+  const { t } = useTranslation('settings');
+  const [isOpen, setIsOpen] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
+  async function confirm() {
+    setIsBusy(true);
+    try {
+      await remove.run();
+      setIsOpen(false);
+    } finally {
+      setIsBusy(false);
+    }
+  }
+  return (
+    <>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        className="text-muted-foreground"
+        aria-label={remove.label}
+        title={remove.label}
+        onClick={() => setIsOpen(true)}
+        data-testid={`board-remove-${cardKey}`}
+      >
+        <X aria-hidden />
+      </Button>
+      <ConfirmDialog
+        isOpen={isOpen}
+        onOpenChange={(open) => {
+          if (!isBusy) setIsOpen(open);
+        }}
+        title={remove.confirmTitle}
+        description={remove.confirmBody}
+        action={t('onboardingChain.removeAction')}
+        isBusy={isBusy}
+        onConfirm={() => void confirm()}
+      />
+    </>
   );
 }

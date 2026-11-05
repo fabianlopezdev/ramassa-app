@@ -65,6 +65,12 @@
   "seasonCreated": "أُنشئ الموسم.",
   "seasonCreateFailed": "تعذّر إنشاء الموسم.",
   "seasonSetCurrent": "اجعله ساريًا",
+  "onboardingChain": {
+    "remove": "إزالة {{form}} مما بعد التسجيل",
+    "removeTitle": "هل تريد إزالة «{{form}}» مما بعد التسجيل؟",
+    "removeBody": "يخرج من هذه القائمة فقط. يظل النموذج يصل إلى اللاعبات كما هو مُعدّ.",
+    "removeAction": "إزالة"
+  },
   "onboardingBoard": {
     "authorization": "تفويض الموسم",
     "listLabel": "شاشات التسجيل",
