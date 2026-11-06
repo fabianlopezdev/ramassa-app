@@ -7,9 +7,11 @@
  * across every section, and "New field…" as the last row, which opens the
  * Fitxa's field form with the section chosen here and ticks the new field.
  * Each row shows the type, the name, a line saying where it stands and the
- * privacy badge. A field the surface has already is ticked and dimmed; a
- * field that cannot go here is dimmed with the reason. Several fields are
- * picked at once and added with one button.
+ * privacy badge. A field the screen has already is ticked and dimmed; a field
+ * asked on another screen of the form is picked like a free one and its line
+ * says where it is now and that adding it moves it here (RAPP-782); a field
+ * that cannot go here is dimmed with the reason. Several fields are picked at
+ * once and added with one button.
  *
  * Keyboard: Up and Down move in a list (Home and End to its ends), the
  * section list shows a section as it gets focus, Right goes from the
@@ -57,9 +59,16 @@ import type { LanguageCode } from '@ramassa/shared/schemas';
 export type FieldPickState =
   /** Already here: ticked and dimmed. */
   | { readonly kind: 'placed'; readonly note: string }
+  /** Asked on another screen of the form: picked like a free one, and adding it moves it here (RAPP-782). */
+  | { readonly kind: 'moves'; readonly note: string }
   /** Cannot go here: dimmed, with the reason. */
   | { readonly kind: 'blocked'; readonly note: string }
   | { readonly kind: 'free' };
+
+/** Whether a field or a consent in this state can be picked. */
+export function isPickable(state: FieldPickState): boolean {
+  return state.kind === 'free' || state.kind === 'moves';
+}
 
 /** The consents of Dades legals a surface may ask (RAPP-699). */
 interface ConsentPickOptions {
@@ -186,11 +195,11 @@ function PickerBody({
   const consentById = (id: string) => consents?.items.find((each) => each.id === id);
   const canPickField = (id: string) => {
     const field = layout.fields.find((each) => each.id === id);
-    return field !== undefined && stateOf(field).kind === 'free';
+    return field !== undefined && isPickable(stateOf(field));
   };
   const canPickConsent = (id: string) => {
     const consent = consentById(id);
-    return consent !== undefined && consents?.stateOf(consent).kind === 'free';
+    return consent !== undefined && consents !== undefined && isPickable(consents.stateOf(consent));
   };
   const canPick = (id: string) => canPickField(id) || canPickConsent(id);
   const sectionName = (each: ProfileSection) => textIn(each.title, language);
@@ -260,8 +269,8 @@ function PickerBody({
   const count = [...picked].filter(canPick).length;
   const isSectionFull = isConsentsSection
     ? shownConsents.length > 0 &&
-      shownConsents.every((consent) => consents?.stateOf(consent).kind !== 'free')
-    : shown.length > 0 && shown.every((field) => stateOf(field).kind !== 'free');
+      shownConsents.every((consent) => consents !== undefined && !isPickable(consents.stateOf(consent)))
+    : shown.length > 0 && shown.every((field) => !isPickable(stateOf(field)));
 
   return (
     <>
@@ -557,14 +566,15 @@ function FieldOption({
 }) {
   const { t, i18n } = useTranslation('settings');
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
-  const isTicked = state.kind === 'placed' || (state.kind === 'free' && isPicked);
+  const canPick = isPickable(state);
+  const isTicked = state.kind === 'placed' || (canPick && isPicked);
   const line = state.kind === 'free' ? t(`questions.types.${field.type}`) : state.note;
   return (
     <button
       type="button"
       role="option"
       aria-selected={isTicked}
-      aria-disabled={state.kind === 'free' ? undefined : true}
+      aria-disabled={canPick ? undefined : true}
       data-picker-item=""
       tabIndex={isFirst ? 0 : -1}
       title={state.kind === 'free' ? undefined : state.note}
@@ -588,21 +598,21 @@ function FieldOption({
         className={cn(
           'flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-input',
           isTicked && 'border-primary bg-primary text-primary-foreground',
-          state.kind !== 'free' && 'opacity-50',
+          !canPick && 'opacity-50',
         )}
       >
         {isTicked ? <Check className="size-3" /> : null}
       </span>
       {/* Dimmed when it cannot be picked; the line saying why stays readable (RAPP-778). */}
       <span className="flex min-w-0 flex-1 items-center gap-3">
-        <span className={cn('contents', state.kind !== 'free' && '[&>*]:opacity-50')}>
+        <span className={cn('contents', !canPick && '[&>*]:opacity-50')}>
           <FieldTypeIcon type={field.type} />
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span
             className={cn(
               'truncate text-sm font-medium',
-              state.kind !== 'free' && 'text-muted-foreground',
+              !canPick && 'text-muted-foreground',
             )}
           >
             {textIn(field.label, language)}
@@ -612,7 +622,7 @@ function FieldOption({
           </span>
         </span>
         <span
-          className={cn('flex w-20 shrink-0 justify-end', state.kind !== 'free' && 'opacity-50')}
+          className={cn('flex w-20 shrink-0 justify-end', !canPick && 'opacity-50')}
         >
           <PrivacyBadge level={field.privacy} />
         </span>
@@ -638,14 +648,15 @@ function ConsentOption({
 }) {
   const { i18n } = useTranslation('settings');
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
-  const isTicked = state.kind === 'placed' || (state.kind === 'free' && isPicked);
+  const canPick = isPickable(state);
+  const isTicked = state.kind === 'placed' || (canPick && isPicked);
   const line = state.kind === 'free' ? textIn(consent.body, language) : state.note;
   return (
     <button
       type="button"
       role="option"
       aria-selected={isTicked}
-      aria-disabled={state.kind === 'free' ? undefined : true}
+      aria-disabled={canPick ? undefined : true}
       data-picker-item=""
       tabIndex={isFirst ? 0 : -1}
       title={state.kind === 'free' ? undefined : state.note}
@@ -669,20 +680,20 @@ function ConsentOption({
         className={cn(
           'flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-input',
           isTicked && 'border-primary bg-primary text-primary-foreground',
-          state.kind !== 'free' && 'opacity-50',
+          !canPick && 'opacity-50',
         )}
       >
         {isTicked ? <Check className="size-3" /> : null}
       </span>
       <span className="flex min-w-0 flex-1 items-center gap-3">
-        <span className={cn('contents', state.kind !== 'free' && '[&>*]:opacity-50')}>
+        <span className={cn('contents', !canPick && '[&>*]:opacity-50')}>
           <FieldTypeIcon type="consent" />
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span
             className={cn(
               'truncate text-sm font-medium',
-              state.kind !== 'free' && 'text-muted-foreground',
+              !canPick && 'text-muted-foreground',
             )}
           >
             {textIn(consent.name, language)}

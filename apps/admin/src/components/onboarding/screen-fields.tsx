@@ -19,6 +19,8 @@
  *   - A screen of a form the team created (RAPP-700) works like an
  *     Onboarding screen: a field and a consent are asked once per form. A
  *     form the team fills in on her page holds fields only.
+ *   - Any field goes on any screen (RAPP-782): one asked on another screen of
+ *     the form moves here when it is added, with the fields that depend on it.
  *
  * Type and privacy belong to the field, so this list never asks them.
  */
@@ -275,13 +277,30 @@ export function ScreenFieldsSection({
     };
   };
 
+  // Where a field asked on another screen of this form is now: adding it moves it here (RAPP-782).
+  const movesNote = (number: number, screen: string | null): FieldPickState => ({
+    kind: 'moves',
+    note:
+      number > 0
+        ? t('fieldPicker.movesFrom', { number })
+        : isFollowUpScreen(screen)
+          ? t('fieldPicker.movesFromScreen', { screen: t(`builtinScreens.screenName.${screen}`) })
+          : t('fieldPicker.movesFromElsewhere'),
+  });
+
   const stateOf = (field: ProfileField): FieldPickState => {
     if (isForm) {
-      // A field is asked once per form; her names stay on her identity screen.
+      // A field is asked once per form: one on another of its screens moves here.
       const onThisForm = placementsOnSurface(layout, 'custom_form').find(
         (placement) => placement.fieldId === field.id && placement.customFormId === form?.id,
       );
-      if (onThisForm !== undefined) return formScreenNote(onThisForm.screenKey);
+      if (onThisForm?.screenKey === screenKey) {
+        return { kind: 'placed', note: t('fieldPicker.here') };
+      }
+      if (onThisForm !== undefined) {
+        const number = (form?.screenIds ?? []).indexOf(onThisForm.screenKey ?? '') + 1;
+        return movesNote(number, onThisForm.screenKey);
+      }
       if (isNameField(field)) return { kind: 'blocked', note: t('fieldPicker.elsewhereApp') };
       if (!isHerForm && !isStaffWritable(field)) {
         return { kind: 'blocked', note: t('customForms.herFieldOnly') };
@@ -303,26 +322,13 @@ export function ScreenFieldsSection({
         }),
       };
     }
-    if (pick.kind === 'withController') {
-      const controller = fieldById(layout, pick.controllerId);
-      return {
-        kind: 'blocked',
-        note: t('fieldPicker.withController', {
-          field: controller === undefined ? '' : textIn(controller.label, language),
-        }),
-      };
-    }
     const stepKey =
       pick.screenKey === null
         ? null
         : ramassaScreenIdOf(pick.screenKey) === null
           ? pick.screenKey
           : customStepKey(pick.screenKey);
-    const number = steps.findIndex((step) => step.key === stepKey) + 1;
-    return {
-      kind: 'blocked',
-      note: number === 0 ? t('fieldPicker.elsewhereApp') : t('fieldPicker.elsewhere', { number }),
-    };
+    return movesNote(steps.findIndex((step) => step.key === stepKey) + 1, pick.screenKey);
   };
 
   // A consent is asked once per form: here, on another Onboarding screen, or free (RAPP-699).

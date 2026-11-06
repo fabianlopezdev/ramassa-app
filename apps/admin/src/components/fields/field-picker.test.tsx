@@ -111,3 +111,32 @@ test('a section with no field to add says so, and the reasons stay on the rows',
   fireEvent.click(view.getByTestId('field-picker-section-health_needs'));
   expect(view.queryByTestId('field-picker-none-free')).toBeNull();
 });
+
+test('a field asked on another screen is picked, says where it is now, and moves (RAPP-782)', async () => {
+  const onConfirm = mock<(ids: readonly string[]) => Promise<void>>(async () => undefined);
+  const view = render(
+    <FieldPicker
+      layout={LAYOUT}
+      isOpen
+      onOpenChange={() => undefined}
+      title="Add a field"
+      initialSectionId={SIZES}
+      stateOf={(each) =>
+        each.id === 'shoes'
+          ? { kind: 'moves', note: 'Now asked on step 5. Adding it moves it here.' }
+          : (STATES[each.id] ?? { kind: 'free' })
+      }
+      onConfirm={onConfirm}
+    />,
+  );
+  const shoes = view.getByTestId('field-picker-field-shoes');
+  expect(shoes.textContent).toContain('Now asked on step 5. Adding it moves it here.');
+  expect(shoes.getAttribute('aria-disabled')).toBeNull();
+  // A section with a field that moves here is not full.
+  expect(view.queryByTestId('field-picker-none-free')).toBeNull();
+  fireEvent.click(shoes);
+  expect(shoes.getAttribute('aria-selected')).toBe('true');
+  fireEvent.click(view.getByTestId('field-picker-confirm'));
+  await waitFor(() => expect(onConfirm).toHaveBeenCalledTimes(1));
+  expect(onConfirm.mock.calls[0]?.[0]).toEqual(['shoes']);
+});

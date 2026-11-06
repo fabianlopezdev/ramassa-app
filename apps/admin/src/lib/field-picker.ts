@@ -8,15 +8,14 @@
  *     ticks its controlling field when that one can be picked too, and the
  *     controlling field is placed first (the database checks it is there);
  *   - for her onboarding: whether a field is on this screen already, asked on
- *     another one, or free, and which section the picker opens on.
+ *     another one (adding it moves it here, RAPP-782), or free, and which
+ *     section the picker opens on.
  */
 
 import { SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
 import {
   canShareField,
-  DETAIL_SCREEN_PARENTS,
   followUpsOfOwnField,
-  isFollowUpScreen,
   WIZARD_SCREEN_QUESTIONS,
   type WizardQuestionScreen,
 } from '@ramassa/shared/intake';
@@ -95,13 +94,16 @@ export function controllersFirst(layout: ProfileLayout, ids: readonly string[]):
 
 // Her onboarding --------------------------------------------------------------------------------
 
-/** Where a field stands for one onboarding screen. */
+/**
+ * Where a field stands for one onboarding screen (RAPP-782): any field goes
+ * on any screen, and a field asked on another screen moves here when it is
+ * added, with the fields that depend on it. A condition whose controlling
+ * field is elsewhere is free: picking it picks that field too, and both move.
+ */
 export type OnboardingPick =
   | { readonly kind: 'here' }
-  /** On another screen, at that screen's key (an app screen or a Ramassà screen's id). */
+  /** On another screen, at that screen's key: adding it moves it here. */
   | { readonly kind: 'elsewhere'; readonly screenKey: string | null }
-  /** A condition whose controlling field is asked on another screen. */
-  | { readonly kind: 'withController'; readonly controllerId: string }
   /** An app field a follow-up's own control draws (RAPP-720): only on those follow-ups. */
   | { readonly kind: 'followUpOnly' }
   | { readonly kind: 'free' };
@@ -115,32 +117,13 @@ export function onboardingPick(
     (placement) => placement.fieldId === field.id && placement.surface === 'onboarding',
   );
   if (placements.some((placement) => placement.screenKey === screenKey)) return { kind: 'here' };
-  // A field may sit on every sibling follow-up of one question (RAPP-720).
-  const blocking = placements.find((placement) => !canShareField(placement.screenKey, screenKey));
-  if (blocking !== undefined) return { kind: 'elsewhere', screenKey: blocking.screenKey };
   const follows = followUpsOfOwnField(field.systemKey);
   if (follows.length > 0 && !(follows as readonly string[]).includes(screenKey)) {
     return { kind: 'followUpOnly' };
   }
-  const controllerId = field.showWhen?.fieldId;
-  if (controllerId !== undefined) {
-    const controller = fieldById(layout, controllerId);
-    const where =
-      controller === undefined ? undefined : onboardingPick(layout, controller, screenKey).kind;
-    // A follow-up opens on an answer of the screen it follows: its question may be there.
-    const parent = isFollowUpScreen(screenKey) ? DETAIL_SCREEN_PARENTS[screenKey] : undefined;
-    const onParent =
-      parent !== undefined &&
-      layout.placements.some(
-        (placement) =>
-          placement.fieldId === controllerId &&
-          placement.surface === 'onboarding' &&
-          placement.screenKey === parent,
-      );
-    if (where !== 'here' && where !== 'free' && !onParent) {
-      return { kind: 'withController', controllerId };
-    }
-  }
+  // A field may sit on every sibling follow-up of one question (RAPP-720).
+  const other = placements.find((placement) => !canShareField(placement.screenKey, screenKey));
+  if (other !== undefined) return { kind: 'elsewhere', screenKey: other.screenKey };
   return { kind: 'free' };
 }
 

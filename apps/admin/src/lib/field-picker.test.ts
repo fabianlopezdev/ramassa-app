@@ -134,13 +134,25 @@ describe('onboardingPick', () => {
     ).toEqual({ kind: 'free' });
   });
 
-  test('a condition goes where its controlling field is, or with it', () => {
+  test('a condition goes on any screen: its controlling field moves with it (RAPP-782)', () => {
     expect(pick('allergy_detail', SCREEN)).toEqual({ kind: 'free' });
     expect(pick('diet', SCREEN)).toEqual({ kind: 'free' });
-    expect(pick('diet', 'equipment')).toEqual({
-      kind: 'withController',
-      controllerId: 'transport',
+    expect(pick('diet', 'equipment')).toEqual({ kind: 'free' });
+    expect(pick('transport', 'equipment')).toEqual({ kind: 'elsewhere', screenKey: SCREEN });
+  });
+
+  test('a field on any other screen moves, her names included (RAPP-782)', () => {
+    const names: ProfileLayout = {
+      ...LAYOUT,
+      fields: [...LAYOUT.fields, field('nom', SIZES, { kind: 'builtin', systemKey: 'first_name' })],
+      placements: [...LAYOUT.placements, onboarding('nom', 'identity')],
+    };
+    const nom = names.fields.find((each) => each.id === 'nom')!;
+    expect(onboardingPick(names, nom, 'logistics')).toEqual({
+      kind: 'elsewhere',
+      screenKey: 'identity',
     });
+    expect(onboardingPick(names, nom, 'identity')).toEqual({ kind: 'here' });
   });
 });
 
