@@ -509,6 +509,8 @@ export function ScreenFieldsSection({
             ) : (
               <CustomPlacementRow
                 row={item.placed}
+                // Her Onboarding always asks her names: they move, and are never taken off (RAPP-782).
+                canRemove={!(isOnboarding && isNameField(item.placed.field))}
                 screenKey={screenKey}
                 siblings={placed}
                 section={sectionOf(item.placed.field)}
@@ -683,6 +685,7 @@ function ConsentPlacementRow({
 
 function CustomPlacementRow({
   row,
+  canRemove,
   screenKey,
   siblings,
   section,
@@ -695,6 +698,7 @@ function CustomPlacementRow({
   onWordingChange,
 }: {
   readonly row: Placed;
+  readonly canRemove: boolean;
   readonly screenKey: string;
   /** The fields on the same screen, for the conditions that depend on this one. */
   readonly siblings: readonly Placed[];
@@ -762,7 +766,7 @@ function CustomPlacementRow({
         isBusy={isBusy}
         isEditing={isEditing}
         onToggleEdit={onToggleEdit}
-        onRemove={askRemove}
+        {...(canRemove ? { onRemove: askRemove } : {})}
         testId={`placement-row-${field.id}`}
       >
         <PlacementWordingForm
