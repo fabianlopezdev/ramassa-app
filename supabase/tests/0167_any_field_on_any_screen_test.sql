@@ -10,12 +10,14 @@
 --      question it depends on, whichever of the two is added; a condition on
 --      a follow-up that opens on that question stays on its follow-up.
 --   4. Nom and Cognoms move to any Onboarding screen, are never removed from
---      her Onboarding, and stay off the season.
+--      her Onboarding nor moved onto a hidden screen, and stay off the season.
 --   5. A field on several document follow-ups keeps one placement when it
 --      moves to an ordinary screen.
 --   6. A field moved onto a hidden screen becomes optional.
---   7. A screen that depends on a question still needs it on an earlier screen.
---   8. On a form, the legal forms included, a field moves between its screens.
+--   7. A screen that opens on an answer to a moved question moves right after
+--      its new screen; a question never moves onto a screen that depends on it.
+--   8. On a form, the legal forms included, a field moves between its screens,
+--      her names too, and a consent moves the same way.
 --   9. One screen can hold every field of her Onboarding.
 --
 -- Seed: admin ...001 of organization ...000.
@@ -23,7 +25,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(31);
+select plan(37);
 
 create temp table run (label text primary key, id uuid, txt text) on commit drop;
 grant all on run to authenticated;
@@ -163,6 +165,8 @@ select is(
 
 -- 4. Her names ---------------------------------------------------------------------------------------------
 
+update public.intake_screens set is_hidden = true where id = '5eed0000-0000-4000-8044-000000000002';
+
 set local role authenticated;
 select lives_ok(
   $$ select public.place_field(pg_temp.field('first_name'), 'onboarding', 'logistics') $$,
@@ -179,8 +183,13 @@ select throws_ok(
 );
 select throws_ok(
   $$ select public.place_field(pg_temp.field('last_name'), 'season') $$,
-  '23514', 'her names are asked on her onboarding and the entity form',
+  '23514', 'her names are asked on her onboarding, the entity form and her forms',
   'nor put on the season'
+);
+select throws_ok(
+  $$ select public.place_field(pg_temp.field('last_name'), 'onboarding', '5eed0000-0000-4000-8044-000000000002') $$,
+  '23514', 'her onboarding always asks her names',
+  'nor moved onto a hidden screen'
 );
 
 -- 5. A shared follow-up field keeps one placement ----------------------------------------------------------
@@ -194,7 +203,6 @@ select is(pg_temp.screens_of(pg_temp.field('document_number')), array['backgroun
 
 -- 6. A hidden screen -------------------------------------------------------------------------------------
 
-update public.intake_screens set is_hidden = true where id = '5eed0000-0000-4000-8044-000000000002';
 set local role authenticated;
 select lives_ok(
   $$ select public.place_field(pg_temp.field('date_of_birth'), 'onboarding', '5eed0000-0000-4000-8044-000000000002') $$,
@@ -209,6 +217,7 @@ select is(
 
 -- 7. A screen that depends on a question -----------------------------------------------------------------
 
+-- Screen 3 opens on Tens persones al teu càrrec?, now asked on Equipament.
 update public.intake_screens
    set show_when_field_id = pg_temp.field('has_dependents'),
        show_when_values = array[(select o.id::text from public.custom_question_options o
@@ -220,6 +229,17 @@ select throws_ok(
          (select id::text from run where label = 'screen 3')),
   '23514', 'a screen cannot depend on a question asked on it',
   'a question never moves onto a screen that depends on it'
+);
+select lives_ok(
+  $$ select public.place_field(pg_temp.field('has_dependents'), 'onboarding', 'identity') $$,
+  'a question a screen depends on moves to another screen'
+);
+reset role;
+select is(
+  (select step_order[array_position(step_order, 'identity') + 1] from public.intake_flow_orders
+    where org_id = '5eed0000-0000-4000-8000-000000000000'),
+  'custom:' || (select id::text from run where label = 'screen 3'),
+  'and the screen that depends on it moves right after its new screen, in the stored order'
 );
 
 -- 8. Forms, the legal ones included -----------------------------------------------------------------------
@@ -253,6 +273,34 @@ select is(
       and changes ->> 'custom_form' is not null),
   1,
   'audited with its form'
+);
+
+select lives_ok(
+  format($$ select public.place_field(pg_temp.field('first_name'), 'custom_form', %L) $$,
+         (select id::text from run where label = 'authorization screen 2')),
+  'her names go on a form too'
+);
+insert into run (label, id)
+select 'consent', c.consent_id from public.consent_placements c
+ where c.custom_form_id = (select form_id from public.custom_form_screens
+                            where id = (select id from run where label = 'authorization screen 2'))
+   and c.screen_key <> (select id::text from run where label = 'authorization screen 2')
+   and not exists (select 1 from public.consents k where k.id = c.consent_id and k.key = 'app_terms')
+ limit 1;
+set local role authenticated;
+select lives_ok(
+  format($$ select public.place_consent(%L, 'custom_form', %L) $$,
+         (select id from run where label = 'consent'),
+         (select id::text from run where label = 'authorization screen 2')),
+  'a consent on another screen of the form moves here'
+);
+reset role;
+select is(
+  (select count(*)::integer from public.consent_placements
+    where consent_id = (select id from run where label = 'consent')
+      and screen_key = (select id::text from run where label = 'authorization screen 2')),
+  1,
+  'and is asked there once'
 );
 
 -- 9. One screen holds every field ------------------------------------------------------------------------

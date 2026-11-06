@@ -17,8 +17,19 @@
 --     screen (`placement_keeps_screen_conditions`, unchanged);
 --   - each moved field is audited against its field (`target_id`).
 --
--- Her names move too: Nom and Cognoms can be placed on any Onboarding screen.
--- They are still never removed from her Onboarding nor from the entity form.
+--   - a team screen that opens on an answer to the question (RAPP-715) moves
+--     with it, right after its new screen, with the screens that depend on it,
+--     as the order rule of RAPP-715 says; the stored order is written again
+--     so an older build shows them there too.
+--
+-- Her names move too: Nom and Cognoms can be placed on any Onboarding screen
+-- and on any form. They are still never removed from her Onboarding nor from
+-- the entity form, and never moved onto a hidden Onboarding screen, so her
+-- Onboarding always asks them, required.
+--
+-- A consent of Dades legals follows the same rule: adding one asked on another
+-- screen of the form moves it there. The acceptance of the app terms stays on
+-- its screen, as before.
 -- Placing a field on the screen it already sits on returns that placement, so
 -- a picker that sends a controller and its condition together never fails on
 -- the condition the controller just brought along.
@@ -157,6 +168,92 @@ as $$
 $$;
 revoke all on function private.only_on_follow_ups_of(uuid, text, uuid, uuid) from public, anon, authenticated;
 
+-- Writes the order of a form again from the placements: every screen that
+-- opens on an answer sits right after the screen holding its question.
+create or replace function private.write_branch_order(p_org_id uuid, p_surface text, p_form_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if p_surface = 'onboarding' then
+    if exists (select 1 from public.intake_screens s
+                where s.org_id = p_org_id and s.show_when_field_id is not null and not s.is_archived) then
+      perform private.store_intake_flow_order(p_org_id, private.onboarding_step_order(p_org_id), (select auth.uid()));
+    end if;
+  elsif p_surface = 'custom_form' and exists (
+          select 1 from public.custom_form_screens s
+           where s.form_id = p_form_id and s.show_when_field_id is not null and not s.is_archived) then
+    update public.custom_form_screens s
+       set sort_order = o.position - 1, updated_at = now()
+      from unnest(private.custom_form_screen_order(p_form_id)) with ordinality as o(screen_id, position)
+     where s.id::text = o.screen_id and s.form_id = p_form_id
+       and s.sort_order is distinct from (o.position - 1)::integer;
+  end if;
+end;
+$$;
+revoke all on function private.write_branch_order(uuid, text, uuid) from public, anon, authenticated;
+
+-- The body of `20261027060000_screens_that_depend_on_an_answer.sql`; while a
+-- move runs, a screen that depends on the question is put after its new
+-- screen once the move ends (`write_branch_order`), so only a loop is refused.
+create or replace function private.placement_keeps_screen_conditions()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  dependent record;
+  ancestor text;
+  depth integer;
+  order_keys text[];
+  placed_at integer;
+  dependent_at integer;
+begin
+  if new.surface not in ('onboarding', 'custom_form') or new.screen_key is null then
+    return new;
+  end if;
+  for dependent in
+    select s.id from public.intake_screens s
+     where new.surface = 'onboarding' and s.org_id = new.org_id
+       and s.show_when_field_id = new.field_id and not s.is_archived
+    union all
+    select s.id from public.custom_form_screens s
+     where new.surface = 'custom_form' and s.form_id = new.custom_form_id
+       and s.show_when_field_id = new.field_id and not s.is_archived
+  loop
+    if new.screen_key = dependent.id::text then
+      raise check_violation using message = 'a screen cannot depend on a question asked on it';
+    end if;
+    ancestor := new.screen_key;
+    depth := 0;
+    while ancestor is not null and depth < 64 loop
+      if ancestor = dependent.id::text then
+        raise check_violation using message = 'that condition would make a loop';
+      end if;
+      ancestor := private.screen_parent_key(new.org_id, new.surface, ancestor);
+      depth := depth + 1;
+    end loop;
+    continue when private.is_moving_placements();
+    if new.surface = 'onboarding' then
+      order_keys := private.onboarding_step_order(new.org_id);
+      placed_at := array_position(order_keys, private.onboarding_step_key(new.screen_key));
+      dependent_at := array_position(order_keys, 'custom:' || dependent.id);
+    else
+      order_keys := private.custom_form_screen_order(new.custom_form_id);
+      placed_at := array_position(order_keys, new.screen_key);
+      dependent_at := array_position(order_keys, dependent.id::text);
+    end if;
+    if placed_at is not null and dependent_at is not null and placed_at > dependent_at then
+      raise check_violation using message = 'the question is asked on an earlier screen of the same form';
+    end if;
+  end loop;
+  return new;
+end;
+$$;
+
 /**
  * Moves a field placed on a form to another screen of that form, with every
  * field linked to it by a condition on that form. Returns the field's
@@ -184,11 +281,14 @@ declare
 begin
   -- One move at a time per organization, as every builder write is.
   perform o.id from public.organizations o where o.id = p_org_id for update;
-  select coalesce(max(p.sort_order) + 1, 0) into next_order
-    from public.field_placements p
-   where p.org_id = p_org_id and p.surface = p_surface
-     and p.custom_form_id is not distinct from p_form_id
-     and p.screen_key = p_screen_key;
+  -- After every field, block and consent already on the screen.
+  next_order := private.next_form_position(p_org_id, p_surface, p_screen_key);
+  -- Her Onboarding always asks her names, required (RAPP-782).
+  if p_surface = 'onboarding' and target_hidden and exists (
+       select 1 from public.profile_fields f
+        where f.id = p_field_id and private.is_name_field(f)) then
+    raise check_violation using message = 'her onboarding always asks her names';
+  end if;
   perform set_config('ramassa.moving_placements', 'on', true);
   for member in
     with recursive placed as (
@@ -245,6 +345,9 @@ begin
     end if;
   end loop;
   perform set_config('ramassa.moving_placements', 'off', true);
+  -- A screen that opens on an answer to a moved question follows it (RAPP-715):
+  -- the order is written again with each such screen right after its parent.
+  perform private.write_branch_order(p_org_id, p_surface, p_form_id);
   -- The end state keeps every condition with its controller.
   if exists (
     select 1 from public.field_placements mine
@@ -297,9 +400,9 @@ begin
   if p_surface is null or p_surface not in ('onboarding', 'entity_form', 'season', 'authorization', 'custom_form') then
     raise check_violation using message = 'a field is placed on onboarding, the entity form, the season, the authorization or a form';
   end if;
-  -- Her names live on her account: her Onboarding and the entity form ask them.
-  if private.is_name_field(field) and p_surface not in ('entity_form', 'onboarding') then
-    raise check_violation using message = 'her names are asked on her onboarding and the entity form';
+  -- Her names live on her account: her Onboarding, the entity form and her forms ask them.
+  if private.is_name_field(field) and p_surface not in ('entity_form', 'onboarding', 'custom_form') then
+    raise check_violation using message = 'her names are asked on her onboarding, the entity form and her forms';
   end if;
   if p_surface = 'onboarding' then
     -- An app screen or one of the app's follow-ups (RAPP-720).
@@ -398,5 +501,98 @@ begin
   values (actor_org, (select auth.uid()), 'intake.placement_remove', 'profile_field', placement.field_id,
           jsonb_build_object('placement_id', p_placement_id, 'surface', placement.surface,
                              'screen', placement.screen_key));
+end;
+$$;
+
+-- 5. Placing a consent ------------------------------------------------------------------------------
+
+-- The body of `20261027000000_custom_forms.sql`: a consent asked on another
+-- screen of the form moves here (RAPP-782), keeping its required flag and its
+-- wording; onto a hidden screen it becomes optional. Placing it on its own
+-- screen returns its placement.
+create or replace function public.place_consent(
+  p_consent_id uuid,
+  p_surface text,
+  p_screen_key text default null,
+  p_required boolean default false
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  actor_org uuid := private.require_question_builder();
+  consent public.consents;
+  form_id uuid;
+  saved_id uuid;
+  existing public.consent_placements;
+begin
+  select * into consent from public.consents where id = p_consent_id and org_id = actor_org and not is_archived;
+  if consent.id is null then
+    raise no_data_found using message = 'no such consent';
+  end if;
+  if p_surface is null or p_surface not in ('authorization', 'onboarding', 'custom_form') then
+    raise check_violation using message = 'a consent is asked on the authorization, an onboarding screen or a form';
+  end if;
+  if p_surface = 'onboarding' then
+    -- An app screen or one of the app's follow-ups (RAPP-720).
+    if p_screen_key is null or not (
+         private.is_onboarding_app_screen(p_screen_key)
+         or (private.is_uuid_text(p_screen_key)
+             and exists (select 1 from public.intake_screens s
+                          where s.id = p_screen_key::uuid and s.org_id = actor_org
+                            and not s.is_archived))) then
+      raise no_data_found using message = 'no such screen';
+    end if;
+  elsif p_surface = 'custom_form' then
+    form_id := private.custom_form_of_screen(actor_org, p_screen_key);
+    if form_id is null then
+      raise no_data_found using message = 'no such screen';
+    end if;
+    if exists (select 1 from public.custom_forms f where f.id = form_id and f.filled_by <> 'player') then
+      raise check_violation using message = 'a consent is asked on a form she fills in';
+    end if;
+  elsif p_screen_key is not null then
+    raise check_violation using message = 'only an onboarding placement names a screen';
+  end if;
+  select c.* into existing from public.consent_placements c
+   where c.consent_id = consent.id and c.surface = p_surface
+     and c.custom_form_id is not distinct from form_id;
+  if existing.id is not null and existing.screen_key is not distinct from p_screen_key then
+    return existing.id;
+  end if;
+  if existing.id is not null and p_surface in ('onboarding', 'custom_form') then
+    update public.consent_placements
+       set screen_key = p_screen_key,
+           sort_order = private.next_form_position(actor_org, p_surface, p_screen_key),
+           required = required and not private.screen_is_hidden(actor_org, p_surface, p_screen_key),
+           updated_at = now()
+     where id = existing.id;
+    insert into public.audit_log (org_id, actor_id, action, target_type, target_id, changes)
+    values (actor_org, (select auth.uid()), 'consent.move', 'consent', consent.id,
+            jsonb_build_object('placement_id', existing.id, 'surface', p_surface,
+                               'from', existing.screen_key, 'to', p_screen_key, 'custom_form', form_id));
+    return existing.id;
+  end if;
+  -- Image rights drive the photo consent, which she can always refuse.
+  if coalesce(p_required, false) and private.screen_is_hidden(actor_org, p_surface, p_screen_key) then
+    raise check_violation using message = 'a hidden screen asks nothing required';
+  end if;
+  if consent.key = 'image_rights' and coalesce(p_required, false) then
+    raise check_violation using message = 'image rights are never required';
+  end if;
+  if existing.id is not null then
+    raise unique_violation using message = 'the consent is already asked there';
+  end if;
+  insert into public.consent_placements (org_id, consent_id, surface, screen_key, custom_form_id, sort_order, required)
+  values (actor_org, consent.id, p_surface, p_screen_key, form_id,
+          private.next_form_position(actor_org, p_surface, p_screen_key), coalesce(p_required, false))
+  returning id into saved_id;
+  insert into public.audit_log (org_id, actor_id, action, target_type, target_id, changes)
+  values (actor_org, (select auth.uid()), 'consent.place', 'consent', consent.id,
+          jsonb_build_object('placement_id', saved_id, 'surface', p_surface, 'screen', p_screen_key,
+                             'required', coalesce(p_required, false), 'custom_form', form_id));
+  return saved_id;
 end;
 $$;

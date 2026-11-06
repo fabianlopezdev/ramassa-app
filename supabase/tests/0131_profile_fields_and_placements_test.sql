@@ -149,8 +149,8 @@ select is(
 select throws_ok(
   $$ select public.place_field((select id from public.profile_fields where system_key = 'first_name'
                                   and org_id = '5eed0000-0000-4000-8000-000000000000'), 'season') $$,
-  '23514', 'her names are asked on her onboarding and the entity form',
-  'her names stay on her Onboarding and the entity form (RAPP-665, RAPP-782)'
+  '23514', 'her names are asked on her onboarding, the entity form and her forms',
+  'her names stay off the season (RAPP-665, RAPP-782)'
 );
 
 -- 5. A team-only field -----------------------------------------------------------------------------------------
