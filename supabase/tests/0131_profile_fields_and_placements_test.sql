@@ -124,10 +124,10 @@ select is(
   'the field records who created it'
 );
 set local role authenticated;
-select throws_ok(
-  $$ select public.place_field((select id from run where label = 'gloves'), 'onboarding', 'identity') $$,
-  '23505', 'the field is already asked there',
-  'a field is on one onboarding screen only'
+select is(
+  public.place_field((select id from run where label = 'gloves'), 'onboarding', 'equipment'),
+  (select id from run where label = 'gloves_on_equipment'),
+  'a field is on one onboarding screen only: placing it there again keeps its one placement'
 );
 
 -- 4. The entity form and the season ----------------------------------------------------------------------
@@ -149,8 +149,8 @@ select is(
 select throws_ok(
   $$ select public.place_field((select id from public.profile_fields where system_key = 'first_name'
                                   and org_id = '5eed0000-0000-4000-8000-000000000000'), 'season') $$,
-  '23514', 'her names are asked on her identity screen',
-  'her names stay on her identity screen (RAPP-665)'
+  '23514', 'her names are asked on her onboarding and the entity form',
+  'her names stay on her Onboarding and the entity form (RAPP-665, RAPP-782)'
 );
 
 -- 5. A team-only field -----------------------------------------------------------------------------------------

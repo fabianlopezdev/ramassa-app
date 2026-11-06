@@ -4,7 +4,7 @@
 -- What these assertions defend:
 --   1. A field is placed on an app screen staff may move by its key; the
 --      summary and the season authorization never take one, and a field is on
---      one onboarding screen at most.
+--      one onboarding screen at most (placing it there again changes nothing).
 --   2. The fields on an app screen are reordered with the placement writer.
 --   3. The catalog carries each placement with its app screen key.
 --   4. Only app screens and live Ramassà screens are steps of the flow.
@@ -56,10 +56,12 @@ select throws_ok(
   'P0002', 'no such screen',
   'nor does the season authorization'
 );
-select throws_ok(
-  $$ select public.place_field((select id from run where label = 'text'), 'onboarding', 'equipment') $$,
-  '23505', 'the field is already asked there',
-  'a field is on one onboarding screen at most'
+-- A field is on one onboarding screen at most: placing it where it is changes
+-- nothing (moving it is 0167_any_field_on_any_screen_test.sql, RAPP-782).
+select is(
+  public.place_field((select id from run where label = 'text'), 'onboarding', 'participation-support'),
+  (select id from run where label = 'text placement'),
+  'a field placed again on its screen keeps its one placement'
 );
 
 -- 2. Their order -------------------------------------------------------------------------------------------
