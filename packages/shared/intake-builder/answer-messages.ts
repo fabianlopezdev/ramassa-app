@@ -15,6 +15,11 @@ import {
   type CustomQuestion,
 } from './builder';
 import {
+  documentNumberIssue,
+  tidyDocumentNumber,
+  type DocumentNumberRule,
+} from './document-number';
+import {
   customAnswerSchema,
   itemListSettings,
   normalizeCustomAnswerInput,
@@ -73,6 +78,8 @@ export function customAnswerMessage(
  */
 export interface CheckCustomAnswersOptions {
   readonly enforceRequired?: boolean;
+  /** Her document number's check by her document type (RAPP-782), when the screen may ask it. */
+  readonly documentNumber?: DocumentNumberRule;
 }
 
 /**
@@ -84,7 +91,7 @@ export function checkCustomAnswers(
   questions: readonly CustomQuestion[],
   answers: CustomAnswers,
   t: AnswerTranslate,
-  { enforceRequired = true }: CheckCustomAnswersOptions = {},
+  { enforceRequired = true, documentNumber }: CheckCustomAnswersOptions = {},
 ): { readonly answers: CustomAnswers; readonly errors: Readonly<Record<string, string>> } {
   const tidied: Record<string, CustomAnswerValue> = { ...answers };
   const errors: Record<string, string> = {};
@@ -100,6 +107,13 @@ export function checkCustomAnswers(
     tidied[question.id] = normalizeCustomAnswerInput(question, value);
     const message = customAnswerMessage(question, value, t);
     if (message !== undefined) errors[question.id] = message;
+    // A NIE keeps its form wherever her document number is asked (RAPP-782).
+    if (question.id === documentNumber?.fieldId && typeof value === 'string') {
+      tidied[question.id] = tidyDocumentNumber(value);
+      if (message === undefined && documentNumberIssue(documentNumber, answers) !== null) {
+        errors[question.id] = t('onboarding:errorNieFormat');
+      }
+    }
   }
   return { answers: tidied, errors };
 }

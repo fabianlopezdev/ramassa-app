@@ -32,6 +32,8 @@ import {
 import {
   appScreenFields,
   consentsOn,
+  documentNumberIssue,
+  documentNumberRule,
   followUpAsking,
   followUpGroupOf,
   followUpOfGroupId,
@@ -173,6 +175,21 @@ export function firstIncompleteStep(
   const answers: CustomAnswers = { ...context.storedCustom, ...given?.custom };
   // A name staff moved to another screen is answered there (RAPP-782).
   const draft = withPlacedNames(given, context.catalog, answers);
+  // Her document number keeps her document type's check wherever it is (RAPP-782).
+  const numberRule =
+    context.catalog === undefined
+      ? undefined
+      : documentNumberRule(
+          context.catalog,
+          answers,
+          (draft?.documentation as { readonly documentType?: string } | undefined)?.documentType,
+        );
+  const isComplete = (screen: IntakeScreen) =>
+    isCustomScreenComplete(screen, answers) &&
+    !(
+      screen.questions.some((question) => question.id === numberRule?.fieldId) &&
+      documentNumberIssue(numberRule, answers) !== null
+    );
   const isUnsignedOrUnticked = (screenKey: string) =>
     unsignedFormBlocks(formBlocksOn(context.blocks, 'onboarding', screenKey), draft?.signatures)
       .length > 0 ||
@@ -186,7 +203,7 @@ export function firstIncompleteStep(
       const planned = context.custom.find((candidate) => candidate.id === customId);
       if (planned !== undefined && !opensForAnswers(planned, context.answers ?? answers)) continue;
       const screen = context.customScreens?.find((candidate) => candidate.id === customId);
-      if (screen !== undefined && !isCustomScreenComplete(screen, answers)) return step;
+      if (screen !== undefined && !isComplete(screen)) return step;
       // A follow-up that is a step of its own keeps its blocks under its key (RAPP-782).
       if (screen !== undefined && isUnsignedOrUnticked(followUpOfGroupId(customId) ?? customId)) {
         return step;
@@ -198,7 +215,7 @@ export function firstIncompleteStep(
     if (isUnsignedOrUnticked(step)) return step;
     // The Fitxa fields placed on this screen (RAPP-655).
     const placed = appScreenFields(context.customScreens ?? [], step);
-    if (placed !== undefined && !isCustomScreenComplete(placed, answers)) return step;
+    if (placed !== undefined && !isComplete(placed)) return step;
     // And on its follow-ups her answers open (RAPP-720): she answers them from this step.
     for (const branch of context.catalog === undefined ? [] : detailScreensOf(step)) {
       // One that is a step of its own is checked as its own step (RAPP-782).
@@ -209,7 +226,7 @@ export function firstIncompleteStep(
       )
         continue;
       const onFollowUp = followUpGroupOf(context.customScreens ?? [], branch.screen);
-      if (onFollowUp !== undefined && !isCustomScreenComplete(onFollowUp, answers)) return step;
+      if (onFollowUp !== undefined && !isComplete(onFollowUp)) return step;
       if (isUnsignedOrUnticked(branch.screen)) return step;
     }
   }

@@ -29,6 +29,13 @@ export const onboardingDraftStore = createWizardDraftStore(
   createAccountOnboardingDraftStore(privateStorage),
 );
 
+/** The document type her document screen saved in her draft, if any (RAPP-782). */
+export function draftDocumentType(): string | undefined {
+  const saved = onboardingDraftStore.loadDraft()?.documentation as
+    { readonly documentType?: string } | undefined;
+  return saved?.documentType;
+}
+
 /**
  * What she sends when she finishes: her names, her settings, her answers by
  * field and her signatures of the signature blocks, by block id (RAPP-690).

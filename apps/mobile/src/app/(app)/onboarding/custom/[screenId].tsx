@@ -24,7 +24,7 @@ import { WizardValidationSummary } from '@/components/onboarding/wizard-validati
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
 import { FOLLOW_UP_TITLE_KEYS, placementKeyOfStep } from '@/lib/follow-up-steps';
 import { playHaptic } from '@/lib/haptics/haptics';
-import { onboardingDraftStore } from '@/lib/onboarding';
+import { draftDocumentType, onboardingDraftStore } from '@/lib/onboarding';
 import { mergedCustomAnswers, WIZARD_SCREEN_ROUTES } from '@/lib/onboarding-intake';
 import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { useScreenTitle } from '@/lib/screen-wording';
@@ -36,6 +36,7 @@ import { useLanguage } from '@ramassa/shared/i18n';
 import { teamTextIn } from '@ramassa/shared/i18n/localized-content';
 import { customStepKey } from '@ramassa/shared/intake';
 import {
+  documentNumberRule,
   followUpOfGroupId,
   formScreenTextsIn,
   isCustomQuestionVisible,
@@ -47,7 +48,7 @@ export default function CustomStepScreen() {
   const { t } = useTranslation('onboarding');
   const { language } = useLanguage();
   const { screenId = '' } = useLocalSearchParams<{ screenId: string }>();
-  const { customScreens, customAnswers } = useWizardIntake();
+  const { customScreens, customAnswers, catalog } = useWizardIntake();
   const step = useWizardStep(customStepKey(screenId));
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [answers, setAnswers] = useState<CustomAnswerDraft>(() =>
@@ -105,7 +106,10 @@ export default function CustomStepScreen() {
       onContinue={() => {
         // The shared schema checks each answer before she leaves the screen,
         // as the database will (RAPP-610); a phone or an email is tidied first.
-        const checked = checkCustomAnswers(screen.questions, answers, t);
+        // Her document number keeps her document type's check here too (RAPP-782).
+        const checked = checkCustomAnswers(screen.questions, answers, t, {
+          documentNumber: documentNumberRule(catalog, answers, draftDocumentType()),
+        });
         setAnswers(checked.answers);
         setErrors(checked.errors);
         const isSigned = signatures.check();

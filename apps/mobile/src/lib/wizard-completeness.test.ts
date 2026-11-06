@@ -5,7 +5,7 @@
  */
 import { describe, expect, test } from 'bun:test';
 import type { WizardFlow } from '@ramassa/shared/intake';
-import type { IntakeScreen } from '@ramassa/shared/intake-builder';
+import type { IntakeCatalog, IntakeScreen } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraft } from '@ramassa/shared/onboarding-drafts';
 import {
   firstIncompleteScreen,
@@ -255,5 +255,84 @@ describe('consents placed on her screens (RAPP-699)', () => {
       ),
     ).toBe('logistics');
     expect(firstIncompleteStep({ ...complete, consents: { sortides: true } }, context)).toBeNull();
+  });
+});
+
+describe('her document number wherever staff place it (RAPP-782)', () => {
+  const TYPE = '5eed0000-0000-4000-8099-0000000000a1';
+  const NUMBER = '5eed0000-0000-4000-8099-0000000000a2';
+  const NIE = '5eed0000-0000-4000-8099-0000000000a3';
+  const catalog = {
+    screens: [],
+    overrides: [],
+    presets: [],
+    // Número de document sits on logistics: the document follow-ups ask it no more.
+    layout: {
+      sections: [],
+      fields: [
+        {
+          id: NUMBER,
+          kind: 'builtin',
+          systemKey: 'document_number',
+          isArchived: false,
+          options: [],
+        },
+      ],
+      placements: [
+        {
+          id: 'p-number',
+          fieldId: NUMBER,
+          surface: 'onboarding',
+          screenKey: 'logistics',
+          sortOrder: 0,
+          required: true,
+          labelOverride: null,
+          helpOverride: null,
+        },
+      ],
+    },
+    systemFields: new Map([
+      [
+        'document_type',
+        {
+          id: TYPE,
+          type: 'single_choice',
+          privacy: 'personal',
+          options: [{ id: NIE, key: 'nie', label: { ca: 'NIE' }, isArchived: false }],
+        },
+      ],
+      ['document_number', { id: NUMBER, type: 'short_text', privacy: 'sensitive', options: [] }],
+    ]),
+  } as unknown as IntakeCatalog;
+  // Número de document moved to logistics, asked there with the generic renderer.
+  const onLogistics: IntakeScreen = {
+    id: 'app:logistics',
+    title: {},
+    intro: null,
+    afterScreen: 'logistics',
+    isArchived: false,
+    builtinScreen: 'logistics',
+    questions: [{ id: NUMBER, type: 'short_text', label: { ca: 'Número' }, options: [] } as never],
+  };
+  const context = (custom: Record<string, string>) => ({
+    custom: [],
+    flow: appOrder,
+    customScreens: [onLogistics],
+    catalog,
+    storedCustom: custom,
+  });
+  const nieDraft = { ...complete, documentation: { documentType: 'nie' } };
+
+  test('a NIE that does not fit sends her back to the screen asking the number', () => {
+    expect(firstIncompleteStep(nieDraft, context({ [NUMBER]: 'X123' }))).toBe('logistics');
+    expect(firstIncompleteStep(nieDraft, context({ [NUMBER]: 'x1234567l' }))).toBeNull();
+  });
+
+  test('her type answered by field counts too; a passport has no form to check', () => {
+    expect(firstIncompleteStep(complete, context({ [TYPE]: NIE, [NUMBER]: 'X123' }))).toBe(
+      'logistics',
+    );
+    const passport = { ...complete, documentation: { documentType: 'passport' } };
+    expect(firstIncompleteStep(passport, context({ [NUMBER]: 'X123' }))).toBeNull();
   });
 });

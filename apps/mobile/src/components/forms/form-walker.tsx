@@ -37,6 +37,7 @@ import { useLanguage } from '@ramassa/shared/i18n';
 import { teamTextIn } from '@ramassa/shared/i18n/localized-content';
 import {
   customFormScreenQuestions,
+  documentNumberRule,
   formScreenTextsIn,
   formWalkScreens,
   isCustomQuestionVisible,
@@ -236,11 +237,16 @@ export function FormWalkStep({
       header={header}
       // The screen's own help line and main button (RAPP-771).
       help={own.help === '' ? own.help : fillText(own.help)}
-      continueLabel={fillText(own.continueLabel ?? continueLabelFor(answers) ?? t('continueAction'))}
+      continueLabel={fillText(
+        own.continueLabel ?? continueLabelFor(answers) ?? t('continueAction'),
+      )}
       isContinueBusy={isSending}
       onContinue={() => {
         // The shared checks, as on her Onboarding (RAPP-610).
-        const checked = checkCustomAnswers(questions, answers, t);
+        // Her document number keeps her document type's check on a form too (RAPP-782).
+        const checked = checkCustomAnswers(questions, answers, t, {
+          documentNumber: documentNumberRule(catalog, { ...draft.answers, ...answers }),
+        });
         setAnswers(checked.answers);
         setErrors(checked.errors);
         const isSigned = signatures.check();

@@ -25,7 +25,7 @@ import { useScreenConsents } from '@/components/onboarding/screen-consents';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
 import { placedScreenOf } from '@/lib/follow-up-screens';
 import { playHaptic } from '@/lib/haptics/haptics';
-import { onboardingDraftStore } from '@/lib/onboarding';
+import { draftDocumentType, onboardingDraftStore } from '@/lib/onboarding';
 import { mergedCustomAnswers, wizardDraftStep } from '@/lib/onboarding-intake';
 import { useWizardIntake } from '@/lib/onboarding-intake-context';
 import { useState, type ReactNode } from 'react';
@@ -35,6 +35,7 @@ import { isFollowUpScreen, type WizardQuestionScreen } from '@ramassa/shared/int
 import {
   appScreenFields,
   detailBranch,
+  documentNumberRule,
   isCustomQuestionVisible,
   updateCustomAnswer,
 } from '@ramassa/shared/intake-builder';
@@ -54,7 +55,7 @@ export interface PlacedFields {
 
 export function usePlacedFields(frameId: string | undefined): PlacedFields {
   const { t } = useTranslation('onboarding');
-  const { customScreens, customAnswers } = useWizardIntake();
+  const { customScreens, customAnswers, catalog } = useWizardIntake();
   // An app follow-up holds its own placements (RAPP-720); every support need shares one.
   const screenId = placedScreenOf(frameId);
   const questions = appScreenFields(customScreens, screenId)?.questions ?? [];
@@ -96,7 +97,10 @@ export function usePlacedFields(frameId: string | undefined): PlacedFields {
   function checkAndSave(): boolean {
     if (!hasQuestions) return true;
     // The shared schema checks each answer, as the database will (RAPP-610).
-    const checked = checkCustomAnswers(questions, answers, t);
+    // Her document number keeps her document type's check here too (RAPP-782).
+    const checked = checkCustomAnswers(questions, answers, t, {
+      documentNumber: documentNumberRule(catalog, answers, draftDocumentType()),
+    });
     setAnswers(checked.answers);
     setErrors(checked.errors);
     const isSigned = signatures.check();

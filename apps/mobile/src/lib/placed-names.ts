@@ -32,9 +32,10 @@ export function withPlacedNames(
   const off = questionsOffTheirControl(layout);
   const names = Object.fromEntries(
     ACCOUNT_NAME_KEYS.flatMap((key) => {
-      if (!off.has(key)) return [];
       const field = layout.fields.find((each) => each.systemKey === key);
-      const value = field === undefined ? undefined : answers[field.id];
+      // A layout without her name field (an older one, a test) keeps her name screen's.
+      if (!off.has(key) || field === undefined) return [];
+      const value = answers[field.id];
       return [[IDENTITY_KEY[key], typeof value === 'string' ? value : '']];
     }),
   );
