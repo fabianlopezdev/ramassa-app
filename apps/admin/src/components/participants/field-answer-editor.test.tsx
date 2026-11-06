@@ -108,3 +108,63 @@ test('a name is never emptied', async () => {
   );
   expect(onSave).not.toHaveBeenCalled();
 });
+
+test('a NIE given new keeps its form, with her phone words, before saving (RAPP-782)', async () => {
+  const onSave = mock(async () => undefined);
+  const view = render(
+    <FieldAnswerEditor
+      question={documentType}
+      value={undefined}
+      partners={[
+        {
+          field: { id: 'number' } as never,
+          question: documentNumber,
+          value: undefined,
+          asksWhen: (value) => typeof value === 'string' && value !== 'none',
+        },
+      ]}
+      documentNumberRule={(answers) => ({
+        fieldId: 'number',
+        typeKey: answers.type === 'nie' ? 'nie' : undefined,
+      })}
+      language="ca"
+      onSave={onSave}
+      onCancel={() => undefined}
+    />,
+  );
+  fireEvent.change(view.container.querySelector('#fitxa-answer-type')!, {
+    target: { value: 'nie' },
+  });
+  fireEvent.change(view.container.querySelector('#fitxa-answer-number')!, {
+    target: { value: 'X12' },
+  });
+  fireEvent.submit(view.container.querySelector('form')!);
+  await waitFor(() =>
+    expect(view.getByTestId('fitxa-answer-number-error').textContent).toBe(
+      'onboarding:errorNieFormat',
+    ),
+  );
+  expect(onSave).not.toHaveBeenCalled();
+});
+
+test('a NIE stored before is left as it is (RAPP-782)', async () => {
+  const onSave = mock(async () => undefined);
+  const view = render(
+    <FieldAnswerEditor
+      question={documentNumber}
+      value="OLD-1"
+      documentNumberRule={() => ({ fieldId: 'number', typeKey: 'nie' })}
+      language="ca"
+      onSave={onSave}
+      onCancel={() => undefined}
+    />,
+  );
+  // Changing nothing never refuses it; a new number does.
+  fireEvent.submit(view.container.querySelector('form')!);
+  expect(view.queryByTestId('fitxa-answer-number-error')).toBeNull();
+  fireEvent.change(view.container.querySelector('#fitxa-answer-number')!, {
+    target: { value: 'X1234567L' },
+  });
+  fireEvent.submit(view.container.querySelector('form')!);
+  await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+});

@@ -7,7 +7,8 @@
  * each asked only while it applies.
  *
  * Her names are answers like any field (RAPP-693): their editor is the one
- * their type has, and they are never left empty.
+ * their type has, and they are never left empty. A NIE given new or changed
+ * keeps its form, with her phone's words, as the database checks (RAPP-782).
  */
 
 import {
@@ -20,7 +21,12 @@ import { type EditPartner } from '@/lib/participant-fitxa';
 import { useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getErrorMessageKey, isAppError } from '@ramassa/shared/errors';
-import type { CustomAnswerValue, CustomQuestion } from '@ramassa/shared/intake-builder';
+import {
+  documentNumberIssue,
+  type CustomAnswerValue,
+  type CustomQuestion,
+  type DocumentNumberRule,
+} from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
 const PREFIX = 'fitxa-answer';
@@ -39,6 +45,10 @@ export interface FieldAnswerEditorProps {
   })[];
   /** An answer is required: her names are never empty. */
   readonly isRequired?: boolean;
+  /** Her document number's check for the answers being saved (RAPP-782); absent off the document. */
+  readonly documentNumberRule?: (
+    answers: Readonly<Record<string, CustomAnswerValue | null>>,
+  ) => DocumentNumberRule | undefined;
   readonly language: LanguageCode;
   readonly onSave: (changes: FieldAnswerChanges) => Promise<void>;
   readonly onCancel: () => void;
@@ -49,6 +59,7 @@ export function FieldAnswerEditor({
   value,
   partners = [],
   isRequired = false,
+  documentNumberRule,
   language,
   onSave,
   onCancel,
@@ -75,13 +86,24 @@ export function FieldAnswerEditor({
     if (isRequired && answers[question.id] == null) {
       misfits[question.id] = t('onboarding:errorRequired');
     }
-    setErrors(misfits);
-    setMessage(null);
-    if (Object.keys(misfits).length > 0) return;
     const before: Record<string, CustomAnswerValue | null> = {
       [question.id]: value ?? null,
       ...Object.fromEntries(asked.map((partner) => [partner.question.id, partner.value ?? null])),
     };
+    // A NIE given new or changed keeps its form; one stored before is left as it is.
+    const rule = documentNumberRule?.(answers);
+    if (
+      rule !== undefined &&
+      misfits[rule.fieldId] === undefined &&
+      rule.fieldId in answers &&
+      answers[rule.fieldId] !== before[rule.fieldId] &&
+      documentNumberIssue(rule, answers as Readonly<Record<string, CustomAnswerValue>>) !== null
+    ) {
+      misfits[rule.fieldId] = t('onboarding:errorNieFormat');
+    }
+    setErrors(misfits);
+    setMessage(null);
+    if (Object.keys(misfits).length > 0) return;
     if (JSON.stringify(answers) === JSON.stringify(before)) {
       onCancel();
       return;

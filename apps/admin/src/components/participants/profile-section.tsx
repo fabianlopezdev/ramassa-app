@@ -42,6 +42,7 @@ import {
   type ProfileLayout,
   type ProfileSection as Section,
 } from '@ramassa/shared/intake-builder';
+import type { CustomAnswerValue, DocumentNumberRule } from '@ramassa/shared/intake-builder';
 import type { ParticipantUpdate } from '@ramassa/shared/participants';
 import type { PermissionCode } from '@ramassa/shared/permissions';
 import type { LanguageCode } from '@ramassa/shared/schemas';
@@ -133,6 +134,27 @@ export function ProfileSection({
   );
 }
 
+/**
+ * Her document number's check while staff edit her record (RAPP-782): her
+ * document type as edited in the same form, else as stored.
+ */
+function documentRuleOf(
+  context: FitxaContext,
+  edited: Readonly<Record<string, CustomAnswerValue | null>>,
+): DocumentNumberRule | undefined {
+  const number = context.layout.fields.find((each) => each.systemKey === 'document_number');
+  const type = context.layout.fields.find((each) => each.systemKey === 'document_type');
+  if (number === undefined) return undefined;
+  const chosen =
+    type === undefined
+      ? undefined
+      : type.id in edited
+        ? edited[type.id]
+        : context.answers.get(type.id)?.current.value;
+  const typeKey = type?.options.find((option) => option.id === chosen)?.key ?? undefined;
+  return { fieldId: number.id, typeKey };
+}
+
 function FitxaFieldRow({
   field,
   context,
@@ -215,6 +237,7 @@ function FitxaFieldRow({
           value={current?.value}
           partners={partners}
           isRequired={isNameField(field)}
+          documentNumberRule={(edited) => documentRuleOf(context, edited)}
           language={language}
           onSave={save}
           onCancel={close}
