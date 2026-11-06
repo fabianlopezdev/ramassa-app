@@ -573,7 +573,8 @@ function PickerBody({
         onConfirm={() => void add()}
       >
         <ul
-          className="flex list-disc flex-col gap-1.5 ps-5 text-start text-sm"
+          // A move of many fields lists many changes: the list scrolls inside the dialog.
+          className="flex max-h-[50vh] list-disc flex-col gap-1.5 overflow-y-auto ps-5 text-start text-sm"
           data-testid={`${testId}-move-review`}
         >
           {(review?.lines ?? []).map((line) => (
@@ -637,7 +638,7 @@ function FieldOption({
         }
       }}
       className={cn(
-        'flex h-14 w-full shrink-0 items-center gap-3 px-5 text-start outline-none',
+        'flex min-h-14 w-full shrink-0 items-center gap-3 px-5 py-2 text-start outline-none',
         'hover:bg-muted/60 focus-visible:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset',
         'aria-disabled:cursor-not-allowed',
       )}
@@ -663,7 +664,8 @@ function FieldOption({
           <span className={cn('truncate text-sm font-medium', !canPick && 'text-muted-foreground')}>
             {textIn(field.label, language)}
           </span>
-          <span className="truncate text-xs text-muted-foreground">
+          {/* Where it is now and what adding it does read whole (RAPP-782). */}
+          <span className="line-clamp-2 text-xs text-muted-foreground">
             {sectionName === null ? line : `${sectionName} · ${line}`}
           </span>
         </span>

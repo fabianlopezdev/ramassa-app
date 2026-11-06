@@ -756,8 +756,8 @@
     "legalData": "Datos legales",
     "move": {
       "title": "¿Quieres hacer estos cambios?",
-      "intro": "Al añadirlos a «{{screen}}», el formulario cambia así:",
-      "action": "Muévelos aquí",
+      "intro": "Si añades la selección a «{{screen}}», el formulario cambia así:",
+      "action": "Haz los cambios",
       "field": "«{{field}}» pasa aquí. Ahora se pregunta en: {{where}}.",
       "comesAlong": "«{{field}}» también pasa aquí, porque va ligado a «{{with}}». Ahora se pregunta en: {{where}}.",
       "followUps": "Las pantallas {{screens}} se mueven con «{{field}}» y se muestran justo después de esta pantalla, según su respuesta.",

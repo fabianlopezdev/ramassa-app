@@ -756,8 +756,8 @@
     "legalData": "Dades legals",
     "move": {
       "title": "Vols fer aquests canvis?",
-      "intro": "En afegir-los a «{{screen}}», el formulari canvia així:",
-      "action": "Mou-los aquí",
+      "intro": "Si afegeixes la selecció a «{{screen}}», el formulari canvia així:",
+      "action": "Fes els canvis",
       "field": "«{{field}}» passa aquí. Ara es pregunta a: {{where}}.",
       "comesAlong": "«{{field}}» també passa aquí, perquè va lligat a «{{with}}». Ara es pregunta a: {{where}}.",
       "followUps": "Les pantalles {{screens}} es mouen amb «{{field}}» i es mostren just després d'aquesta pantalla, segons la seva resposta.",
