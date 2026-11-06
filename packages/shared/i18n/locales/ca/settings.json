@@ -616,7 +616,7 @@
     "phoneNote": "Vista aproximada. L'aspecte a l'app pot variar.",
     "previousScreen": "Pantalla anterior",
     "nextScreen": "Pantalla següent",
-    "branchEachNeed": "Per cada necessitat que marqui",
+    "branchEachNeed": "Si marca alguna necessitat",
     "branchEachAnswer": "Per cada resposta que marqui",
     "branchFollows": "Es mostra i s'amaga amb {{screen}}",
     "branchWhen": "Si «{{question}}» és {{answers}}",

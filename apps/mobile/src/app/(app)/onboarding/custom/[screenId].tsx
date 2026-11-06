@@ -28,6 +28,7 @@ import { draftDocumentType, onboardingDraftStore } from '@/lib/onboarding';
 import { mergedCustomAnswers, WIZARD_SCREEN_ROUTES } from '@/lib/onboarding-intake';
 import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { useScreenTitle } from '@/lib/screen-wording';
+import { supportNeedsTitle, tickedSupportNeeds } from '@/lib/support-needs-title';
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -96,7 +97,10 @@ export default function CustomStepScreen() {
       title={
         followUp === null
           ? teamTextIn(screen.title, language, false)
-          : screenTitle(followUp, t(FOLLOW_UP_TITLE_KEYS[followUp]))
+          : // Her needs details name the needs she ticked, as on her needs screen.
+            ((followUp === 'specific-needs-details'
+              ? supportNeedsTitle(tickedSupportNeeds(catalog, answers), t)
+              : null) ?? screenTitle(followUp, t(FOLLOW_UP_TITLE_KEYS[followUp])))
       }
       intro={intro === '' ? undefined : intro}
       scrollEnabled={!isDrawing}

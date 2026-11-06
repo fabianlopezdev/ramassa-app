@@ -616,7 +616,7 @@
     "phoneNote": "Approximate preview. The appearance in the app may vary.",
     "previousScreen": "Previous screen",
     "nextScreen": "Next screen",
-    "branchEachNeed": "For each need she ticks",
+    "branchEachNeed": "If she ticks any need",
     "branchEachAnswer": "For each answer she ticks",
     "branchFollows": "Shows and hides with {{screen}}",
     "branchWhen": "If “{{question}}” is {{answers}}",

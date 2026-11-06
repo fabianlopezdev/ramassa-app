@@ -547,7 +547,7 @@ export function conditionAnswers(
 /**
  * The line on a follow-up's card and in its editor (RAPP-713, RAPP-715), in
  * the dashboard's language, from the rule her phone reads: "Si «Tipus de
- * document» és Passaport", or one follow-up per answer she ticks. One line for
+ * document» és Passaport", or a follow-up that opens on any answer she ticks. One line for
  * the app's follow-ups and the team's.
  */
 export function conditionLine(

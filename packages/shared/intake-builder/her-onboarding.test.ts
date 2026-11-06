@@ -344,6 +344,60 @@ describe('any field on any screen (RAPP-782)', () => {
     expect(order.indexOf('custom:app:documentation-nie')).toBe(order.indexOf(from) + 1);
   });
 
+  test('moved Necessitats específiques opens its one details screen right after, on any need', () => {
+    const NEEDS = field({
+      id: '5eed0000-0000-4000-8098-000000000021',
+      kind: 'builtin',
+      systemKey: 'specific_needs',
+      type: 'multiple_choice',
+      options: [
+        {
+          id: '5eed0000-0000-4000-8099-000000000021',
+          key: 'health',
+          label: { ca: 'Salut' },
+          isArchived: false,
+        },
+        {
+          id: '5eed0000-0000-4000-8099-000000000022',
+          key: 'none',
+          label: { ca: 'Cap' },
+          isArchived: false,
+        },
+      ] as ProfileField['options'],
+    });
+    const DETAILS = field({
+      id: '5eed0000-0000-4000-8098-000000000022',
+      kind: 'builtin',
+      systemKey: 'specific_needs_details',
+      type: 'long_text',
+    });
+    const layout: ProfileLayout = {
+      sections: [],
+      fields: [NEEDS, DETAILS],
+      placements: [
+        placed(NEEDS.id, 'onboarding', TRANSPORT_SCREEN, 0),
+        placed(DETAILS.id, 'onboarding', 'specific-needs-details', 0),
+      ],
+    };
+    const moved: IntakeCatalog = {
+      ...catalogWith([]),
+      layout,
+      systemFields: layoutSystemFields(layout),
+    };
+    const { plan } = herOnboarding(moved);
+    const from = customStepKey(TRANSPORT_SCREEN);
+    const flow = wizardFlow(moved);
+    const health = { [NEEDS.id]: ['5eed0000-0000-4000-8099-000000000021'] };
+    const none = { [NEEDS.id]: ['5eed0000-0000-4000-8099-000000000022'] };
+    expect(nextWizardScreen(from, new Set(), plan, flow, health)).toBe(
+      'custom:app:specific-needs-details',
+    );
+    expect(nextWizardScreen(from, new Set(), plan, flow, none)).not.toBe(
+      'custom:app:specific-needs-details',
+    );
+    expect(plan.filter((each) => each.id === 'app:specific-needs-details')).toHaveLength(1);
+  });
+
   test("a follow-up's field moved to another screen is asked there to everyone", () => {
     const placements = [
       placed(DOC_TYPE.id, 'onboarding', 'documentation', 0),

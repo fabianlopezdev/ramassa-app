@@ -616,7 +616,7 @@
     "phoneNote": "Vista aproximada. El aspecto en la app puede variar.",
     "previousScreen": "Pantalla anterior",
     "nextScreen": "Pantalla siguiente",
-    "branchEachNeed": "Por cada necesidad que marque",
+    "branchEachNeed": "Si marca alguna necesidad",
     "branchEachAnswer": "Por cada respuesta que marque",
     "branchFollows": "Se muestra y se oculta con {{screen}}",
     "branchWhen": "Si «{{question}}» es {{answers}}",
