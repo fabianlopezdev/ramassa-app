@@ -195,6 +195,7 @@
   "supportingEntitiesInstruction": "Si altres entitats o programes et donen suport, afegeix-los aquí.",
   "supportingEntitiesRemoveAction": "Elimina {{name}}",
   "supportNeedsTitle": "Necessites algun suport específic?",
+  "supportNeedsDetailsTitle": "Explica'ns quin suport necessites",
   "supportNeedsChooseMultiple": "Pots triar més d’una opció.",
   "supportNeedAccessibility": "Accessibilitat",
   "supportNeedHealth": "Salut",

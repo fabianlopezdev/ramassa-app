@@ -195,6 +195,7 @@
   "supportingEntitiesInstruction": "اگر نهادها یا برنامه‌های دیگری از شما حمایت می‌کنند، لطفاً آن‌ها را اینجا اضافه کنید.",
   "supportingEntitiesRemoveAction": "حذف {{name}}",
   "supportNeedsTitle": "آیا به حمایت خاصی نیاز دارید؟",
+  "supportNeedsDetailsTitle": "به ما بگو به چه پشتیبانی‌ای نیاز داری",
   "supportNeedsChooseMultiple": "می‌توانید بیش از یک گزینه انتخاب کنید.",
   "supportNeedAccessibility": "دسترس‌پذیری",
   "supportNeedHealth": "سلامت",

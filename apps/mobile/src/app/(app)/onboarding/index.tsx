@@ -4,7 +4,8 @@
  * open filled in, and every player sees this screen first to confirm or
  * correct them. The front door also resumes an interrupted wizard from its
  * stored step, and the layout's seeding sets that step past what staff
- * already answered (RAPP-300).
+ * already answered (RAPP-300). A name staff moved to another screen
+ * (RAPP-782) is asked there, so this screen asks only the ones left on it.
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
@@ -12,7 +13,7 @@ import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
-import { identityNameFormSchema, type IdentityNameFormInput } from '@/lib/onboarding-form';
+import { identityNameFormSchemaFor, type IdentityNameFormInput } from '@/lib/onboarding-form';
 import { wizardStackRoute, wizardStepRoute, type WizardStackRoute } from '@/lib/onboarding-intake';
 import {
   useBuiltinWording,
@@ -87,12 +88,19 @@ export default function IdentityStepScreen() {
     };
   }, [draft]);
 
+  // The names still on this screen: one staff moved is asked where it is now.
+  const asksFirstName = !intake.hidden.has('first_name');
+  const asksLastName = !intake.hidden.has('last_name');
+  const schema = useMemo(
+    () => identityNameFormSchemaFor({ firstName: asksFirstName, lastName: asksLastName }),
+    [asksFirstName, asksLastName],
+  );
   const {
     control,
     handleSubmit,
     formState: { errors },
   } = useForm<IdentityNameFormInput>({
-    resolver: zodResolver(identityNameFormSchema),
+    resolver: zodResolver(schema),
     defaultValues,
   });
 
@@ -102,10 +110,14 @@ export default function IdentityStepScreen() {
     (names) => {
       setHasSubmitErrors(false);
       const latest = onboardingDraftStore.loadDraft();
+      const asked = {
+        ...(asksFirstName ? { firstName: names.firstName } : {}),
+        ...(asksLastName ? { lastName: names.lastName } : {}),
+      };
       onboardingDraftStore.saveDraft({
         ...latest,
         currentStep: step.nextDraftStep,
-        identity: { ...latest?.identity, ...names },
+        identity: { ...latest?.identity, ...asked },
       });
       step.goNext();
     },
@@ -126,43 +138,47 @@ export default function IdentityStepScreen() {
       onBack={step.goBack ?? undefined}
     >
       <WizardValidationSummary isVisible={hasSubmitErrors} message={t('errorSummary')} />
-      <Controller
-        control={control}
-        name="firstName"
-        render={({ field }) => (
-          <AuthTextField
-            testID="onboarding-first-name"
-            label={wording.label('first_name', t('firstNameLabel'))}
-            hint={wording.help('first_name')}
-            value={field.value}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            isInvalid={Boolean(errors.firstName)}
-            autoCapitalize="words"
-            autoComplete="given-name"
-            returnKeyType="next"
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="lastName"
-        render={({ field }) => (
-          <AuthTextField
-            testID="onboarding-last-name"
-            label={wording.label('last_name', t('lastNameLabel'))}
-            hint={wording.help('last_name')}
-            value={field.value}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            isInvalid={Boolean(errors.lastName)}
-            autoCapitalize="words"
-            autoComplete="family-name"
-            returnKeyType="done"
-            onSubmitEditing={continueToBackground}
-          />
-        )}
-      />
+      {asksFirstName ? (
+        <Controller
+          control={control}
+          name="firstName"
+          render={({ field }) => (
+            <AuthTextField
+              testID="onboarding-first-name"
+              label={wording.label('first_name', t('firstNameLabel'))}
+              hint={wording.help('first_name')}
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              isInvalid={Boolean(errors.firstName)}
+              autoCapitalize="words"
+              autoComplete="given-name"
+              returnKeyType="next"
+            />
+          )}
+        />
+      ) : null}
+      {asksLastName ? (
+        <Controller
+          control={control}
+          name="lastName"
+          render={({ field }) => (
+            <AuthTextField
+              testID="onboarding-last-name"
+              label={wording.label('last_name', t('lastNameLabel'))}
+              hint={wording.help('last_name')}
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              isInvalid={Boolean(errors.lastName)}
+              autoCapitalize="words"
+              autoComplete="family-name"
+              returnKeyType="done"
+              onSubmitEditing={continueToBackground}
+            />
+          )}
+        />
+      ) : null}
     </WizardFrame>
   );
 }

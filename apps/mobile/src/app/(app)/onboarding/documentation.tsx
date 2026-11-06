@@ -1,4 +1,9 @@
-/** Document choice first; only documents that have details open another page. */
+/**
+ * Document choice first; only documents that have details open another page.
+ * When staff move Tipus de document to another screen (RAPP-782), it is asked
+ * there and its follow-ups follow it, so this screen asks only what is left
+ * on it.
+ */
 import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { QuestionHelp } from '@/components/onboarding/question-help';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
@@ -36,7 +41,9 @@ export default function DocumentationStepScreen() {
   const router = useRouter();
   const wording = useBuiltinWording();
   // Her explanation of the document is the screen's help now, drawn by the frame (RAPP-721).
-  const { catalog } = useWizardIntake();
+  const { catalog, hidden } = useWizardIntake();
+  // A test or an older intake may hold no hidden list: then the screen asks it.
+  const asksDocument = hidden?.has('document') !== true;
   const { fontScale } = useWindowDimensions();
   const rowStyle = useMemo(
     () => ({
@@ -72,6 +79,11 @@ export default function DocumentationStepScreen() {
     });
   };
   const continueFromChoice = () => {
+    if (!asksDocument) {
+      persist(step.nextDraftStep);
+      step.goNext();
+      return;
+    }
     if (choice === undefined || (choice === 'skip' && step.isRequired('document'))) {
       setHasSubmitErrors(true);
       playHaptic('warning');
@@ -108,30 +120,32 @@ export default function DocumentationStepScreen() {
       }
     >
       <WizardValidationSummary isVisible={hasSubmitErrors} message={t('documentChooseError')} />
-      <View
-        accessibilityRole="radiogroup"
-        accessibilityLabel={wording.label('document', t('documentTypeLabel'))}
-        className="gap-sm"
-      >
-        <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
-          {wording.label('document', t('documentTypeLabel'))}
-        </Text>
-        <QuestionHelp text={wording.help('document')} />
-        {options.map((option) => (
-          <SelectionChoiceCard
-            key={option.value}
-            testID={`onboarding-document-${option.value}`}
-            label={option.label}
-            fontClass={fontClass}
-            rowStyle={rowStyle}
-            isSelected={choice === option.value}
-            onPress={() => {
-              setChoice(option.value as DocumentChoice);
-              setHasSubmitErrors(false);
-            }}
-          />
-        ))}
-      </View>
+      {asksDocument ? (
+        <View
+          accessibilityRole="radiogroup"
+          accessibilityLabel={wording.label('document', t('documentTypeLabel'))}
+          className="gap-sm"
+        >
+          <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
+            {wording.label('document', t('documentTypeLabel'))}
+          </Text>
+          <QuestionHelp text={wording.help('document')} />
+          {options.map((option) => (
+            <SelectionChoiceCard
+              key={option.value}
+              testID={`onboarding-document-${option.value}`}
+              label={option.label}
+              fontClass={fontClass}
+              rowStyle={rowStyle}
+              isSelected={choice === option.value}
+              onPress={() => {
+                setChoice(option.value as DocumentChoice);
+                setHasSubmitErrors(false);
+              }}
+            />
+          ))}
+        </View>
+      ) : null}
     </WizardFrame>
   );
 }

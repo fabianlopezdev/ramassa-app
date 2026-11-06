@@ -15,9 +15,12 @@
  * Otherwise the question is off its control: the app screen hides the control
  * (`hiddenBuiltinQuestions` lists it), and every field of the question is asked
  * where it is placed with the generic renderer, as a Ramassà field is. Her
- * names keep their own control: her phone asks them as text and the database
- * fits the text to their type (RAPP-693).
+ * names keep their own control on her name screen whatever their type: her
+ * phone asks them as text and the database fits the text to their type
+ * (RAPP-693). A name placed on another screen (RAPP-782) is asked there with
+ * the generic renderer, as any field is.
  */
+import { followUpsOfOwnField } from '../onboarding/follow-ups';
 import {
   WIZARD_QUESTION_SCREENS,
   WIZARD_SCREEN_QUESTIONS,
@@ -62,9 +65,11 @@ export function ownScreenOf(question: IntakeQuestion): WizardQuestionScreen | un
   );
 }
 
-const APP_QUESTIONS = [...new Set(Object.values(SYSTEM_FIELD_QUESTIONS))].filter(
-  (question) => !(ACCOUNT_NAME_KEYS as readonly string[]).includes(question),
-);
+const APP_QUESTIONS = [...new Set(Object.values(SYSTEM_FIELD_QUESTIONS))];
+
+function isNameQuestion(question: IntakeQuestion): boolean {
+  return (ACCOUNT_NAME_KEYS as readonly string[]).includes(question);
+}
 
 /** The app's questions whose own control no longer asks them, for one layout. */
 export function questionsOffTheirControl(layout: ProfileLayout): ReadonlySet<IntakeQuestion> {
@@ -79,6 +84,11 @@ export function questionsOffTheirControl(layout: ProfileLayout): ReadonlySet<Int
       const placement = layout.placements.find(
         (candidate) => candidate.fieldId === field.id && candidate.surface === 'onboarding',
       );
+      // Her names fit their control whatever their type (RAPP-693), and leave
+      // it only for another screen staff placed them on (RAPP-782).
+      if (isNameQuestion(question)) {
+        return placement !== undefined && placement.screenKey !== ownScreenOf(question);
+      }
       return placement?.screenKey !== ownScreenOf(question) || !appControlFits(index, question);
     }),
   );
@@ -87,13 +97,24 @@ export function questionsOffTheirControl(layout: ProfileLayout): ReadonlySet<Int
 /**
  * Whether a field is asked with the generic renderer wherever it is placed on
  * her onboarding and her season form: every Ramassà field, and an app field
- * whose question is off its control.
+ * whose question is off its control. A follow-up's own field (RAPP-720)
+ * placed on a screen that is not one of its follow-ups (`placedOn`, RAPP-782)
+ * is asked there with the generic renderer too, to every player on it.
  */
 export function isAskedGenerically(
   field: ProfileField,
   offTheirControl: ReadonlySet<IntakeQuestion>,
+  placedOn?: string | null,
 ): boolean {
   if (field.kind !== 'builtin') return true;
+  const follows = followUpsOfOwnField(field.systemKey);
+  if (
+    placedOn != null &&
+    follows.length > 0 &&
+    !(follows as readonly string[]).includes(placedOn)
+  ) {
+    return true;
+  }
   const question =
     field.builtinKey ?? (field.systemKey == null ? null : SYSTEM_FIELD_QUESTIONS[field.systemKey]);
   return question !== null && offTheirControl.has(question);

@@ -195,6 +195,7 @@
   "supportingEntitiesInstruction": "If other organisations or programmes are supporting you, please add them here.",
   "supportingEntitiesRemoveAction": "Remove {{name}}",
   "supportNeedsTitle": "Do you need any specific support?",
+  "supportNeedsDetailsTitle": "Tell us what support you need",
   "supportNeedsChooseMultiple": "You can choose more than one option.",
   "supportNeedAccessibility": "Accessibility",
   "supportNeedHealth": "Health",

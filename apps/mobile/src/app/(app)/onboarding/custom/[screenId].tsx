@@ -9,7 +9,8 @@
  * her strokes on the screen's signature blocks, which show among the fields in
  * their order, each required (RAPP-690), and her ticks of the screen's
  * consents (RAPP-699). A text or points block shows in its place too
- * (RAPP-770).
+ * (RAPP-770). An app follow-up whose question staff moved (RAPP-782) is a
+ * step here too, with the follow-up's own blocks, consents and wording.
  */
 
 import {
@@ -21,10 +22,12 @@ import { useScreenConsents } from '@/components/onboarding/screen-consents';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
+import { FOLLOW_UP_TITLE_KEYS, placementKeyOfStep } from '@/lib/follow-up-steps';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { mergedCustomAnswers, WIZARD_SCREEN_ROUTES } from '@/lib/onboarding-intake';
 import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
+import { useScreenTitle } from '@/lib/screen-wording';
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +36,7 @@ import { useLanguage } from '@ramassa/shared/i18n';
 import { teamTextIn } from '@ramassa/shared/i18n/localized-content';
 import { customStepKey } from '@ramassa/shared/intake';
 import {
+  followUpOfGroupId,
   formScreenTextsIn,
   isCustomQuestionVisible,
   updateCustomAnswer,
@@ -51,8 +55,12 @@ export default function CustomStepScreen() {
   );
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
   const [isDrawing, setIsDrawing] = useState(false);
-  const signatures = useFormBlocks(screenId, setIsDrawing);
-  const consents = useScreenConsents(screenId);
+  // A moved follow-up keeps its blocks, consents and wording under its own key.
+  const placementKey = placementKeyOfStep(screenId);
+  const followUp = followUpOfGroupId(screenId);
+  const screenTitle = useScreenTitle();
+  const signatures = useFormBlocks(placementKey, setIsDrawing);
+  const consents = useScreenConsents(placementKey);
   const screen = customScreens.find((candidate) => candidate.id === screenId);
 
   // Staff removed the screen since her draft was saved: the summary shows the rest.
@@ -81,10 +89,14 @@ export default function CustomStepScreen() {
 
   return (
     <WizardFrame
-      screenId={customStepKey(screenId)}
+      screenId={followUp ?? customStepKey(screenId)}
       stepNumber={step.position.step}
       totalSteps={step.position.total}
-      title={teamTextIn(screen.title, language, false)}
+      title={
+        followUp === null
+          ? teamTextIn(screen.title, language, false)
+          : screenTitle(followUp, t(FOLLOW_UP_TITLE_KEYS[followUp]))
+      }
       intro={intro === '' ? undefined : intro}
       scrollEnabled={!isDrawing}
       // The screen's own help line and main button (RAPP-771).

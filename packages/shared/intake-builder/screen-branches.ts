@@ -10,7 +10,7 @@
  * board, the screen editor and her phone all read these functions.
  *
  * The parent is the screen where the condition's field is placed on the same
- * form. A screen whose question is asked nowhere on its form has no parent: it
+ * form; an app follow-up moves with its question too (RAPP-782). A screen whose question is asked nowhere on its form has no parent: it
  * keeps its own place and opens only for a stored answer that matches. A
  * hidden screen hides its follow-ups.
  */
@@ -30,10 +30,11 @@ import {
 } from '../onboarding/screen-conditions';
 import {
   DETAIL_SCREEN_BRANCHES,
-  detailScreensOf,
   type DetailScreen,
   type DetailScreenBranch,
 } from '../onboarding/screen-texts';
+import { SYSTEM_FIELD_QUESTIONS, type SystemFieldKey } from '../onboarding/system-fields';
+import { questionsOffTheirControl } from './app-controls';
 import { systemFieldsOf, wizardFlow, type IntakeCatalog, type RamassaScreen } from './builder';
 import type { CustomForm, CustomFormScreen } from './custom-form-model';
 import { placementOn } from './profile-layout';
@@ -119,9 +120,47 @@ export function onboardingScreenOpens(
   return conditions !== null && conditionsHold(conditions, answers);
 }
 
+/**
+ * The step holding an app follow-up's question (RAPP-782): the screen staff
+ * placed it on, an app screen or `custom:<id>`, else the follow-up's own
+ * parent. The follow-up moves with its question.
+ */
+export function followUpParent(catalog: IntakeCatalog, screen: DetailScreen): WizardStepKey {
+  const branch = detailBranch(screen);
+  const field = systemFieldsOf(catalog).get(branch.condition.field);
+  const key =
+    field === undefined || catalog.layout === undefined
+      ? null
+      : (placementOn(catalog.layout, field.id, 'onboarding')?.screenKey ?? null);
+  if (key === null || key === branch.parent) return branch.parent;
+  if (isQuestionScreen(key)) return key;
+  return catalog.screens.some((each) => each.id === key && !each.isArchived)
+    ? customStepKey(key)
+    : branch.parent;
+}
+
+/**
+ * Whether an app follow-up is a step of its own (RAPP-782): its question is
+ * off its own control (moved to another screen, or retyped), so no app
+ * control opens it. It follows the step holding its question, opens on her
+ * answer there, and asks its fields with the generic renderer.
+ */
+export function isFollowUpOwnStep(catalog: IntakeCatalog, screen: DetailScreen): boolean {
+  if (catalog.layout === undefined) return false;
+  return questionsOffTheirControl(catalog.layout).has(
+    SYSTEM_FIELD_QUESTIONS[detailBranch(screen).condition.field as SystemFieldKey],
+  );
+}
+
+/** The follow-up a group of fields id names (`app:<follow-up>`), or null. */
+export function followUpOfGroupId(id: string): DetailScreen | null {
+  const key = id.startsWith('app:') ? id.slice('app:'.length) : '';
+  return isDetailScreen(key) ? key : null;
+}
+
 /** The step holding a step's question (RAPP-715): for a team screen, an app follow-up, or none. */
 export function onboardingParentOf(catalog: IntakeCatalog, key: string): string | null {
-  if (isDetailScreen(key)) return detailBranch(key).parent;
+  if (isDetailScreen(key)) return followUpParent(catalog, key);
   const id = customStepId(key);
   if (id === null) return null;
   const screen = catalog.screens.find((each) => each.id === id);
@@ -138,7 +177,7 @@ export function onboardingBranchKeys(
   order: readonly string[],
 ): readonly string[] {
   return [
-    ...detailScreensOf(key)
+    ...DETAIL_SCREEN_BRANCHES.filter((branch) => followUpParent(catalog, branch.screen) === key)
       .filter(
         (branch) => !catalog.screenSettings?.some((s) => s.screen === branch.screen && s.isDeleted),
       )

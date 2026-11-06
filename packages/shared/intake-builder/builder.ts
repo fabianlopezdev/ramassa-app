@@ -978,9 +978,12 @@ export function wizardFormFields(catalog: IntakeCatalog): SystemFieldIndex {
  */
 export function askedRequiredQuestions(catalog: IntakeCatalog): RequiredQuestions {
   const hidden = hiddenBuiltinQuestions(catalog);
+  const off: ReadonlySet<IntakeQuestion> =
+    catalog.layout === undefined ? new Set() : questionsOffTheirControl(catalog.layout);
+  // A locked question stays required on its screen, unless staff moved it off (RAPP-782).
   return new Set(
-    [...requiredBuiltinQuestions(catalog)].filter(
-      (question) => isLockedRequiredQuestion(question) || !hidden.has(question),
+    [...requiredBuiltinQuestions(catalog)].filter((question) =>
+      isLockedRequiredQuestion(question) ? !off.has(question) : !hidden.has(question),
     ),
   );
 }

@@ -16,8 +16,13 @@ import {
   identityFormSchemaFor,
   logisticsFormSchemaFor,
 } from '@/lib/onboarding-form';
-import { appAnswersToSave, customAnswersToSave } from '@/lib/onboarding-intake';
+import {
+  appAnswersToSave,
+  customAnswersToSave,
+  mergedCustomAnswers,
+} from '@/lib/onboarding-intake';
 import { herWizardAnswers, type WizardIntake } from '@/lib/onboarding-intake-context';
+import { withPlacedNames } from '@/lib/placed-names';
 import { firstIncompleteStep } from '@/lib/wizard-completeness';
 import {
   DEFAULT_REQUIRED_QUESTIONS,
@@ -31,6 +36,7 @@ import {
   closedFollowUps,
   consentDecisionsPayload,
   followUpAsking,
+  followUpOfGroupId,
   formSignaturesPayload,
   liveOnboardingConsents,
   onboardingScreenOpens,
@@ -84,7 +90,13 @@ export function onboardingAnswersFromDraft(
   const isClosed = (screenKey: string | null | undefined) =>
     screenKey != null && (closed.has(screenKey) || closedApp.has(screenKey));
   const required = intake.required ?? DEFAULT_REQUIRED_QUESTIONS;
-  const identity = identityFormSchemaFor(required).safeParse(draft?.identity ?? {});
+  // A name staff moved to another screen is read from her answer there (RAPP-782).
+  const named = withPlacedNames(
+    draft,
+    intake.catalog,
+    mergedCustomAnswers(intake.customAnswers, draft?.custom),
+  );
+  const identity = identityFormSchemaFor(required).safeParse(named?.identity ?? {});
   if (!identity.success) return { ok: false, step: 'identity' };
   const documentation = documentationFormSchemaFor(
     required,
@@ -125,7 +137,13 @@ export function onboardingAnswersFromDraft(
   // Her answers to the staff questions (RAPP-307), only the new or changed
   // ones, checked by the server before anything is kept (RAPP-611).
   const placed = intake.customScreens
-    .filter((screen) => !closed.has(screen.id) && !isClosed(screen.builtinScreen))
+    .filter(
+      (screen) =>
+        !closed.has(screen.id) &&
+        !isClosed(screen.builtinScreen) &&
+        // A follow-up that is a step of its own (RAPP-782).
+        !isClosed(followUpOfGroupId(screen.id)),
+    )
     .flatMap((screen) => screen.questions);
   const customAnswers = customAnswersToSave(placed, draft?.custom, intake.customAnswers);
   // An app field the generic renderer asks (RAPP-665) is saved from there only.

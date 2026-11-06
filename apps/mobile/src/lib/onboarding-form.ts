@@ -61,6 +61,21 @@ export const identityNameFormSchema = identityFields.pick({
 });
 export type IdentityNameFormInput = z.input<typeof identityNameFormSchema>;
 
+/**
+ * The names her name screen asks: a name staff moved to another screen
+ * (RAPP-782) is checked there, so this screen takes it as it stands.
+ */
+export function identityNameFormSchemaFor(asks: {
+  readonly firstName: boolean;
+  readonly lastName: boolean;
+}): z.ZodType<IdentityNameFormInput, IdentityNameFormInput> {
+  if (asks.firstName && asks.lastName) return identityNameFormSchema;
+  return identityNameFormSchema.extend({
+    ...(asks.firstName ? {} : { firstName: z.string() }),
+    ...(asks.lastName ? {} : { lastName: z.string() }),
+  }) as unknown as z.ZodType<IdentityNameFormInput, IdentityNameFormInput>;
+}
+
 const decimalInputSchema = z.string().trim().transform(normalizeDecimalDigits);
 const birthDayInputSchema = decimalInputSchema.pipe(
   z

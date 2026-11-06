@@ -51,16 +51,19 @@ import { isSystemFieldKey, SYSTEM_FIELD_QUESTIONS } from './system-fields';
  */
 const ALWAYS_ASKED_QUESTIONS: readonly IntakeQuestion[] = SCREEN_QUESTIONS.identity;
 
-/** The questions her wizard does not ask: not asked by the rules, or removed in Settings. */
+/**
+ * The questions her wizard does not ask: not asked by the rules, or removed in
+ * Settings. Her names are always asked; one in `hidden` is asked on the screen
+ * staff moved it to (RAPP-782), so her name screen does not ask it.
+ */
 export function wizardNotAsked(
   toAsk: ReadonlySet<IntakeQuestion>,
   hidden: ReadonlySet<IntakeQuestion>,
 ): AnsweredQuestions {
-  return new Set(
-    [...questionsNotAsked(toAsk), ...hidden].filter(
-      (question) => !ALWAYS_ASKED_QUESTIONS.includes(question),
-    ),
-  );
+  return new Set([
+    ...[...questionsNotAsked(toAsk)].filter((question) => !ALWAYS_ASKED_QUESTIONS.includes(question)),
+    ...hidden,
+  ]);
 }
 
 /**

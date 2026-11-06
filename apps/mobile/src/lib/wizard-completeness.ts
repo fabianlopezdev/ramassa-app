@@ -34,11 +34,13 @@ import {
   consentsOn,
   followUpAsking,
   followUpGroupOf,
+  followUpOfGroupId,
   followUpOpens,
   formBlocksOn,
   isCustomQuestionRequired,
   isCustomQuestionVisible,
   isEmptyAnswer,
+  isFollowUpOwnStep,
   unsignedFormBlocks,
   untickedRequiredConsents,
   type Consent,
@@ -57,6 +59,7 @@ import {
   identityFormSchemaFor,
   identityNameFormSchema,
 } from './onboarding-form';
+import { withPlacedNames } from './placed-names';
 
 type Section = Readonly<Record<string, unknown>>;
 
@@ -161,13 +164,15 @@ export interface CompletenessContext {
  * hid is never asked, so it never blocks her.
  */
 export function firstIncompleteStep(
-  draft: OnboardingDraft | null,
+  given: OnboardingDraft | null,
   context: CompletenessContext,
 ): WizardStepKey | null {
   const required = context.required ?? DEFAULT_REQUIRED_QUESTIONS;
   const asking =
     context.catalog === undefined ? DEFAULT_FOLLOW_UP_ASKING : followUpAsking(context.catalog);
-  const answers: CustomAnswers = { ...context.storedCustom, ...draft?.custom };
+  const answers: CustomAnswers = { ...context.storedCustom, ...given?.custom };
+  // A name staff moved to another screen is answered there (RAPP-782).
+  const draft = withPlacedNames(given, context.catalog, answers);
   const isUnsignedOrUnticked = (screenKey: string) =>
     unsignedFormBlocks(formBlocksOn(context.blocks, 'onboarding', screenKey), draft?.signatures)
       .length > 0 ||
@@ -182,7 +187,10 @@ export function firstIncompleteStep(
       if (planned !== undefined && !opensForAnswers(planned, context.answers ?? answers)) continue;
       const screen = context.customScreens?.find((candidate) => candidate.id === customId);
       if (screen !== undefined && !isCustomScreenComplete(screen, answers)) return step;
-      if (screen !== undefined && isUnsignedOrUnticked(customId)) return step;
+      // A follow-up that is a step of its own keeps its blocks under its key (RAPP-782).
+      if (screen !== undefined && isUnsignedOrUnticked(followUpOfGroupId(customId) ?? customId)) {
+        return step;
+      }
       continue;
     }
     if (!isQuestionScreen(step) || context.flow.hiddenScreens.has(step)) continue;
@@ -193,6 +201,9 @@ export function firstIncompleteStep(
     if (placed !== undefined && !isCustomScreenComplete(placed, answers)) return step;
     // And on its follow-ups her answers open (RAPP-720): she answers them from this step.
     for (const branch of context.catalog === undefined ? [] : detailScreensOf(step)) {
+      // One that is a step of its own is checked as its own step (RAPP-782).
+      if (context.catalog !== undefined && isFollowUpOwnStep(context.catalog, branch.screen))
+        continue;
       if (
         !followUpOpens(context.catalog as IntakeCatalog, branch.screen, context.answers ?? answers)
       )

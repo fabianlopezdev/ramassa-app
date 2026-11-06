@@ -185,6 +185,16 @@ describe('questionsOffTheirControl', () => {
     expect(isAskedGenerically(NAME, questionsOffTheirControl(layout))).toBe(false);
   });
 
+  test('a name staff move to another screen is asked there by the generic renderer (RAPP-782)', () => {
+    const layout = layoutWith(
+      [BIRTH, SIZE, NAME],
+      [onboarding(BIRTH, 'background'), onboarding(SIZE, 'equipment'), onboarding(NAME, 'logistics')],
+    );
+    const off = questionsOffTheirControl(layout);
+    expect(off.has('first_name')).toBe(true);
+    expect(isAskedGenerically(NAME, off)).toBe(true);
+  });
+
   test('a layout with no app field changes nothing', () => {
     expect(questionsOffTheirControl({ sections: [], fields: [], placements: [] })).toEqual(
       new Set(),

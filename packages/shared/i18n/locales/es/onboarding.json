@@ -195,6 +195,7 @@
   "supportingEntitiesInstruction": "Si otras entidades o programas te están dando apoyo, añádelos aquí.",
   "supportingEntitiesRemoveAction": "Eliminar {{name}}",
   "supportNeedsTitle": "¿Necesitas algún apoyo específico?",
+  "supportNeedsDetailsTitle": "Cuéntanos qué apoyo necesitas",
   "supportNeedsChooseMultiple": "Puedes elegir más de una opción.",
   "supportNeedAccessibility": "Accesibilidad",
   "supportNeedHealth": "Salud",

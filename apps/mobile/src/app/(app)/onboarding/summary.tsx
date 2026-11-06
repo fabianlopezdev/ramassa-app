@@ -18,6 +18,7 @@ import { ReviewEditAction, ReviewRow, ReviewSection } from '@/components/onboard
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { SeasonAnswerRows } from '@/components/profile/season-answer-rows';
+import { FOLLOW_UP_TITLE_KEYS } from '@/lib/follow-up-steps';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { normalizeDecimalDigits } from '@/lib/onboarding-form';
@@ -60,6 +61,7 @@ import {
   appScreenFields,
   followUpAsking,
   followUpGroupOf,
+  followUpOfGroupId,
   followUpOpens,
   formBlocksOn,
   formBlockText,
@@ -188,7 +190,14 @@ function CustomSection({
   readonly language: LanguageCode;
 }) {
   const router = useRouter();
-  const title = teamTextIn(screen.title, language, false);
+  const { t } = useTranslation('onboarding');
+  const screenTitle = useScreenTitle();
+  // A follow-up that is a step of its own (RAPP-782) is named as the follow-up.
+  const followUp = followUpOfGroupId(screen.id);
+  const title =
+    followUp === null
+      ? teamTextIn(screen.title, language, false)
+      : screenTitle(followUp, t(FOLLOW_UP_TITLE_KEYS[followUp]));
   return (
     <ReviewSection
       title={title}
@@ -375,16 +384,21 @@ export default function SummaryStepScreen() {
           />
         }
       >
-        <ReviewRow
-          icon="person"
-          label={wording.label('first_name', t('firstNameLabel'))}
-          value={show(text(identity.firstName))}
-        />
-        <ReviewRow
-          icon="person"
-          label={wording.label('last_name', t('lastNameLabel'))}
-          value={show(text(identity.lastName))}
-        />
+        {/* A name staff moved to another screen shows with that screen's fields (RAPP-782). */}
+        {shows('first_name') ? (
+          <ReviewRow
+            icon="person"
+            label={wording.label('first_name', t('firstNameLabel'))}
+            value={show(text(identity.firstName))}
+          />
+        ) : null}
+        {shows('last_name') ? (
+          <ReviewRow
+            icon="person"
+            label={wording.label('last_name', t('lastNameLabel'))}
+            value={show(text(identity.lastName))}
+          />
+        ) : null}
         {added('identity')}
       </ReviewSection>
     ),
@@ -596,6 +610,8 @@ export default function SummaryStepScreen() {
     const customId = customStepId(step);
     if (customId !== null) {
       const screen = customScreens.find((candidate) => candidate.id === customId);
+      const followUp = followUpOfGroupId(customId);
+      if (followUp !== null) return screenTitle(followUp, t(FOLLOW_UP_TITLE_KEYS[followUp]));
       return screen === undefined ? t('summaryTitle') : teamTextIn(screen.title, locale, false);
     }
     return builtinSectionTitle(step as WizardQuestionScreen);

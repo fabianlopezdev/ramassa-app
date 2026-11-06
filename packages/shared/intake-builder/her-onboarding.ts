@@ -26,7 +26,7 @@ import {
   type WizardQuestionScreen,
 } from '../onboarding/intake';
 import { DETAIL_SCREEN_BRANCHES } from '../onboarding/screen-texts';
-import { SYSTEM_FIELD_QUESTIONS } from '../onboarding/system-fields';
+import { ACCOUNT_NAME_KEYS, SYSTEM_FIELD_QUESTIONS } from '../onboarding/system-fields';
 import { isAskedGenerically, questionsOffTheirControl } from './app-controls';
 import {
   isScreenAnswered,
@@ -53,6 +53,8 @@ import {
 import {
   appBranchCondition,
   detailBranch,
+  followUpParent,
+  isFollowUpOwnStep,
   onboardingOpensWhen,
   onboardingScreenParent,
 } from './screen-branches';
@@ -95,7 +97,7 @@ function placedQuestionsOn(
   const offTheirControl = questionsOffTheirControl(layout);
   return placementsOnSurface(layout, surface, screenKey).flatMap((placement) => {
     const field = fieldById(layout, placement.fieldId);
-    return field === undefined || !isAskedGenerically(field, offTheirControl)
+    return field === undefined || !isAskedGenerically(field, offTheirControl, placement.screenKey)
       ? []
       : [placedQuestion(layout, field, placement)];
   });
@@ -286,6 +288,12 @@ export function herOnboarding(
     if (kept !== undefined) return [kept];
     return signs(screen) ? [{ ...screen, questions: [] }] : [];
   });
+  // Her names are always asked, to check them (RAPP-708), wherever staff put them (RAPP-782).
+  const nameIds = new Set(
+    (catalog.layout?.fields ?? [])
+      .filter((field) => (ACCOUNT_NAME_KEYS as readonly string[]).includes(field.systemKey ?? ''))
+      .map((field) => field.id),
+  );
   const plan = shown.map((screen): CustomWizardScreen => {
     // A screen that depends on an answer (RAPP-715): it follows the step
     // holding its question, and opens while her answers meet its conditions.
@@ -296,15 +304,22 @@ export function herOnboarding(
     // her answer there opens the follow-up.
     const followUp = isFollowUpScreen(builtin) ? detailBranch(builtin) : null;
     const opening = followUp === null ? null : appBranchCondition(catalog, followUp);
+    // One whose question left its control (RAPP-782) is a step of its own
+    // right after the step holding the question.
+    const isOwnStep = isFollowUpScreen(builtin) && isFollowUpOwnStep(catalog, builtin);
     return {
       id: screen.id,
       afterScreen: screen.afterScreen,
       isAnswered:
         !signs(screen) &&
+        !screen.questions.some((question) => nameIds.has(question.id)) &&
         isScreenAnswered(screen, answers) &&
         !screen.questions.some((question) => asking.get(question.id) === true),
-      builtinScreen: builtin === null ? null : groupStep(builtin),
+      builtinScreen: builtin === null || isOwnStep ? null : groupStep(builtin),
       ...(opening === null ? {} : { opensWhen: [opening] }),
+      ...(isFollowUpScreen(builtin) && isOwnStep
+        ? { parent: followUpParent(catalog, builtin) }
+        : {}),
       ...(own === undefined || own.showWhen === undefined
         ? {}
         : { parent: onboardingScreenParent(catalog, own), opensWhen: opensWhen ?? [] }),
@@ -317,5 +332,11 @@ export function herOnboarding(
     );
   const byFlow = <Screen extends PlannedScreen>(list: readonly Screen[]) =>
     [...list].sort((a, b) => position(a) - position(b));
-  return { screens: byFlow(shown), plan: byFlow(plan) };
+  // A follow-up that is a step of its own is a screen of its own (RAPP-782).
+  const screens = shown.map((screen) =>
+    isFollowUpScreen(screen.builtinScreen) && isFollowUpOwnStep(catalog, screen.builtinScreen)
+      ? { ...screen, builtinScreen: null }
+      : screen,
+  );
+  return { screens: byFlow(screens), plan: byFlow(plan) };
 }

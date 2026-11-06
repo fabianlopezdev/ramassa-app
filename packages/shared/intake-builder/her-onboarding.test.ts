@@ -4,8 +4,10 @@
  * fallback, required per surface, and staff's choice per player.
  */
 import { describe, expect, test } from 'bun:test';
+import { customStepKey, nextWizardScreen, wizardFlowOrder } from '../onboarding/intake';
+import { layoutSystemFields } from './app-controls';
 import type { CustomQuestion, IntakeCatalog, IntakeScreen } from './builder';
-import { EMPTY_INTAKE_CATALOG, textIn } from './builder';
+import { EMPTY_INTAKE_CATALOG, textIn, wizardFlow } from './builder';
 import {
   APP_SCREEN_ANCHORS,
   appScreenFields,
@@ -268,5 +270,95 @@ describe('a screen with a signature block always shows (RAPP-690)', () => {
 
   test('without blocks a screen with no field is no screen', () => {
     expect(herOnboarding({ ...catalog, blocks: [] }).plan).toEqual([]);
+  });
+});
+
+describe('any field on any screen (RAPP-782)', () => {
+  const DOC_TYPE = field({
+    id: '5eed0000-0000-4000-8098-000000000011',
+    kind: 'builtin',
+    systemKey: 'document_type',
+    type: 'single_choice',
+    options: [
+      {
+        id: '5eed0000-0000-4000-8099-000000000001',
+        key: 'nie',
+        label: { ca: 'NIE' },
+        isArchived: false,
+      },
+    ] as ProfileField['options'],
+  });
+  const DOC_NUMBER = field({
+    id: '5eed0000-0000-4000-8098-000000000012',
+    kind: 'builtin',
+    systemKey: 'document_number',
+  });
+  const NOM = field({
+    id: '5eed0000-0000-4000-8098-000000000013',
+    kind: 'builtin',
+    systemKey: 'first_name',
+  });
+  const catalog = (placements: readonly FieldPlacement[]): IntakeCatalog => {
+    const layout: ProfileLayout = {
+      sections: [],
+      fields: [BUS, DOC_TYPE, DOC_NUMBER, NOM],
+      placements,
+    };
+    return { ...catalogWith([]), layout, systemFields: layoutSystemFields(layout) };
+  };
+
+  test('a follow-up whose question moved is a step of its own, right after the question', () => {
+    const { plan, screens } = herOnboarding(
+      catalog([
+        placed(DOC_TYPE.id, 'onboarding', TRANSPORT_SCREEN, 0),
+        placed(DOC_NUMBER.id, 'onboarding', 'documentation-nie', 0, { required: true }),
+        placed(BUS.id, 'onboarding', TRANSPORT_SCREEN, 1),
+      ]),
+    );
+    const nie = plan.find((each) => each.id === 'app:documentation-nie');
+    expect(nie?.builtinScreen).toBeNull();
+    expect(nie?.parent).toBe(`custom:${TRANSPORT_SCREEN}`);
+    expect(nie?.opensWhen).toEqual([
+      { fieldId: DOC_TYPE.id, values: ['5eed0000-0000-4000-8099-000000000001'] },
+    ]);
+    // Off its control, the follow-up asks its number with the generic renderer.
+    expect(
+      ids(screens.find((each) => each.id === 'app:documentation-nie')?.questions ?? []),
+    ).toEqual([DOC_NUMBER.id]);
+  });
+
+  test('her phone walks to the moved follow-up right after the question, on her answer', () => {
+    const moved = catalog([
+      placed(DOC_TYPE.id, 'onboarding', TRANSPORT_SCREEN, 0),
+      placed(DOC_NUMBER.id, 'onboarding', 'documentation-nie', 0, { required: true }),
+    ]);
+    const { plan } = herOnboarding(moved);
+    const flow = wizardFlow(moved);
+    const from = customStepKey(TRANSPORT_SCREEN);
+    const nie = { [DOC_TYPE.id]: '5eed0000-0000-4000-8099-000000000001' };
+    expect(nextWizardScreen(from, new Set(), plan, flow, nie)).toBe('custom:app:documentation-nie');
+    expect(nextWizardScreen(from, new Set(), plan, flow, {})).not.toBe(
+      'custom:app:documentation-nie',
+    );
+    const order = wizardFlowOrder(plan, flow);
+    expect(order.indexOf('custom:app:documentation-nie')).toBe(order.indexOf(from) + 1);
+  });
+
+  test("a follow-up's field moved to another screen is asked there to everyone", () => {
+    const placements = [
+      placed(DOC_TYPE.id, 'onboarding', 'documentation', 0),
+      placed(DOC_NUMBER.id, 'onboarding', 'logistics', 0),
+    ];
+    expect(ids(onboardingScreenQuestions(catalog(placements), 'logistics'))).toEqual([
+      DOC_NUMBER.id,
+    ]);
+  });
+
+  test('a screen holding her name is never skipped as answered', () => {
+    const { plan } = herOnboarding(
+      catalog([placed(NOM.id, 'onboarding', TRANSPORT_SCREEN, 0, { required: true })]),
+      { [NOM.id]: 'Aisha' },
+    );
+    expect(plan.find((each) => each.id === TRANSPORT_SCREEN)?.isAnswered).toBe(false);
   });
 });
