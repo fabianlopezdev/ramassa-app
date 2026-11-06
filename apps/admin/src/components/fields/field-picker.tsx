@@ -11,7 +11,8 @@
  * asked on another screen of the form is picked like a free one and its line
  * says where it is now and that adding it moves it here (RAPP-782); a field
  * that cannot go here is dimmed with the reason. Several fields are picked at
- * once and added with one button.
+ * once and added with one button. Before a pick moves anything, a
+ * confirmation says what changes (`reviewMove`, RAPP-782).
  *
  * Keyboard: Up and Down move in a list (Home and End to its ends), the
  * section list shows a section as it gets focus, Right goes from the
@@ -29,6 +30,7 @@
 import type { FieldFormDraft } from '@/components/fields/field-form';
 import { FieldTypeIcon } from '@/components/fields/field-type-icon';
 import { PrivacyBadge } from '@/components/fields/privacy-badge';
+import { ConfirmDialog } from '@/components/onboarding/confirm-dialog';
 import { FieldDialog } from '@/components/profile-layout/field-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -103,6 +105,15 @@ export interface FieldPickerProps {
   readonly onCreateField?: (section: ProfileSection, draft: FieldFormDraft) => Promise<string>;
   /** Dades legals as one more section (RAPP-699). */
   readonly consents?: ConsentPickOptions;
+  /**
+   * What adding the picked fields and consents changes (RAPP-782): the
+   * confirmation's opening line and one line per change; null when nothing
+   * moves, and they are added at once.
+   */
+  readonly reviewMove?: (
+    fieldIds: readonly string[],
+    consentIds: readonly string[],
+  ) => { readonly intro: string; readonly lines: readonly string[] } | null;
   readonly testId?: string;
 }
 
@@ -149,6 +160,7 @@ function PickerBody({
   onConfirm,
   onCreateField,
   consents,
+  reviewMove,
   testId = 'field-picker',
 }: FieldPickerProps) {
   const { t, i18n } = useTranslation('settings');
@@ -162,6 +174,10 @@ function PickerBody({
   const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [review, setReview] = useState<{
+    readonly intro: string;
+    readonly lines: readonly string[];
+  } | null>(null);
   const sectionsRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
 
@@ -223,11 +239,24 @@ function PickerBody({
     });
   }
 
-  async function confirm() {
+  function confirm() {
     // A field picked earlier may have been placed meanwhile (another tab).
     const chosen = [...picked].filter(canPickField);
     const chosenConsents = [...picked].filter(canPickConsent);
     if ((chosen.length === 0 && chosenConsents.length === 0) || isSaving) return;
+    // Anything that moves is said first (RAPP-782).
+    const changes = reviewMove?.(chosen, chosenConsents) ?? null;
+    if (changes !== null && changes.lines.length > 0) {
+      setReview(changes);
+      return;
+    }
+    void add();
+  }
+
+  async function add() {
+    const chosen = [...picked].filter(canPickField);
+    const chosenConsents = [...picked].filter(canPickConsent);
+    setReview(null);
     setIsSaving(true);
     try {
       if (chosen.length > 0) await onConfirm(controllersFirst(layout, chosen));
@@ -260,7 +289,7 @@ function PickerBody({
     }
     if (event.key === 'Enter' && (event.target as HTMLElement).dataset.pickerNew === undefined) {
       event.preventDefault();
-      void confirm();
+      confirm();
       return;
     }
     moveIn(event, items(optionsRef.current));
@@ -269,7 +298,9 @@ function PickerBody({
   const count = [...picked].filter(canPick).length;
   const isSectionFull = isConsentsSection
     ? shownConsents.length > 0 &&
-      shownConsents.every((consent) => consents !== undefined && !isPickable(consents.stateOf(consent)))
+      shownConsents.every(
+        (consent) => consents !== undefined && !isPickable(consents.stateOf(consent)),
+      )
     : shown.length > 0 && shown.every((field) => !isPickable(stateOf(field)));
 
   return (
@@ -524,12 +555,32 @@ function PickerBody({
         <Button
           type="button"
           disabled={count === 0 || isSaving}
-          onClick={() => void confirm()}
+          onClick={confirm}
           data-testid={`${testId}-confirm`}
         >
           {count === 0 ? t('fieldPicker.addNone') : t('fieldPicker.add', { count })}
         </Button>
       </div>
+      <ConfirmDialog
+        isOpen={review !== null}
+        onOpenChange={(open) => {
+          if (!open) setReview(null);
+        }}
+        title={t('fieldPicker.move.title')}
+        description={review?.intro ?? ''}
+        action={t('fieldPicker.move.action')}
+        isDestructive={false}
+        onConfirm={() => void add()}
+      >
+        <ul
+          className="flex list-disc flex-col gap-1.5 ps-5 text-start text-sm"
+          data-testid={`${testId}-move-review`}
+        >
+          {(review?.lines ?? []).map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      </ConfirmDialog>
       {onCreateField === undefined || section === undefined ? null : (
         <FieldDialog
           section={section}
@@ -609,21 +660,14 @@ function FieldOption({
           <FieldTypeIcon type={field.type} />
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span
-            className={cn(
-              'truncate text-sm font-medium',
-              !canPick && 'text-muted-foreground',
-            )}
-          >
+          <span className={cn('truncate text-sm font-medium', !canPick && 'text-muted-foreground')}>
             {textIn(field.label, language)}
           </span>
           <span className="truncate text-xs text-muted-foreground">
             {sectionName === null ? line : `${sectionName} · ${line}`}
           </span>
         </span>
-        <span
-          className={cn('flex w-20 shrink-0 justify-end', !canPick && 'opacity-50')}
-        >
+        <span className={cn('flex w-20 shrink-0 justify-end', !canPick && 'opacity-50')}>
           <PrivacyBadge level={field.privacy} />
         </span>
       </span>
@@ -690,12 +734,7 @@ function ConsentOption({
           <FieldTypeIcon type="consent" />
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span
-            className={cn(
-              'truncate text-sm font-medium',
-              !canPick && 'text-muted-foreground',
-            )}
-          >
+          <span className={cn('truncate text-sm font-medium', !canPick && 'text-muted-foreground')}>
             {textIn(consent.name, language)}
           </span>
           <span className="truncate text-xs text-muted-foreground">{line}</span>

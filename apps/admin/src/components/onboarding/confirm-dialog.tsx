@@ -1,7 +1,8 @@
 /**
  * A yes-or-no before a change that removes something (RAPP-641, RAPP-651):
  * deleting a screen, taking a field off a screen. The action reads as
- * destructive; Cancel keeps everything.
+ * destructive; Cancel keeps everything. A change that moves things
+ * (RAPP-782) passes `isDestructive={false}`.
  */
 
 import {
@@ -26,6 +27,7 @@ export function ConfirmDialog({
   onConfirm,
   children,
   isBusy,
+  isDestructive = true,
 }: {
   readonly isOpen: boolean;
   readonly onOpenChange: (open: boolean) => void;
@@ -35,6 +37,7 @@ export function ConfirmDialog({
   readonly onConfirm: () => void;
   readonly children?: ReactNode;
   readonly isBusy?: boolean;
+  readonly isDestructive?: boolean;
 }) {
   const { t } = useTranslation('settings');
   return (
@@ -48,7 +51,7 @@ export function ConfirmDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isBusy}>{t('onboardingBoard.cancel')}</AlertDialogCancel>
           <AlertDialogAction
-            variant="destructive"
+            variant={isDestructive ? 'destructive' : 'default'}
             disabled={isBusy}
             onClick={(event) => {
               if (isBusy !== undefined) event.preventDefault();

@@ -289,7 +289,10 @@ export function ScreenBoard({
       ? t('builtinScreens.hiddenBadge')
       : step.kind === 'custom' && !isShownToHer(catalog, step.screen)
         ? t('onboardingBoard.notShown')
-        : null;
+        : // An app screen staff emptied by moving its questions away (RAPP-782).
+          step.kind === 'builtin' && !appScreenAsksSomething(catalog, step.key)
+          ? t('onboardingBoard.skippedEmpty')
+          : null;
     const hide = (): BoardCardHide => {
       if (step.kind === 'locked') return lockedHide(t('onboardingBoard.hideLockedFinal'));
       if (step.kind === 'builtin') {
@@ -633,6 +636,21 @@ export type BoardCardLink =
       readonly to: '/forms/custom/$formId';
       readonly params: { readonly formId: string };
     };
+
+/** Whether an app screen asks her anything: a field, a block or a consent placed on it. */
+function appScreenAsksSomething(catalog: IntakeCatalog, screen: string): boolean {
+  return (
+    (catalog.layout?.placements ?? []).some(
+      (placement) => placement.surface === 'onboarding' && placement.screenKey === screen,
+    ) ||
+    (catalog.blocks ?? []).some(
+      (block) => block.surface === 'onboarding' && block.screenKey === screen,
+    ) ||
+    (catalog.consentPlacements ?? []).some(
+      (each) => each.surface === 'onboarding' && each.screenKey === screen,
+    )
+  );
+}
 
 /**
  * The eye on a card (RAPP-711): whether the screen is hidden, and whether it

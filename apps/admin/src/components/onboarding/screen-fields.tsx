@@ -40,7 +40,12 @@ import { FieldDialog } from '@/components/profile-layout/field-dialog';
 import { useReload } from '@/components/settings/onboarding-design-sections';
 import { SortableList, type SortableHandle } from '@/components/ui-patterns/sortable-list';
 import { Button } from '@/components/ui/button';
-import { onboardingPick, pickerSectionFor } from '@/lib/field-picker';
+import {
+  moveConsequences,
+  onboardingPick,
+  pickerSectionFor,
+  type MoveConsequence,
+} from '@/lib/field-picker';
 import { profileLayoutOf } from '@/lib/profile-layout';
 import { useProfileLayoutActions } from '@/lib/profile-layout-actions';
 import { supabase } from '@/lib/supabase';
@@ -52,7 +57,6 @@ import { toast } from 'sonner';
 import {
   customStepKey,
   FOLLOW_UP_OWN_FIELDS,
-  followUpsOfOwnField,
   INTAKE_QUESTION_LABEL_KEYS,
   isFollowUpScreen,
   isRequiredQuestion,
@@ -79,7 +83,6 @@ import {
   saveBuiltinOverride,
   saveBuiltinQuestionRequired,
   textIn,
-  type BuilderText,
   type Consent,
   type CustomFormFiller,
   type FieldPlacement,
@@ -93,11 +96,7 @@ import {
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { allSteps } from './board-steps';
 import { ConfirmDialog } from './confirm-dialog';
-import {
-  builtinQuestionType,
-  type TypedBuiltinWording,
-  type TypedWording,
-} from './screen-content';
+import { builtinQuestionType, type TypedBuiltinWording, type TypedWording } from './screen-content';
 
 interface Placed {
   readonly placement: FieldPlacement;
@@ -160,7 +159,7 @@ function placedFields(
     // A form the team created asks every field with the generic renderer (RAPP-700).
     return field === undefined ||
       (surface !== 'custom_form' &&
-        !isAskedGenerically(field, offTheirControl) &&
+        !isAskedGenerically(field, offTheirControl, screenKey) &&
         !own.has(field.systemKey ?? ''))
       ? []
       : [{ placement, field }];
@@ -268,15 +267,6 @@ export function ScreenFieldsSection({
     if (editing !== id) onEdit(id);
   };
 
-  const formScreenNote = (screen: string | null): FieldPickState => {
-    if (screen === screenKey) return { kind: 'placed', note: t('fieldPicker.here') };
-    const number = (form?.screenIds ?? []).indexOf(screen ?? '') + 1;
-    return {
-      kind: 'blocked',
-      note: number === 0 ? t('fieldPicker.elsewhereApp') : t('fieldPicker.elsewhere', { number }),
-    };
-  };
-
   // Where a field asked on another screen of this form is now: adding it moves it here (RAPP-782).
   const movesNote = (number: number, screen: string | null): FieldPickState => ({
     kind: 'moves',
@@ -301,7 +291,6 @@ export function ScreenFieldsSection({
         const number = (form?.screenIds ?? []).indexOf(onThisForm.screenKey ?? '') + 1;
         return movesNote(number, onThisForm.screenKey);
       }
-      if (isNameField(field)) return { kind: 'blocked', note: t('fieldPicker.elsewhereApp') };
       if (!isHerForm && !isStaffWritable(field)) {
         return { kind: 'blocked', note: t('customForms.herFieldOnly') };
       }
@@ -310,18 +299,6 @@ export function ScreenFieldsSection({
     const pick = onboardingPick(layout, field, screenKey);
     if (pick.kind === 'here') return { kind: 'placed', note: t('fieldPicker.here') };
     if (pick.kind === 'free') return { kind: 'free' };
-    if (pick.kind === 'followUpOnly') {
-      // Drawn by the app's own control on its follow-ups only (RAPP-720).
-      const screens = followUpsOfOwnField(field.systemKey).map((screen) =>
-        t(`builtinScreens.screenName.${screen}`),
-      );
-      return {
-        kind: 'blocked',
-        note: t('fieldPicker.followUpOnly', {
-          screens: new Intl.ListFormat(uiLanguage, { type: 'disjunction' }).format(screens),
-        }),
-      };
-    }
     const stepKey =
       pick.screenKey === null
         ? null
@@ -331,7 +308,7 @@ export function ScreenFieldsSection({
     return movesNote(steps.findIndex((step) => step.key === stepKey) + 1, pick.screenKey);
   };
 
-  // A consent is asked once per form: here, on another Onboarding screen, or free (RAPP-699).
+  // A consent is asked once per form (RAPP-699): one on another screen moves here (RAPP-782).
   const consentStateOf = (consent: Consent): FieldPickState => {
     const placement = (catalog.consentPlacements ?? []).find(
       (each) =>
@@ -340,18 +317,113 @@ export function ScreenFieldsSection({
         (!isForm || each.customFormId === form?.id),
     );
     if (placement === undefined) return { kind: 'free' };
-    if (isForm) return formScreenNote(placement.screenKey);
-    if (placement.screenKey === placementKey)
+    if (placement.screenKey === placementKey) {
       return { kind: 'placed', note: t('fieldPicker.here') };
+    }
+    // The acceptance of the app terms stays on its screen (RAPP-772).
+    if (consent.key === APP_TERMS_CONSENT) {
+      return { kind: 'blocked', note: t('legalData.appTermsAcceptanceLock') };
+    }
+    if (isForm) {
+      const number = (form?.screenIds ?? []).indexOf(placement.screenKey ?? '') + 1;
+      return movesNote(number, placement.screenKey);
+    }
     const stepKey =
       placement.screenKey === null || ramassaScreenIdOf(placement.screenKey) === null
         ? placement.screenKey
         : customStepKey(placement.screenKey);
+    return movesNote(steps.findIndex((step) => step.key === stepKey) + 1, placement.screenKey);
+  };
+
+  // Where a screen of this form is, for the move's confirmation (RAPP-782).
+  const whereOf = (key: string | null): string => {
+    if (isForm) {
+      const number = (form?.screenIds ?? []).indexOf(key ?? '') + 1;
+      return number > 0
+        ? t('fieldPicker.move.whereStep', { number })
+        : t('fieldPicker.move.whereElsewhere');
+    }
+    const stepKey = key === null || ramassaScreenIdOf(key) === null ? key : customStepKey(key);
     const number = steps.findIndex((step) => step.key === stepKey) + 1;
-    return {
-      kind: 'blocked',
-      note: number === 0 ? t('fieldPicker.elsewhereApp') : t('fieldPicker.elsewhere', { number }),
-    };
+    if (number > 0) return t('fieldPicker.move.whereStep', { number });
+    return isFollowUpScreen(key)
+      ? t('fieldPicker.move.whereScreen', { screen: t(`builtinScreens.screenName.${key}`) })
+      : t('fieldPicker.move.whereElsewhere');
+  };
+  const fieldName = (id: string) => {
+    const field = fieldById(layout, id);
+    return field === undefined ? '' : textIn(field.label, uiLanguage);
+  };
+  const lineOf = (change: MoveConsequence): string => {
+    switch (change.kind) {
+      case 'field':
+        return t('fieldPicker.move.field', {
+          field: fieldName(change.fieldId),
+          where: whereOf(change.from),
+        });
+      case 'comesAlong':
+        return t('fieldPicker.move.comesAlong', {
+          field: fieldName(change.fieldId),
+          with: fieldName(change.withId),
+          where: whereOf(change.from),
+        });
+      case 'followUps':
+        return t('fieldPicker.move.followUps', {
+          field: fieldName(change.fieldId),
+          screens: new Intl.ListFormat(uiLanguage, { type: 'conjunction' }).format(
+            change.screens.map((screen) => `«${t(`builtinScreens.screenName.${screen}`)}»`),
+          ),
+        });
+      case 'toEveryone':
+        return t('fieldPicker.move.toEveryone', {
+          field: fieldName(change.fieldId),
+          screen: t(`builtinScreens.screenName.${change.from}`),
+        });
+      case 'dependentScreen':
+        return t('fieldPicker.move.dependentScreen', {
+          field: fieldName(change.fieldId),
+          screen: whereOf(change.screenId),
+        });
+      case 'consent': {
+        const consent = (catalog.consents ?? []).find((each) => each.id === change.consentId);
+        return t('fieldPicker.move.field', {
+          field: consent === undefined ? '' : textIn(consent.name, uiLanguage),
+          where: whereOf(change.from),
+        });
+      }
+      case 'emptied':
+        return t('fieldPicker.move.emptied', { where: whereOf(change.screenKey) });
+    }
+  };
+  const formScreens = isForm
+    ? ((catalog.customForms ?? []).find((each) => each.id === form?.id)?.screens ?? [])
+    : catalog.screens;
+  const reviewMove = (fieldIds: readonly string[], consentIds: readonly string[]) => {
+    const changes = moveConsequences(
+      {
+        layout,
+        surface: orderSurface,
+        ...(form === undefined ? {} : { formId: form.id }),
+        screenKey,
+        screens: formScreens.flatMap((screen) =>
+          screen.showWhen === undefined ? [] : [{ id: screen.id, showWhen: screen.showWhen }],
+        ),
+        blocks: (catalog.blocks ?? []).filter((block) =>
+          isForm
+            ? block.surface === 'custom_form' &&
+              (form?.screenIds ?? []).includes(block.screenKey ?? '')
+            : block.surface === 'onboarding',
+        ),
+        consents: (catalog.consentPlacements ?? []).filter(
+          (each) => each.surface === consentSurface && (!isForm || each.customFormId === form?.id),
+        ),
+      },
+      fieldIds,
+      consentIds,
+    );
+    return changes.length === 0
+      ? null
+      : { intro: t('fieldPicker.move.intro', { screen: screenName }), lines: changes.map(lineOf) };
   };
 
   // A question off its own control is asked by its fields' rows instead (RAPP-665).
@@ -478,6 +550,7 @@ export function ScreenFieldsSection({
         title={t('fieldPicker.title', { screen: screenName })}
         initialSectionId={isOnboarding ? pickerSectionFor(layout, screenKey) : null}
         stateOf={stateOf}
+        reviewMove={reviewMove}
         onConfirm={(ids) => actions.placeFields(orderSurface, placementKey, ids)}
         onCreateField={(section, draft) => actions.saveField(null, section, draft)}
         {...(asksConsents

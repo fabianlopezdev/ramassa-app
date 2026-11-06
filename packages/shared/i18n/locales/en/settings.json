@@ -644,7 +644,8 @@
     "addDependent": "Add a dependent screen",
     "addDependentNoChoice": "This screen has no question with options.",
     "addDependentLockedFinal": "It ends Onboarding, so no screen can depend on it.",
-    "addDependentLockedChain": "It is a chained form. Its screens are added on its own board."
+    "addDependentLockedChain": "It is a chained form. Its screens are added on its own board.",
+    "skippedEmpty": "No questions: players skip it."
   },
   "sortable": {
     "instructions": "To move it, press space or enter, use the arrow keys, then press space or enter again to drop it. Escape cancels.",
@@ -752,7 +753,21 @@
     "addNone": "Add",
     "failed": "Some fields could not be added. Try again.",
     "playerData": "Player data",
-    "legalData": "Legal data"
+    "legalData": "Legal data",
+    "move": {
+      "title": "Make these changes?",
+      "intro": "Adding them to “{{screen}}” changes the form like this:",
+      "action": "Move them here",
+      "field": "“{{field}}” moves here. Now asked on: {{where}}.",
+      "comesAlong": "“{{field}}” moves here too, because it is linked to “{{with}}”. Now asked on: {{where}}.",
+      "followUps": "The screens {{screens}} move with “{{field}}” and show right after this screen, depending on her answer.",
+      "toEveryone": "“{{field}}” will be asked of every player who sees this screen. Until now it was asked only on “{{screen}}”, depending on her answer.",
+      "dependentScreen": "The screen {{screen}} depends on “{{field}}” and moves right after this screen.",
+      "emptied": "{{where}} is left empty and players skip it.",
+      "whereStep": "Step {{number}}",
+      "whereScreen": "“{{screen}}”",
+      "whereElsewhere": "Another screen"
+    }
   },
   "placement": {
     "askHer": "How we ask her (optional)",

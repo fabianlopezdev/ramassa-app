@@ -7,6 +7,7 @@ import type {
 } from '@ramassa/shared/intake-builder';
 import {
   controllersFirst,
+  moveConsequences,
   onboardingPick,
   pickerSectionFor,
   searchFields,
@@ -163,5 +164,75 @@ describe('pickerSectionFor', () => {
   test("a Ramassà screen opens on its first field's section, an empty one on the first", () => {
     expect(pickerSectionFor(LAYOUT, SCREEN)).toBe(HEALTH);
     expect(pickerSectionFor(LAYOUT, '5eed0000-0000-4000-8092-0000000000ff')).toBe(SIZES);
+  });
+});
+
+describe('moveConsequences (RAPP-782)', () => {
+  const doc = field('doctype', SIZES, { kind: 'builtin', systemKey: 'document_type' });
+  const number = field('docnumber', SIZES, { kind: 'builtin', systemKey: 'document_number' });
+  const docName = field('docname', SIZES, {
+    kind: 'builtin',
+    systemKey: 'document_name',
+    showWhen: { fieldId: 'doctype', optionId: 'other' },
+  });
+  const layout: ProfileLayout = {
+    ...LAYOUT,
+    fields: [...LAYOUT.fields, doc, number, docName],
+    placements: [
+      ...LAYOUT.placements,
+      onboarding('allergies', 'logistics'),
+      { ...onboarding('allergy_detail', 'logistics'), id: 'p-detail' },
+      onboarding('doctype', 'documentation'),
+      { ...onboarding('docnumber', 'documentation-nie'), id: 'p-n1' },
+      { ...onboarding('docnumber', 'documentation-passport'), id: 'p-n2' },
+      onboarding('docname', 'documentation-other'),
+    ],
+  };
+  const context = {
+    layout,
+    surface: 'onboarding' as const,
+    screenKey: 'identity',
+    screens: [{ id: SCREEN, showWhen: { fieldId: 'allergies' } }],
+    blocks: [],
+    consents: [{ consentId: 'photos', screenKey: 'equipment' }],
+  };
+
+  test('a field moves with its conditions, and the screen that opens on it follows', () => {
+    expect(moveConsequences(context, ['allergy_detail'], [])).toEqual([
+      { kind: 'field', fieldId: 'allergy_detail', from: 'logistics' },
+      { kind: 'comesAlong', fieldId: 'allergies', withId: 'allergy_detail', from: 'logistics' },
+      { kind: 'dependentScreen', fieldId: 'allergies', screenId: SCREEN },
+      { kind: 'emptied', screenKey: 'logistics' },
+    ]);
+  });
+
+  test('a question takes its follow-ups along; their own condition stays on them', () => {
+    expect(moveConsequences(context, ['doctype'], [])).toEqual([
+      { kind: 'field', fieldId: 'doctype', from: 'documentation' },
+      {
+        kind: 'followUps',
+        fieldId: 'doctype',
+        screens: ['documentation-nie', 'documentation-passport', 'documentation-other'],
+      },
+      { kind: 'emptied', screenKey: 'documentation' },
+    ]);
+  });
+
+  test('a follow-up field is then asked to everyone, and the follow-ups it leaves are skipped', () => {
+    expect(moveConsequences(context, ['docnumber'], [])).toEqual([
+      { kind: 'field', fieldId: 'docnumber', from: 'documentation-nie' },
+      { kind: 'toEveryone', fieldId: 'docnumber', from: 'documentation-nie' },
+      { kind: 'emptied', screenKey: 'documentation-nie' },
+      { kind: 'emptied', screenKey: 'documentation-passport' },
+    ]);
+  });
+
+  test('a field placed on a sibling follow-up adds no move; a consent moves too', () => {
+    expect(
+      moveConsequences({ ...context, screenKey: 'documentation-other' }, ['docnumber'], []),
+    ).toEqual([]);
+    expect(moveConsequences(context, [], ['photos'])).toEqual([
+      { kind: 'consent', consentId: 'photos', from: 'equipment' },
+    ]);
   });
 });

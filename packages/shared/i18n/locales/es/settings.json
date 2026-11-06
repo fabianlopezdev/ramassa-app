@@ -644,7 +644,8 @@
     "addDependent": "Añade una pantalla dependiente",
     "addDependentNoChoice": "Esta pantalla no tiene ninguna pregunta con opciones.",
     "addDependentLockedFinal": "Cierra el Onboarding, así que ninguna pantalla puede depender de ella.",
-    "addDependentLockedChain": "Es un formulario encadenado. Sus pantallas se añaden en su tablero."
+    "addDependentLockedChain": "Es un formulario encadenado. Sus pantallas se añaden en su tablero.",
+    "skippedEmpty": "Sin preguntas: las jugadoras se la saltan."
   },
   "sortable": {
     "instructions": "Para mover un elemento, pulsa espacio o intro, usa las flechas y vuelve a pulsar espacio o intro para soltarlo. Escape cancela.",
@@ -752,7 +753,21 @@
     "addNone": "Añade",
     "failed": "No se han podido añadir todos los campos. Vuelve a intentarlo.",
     "playerData": "Datos de las jugadoras",
-    "legalData": "Datos legales"
+    "legalData": "Datos legales",
+    "move": {
+      "title": "¿Quieres hacer estos cambios?",
+      "intro": "Al añadirlos a «{{screen}}», el formulario cambia así:",
+      "action": "Muévelos aquí",
+      "field": "«{{field}}» pasa aquí. Ahora se pregunta en: {{where}}.",
+      "comesAlong": "«{{field}}» también pasa aquí, porque va ligado a «{{with}}». Ahora se pregunta en: {{where}}.",
+      "followUps": "Las pantallas {{screens}} se mueven con «{{field}}» y se muestran justo después de esta pantalla, según su respuesta.",
+      "toEveryone": "«{{field}}» se preguntará a todas las jugadoras que vean esta pantalla. Hasta ahora solo se preguntaba en «{{screen}}», según su respuesta.",
+      "dependentScreen": "La pantalla {{screen}} depende de «{{field}}» y se mueve justo después de esta pantalla.",
+      "emptied": "{{where}} queda vacía y las jugadoras se la saltarán.",
+      "whereStep": "Paso {{number}}",
+      "whereScreen": "«{{screen}}»",
+      "whereElsewhere": "Otra pantalla"
+    }
   },
   "placement": {
     "askHer": "Cómo se lo preguntamos (opcional)",
