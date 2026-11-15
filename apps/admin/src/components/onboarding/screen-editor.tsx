@@ -1380,10 +1380,7 @@ function useScreenWording({
 }
 
 /** An app screen's wording in its own box, saved by its own button. */
-function WordingSection({
-  title,
-  ...options
-}: ScreenWordingOptions & { readonly title: string }) {
+function WordingSection({ title, ...options }: ScreenWordingOptions & { readonly title: string }) {
   const { t } = useTranslation('settings');
   const wording = useScreenWording(options);
   return (
