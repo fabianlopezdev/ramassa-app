@@ -1,1 +1,90 @@
-[]
+[
+  {
+    "issue": "RAPP-784",
+    "package": "glob",
+    "installedVersion": "13.0.6",
+    "created": "2026-11-15",
+    "reviewBy": "2026-12-15",
+    "exposure": "build-time only",
+    "dependencyPath": [
+      "apps/mobile (build tooling) and the repo root (dev tooling)",
+      "@expo/cli@58.0.9, @expo/config@58.0.1, @expo/config-plugins@58.0.4 and 58.0.9, @expo/fingerprint@0.21.2, @expo/metro-config@58.0.6 (all ^13.0.0), @sentry/bundler-plugins@10.66.0 (^13.0.6)",
+      "glob@13.0.6"
+    ],
+    "reachableSurface": "The Expo CLI, the Expo config and fingerprint tools and the Sentry bundler plugin expand glob patterns from this repository's own configuration while building. Ramassa never passes user input to glob. On 2026-11-15 the iOS export source map (4,851 modules), the Android one (4,908 modules) and the admin Vite build contained no glob 13 module. The admin build holds glob 7.2.3 through exceljs, which the advisory does not cover.",
+    "advisories": [
+      {
+        "id": "GHSA-3g3m-2fjr-6pw4",
+        "url": "https://github.com/advisories/GHSA-3g3m-2fjr-6pw4"
+      }
+    ],
+    "upstreamStatus": "Advisory published 2026-10-30 for glob >= 9.0.0, <= 14.0.1. The first patched release is 14.0.2, a major above the ^13.0.0 that Expo SDK 58 requires; 13.0.7 (2026-11-06) is still in range.",
+    "removalCondition": "Remove when glob publishes a patched 13.x (then add an exact override) or when Expo and the Sentry bundler plugin accept a patched glob."
+  },
+  {
+    "issue": "RAPP-784",
+    "package": "minimatch",
+    "installedVersion": "10.2.5",
+    "created": "2026-11-15",
+    "reviewBy": "2026-12-15",
+    "exposure": "build-time only",
+    "dependencyPath": [
+      "the repo root (lint and dead-code tooling) and apps/mobile (build tooling)",
+      "eslint@10.7.0 and @eslint/config-array@0.23.5 (^10.2.4), @typescript-eslint/typescript-estree@8.64.0 and @expo/fingerprint@0.21.2 (^10.2.2), @ts-morph/common@0.27.0 (^10.0.1), glob@13.0.6 (^10.2.2)",
+      "minimatch@10.2.5"
+    ],
+    "reachableSurface": "ESLint, typescript-eslint, ts-morph (knip, shadcn) and the Expo fingerprint match patterns from this repository's own configuration on developer machines and in CI. Ramassa never passes user input to minimatch. On 2026-11-15 the iOS and Android export source maps and the admin Vite build contained no minimatch 10 module. The admin build holds minimatch 3.1.5 and 5.1.9 through exceljs, which the advisory does not cover.",
+    "advisories": [
+      {
+        "id": "GHSA-g3hv-75wg-m249",
+        "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249"
+      }
+    ],
+    "upstreamStatus": "Advisory published 2026-10-30 for minimatch >= 7.0.0, < 11.0.1. The first patched release is 11.0.1, a major above the ^10 its consumers require; 10.2.6 is still in range.",
+    "removalCondition": "Remove when minimatch publishes a patched 10.x (then add an exact override) or when ESLint, typescript-eslint, ts-morph and Expo accept minimatch 11."
+  },
+  {
+    "issue": "RAPP-784",
+    "package": "deepmerge",
+    "installedVersion": "4.3.1",
+    "created": "2026-11-15",
+    "reviewBy": "2026-12-15",
+    "exposure": "build-time only",
+    "dependencyPath": [
+      "apps/mobile (build tooling) and apps/admin (dev tooling)",
+      "@expo/config@58.0.1 (^4.3.1, under expo@58.0.0 and @expo/cli@58.0.9), shadcn@4.13.1 (^4.3.1)",
+      "deepmerge@4.3.1"
+    ],
+    "reachableSurface": "The Expo config merges this repository's app.json and config plugin output at build time, and the shadcn CLI merges its own component config while scaffolding. Ramassa never passes user input to deepmerge. On 2026-11-15 the iOS and Android export source maps and the admin Vite build contained no deepmerge module.",
+    "advisories": [
+      {
+        "id": "GHSA-gcqx-w48m-w2h4",
+        "url": "https://github.com/advisories/GHSA-gcqx-w48m-w2h4"
+      }
+    ],
+    "upstreamStatus": "Advisory published 2026-09-18 for deepmerge >= 4.2.0, <= 4.3.1 with no first patched version. The latest release is 4.3.1 (2023-03-16).",
+    "removalCondition": "Remove when deepmerge publishes a patched release (then add an exact override) or when the Expo config and the shadcn CLI no longer depend on a vulnerable deepmerge."
+  },
+  {
+    "issue": "RAPP-784",
+    "package": "zod",
+    "installedVersion": "3.25.76",
+    "created": "2026-11-15",
+    "reviewBy": "2026-12-15",
+    "exposure": "build-time only",
+    "dependencyPath": [
+      "apps/mobile (build tooling) and apps/admin (dev tooling)",
+      "@expo/cli@58.0.9 (^3.25.76), shadcn@4.13.1 (^3.24.1), each with its own nested copy",
+      "zod@3.25.76"
+    ],
+    "reachableSurface": "Only the Expo CLI and the shadcn CLI use zod 3, to read their own config and command options on developer machines and in CI. Every Ramassa workspace resolves zod 4.6.7, which is patched. On 2026-11-15 the iOS export source map (4,851 modules), the Android one (4,908 modules) and the admin Vite build contained only the root zod 4.6.7 and no zod 3 module.",
+    "advisories": [
+      {
+        "id": "GHSA-mrhx-c7xc-m3w5",
+        "url": "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5"
+      }
+    ],
+    "upstreamStatus": "Advisory published 2026-10-01 for zod < 4.6.6. No 3.x release is patched; the latest 3.x is 3.25.76 (2025-07-08), and 4.6.6 is a major above the ^3 the Expo CLI and shadcn require.",
+    "removalCondition": "Remove when zod publishes a patched 3.x (then add an exact override) or when the Expo CLI and shadcn move to zod 4.6.6 or later."
+  }
+]
