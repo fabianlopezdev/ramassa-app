@@ -950,6 +950,19 @@
       "fr": "Traducir al francés",
       "ar": "Traducir al árabe",
       "fa": "Traducir al persa"
+    },
+    "toAll": "Traducir a todas las demás lenguas",
+    "writtenTitle": "¿Quieres sustituir el texto que ya hay?",
+    "writtenBody": "Ya hay texto en {{languages}}.",
+    "replace": "Sustituirlo",
+    "keep": "Conservarlo",
+    "failedIn": "La traducción ha fallado en {{languages}}.",
+    "language": {
+      "es": "castellano",
+      "en": "inglés",
+      "fr": "francés",
+      "ar": "árabe",
+      "fa": "persa"
     }
   }
 }

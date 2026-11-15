@@ -351,7 +351,8 @@ function PointsBlockForm({
   // The editor's translate button fills the points whose Catalan changed (RAPP-751).
   useTranslatableTexts({
     texts: () => changedCatalanTexts(points, block.points),
-    apply: (target, drafts) => edit(withCatalanDrafts(points, block.points, target, drafts)),
+    apply: (drafts, keepWritten) =>
+      edit(withCatalanDrafts(points, block.points, drafts, keepWritten)),
   });
   return (
     <form

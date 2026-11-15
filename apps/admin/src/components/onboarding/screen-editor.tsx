@@ -647,6 +647,15 @@ export function StaffScreenEditor({
         (each) => shownIn(field, each).trim() !== savedIn(field, each).trim(),
       ),
     );
+  /**
+   * Whether staff wrote words in a language (RAPP-783): typed here or saved.
+   * A box that only repeats the Catalan or the app's own label does not count.
+   */
+  const isWrittenIn = (field: TeamScreenField, shownLanguage: LanguageCode): boolean => {
+    const typedText = typed[field][shownLanguage];
+    if (typedText !== undefined) return typedText.trim() !== '';
+    return (staffTextIn(saved[field], shownLanguage, isOptional(field)) ?? '') !== '';
+  };
   /** The fields whose Catalan changed: only those are translated (RAPP-751). */
   const changedCatalan = () =>
     fieldsEdited.filter(
@@ -725,12 +734,21 @@ export function StaffScreenEditor({
         language={language}
         onLanguageChange={setLanguage}
         translatable={{
-          texts: () => changedCatalan().map((field) => shownIn(field, 'ca')),
-          apply: (target, drafts) => {
+          texts: () =>
+            changedCatalan().map((field) => ({
+              text: shownIn(field, 'ca'),
+              written: SUPPORTED_LANGUAGES.filter(
+                (each) => each !== 'ca' && isWrittenIn(field, each),
+              ),
+            })),
+          apply: (drafts, keepWritten) => {
             const next = { ...typed };
             for (const field of changedCatalan()) {
-              const draft = drafts.get(shownIn(field, 'ca').trim());
-              if (draft !== undefined) next[field] = { ...typed[field], [target]: draft };
+              for (const [target, byText] of drafts) {
+                const draft = byText.get(shownIn(field, 'ca').trim());
+                if (draft === undefined || (keepWritten && isWrittenIn(field, target))) continue;
+                next[field] = { ...next[field], [target]: draft };
+              }
             }
             setTyped(next);
           },
@@ -1221,14 +1239,31 @@ export function useScreenWording({
     });
   // Registered here inside an editor's columns; a host outside them renders
   // `TranslatableSource` with it (the app terms, RAPP-761).
+  // Words staff wrote in a language, typed here or saved (RAPP-783). The app's
+  // own wording does not count, so the translation replaces it without asking.
+  const isWrittenIn = (field: ScreenTextField, shownLanguage: LanguageCode): boolean => {
+    const typedText = typed[field]?.[shownLanguage];
+    if (typedText !== undefined) return typedText.trim() !== '';
+    return (
+      (staffTextIn(savedTexts[field], shownLanguage, isOptionalScreenTextField(field)) ?? '') !== ''
+    );
+  };
   const translatable: TranslatableTexts = {
-    texts: () => changedWording().map(([, text]) => text),
-    apply: (target, drafts) =>
+    texts: () =>
+      changedWording().map(([field, text]) => ({
+        text,
+        written: SUPPORTED_LANGUAGES.filter((each) => each !== 'ca' && isWrittenIn(field, each)),
+      })),
+    apply: (drafts, keepWritten) =>
       write(
-        changedWording().flatMap(([field, text]) => {
-          const draft = drafts.get(text.trim());
-          return draft === undefined ? [] : [[field, target, draft] as const];
-        }),
+        changedWording().flatMap(([field, text]) =>
+          [...drafts].flatMap(([target, byText]) => {
+            const draft = byText.get(text.trim());
+            return draft === undefined || (keepWritten && isWrittenIn(field, target))
+              ? []
+              : [[field, target, draft] as const];
+          }),
+        ),
       ),
   };
   useTranslatableTexts(translatable);

@@ -67,16 +67,29 @@ export function LanguageFields({
     const now = boxIn('ca')?.value.trim() ?? '';
     return now !== '' && now !== openedCatalan ? now : null;
   };
+  // A box that already has words counts as written (RAPP-783).
+  const isWrittenIn = (language: LanguageCode) => (boxIn(language)?.value.trim() ?? '') !== '';
   useTranslatableTexts({
     texts: () => {
       const text = changedCatalan();
-      return text === null ? [] : [text];
+      if (text === null) return [];
+      return [
+        {
+          text,
+          written: SUPPORTED_LANGUAGES.filter((each) => each !== 'ca' && isWrittenIn(each)),
+        },
+      ];
     },
-    apply: (target, drafts) => {
+    apply: (drafts, keepWritten) => {
       const text = changedCatalan();
-      const draft = text === null ? undefined : drafts.get(text);
-      const box = boxIn(target);
-      if (draft !== undefined && box !== null) typeInto(box, draft);
+      if (text === null) return;
+      for (const [target, byText] of drafts) {
+        const draft = byText.get(text);
+        const box = boxIn(target);
+        if (draft === undefined || box === null) continue;
+        if (keepWritten && isWrittenIn(target)) continue;
+        typeInto(box, draft);
+      }
     },
   });
   const inputClass = isLong ? `${TEXT_INPUT_CLASS} h-auto min-h-16 py-2` : TEXT_INPUT_CLASS;

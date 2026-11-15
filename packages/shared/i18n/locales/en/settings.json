@@ -950,6 +950,19 @@
       "fr": "Translate into French",
       "ar": "Translate into Arabic",
       "fa": "Translate into Persian"
+    },
+    "toAll": "Translate into all other languages",
+    "writtenTitle": "Replace the text that is already there?",
+    "writtenBody": "There is already text in {{languages}}.",
+    "replace": "Replace it",
+    "keep": "Keep it",
+    "failedIn": "The translation failed for {{languages}}.",
+    "language": {
+      "es": "Spanish",
+      "en": "English",
+      "fr": "French",
+      "ar": "Arabic",
+      "fa": "Persian"
     }
   }
 }

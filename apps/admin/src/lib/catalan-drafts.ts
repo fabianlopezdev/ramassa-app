@@ -2,11 +2,12 @@
  * A form's texts against what is saved (RAPP-750, RAPP-751). Desa turns on
  * only when the content differs from the saved one, and the translate button
  * sends only the Catalan texts that changed, writing each draft back in the
- * chosen language at the same place. Pure, so it is tested on its own.
+ * chosen languages at the same place (RAPP-783). Pure, so it is tested on its own.
  */
 
 import { SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
 import type { LanguageCode } from '@ramassa/shared/schemas';
+import type { CatalanDrafts, CatalanText } from './catalan-translation';
 
 const LANGUAGE_KEYS = new Set<string>(SUPPORTED_LANGUAGES);
 
@@ -38,11 +39,18 @@ function changedCatalan(text: LanguageText, saved: unknown): string | null {
   return now !== '' && now !== before ? now : null;
 }
 
+/** The languages other than Catalan with words written in a text. */
+function writtenIn(text: LanguageText): readonly LanguageCode[] {
+  return SUPPORTED_LANGUAGES.filter(
+    (language) => language !== 'ca' && (text[language] ?? '').trim() !== '',
+  );
+}
+
 /** The Catalan texts that changed against the saved content, at any depth. */
-export function changedCatalanTexts(current: unknown, saved: unknown): readonly string[] {
+export function changedCatalanTexts(current: unknown, saved: unknown): readonly CatalanText[] {
   if (isLanguageText(current)) {
     const text = changedCatalan(current, saved);
-    return text === null ? [] : [text];
+    return text === null ? [] : [{ text, written: writtenIn(current) }];
   }
   if (Array.isArray(current)) {
     return current.flatMap((each, index) => changedCatalanTexts(each, savedAt(saved, index)));
@@ -55,28 +63,38 @@ export function changedCatalanTexts(current: unknown, saved: unknown): readonly 
   return [];
 }
 
-/** The content with a draft in the target language wherever its Catalan changed. */
+/**
+ * The content with each language's draft wherever its Catalan changed. With
+ * `keepWritten`, a language that already has words there keeps them.
+ */
 export function withCatalanDrafts<Value>(
   current: Value,
   saved: unknown,
-  target: LanguageCode,
-  drafts: ReadonlyMap<string, string>,
+  drafts: CatalanDrafts,
+  keepWritten: boolean,
 ): Value {
   if (isLanguageText(current)) {
     const text = changedCatalan(current, saved);
-    const draft = text === null ? undefined : drafts.get(text);
-    return (draft === undefined ? current : { ...current, [target]: draft }) as Value;
+    if (text === null) return current;
+    const next: LanguageText = { ...current };
+    for (const [language, byText] of drafts) {
+      const draft = byText.get(text);
+      if (draft === undefined) continue;
+      if (keepWritten && (current[language] ?? '').trim() !== '') continue;
+      next[language] = draft;
+    }
+    return next as Value;
   }
   if (Array.isArray(current)) {
     return current.map((each: unknown, index) =>
-      withCatalanDrafts(each, savedAt(saved, index), target, drafts),
+      withCatalanDrafts(each, savedAt(saved, index), drafts, keepWritten),
     ) as Value;
   }
   if (isRecord(current)) {
     return Object.fromEntries(
       Object.entries(current).map(([key, each]) => [
         key,
-        withCatalanDrafts(each, savedAt(saved, key), target, drafts),
+        withCatalanDrafts(each, savedAt(saved, key), drafts, keepWritten),
       ]),
     ) as Value;
   }

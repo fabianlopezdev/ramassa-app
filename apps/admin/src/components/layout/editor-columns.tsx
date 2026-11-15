@@ -3,7 +3,8 @@
  * the start side, written in one language at a time, and the preview kept in
  * view on the end side while the form scrolls. The preview follows the
  * editing language when it changes; its own switch stays free. Next to the
- * editing language, a button translates the screen from Catalan (RAPP-750).
+ * editing language, a button translates the screen from Catalan (RAPP-750),
+ * or on the Catalan tab into every other language (RAPP-783).
  */
 
 import { EditingLanguageContext } from '@/components/fields/language-fields';
@@ -11,6 +12,7 @@ import {
   TranslatableRegisterProvider,
   TranslatableSource,
   TranslateFromCatalanButton,
+  TranslateToAllButton,
   useTranslatableRegister,
   type TranslatableTexts,
 } from '@/components/layout/translate-from-catalan';
@@ -66,7 +68,11 @@ export function EditorColumns({
             label={t('onboardingBoard.editingLanguage')}
             testId="editor-language"
           />
-          <TranslateFromCatalanButton target={language} run={register.run} />
+          {language === 'ca' ? (
+            <TranslateToAllButton written={register.written} runAll={register.runAll} />
+          ) : (
+            <TranslateFromCatalanButton target={language} run={register.run} />
+          )}
         </div>
         <TranslatableRegisterProvider register={register.register}>
           {translatable === undefined ? null : <TranslatableSource source={translatable} />}
