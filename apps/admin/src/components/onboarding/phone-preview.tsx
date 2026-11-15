@@ -12,10 +12,9 @@
  */
 
 import { QuestionControl } from '@/components/settings/question-type-fields';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { ChevronDown, Files } from 'lucide-react';
-import { useEffect, useRef, useState, type ComponentProps } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getLanguageDirection } from '@ramassa/shared/i18n/languages';
 import type { LanguageCode } from '@ramassa/shared/schemas';
@@ -147,9 +146,7 @@ export function PhoneFrame({
                       {question.label === '' ? ' ' : question.label}
                     </p>
                     <PhoneSignature
-                      title={
-                        question.signatureTexts?.title ?? phone('authorizationSignatureTitle')
-                      }
+                      title={question.signatureTexts?.title ?? phone('authorizationSignatureTitle')}
                       prompt={
                         question.signatureTexts?.prompt ?? phone('authorizationSignaturePrompt')
                       }
@@ -245,48 +242,6 @@ export function PhoneFrame({
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-/**
- * The phone with a row of tabs above it when what is edited spans several
- * screens (RAPP-695): the screen editor's main and detail screens, the
- * authorization's steps, the terms' two screens. One component, so every
- * editor's preview is the same.
- */
-export function SteppedPhone<Step extends string>({
-  steps,
-  shown,
-  onShow,
-  label,
-  ...frame
-}: ComponentProps<typeof PhoneFrame> & {
-  /** The screens to pick from; with fewer than two, no tabs. */
-  readonly steps: readonly { readonly value: Step; readonly label: string }[];
-  readonly shown: Step;
-  readonly onShow: (step: Step) => void;
-  /** The tabs' name for assistive technology. */
-  readonly label: string;
-}) {
-  return (
-    <div className="flex w-full flex-col items-center gap-4">
-      {steps.length < 2 ? null : (
-        <Tabs value={shown} onValueChange={(next) => onShow(next as Step)}>
-          <TabsList aria-label={label} className="h-auto max-w-full flex-wrap justify-center">
-            {steps.map((step) => (
-              <TabsTrigger
-                key={step.value}
-                value={step.value}
-                data-testid={`phone-step-${step.value}`}
-              >
-                {step.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      )}
-      <PhoneFrame {...frame} />
     </div>
   );
 }

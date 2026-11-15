@@ -102,7 +102,7 @@ export function PointsEditor({
 }
 
 /** Whether the list has room for one more point. */
-export function canAddPoint(points: readonly LocalizedPoint[]): boolean {
+function canAddPoint(points: readonly LocalizedPoint[]): boolean {
   return points.length < APP_TERMS_MAX_POINTS;
 }
 

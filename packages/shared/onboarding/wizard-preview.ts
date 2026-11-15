@@ -61,7 +61,9 @@ export function wizardNotAsked(
   hidden: ReadonlySet<IntakeQuestion>,
 ): AnsweredQuestions {
   return new Set([
-    ...[...questionsNotAsked(toAsk)].filter((question) => !ALWAYS_ASKED_QUESTIONS.includes(question)),
+    ...[...questionsNotAsked(toAsk)].filter(
+      (question) => !ALWAYS_ASKED_QUESTIONS.includes(question),
+    ),
     ...hidden,
   ]);
 }

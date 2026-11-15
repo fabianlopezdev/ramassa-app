@@ -90,7 +90,7 @@ describe('signing mode for a screen reader (RAPP-530)', () => {
     expect(screen).toContain('i18n.cloneInstance({ lng: language })');
     expect(screen).toContain('<I18nextProvider i18n={herI18n}>');
     expect(screen).toContain('<ScreenLanguageContext.Provider value={language}>');
-    expect(screen).toContain('i18n.getFixedT(coachLanguage, \'participants\')');
+    expect(screen).toContain("i18n.getFixedT(coachLanguage, 'participants')");
   });
 
   test('the signature pad tells a screen reader user how to sign without drawing', () => {

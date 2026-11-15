@@ -1157,7 +1157,7 @@ function AppScreenEditor({
  * the app's own. Clearing an optional text removes it from her phone in that
  * language; a required text cannot be saved empty.
  */
-export interface ScreenWordingOptions {
+interface ScreenWordingOptions {
   readonly catalog: IntakeCatalog;
   readonly screen: EditableWizardScreen;
   readonly language: LanguageCode;
@@ -1172,7 +1172,7 @@ export interface ScreenWordingOptions {
  * The wording's fields and their save, for a box that holds more than the
  * wording: the app terms put their own texts in the same box (RAPP-761).
  */
-export function useScreenWording({
+function useScreenWording({
   catalog,
   screen,
   language,
@@ -1380,7 +1380,7 @@ export function useScreenWording({
 }
 
 /** An app screen's wording in its own box, saved by its own button. */
-export function WordingSection({
+function WordingSection({
   title,
   ...options
 }: ScreenWordingOptions & { readonly title: string }) {

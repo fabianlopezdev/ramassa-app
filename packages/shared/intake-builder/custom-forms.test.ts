@@ -140,7 +140,9 @@ describe('forms the team creates (RAPP-700)', () => {
   });
 
   test('an older server sends no forms: the catalog reads as before', () => {
-    const { custom_forms: _forms, custom_form_placements: _placements, ...older } = catalogRow;
+    const older: Partial<typeof catalogRow> = { ...catalogRow };
+    delete older.custom_forms;
+    delete older.custom_form_placements;
     const catalog = parseIntakeCatalog(older);
     expect(catalog.customForms).toEqual([]);
     expect(catalog.layout?.placements).toEqual([]);

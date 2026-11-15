@@ -249,7 +249,7 @@ export function CustomFormPage({
 }
 
 /** The page that lists a form: Condicions legals for a legal one (RAPP-771). */
-export function formListPath(
+function formListPath(
   form: Pick<CustomForm, 'kind'> | undefined,
 ): '/forms/legal' | '/forms/custom' {
   return form?.kind === 'legal' ? '/forms/legal' : '/forms/custom';

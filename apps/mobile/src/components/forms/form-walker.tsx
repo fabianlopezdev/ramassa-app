@@ -49,7 +49,7 @@ import {
 } from '@ramassa/shared/intake-builder';
 
 /** A send that failed: the code staff can act on, and what she reads. */
-export interface FormWalkFailure {
+interface FormWalkFailure {
   readonly code: AppErrorCode;
   readonly message: string;
 }

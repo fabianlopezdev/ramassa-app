@@ -122,8 +122,9 @@ export function customFormAskingScreens(
 export function authorizationScreenCount(catalog: IntakeCatalog): number {
   const form = authorizationForm(catalog);
   if (form !== undefined) {
-    return form.screens.filter((screen) => screen.isHidden !== true && !isReregistrationScreen(screen))
-      .length;
+    return form.screens.filter(
+      (screen) => screen.isHidden !== true && !isReregistrationScreen(screen),
+    ).length;
   }
   return 2 + (authorizationQuestions(catalog).length > 0 ? 1 : 0);
 }

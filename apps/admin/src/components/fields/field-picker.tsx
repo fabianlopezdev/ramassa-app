@@ -68,7 +68,7 @@ export type FieldPickState =
   | { readonly kind: 'free' };
 
 /** Whether a field or a consent in this state can be picked. */
-export function isPickable(state: FieldPickState): boolean {
+function isPickable(state: FieldPickState): boolean {
   return state.kind === 'free' || state.kind === 'moves';
 }
 

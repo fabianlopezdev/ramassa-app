@@ -42,6 +42,7 @@ Every answer is an answer to a field. The decisions below are numbered as in the
    > their own language. `profiles.first_name` and `last_name` stay for team accounts; for a player
    > they are a copy that never holds more than the Normal level, kept by triggers. Migration
    > `20261026160000_names_fully_editable.sql`. Her app language is still an account setting.
+
 3. **D3. One answer store.** Every other field answers into `custom_answers` through
    `private.write_custom_answer`: one row per field (per season for a seasonal field), Sensitive
    answers encrypted.

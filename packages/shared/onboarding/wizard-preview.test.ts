@@ -52,9 +52,7 @@ describe('the preview staff confirm before inviting (RAPP-618)', () => {
   test('Ask and Don’t ask change single questions, as her phone will', () => {
     const answered = answeredByInvitation({});
     const rows = previewWizardQuestions(answered, { date_of_birth: 'ask', phone: 'skip' });
-    expect(asked(rows)).toEqual(
-      WIZARD_QUESTIONS.filter((question) => question !== 'phone'),
-    );
+    expect(asked(rows)).toEqual(WIZARD_QUESTIONS.filter((question) => question !== 'phone'));
     expect(rows.find((row) => row.question === 'date_of_birth')?.state).toBe('ask');
   });
 

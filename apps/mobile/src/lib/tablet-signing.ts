@@ -21,10 +21,10 @@ import { AppError } from '@ramassa/shared/errors';
 import {
   EMPTY_INTAKE_CATALOG,
   fetchIntakeCatalog,
-  parseCatalogWithFormVersion,
-  type IntakeCatalog,
   liveOnboardingBlocks,
   liveOnboardingConsents,
+  parseCatalogWithFormVersion,
+  type IntakeCatalog,
   type PlacedConsent,
   type SignatureFormBlock,
 } from '@ramassa/shared/intake-builder';
@@ -205,7 +205,7 @@ export function useSigningCatalog(version: AuthorizationForSigning | null | unde
       let raw: unknown;
       try {
         const { data, error } = await supabase.rpc('intake_catalog');
-        if (error) throw new Error(error.message);
+        if (error) throw new AppError('DB-1', { message: error.message });
         raw = data;
         privateStorage.set(signingCatalogKey(userId), JSON.stringify(data));
       } catch (error) {

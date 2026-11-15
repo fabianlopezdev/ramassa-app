@@ -40,8 +40,7 @@ export function useSignAuthorization() {
     mutationFn: (input: {
       readonly versionId: string;
       readonly payload: NonNullable<ReturnType<typeof buildSignPayload>>;
-    }) =>
-      signAuthorization(supabase, input.versionId, input.payload),
+    }) => signAuthorization(supabase, input.versionId, input.payload),
     onSuccess: async () => {
       const userId = user?.id ?? 'signed-out';
       await Promise.all([

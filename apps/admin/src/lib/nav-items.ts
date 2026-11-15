@@ -110,7 +110,7 @@ export const ONBOARDING_PERMISSIONS = [
  * Onboarding area. Onboarding designers write the drafts; only
  * settings.organization saves them for the players.
  */
-export const LEGAL_FORMS_PERMISSIONS = [
+const LEGAL_FORMS_PERMISSIONS = [
   'settings.organization',
   'onboarding.design',
 ] as const satisfies readonly PermissionCode[];

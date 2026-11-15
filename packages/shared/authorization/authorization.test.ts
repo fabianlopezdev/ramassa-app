@@ -7,8 +7,8 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, test } from 'bun:test';
-import { EMPTY_INTAKE_CATALOG, type IntakeCatalog } from '../intake-builder/builder';
 import type { SignatureStrokes } from '../equipment/handover';
+import { EMPTY_INTAKE_CATALOG, type IntakeCatalog } from '../intake-builder/builder';
 import { UNABLE_TO_DRAW } from '../intake-builder/form-blocks';
 import { buildAuthorizationVersion } from '../testing/factories';
 import {
@@ -46,7 +46,8 @@ const version1 = (): AuthorizationContent =>
 /** Version 1 with a staff consent, health optional, the contact required and sensitive. */
 function version2(): AuthorizationContent {
   // A version made since RAPP-698: no questions, the Health screen asks fields.
-  const { questions: _questions, ...content } = version1();
+  const content = version1();
+  delete content.questions;
   const consents = Object.fromEntries(
     Object.entries(content.consents).filter(([key]) => key !== 'newsletter'),
   );
@@ -61,12 +62,6 @@ function version2(): AuthorizationContent {
   };
 }
 
-const requiredOf1 = {
-  participation: true,
-  data_processing: true,
-  code_of_conduct: true,
-  health_data: true,
-};
 const drawing = [
   [
     [1, 2],
@@ -135,7 +130,8 @@ describe('a version', () => {
       }).success,
     ).toBe(false);
     // A version without questions is valid (RAPP-698): the Health screen asks fields.
-    const { questions: _questions, ...withoutQuestions } = content;
+    const withoutQuestions = { ...content };
+    delete withoutQuestions.questions;
     expect(authorizationContentSchema.safeParse(withoutQuestions).success).toBe(true);
   });
 
@@ -221,15 +217,27 @@ function signingCatalog(): IntakeCatalog {
   return {
     ...EMPTY_INTAKE_CATALOG,
     blocks: [
-      { ...place, id: OWN_BLOCK, kind: 'signature', body: { ca: 'Signo.' }, sortOrder: 2, system: 'authorization_signature' },
+      {
+        ...place,
+        id: OWN_BLOCK,
+        kind: 'signature',
+        body: { ca: 'Signo.' },
+        sortOrder: 2,
+        system: 'authorization_signature',
+      },
       { ...place, id: CLUB_BLOCK, kind: 'signature', body: { ca: 'Normes.' }, sortOrder: 3 },
     ],
     consents: [
-      { id: 'c1', key: 'participation', systemKey: 'participation', name: { ca: 'P' }, body: { ca: 'Hi participo.' }, isArchived: false },
+      {
+        id: 'c1',
+        key: 'participation',
+        systemKey: 'participation',
+        name: { ca: 'P' },
+        body: { ca: 'Hi participo.' },
+        isArchived: false,
+      },
     ],
-    consentPlacements: [
-      { ...place, id: 'p1', consentId: 'c1', sortOrder: 1, required: true },
-    ],
+    consentPlacements: [{ ...place, id: 'p1', consentId: 'c1', sortOrder: 1, required: true }],
   };
 }
 
@@ -263,7 +271,11 @@ describe('signing the form (RAPP-773)', () => {
     const payload = buildSignPayload({
       catalog: signingCatalog(),
       screens: [{ id: SIGN_SCREEN }],
-      draft: { answers: {}, consents: {}, signatures: { [OWN_BLOCK]: drawing as SignatureStrokes } },
+      draft: {
+        answers: {},
+        consents: {},
+        signatures: { [OWN_BLOCK]: drawing as SignatureStrokes },
+      },
       language: 'ca',
       device: null,
     }) as Record<string, unknown>;
