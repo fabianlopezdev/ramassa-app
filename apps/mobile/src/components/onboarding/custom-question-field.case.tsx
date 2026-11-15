@@ -72,6 +72,26 @@ mock.module('@/components/equipment/signature-pad', () => ({
       prompt,
     ),
 }));
+// A signature block draws the shared signature section (RAPP-771), whose
+// "No puc signar" row animates through NativeWind on the phone.
+mock.module('@/components/authorization/consent-row', () => ({
+  ConsentRow: ({
+    label,
+    onToggle,
+    checked,
+    testID,
+  }: {
+    label: string;
+    onToggle: () => void;
+    checked: boolean;
+    testID: string;
+  }) =>
+    createElement(
+      'button',
+      { onClick: onToggle, role: 'checkbox', 'aria-checked': checked, 'data-testid': testID },
+      label,
+    ),
+}));
 mock.module('@/components/onboarding/option-search-picker', () => ({
   OptionSearchPicker: ({
     options,
@@ -133,13 +153,14 @@ mock.module('@/components/profile/supporting-entities-field', () => ({
       inputLabel,
     ),
 }));
+const translate = (key: string) => ca[key.replace('onboarding:', '') as keyof typeof ca] ?? key;
 mock.module('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => ca[key.replace('onboarding:', '') as keyof typeof ca] ?? key,
-  }),
+  // The signature section reads her language's texts through getFixedT (RAPP-773).
+  useTranslation: () => ({ t: translate, i18n: { getFixedT: () => translate } }),
 }));
 mock.module('@ramassa/shared/i18n', () => ({ useLanguage: () => ({ language: 'ca' }) }));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
+mock.module('@/lib/language-font-class', () => ({ fontClassForLanguage: () => '' }));
 mock.module('@/components/onboarding/option-chip', () => ({
   OptionChip: ({
     label,

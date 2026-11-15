@@ -66,6 +66,11 @@ const flow: WizardFlow = {
   hiddenScreens: new Set(),
 };
 mock.module('@/lib/onboarding-intake-context', () => ({
+  // Her answers as the real one reads them: stored ones under her draft's (RAPP-715).
+  herWizardAnswers: (intake: { customAnswers: Record<string, unknown> }) => ({
+    ...intake.customAnswers,
+    ...store.loadStoredDraft()?.answers,
+  }),
   useWizardIntake: () => ({
     customAnswers: {},
     hidden: new Set(),

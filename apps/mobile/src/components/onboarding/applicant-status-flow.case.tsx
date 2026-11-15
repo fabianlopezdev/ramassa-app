@@ -2,7 +2,7 @@ import { wizardDraftStoreOn } from '@/lib/wizard-draft';
 import { fireEvent, render } from '@testing-library/react';
 import { afterAll, beforeEach, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
-import { systemFieldIndexFromCatalog } from '@ramassa/shared/intake-builder';
+import { EMPTY_INTAKE_CATALOG, systemFieldIndexFromCatalog } from '@ramassa/shared/intake-builder';
 import { createInMemoryOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
 import { encodeSupportNeeds } from '@ramassa/shared/schemas';
 import { systemFieldsCatalogFixture } from '@ramassa/shared/testing';
@@ -26,7 +26,13 @@ mock.module('expo-router', () => ({
   useRouter: () => ({ push, replace }),
   Redirect: () => null,
 }));
-mock.module('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+mock.module('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key, i18n: { resolvedLanguage: 'ca' } }),
+}));
+mock.module('react-native', () => ({
+  View: ({ children }: { children: ReactNode }) => createElement('div', null, children),
+}));
+mock.module('@/components/onboarding/question-help', () => ({ QuestionHelp: () => null }));
 mock.module('@/lib/haptics/haptics', () => ({ playHaptic: () => {} }));
 mock.module('@/components/onboarding/wizard-validation-summary', () => ({
   WizardValidationSummary: () => null,
@@ -44,7 +50,11 @@ mock.module('@/lib/onboarding-intake-context', () => ({
     goNext,
     goBack: () => {},
     previousDraftStep: 'season',
+    // The screen under this one is not the choice, so Back replaces (RAPP-707).
+    isBelow: () => false,
   }),
+  // A catalog with no app fields: each follow-up starts as the app's own (RAPP-782).
+  useWizardIntake: () => ({ catalog: EMPTY_INTAKE_CATALOG, hidden: new Set() }),
 }));
 mock.module('@/components/onboarding/wizard-frame', () => ({
   WizardFrame: ({
