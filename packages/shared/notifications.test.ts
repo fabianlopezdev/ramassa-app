@@ -11,6 +11,7 @@ const weeklyReminder = {
   ca: 'Recordatori de l’entrenament setmanal',
   es: 'Recordatorio del entrenamiento semanal',
   en: 'Weekly training reminder',
+  fr: 'Rappel de l’entraînement de la semaine',
   ar: 'تذكير بالتدريب الأسبوعي',
   fa: 'یادآوری تمرین هفتگی',
 } as const;
@@ -25,9 +26,21 @@ test('targeted notification contracts expose every supported audience', () => {
   ]);
 });
 
-test('notification copy requires reviewed text in all five supported languages', () => {
+test('notification copy requires reviewed text in every supported language', () => {
   expect(notificationContentSchema.parse(weeklyReminder)).toEqual(weeklyReminder);
   expect(() => notificationContentSchema.parse({ ...weeklyReminder, fa: '' })).toThrow();
+});
+
+test('sending asks for French too (RAPP-781)', () => {
+  expect(notificationContentSchema.safeParse({ ...weeklyReminder, fr: undefined }).success).toBe(
+    false,
+  );
+});
+
+test('copy saved before French reads in French as the Catalan (RAPP-781)', () => {
+  const savedBeforeFrench = { ...weeklyReminder, fr: undefined };
+  expect(resolveNotificationCopy(savedBeforeFrench, 'fr')).toBe(weeklyReminder.ca);
+  expect(resolveNotificationCopy(weeklyReminder, 'fr')).toBe(weeklyReminder.fr);
 });
 
 test('audience configuration is discriminated and rejects mismatched identifiers', () => {

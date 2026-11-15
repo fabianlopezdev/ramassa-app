@@ -23,7 +23,7 @@ import {
   fetchCustomNotificationGroups,
   previewNotificationAudience,
   saveCustomNotificationGroup,
-  type NotificationContent,
+  type PublishedNotificationContent,
 } from '../notifications';
 import type { SeasonAnswerFields } from '../schemas/season';
 import type { Database, Json } from '../types/database';
@@ -222,8 +222,8 @@ export async function remindUnregisteredPlayers(
   input: {
     readonly seasonName: string;
     readonly participantIds: readonly string[];
-    readonly title: NotificationContent;
-    readonly body: NotificationContent;
+    readonly title: PublishedNotificationContent;
+    readonly body: PublishedNotificationContent;
   },
 ): Promise<number> {
   if (input.participantIds.length === 0) return 0;

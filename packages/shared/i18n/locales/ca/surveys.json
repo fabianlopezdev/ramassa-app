@@ -25,7 +25,7 @@
   "saving": "Desant...",
   "saved": "Enquesta desada i distribuïda a l'audiència.",
   "error": "No hem pogut desar l'enquesta. Revisa els camps i torna-ho a provar.",
-  "translationRequired": "Cal revisar i aprovar les cinc llengües abans de publicar.",
+  "translationRequired": "Cal revisar i aprovar totes les llengües abans de publicar.",
   "results": "Resultats",
   "responsesCount": "{{count}} respostes",
   "completedCount": "{{count}} completades",

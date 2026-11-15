@@ -49,7 +49,7 @@ test('a guide is written block by block and published with five aligned language
     // Publishing before approving is refused at the button.
     await page.getByRole('button', { name: 'Publish', exact: true }).click();
     await expect(
-      page.getByText('Generate, review, and approve all five language versions before publishing.'),
+      page.getByText('Generate, review, and approve every language version before publishing.'),
     ).toBeVisible();
 
     await page.getByTestId('knowledge-generate').click();

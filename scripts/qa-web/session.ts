@@ -130,6 +130,7 @@ const PLAYER_LANGUAGES = [
   'ca',
   'es',
   'en',
+  'fr',
   'ar',
   'fa',
 ] as const satisfies readonly SupportedLanguage[];

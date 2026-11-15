@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { authorizationContentSchema } from '../authorization';
 import { SUPPORTED_LANGUAGES } from '../i18n/languages';
 import { questionSettingsSchema } from '../intake-builder/question-types';
+import { STORED_TRANSLATION_LANGUAGES } from '../schemas/language';
 import {
   buildAnnouncement,
   buildAppAnswersFromFixture,
@@ -78,9 +79,10 @@ describe('fixtures — the roster the seed and the factories share', () => {
     }
   });
 
-  test('the participant roster spans all five supported languages', () => {
+  // The seeded roster predates French (RAPP-781): it spans the five grant languages.
+  test('the participant roster spans all five grant languages', () => {
     const languages = new Set(PARTICIPANT_FIXTURES.map((fixture) => fixture.preferredLanguage));
-    for (const language of SUPPORTED_LANGUAGES) {
+    for (const language of STORED_TRANSLATION_LANGUAGES) {
       expect(languages.has(language)).toBe(true);
     }
   });
@@ -120,7 +122,7 @@ describe('fixtures — the roster the seed and the factories share', () => {
 });
 
 describe('buildOrganization', () => {
-  test('defaults to the seeded tenant with all five languages available', () => {
+  test('defaults to the seeded tenant with every supported language available', () => {
     const organization = buildOrganization();
 
     expect(organization.id).toBe(SEED_ORGANIZATION_ID);

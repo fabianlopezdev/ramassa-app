@@ -12,7 +12,11 @@
 import { typeInto, useTranslatableTexts } from '@/components/layout/translate-from-catalan';
 import { createContext, useContext, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
+import {
+  isRtlLanguage,
+  LANGUAGE_NATIVE_NAMES,
+  SUPPORTED_LANGUAGES,
+} from '@ramassa/shared/i18n/languages';
 import type { BuilderText } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
@@ -91,7 +95,7 @@ export function LanguageFields({
             id,
             name: id,
             defaultValue: value?.[language] ?? '',
-            dir: language === 'ar' || language === 'fa' ? 'rtl' : 'auto',
+            dir: isRtlLanguage(language) ? 'rtl' : 'auto',
             lang: language,
             hidden: language !== editing,
             placeholder: placeholder?.(language),
@@ -118,7 +122,7 @@ export function LanguageFields({
           id,
           name: id,
           defaultValue: value?.[language] ?? '',
-          dir: language === 'ar' || language === 'fa' ? 'rtl' : 'auto',
+          dir: isRtlLanguage(language) ? 'rtl' : 'auto',
           lang: language,
           required: language === 'ca' && isCatalanRequired,
           placeholder: placeholder?.(language),

@@ -26,6 +26,7 @@ import {
   type CreateTranslationReviewOptions,
   type TranslationReview,
 } from '@ramassa/shared/translation';
+import { CATALAN_TRANSLATION_TARGETS } from '@ramassa/shared/translation/client';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 import { uploadFile } from '@ramassa/shared/upload-client';
 import { ImageUploadField, type ImageUploadState } from './image-upload-field';
@@ -33,7 +34,7 @@ import { MultilingualEditor } from './multilingual-editor';
 import { ScheduledPublishFields, type PublishMode } from './scheduled-publish-fields';
 import { TranslationReviewPanel } from './translation-review-panel';
 
-const TARGET_LANGUAGES = ['es', 'en', 'ar', 'fa'] as const;
+const TARGET_LANGUAGES = CATALAN_TRANSLATION_TARGETS;
 
 export interface AnnouncementEditorProps {
   readonly announcement?: AnnouncementListRow;

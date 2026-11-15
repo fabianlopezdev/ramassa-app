@@ -33,7 +33,7 @@ import {
 import { isOptionType } from '../intake-builder/question-types';
 import type { IntakeQuestion } from '../onboarding/intake';
 import { systemKeysOfQuestion, type SystemFieldKey } from '../onboarding/system-fields';
-import type { LanguageCode } from '../schemas/language';
+import { languageCodeSchema, type LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
 
 type Client = SupabaseClient<Database>;
@@ -66,6 +66,12 @@ const SAMPLE_TEXTS: Readonly<
     entity: 'Test entity',
     contact: 'Test contact person',
     need: 'Test answer: she prefers to train in the afternoon.',
+  },
+  fr: {
+    address: '1 rue du Test',
+    entity: 'Entité de test',
+    contact: 'Personne de référence de test',
+    need: 'Réponse de test : elle préfère s’entraîner l’après-midi.',
   },
   ar: {
     address: 'شارع الاختبار 1',
@@ -266,7 +272,7 @@ export const testPlayerScenarioSchema = z
     // The staff questions she has an answer to (RAPP-610); an older server sends none.
     custom_answered: z.array(z.string()).optional(),
     org_id: z.uuid().optional(),
-    preferred_language: z.enum(['ca', 'es', 'en', 'ar', 'fa']).catch('ca'),
+    preferred_language: languageCodeSchema.catch('ca'),
     // Her phone shows the draft terms or authorization (RAPP-619); an older server sends neither.
     terms_draft: z.boolean().optional().default(false),
     authorization_draft: z.boolean().optional().default(false),

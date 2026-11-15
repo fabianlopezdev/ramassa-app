@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { requestCatalanTranslation } from '@/lib/translation-worker';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { SupportedLanguage } from '@ramassa/shared/i18n';
+import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '@ramassa/shared/i18n';
 import type {
   CustomNotificationGroup,
   NotificationAudience,
@@ -37,7 +37,7 @@ import type {
 } from '@ramassa/shared/translation';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 
-const ALL_LANGUAGES = ['ca', 'es', 'en', 'ar', 'fa'] as const;
+const ALL_LANGUAGES = SUPPORTED_LANGUAGES;
 const QUESTION_TYPES = ['rating', 'multiple_choice', 'yes_no', 'free_text'] as const;
 const STAR_SYMBOL = String.fromCodePoint(0x2605);
 
@@ -51,7 +51,7 @@ interface DraftQuestion {
 }
 
 function blankCopy(): SurveyLocalizedText {
-  return { ca: '', es: '', en: '', ar: '', fa: '' };
+  return { ca: '', es: '', en: '', fr: '', ar: '', fa: '' };
 }
 
 function newQuestion(type: SurveyQuestionType = 'rating'): DraftQuestion {

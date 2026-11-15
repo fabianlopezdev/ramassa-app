@@ -1,0 +1,16 @@
+{
+  "questions": {
+    "typeSamples": {
+      "shortText": "Marie",
+      "longText": "Je vis avec mes deux enfants à Gérone depuis trois ans.",
+      "email": "marie@exemple.fr",
+      "number": "3",
+      "option1": "Matin",
+      "option2": "Après-midi",
+      "option3": "Soir",
+      "search1": "Maroc",
+      "search2": "Sénégal",
+      "listItem": "Services sociaux"
+    }
+  }
+}

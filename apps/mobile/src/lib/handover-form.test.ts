@@ -51,7 +51,8 @@ describe('statementLanguageFor', () => {
   test('her language when the statement exists in it, else Catalan', () => {
     expect(statementLanguageFor('fa')).toBe('fa');
     expect(statementLanguageFor(null)).toBe('ca');
-    expect(statementLanguageFor('fr')).toBe('ca');
+    expect(statementLanguageFor('fr')).toBe('fr');
+    expect(statementLanguageFor('de')).toBe('ca');
   });
 });
 

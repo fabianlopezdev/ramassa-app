@@ -6,7 +6,7 @@
  * each app wraps it in its own `safeAsync` (the one that reports to Sentry).
  */
 import { AppError, errorCodeRegistry, type AppErrorCode } from '../errors';
-import type { LanguageCode } from '../schemas/language';
+import { languageCodeSchema, type LanguageCode } from '../schemas/language';
 import {
   translationRequestSchema,
   translationWorkerResponseSchema,
@@ -24,7 +24,9 @@ export interface RequestTranslationOptions {
   readonly fetchImplementation?: FetchImplementation;
 }
 
-export const CATALAN_TRANSLATION_TARGETS = ['es', 'en', 'ar', 'fa'] as const;
+export const CATALAN_TRANSLATION_TARGETS = languageCodeSchema.options.filter(
+  (language) => language !== 'ca',
+);
 
 function isAppErrorCode(value: unknown): value is AppErrorCode {
   return typeof value === 'string' && value in errorCodeRegistry;

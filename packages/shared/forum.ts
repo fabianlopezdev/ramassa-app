@@ -8,7 +8,8 @@ import {
   forumPostEditSchema,
   forumPostInputSchema,
   forumReplyInputSchema,
-  languageCodeSchema,
+  publishedTranslationsSchema,
+  storedTranslationsSchema,
   type ForumFlagInput,
   type ForumModerationInput,
   type ForumPostEdit,
@@ -40,13 +41,7 @@ export interface ForumCategoryRow {
 
 const forumCategoryInputSchema = z.object({
   id: z.uuid().nullable(),
-  name: z.object({
-    ca: z.string().trim().min(1),
-    es: z.string().trim().min(1),
-    en: z.string().trim().min(1),
-    ar: z.string().trim().min(1),
-    fa: z.string().trim().min(1),
-  }),
+  name: publishedTranslationsSchema(z.string().trim().min(1)),
   slug: z
     .string()
     .trim()
@@ -87,7 +82,8 @@ export interface ForumReplyRow {
 const forumVisibilitySchema = z.enum(['visible', 'hidden_pending_review', 'hidden', 'deleted']);
 const forumCategoryDatabaseRowSchema = z.object({
   id: z.uuid(),
-  name: z.record(languageCodeSchema, z.string().trim().min(1)),
+  // A category saved before French has no French name (RAPP-781).
+  name: storedTranslationsSchema(z.string().trim().min(1)),
   slug: z.string().min(1),
   icon: z.string().min(1),
   color: z.string().min(1),
@@ -375,6 +371,28 @@ export async function saveForumCategory(
     p_icon: input.icon,
     p_color: input.color,
     p_sort_order: input.sortOrder,
+  } as never);
+  if (error !== null) throw new AppError('DB-1', { message: error.message });
+  return z.uuid().parse(data);
+}
+
+/**
+ * Gives a category a new place in the list, keeping its name exactly as stored:
+ * a category saved before French has no French name yet (RAPP-781), and
+ * moving it must not ask for one.
+ */
+export async function moveForumCategory(
+  client: SupabaseClient<Database>,
+  category: ForumCategoryRow,
+  sortOrder: number,
+): Promise<string> {
+  const { data, error } = await client.rpc('save_forum_category', {
+    p_category_id: z.uuid().parse(category.id),
+    p_name: storedTranslationsSchema(z.string().trim().min(1)).parse(category.name),
+    p_slug: category.slug,
+    p_icon: category.icon,
+    p_color: category.color,
+    p_sort_order: z.number().int().parse(sortOrder),
   } as never);
   if (error !== null) throw new AppError('DB-1', { message: error.message });
   return z.uuid().parse(data);

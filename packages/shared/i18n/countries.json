@@ -5,6 +5,7 @@
       "ca": "Afganistan",
       "es": "Afganistán",
       "en": "Afghanistan",
+      "fr": "Afghanistan",
       "ar": "أفغانستان",
       "fa": "افغانستان"
     }
@@ -15,6 +16,7 @@
       "ca": "Albània",
       "es": "Albania",
       "en": "Albania",
+      "fr": "Albanie",
       "ar": "ألبانيا",
       "fa": "آلبانی"
     }
@@ -25,6 +27,7 @@
       "ca": "Alemanya",
       "es": "Alemania",
       "en": "Germany",
+      "fr": "Allemagne",
       "ar": "ألمانيا",
       "fa": "آلمان"
     }
@@ -35,6 +38,7 @@
       "ca": "Algèria",
       "es": "Argelia",
       "en": "Algeria",
+      "fr": "Algérie",
       "ar": "الجزائر",
       "fa": "الجزایر"
     }
@@ -45,6 +49,7 @@
       "ca": "Andorra",
       "es": "Andorra",
       "en": "Andorra",
+      "fr": "Andorre",
       "ar": "أندورا",
       "fa": "آندورا"
     }
@@ -55,6 +60,7 @@
       "ca": "Angola",
       "es": "Angola",
       "en": "Angola",
+      "fr": "Angola",
       "ar": "أنغولا",
       "fa": "آنگولا"
     }
@@ -65,6 +71,7 @@
       "ca": "Anguilla",
       "es": "Anguila",
       "en": "Anguilla",
+      "fr": "Anguilla",
       "ar": "أنغويلا",
       "fa": "آنگویلا"
     }
@@ -75,6 +82,7 @@
       "ca": "Antàrtida",
       "es": "Antártida",
       "en": "Antarctica",
+      "fr": "Antarctique",
       "ar": "أنتاركتيكا",
       "fa": "جنوبگان"
     }
@@ -85,6 +93,7 @@
       "ca": "Antigua i Barbuda",
       "es": "Antigua y Barbuda",
       "en": "Antigua & Barbuda",
+      "fr": "Antigua-et-Barbuda",
       "ar": "أنتيغوا وبربودا",
       "fa": "آنتیگوا و باربودا"
     }
@@ -95,6 +104,7 @@
       "ca": "Aràbia Saudí",
       "es": "Arabia Saudí",
       "en": "Saudi Arabia",
+      "fr": "Arabie saoudite",
       "ar": "المملكة العربية السعودية",
       "fa": "عربستان سعودی"
     }
@@ -105,6 +115,7 @@
       "ca": "Argentina",
       "es": "Argentina",
       "en": "Argentina",
+      "fr": "Argentine",
       "ar": "الأرجنتين",
       "fa": "آرژانتین"
     }
@@ -115,6 +126,7 @@
       "ca": "Armènia",
       "es": "Armenia",
       "en": "Armenia",
+      "fr": "Arménie",
       "ar": "أرمينيا",
       "fa": "ارمنستان"
     }
@@ -125,6 +137,7 @@
       "ca": "Aruba",
       "es": "Aruba",
       "en": "Aruba",
+      "fr": "Aruba",
       "ar": "أروبا",
       "fa": "آروبا"
     }
@@ -135,6 +148,7 @@
       "ca": "Austràlia",
       "es": "Australia",
       "en": "Australia",
+      "fr": "Australie",
       "ar": "أستراليا",
       "fa": "استرالیا"
     }
@@ -145,6 +159,7 @@
       "ca": "Àustria",
       "es": "Austria",
       "en": "Austria",
+      "fr": "Autriche",
       "ar": "النمسا",
       "fa": "اتریش"
     }
@@ -155,6 +170,7 @@
       "ca": "Azerbaidjan",
       "es": "Azerbaiyán",
       "en": "Azerbaijan",
+      "fr": "Azerbaïdjan",
       "ar": "أذربيجان",
       "fa": "جمهوری آذربایجان"
     }
@@ -165,6 +181,7 @@
       "ca": "Bahames",
       "es": "Bahamas",
       "en": "Bahamas",
+      "fr": "Bahamas",
       "ar": "جزر البهاما",
       "fa": "باهاما"
     }
@@ -175,6 +192,7 @@
       "ca": "Bahrain",
       "es": "Baréin",
       "en": "Bahrain",
+      "fr": "Bahreïn",
       "ar": "البحرين",
       "fa": "بحرین"
     }
@@ -185,6 +203,7 @@
       "ca": "Bangladesh",
       "es": "Bangladés",
       "en": "Bangladesh",
+      "fr": "Bangladesh",
       "ar": "بنغلاديش",
       "fa": "بنگلادش"
     }
@@ -195,6 +214,7 @@
       "ca": "Barbados",
       "es": "Barbados",
       "en": "Barbados",
+      "fr": "Barbade",
       "ar": "بربادوس",
       "fa": "باربادوس"
     }
@@ -205,6 +225,7 @@
       "ca": "Belarús",
       "es": "Bielorrusia",
       "en": "Belarus",
+      "fr": "Biélorussie",
       "ar": "بيلاروس",
       "fa": "بلاروس"
     }
@@ -215,6 +236,7 @@
       "ca": "Bèlgica",
       "es": "Bélgica",
       "en": "Belgium",
+      "fr": "Belgique",
       "ar": "بلجيكا",
       "fa": "بلژیک"
     }
@@ -225,6 +247,7 @@
       "ca": "Belize",
       "es": "Belice",
       "en": "Belize",
+      "fr": "Belize",
       "ar": "بليز",
       "fa": "بلیز"
     }
@@ -235,6 +258,7 @@
       "ca": "Benín",
       "es": "Benín",
       "en": "Benin",
+      "fr": "Bénin",
       "ar": "بنين",
       "fa": "بنین"
     }
@@ -245,6 +269,7 @@
       "ca": "Bermudes",
       "es": "Bermudas",
       "en": "Bermuda",
+      "fr": "Bermudes",
       "ar": "برمودا",
       "fa": "برمودا"
     }
@@ -255,6 +280,7 @@
       "ca": "Bhutan",
       "es": "Bután",
       "en": "Bhutan",
+      "fr": "Bhoutan",
       "ar": "بوتان",
       "fa": "بوتان"
     }
@@ -265,6 +291,7 @@
       "ca": "Bolívia",
       "es": "Bolivia",
       "en": "Bolivia",
+      "fr": "Bolivie",
       "ar": "بوليفيا",
       "fa": "بولیوی"
     }
@@ -275,6 +302,7 @@
       "ca": "Bòsnia i Hercegovina",
       "es": "Bosnia y Herzegovina",
       "en": "Bosnia & Herzegovina",
+      "fr": "Bosnie-Herzégovine",
       "ar": "البوسنة والهرسك",
       "fa": "بوسنی و هرزگوین"
     }
@@ -285,6 +313,7 @@
       "ca": "Botswana",
       "es": "Botsuana",
       "en": "Botswana",
+      "fr": "Botswana",
       "ar": "بوتسوانا",
       "fa": "بوتسوانا"
     }
@@ -295,6 +324,7 @@
       "ca": "Brasil",
       "es": "Brasil",
       "en": "Brazil",
+      "fr": "Brésil",
       "ar": "البرازيل",
       "fa": "برزیل"
     }
@@ -305,6 +335,7 @@
       "ca": "Brunei",
       "es": "Brunéi",
       "en": "Brunei",
+      "fr": "Brunei",
       "ar": "بروناي",
       "fa": "برونئی"
     }
@@ -315,6 +346,7 @@
       "ca": "Bulgària",
       "es": "Bulgaria",
       "en": "Bulgaria",
+      "fr": "Bulgarie",
       "ar": "بلغاريا",
       "fa": "بلغارستان"
     }
@@ -325,6 +357,7 @@
       "ca": "Burkina Faso",
       "es": "Burkina Faso",
       "en": "Burkina Faso",
+      "fr": "Burkina Faso",
       "ar": "بوركينا فاسو",
       "fa": "بورکینافاسو"
     }
@@ -335,6 +368,7 @@
       "ca": "Burundi",
       "es": "Burundi",
       "en": "Burundi",
+      "fr": "Burundi",
       "ar": "بوروندي",
       "fa": "بوروندی"
     }
@@ -345,6 +379,7 @@
       "ca": "Cambodja",
       "es": "Camboya",
       "en": "Cambodia",
+      "fr": "Cambodge",
       "ar": "كمبوديا",
       "fa": "کامبوج"
     }
@@ -355,6 +390,7 @@
       "ca": "Camerun",
       "es": "Camerún",
       "en": "Cameroon",
+      "fr": "Cameroun",
       "ar": "الكاميرون",
       "fa": "کامرون"
     }
@@ -365,6 +401,7 @@
       "ca": "Canadà",
       "es": "Canadá",
       "en": "Canada",
+      "fr": "Canada",
       "ar": "كندا",
       "fa": "کانادا"
     }
@@ -375,6 +412,7 @@
       "ca": "Cap Verd",
       "es": "Cabo Verde",
       "en": "Cape Verde",
+      "fr": "Cap-Vert",
       "ar": "الرأس الأخضر",
       "fa": "کیپ‌ورد"
     }
@@ -385,6 +423,7 @@
       "ca": "Carib Neerlandès",
       "es": "Caribe neerlandés",
       "en": "Caribbean Netherlands",
+      "fr": "Pays-Bas caribéens",
       "ar": "هولندا الكاريبية",
       "fa": "جزایر کارائیب هلند"
     }
@@ -395,6 +434,7 @@
       "ca": "Ciutat del Vaticà",
       "es": "Ciudad del Vaticano",
       "en": "Vatican City",
+      "fr": "État de la Cité du Vatican",
       "ar": "الفاتيكان",
       "fa": "واتیکان"
     }
@@ -405,6 +445,7 @@
       "ca": "Colòmbia",
       "es": "Colombia",
       "en": "Colombia",
+      "fr": "Colombie",
       "ar": "كولومبيا",
       "fa": "کلمبیا"
     }
@@ -415,6 +456,7 @@
       "ca": "Comores",
       "es": "Comoras",
       "en": "Comoros",
+      "fr": "Comores",
       "ar": "جزر القمر",
       "fa": "کومور"
     }
@@ -425,6 +467,7 @@
       "ca": "Congo - Brazzaville",
       "es": "Congo",
       "en": "Congo - Brazzaville",
+      "fr": "Congo-Brazzaville",
       "ar": "الكونغو - برازافيل",
       "fa": "کنگو - برازویل"
     }
@@ -435,6 +478,7 @@
       "ca": "Congo - Kinshasa",
       "es": "República Democrática del Congo",
       "en": "Congo - Kinshasa",
+      "fr": "Congo-Kinshasa",
       "ar": "الكونغو - كينشاسا",
       "fa": "کنگو - کینشاسا"
     }
@@ -445,6 +489,7 @@
       "ca": "Corea del Nord",
       "es": "Corea del Norte",
       "en": "North Korea",
+      "fr": "Corée du Nord",
       "ar": "كوريا الشمالية",
       "fa": "کرهٔ شمالی"
     }
@@ -455,6 +500,7 @@
       "ca": "Corea del Sud",
       "es": "Corea del Sur",
       "en": "South Korea",
+      "fr": "Corée du Sud",
       "ar": "كوريا الجنوبية",
       "fa": "کرهٔ جنوبی"
     }
@@ -465,6 +511,7 @@
       "ca": "Costa Rica",
       "es": "Costa Rica",
       "en": "Costa Rica",
+      "fr": "Costa Rica",
       "ar": "كوستاريكا",
       "fa": "کاستاریکا"
     }
@@ -475,6 +522,7 @@
       "ca": "Côte d’Ivoire",
       "es": "Côte d’Ivoire",
       "en": "Côte d’Ivoire",
+      "fr": "Côte d’Ivoire",
       "ar": "ساحل العاج",
       "fa": "ساحل عاج"
     }
@@ -485,6 +533,7 @@
       "ca": "CQ",
       "es": "CQ",
       "en": "Sark",
+      "fr": "CQ",
       "ar": "CQ",
       "fa": "CQ"
     }
@@ -495,6 +544,7 @@
       "ca": "Croàcia",
       "es": "Croacia",
       "en": "Croatia",
+      "fr": "Croatie",
       "ar": "كرواتيا",
       "fa": "کرواسی"
     }
@@ -505,6 +555,7 @@
       "ca": "Cuba",
       "es": "Cuba",
       "en": "Cuba",
+      "fr": "Cuba",
       "ar": "كوبا",
       "fa": "کوبا"
     }
@@ -515,6 +566,7 @@
       "ca": "Curaçao",
       "es": "Curazao",
       "en": "Curaçao",
+      "fr": "Curaçao",
       "ar": "كوراساو",
       "fa": "کوراسائو"
     }
@@ -525,6 +577,7 @@
       "ca": "Dinamarca",
       "es": "Dinamarca",
       "en": "Denmark",
+      "fr": "Danemark",
       "ar": "الدانمرك",
       "fa": "دانمارک"
     }
@@ -535,6 +588,7 @@
       "ca": "Djibouti",
       "es": "Yibuti",
       "en": "Djibouti",
+      "fr": "Djibouti",
       "ar": "جيبوتي",
       "fa": "جیبوتی"
     }
@@ -545,6 +599,7 @@
       "ca": "Dominica",
       "es": "Dominica",
       "en": "Dominica",
+      "fr": "Dominique",
       "ar": "دومينيكا",
       "fa": "دومینیکا"
     }
@@ -555,6 +610,7 @@
       "ca": "Egipte",
       "es": "Egipto",
       "en": "Egypt",
+      "fr": "Égypte",
       "ar": "مصر",
       "fa": "مصر"
     }
@@ -565,6 +621,7 @@
       "ca": "El Salvador",
       "es": "El Salvador",
       "en": "El Salvador",
+      "fr": "Salvador",
       "ar": "السلفادور",
       "fa": "السالوادور"
     }
@@ -575,6 +632,7 @@
       "ca": "Emirats Àrabs Units",
       "es": "Emiratos Árabes Unidos",
       "en": "United Arab Emirates",
+      "fr": "Émirats arabes unis",
       "ar": "الإمارات العربية المتحدة",
       "fa": "امارات متحدهٔ عربی"
     }
@@ -585,6 +643,7 @@
       "ca": "Equador",
       "es": "Ecuador",
       "en": "Ecuador",
+      "fr": "Équateur",
       "ar": "الإكوادور",
       "fa": "اکوادور"
     }
@@ -595,6 +654,7 @@
       "ca": "Eritrea",
       "es": "Eritrea",
       "en": "Eritrea",
+      "fr": "Érythrée",
       "ar": "إريتريا",
       "fa": "اریتره"
     }
@@ -605,6 +665,7 @@
       "ca": "Eslovàquia",
       "es": "Eslovaquia",
       "en": "Slovakia",
+      "fr": "Slovaquie",
       "ar": "سلوفاكيا",
       "fa": "اسلواکی"
     }
@@ -615,6 +676,7 @@
       "ca": "Eslovènia",
       "es": "Eslovenia",
       "en": "Slovenia",
+      "fr": "Slovénie",
       "ar": "سلوفينيا",
       "fa": "اسلوونی"
     }
@@ -625,6 +687,7 @@
       "ca": "Espanya",
       "es": "España",
       "en": "Spain",
+      "fr": "Espagne",
       "ar": "إسبانيا",
       "fa": "اسپانیا"
     }
@@ -635,6 +698,7 @@
       "ca": "Estats Units",
       "es": "Estados Unidos",
       "en": "United States",
+      "fr": "États-Unis",
       "ar": "الولايات المتحدة",
       "fa": "ایالات متحده"
     }
@@ -645,6 +709,7 @@
       "ca": "Estònia",
       "es": "Estonia",
       "en": "Estonia",
+      "fr": "Estonie",
       "ar": "إستونيا",
       "fa": "استونی"
     }
@@ -655,6 +720,7 @@
       "ca": "Eswatini",
       "es": "Esuatini",
       "en": "Eswatini",
+      "fr": "Eswatini",
       "ar": "إسواتيني",
       "fa": "اسواتینی"
     }
@@ -665,6 +731,7 @@
       "ca": "Etiòpia",
       "es": "Etiopía",
       "en": "Ethiopia",
+      "fr": "Éthiopie",
       "ar": "إثيوبيا",
       "fa": "اتیوپی"
     }
@@ -675,6 +742,7 @@
       "ca": "Fiji",
       "es": "Fiyi",
       "en": "Fiji",
+      "fr": "Fidji",
       "ar": "فيجي",
       "fa": "فیجی"
     }
@@ -685,6 +753,7 @@
       "ca": "Filipines",
       "es": "Filipinas",
       "en": "Philippines",
+      "fr": "Philippines",
       "ar": "الفلبين",
       "fa": "فیلیپین"
     }
@@ -695,6 +764,7 @@
       "ca": "Finlàndia",
       "es": "Finlandia",
       "en": "Finland",
+      "fr": "Finlande",
       "ar": "فنلندا",
       "fa": "فنلاند"
     }
@@ -705,6 +775,7 @@
       "ca": "França",
       "es": "Francia",
       "en": "France",
+      "fr": "France",
       "ar": "فرنسا",
       "fa": "فرانسه"
     }
@@ -715,6 +786,7 @@
       "ca": "Gabon",
       "es": "Gabón",
       "en": "Gabon",
+      "fr": "Gabon",
       "ar": "الغابون",
       "fa": "گابن"
     }
@@ -725,6 +797,7 @@
       "ca": "Gàmbia",
       "es": "Gambia",
       "en": "Gambia",
+      "fr": "Gambie",
       "ar": "غامبيا",
       "fa": "گامبیا"
     }
@@ -735,6 +808,7 @@
       "ca": "Geòrgia",
       "es": "Georgia",
       "en": "Georgia",
+      "fr": "Géorgie",
       "ar": "جورجيا",
       "fa": "گرجستان"
     }
@@ -745,6 +819,7 @@
       "ca": "Ghana",
       "es": "Ghana",
       "en": "Ghana",
+      "fr": "Ghana",
       "ar": "غانا",
       "fa": "غنا"
     }
@@ -755,6 +830,7 @@
       "ca": "Gibraltar",
       "es": "Gibraltar",
       "en": "Gibraltar",
+      "fr": "Gibraltar",
       "ar": "جبل طارق",
       "fa": "جبل‌الطارق"
     }
@@ -765,6 +841,7 @@
       "ca": "Grècia",
       "es": "Grecia",
       "en": "Greece",
+      "fr": "Grèce",
       "ar": "اليونان",
       "fa": "یونان"
     }
@@ -775,6 +852,7 @@
       "ca": "Grenada",
       "es": "Granada",
       "en": "Grenada",
+      "fr": "Grenade",
       "ar": "غرينادا",
       "fa": "گرنادا"
     }
@@ -785,6 +863,7 @@
       "ca": "Groenlàndia",
       "es": "Groenlandia",
       "en": "Greenland",
+      "fr": "Groenland",
       "ar": "غرينلاند",
       "fa": "گرینلند"
     }
@@ -795,6 +874,7 @@
       "ca": "Guadalupe",
       "es": "Guadalupe",
       "en": "Guadeloupe",
+      "fr": "Guadeloupe",
       "ar": "غوادلوب",
       "fa": "گوادلوپ"
     }
@@ -805,6 +885,7 @@
       "ca": "Guaiana Francesa",
       "es": "Guayana Francesa",
       "en": "French Guiana",
+      "fr": "Guyane française",
       "ar": "غويانا الفرنسية",
       "fa": "گویان فرانسه"
     }
@@ -815,6 +896,7 @@
       "ca": "Guam",
       "es": "Guam",
       "en": "Guam",
+      "fr": "Guam",
       "ar": "غوام",
       "fa": "گوام"
     }
@@ -825,6 +907,7 @@
       "ca": "Guatemala",
       "es": "Guatemala",
       "en": "Guatemala",
+      "fr": "Guatemala",
       "ar": "غواتيمالا",
       "fa": "گواتمالا"
     }
@@ -835,6 +918,7 @@
       "ca": "Guernsey",
       "es": "Guernesey",
       "en": "Guernsey",
+      "fr": "Guernesey",
       "ar": "غيرنزي",
       "fa": "گرنزی"
     }
@@ -845,6 +929,7 @@
       "ca": "Guinea",
       "es": "Guinea",
       "en": "Guinea",
+      "fr": "Guinée",
       "ar": "غينيا",
       "fa": "گینه"
     }
@@ -855,6 +940,7 @@
       "ca": "Guinea Bissau",
       "es": "Guinea-Bisáu",
       "en": "Guinea-Bissau",
+      "fr": "Guinée-Bissau",
       "ar": "غينيا بيساو",
       "fa": "گینهٔ بیسائو"
     }
@@ -865,6 +951,7 @@
       "ca": "Guinea Equatorial",
       "es": "Guinea Ecuatorial",
       "en": "Equatorial Guinea",
+      "fr": "Guinée équatoriale",
       "ar": "غينيا الاستوائية",
       "fa": "گینهٔ استوایی"
     }
@@ -875,6 +962,7 @@
       "ca": "Guyana",
       "es": "Guyana",
       "en": "Guyana",
+      "fr": "Guyana",
       "ar": "غيانا",
       "fa": "گویان"
     }
@@ -885,6 +973,7 @@
       "ca": "Haití",
       "es": "Haití",
       "en": "Haiti",
+      "fr": "Haïti",
       "ar": "هايتي",
       "fa": "هائیتی"
     }
@@ -895,6 +984,7 @@
       "ca": "Hondures",
       "es": "Honduras",
       "en": "Honduras",
+      "fr": "Honduras",
       "ar": "هندوراس",
       "fa": "هندوراس"
     }
@@ -905,6 +995,7 @@
       "ca": "Hong Kong (RAE Xina)",
       "es": "RAE de Hong Kong (China)",
       "en": "Hong Kong SAR China",
+      "fr": "R.A.S. chinoise de Hong Kong",
       "ar": "هونغ كونغ الصينية (منطقة إدارية خاصة)",
       "fa": "هنگ‌کنگ، منطقهٔ ویژهٔ اداری چین"
     }
@@ -915,6 +1006,7 @@
       "ca": "Hongria",
       "es": "Hungría",
       "en": "Hungary",
+      "fr": "Hongrie",
       "ar": "هنغاريا",
       "fa": "مجارستان"
     }
@@ -925,6 +1017,7 @@
       "ca": "Iemen",
       "es": "Yemen",
       "en": "Yemen",
+      "fr": "Yémen",
       "ar": "اليمن",
       "fa": "یمن"
     }
@@ -935,6 +1028,7 @@
       "ca": "Illa Christmas",
       "es": "Isla de Navidad",
       "en": "Christmas Island",
+      "fr": "Île Christmas",
       "ar": "جزيرة كريسماس",
       "fa": "جزیرهٔ کریسمس"
     }
@@ -945,6 +1039,7 @@
       "ca": "Illa de la Reunió",
       "es": "Reunión",
       "en": "Réunion",
+      "fr": "La Réunion",
       "ar": "روينيون",
       "fa": "رئونیون"
     }
@@ -955,6 +1050,7 @@
       "ca": "Illa de Man",
       "es": "Isla de Man",
       "en": "Isle of Man",
+      "fr": "Île de Man",
       "ar": "جزيرة مان",
       "fa": "جزیرهٔ من"
     }
@@ -965,6 +1061,7 @@
       "ca": "Illa Norfolk",
       "es": "Isla Norfolk",
       "en": "Norfolk Island",
+      "fr": "Île Norfolk",
       "ar": "جزيرة نورفولك",
       "fa": "جزیرهٔ نورفولک"
     }
@@ -975,6 +1072,7 @@
       "ca": "Illes Åland",
       "es": "Islas Aland",
       "en": "Åland Islands",
+      "fr": "Îles Åland",
       "ar": "جزر آلاند",
       "fa": "جزایر آلاند"
     }
@@ -985,6 +1083,7 @@
       "ca": "Illes Caiman",
       "es": "Islas Caimán",
       "en": "Cayman Islands",
+      "fr": "Îles Caïmans",
       "ar": "جزر كايمان",
       "fa": "جزایر کِیمن"
     }
@@ -995,6 +1094,7 @@
       "ca": "Illes Cocos (Keeling)",
       "es": "Islas Cocos",
       "en": "Cocos (Keeling) Islands",
+      "fr": "Îles Cocos",
       "ar": "جزر كوكوس (كيلينغ)",
       "fa": "جزایر کوکوس"
     }
@@ -1005,6 +1105,7 @@
       "ca": "Illes Cook",
       "es": "Islas Cook",
       "en": "Cook Islands",
+      "fr": "Îles Cook",
       "ar": "جزر كوك",
       "fa": "جزایر کوک"
     }
@@ -1015,6 +1116,7 @@
       "ca": "Illes Falkland",
       "es": "Islas Malvinas",
       "en": "Falkland Islands",
+      "fr": "Îles Malouines",
       "ar": "جزر فوكلاند",
       "fa": "جزایر فالکلند"
     }
@@ -1025,6 +1127,7 @@
       "ca": "Illes Fèroe",
       "es": "Islas Feroe",
       "en": "Faroe Islands",
+      "fr": "Îles Féroé",
       "ar": "جزر فارو",
       "fa": "جزایر فارو"
     }
@@ -1035,6 +1138,7 @@
       "ca": "Illes Geòrgia del Sud i Sandwich del Sud",
       "es": "Islas Georgia del Sur y Sandwich del Sur",
       "en": "South Georgia & South Sandwich Islands",
+      "fr": "Géorgie du Sud-et-les Îles Sandwich du Sud",
       "ar": "جورجيا الجنوبية وجزر ساندويتش الجنوبية",
       "fa": "جورجیای جنوبی و جزایر ساندویچ جنوبی"
     }
@@ -1045,6 +1149,7 @@
       "ca": "Illes Marianes del Nord",
       "es": "Islas Marianas del Norte",
       "en": "Northern Mariana Islands",
+      "fr": "Îles Mariannes du Nord",
       "ar": "جزر ماريانا الشمالية",
       "fa": "جزایر ماریانای شمالی"
     }
@@ -1055,6 +1160,7 @@
       "ca": "Illes Marshall",
       "es": "Islas Marshall",
       "en": "Marshall Islands",
+      "fr": "Îles Marshall",
       "ar": "جزر مارشال",
       "fa": "جزایر مارشال"
     }
@@ -1065,6 +1171,7 @@
       "ca": "Illes Menors Allunyades dels Estats Units",
       "es": "Islas menores alejadas de EE. UU.",
       "en": "U.S. Outlying Islands",
+      "fr": "Îles mineures éloignées des États-Unis",
       "ar": "جزر الولايات المتحدة النائية",
       "fa": "جزایر دورافتادهٔ ایالات متحده"
     }
@@ -1075,6 +1182,7 @@
       "ca": "Illes Pitcairn",
       "es": "Islas Pitcairn",
       "en": "Pitcairn Islands",
+      "fr": "Îles Pitcairn",
       "ar": "جزر بيتكيرن",
       "fa": "جزایر پیت‌کرن"
     }
@@ -1085,6 +1193,7 @@
       "ca": "Illes Salomó",
       "es": "Islas Salomón",
       "en": "Solomon Islands",
+      "fr": "Îles Salomon",
       "ar": "جزر سليمان",
       "fa": "جزایر سلیمان"
     }
@@ -1095,6 +1204,7 @@
       "ca": "Illes Turks i Caicos",
       "es": "Islas Turcas y Caicos",
       "en": "Turks & Caicos Islands",
+      "fr": "Îles Turques-et-Caïques",
       "ar": "جزر توركس وكايكوس",
       "fa": "جزایر تورکس و کایکوس"
     }
@@ -1105,6 +1215,7 @@
       "ca": "Illes Verges Britàniques",
       "es": "Islas Vírgenes Británicas",
       "en": "British Virgin Islands",
+      "fr": "Îles Vierges britanniques",
       "ar": "جزر فيرجن البريطانية",
       "fa": "جزایر ویرجین بریتانیا"
     }
@@ -1115,6 +1226,7 @@
       "ca": "Illes Verges dels Estats Units",
       "es": "Islas Vírgenes de EE. UU.",
       "en": "U.S. Virgin Islands",
+      "fr": "Îles Vierges des États-Unis",
       "ar": "جزر فيرجن الأمريكية",
       "fa": "جزایر ویرجین ایالات متحده"
     }
@@ -1125,6 +1237,7 @@
       "ca": "Índia",
       "es": "India",
       "en": "India",
+      "fr": "Inde",
       "ar": "الهند",
       "fa": "هند"
     }
@@ -1135,6 +1248,7 @@
       "ca": "Indonèsia",
       "es": "Indonesia",
       "en": "Indonesia",
+      "fr": "Indonésie",
       "ar": "إندونيسيا",
       "fa": "اندونزی"
     }
@@ -1145,6 +1259,7 @@
       "ca": "Iran",
       "es": "Irán",
       "en": "Iran",
+      "fr": "Iran",
       "ar": "إيران",
       "fa": "ایران"
     }
@@ -1155,6 +1270,7 @@
       "ca": "Iraq",
       "es": "Irak",
       "en": "Iraq",
+      "fr": "Irak",
       "ar": "العراق",
       "fa": "عراق"
     }
@@ -1165,6 +1281,7 @@
       "ca": "Irlanda",
       "es": "Irlanda",
       "en": "Ireland",
+      "fr": "Irlande",
       "ar": "أيرلندا",
       "fa": "ایرلند"
     }
@@ -1175,6 +1292,7 @@
       "ca": "Islàndia",
       "es": "Islandia",
       "en": "Iceland",
+      "fr": "Islande",
       "ar": "آيسلندا",
       "fa": "ایسلند"
     }
@@ -1185,6 +1303,7 @@
       "ca": "Israel",
       "es": "Israel",
       "en": "Israel",
+      "fr": "Israël",
       "ar": "إسرائيل",
       "fa": "اسرائیل"
     }
@@ -1195,6 +1314,7 @@
       "ca": "Itàlia",
       "es": "Italia",
       "en": "Italy",
+      "fr": "Italie",
       "ar": "إيطاليا",
       "fa": "ایتالیا"
     }
@@ -1205,6 +1325,7 @@
       "ca": "Jamaica",
       "es": "Jamaica",
       "en": "Jamaica",
+      "fr": "Jamaïque",
       "ar": "جامايكا",
       "fa": "جامائیکا"
     }
@@ -1215,6 +1336,7 @@
       "ca": "Japó",
       "es": "Japón",
       "en": "Japan",
+      "fr": "Japon",
       "ar": "اليابان",
       "fa": "ژاپن"
     }
@@ -1225,6 +1347,7 @@
       "ca": "Jersey",
       "es": "Jersey",
       "en": "Jersey",
+      "fr": "Jersey",
       "ar": "جيرسي",
       "fa": "جرزی"
     }
@@ -1235,6 +1358,7 @@
       "ca": "Jordània",
       "es": "Jordania",
       "en": "Jordan",
+      "fr": "Jordanie",
       "ar": "الأردن",
       "fa": "اردن"
     }
@@ -1245,6 +1369,7 @@
       "ca": "Kazakhstan",
       "es": "Kazajistán",
       "en": "Kazakhstan",
+      "fr": "Kazakhstan",
       "ar": "كازاخستان",
       "fa": "قزاقستان"
     }
@@ -1255,6 +1380,7 @@
       "ca": "Kenya",
       "es": "Kenia",
       "en": "Kenya",
+      "fr": "Kenya",
       "ar": "كينيا",
       "fa": "کنیا"
     }
@@ -1265,6 +1391,7 @@
       "ca": "Kirguizstan",
       "es": "Kirguistán",
       "en": "Kyrgyzstan",
+      "fr": "Kirghizstan",
       "ar": "قيرغيزستان",
       "fa": "قرقیزستان"
     }
@@ -1275,6 +1402,7 @@
       "ca": "Kiribati",
       "es": "Kiribati",
       "en": "Kiribati",
+      "fr": "Kiribati",
       "ar": "كيريباتي",
       "fa": "کیریباتی"
     }
@@ -1285,6 +1413,7 @@
       "ca": "Kosovo",
       "es": "Kosovo",
       "en": "Kosovo",
+      "fr": "Kosovo",
       "ar": "كوسوفو",
       "fa": "کوزوو"
     }
@@ -1295,6 +1424,7 @@
       "ca": "Kuwait",
       "es": "Kuwait",
       "en": "Kuwait",
+      "fr": "Koweït",
       "ar": "الكويت",
       "fa": "کویت"
     }
@@ -1305,6 +1435,7 @@
       "ca": "Lao",
       "es": "Laos",
       "en": "Laos",
+      "fr": "Laos",
       "ar": "لاوس",
       "fa": "لائوس"
     }
@@ -1315,6 +1446,7 @@
       "ca": "Lesotho",
       "es": "Lesoto",
       "en": "Lesotho",
+      "fr": "Lesotho",
       "ar": "ليسوتو",
       "fa": "لسوتو"
     }
@@ -1325,6 +1457,7 @@
       "ca": "Letònia",
       "es": "Letonia",
       "en": "Latvia",
+      "fr": "Lettonie",
       "ar": "لاتفيا",
       "fa": "لتونی"
     }
@@ -1335,6 +1468,7 @@
       "ca": "Líban",
       "es": "Líbano",
       "en": "Lebanon",
+      "fr": "Liban",
       "ar": "لبنان",
       "fa": "لبنان"
     }
@@ -1345,6 +1479,7 @@
       "ca": "Libèria",
       "es": "Liberia",
       "en": "Liberia",
+      "fr": "Liberia",
       "ar": "ليبيريا",
       "fa": "لیبریا"
     }
@@ -1355,6 +1490,7 @@
       "ca": "Líbia",
       "es": "Libia",
       "en": "Libya",
+      "fr": "Libye",
       "ar": "ليبيا",
       "fa": "لیبی"
     }
@@ -1365,6 +1501,7 @@
       "ca": "Liechtenstein",
       "es": "Liechtenstein",
       "en": "Liechtenstein",
+      "fr": "Liechtenstein",
       "ar": "ليختنشتاين",
       "fa": "لیختن‌اشتاین"
     }
@@ -1375,6 +1512,7 @@
       "ca": "Lituània",
       "es": "Lituania",
       "en": "Lithuania",
+      "fr": "Lituanie",
       "ar": "ليتوانيا",
       "fa": "لیتوانی"
     }
@@ -1385,6 +1523,7 @@
       "ca": "Luxemburg",
       "es": "Luxemburgo",
       "en": "Luxembourg",
+      "fr": "Luxembourg",
       "ar": "لوكسمبورغ",
       "fa": "لوکزامبورگ"
     }
@@ -1395,6 +1534,7 @@
       "ca": "Macau (RAE Xina)",
       "es": "RAE de Macao (China)",
       "en": "Macao SAR China",
+      "fr": "R.A.S. chinoise de Macao",
       "ar": "منطقة ماكاو الإدارية الخاصة",
       "fa": "ماکائو، منطقهٔ ویژهٔ اداری چین"
     }
@@ -1405,6 +1545,7 @@
       "ca": "Macedònia del Nord",
       "es": "Macedonia del Norte",
       "en": "North Macedonia",
+      "fr": "Macédoine du Nord",
       "ar": "مقدونيا الشمالية",
       "fa": "مقدونیهٔ شمالی"
     }
@@ -1415,6 +1556,7 @@
       "ca": "Madagascar",
       "es": "Madagascar",
       "en": "Madagascar",
+      "fr": "Madagascar",
       "ar": "مدغشقر",
       "fa": "ماداگاسکار"
     }
@@ -1425,6 +1567,7 @@
       "ca": "Malàisia",
       "es": "Malasia",
       "en": "Malaysia",
+      "fr": "Malaisie",
       "ar": "ماليزيا",
       "fa": "مالزی"
     }
@@ -1435,6 +1578,7 @@
       "ca": "Malawi",
       "es": "Malaui",
       "en": "Malawi",
+      "fr": "Malawi",
       "ar": "ملاوي",
       "fa": "مالاوی"
     }
@@ -1445,6 +1589,7 @@
       "ca": "Maldives",
       "es": "Maldivas",
       "en": "Maldives",
+      "fr": "Maldives",
       "ar": "جزر المالديف",
       "fa": "مالدیو"
     }
@@ -1455,6 +1600,7 @@
       "ca": "Mali",
       "es": "Mali",
       "en": "Mali",
+      "fr": "Mali",
       "ar": "مالي",
       "fa": "مالی"
     }
@@ -1465,6 +1611,7 @@
       "ca": "Malta",
       "es": "Malta",
       "en": "Malta",
+      "fr": "Malte",
       "ar": "مالطا",
       "fa": "مالت"
     }
@@ -1475,6 +1622,7 @@
       "ca": "Marroc",
       "es": "Marruecos",
       "en": "Morocco",
+      "fr": "Maroc",
       "ar": "المغرب",
       "fa": "مراکش"
     }
@@ -1485,6 +1633,7 @@
       "ca": "Martinica",
       "es": "Martinica",
       "en": "Martinique",
+      "fr": "Martinique",
       "ar": "جزر المارتينيك",
       "fa": "مارتینیک"
     }
@@ -1495,6 +1644,7 @@
       "ca": "Maurici",
       "es": "Mauricio",
       "en": "Mauritius",
+      "fr": "Maurice",
       "ar": "موريشيوس",
       "fa": "موریس"
     }
@@ -1505,6 +1655,7 @@
       "ca": "Mauritània",
       "es": "Mauritania",
       "en": "Mauritania",
+      "fr": "Mauritanie",
       "ar": "موريتانيا",
       "fa": "موریتانی"
     }
@@ -1515,6 +1666,7 @@
       "ca": "Mayotte",
       "es": "Mayotte",
       "en": "Mayotte",
+      "fr": "Mayotte",
       "ar": "مايوت",
       "fa": "مایوت"
     }
@@ -1525,6 +1677,7 @@
       "ca": "Mèxic",
       "es": "México",
       "en": "Mexico",
+      "fr": "Mexique",
       "ar": "المكسيك",
       "fa": "مکزیک"
     }
@@ -1535,6 +1688,7 @@
       "ca": "Micronèsia",
       "es": "Micronesia",
       "en": "Micronesia",
+      "fr": "Micronésie",
       "ar": "ميكرونيزيا",
       "fa": "میکرونزی"
     }
@@ -1545,6 +1699,7 @@
       "ca": "Moçambic",
       "es": "Mozambique",
       "en": "Mozambique",
+      "fr": "Mozambique",
       "ar": "موزمبيق",
       "fa": "موزامبیک"
     }
@@ -1555,6 +1710,7 @@
       "ca": "Moldàvia",
       "es": "Moldavia",
       "en": "Moldova",
+      "fr": "Moldavie",
       "ar": "مولدوفا",
       "fa": "مولداوی"
     }
@@ -1565,6 +1721,7 @@
       "ca": "Mònaco",
       "es": "Mónaco",
       "en": "Monaco",
+      "fr": "Monaco",
       "ar": "موناكو",
       "fa": "موناکو"
     }
@@ -1575,6 +1732,7 @@
       "ca": "Mongòlia",
       "es": "Mongolia",
       "en": "Mongolia",
+      "fr": "Mongolie",
       "ar": "منغوليا",
       "fa": "مغولستان"
     }
@@ -1585,6 +1743,7 @@
       "ca": "Montenegro",
       "es": "Montenegro",
       "en": "Montenegro",
+      "fr": "Monténégro",
       "ar": "الجبل الأسود",
       "fa": "مونته‌نگرو"
     }
@@ -1595,6 +1754,7 @@
       "ca": "Montserrat",
       "es": "Montserrat",
       "en": "Montserrat",
+      "fr": "Montserrat",
       "ar": "مونتسرات",
       "fa": "مونت‌سرات"
     }
@@ -1605,6 +1765,7 @@
       "ca": "Myanmar (Birmània)",
       "es": "Myanmar (Birmania)",
       "en": "Myanmar (Burma)",
+      "fr": "Myanmar (Birmanie)",
       "ar": "ميانمار (بورما)",
       "fa": "میانمار (برمه)"
     }
@@ -1615,6 +1776,7 @@
       "ca": "Namíbia",
       "es": "Namibia",
       "en": "Namibia",
+      "fr": "Namibie",
       "ar": "ناميبيا",
       "fa": "نامیبیا"
     }
@@ -1625,6 +1787,7 @@
       "ca": "Nauru",
       "es": "Nauru",
       "en": "Nauru",
+      "fr": "Nauru",
       "ar": "ناورو",
       "fa": "نائورو"
     }
@@ -1635,6 +1798,7 @@
       "ca": "Nepal",
       "es": "Nepal",
       "en": "Nepal",
+      "fr": "Népal",
       "ar": "نيبال",
       "fa": "نپال"
     }
@@ -1645,6 +1809,7 @@
       "ca": "Nicaragua",
       "es": "Nicaragua",
       "en": "Nicaragua",
+      "fr": "Nicaragua",
       "ar": "نيكاراغوا",
       "fa": "نیکاراگوئه"
     }
@@ -1655,6 +1820,7 @@
       "ca": "Níger",
       "es": "Níger",
       "en": "Niger",
+      "fr": "Niger",
       "ar": "النيجر",
       "fa": "نیجر"
     }
@@ -1665,6 +1831,7 @@
       "ca": "Nigèria",
       "es": "Nigeria",
       "en": "Nigeria",
+      "fr": "Nigeria",
       "ar": "نيجيريا",
       "fa": "نیجریه"
     }
@@ -1675,6 +1842,7 @@
       "ca": "Niue",
       "es": "Niue",
       "en": "Niue",
+      "fr": "Niue",
       "ar": "نيوي",
       "fa": "نیوئه"
     }
@@ -1685,6 +1853,7 @@
       "ca": "Noruega",
       "es": "Noruega",
       "en": "Norway",
+      "fr": "Norvège",
       "ar": "النرويج",
       "fa": "نروژ"
     }
@@ -1695,6 +1864,7 @@
       "ca": "Nova Caledònia",
       "es": "Nueva Caledonia",
       "en": "New Caledonia",
+      "fr": "Nouvelle-Calédonie",
       "ar": "كاليدونيا الجديدة",
       "fa": "کالدونیای جدید"
     }
@@ -1705,6 +1875,7 @@
       "ca": "Nova Zelanda",
       "es": "Nueva Zelanda",
       "en": "New Zealand",
+      "fr": "Nouvelle-Zélande",
       "ar": "نيوزيلندا",
       "fa": "نیوزیلند"
     }
@@ -1715,6 +1886,7 @@
       "ca": "Oman",
       "es": "Omán",
       "en": "Oman",
+      "fr": "Oman",
       "ar": "عُمان",
       "fa": "عمان"
     }
@@ -1725,6 +1897,7 @@
       "ca": "Països Baixos",
       "es": "Países Bajos",
       "en": "Netherlands",
+      "fr": "Pays-Bas",
       "ar": "هولندا",
       "fa": "هلند"
     }
@@ -1735,6 +1908,7 @@
       "ca": "Pakistan",
       "es": "Pakistán",
       "en": "Pakistan",
+      "fr": "Pakistan",
       "ar": "باكستان",
       "fa": "پاکستان"
     }
@@ -1745,6 +1919,7 @@
       "ca": "Palau",
       "es": "Palaos",
       "en": "Palau",
+      "fr": "Palaos",
       "ar": "بالاو",
       "fa": "پالائو"
     }
@@ -1755,6 +1930,7 @@
       "ca": "Panamà",
       "es": "Panamá",
       "en": "Panama",
+      "fr": "Panama",
       "ar": "بنما",
       "fa": "پاناما"
     }
@@ -1765,6 +1941,7 @@
       "ca": "Papua Nova Guinea",
       "es": "Papúa Nueva Guinea",
       "en": "Papua New Guinea",
+      "fr": "Papouasie-Nouvelle-Guinée",
       "ar": "بابوا غينيا الجديدة",
       "fa": "پاپوا گینهٔ نو"
     }
@@ -1775,6 +1952,7 @@
       "ca": "Paraguai",
       "es": "Paraguay",
       "en": "Paraguay",
+      "fr": "Paraguay",
       "ar": "باراغواي",
       "fa": "پاراگوئه"
     }
@@ -1785,6 +1963,7 @@
       "ca": "Perú",
       "es": "Perú",
       "en": "Peru",
+      "fr": "Pérou",
       "ar": "بيرو",
       "fa": "پرو"
     }
@@ -1795,6 +1974,7 @@
       "ca": "Polinèsia Francesa",
       "es": "Polinesia Francesa",
       "en": "French Polynesia",
+      "fr": "Polynésie française",
       "ar": "بولينيزيا الفرنسية",
       "fa": "پلی‌نزی فرانسه"
     }
@@ -1805,6 +1985,7 @@
       "ca": "Polònia",
       "es": "Polonia",
       "en": "Poland",
+      "fr": "Pologne",
       "ar": "بولندا",
       "fa": "لهستان"
     }
@@ -1815,6 +1996,7 @@
       "ca": "Portugal",
       "es": "Portugal",
       "en": "Portugal",
+      "fr": "Portugal",
       "ar": "البرتغال",
       "fa": "پرتغال"
     }
@@ -1825,6 +2007,7 @@
       "ca": "Puerto Rico",
       "es": "Puerto Rico",
       "en": "Puerto Rico",
+      "fr": "Porto Rico",
       "ar": "بورتوريكو",
       "fa": "پورتوریکو"
     }
@@ -1835,6 +2018,7 @@
       "ca": "Qatar",
       "es": "Catar",
       "en": "Qatar",
+      "fr": "Qatar",
       "ar": "قطر",
       "fa": "قطر"
     }
@@ -1845,6 +2029,7 @@
       "ca": "Regne Unit",
       "es": "Reino Unido",
       "en": "United Kingdom",
+      "fr": "Royaume-Uni",
       "ar": "المملكة المتحدة",
       "fa": "بریتانیا"
     }
@@ -1855,6 +2040,7 @@
       "ca": "República Centreafricana",
       "es": "República Centroafricana",
       "en": "Central African Republic",
+      "fr": "République centrafricaine",
       "ar": "جمهورية أفريقيا الوسطى",
       "fa": "جمهوری افریقای مرکزی"
     }
@@ -1865,6 +2051,7 @@
       "ca": "República Dominicana",
       "es": "República Dominicana",
       "en": "Dominican Republic",
+      "fr": "République dominicaine",
       "ar": "جمهورية الدومينيكان",
       "fa": "جمهوری دومینیکن"
     }
@@ -1875,6 +2062,7 @@
       "ca": "Romania",
       "es": "Rumanía",
       "en": "Romania",
+      "fr": "Roumanie",
       "ar": "رومانيا",
       "fa": "رومانی"
     }
@@ -1885,6 +2073,7 @@
       "ca": "Ruanda",
       "es": "Ruanda",
       "en": "Rwanda",
+      "fr": "Rwanda",
       "ar": "رواندا",
       "fa": "رواندا"
     }
@@ -1895,6 +2084,7 @@
       "ca": "Rússia",
       "es": "Rusia",
       "en": "Russia",
+      "fr": "Russie",
       "ar": "روسيا",
       "fa": "روسیه"
     }
@@ -1905,6 +2095,7 @@
       "ca": "Sàhara Occidental",
       "es": "Sáhara Occidental",
       "en": "Western Sahara",
+      "fr": "Sahara occidental",
       "ar": "الصحراء الغربية",
       "fa": "صحرای غربی"
     }
@@ -1915,6 +2106,7 @@
       "ca": "Saint Kitts i Nevis",
       "es": "San Cristóbal y Nieves",
       "en": "St. Kitts & Nevis",
+      "fr": "Saint-Christophe-et-Niévès",
       "ar": "سانت كيتس ونيفيس",
       "fa": "سنت کیتس و نویس"
     }
@@ -1925,6 +2117,7 @@
       "ca": "Saint Lucia",
       "es": "Santa Lucía",
       "en": "St. Lucia",
+      "fr": "Sainte-Lucie",
       "ar": "سانت لوسيا",
       "fa": "سنت لوسیا"
     }
@@ -1935,6 +2128,7 @@
       "ca": "Saint Martin",
       "es": "San Martín",
       "en": "St. Martin",
+      "fr": "Saint-Martin",
       "ar": "سان مارتن",
       "fa": "سنت مارتین"
     }
@@ -1945,6 +2139,7 @@
       "ca": "Saint Vincent i les Grenadines",
       "es": "San Vicente y las Granadinas",
       "en": "St. Vincent & Grenadines",
+      "fr": "Saint-Vincent-et-les Grenadines",
       "ar": "سانت فنسنت وجزر غرينادين",
       "fa": "سنت وینسنت و گرنادین"
     }
@@ -1955,6 +2150,7 @@
       "ca": "Saint-Barthélemy",
       "es": "San Bartolomé",
       "en": "St. Barthélemy",
+      "fr": "Saint-Barthélemy",
       "ar": "سان بارتليمي",
       "fa": "سن بارتلمی"
     }
@@ -1965,6 +2161,7 @@
       "ca": "Saint-Pierre-et-Miquelon",
       "es": "San Pedro y Miquelón",
       "en": "St. Pierre & Miquelon",
+      "fr": "Saint-Pierre-et-Miquelon",
       "ar": "سان بيير ومكويلون",
       "fa": "سن پیر و میکلن"
     }
@@ -1975,6 +2172,7 @@
       "ca": "Samoa",
       "es": "Samoa",
       "en": "Samoa",
+      "fr": "Samoa",
       "ar": "ساموا",
       "fa": "ساموآ"
     }
@@ -1985,6 +2183,7 @@
       "ca": "Samoa Americana",
       "es": "Samoa Americana",
       "en": "American Samoa",
+      "fr": "Samoa américaines",
       "ar": "ساموا الأمريكية",
       "fa": "ساموآی امریکا"
     }
@@ -1995,6 +2194,7 @@
       "ca": "San Marino",
       "es": "San Marino",
       "en": "San Marino",
+      "fr": "Saint-Marin",
       "ar": "سان مارينو",
       "fa": "سان‌مارینو"
     }
@@ -2005,6 +2205,7 @@
       "ca": "Santa Helena",
       "es": "Santa Elena",
       "en": "St. Helena",
+      "fr": "Sainte-Hélène",
       "ar": "سانت هيلينا",
       "fa": "سنت هلن"
     }
@@ -2015,6 +2216,7 @@
       "ca": "São Tomé i Príncipe",
       "es": "Santo Tomé y Príncipe",
       "en": "São Tomé & Príncipe",
+      "fr": "Sao Tomé-et-Principe",
       "ar": "ساو تومي وبرينسيبي",
       "fa": "سائوتومه و پرینسیپ"
     }
@@ -2025,6 +2227,7 @@
       "ca": "Senegal",
       "es": "Senegal",
       "en": "Senegal",
+      "fr": "Sénégal",
       "ar": "السنغال",
       "fa": "سنگال"
     }
@@ -2035,6 +2238,7 @@
       "ca": "Sèrbia",
       "es": "Serbia",
       "en": "Serbia",
+      "fr": "Serbie",
       "ar": "صربيا",
       "fa": "صربستان"
     }
@@ -2045,6 +2249,7 @@
       "ca": "Seychelles",
       "es": "Seychelles",
       "en": "Seychelles",
+      "fr": "Seychelles",
       "ar": "سيشل",
       "fa": "سیشل"
     }
@@ -2055,6 +2260,7 @@
       "ca": "Sierra Leone",
       "es": "Sierra Leona",
       "en": "Sierra Leone",
+      "fr": "Sierra Leone",
       "ar": "سيراليون",
       "fa": "سیرالئون"
     }
@@ -2065,6 +2271,7 @@
       "ca": "Singapur",
       "es": "Singapur",
       "en": "Singapore",
+      "fr": "Singapour",
       "ar": "سنغافورة",
       "fa": "سنگاپور"
     }
@@ -2075,6 +2282,7 @@
       "ca": "Sint Maarten",
       "es": "Sint Maarten",
       "en": "Sint Maarten",
+      "fr": "Saint-Martin (partie néerlandaise)",
       "ar": "سانت مارتن",
       "fa": "سنت مارتن"
     }
@@ -2085,6 +2293,7 @@
       "ca": "Síria",
       "es": "Siria",
       "en": "Syria",
+      "fr": "Syrie",
       "ar": "سوريا",
       "fa": "سوریه"
     }
@@ -2095,6 +2304,7 @@
       "ca": "Somàlia",
       "es": "Somalia",
       "en": "Somalia",
+      "fr": "Somalie",
       "ar": "الصومال",
       "fa": "سومالی"
     }
@@ -2105,6 +2315,7 @@
       "ca": "Sri Lanka",
       "es": "Sri Lanka",
       "en": "Sri Lanka",
+      "fr": "Sri Lanka",
       "ar": "سريلانكا",
       "fa": "سری‌لانکا"
     }
@@ -2115,6 +2326,7 @@
       "ca": "Sud-àfrica",
       "es": "Sudáfrica",
       "en": "South Africa",
+      "fr": "Afrique du Sud",
       "ar": "جنوب أفريقيا",
       "fa": "افریقای جنوبی"
     }
@@ -2125,6 +2337,7 @@
       "ca": "Sudan",
       "es": "Sudán",
       "en": "Sudan",
+      "fr": "Soudan",
       "ar": "السودان",
       "fa": "سودان"
     }
@@ -2135,6 +2348,7 @@
       "ca": "Sudan del Sud",
       "es": "Sudán del Sur",
       "en": "South Sudan",
+      "fr": "Soudan du Sud",
       "ar": "جنوب السودان",
       "fa": "سودان جنوبی"
     }
@@ -2145,6 +2359,7 @@
       "ca": "Suècia",
       "es": "Suecia",
       "en": "Sweden",
+      "fr": "Suède",
       "ar": "السويد",
       "fa": "سوئد"
     }
@@ -2155,6 +2370,7 @@
       "ca": "Suïssa",
       "es": "Suiza",
       "en": "Switzerland",
+      "fr": "Suisse",
       "ar": "سويسرا",
       "fa": "سوئیس"
     }
@@ -2165,6 +2381,7 @@
       "ca": "Surinam",
       "es": "Surinam",
       "en": "Suriname",
+      "fr": "Suriname",
       "ar": "سورينام",
       "fa": "سورینام"
     }
@@ -2175,6 +2392,7 @@
       "ca": "Svalbard i Jan Mayen",
       "es": "Svalbard y Jan Mayen",
       "en": "Svalbard & Jan Mayen",
+      "fr": "Svalbard et Jan Mayen",
       "ar": "سفالبارد وجان ماين",
       "fa": "سوالبارد و یان ماین"
     }
@@ -2185,6 +2403,7 @@
       "ca": "Tadjikistan",
       "es": "Tayikistán",
       "en": "Tajikistan",
+      "fr": "Tadjikistan",
       "ar": "طاجيكستان",
       "fa": "تاجیکستان"
     }
@@ -2195,6 +2414,7 @@
       "ca": "Tailàndia",
       "es": "Tailandia",
       "en": "Thailand",
+      "fr": "Thaïlande",
       "ar": "تايلاند",
       "fa": "تایلند"
     }
@@ -2205,6 +2425,7 @@
       "ca": "Taiwan",
       "es": "Taiwán",
       "en": "Taiwan",
+      "fr": "Taïwan",
       "ar": "تايوان",
       "fa": "تایوان"
     }
@@ -2215,6 +2436,7 @@
       "ca": "Tanzània",
       "es": "Tanzania",
       "en": "Tanzania",
+      "fr": "Tanzanie",
       "ar": "تنزانيا",
       "fa": "تانزانیا"
     }
@@ -2225,6 +2447,7 @@
       "ca": "Terres Australs Antàrtiques Franceses",
       "es": "Territorios Australes Franceses",
       "en": "French Southern Territories",
+      "fr": "Terres australes françaises",
       "ar": "الأقاليم الجنوبية الفرنسية",
       "fa": "سرزمین‌های جنوبی فرانسه"
     }
@@ -2235,6 +2458,7 @@
       "ca": "Territori Britànic de l’Oceà Índic",
       "es": "Territorio Británico del Océano Índico",
       "en": "British Indian Ocean Territory",
+      "fr": "Territoire britannique de l’océan Indien",
       "ar": "الإقليم البريطاني في المحيط الهندي",
       "fa": "قلمرو بریتانیا در اقیانوس هند"
     }
@@ -2245,6 +2469,7 @@
       "ca": "Territoris palestins",
       "es": "Territorios Palestinos",
       "en": "Palestinian Territories",
+      "fr": "Territoires palestiniens",
       "ar": "الأراضي الفلسطينية",
       "fa": "سرزمین‌های فلسطینی"
     }
@@ -2255,6 +2480,7 @@
       "ca": "Timor-Leste",
       "es": "Timor-Leste",
       "en": "Timor-Leste",
+      "fr": "Timor oriental",
       "ar": "تيمور - ليشتي",
       "fa": "تیمور-لسته"
     }
@@ -2265,6 +2491,7 @@
       "ca": "Togo",
       "es": "Togo",
       "en": "Togo",
+      "fr": "Togo",
       "ar": "توغو",
       "fa": "توگو"
     }
@@ -2275,6 +2502,7 @@
       "ca": "Tokelau",
       "es": "Tokelau",
       "en": "Tokelau",
+      "fr": "Tokelau",
       "ar": "توكيلاو",
       "fa": "توکلائو"
     }
@@ -2285,6 +2513,7 @@
       "ca": "Tonga",
       "es": "Tonga",
       "en": "Tonga",
+      "fr": "Tonga",
       "ar": "تونغا",
       "fa": "تونگا"
     }
@@ -2295,6 +2524,7 @@
       "ca": "Trinidad i Tobago",
       "es": "Trinidad y Tobago",
       "en": "Trinidad & Tobago",
+      "fr": "Trinité-et-Tobago",
       "ar": "ترينيداد وتوباغو",
       "fa": "ترینیداد و توباگو"
     }
@@ -2305,6 +2535,7 @@
       "ca": "Tunísia",
       "es": "Túnez",
       "en": "Tunisia",
+      "fr": "Tunisie",
       "ar": "تونس",
       "fa": "تونس"
     }
@@ -2315,6 +2546,7 @@
       "ca": "Turkmenistan",
       "es": "Turkmenistán",
       "en": "Turkmenistan",
+      "fr": "Turkménistan",
       "ar": "تركمانستان",
       "fa": "ترکمنستان"
     }
@@ -2325,6 +2557,7 @@
       "ca": "Turquia",
       "es": "Turquía",
       "en": "Türkiye",
+      "fr": "Turquie",
       "ar": "تركيا",
       "fa": "ترکیه"
     }
@@ -2335,6 +2568,7 @@
       "ca": "Tuvalu",
       "es": "Tuvalu",
       "en": "Tuvalu",
+      "fr": "Tuvalu",
       "ar": "توفالو",
       "fa": "تووالو"
     }
@@ -2345,6 +2579,7 @@
       "ca": "Txad",
       "es": "Chad",
       "en": "Chad",
+      "fr": "Tchad",
       "ar": "تشاد",
       "fa": "چاد"
     }
@@ -2355,6 +2590,7 @@
       "ca": "Txèquia",
       "es": "Chequia",
       "en": "Czechia",
+      "fr": "Tchéquie",
       "ar": "التشيك",
       "fa": "چک"
     }
@@ -2365,6 +2601,7 @@
       "ca": "Ucraïna",
       "es": "Ucrania",
       "en": "Ukraine",
+      "fr": "Ukraine",
       "ar": "أوكرانيا",
       "fa": "اوکراین"
     }
@@ -2375,6 +2612,7 @@
       "ca": "Uganda",
       "es": "Uganda",
       "en": "Uganda",
+      "fr": "Ouganda",
       "ar": "أوغندا",
       "fa": "اوگاندا"
     }
@@ -2385,6 +2623,7 @@
       "ca": "Uruguai",
       "es": "Uruguay",
       "en": "Uruguay",
+      "fr": "Uruguay",
       "ar": "أورغواي",
       "fa": "اروگوئه"
     }
@@ -2395,6 +2634,7 @@
       "ca": "Uzbekistan",
       "es": "Uzbekistán",
       "en": "Uzbekistan",
+      "fr": "Ouzbékistan",
       "ar": "أوزبكستان",
       "fa": "ازبکستان"
     }
@@ -2405,6 +2645,7 @@
       "ca": "Vanuatu",
       "es": "Vanuatu",
       "en": "Vanuatu",
+      "fr": "Vanuatu",
       "ar": "فانواتو",
       "fa": "وانواتو"
     }
@@ -2415,6 +2656,7 @@
       "ca": "Veneçuela",
       "es": "Venezuela",
       "en": "Venezuela",
+      "fr": "Venezuela",
       "ar": "فنزويلا",
       "fa": "ونزوئلا"
     }
@@ -2425,6 +2667,7 @@
       "ca": "Vietnam",
       "es": "Vietnam",
       "en": "Vietnam",
+      "fr": "Viêt Nam",
       "ar": "فيتنام",
       "fa": "ویتنام"
     }
@@ -2435,6 +2678,7 @@
       "ca": "Wallis i Futuna",
       "es": "Wallis y Futuna",
       "en": "Wallis & Futuna",
+      "fr": "Wallis-et-Futuna",
       "ar": "جزر والس وفوتونا",
       "fa": "والیس و فوتونا"
     }
@@ -2445,6 +2689,7 @@
       "ca": "Xile",
       "es": "Chile",
       "en": "Chile",
+      "fr": "Chili",
       "ar": "تشيلي",
       "fa": "شیلی"
     }
@@ -2455,6 +2700,7 @@
       "ca": "Xina",
       "es": "China",
       "en": "China",
+      "fr": "Chine",
       "ar": "الصين",
       "fa": "چین"
     }
@@ -2465,6 +2711,7 @@
       "ca": "Xipre",
       "es": "Chipre",
       "en": "Cyprus",
+      "fr": "Chypre",
       "ar": "قبرص",
       "fa": "قبرس"
     }
@@ -2475,6 +2722,7 @@
       "ca": "Zàmbia",
       "es": "Zambia",
       "en": "Zambia",
+      "fr": "Zambie",
       "ar": "زامبيا",
       "fa": "زامبیا"
     }
@@ -2485,6 +2733,7 @@
       "ca": "Zimbàbue",
       "es": "Zimbabue",
       "en": "Zimbabwe",
+      "fr": "Zimbabwe",
       "ar": "زيمبابوي",
       "fa": "زیمبابوه"
     }

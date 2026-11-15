@@ -54,11 +54,12 @@ const languageTextsSchema = z.object({
   ca: z.string().optional(),
   es: z.string().optional(),
   en: z.string().optional(),
+  fr: z.string().optional(),
   ar: z.string().optional(),
   fa: z.string().optional(),
 });
 
-/** Text in any of the five languages; at least one is given. */
+/** Text in any of the supported languages; at least one is given. */
 export const authorizationTextSchema = languageTextsSchema.refine((text) =>
   Object.values(text).some((value) => (value ?? '').trim() !== ''),
 );
@@ -437,7 +438,9 @@ export interface MyConsent {
   readonly form: 'authorization' | 'onboarding' | null;
 }
 
-const localizedNameSchema = z.partialRecord(z.enum(['ca', 'es', 'en', 'ar', 'fa']), z.string());
+// An object over the languages, so a language this build does not know yet is
+// dropped instead of failing the whole list (RAPP-781).
+const localizedNameSchema = languageTextsSchema;
 
 /** Her consents as they stand; a consent never given is absent. */
 export async function fetchMyConsents(

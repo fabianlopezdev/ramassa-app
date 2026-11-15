@@ -12,6 +12,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
+import { languageCodeSchema, type LanguageCode } from '../schemas/language';
 import type { Database } from '../types/database';
 
 type Client = SupabaseClient<Database>;
@@ -46,7 +47,7 @@ export const RETURN_CONDITIONS = ['new', 'good', 'worn', 'unusable'] as const;
 export type ReturnCondition = (typeof RETURN_CONDITIONS)[number];
 
 /** The languages a statement can be shown in: the player-side languages. */
-export const STATEMENT_LANGUAGES = ['ca', 'es', 'en', 'ar', 'fa'] as const;
+export const STATEMENT_LANGUAGES = languageCodeSchema.options;
 export type StatementLanguage = (typeof STATEMENT_LANGUAGES)[number];
 
 export type HandoverSignature =
@@ -78,7 +79,7 @@ export interface HandoverItemType {
   /** What one donated item is worth, set in the item editor; pre-fills an arrival. */
   readonly default_value_cents: number | null;
   /** A custom item's name by language (RAPP-253); built-ins use the app's translations. */
-  readonly name: Readonly<Partial<Record<'ca' | 'es' | 'en' | 'ar' | 'fa', string>>> | null;
+  readonly name: Readonly<Partial<Record<LanguageCode, string>>> | null;
   readonly is_builtin: boolean;
   readonly is_active: boolean;
   readonly code_prefix: string | null;

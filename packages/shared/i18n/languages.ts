@@ -1,5 +1,6 @@
 /**
- * The five grant-mandated languages (ADR-006). Catalan is both the default and
+ * The player languages: the five grant-mandated ones (ADR-006) and French
+ * (RAPP-781). Catalan is both the default and
  * the fallback: the Generalitat grant requires it, and every key is guaranteed
  * to exist in `locales/ca/` first. The list itself is owned by
  * `languageCodeSchema` in `schemas/` (the single validation source); this
@@ -20,8 +21,9 @@ export type LayoutDirection = 'ltr' | 'rtl';
 
 /**
  * The languages of the staff side (RAPP-238): the web admin, the team screens
- * and the entity screens. Player screens keep all five. Content stays
- * five-language everywhere; this is the language of the screens themselves.
+ * and the entity screens. Player screens offer every supported language, and
+ * so does content; this is the language of the screens themselves. French
+ * staff see Catalan (RAPP-781).
  */
 export const STAFF_LANGUAGES: readonly SupportedLanguage[] = ['ca', 'es', 'en'];
 
@@ -113,6 +115,7 @@ export const LANGUAGE_NATIVE_NAMES: Record<SupportedLanguage, string> = {
   ca: 'Català',
   es: 'Español',
   en: 'English',
+  fr: 'Français',
   ar: 'العربية',
   fa: 'فارسی',
 };

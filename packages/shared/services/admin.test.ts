@@ -17,6 +17,7 @@ const completeText = {
   ca: 'Servei de prova',
   es: 'Servicio de prueba',
   en: 'Test service',
+  fr: 'Test service',
   ar: 'خدمة تجريبية',
   fa: 'خدمات آزمایشی',
 };

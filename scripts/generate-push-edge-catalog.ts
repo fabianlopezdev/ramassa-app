@@ -3,8 +3,9 @@ import ca from '../packages/shared/i18n/locales/ca/push.json';
 import en from '../packages/shared/i18n/locales/en/push.json';
 import es from '../packages/shared/i18n/locales/es/push.json';
 import fa from '../packages/shared/i18n/locales/fa/push.json';
+import fr from '../packages/shared/i18n/locales/fr/push.json';
 
-const catalogs = { ca, es, en, ar, fa } as const;
+const catalogs = { ca, es, en, fr, ar, fa } as const;
 
 export function renderPushEdgeCatalog(): string {
   const fallbackBodies = Object.fromEntries(

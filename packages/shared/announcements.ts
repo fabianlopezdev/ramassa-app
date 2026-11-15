@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
-import { languageCodeSchema, type LanguageCode } from './schemas/language';
+import { draftTranslationsSchema, languageCodeSchema, type LanguageCode } from './schemas/language';
 import {
   isTranslationReviewPublishable,
   MAX_TRANSLATION_TEXT_LENGTH,
@@ -24,13 +24,7 @@ export type AnnouncementStatusFilter = (typeof ANNOUNCEMENT_STATUS_FILTERS)[numb
 export type PlayerAnnouncementCategoryFilter = 'all' | AnnouncementCategory;
 
 const optionalLocalizedTextSchema = (maximum: number) =>
-  z.object({
-    ca: z.string().trim().min(1).max(maximum),
-    es: z.string().trim().min(1).max(maximum).optional(),
-    en: z.string().trim().min(1).max(maximum).optional(),
-    ar: z.string().trim().min(1).max(maximum).optional(),
-    fa: z.string().trim().min(1).max(maximum).optional(),
-  });
+  draftTranslationsSchema(z.string().trim().min(1).max(maximum));
 
 export const announcementTitleSchema = optionalLocalizedTextSchema(MAX_ANNOUNCEMENT_TITLE_LENGTH);
 export const announcementBodySchema = optionalLocalizedTextSchema(MAX_TRANSLATION_TEXT_LENGTH);

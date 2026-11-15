@@ -3,6 +3,11 @@ import { z } from 'zod';
 import { AppError } from './errors';
 import { isSupportedLanguage, type SupportedLanguage } from './i18n';
 import { withShownNames } from './participants/shown-names';
+import {
+  languageCodeSchema,
+  publishedTranslationsSchema,
+  storedTranslationsSchema,
+} from './schemas/language';
 import type { Database, Json } from './types/database';
 
 export const NOTIFICATION_AUDIENCE_KINDS = [
@@ -22,19 +27,26 @@ export type NotificationAudienceKind = (typeof NOTIFICATION_AUDIENCE_KINDS)[numb
 export type NotificationTemplateCategory = (typeof NOTIFICATION_TEMPLATE_CATEGORIES)[number];
 
 const requiredCopy = z.string().trim().min(1).max(1000);
-export const notificationContentSchema = z.object({
-  ca: requiredCopy,
-  es: requiredCopy,
-  en: requiredCopy,
-  ar: requiredCopy,
-  fa: requiredCopy,
-});
+/** Copy as staff send or save it: every supported language, French too. */
+export const notificationContentSchema = publishedTranslationsSchema(requiredCopy);
+/** Copy as stored: a template saved before French has none (RAPP-781). */
+const storedNotificationContentSchema = storedTranslationsSchema(requiredCopy);
+const titleLengthRule = (copy: Readonly<Record<string, string | undefined>>) =>
+  Object.values(copy).every((value) => value === undefined || value.length <= 120);
+const titleLengthMessage = 'notification titles cannot exceed 120 characters';
 export const notificationTitleSchema = notificationContentSchema.refine(
-  (copy) => Object.values(copy).every((value) => value.length <= 120),
-  'notification titles cannot exceed 120 characters',
+  titleLengthRule,
+  titleLengthMessage,
+);
+const storedNotificationTitleSchema = storedNotificationContentSchema.refine(
+  titleLengthRule,
+  titleLengthMessage,
 );
 
-export type NotificationContent = z.infer<typeof notificationContentSchema>;
+/** Copy as read back: French may be missing on copy saved before it. */
+export type NotificationContent = z.infer<typeof storedNotificationContentSchema>;
+/** Copy as sent: every supported language. */
+export type PublishedNotificationContent = z.infer<typeof notificationContentSchema>;
 
 export const notificationAudienceSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('all') }),
@@ -60,8 +72,8 @@ const templateRowSchema = z.object({
   id: z.uuid(),
   name: z.string(),
   category: z.enum(NOTIFICATION_TEMPLATE_CATEGORIES),
-  title: notificationTitleSchema,
-  body: notificationContentSchema,
+  title: storedNotificationTitleSchema,
+  body: storedNotificationContentSchema,
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -78,7 +90,7 @@ const groupMemberRowSchema = z.object({
 const audienceMemberRowSchema = z.object({
   participant_id: z.uuid(),
   full_name: z.string(),
-  language: z.enum(['ca', 'es', 'en', 'ar', 'fa']),
+  language: languageCodeSchema,
   device_count: z.coerce.number().int().positive(),
 });
 const historyRowSchema = z.object({
@@ -180,7 +192,7 @@ export function notificationAudienceArguments(audience: NotificationAudience): {
 }
 
 export function resolveNotificationCopy(copy: NotificationContent, language: string): string {
-  return copy[isSupportedLanguage(language) ? language : 'ca'];
+  return (isSupportedLanguage(language) ? copy[language] : undefined) ?? copy.ca;
 }
 
 function localizedLabel(value: Json): string {

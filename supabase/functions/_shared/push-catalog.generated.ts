@@ -42,6 +42,19 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "mentoringUpdateBody": "Open Ramassà to see the date and time.",
     "customFormFallbackBody": "Tap to answer it."
   },
+  "fr": {
+    "announcementFallbackBody": "Appuie pour lire l’annonce.",
+    "eventFallbackBody": "Appuie pour voir l’activité.",
+    "messageTitle": "Nouveau message de l’équipe",
+    "messageBody": "Ouvre Ramassà pour le lire.",
+    "forumFlagTitle": "Nouveau signalement sur le forum",
+    "forumFlagBody": "Ouvre la file de modération pour le vérifier.",
+    "referralUpdateTitle": "Nouvelle mise à jour d’une orientation",
+    "referralUpdateBody": "Ouvre la fiche de la participante pour la vérifier.",
+    "mentoringUpdateTitle": "Mise à jour de ton rendez-vous privé",
+    "mentoringUpdateBody": "Ouvre Ramassà pour voir le jour et l’heure.",
+    "customFormFallbackBody": "Appuie pour y répondre."
+  },
   "ar": {
     "announcementFallbackBody": "اضغطي لقراءة الإشعار.",
     "eventFallbackBody": "اضغطي لعرض النشاط.",

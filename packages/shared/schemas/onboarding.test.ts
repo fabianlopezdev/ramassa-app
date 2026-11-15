@@ -81,9 +81,9 @@ describe('identityStepSchema', () => {
     ).toBe(false);
   });
 
-  test('rejects a language outside the five', () => {
+  test('rejects a language the app does not offer', () => {
     expect(
-      identityStepSchema.safeParse({ ...validIdentity, preferredLanguage: 'fr' }).success,
+      identityStepSchema.safeParse({ ...validIdentity, preferredLanguage: 'de' }).success,
     ).toBe(false);
   });
 });

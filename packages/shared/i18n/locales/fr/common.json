@@ -1,0 +1,38 @@
+{
+  "appName": "Ramassà",
+  "back": "Retour",
+  "close": "Ferme",
+  "skipToMainContent": "Va au contenu principal",
+  "fundingAcknowledgment": "Projet financé par la Generalitat de Catalunya, Departament de Drets Socials i Inclusió.",
+  "notFound": {
+    "title": "Page introuvable",
+    "description": "Vérifie l’adresse ou reviens à l’accueil.",
+    "returnHome": "Reviens à l’accueil"
+  },
+  "languageName": {
+    "ca": "Català",
+    "es": "Español",
+    "en": "English",
+    "fr": "Français",
+    "ar": "العربية",
+    "fa": "فارسی"
+  },
+  "table": {
+    "sortBy": "Trie par {{column}}",
+    "previousPage": "Précédente",
+    "nextPage": "Suivante",
+    "pageOf": "Page {{page}} sur {{pages}}"
+  },
+  "loading": "Chargement...",
+  "interfaceLanguageLabel": "Langue",
+  "previewAsPlayer": "Voir en tant que joueuse",
+  "previewBarTitle": "Vue joueuse. Aucun changement n’est enregistré.",
+  "previewExit": "Quitte la vue",
+  "previewLanguage": "Langue de la vue",
+  "previewStartFailed": "Nous n’avons pas pu ouvrir la vue joueuse.",
+  "previewNotPublished": "Les joueuses la verront quand elle sera publiée.",
+  "previewDraftTitle": "Brouillon tel que les joueuses le verront. Personne ne le voit encore.",
+  "previewDraftMissing": "Il manque le texte dans cette langue. Les joueuses le verront dans une autre langue.",
+  "previewOpening": "Ouverture de la vue joueuse.",
+  "characterCount": "{{count}} / {{limit}} caractères"
+}

@@ -13,7 +13,7 @@ import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
-import type { NotificationContent } from '@ramassa/shared/notifications';
+import type { PublishedNotificationContent } from '@ramassa/shared/notifications';
 import {
   filterRegistrations,
   type RegistrationFilter,
@@ -27,8 +27,8 @@ export interface SeasonRegistrationsProps {
   readonly canRemind: boolean;
   readonly onRemind: (input: {
     readonly participantIds: readonly string[];
-    readonly title: NotificationContent;
-    readonly body: NotificationContent;
+    readonly title: PublishedNotificationContent;
+    readonly body: PublishedNotificationContent;
   }) => Promise<number>;
 }
 
@@ -57,13 +57,13 @@ export function SeasonRegistrations({
 
   const pending = registrations.filter((row) => !row.registered);
   const shown = filterRegistrations(registrations, filter);
-  const copy = (key: string, values: Record<string, string> = {}): NotificationContent =>
+  const copy = (key: string, values: Record<string, string> = {}): PublishedNotificationContent =>
     Object.fromEntries(
       SUPPORTED_LANGUAGES.map((language) => [
         language,
         i18n.getFixedT(language, 'participants')(key, values),
       ]),
-    ) as NotificationContent;
+    ) as PublishedNotificationContent;
 
   async function remind() {
     if (season === null) return;

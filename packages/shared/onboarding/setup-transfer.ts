@@ -31,7 +31,7 @@ export const ONBOARDING_SETUP_SCHEMA_VERSION = 3;
 /** The versions this build reads: the database reads a version 1 or 2 file as version 3. */
 export const ONBOARDING_SETUP_READABLE_VERSIONS: readonly number[] = [1, 2, 3];
 
-/** Text in any of the five languages (help lines, intros, overrides). */
+/** Text in any of the supported languages (help lines, intros, overrides). */
 const anyLanguageText = z.partialRecord(languageCodeSchema, z.string());
 /** Text whose Catalan is required (titles, labels). */
 const catalanText = anyLanguageText.refine((text) => (text.ca ?? '').trim().length > 0, {

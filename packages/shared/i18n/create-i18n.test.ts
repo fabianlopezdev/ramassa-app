@@ -9,6 +9,7 @@ describe('translation resolution', () => {
       ca: 'Continua',
       es: 'Continuar',
       en: 'Continue',
+      fr: 'Continue',
       ar: 'متابعة',
       fa: 'ادامه',
     } as const;

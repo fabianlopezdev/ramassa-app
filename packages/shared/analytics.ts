@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
-import { eventCategoryNameSchema } from './events';
+import { storedEventCategoryNameSchema } from './events';
 import type { Database } from './types/database';
 
 type Client = SupabaseClient<Database>;
@@ -49,7 +49,7 @@ const trendPointSchema = z.object({
 
 const categoryImpactSchema = z.object({
   category_id: z.uuid(),
-  category_name: eventCategoryNameSchema,
+  category_name: storedEventCategoryNameSchema,
   category_color: z.string().min(1),
   participant_count: nonNegativeInteger,
   attendance_present_count: nonNegativeInteger,
@@ -119,7 +119,7 @@ const impactReportWireSchema = z.object({
     collaborating_entity_id: z.uuid().optional(),
   }),
   available_filters: z.object({
-    categories: z.array(z.object({ id: z.uuid(), name: eventCategoryNameSchema })),
+    categories: z.array(z.object({ id: z.uuid(), name: storedEventCategoryNameSchema })),
     entities: z.array(z.object({ id: z.uuid(), name: z.string().min(1) })),
   }),
   summary: z.discriminatedUnion('suppressed', [visibleSummarySchema, suppressedSummarySchema]),

@@ -2,7 +2,7 @@
  * The wording of the built-in wizard screens that staff edit (RAPP-612).
  *
  * Each built-in screen has a title, an intro, an optional help line and its
- * button labels, bundled in the app's five languages. Staff write their own
+ * button labels, bundled in every app language. Staff write their own
  * per language in the admin; a language they never wrote shows the bundled
  * text in her language (RAPP-710). The intro and the help line are optional:
  * staff may clear them, and that language then shows none. The title and the

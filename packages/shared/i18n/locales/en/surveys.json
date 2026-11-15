@@ -25,7 +25,7 @@
   "saving": "Saving...",
   "saved": "Survey saved and distributed to its audience.",
   "error": "We could not save the survey. Check the fields and try again.",
-  "translationRequired": "Review and approve all five languages before publishing.",
+  "translationRequired": "Review and approve every language before publishing.",
   "results": "Results",
   "responsesCount": "{{count}} responses",
   "completedCount": "{{count}} completed",

@@ -1,6 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from '../errors';
+import {
+  draftTranslationsSchema,
+  publishedTranslationsSchema,
+  storedTranslationsSchema,
+} from '../schemas/language';
 import type { Database, Json } from '../types/database';
 import {
   createServiceCategoryContract,
@@ -12,71 +17,85 @@ import {
 import { SERVICE_AVAILABILITIES, SERVICE_COST_TYPES } from './filters';
 import { SERVICE_SUBMISSION_STATUSES } from './state-machine';
 
-const completeLocalizedTextSchema = z.object({
-  ca: z.string().trim().min(1),
-  es: z.string().trim().min(1),
-  en: z.string().trim().min(1),
-  ar: z.string().trim().min(1),
-  fa: z.string().trim().min(1),
-});
+const completeLocalizedTextSchema = publishedTranslationsSchema(z.string().trim().min(1));
 
-const draftLocalizedTextSchema = z.object({
-  ca: z.string().trim().min(1),
-  es: z.string().trim().min(1).optional(),
-  en: z.string().trim().min(1).optional(),
-  ar: z.string().trim().min(1).optional(),
-  fa: z.string().trim().min(1).optional(),
-});
+const draftLocalizedTextSchema = draftTranslationsSchema(z.string().trim().min(1));
 
+/**
+ * A label as stored: a category or field saved before French has none
+ * (RAPP-781), so French is optional when it is read.
+ */
+const storedLabelSchema = storedTranslationsSchema(z.string().trim().min(1));
+
+/** A label as staff save it: every supported language, French too. */
 const localizedLabelSchema = completeLocalizedTextSchema;
 
-export const serviceMetadataFieldDefinitionSchema = z
-  .object({
-    key: z.string().regex(/^[a-z][a-z0-9_]*$/),
-    label: localizedLabelSchema,
-    type: z.enum(SERVICE_METADATA_FIELD_TYPES),
-    required: z.boolean(),
-    filterable: z.boolean(),
-    options: z.array(z.string().trim().min(1)).min(1).optional(),
-    minimum: z.number().finite().optional(),
-  })
-  .superRefine((field, context) => {
-    if ((field.type === 'select' || field.type === 'string-array') && field.options === undefined) {
-      context.addIssue({
-        code: 'custom',
-        path: ['options'],
-        message: 'Select fields require options',
-      });
-    }
-    if (field.options !== undefined && new Set(field.options).size !== field.options.length) {
-      context.addIssue({ code: 'custom', path: ['options'], message: 'Options must be unique' });
-    }
-    if (field.minimum !== undefined && field.type !== 'number') {
-      context.addIssue({
-        code: 'custom',
-        path: ['minimum'],
-        message: 'Only number fields may define a minimum',
-      });
-    }
-  });
+const metadataFieldDefinitionSchema = <Label extends z.ZodType<ServiceLocalizedLabel>>(
+  label: Label,
+) =>
+  z
+    .object({
+      key: z.string().regex(/^[a-z][a-z0-9_]*$/),
+      label,
+      type: z.enum(SERVICE_METADATA_FIELD_TYPES),
+      required: z.boolean(),
+      filterable: z.boolean(),
+      options: z.array(z.string().trim().min(1)).min(1).optional(),
+      minimum: z.number().finite().optional(),
+    })
+    .superRefine((field, context) => {
+      if (
+        (field.type === 'select' || field.type === 'string-array') &&
+        field.options === undefined
+      ) {
+        context.addIssue({
+          code: 'custom',
+          path: ['options'],
+          message: 'Select fields require options',
+        });
+      }
+      if (field.options !== undefined && new Set(field.options).size !== field.options.length) {
+        context.addIssue({ code: 'custom', path: ['options'], message: 'Options must be unique' });
+      }
+      if (field.minimum !== undefined && field.type !== 'number') {
+        context.addIssue({
+          code: 'custom',
+          path: ['minimum'],
+          message: 'Only number fields may define a minimum',
+        });
+      }
+    });
 
-export const serviceMetadataSchemaDefinitionSchema = z
-  .object({ fields: z.array(serviceMetadataFieldDefinitionSchema).max(50) })
-  .superRefine((schema, context) => {
-    const keys = schema.fields.map((field) => field.key);
-    if (new Set(keys).size !== keys.length) {
-      context.addIssue({ code: 'custom', path: ['fields'], message: 'Field keys must be unique' });
-    }
-  });
+const metadataSchemaDefinitionSchema = <Label extends z.ZodType<ServiceLocalizedLabel>>(
+  label: Label,
+) =>
+  z
+    .object({ fields: z.array(metadataFieldDefinitionSchema(label)).max(50) })
+    .superRefine((schema, context) => {
+      const keys = schema.fields.map((field) => field.key);
+      if (new Set(keys).size !== keys.length) {
+        context.addIssue({
+          code: 'custom',
+          path: ['fields'],
+          message: 'Field keys must be unique',
+        });
+      }
+    });
+
+export const serviceMetadataFieldDefinitionSchema =
+  metadataFieldDefinitionSchema(localizedLabelSchema);
+export const serviceMetadataSchemaDefinitionSchema =
+  metadataSchemaDefinitionSchema(localizedLabelSchema);
+const storedMetadataSchemaDefinitionSchema = metadataSchemaDefinitionSchema(storedLabelSchema);
 
 const serviceCategoryDatabaseRowSchema = z.object({
   id: z.uuid(),
-  name: localizedLabelSchema,
+  name: storedLabelSchema,
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   icon: z.string().trim().min(1),
   color: z.string().trim().min(1),
   sort_order: z.number().int().nonnegative(),
-  metadata_schema: serviceMetadataSchemaDefinitionSchema,
+  metadata_schema: storedMetadataSchemaDefinitionSchema,
   created_at: z.iso.datetime({ offset: true }),
   updated_at: z.iso.datetime({ offset: true }),
 });
@@ -88,7 +107,7 @@ export interface AdminServiceCategory {
   readonly icon: string;
   readonly color: string;
   readonly sortOrder: number;
-  readonly metadataSchema: z.infer<typeof serviceMetadataSchemaDefinitionSchema>;
+  readonly metadataSchema: z.infer<typeof storedMetadataSchemaDefinitionSchema>;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly definition: ServiceCategoryDefinition;

@@ -236,7 +236,7 @@
   "fieldDone": "Hecho",
   "fieldNeedsWork": "Faltan datos o traducciones",
   "fieldLabelGenerate": "Generar las traducciones del nombre",
-  "categoryInvalidPhone": "Revisa la categoría: el nombre en cinco idiomas, una clave corta y cada campo completo.",
+  "categoryInvalidPhone": "Revisa la categoría: el nombre en todos los idiomas, una clave corta y cada campo completo.",
   "iconHouse": "Casa",
   "iconLanguages": "Idiomas",
   "iconBriefcaseBusiness": "Trabajo",

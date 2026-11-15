@@ -36,11 +36,12 @@ function databaseError(error: { readonly message: string; readonly code?: string
   return new AppError(databaseErrorCode(error.message, error.code), { message: error.message });
 }
 
-/** Localized text as stored: any of the five languages. */
+/** Localized text as stored: any of the supported languages. */
 export const anyLanguageTextSchema = z.object({
   ca: z.string().optional(),
   es: z.string().optional(),
   en: z.string().optional(),
+  fr: z.string().optional(),
   ar: z.string().optional(),
   fa: z.string().optional(),
 });
@@ -444,7 +445,7 @@ export function ramassaScreenIdOf(screenKey: string | null): string | null {
 }
 
 /**
- * The wording she sees for a placement, in the five languages: its override
+ * The wording she sees for a placement, in every supported language: its override
  * in each language that has one, else the field's own name and help in that
  * language (as the field's own text falls back, never to the override).
  */

@@ -107,6 +107,7 @@ const entityLocalizedTextSchema = z.object({
   ca: z.string().trim().min(1),
   es: z.string().trim().min(1).optional(),
   en: z.string().trim().min(1).optional(),
+  fr: z.string().trim().min(1).optional(),
   ar: z.string().trim().min(1).optional(),
   fa: z.string().trim().min(1).optional(),
 });

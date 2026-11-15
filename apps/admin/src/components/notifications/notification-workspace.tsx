@@ -28,17 +28,22 @@ import type {
   CreateTranslationReviewOptions,
   TranslationReview,
 } from '@ramassa/shared/translation';
+import { CATALAN_TRANSLATION_TARGETS } from '@ramassa/shared/translation/client';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 import { AudiencePicker } from './audience-picker';
 
-const TARGET_LANGUAGES = ['es', 'en', 'ar', 'fa'] as const;
+const TARGET_LANGUAGES = CATALAN_TRANSLATION_TARGETS;
 
 function reviewOptions(copy: NotificationTemplate['title']): CreateTranslationReviewOptions {
   return {
     sourceLanguage: 'ca',
     sourceText: copy.ca,
+    // A template saved before French has no French yet (RAPP-781).
     translations: Object.fromEntries(
-      TARGET_LANGUAGES.map((language) => [language, copy[language]]),
+      TARGET_LANGUAGES.flatMap((language) => {
+        const text = copy[language];
+        return text === undefined ? [] : [[language, text]];
+      }),
     ),
   };
 }

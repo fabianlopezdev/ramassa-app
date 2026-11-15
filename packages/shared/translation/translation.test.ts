@@ -13,22 +13,23 @@ import {
 const generatedTranslations = {
   es: 'Entrenamiento cancelado',
   en: 'Training cancelled',
+  fr: 'Entraînement annulé',
   ar: 'تم إلغاء التدريب',
   fa: 'تمرین لغو شد',
 } as const;
 
 describe('translation request validation', () => {
-  test('accepts one source and the four other supported languages', () => {
+  test('accepts one source and every other supported language', () => {
     expect(
       translationRequestSchema.parse({
         text: 'Entrenament cancel·lat',
         from: 'ca',
-        to: ['es', 'en', 'ar', 'fa'],
+        to: ['es', 'en', 'fr', 'ar', 'fa'],
       }),
     ).toEqual({
       text: 'Entrenament cancel·lat',
       from: 'ca',
-      to: ['es', 'en', 'ar', 'fa'],
+      to: ['es', 'en', 'fr', 'ar', 'fa'],
     });
   });
 
@@ -61,6 +62,7 @@ describe('translation review state machine', () => {
     });
 
     expect(review.suggestions.map((suggestion) => suggestion.status)).toEqual([
+      'draft',
       'draft',
       'draft',
       'draft',
@@ -103,7 +105,7 @@ describe('translation review state machine', () => {
       sourceText: 'Entrenament cancel·lat',
       translations: generatedTranslations,
     });
-    for (const language of ['es', 'en', 'ar', 'fa'] as const) {
+    for (const language of ['es', 'en', 'fr', 'ar', 'fa'] as const) {
       review = approveTranslation(review, language);
     }
 

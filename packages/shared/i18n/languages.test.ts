@@ -12,8 +12,8 @@ import {
 } from './languages';
 
 describe('language constants', () => {
-  test('supports exactly the five grant languages with Catalan as default', () => {
-    expect(SUPPORTED_LANGUAGES).toEqual(['ca', 'es', 'en', 'ar', 'fa']);
+  test('supports the five grant languages and French, with Catalan as default', () => {
+    expect(SUPPORTED_LANGUAGES).toEqual(['ca', 'es', 'en', 'fr', 'ar', 'fa']);
     expect(DEFAULT_LANGUAGE).toBe('ca');
   });
 
@@ -30,7 +30,7 @@ describe('isSupportedLanguage', () => {
   });
 
   test('rejects unsupported languages', () => {
-    expect(isSupportedLanguage('fr')).toBe(false);
+    expect(isSupportedLanguage('de')).toBe(false);
     expect(isSupportedLanguage('')).toBe(false);
   });
 });
@@ -68,14 +68,14 @@ describe('resolveInitialLanguage', () => {
   });
 
   test('an unsupported persisted value is ignored in favor of the device language', () => {
-    expect(resolveInitialLanguage({ persistedLanguage: 'fr', deviceLanguages: ['en-US'] })).toBe(
+    expect(resolveInitialLanguage({ persistedLanguage: 'de', deviceLanguages: ['en-US'] })).toBe(
       'en',
     );
   });
 
   test('device languages match on the primary subtag, first supported wins', () => {
     expect(
-      resolveInitialLanguage({ persistedLanguage: null, deviceLanguages: ['fr-FR', 'fa-IR'] }),
+      resolveInitialLanguage({ persistedLanguage: null, deviceLanguages: ['de-DE', 'fa-IR'] }),
     ).toBe('fa');
   });
 
@@ -112,7 +112,7 @@ describe('parseAcceptLanguageHeader', () => {
   test('feeds resolveInitialLanguage the browser preference order', () => {
     const language = resolveInitialLanguage({
       persistedLanguage: null,
-      deviceLanguages: parseAcceptLanguageHeader('fr;q=0.9,ar;q=0.8,en;q=0.7'),
+      deviceLanguages: parseAcceptLanguageHeader('de;q=0.9,ar;q=0.8,en;q=0.7'),
     });
     expect(language).toBe('ar');
   });

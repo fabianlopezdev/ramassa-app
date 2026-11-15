@@ -1,18 +1,19 @@
 /**
  * Item types management (RAPP-253): the material catalog that holders of
  * `equipment.items` keep. A custom item has a name in Catalan and, when
- * given, the other four languages; the app falls back to Catalan.
+ * given, the other supported languages; the app falls back to Catalan.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { AppError, databaseErrorCode } from '../errors';
 import { resolveLocalizedText, type SupportedLanguage } from '../i18n';
+import { languageCodeSchema } from '../schemas/language';
 import type { Database } from '../types/database';
 import type { HandoverItemType } from './handover';
 
 type Client = SupabaseClient<Database>;
 
-export const ITEM_NAME_LANGUAGES = ['ca', 'es', 'en', 'ar', 'fa'] as const;
+export const ITEM_NAME_LANGUAGES = languageCodeSchema.options;
 export type ItemNameLanguage = (typeof ITEM_NAME_LANGUAGES)[number];
 export type ItemName = Readonly<Partial<Record<ItemNameLanguage, string>>>;
 

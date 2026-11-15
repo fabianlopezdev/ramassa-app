@@ -5,6 +5,7 @@ import { useTranslationReview } from './react';
 const translations = {
   es: 'Entrenamiento cancelado',
   en: 'Training cancelled',
+  fr: 'Entraînement annulé',
   ar: 'تم إلغاء التدريب',
   fa: 'تمرین لغو شد',
 } as const;
@@ -46,7 +47,7 @@ describe('useTranslationReview', () => {
     );
 
     act(() => {
-      for (const language of ['es', 'en', 'ar', 'fa'] as const) {
+      for (const language of ['es', 'en', 'fr', 'ar', 'fa'] as const) {
         result.current.approve(language);
       }
     });

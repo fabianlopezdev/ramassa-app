@@ -27,6 +27,7 @@ const completeTitle = {
   ca: 'Entrenament setmanal',
   es: 'Entrenamiento semanal',
   en: 'Weekly training',
+  fr: 'Weekly training',
   ar: 'تدريب أسبوعي',
   fa: 'تمرین هفتگی',
 };
@@ -248,11 +249,12 @@ describe('event translation review gate', () => {
       translations: {
         es: completeTitle.es,
         en: completeTitle.en,
+        fr: completeTitle.en,
         ar: completeTitle.ar,
         fa: completeTitle.fa,
       },
     });
-    for (const language of ['es', 'en', 'ar', 'fa'] as const) {
+    for (const language of ['es', 'en', 'fr', 'ar', 'fa'] as const) {
       titleReview = approveTranslation(titleReview, language);
     }
 

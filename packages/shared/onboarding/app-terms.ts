@@ -44,6 +44,7 @@ const termsTextSchema = z.object({
   ca: z.string().optional(),
   es: z.string().optional(),
   en: z.string().optional(),
+  fr: z.string().optional(),
   ar: z.string().optional(),
   fa: z.string().optional(),
 });
@@ -104,9 +105,12 @@ const BUNDLED_KEYS: Readonly<Record<AppTermsTextField, string>> = {
 
 const BUNDLED_POINT_KEYS = ['Purpose', 'Protected', 'Private', 'Control'] as const;
 
-/** The bundled `onboarding` strings of the five languages, as one version. */
+/**
+ * The bundled `onboarding` strings of the given languages, as one version.
+ * Version 1 holds the five languages it shipped in, before French (RAPP-781).
+ */
 export function bundledAppTermsContent(
-  strings: Readonly<Record<LanguageCode, OnboardingStrings>>,
+  strings: Readonly<Partial<Record<LanguageCode, OnboardingStrings>>>,
 ): AppTermsContent {
   const field = (key: string): AppTermsText =>
     Object.fromEntries(

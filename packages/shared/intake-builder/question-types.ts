@@ -389,6 +389,7 @@ const SAMPLE_TEXT: Readonly<
   ca: { short: 'Resposta de prova', item: 'Element de prova' },
   es: { short: 'Respuesta de prueba', item: 'Elemento de prueba' },
   en: { short: 'Test answer', item: 'Test item' },
+  fr: { short: 'Réponse de test', item: 'Élément de test' },
   ar: { short: 'إجابة اختبار', item: 'عنصر اختبار' },
   fa: { short: 'پاسخ آزمایشی', item: 'مورد آزمایشی' },
 };

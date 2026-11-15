@@ -14,6 +14,7 @@ const deepLLanguageByRamassaLanguage: Record<LanguageCode, string> = {
   ca: 'CA',
   es: 'ES',
   en: 'EN-GB',
+  fr: 'FR',
   ar: 'AR',
   fa: 'FA',
 };

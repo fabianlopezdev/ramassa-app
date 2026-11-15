@@ -80,6 +80,7 @@ export const localizedKnowledgeBodySchema = z
     ca: knowledgeBlocksSchema.optional(),
     es: knowledgeBlocksSchema.optional(),
     en: knowledgeBlocksSchema.optional(),
+    fr: knowledgeBlocksSchema.optional(),
     ar: knowledgeBlocksSchema.optional(),
     fa: knowledgeBlocksSchema.optional(),
   })
@@ -91,6 +92,7 @@ export const knowledgeTitleSchema = z
     ca: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
     es: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
     en: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
+    fr: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
     ar: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
     fa: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
   })

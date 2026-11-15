@@ -1,7 +1,7 @@
 /**
  * The forms the team creates (RAPP-700, RAPP-701), as the catalog sends them.
  *
- * A form has a name in five languages (Catalan required) and its choices:
+ * A form has a name in the supported languages (Catalan required) and its choices:
  * who fills it (`player` on her phone; `entity` is not available yet), when
  * it must be answered (`optional`, `required_to_use_app`, `required_from_date`
  * with its deadline), who it is for (`all` players, including those who join

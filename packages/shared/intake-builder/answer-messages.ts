@@ -4,7 +4,7 @@
  * phone and on the web. The check is the shared schema (`customAnswerError`),
  * the same one the database runs; this only chooses the words, so she knows
  * what to change: a whole number, the range, the phone prefix, the age the
- * date gives. The keys live in the `onboarding` namespace, in five languages.
+ * date gives. The keys live in the `onboarding` namespace, in every player language.
  */
 import {
   customAnswerError,

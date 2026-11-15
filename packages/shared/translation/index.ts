@@ -3,11 +3,14 @@ import { languageCodeSchema, type LanguageCode } from '../schemas/language';
 
 export const MAX_TRANSLATION_TEXT_LENGTH = 10_000;
 
+/** Every language but the source one: the most one request can translate into. */
+const MAX_TRANSLATION_TARGETS = languageCodeSchema.options.length - 1;
+
 export const translationRequestSchema = z
   .object({
     text: z.string().trim().min(1).max(MAX_TRANSLATION_TEXT_LENGTH),
     from: languageCodeSchema,
-    to: languageCodeSchema.array().min(1).max(4),
+    to: languageCodeSchema.array().min(1).max(MAX_TRANSLATION_TARGETS),
   })
   .superRefine((request, context) => {
     if (new Set(request.to).size !== request.to.length) {
@@ -72,7 +75,7 @@ export const translationReviewSchema = z
   .object({
     sourceLanguage: languageCodeSchema,
     sourceText: z.string().trim().min(1).max(MAX_TRANSLATION_TEXT_LENGTH),
-    suggestions: translationSuggestionSchema.array().min(1).max(4),
+    suggestions: translationSuggestionSchema.array().min(1).max(MAX_TRANSLATION_TARGETS),
   })
   .superRefine((review, context) => {
     const languages = review.suggestions.map((suggestion) => suggestion.language);
@@ -180,9 +183,22 @@ export function getApprovedTranslations(review: TranslationReview): TranslationM
   );
 }
 
+/**
+ * Every supported language but the source one is approved. A review opened on
+ * a text saved before French has no French suggestion, so it asks for a new
+ * translation before it publishes (RAPP-781).
+ */
 export function isTranslationReviewPublishable(review: TranslationReview): boolean {
+  const approved = new Set(
+    review.suggestions
+      .filter((suggestion) => suggestion.status === 'approved')
+      .map((suggestion) => suggestion.language),
+  );
   return (
     review.suggestions.length > 0 &&
-    review.suggestions.every((suggestion) => suggestion.status === 'approved')
+    review.suggestions.every((suggestion) => suggestion.status === 'approved') &&
+    languageCodeSchema.options.every(
+      (language) => language === review.sourceLanguage || approved.has(language),
+    )
   );
 }

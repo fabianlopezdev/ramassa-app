@@ -1,12 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from 'bun:test';
-import { resolveLocalizedText, SUPPORTED_LANGUAGES } from '../i18n';
+import { resolveLocalizedText } from '../i18n';
+import { STORED_TRANSLATION_LANGUAGES } from '../schemas/language';
 import { authorizationContentSchema, orderedConsents } from './authorization';
 
 const seed = readFileSync(`${import.meta.dir}/../../../supabase/seed.sql`, 'utf8');
 const raw = seed.match(/\$auth\$([\s\S]*?)\$auth\$/)?.[1];
 const content = authorizationContentSchema.parse(JSON.parse(raw ?? 'null'));
 
+// The seeded authorization was written before French (RAPP-781).
 test('season authorization has all five languages without fallback in every published field', () => {
   const texts = [
     content.title,
@@ -15,7 +17,7 @@ test('season authorization has all five languages without fallback in every publ
     ...content.attachments.map((a) => a.label),
   ];
   expect(content.sections).toHaveLength(9);
-  for (const language of SUPPORTED_LANGUAGES) {
+  for (const language of STORED_TRANSLATION_LANGUAGES) {
     for (const text of texts) {
       expect(text[language]?.trim().length).toBeGreaterThan(0);
       expect(resolveLocalizedText(text, language)?.text).toBe(text[language]);

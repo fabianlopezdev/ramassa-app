@@ -24,7 +24,7 @@ import {
   type ForumModerationAction,
   type ForumModerationQueueRow,
 } from '@ramassa/shared/forum';
-import { resolveLocalizedText } from '@ramassa/shared/i18n';
+import { resolveLocalizedText, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { deleteMediaItem } from '@ramassa/shared/upload-client';
 
@@ -281,7 +281,7 @@ function ActionButton({
 
 const emptyCategory = (): ForumCategoryInput => ({
   id: null,
-  name: { ca: '', es: '', en: '', ar: '', fa: '' },
+  name: { ca: '', es: '', en: '', fr: '', ar: '', fa: '' },
   slug: '',
   icon: 'message-circle',
   color: 'primary',
@@ -320,6 +320,7 @@ function ForumCategoryManager({
         ca: category.name.ca ?? '',
         es: category.name.es ?? '',
         en: category.name.en ?? '',
+        fr: category.name.fr ?? '',
         ar: category.name.ar ?? '',
         fa: category.name.fa ?? '',
       },
@@ -366,7 +367,7 @@ function ForumCategoryManager({
         ))}
       </ul>
       <form onSubmit={(event) => void submit(event)} className="grid gap-3 md:grid-cols-2">
-        {(['ca', 'es', 'en', 'ar', 'fa'] as const).map((language) => (
+        {SUPPORTED_LANGUAGES.map((language) => (
           <label key={language} className="space-y-1 text-sm font-medium">
             <span>{t('categoryName', { language: language.toUpperCase() })}</span>
             <Input

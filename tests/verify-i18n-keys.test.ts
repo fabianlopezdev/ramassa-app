@@ -24,12 +24,13 @@ const five = (keys: Record<string, string>) => ({
   ca: { home: keys },
   es: { home: keys },
   en: { home: keys },
+  fr: { home: keys },
   ar: { home: keys },
   fa: { home: keys },
 });
 
 describe('parity', () => {
-  test('a player namespace must exist in all five languages', () => {
+  test('a player namespace must exist in every player language', () => {
     const withoutFarsi = Object.fromEntries(
       Object.entries(five({ title: 'x' })).filter(([language]) => language !== 'fa'),
     );

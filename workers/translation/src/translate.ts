@@ -8,7 +8,7 @@ import {
 import { errorResponse, jsonResponse } from './http';
 import type { CallerIdentity } from './supabase-identity';
 
-/** The permissions whose screens write player-facing text in five languages. */
+/** The permissions whose screens write player-facing text in every supported language. */
 const TRANSLATION_PERMISSIONS = [
   'announcements.edit',
   'events.edit',

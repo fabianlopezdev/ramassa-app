@@ -4,7 +4,7 @@
  * A block sits on an Onboarding screen (an app screen or a Ramassà screen), on
  * a screen of a form the team created, or on the entity form, and shares one
  * order with the fields and consents placed there (`reorder_placements`
- * orders them all). Each kind holds its own content, in five languages with
+ * orders them all). Each kind holds its own content, in the supported languages with
  * the Catalan written; another language left empty shows the Catalan:
  *
  *   - `signature`: the text to accept and a box she signs in. It is no data
@@ -34,7 +34,7 @@ import {
   localizedPointsSchema,
   type LocalizedPoint,
 } from '../onboarding/app-terms';
-import type { LanguageCode } from '../schemas/language';
+import { languageCodeSchema, type LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
 import { anyLanguageTextSchema, type BuilderText } from './profile-layout';
 
@@ -75,7 +75,7 @@ export type SignatureTexts = Readonly<Partial<Record<SignatureTextField, Builder
 /** A signature block: the text to accept, then a box she signs in. */
 export interface SignatureFormBlock extends FormBlockPlace {
   readonly kind: 'signature';
-  /** The text to accept, in five languages, Catalan required. */
+  /** The text to accept, in the supported languages, Catalan required. */
   readonly body: BuilderText;
   /**
    * A legal form's own signature (RAPP-772, RAPP-773): `terms_signature` or
@@ -90,7 +90,7 @@ export interface SignatureFormBlock extends FormBlockPlace {
 export interface TextFormBlock extends FormBlockPlace {
   readonly kind: 'text';
   readonly title: BuilderText | null;
-  /** The text, in five languages, Catalan required. */
+  /** The text, in the supported languages, Catalan required. */
   readonly body: BuilderText;
 }
 
@@ -461,7 +461,7 @@ export async function fetchMyFormSignatures(
       z.object({
         block_id: z.uuid(),
         body: z.string(),
-        language: z.enum(['ca', 'es', 'en', 'ar', 'fa']),
+        language: languageCodeSchema,
       }),
     )
     .parse(data ?? [])
@@ -494,7 +494,7 @@ const signatureRowSchema = z.object({
   surface: z.enum(['wizard', 'entity_form', 'custom_form']),
   screen_key: z.string().nullable(),
   body: z.string(),
-  language: z.enum(['ca', 'es', 'en', 'ar', 'fa']),
+  language: languageCodeSchema,
   signer_kind: z.enum(['player', 'entity']),
   signer_name: z.string(),
   strokes: z.unknown(),
