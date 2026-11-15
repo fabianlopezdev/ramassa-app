@@ -1,6 +1,16 @@
 import { expect, test } from 'bun:test';
-import { EMPTY_INTAKE_CATALOG, type IntakeCatalog } from '@ramassa/shared/intake-builder';
-import { builtinPhoneQuestion, placedPhoneQuestions } from './screen-content';
+import {
+  EMPTY_INTAKE_CATALOG,
+  withSeasonName,
+  type IntakeCatalog,
+} from '@ramassa/shared/intake-builder';
+import {
+  builtinPhoneQuestion,
+  filledContent,
+  formScreenButtons,
+  placedPhoneQuestions,
+  staffScreenContent,
+} from './screen-content';
 
 const SCREEN = '5eed0000-0000-4000-8044-000000000001';
 const t = (key: string) => key;
@@ -57,4 +67,22 @@ test('a screen shows its consents as ticks and a signature with its own texts (R
     label: 'Amb la meva signatura accepto.',
     signatureTexts: { title: 'La signatura', prompt: undefined, cannotDraw: 'No puc' },
   });
+});
+
+test("the authorization's preview writes the season where her phone does (RAPP-785)", () => {
+  const drawn = staffScreenContent(
+    { ca: 'Inscripció per a la temporada {{season}}' },
+    { ca: 'Temporada {{season}}: revisa les teves dades.' },
+    [],
+    'ca',
+    t,
+    { help: { ca: 'Per a {{ season }}' }, decline_label: { ca: 'Corregeix {{season}}' } },
+    formScreenButtons({ systemScreen: 'reregistration' }),
+  );
+  const filled = filledContent(drawn, (text) => withSeasonName(text, '2026/27'));
+  expect(filled.title).toBe('Inscripció per a la temporada 2026/27');
+  expect(filled.intro).toBe('Temporada 2026/27: revisa les teves dades.');
+  expect(filled.help).toBe('Per a 2026/27');
+  expect(filled.declineLabel).toBe('Corregeix 2026/27');
+  expect(filledContent(drawn, undefined)).toBe(drawn);
 });

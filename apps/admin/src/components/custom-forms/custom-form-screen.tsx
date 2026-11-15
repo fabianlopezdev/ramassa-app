@@ -16,6 +16,7 @@ import {
   DRAFT_SAVE,
   formBoardNumbers,
   formConditionSources,
+  formTextFill,
   useCreateFormScreen,
 } from '@/components/custom-forms/custom-form-page';
 import { FormAttachmentsSection } from '@/components/custom-forms/form-attachments';
@@ -31,6 +32,7 @@ import {
 } from '@/components/onboarding/screen-condition';
 import {
   conditionLine,
+  filledContent,
   formScreenButtons,
   placedPhoneQuestions,
   staffScreenContent,
@@ -42,7 +44,7 @@ import {
   type SiblingScreen,
 } from '@/components/onboarding/screen-editor';
 import { ScreenFieldsSection } from '@/components/onboarding/screen-fields';
-import { teamHideLockKey } from '@/components/onboarding/screen-hiding';
+import { fixedScreenLockKeys, teamHideLockKey } from '@/components/onboarding/screen-hiding';
 import type { CustomFormData } from '@/lib/custom-forms';
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from '@tanstack/react-router';
@@ -164,7 +166,7 @@ function FormScreenBody({
   // shows, depends on no answer, and nothing comes after it.
   const isFixed = screen.systemScreen !== undefined;
   const hideLock = isFixed
-    ? 'onboardingBoard.hideLockedLegal'
+    ? fixedScreenLockKeys(screen).hide
     : teamHideLockKey(catalog, 'custom_form', screen.id);
   // The re-registration screens are drawn by the app: nothing is placed on them (RAPP-773).
   const holdsNothing =
@@ -190,6 +192,8 @@ function FormScreenBody({
     dashboardLanguage,
   );
   const condition = screen.showWhen ?? null;
+  // Her phone writes the authorization's season into its texts (RAPP-785).
+  const fill = formTextFill(form, data.seasons);
   // The family row's + tile (RAPP-717): a screen that depends on this one.
   const createScreen = useCreateFormScreen(form);
   const dependent = useAddDependentScreen({
@@ -215,15 +219,18 @@ function FormScreenBody({
           isCurrent: each.id === screen.id,
           picture: (
             <PhoneMiniature
-              content={staffScreenContent(
-                each.title,
-                each.intro,
-                placedPhoneQuestions(catalog, each.id, dashboardLanguage, null, 'custom_form'),
-                dashboardLanguage,
-                t,
-                each.texts,
-                formScreenButtons(each),
-                each.attachments,
+              content={filledContent(
+                staffScreenContent(
+                  each.title,
+                  each.intro,
+                  placedPhoneQuestions(catalog, each.id, dashboardLanguage, null, 'custom_form'),
+                  dashboardLanguage,
+                  t,
+                  each.texts,
+                  formScreenButtons(each),
+                  each.attachments,
+                ),
+                fill,
               )}
               language={dashboardLanguage}
             />
@@ -245,13 +252,14 @@ function FormScreenBody({
         <AddDependentButton
           add={
             isFixed
-              ? lockedAddDependent(t('onboardingBoard.addDependentLockedFinal'))
+              ? lockedAddDependent(t(fixedScreenLockKeys(screen).addDependent))
               : dependent.addFor(screen.id)
           }
         />
       }
       buttons={formScreenButtons(screen)}
       {...(screen.attachments === undefined ? {} : { attachments: screen.attachments })}
+      {...(fill === undefined ? {} : { fillText: fill })}
       family={
         <>
           <FamilyRow members={family} />
