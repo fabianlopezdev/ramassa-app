@@ -86,6 +86,7 @@ import {
   type RamassaScreen,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
+import { previewSeasonName } from '@ramassa/shared/seasons';
 import {
   allSteps,
   boardNumbers,
@@ -118,6 +119,7 @@ import {
   conditionLine,
   CONTINUE_ONLY,
   detailScreenContent,
+  filledContent,
   placedPhoneQuestions,
   staffScreenContent,
   stepContent,
@@ -529,6 +531,7 @@ export function StaffScreenEditor({
   condition = null,
   buttons = CONTINUE_ONLY,
   attachments = [],
+  fillText,
 }: {
   readonly screen: {
     readonly title: BuilderText;
@@ -572,6 +575,8 @@ export function StaffScreenEditor({
   readonly buttons?: ScreenButtons;
   /** The season documents her phone lists on the authorization's document screen (RAPP-773). */
   readonly attachments?: readonly FormAttachment[];
+  /** How her phone fills the screen's texts, such as the authorization's season (RAPP-785). */
+  readonly fillText?: (text: string) => string;
 }) {
   const { t } = useTranslation(['settings', 'onboarding']);
   const hasDecline = buttons.declineKey !== null;
@@ -710,7 +715,7 @@ export function StaffScreenEditor({
   }
 
   // Her phone: the fields she is asked, the wording being typed as typed.
-  const content = staffScreenContent(
+  const drawn = staffScreenContent(
     current('title'),
     current('intro'),
     phoneQuestions(previewLanguage, row.wording),
@@ -724,6 +729,7 @@ export function StaffScreenEditor({
     buttons,
     attachments,
   );
+  const content = filledContent(drawn, fillText);
 
   const direction = getLanguageDirection(language);
   return (
@@ -1014,7 +1020,6 @@ function AppScreenEditor({
       : null;
   const [texts, setTexts] = useState<Partial<Record<EditableWizardScreen, ScreenTexts>>>({});
   const row = useRowEditing();
-  const currentSeason = data.seasons.find((season) => season.isCurrent);
   const dependent = useOnboardingAddDependent(catalog, dashboardLanguage, t);
 
   const questions = step.kind === 'builtin' ? WIZARD_SCREEN_QUESTIONS[step.key] : [];
@@ -1050,7 +1055,7 @@ function AppScreenEditor({
       : stepContent(catalog, step, previewLanguage, t, {
           ...(screen === null ? {} : { texts: texts[screen] }),
           ...(step.kind === 'builtin' ? { questions: phoneQuestions } : {}),
-          seasonName: currentSeason?.name,
+          seasonName: previewSeasonName(data.seasons),
         });
 
   const phone = (

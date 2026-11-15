@@ -84,6 +84,25 @@ export function publishableSeasons(seasons: readonly Season[], today: string): r
   return current === undefined ? later : [current, ...later];
 }
 
+/**
+ * The name the season running on `now` gets in Ramassà's format, "2026/27":
+ * a season starts on 1 September, as the first one did (RAPP-785).
+ */
+export function seasonNameOn(now: Date): string {
+  const start = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
+  return `${start}/${String((start + 1) % 100).padStart(2, '0')}`;
+}
+
+/**
+ * The season name a preview of the authorization shows for `{{season}}`
+ * (RAPP-785): the current season's, as her phone shows it. Her phone opens
+ * no authorization without a current season, so with none the preview shows
+ * the name the season running on `now` would get.
+ */
+export function previewSeasonName(seasons: readonly Season[], now: Date = new Date()): string {
+  return seasons.find((season) => season.isCurrent)?.name ?? seasonNameOn(now);
+}
+
 export const newSeasonSchema = z.object({
   name: z.string().trim().min(1).max(50),
   startsOn: z.iso.date(),

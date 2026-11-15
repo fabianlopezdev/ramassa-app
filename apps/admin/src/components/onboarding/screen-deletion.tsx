@@ -1,8 +1,9 @@
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from '@tanstack/react-router';
 import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { customStepKey, DETAIL_SCREEN_BRANCHES } from '@ramassa/shared/intake';
@@ -19,6 +20,7 @@ import {
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { boardNumbers } from './board-steps';
 import { ConfirmDialog } from './confirm-dialog';
+import { namesDeletionLockKey } from './screen-hiding';
 
 export interface ScreenDeletion {
   readonly key: string;
@@ -29,6 +31,11 @@ export interface ScreenDeletion {
     readonly number: string;
   }[];
   readonly run: () => Promise<void>;
+  /**
+   * Why the database refuses this delete, such as a screen that asks her
+   * names (RAPP-785); the button is then off and gives the reason.
+   */
+  readonly lockReason?: string;
 }
 
 /** Include screens whose gate is on an app follow-up, even when the board places them separately. */
@@ -78,6 +85,7 @@ export function onboardingDeletion(
     return undefined;
   const numbers = boardNumbers(catalog);
   const family = onboardingDeletionKeys(catalog, key);
+  const namesLock = namesDeletionLockKey(catalog, family);
   return {
     key,
     name,
@@ -85,6 +93,7 @@ export function onboardingDeletion(
       .slice(1)
       .map((member) => ({ key: member, name: nameOf(member), number: numbers.get(member) ?? '' })),
     run: () => deleteBuilderScreen(supabase, 'onboarding', key, family),
+    ...(namesLock === null ? {} : { lockReason: t(`settings:onboardingBoard.${namesLock}`) }),
   };
 }
 
@@ -120,9 +129,11 @@ export function customFormDeletion(
 /** The message for a delete the database refused for a known reason (RAPP-780). */
 function deleteFailureKey(
   error: unknown,
-): 'deleteStale' | 'deleteGone' | 'deleteConditional' | 'deleteFailed' {
+): 'deleteStale' | 'deleteGone' | 'deleteConditional' | 'deleteLockedNames' | 'deleteFailed' {
   const message = error instanceof Error ? error.message : '';
   if (message.includes('the screen dependencies changed')) return 'deleteStale';
+  // Her names moved onto it since the page was read (RAPP-785).
+  if (message.includes('her onboarding always asks her names')) return 'deleteLockedNames';
   if (message.includes('a conditional field prevented screen deletion')) return 'deleteConditional';
   if (message.includes('no such') && message.includes('screen')) return 'deleteGone';
   return 'deleteFailed';
@@ -161,6 +172,11 @@ export function DeleteScreenAction({
     }
   }
   const label = t('onboardingBoard.deleteNamedScreen', { screen: deletion.name });
+  if (deletion.lockReason !== undefined) {
+    return (
+      <LockedDeleteButton reason={deletion.lockReason} variant={variant} cardKey={deletion.key} />
+    );
+  }
   return (
     <>
       <Button
@@ -207,5 +223,67 @@ export function DeleteScreenAction({
         )}
       </ConfirmDialog>
     </>
+  );
+}
+
+/**
+ * A delete the database refuses (RAPP-785), off with its reason: on hover on a
+ * board card, as the eye and the + give theirs, and written under the
+ * editor's button, as the editor's + does.
+ */
+function LockedDeleteButton({
+  reason,
+  variant,
+  cardKey,
+}: {
+  readonly reason: string;
+  readonly variant: 'icon' | 'button';
+  readonly cardKey: string;
+}) {
+  const { t } = useTranslation('settings');
+  const reasonId = useId();
+  if (variant === 'icon') {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {/* A disabled button gets no hover: the wrapper carries the reason. */}
+          <span className="inline-flex" tabIndex={0}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground"
+              disabled
+              aria-label={reason}
+              data-testid={`board-delete-${cardKey}`}
+            >
+              <Trash2 aria-hidden />
+            </Button>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>{reason}</TooltipContent>
+      </Tooltip>
+    );
+  }
+  return (
+    <div className="flex flex-col items-end gap-1.5">
+      <Button
+        type="button"
+        variant="destructive"
+        disabled
+        aria-describedby={reasonId}
+        data-testid="screen-delete"
+      >
+        <Trash2 aria-hidden data-icon="inline-start" />
+        {t('onboardingBoard.deleteScreen')}
+      </Button>
+      <p
+        id={reasonId}
+        className="text-end text-xs text-muted-foreground"
+        data-testid="screen-delete-reason"
+      >
+        {reason}
+      </p>
+    </div>
   );
 }

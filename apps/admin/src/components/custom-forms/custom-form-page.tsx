@@ -56,12 +56,13 @@ import {
 import { conditionSources, type ConditionSource } from '@/components/onboarding/screen-condition';
 import {
   conditionLine,
+  filledContent,
   formScreenButtons,
   placedPhoneQuestions,
   staffScreenContent,
 } from '@/components/onboarding/screen-content';
 import { customFormDeletion } from '@/components/onboarding/screen-deletion';
-import { teamHideLockKey } from '@/components/onboarding/screen-hiding';
+import { fixedScreenLockKeys, teamHideLockKey } from '@/components/onboarding/screen-hiding';
 import { useReload } from '@/components/settings/onboarding-design-sections';
 import { SeasonsPanel } from '@/components/settings/seasons-panel';
 import { Badge } from '@/components/ui/badge';
@@ -110,6 +111,7 @@ import {
   setCustomFormRecipients,
   setScreenHidden,
   textIn,
+  withSeasonName,
   type CustomForm,
   type CustomFormChoices,
   type CustomFormRecipients,
@@ -124,7 +126,26 @@ import {
   type NotificationAudienceOptions,
 } from '@ramassa/shared/notifications';
 import type { LanguageCode } from '@ramassa/shared/schemas';
-import { createSeason, setCurrentSeason, type Season } from '@ramassa/shared/seasons';
+import {
+  createSeason,
+  previewSeasonName,
+  setCurrentSeason,
+  type Season,
+} from '@ramassa/shared/seasons';
+
+/**
+ * How her phone fills a form's texts (RAPP-785): the authorization writes the
+ * current season's name for `{{season}}`; every other form shows its texts as
+ * written.
+ */
+export function formTextFill(
+  form: Pick<CustomForm, 'systemKey'>,
+  seasons: readonly Season[],
+): ((text: string) => string) | undefined {
+  if (form.systemKey !== 'season_authorization') return undefined;
+  const seasonName = previewSeasonName(seasons);
+  return (text) => withSeasonName(text, seasonName);
+}
 
 /** Draft, live or archived, as a badge. */
 export function FormStatusBadge({
@@ -758,6 +779,7 @@ function FormScreensBoard({
   const sources = formConditionSources(catalog, form, language);
   const createScreen = useCreateFormScreen(form);
   const dependent = useAddDependentScreen({ catalog, sources, onCreate: createScreen });
+  const fill = formTextFill(form, data.seasons);
   const hidingAncestor = (screen: CustomFormScreen): CustomFormScreen | null => {
     let parent = formScreenParent(catalog, form, screen);
     for (let depth = 0; parent !== null && depth < 64; depth += 1) {
@@ -782,15 +804,18 @@ function FormScreensBoard({
       name: textIn(screen.title, language),
       miniature: (
         <PhoneMiniature
-          content={staffScreenContent(
-            screen.title,
-            screen.intro,
-            placedPhoneQuestions(catalog, screen.id, language, null, 'custom_form'),
-            language,
-            t,
-            screen.texts,
-            formScreenButtons(screen),
-            screen.attachments,
+          content={filledContent(
+            staffScreenContent(
+              screen.title,
+              screen.intro,
+              placedPhoneQuestions(catalog, screen.id, language, null, 'custom_form'),
+              language,
+              t,
+              screen.texts,
+              formScreenButtons(screen),
+              screen.attachments,
+            ),
+            fill,
           )}
           language={language}
           isDimmed={isHidden || isOrphan}
@@ -846,22 +871,25 @@ function FormScreensBoard({
     name: textIn(screen.title, language),
     miniature: (
       <PhoneMiniature
-        content={staffScreenContent(
-          screen.title,
-          screen.intro,
-          placedPhoneQuestions(catalog, screen.id, language, null, 'custom_form'),
-          language,
-          t,
-          screen.texts,
-          formScreenButtons(screen),
-          screen.attachments,
+        content={filledContent(
+          staffScreenContent(
+            screen.title,
+            screen.intro,
+            placedPhoneQuestions(catalog, screen.id, language, null, 'custom_form'),
+            language,
+            t,
+            screen.texts,
+            formScreenButtons(screen),
+            screen.attachments,
+          ),
+          fill,
         )}
         language={language}
       />
     ),
     status: null,
-    hide: lockedHide(t('onboardingBoard.hideLockedLegal')),
-    addDependent: lockedAddDependent(t('onboardingBoard.addDependentLockedFinal')),
+    hide: lockedHide(t(fixedScreenLockKeys(screen).hide)),
+    addDependent: lockedAddDependent(t(fixedScreenLockKeys(screen).addDependent)),
     link: {
       to: '/forms/custom/$formId/screens/$screenId',
       params: { formId: form.id, screenId: screen.id },

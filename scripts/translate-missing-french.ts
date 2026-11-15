@@ -372,12 +372,13 @@ async function main() {
     );
   }
 
+  // A draft row is no published version yet (`published_at` is null): it is not counted.
   for (const frozen of FROZEN_SOURCES) {
     const [count] = (await database.unsafe(
-      `select count(*)::int as total from public.${quoted(frozen)}`,
+      `select count(*)::int as total from public.${quoted(frozen)} where published_at is not null`,
     )) as { total: number }[];
     console.log(
-      `${frozen}: ${count?.total ?? 0} published versions left as signed (never touched)`,
+      `${frozen}: ${count?.total ?? 0} published versions left as published (never touched)`,
     );
   }
   await database.close();

@@ -13,8 +13,10 @@ import {
   filterRegistrations,
   mySeasonAnswers,
   newSeasonSchema,
+  previewSeasonName,
   publishableSeasons,
   reminderGroupName,
+  seasonNameOn,
   updateMySeasonAnswers,
   type SeasonRegistration,
 } from './seasons';
@@ -121,5 +123,24 @@ describe('publishableSeasons (RAPP-694)', () => {
   test('with no current season, the seasons starting today or later', () => {
     const seasons = [season('2027/28', '2027-09-01'), season('2025/26', '2025-09-01')];
     expect(publishableSeasons(seasons, '2026-10-26').map((row) => row.name)).toEqual(['2027/28']);
+  });
+});
+
+describe('the season name a preview shows (RAPP-785)', () => {
+  test('a season starts on 1 September', () => {
+    expect(seasonNameOn(new Date(2026, 10, 15))).toBe('2026/27');
+    expect(seasonNameOn(new Date(2026, 8, 1))).toBe('2026/27');
+    expect(seasonNameOn(new Date(2027, 7, 31))).toBe('2026/27');
+    expect(seasonNameOn(new Date(2099, 9, 1))).toBe('2099/00');
+  });
+
+  test("the current season's own name first, as her phone shows it", () => {
+    const seasons = [
+      { id: 'a', name: 'Temporada 25', startsOn: '2025-09-01', isCurrent: false },
+      { id: 'b', name: 'Temporada 26', startsOn: '2026-09-01', isCurrent: true },
+    ];
+    expect(previewSeasonName(seasons, new Date(2026, 10, 15))).toBe('Temporada 26');
+    expect(previewSeasonName([], new Date(2026, 10, 15))).toBe('2026/27');
+    expect(previewSeasonName(seasons.slice(0, 1), new Date(2026, 10, 15))).toBe('2026/27');
   });
 });

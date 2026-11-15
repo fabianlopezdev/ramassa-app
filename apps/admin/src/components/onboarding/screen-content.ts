@@ -632,6 +632,26 @@ export function staffScreenContent(
 }
 
 /**
+ * A screen's texts as her phone fills them (RAPP-785): the authorization
+ * writes its season into its title, intro, help line and buttons. Without
+ * `fill`, the texts are drawn as written.
+ */
+export function filledContent(
+  content: PhoneContent,
+  fill: ((text: string) => string) | undefined,
+): PhoneContent {
+  if (fill === undefined) return content;
+  return {
+    ...content,
+    title: fill(content.title),
+    intro: fill(content.intro),
+    help: fill(content.help),
+    continueLabel: fill(content.continueLabel),
+    declineLabel: content.declineLabel === null ? null : fill(content.declineLabel),
+  };
+}
+
+/**
  * A form screen's buttons where staff wrote none: the app's own main button
  * and, on a screen that has one, its second button with the field that names
  * it in the editor.
