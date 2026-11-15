@@ -8,7 +8,7 @@
     "workers/*"
   ],
   "overrides": {
-    "@hono/node-server": "1.19.19",
+    "@hono/node-server": "2.1.8",
     "@modelcontextprotocol/sdk": "1.32.1",
     "@react-native/metro-config": "0.88.0-rc.3",
     "baseline-browser-mapping": "2.11.27",
@@ -83,7 +83,7 @@
     "@commitlint/config-conventional": "^21.2.0",
     "@eslint/js": "^10.0.1",
     "@expo/plist": "0.10.1",
-    "@happy-dom/global-registrator": "^20.0.11",
+    "@happy-dom/global-registrator": "^21.0.4",
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
     "@playwright/test": "^1.62.1",
     "@supabase/supabase-js": "^2.110.7",
