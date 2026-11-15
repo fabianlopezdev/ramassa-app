@@ -4,7 +4,8 @@
 // mobile theme and the admin theme derive from the exact same values. Change a
 // token in packages/shared/tokens and both apps change.
 const { tokens } = require('@ramassa/shared/tokens');
-const { brandThemeVariables } = require('@ramassa/shared/organization-settings');
+// Zod-free (RAPP-784): this config is loaded by Tailwind's jiti, which cannot read zod 4.6.
+const { brandThemeVariables } = require('@ramassa/shared/brand-theme');
 
 const withPixelUnit = (scale) =>
   Object.fromEntries(Object.entries(scale).map(([name, value]) => [name, `${value}px`]));
