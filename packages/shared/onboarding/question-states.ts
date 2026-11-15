@@ -108,6 +108,18 @@ export function isRequiredQuestion(
   return isLockedRequiredQuestion(question) || required.has(question);
 }
 
+/**
+ * Whether her screen adds "Not now, skip this step" as the last answer
+ * (RAPP-712): the document step does while the document is optional. Her
+ * phone and the Control Center's preview both ask this, so they agree.
+ */
+export function offersSkipAnswer(
+  question: IntakeQuestion,
+  required: RequiredQuestions = DEFAULT_REQUIRED_QUESTIONS,
+): boolean {
+  return question === 'document' && !isRequiredQuestion(question, required);
+}
+
 /** Don't ask is allowed on an optional question, or on a required one that has an answer. */
 export function canSkipQuestion(
   question: IntakeQuestion,
@@ -200,7 +212,8 @@ export async function fetchParticipantQuestionStates(
 export async function saveParticipantQuestionStates(
   client: Client,
   profileId: string,
-  changes: Partial<Record<IntakeQuestion, IntakeQuestionState>>,
+  // A Ramassà question travels as `custom:<id>` (RAPP-645).
+  changes: Readonly<Record<string, IntakeQuestionState>>,
 ): Promise<void> {
   const { error } = await client.rpc('set_intake_question_states', {
     p_profile_id: profileId,

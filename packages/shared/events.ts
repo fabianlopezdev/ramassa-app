@@ -3,7 +3,12 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { addMilliseconds, addWeeks, differenceInMilliseconds, format } from 'date-fns';
 import { z } from 'zod';
 import { AppError } from './errors';
-import { languageCodeSchema } from './schemas/language';
+import {
+  draftTranslationsSchema,
+  languageCodeSchema,
+  publishedTranslationsSchema,
+  storedTranslationsSchema,
+} from './schemas/language';
 import {
   isTranslationReviewPublishable,
   MAX_TRANSLATION_TEXT_LENGTH,
@@ -47,26 +52,18 @@ export type EventCategoryColor = (typeof EVENT_CATEGORY_COLORS)[number];
 type Client = SupabaseClient<Database>;
 
 const optionalLocalizedTextSchema = (maximum: number) =>
-  z.object({
-    ca: z.string().trim().min(1).max(maximum),
-    es: z.string().trim().min(1).max(maximum).optional(),
-    en: z.string().trim().min(1).max(maximum).optional(),
-    ar: z.string().trim().min(1).max(maximum).optional(),
-    fa: z.string().trim().min(1).max(maximum).optional(),
-  });
+  draftTranslationsSchema(z.string().trim().min(1).max(maximum));
 
 const completeLocalizedTextSchema = (maximum: number) =>
-  z.object({
-    ca: z.string().trim().min(1).max(maximum),
-    es: z.string().trim().min(1).max(maximum),
-    en: z.string().trim().min(1).max(maximum),
-    ar: z.string().trim().min(1).max(maximum),
-    fa: z.string().trim().min(1).max(maximum),
-  });
+  publishedTranslationsSchema(z.string().trim().min(1).max(maximum));
 
 export const eventTitleSchema = optionalLocalizedTextSchema(MAX_EVENT_TITLE_LENGTH);
 export const eventDescriptionSchema = optionalLocalizedTextSchema(MAX_TRANSLATION_TEXT_LENGTH);
 export const eventCategoryNameSchema = completeLocalizedTextSchema(MAX_EVENT_TITLE_LENGTH);
+/** A category name as stored: one saved before French has none (RAPP-781). */
+export const storedEventCategoryNameSchema = storedTranslationsSchema(
+  z.string().trim().min(1).max(MAX_EVENT_TITLE_LENGTH),
+);
 
 export type EventLocalizedText = z.infer<typeof eventTitleSchema>;
 

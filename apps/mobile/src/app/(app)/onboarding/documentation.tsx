@@ -1,4 +1,9 @@
-/** Document choice first; only documents that have details open another page. */
+/**
+ * Document choice first; only documents that have details open another page.
+ * When staff move Tipus de document to another screen (RAPP-782), it is asked
+ * there and its follow-ups follow it, so this screen asks only what is left
+ * on it.
+ */
 import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { QuestionHelp } from '@/components/onboarding/question-help';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
@@ -9,6 +14,7 @@ import {
   hasDocumentDetails,
   type DocumentChoice,
 } from '@/lib/documentation-step';
+import { followUpShows } from '@/lib/follow-up-screens';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { useBuiltinWording, useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
@@ -17,8 +23,8 @@ import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, useWindowDimensions, View } from 'react-native';
-import { documentExplanationFor } from '@ramassa/shared/intake';
-import { DOCUMENT_TYPES, type DocumentationStep, type LanguageCode } from '@ramassa/shared/schemas';
+import { documentDetailScreen, offersSkipAnswer } from '@ramassa/shared/intake';
+import { DOCUMENT_TYPES, type DocumentationStep } from '@ramassa/shared/schemas';
 import { tokens } from '@ramassa/shared/tokens';
 
 const labelKeys = {
@@ -29,16 +35,15 @@ const labelKeys = {
 } as const;
 
 export default function DocumentationStepScreen() {
-  const { t, i18n } = useTranslation('onboarding');
+  const { t } = useTranslation('onboarding');
   const fontClass = useLanguageFontClass();
   const step = useWizardStep('documentation');
   const router = useRouter();
   const wording = useBuiltinWording();
-  const { documentExplanation } = useWizardIntake();
-  const explanation = documentExplanationFor(
-    documentExplanation,
-    (i18n.resolvedLanguage as LanguageCode) ?? 'ca',
-  );
+  // Her explanation of the document is the screen's help now, drawn by the frame (RAPP-721).
+  const { catalog, hidden } = useWizardIntake();
+  // A test or an older intake may hold no hidden list: then the screen asks it.
+  const asksDocument = hidden?.has('document') !== true;
   const { fontScale } = useWindowDimensions();
   const rowStyle = useMemo(
     () => ({
@@ -60,9 +65,9 @@ export default function DocumentationStepScreen() {
       choice === 'skip' ? null : (choice ?? null),
     ),
     // "Not now" is no answer: staff can make the document required (RAPP-611).
-    ...(step.isRequired('document')
-      ? []
-      : [{ value: 'skip' as const, label: t('documentSkipAction') }]),
+    ...(offersSkipAnswer('document', step.required)
+      ? [{ value: 'skip' as const, label: t('documentSkipAction') }]
+      : []),
   ];
   const persist = (currentStep: typeof step.nextDraftStep) => {
     const latest = onboardingDraftStore.loadDraft();
@@ -74,12 +79,19 @@ export default function DocumentationStepScreen() {
     });
   };
   const continueFromChoice = () => {
+    if (!asksDocument) {
+      persist(step.nextDraftStep);
+      step.goNext();
+      return;
+    }
     if (choice === undefined || (choice === 'skip' && step.isRequired('document'))) {
       setHasSubmitErrors(true);
       playHaptic('warning');
       return;
     }
-    if (hasDocumentDetails(choice)) {
+    // A follow-up that asks nothing is skipped (RAPP-720).
+    const detail = documentDetailScreen(choice);
+    if (hasDocumentDetails(choice) && detail !== null && followUpShows(catalog, detail)) {
       persist('documentation-details');
       const route = `/onboarding/documentation-details${step.isEditing ? '?edit=1' : ''}` as Href;
       if (step.isEditing) router.replace(route);
@@ -107,39 +119,33 @@ export default function DocumentationStepScreen() {
             }
       }
     >
-      {explanation === null ? null : (
-        <Text
-          testID="onboarding-document-explanation"
-          className={`text-start text-form text-neutral-700 ${fontClass}`}
-        >
-          {explanation}
-        </Text>
-      )}
       <WizardValidationSummary isVisible={hasSubmitErrors} message={t('documentChooseError')} />
-      <View
-        accessibilityRole="radiogroup"
-        accessibilityLabel={wording.label('document', t('documentTypeLabel'))}
-        className="gap-sm"
-      >
-        <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
-          {wording.label('document', t('documentTypeLabel'))}
-        </Text>
-        <QuestionHelp text={wording.help('document')} />
-        {options.map((option) => (
-          <SelectionChoiceCard
-            key={option.value}
-            testID={`onboarding-document-${option.value}`}
-            label={option.label}
-            fontClass={fontClass}
-            rowStyle={rowStyle}
-            isSelected={choice === option.value}
-            onPress={() => {
-              setChoice(option.value as DocumentChoice);
-              setHasSubmitErrors(false);
-            }}
-          />
-        ))}
-      </View>
+      {asksDocument ? (
+        <View
+          accessibilityRole="radiogroup"
+          accessibilityLabel={wording.label('document', t('documentTypeLabel'))}
+          className="gap-sm"
+        >
+          <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
+            {wording.label('document', t('documentTypeLabel'))}
+          </Text>
+          <QuestionHelp text={wording.help('document')} />
+          {options.map((option) => (
+            <SelectionChoiceCard
+              key={option.value}
+              testID={`onboarding-document-${option.value}`}
+              label={option.label}
+              fontClass={fontClass}
+              rowStyle={rowStyle}
+              isSelected={choice === option.value}
+              onPress={() => {
+                setChoice(option.value as DocumentChoice);
+                setHasSubmitErrors(false);
+              }}
+            />
+          ))}
+        </View>
+      ) : null}
     </WizardFrame>
   );
 }

@@ -1,0 +1,69 @@
+{
+  "tabs": {
+    "home": "Accueil",
+    "events": "Calendrier",
+    "community": "Communauté",
+    "services": "Services",
+    "profile": "Profil"
+  },
+  "staff": {
+    "dashboard": "Tableau de bord",
+    "participants": "Participantes",
+    "onboarding": "Onboarding",
+    "legal": "Conditions légales",
+    "authorization": "Autorisation de la saison",
+    "appTerms": "Conditions de l’app",
+    "content": "Contenus",
+    "attendance": "Présences",
+    "messages": "Messages",
+    "forum": "Modération du forum",
+    "gallery": "Galerie",
+    "mentoring": "Mentorats",
+    "feedback": "Suggestions",
+    "notifications": "Notifications",
+    "surveys": "Enquêtes",
+    "data": "Exports et audit",
+    "settings": "Paramètres",
+    "referrals": "Orientations",
+    "referralForm": "Formulaire des associations",
+    "entities": "Associations partenaires",
+    "profileLayout": "Données des joueuses",
+    "legalData": "Données légales",
+    "team": "Équipe",
+    "seasons": "Saisons",
+    "groups": {
+      "forms": "Formulaires",
+      "data": "Données",
+      "app": "App des joueuses",
+      "entities": "Associations",
+      "organisation": "Organisation"
+    },
+    "customForms": "Autres formulaires"
+  },
+  "entity": {
+    "dashboard": "Impact",
+    "referrals": "Orientations",
+    "services": "Services",
+    "events": "Événements",
+    "messages": "Messages"
+  },
+  "a11y": {
+    "staffSidebar": "Navigation de l’équipe",
+    "entityPortal": "Navigation du portail",
+    "toggleSidebar": "Affiche ou masque le menu latéral",
+    "sidebarLabel": "Menu latéral",
+    "sidebarDescription": "Menu de navigation latéral",
+    "toggleFold": "Affiche ou masque {{name}}"
+  },
+  "team": {
+    "today": "Aujourd’hui",
+    "messages": "Messages",
+    "more": "Plus",
+    "homeTitle": "Que veux-tu faire ?",
+    "navigation": "Navigation de l’équipe",
+    "backToHome": "Reviens à l’accueil",
+    "todayIntro": "Ce qu’il faut faire maintenant.",
+    "participants": "Participantes",
+    "content": "Contenu"
+  }
+}

@@ -80,6 +80,7 @@ export const localizedKnowledgeBodySchema = z
     ca: knowledgeBlocksSchema.optional(),
     es: knowledgeBlocksSchema.optional(),
     en: knowledgeBlocksSchema.optional(),
+    fr: knowledgeBlocksSchema.optional(),
     ar: knowledgeBlocksSchema.optional(),
     fa: knowledgeBlocksSchema.optional(),
   })
@@ -91,6 +92,7 @@ export const knowledgeTitleSchema = z
     ca: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
     es: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
     en: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
+    fr: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
     ar: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
     fa: nonEmptyText(MAX_KNOWLEDGE_TITLE_LENGTH).optional(),
   })
@@ -337,6 +339,8 @@ export interface KnowledgeArticleListRow {
   readonly publication_consent_version: string | null;
   readonly author_id: string | null;
   readonly author_first_name: string | null;
+  /** Who created it: the team member for an article (RAPP-639). */
+  readonly created_by: string | null;
   readonly reviewer_note: string | null;
   readonly is_published: boolean;
   readonly published_at: string | null;
@@ -352,7 +356,7 @@ export interface KnowledgeArticlePage {
 
 type Client = SupabaseClient<Database>;
 const KNOWLEDGE_COLUMNS =
-  'id, category_id, category:knowledge_categories!knowledge_articles_category_same_org(id, name, slug, icon, sort_order), title, body, image_url, video_url, external_url, content_type, story_status, submission_language, story_image_urls, publication_consent, publication_consent_at, publication_consent_version, author_id, author_first_name, reviewer_note, is_published, published_at, expires_at, created_at, updated_at';
+  'id, category_id, category:knowledge_categories!knowledge_articles_category_same_org(id, name, slug, icon, sort_order), title, body, image_url, video_url, external_url, content_type, story_status, submission_language, story_image_urls, publication_consent, publication_consent_at, publication_consent_version, author_id, author_first_name, created_by, reviewer_note, is_published, published_at, expires_at, created_at, updated_at';
 
 export async function fetchKnowledgeCategories(
   client: Client,

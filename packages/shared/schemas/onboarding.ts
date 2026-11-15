@@ -14,6 +14,12 @@
 
 import { z } from 'zod';
 import { isCanonicalMunicipality } from '../i18n/municipalities';
+import {
+  DEFAULT_FOLLOW_UP_ASKING,
+  ownFieldAsking,
+  type FollowUpAsking,
+  type OwnFieldAsking,
+} from '../onboarding/follow-ups';
 import type { IntakeQuestion } from '../onboarding/intake';
 import {
   DEFAULT_REQUIRED_QUESTIONS,
@@ -22,7 +28,6 @@ import {
 } from '../onboarding/question-states';
 import { languageCodeSchema } from './language';
 import { personNameSchema } from './person-name';
-import type { SeasonAnswerFields } from './season';
 
 /**
  * Which questions need an answer is data (RAPP-611): staff choose per
@@ -232,10 +237,74 @@ export function refineDocumentNumber(
 
 export const DOCUMENTATION_FIELD_QUESTIONS: FieldQuestions = { documentType: 'document' };
 
-/** The document step; staff may make the document required (RAPP-611): "none" is an answer. */
-export function documentationStepSchemaFor(required: RequiredQuestions) {
+const DOCUMENT_FOLLOW_UPS = {
+  nie: 'documentation-nie',
+  passport: 'documentation-passport',
+  other: 'documentation-other',
+} as const;
+
+/**
+ * How the follow-up of her document asks its number and its name (RAPP-720),
+ * as staff placed them; null for no document or none.
+ */
+export function documentDetailAsking(
+  asking: FollowUpAsking,
+  type: DocumentType | undefined,
+): { readonly number: OwnFieldAsking; readonly name: OwnFieldAsking } | null {
+  if (type === undefined || type === 'none') return null;
+  const screen = DOCUMENT_FOLLOW_UPS[type];
+  return {
+    number: ownFieldAsking(asking, screen, 'document_number'),
+    name: ownFieldAsking(asking, screen, 'document_name'),
+  };
+}
+
+/**
+ * The document rule as her follow-up screen asks it (RAPP-720): what it
+ * requires, and a NIE's form when it asks the number. At the end of her
+ * Onboarding (`atTheEnd`) only the number of a NIE or a passport is required,
+ * as before.
+ */
+export function refineDocumentDetails(asking: FollowUpAsking, atTheEnd: boolean) {
+  return (
+    step: { documentType?: DocumentType; documentName?: string; documentNumber?: string },
+    context: z.RefinementCtx,
+  ): void => {
+    const detail = documentDetailAsking(asking, step.documentType);
+    if (detail === null) return;
+    const numberIsRequired =
+      detail.number === 'required' && (!atTheEnd || step.documentType !== 'other');
+    if (step.documentNumber === undefined && numberIsRequired) {
+      context.addIssue({ code: 'custom', path: ['documentNumber'], message: 'required' });
+    }
+    if (step.documentName === undefined && detail.name === 'required' && !atTheEnd) {
+      context.addIssue({ code: 'custom', path: ['documentName'], message: 'required' });
+    }
+    if (
+      step.documentType === 'nie' &&
+      detail.number !== 'not_asked' &&
+      step.documentNumber !== undefined &&
+      !NIE_PATTERN.test(step.documentNumber)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['documentNumber'],
+        message: 'a NIE is one letter, seven digits, one letter',
+      });
+    }
+  };
+}
+
+/**
+ * The document step; staff may make the document required (RAPP-611): "none"
+ * is an answer. Its follow-up's number counts as its placements say (RAPP-720).
+ */
+export function documentationStepSchemaFor(
+  required: RequiredQuestions,
+  asking: FollowUpAsking = DEFAULT_FOLLOW_UP_ASKING,
+) {
   return documentationFields
-    .superRefine(refineDocumentNumber)
+    .superRefine(refineDocumentDetails(asking, true))
     .superRefine(requireAnswers(DOCUMENTATION_FIELD_QUESTIONS, required), ALWAYS_CHECK);
 }
 
@@ -381,26 +450,6 @@ export const termsStepSchema = z.object({
 });
 export type TermsStep = z.infer<typeof termsStepSchema>;
 
-export interface OnboardingSteps {
-  identity: IdentityStep;
-  documentation: DocumentationStep;
-  logistics: LogisticsStep;
-  /** The registration questions (RAPP-306), all optional. */
-  season?: SeasonAnswerFields;
-  terms: TermsStep;
-}
-
-export interface TermsContext {
-  termsVersion: string;
-  localeShown: z.infer<typeof languageCodeSchema>;
-}
-
-/**
- * The exact snake_case payload `public.complete_onboarding(jsonb)` reads.
- * Centralized here because no type checker crosses the SQL boundary: a
- * mistyped key would silently become a NULL column, and this mapper plus its
- * test are the only guard.
- */
 /** A number travels only with a type that takes one. */
 export function documentNumberToSend(document: {
   readonly documentType?: DocumentType;
@@ -416,54 +465,3 @@ export function documentNameToSend(document: {
 }): string | null {
   return document.documentType === 'other' ? document.documentName?.trim() || null : null;
 }
-
-export function buildCompleteOnboardingPayload(steps: OnboardingSteps, terms: TermsContext) {
-  return {
-    first_name: steps.identity.firstName,
-    last_name: steps.identity.lastName,
-    // An optional answer she did not give travels as none (RAPP-611).
-    date_of_birth: steps.identity.dateOfBirth ?? null,
-    place_of_birth: steps.identity.placeOfBirth ?? null,
-    nationality: steps.identity.nationality ?? null,
-    preferred_language: steps.identity.preferredLanguage,
-    document_type: steps.documentation.documentType ?? null,
-    document_number: documentNumberToSend(steps.documentation),
-    document_name: documentNameToSend(steps.documentation),
-    phone: steps.logistics.phone ?? null,
-    address: steps.logistics.address ?? null,
-    city: steps.logistics.city ?? null,
-    postal_code: steps.logistics.postalCode ?? null,
-    // The entity travels only when answered: "None" is null, and a key left
-    // out is no answer, so the server keeps what is stored (RAPP-611).
-    ...(steps.logistics.referenceEntity === undefined
-      ? {}
-      : { reference_entity: steps.logistics.referenceEntity }),
-    reference_contact_name: steps.logistics.referenceContactName ?? null,
-    // No answer to dependants is unknown (null), never "no".
-    has_dependents: steps.logistics.hasDependents ?? null,
-    num_dependents: steps.logistics.numDependents,
-    clothing_size: steps.logistics.clothingSize ?? null,
-    shoe_size: steps.logistics.shoeSize ?? null,
-    // The registration questions (RAPP-306), only when the screen was shown.
-    ...(steps.season === undefined
-      ? {}
-      : {
-          applicant_status: steps.season.applicantStatus ?? null,
-          applicant_status_details:
-            steps.season.applicantStatus === 'other'
-              ? (steps.season.applicantStatusDetails ?? null)
-              : null,
-          supporting_entities:
-            steps.season.supportingEntities === undefined ||
-            steps.season.supportingEntities.length === 0
-              ? null
-              : steps.season.supportingEntities,
-          childcare_need: steps.season.childcareNeed ?? null,
-          specific_needs: steps.season.specificNeeds ?? null,
-        }),
-    media_consent: steps.terms.mediaConsent,
-    terms_version: terms.termsVersion,
-    locale_shown: terms.localeShown,
-  };
-}
-export type CompleteOnboardingPayload = ReturnType<typeof buildCompleteOnboardingPayload>;

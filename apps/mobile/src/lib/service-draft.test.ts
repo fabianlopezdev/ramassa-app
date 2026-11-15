@@ -16,7 +16,7 @@ import {
 } from './service-draft';
 
 const NOW = new Date('2026-10-14T10:00:00.000Z');
-const label = (text: string) => ({ ca: text, es: text, en: text, ar: text, fa: text });
+const label = (text: string) => ({ ca: text, es: text, en: text, fr: text, ar: text, fa: text });
 
 const leisure = parseServiceCategoryRow({
   id: '5eed0000-0000-4000-8009-000000000007',
@@ -81,6 +81,7 @@ function approved(text: string): TranslationReview {
     translations: {
       es: `[es] ${text}`,
       en: `[en] ${text}`,
+      fr: `[fr] ${text}`,
       ar: `[ar] ${text}`,
       fa: `[fa] ${text}`,
     },

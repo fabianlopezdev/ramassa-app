@@ -1,0 +1,612 @@
+/**
+ * The player profile layout (RAPP-649): what Ramassà knows about a player,
+ * and where it asks.
+ *
+ *   - a **section** groups fields the way the team reads a profile (Identitat,
+ *     Contacte, Origen...); staff rename and reorder them;
+ *   - a **field** is one piece of information, defined once with its type and
+ *     privacy level. Built-in fields are the app's own questions; custom fields
+ *     are what staff add, and keep the id of the question they were;
+ *   - a **placement** puts a field on a surface (her onboarding at one screen,
+ *     the entity form, the season re-registration) with its order, whether it
+ *     is required there and an optional wording per language. A field with no
+ *     placement is filled in by the team only.
+ *
+ * `intake_catalog` sends `sections`, `fields` and `placements`; the database
+ * checks every rule, and the functions below call its writers.
+ */
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { z } from 'zod';
+import { AppError, databaseErrorCode } from '../errors';
+import { SUPPORTED_LANGUAGES } from '../i18n/languages';
+import { resolveLocalizedText } from '../i18n/localized-content';
+import { INTAKE_QUESTIONS, type IntakeQuestion } from '../onboarding/intake';
+import {
+  isSystemFieldKey,
+  SYSTEM_FIELD_QUESTIONS,
+  type SystemFieldKey,
+} from '../onboarding/system-fields';
+import type { LanguageCode } from '../schemas/language';
+import type { Database, Json } from '../types/database';
+import { CUSTOM_QUESTION_TYPES, type CustomQuestionType } from './question-types';
+
+type Client = SupabaseClient<Database>;
+
+function databaseError(error: { readonly message: string; readonly code?: string }): AppError {
+  return new AppError(databaseErrorCode(error.message, error.code), { message: error.message });
+}
+
+/** Localized text as stored: any of the supported languages. */
+export const anyLanguageTextSchema = z.object({
+  ca: z.string().optional(),
+  es: z.string().optional(),
+  en: z.string().optional(),
+  fr: z.string().optional(),
+  ar: z.string().optional(),
+  fa: z.string().optional(),
+});
+export type BuilderText = z.infer<typeof anyLanguageTextSchema>;
+
+export const QUESTION_PRIVACY_LEVELS = ['normal', 'personal', 'sensitive'] as const;
+export type QuestionPrivacy = (typeof QUESTION_PRIVACY_LEVELS)[number];
+
+/** Where a field is asked; `authorization` is the season authorization's Health screen (RAPP-698). */
+export const PROFILE_SURFACES = [
+  'onboarding',
+  'entity_form',
+  'season',
+  'authorization',
+  // A form the team created (RAPP-700): its screen and the form name the placement.
+  'custom_form',
+] as const;
+
+/**
+ * The season authorization's own fields (RAPP-698): team fields the signing
+ * functions find by key. The database keeps the same list
+ * (`private.authorization_field_keys`).
+ */
+export const AUTHORIZATION_FIELD_KEYS = [
+  'health_info',
+  'emergency_contact_name',
+  'emergency_contact_relation',
+  'emergency_contact_phone',
+] as const;
+export type AuthorizationFieldKey = (typeof AUTHORIZATION_FIELD_KEYS)[number];
+export type ProfileSurface = (typeof PROFILE_SURFACES)[number];
+
+export const PROFILE_FIELD_KINDS = ['builtin', 'custom'] as const;
+export type ProfileFieldKind = (typeof PROFILE_FIELD_KINDS)[number];
+
+// The catalog ----------------------------------------------------------------------------------
+
+const sectionSchema = z.object({
+  id: z.uuid(),
+  key: z.string(),
+  title: anyLanguageTextSchema,
+  sort_order: z.number().int(),
+  is_builtin: z.boolean(),
+});
+
+const fieldOptionSchema = z.object({
+  id: z.uuid(),
+  // The stable key of an app field's option (D5): `nie`, `M`, `yes`.
+  key: z.string().nullable().optional(),
+  label: anyLanguageTextSchema,
+  sort_order: z.number().int(),
+  is_archived: z.boolean(),
+});
+
+const fieldSchema = z.object({
+  id: z.uuid(),
+  section_id: z.uuid(),
+  kind: z.enum(PROFILE_FIELD_KINDS),
+  system_key: z.string().nullable(),
+  question_type: z.enum(CUSTOM_QUESTION_TYPES),
+  label: anyLanguageTextSchema,
+  help: anyLanguageTextSchema.nullable(),
+  privacy: z.enum(QUESTION_PRIVACY_LEVELS),
+  // A permission a reader needs on top of the privacy level (RAPP-698).
+  read_permission: z.string().nullable().optional(),
+  default_required: z.boolean(),
+  settings: z.unknown().optional(),
+  show_when_field_id: z.uuid().nullable(),
+  show_when_option_id: z.uuid().nullable(),
+  sort_order: z.number().int(),
+  is_archived: z.boolean(),
+  created_at: z.string(),
+  // Only for the people who design the layout.
+  created_by: z.uuid().nullable().optional(),
+  created_by_name: z.string().nullable().optional(),
+  has_answers: z.boolean().nullable().optional(),
+  options: z.array(fieldOptionSchema),
+});
+
+const placementSchema = z.object({
+  id: z.uuid(),
+  field_id: z.uuid(),
+  surface: z.enum(PROFILE_SURFACES),
+  screen_key: z.string().nullable(),
+  custom_form_id: z.uuid().nullable().optional(),
+  sort_order: z.number().int(),
+  required: z.boolean(),
+  label_override: anyLanguageTextSchema.nullable(),
+  help_override: anyLanguageTextSchema.nullable(),
+  // The question as a published version froze it (schema 2, RAPP-771).
+  field: z
+    .object({
+      label: anyLanguageTextSchema,
+      help: anyLanguageTextSchema.nullable(),
+      options: z.array(z.object({ id: z.uuid(), label: anyLanguageTextSchema })).catch([]),
+    })
+    .optional()
+    .catch(undefined),
+});
+
+export interface ProfileSection {
+  readonly id: string;
+  readonly key: string;
+  readonly title: BuilderText;
+  readonly isBuiltin: boolean;
+}
+
+export interface ProfileFieldOption {
+  readonly id: string;
+  /** The stable key of an app field's option (`nie`, `M`); null for one staff added. */
+  readonly key?: string | null;
+  readonly label: BuilderText;
+  readonly isArchived: boolean;
+}
+
+export interface ProfileField {
+  readonly id: string;
+  readonly sectionId: string;
+  readonly kind: ProfileFieldKind;
+  /**
+   * The stable name features and the app's screens find the field by (D1):
+   * `date_of_birth`, `document_number`... Null for a field staff created.
+   */
+  readonly systemKey?: SystemFieldKey | null;
+  /**
+   * The app question a field stands for in her plan (the per-player choice):
+   * the field itself, or the first part of a question that was composite (the
+   * document type for the document). Null for the other parts and for a field
+   * staff created.
+   */
+  readonly builtinKey: IntakeQuestion | null;
+  /** One of the authorization's own fields (RAPP-698), by its key; null for every other. */
+  readonly authorizationKey?: AuthorizationFieldKey | null;
+  readonly type: CustomQuestionType;
+  readonly label: BuilderText;
+  readonly help: BuilderText | null;
+  readonly privacy: QuestionPrivacy;
+  /**
+   * A permission a reader needs on top of its privacy level, whatever the
+   * level: `participants.view_health` on her health (RAPP-698). Null for most.
+   */
+  readonly readPermission?: string | null;
+  /** What a new placement of it starts from. */
+  readonly defaultRequired: boolean;
+  /** The type's settings as stored; `parseQuestionSettings` reads them. */
+  readonly settings: unknown;
+  readonly showWhen?: { readonly fieldId: string; readonly optionId: string };
+  /** Its place in its section. */
+  readonly sortOrder: number;
+  readonly isArchived: boolean;
+  readonly createdAt: string;
+  /** Who created it, for the people who design the layout; null otherwise or unknown. */
+  readonly createdBy: string | null;
+  readonly createdByName: string | null;
+  /** Whether anything was answered: its privacy level is then fixed. Null when not sent. */
+  readonly hasAnswers: boolean | null;
+  readonly options: readonly ProfileFieldOption[];
+}
+
+export interface FieldPlacement {
+  readonly id: string;
+  readonly fieldId: string;
+  readonly surface: ProfileSurface;
+  /** On onboarding: an app screen (`equipment`) or a Ramassà screen's id; on a form, its screen's id. */
+  readonly screenKey: string | null;
+  /** The form the team created that asks it (RAPP-700); null everywhere else. */
+  readonly customFormId?: string | null;
+  /** Its place on its surface (and screen). */
+  readonly sortOrder: number;
+  readonly required: boolean;
+  readonly labelOverride: BuilderText | null;
+  readonly helpOverride: BuilderText | null;
+  /**
+   * Each option's label as a published version froze it (schema 2, RAPP-771),
+   * by option id. Absent on a draft and on an older version.
+   */
+  readonly frozenOptionLabels?: Readonly<Record<string, BuilderText>>;
+}
+
+/** Sections, fields and placements, each list in its stored order. */
+export interface ProfileLayout {
+  readonly sections: readonly ProfileSection[];
+  readonly fields: readonly ProfileField[];
+  readonly placements: readonly FieldPlacement[];
+}
+
+export const EMPTY_PROFILE_LAYOUT: ProfileLayout = { sections: [], fields: [], placements: [] };
+
+const layoutSchema = z.object({
+  sections: z.array(sectionSchema),
+  fields: z.array(fieldSchema),
+  placements: z.array(placementSchema),
+});
+
+function byOrder<Row extends { readonly sort_order: number }>(rows: readonly Row[]): Row[] {
+  return [...rows].sort((a, b) => a.sort_order - b.sort_order);
+}
+
+function isIntakeQuestion(key: string | null): key is IntakeQuestion {
+  return key !== null && (INTAKE_QUESTIONS as readonly string[]).includes(key);
+}
+
+/**
+ * The app question a system field stands for in her plan: the field itself,
+ * or the first part of a question that was composite. The other parts
+ * (`document_number`, `num_dependents`...) are fields of their own with no
+ * question; null for a Ramassà field.
+ */
+function questionOfSystemKey(systemKey: SystemFieldKey | null): IntakeQuestion | null {
+  if (systemKey === null) return null;
+  const question = SYSTEM_FIELD_QUESTIONS[systemKey];
+  const firstPart = (Object.keys(SYSTEM_FIELD_QUESTIONS) as SystemFieldKey[]).find(
+    (key) => SYSTEM_FIELD_QUESTIONS[key] === question,
+  );
+  return firstPart === systemKey && isIntakeQuestion(question) ? question : null;
+}
+
+function systemKeyOf(raw: string | null): SystemFieldKey | null {
+  return raw !== null && isSystemFieldKey(raw) ? raw : null;
+}
+
+/** The layout from the catalog; undefined when the catalog sends none. */
+export function parseProfileLayout(raw: {
+  readonly sections?: unknown;
+  readonly fields?: unknown;
+  readonly placements?: unknown;
+}): ProfileLayout | undefined {
+  if (raw.sections === undefined || raw.fields === undefined || raw.placements === undefined) {
+    return undefined;
+  }
+  const layout = layoutSchema.parse(raw);
+  return {
+    sections: byOrder(layout.sections).map((section) => ({
+      id: section.id,
+      key: section.key,
+      title: section.title,
+      isBuiltin: section.is_builtin,
+    })),
+    fields: byOrder(layout.fields).map((field) => ({
+      id: field.id,
+      sectionId: field.section_id,
+      kind: field.kind,
+      systemKey: systemKeyOf(field.system_key),
+      builtinKey: questionOfSystemKey(systemKeyOf(field.system_key)),
+      authorizationKey: (AUTHORIZATION_FIELD_KEYS as readonly string[]).includes(
+        field.system_key ?? '',
+      )
+        ? (field.system_key as AuthorizationFieldKey)
+        : null,
+      type: field.question_type,
+      label: field.label,
+      help: field.help,
+      privacy: field.privacy,
+      readPermission: field.read_permission ?? null,
+      defaultRequired: field.default_required,
+      settings: field.settings ?? {},
+      ...(field.show_when_field_id !== null && field.show_when_option_id !== null
+        ? { showWhen: { fieldId: field.show_when_field_id, optionId: field.show_when_option_id } }
+        : {}),
+      sortOrder: field.sort_order,
+      isArchived: field.is_archived,
+      createdAt: field.created_at,
+      createdBy: field.created_by ?? null,
+      createdByName: field.created_by_name ?? null,
+      hasAnswers: field.has_answers ?? null,
+      options: byOrder(field.options).map((option) => ({
+        id: option.id,
+        key: option.key ?? null,
+        label: option.label,
+        isArchived: option.is_archived,
+      })),
+    })),
+    placements: byOrder(layout.placements).map((placement) => ({
+      id: placement.id,
+      fieldId: placement.field_id,
+      surface: placement.surface,
+      screenKey: placement.screen_key,
+      customFormId: placement.custom_form_id ?? null,
+      sortOrder: placement.sort_order,
+      required: placement.required,
+      // A published version's wording is what she reads (RAPP-771); a draft reads the Fitxa.
+      labelOverride: placement.field?.label ?? placement.label_override,
+      helpOverride: placement.field === undefined ? placement.help_override : placement.field.help,
+      ...(placement.field === undefined
+        ? {}
+        : {
+            frozenOptionLabels: Object.fromEntries(
+              placement.field.options.map((option) => [option.id, option.label]),
+            ),
+          }),
+    })),
+  };
+}
+
+// Reading the layout ----------------------------------------------------------------------------
+
+export function fieldById(layout: ProfileLayout, id: string): ProfileField | undefined {
+  return layout.fields.find((field) => field.id === id);
+}
+
+/** The built-in field of one of the app's questions. */
+export function builtinField(
+  layout: ProfileLayout,
+  question: IntakeQuestion,
+): ProfileField | undefined {
+  return layout.fields.find((field) => field.builtinKey === question);
+}
+
+/** The app field with this system key. */
+export function systemField(
+  layout: ProfileLayout,
+  systemKey: SystemFieldKey,
+): ProfileField | undefined {
+  return layout.fields.find((field) => field.systemKey === systemKey);
+}
+
+/**
+ * The order fields are listed in (RAPP-658): the app's own fields first, in
+ * their natural order, then the fields staff created, A to Z in the reader's
+ * language. Nobody reorders them by hand.
+ */
+export function compareFields(language: LanguageCode) {
+  const name = (field: ProfileField) => resolveLocalizedText(field.label, language)?.text ?? '';
+  const isApp = (field: ProfileField) =>
+    (field.systemKey ?? null) !== null || field.builtinKey !== null;
+  return (a: ProfileField, b: ProfileField): number => {
+    const aIsApp = isApp(a);
+    if (aIsApp !== isApp(b)) return aIsApp ? -1 : 1;
+    if (aIsApp) return a.sortOrder - b.sortOrder;
+    return name(a).localeCompare(name(b), language, { sensitivity: 'base' });
+  };
+}
+
+/** A section's fields in that order; archived ones only when asked. */
+export function fieldsOfSection(
+  layout: ProfileLayout,
+  sectionId: string,
+  withArchived = false,
+  language: LanguageCode = 'ca',
+): readonly ProfileField[] {
+  return layout.fields
+    .filter((field) => field.sectionId === sectionId && (withArchived || !field.isArchived))
+    .sort(compareFields(language));
+}
+
+/** Every placement of one field. */
+export function placementsOf(layout: ProfileLayout, fieldId: string): readonly FieldPlacement[] {
+  return layout.placements.filter((placement) => placement.fieldId === fieldId);
+}
+
+/**
+ * The field's placement on a surface. A field is on each surface once, but
+ * for the sibling follow-ups of one question (RAPP-720): pass the screen to
+ * read the placement there.
+ */
+export function placementOn(
+  layout: ProfileLayout,
+  fieldId: string,
+  surface: ProfileSurface,
+  screenKey?: string | null,
+): FieldPlacement | undefined {
+  return layout.placements.find(
+    (placement) =>
+      placement.fieldId === fieldId &&
+      placement.surface === surface &&
+      (screenKey === undefined || placement.screenKey === screenKey),
+  );
+}
+
+/**
+ * The placements of live fields on a surface, in order: on onboarding, the
+ * ones of one screen.
+ */
+export function placementsOnSurface(
+  layout: ProfileLayout,
+  surface: ProfileSurface,
+  screenKey: string | null = null,
+): readonly FieldPlacement[] {
+  const live = new Set(layout.fields.filter((field) => !field.isArchived).map((field) => field.id));
+  return layout.placements
+    .filter(
+      (placement) =>
+        placement.surface === surface &&
+        ((surface !== 'onboarding' && surface !== 'custom_form') ||
+          placement.screenKey === screenKey) &&
+        live.has(placement.fieldId),
+    )
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+/** No surface asks it: the team fills it in on her page. */
+export function isTeamOnly(layout: ProfileLayout, fieldId: string): boolean {
+  return placementsOf(layout, fieldId).length === 0;
+}
+
+const SCREEN_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/** The Ramassà screen an onboarding placement names, or null for an app screen. */
+export function ramassaScreenIdOf(screenKey: string | null): string | null {
+  return screenKey !== null && SCREEN_ID_PATTERN.test(screenKey) ? screenKey : null;
+}
+
+/**
+ * The wording she sees for a placement, in every supported language: its override
+ * in each language that has one, else the field's own name and help in that
+ * language (as the field's own text falls back, never to the override).
+ */
+export function placementWording(
+  placement: FieldPlacement,
+  field: ProfileField,
+): { readonly label: BuilderText; readonly help: BuilderText | null } {
+  return {
+    label: overlaid(field.label, placement.labelOverride) ?? {},
+    help: overlaid(field.help, placement.helpOverride),
+  };
+}
+
+/** The wording she sees for a placement in one language. */
+export function placementWordingIn(
+  placement: FieldPlacement,
+  field: ProfileField,
+  language: LanguageCode,
+): { readonly label: string; readonly help: string } {
+  const wording = placementWording(placement, field);
+  return {
+    label: wording.label[language] ?? '',
+    help: wording.help?.[language] ?? '',
+  };
+}
+
+function overlaid(own: BuilderText | null, override: BuilderText | null): BuilderText | null {
+  const written = (text: string | undefined) => (text ?? '').trim();
+  if (override === null || SUPPORTED_LANGUAGES.every((code) => written(override[code]) === '')) {
+    return own === null ? null : resolvedIn(own);
+  }
+  return Object.fromEntries(
+    SUPPORTED_LANGUAGES.flatMap((code) => {
+      const text =
+        written(override[code]) ||
+        (own === null ? '' : (resolveLocalizedText(own, code)?.text ?? ''));
+      return text === '' ? [] : [[code, text]];
+    }),
+  ) as BuilderText;
+}
+
+/** Each language as it reads, the fallbacks filled in. */
+function resolvedIn(text: BuilderText): BuilderText {
+  return Object.fromEntries(
+    SUPPORTED_LANGUAGES.flatMap((code) => {
+      const resolved = resolveLocalizedText(text, code)?.text ?? '';
+      return resolved === '' ? [] : [[code, resolved]];
+    }),
+  ) as BuilderText;
+}
+
+// Writing ---------------------------------------------------------------------------------------
+
+/** Creates a section (id null) or renames one. */
+export async function saveProfileSection(
+  client: Client,
+  id: string | null,
+  title: BuilderText,
+): Promise<string> {
+  const { data, error } = await client.rpc('save_profile_section', {
+    p_id: id as string,
+    p_title: title as Json,
+  });
+  if (error) throw databaseError(error);
+  return z.uuid().parse(data);
+}
+
+export interface ProfileFieldDraft {
+  readonly id: string | null;
+  /** Null keeps the field where it is. */
+  readonly sectionId: string | null;
+  readonly type: CustomQuestionType;
+  readonly label: BuilderText;
+  readonly help: BuilderText | null;
+  readonly privacy: QuestionPrivacy;
+  readonly defaultRequired: boolean;
+  readonly options: readonly { readonly id?: string; readonly label: BuilderText }[];
+  readonly settings: Readonly<Record<string, unknown>>;
+}
+
+/** Creates or changes a field; where it is asked is the placements' business. */
+export async function saveProfileField(client: Client, draft: ProfileFieldDraft): Promise<string> {
+  const { data, error } = await client.rpc('save_profile_field', {
+    p_id: draft.id as string,
+    p_section_id: draft.sectionId as string,
+    p_type: draft.type,
+    p_label: draft.label as Json,
+    p_help: draft.help as Json,
+    p_privacy: draft.privacy,
+    p_default_required: draft.defaultRequired,
+    p_options: [...draft.options] as Json,
+    p_settings: draft.settings as Json,
+  });
+  if (error) throw databaseError(error);
+  return z.uuid().parse(data);
+}
+
+/** How many answers a field keeps, hers and the entities' (RAPP-650); designers only. */
+export async function profileFieldAnswerCount(client: Client, id: string): Promise<number> {
+  const { data, error } = await client.rpc('profile_field_answer_count', { p_id: id });
+  if (error) throw databaseError(error);
+  return z.number().int().nonnegative().parse(data);
+}
+
+export async function archiveProfileField(client: Client, id: string): Promise<void> {
+  const { error } = await client.rpc('archive_profile_field', { p_id: id });
+  if (error) throw databaseError(error);
+}
+
+/** Puts a field on a surface (and screen, for onboarding). Returns the placement id. */
+export async function placeField(
+  client: Client,
+  fieldId: string,
+  surface: ProfileSurface,
+  screenKey: string | null = null,
+  required: boolean | null = null,
+): Promise<string> {
+  const { data, error } = await client.rpc('place_field', {
+    p_field_id: fieldId,
+    p_surface: surface,
+    p_screen_key: screenKey as string,
+    p_required: required as boolean,
+  });
+  if (error) throw databaseError(error);
+  return z.uuid().parse(data);
+}
+
+export async function removePlacement(client: Client, placementId: string): Promise<void> {
+  const { error } = await client.rpc('remove_placement', { p_placement_id: placementId });
+  if (error) throw databaseError(error);
+}
+
+export async function reorderPlacements(
+  client: Client,
+  surface: ProfileSurface,
+  screenKey: string | null,
+  ids: readonly string[],
+): Promise<void> {
+  const { error } = await client.rpc('reorder_placements', {
+    p_surface: surface,
+    p_screen_key: screenKey as string,
+    p_ids: [...ids],
+  });
+  if (error) throw databaseError(error);
+}
+
+/** Required on this surface and the wording per language; null leaves the field's own. */
+export async function savePlacement(
+  client: Client,
+  placementId: string,
+  change: {
+    readonly required: boolean;
+    readonly labelOverride: BuilderText | null;
+    readonly helpOverride: BuilderText | null;
+  },
+): Promise<void> {
+  const { error } = await client.rpc('save_placement', {
+    p_placement_id: placementId,
+    p_required: change.required,
+    p_label_override: change.labelOverride as Json,
+    p_help_override: change.helpOverride as Json,
+  });
+  if (error) throw databaseError(error);
+}

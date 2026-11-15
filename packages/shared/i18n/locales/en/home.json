@@ -16,5 +16,11 @@
   "emptyBody": "When the team posts an update, you will find it here.",
   "loadFailed": "We could not load the announcements.",
   "retryAction": "Try again",
-  "loading": "Loading announcements"
+  "loading": "Loading announcements",
+  "pendingForm": {
+    "eyebrow": "Form",
+    "deadline": "By {{date}}",
+    "answer": "Answer",
+    "dismiss": "Not now"
+  }
 }

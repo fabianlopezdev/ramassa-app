@@ -15,14 +15,15 @@
  */
 
 import { Button } from '@/components/ui/button';
-import { QUESTION_LABEL_KEYS } from '@/lib/builtin-questions';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { WIZARD_QUESTIONS, type IntakeQuestion } from '@ramassa/shared/intake';
+import {
+  INTAKE_QUESTION_LABEL_KEYS,
+  WIZARD_QUESTIONS,
+  type IntakeQuestion,
+} from '@ramassa/shared/intake';
 import { textIn, type CustomQuestion } from '@ramassa/shared/intake-builder';
 import {
-  sampleAnswerPayload,
-  sampleAnswersFor,
   sampleCustomAnswersFor,
   type TestPlayerScenario,
   type TestPlayerScenarioChange,
@@ -172,9 +173,7 @@ export function TestPlayerScenarioPanel({
             type="button"
             variant="outline"
             disabled={working}
-            onClick={() =>
-              void apply({ kind: 'answers', fill: sampleAnswersFor(FILL_ALL_QUESTIONS, language) })
-            }
+            onClick={() => void apply({ kind: 'answers', fill: FILL_ALL_QUESTIONS, language })}
           >
             {t('testScenarioFillAll')}
           </Button>
@@ -199,7 +198,7 @@ export function TestPlayerScenarioPanel({
                 data-answered={isAnswered ? 'true' : 'false'}
               >
                 <span className="text-start text-sm">
-                  {t(QUESTION_LABEL_KEYS[question] ?? question)}
+                  {t(INTAKE_QUESTION_LABEL_KEYS[question] ?? question)}
                   {' · '}
                   <span className="text-muted-foreground">
                     {isAnswered ? t('questionStatesAnswered') : t('questionStatesUnanswered')}
@@ -213,17 +212,17 @@ export function TestPlayerScenarioPanel({
                   aria-label={
                     isAnswered
                       ? t('testScenarioClearOne', {
-                          question: t(QUESTION_LABEL_KEYS[question] ?? question),
+                          question: t(INTAKE_QUESTION_LABEL_KEYS[question] ?? question),
                         })
                       : t('testScenarioFillOne', {
-                          question: t(QUESTION_LABEL_KEYS[question] ?? question),
+                          question: t(INTAKE_QUESTION_LABEL_KEYS[question] ?? question),
                         })
                   }
                   onClick={() =>
                     void apply(
                       isAnswered
                         ? { kind: 'answers', clear: [question] }
-                        : { kind: 'answers', fill: sampleAnswerPayload(question, language) },
+                        : { kind: 'answers', fill: [question], language },
                     )
                   }
                 >

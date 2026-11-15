@@ -5,14 +5,15 @@
  * questions. Her answers are kept for this season; last season's stay as they
  * were.
  *
- * The seasonal questions staff added (RAPP-307) follow the built-in ones and
- * save with them. When they cannot load, the built-in ones still work.
+ * The Fitxa fields placed on the season form (RAPP-655) follow the built-in
+ * ones, in their order and worded for her, and save with them. When they
+ * cannot load, the built-in ones still work and the failure is logged.
  */
 
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import {
-  CustomQuestionSections,
+  CustomQuestionList,
   type CustomAnswerDraft,
 } from '@/components/onboarding/custom-question-field';
 import { ProfileRow, ProfileSection } from '@/components/profile/profile-section';
@@ -25,6 +26,7 @@ import {
 import { continuousCorners } from '@/lib/continuous-corners';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
 import { playHaptic } from '@/lib/haptics/haptics';
+import { logger } from '@/lib/observability';
 import { customAnswersToSave, mergedCustomAnswers } from '@/lib/onboarding-intake';
 import { useBuiltinWording } from '@/lib/onboarding-intake-context';
 import { supabase } from '@/lib/supabase';
@@ -42,6 +44,7 @@ import {
   type AuthorizationContent,
   type AuthorizationTextField,
 } from '@ramassa/shared/authorization';
+import { toAppError } from '@ramassa/shared/errors';
 import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
 import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
 import { isRequiredQuestion, type IntakeQuestion } from '@ramassa/shared/intake';
@@ -51,14 +54,14 @@ import {
   fetchMyCustomAnswers,
   requiredBuiltinQuestions,
   reregistrationAsks,
-  saveMyCustomAnswers,
-  seasonScreens,
+  seasonFormQuestions,
   type CustomAnswers,
   type IntakeCatalog,
+  type SystemFieldIndex,
 } from '@ramassa/shared/intake-builder';
 import { fetchOwnProfile } from '@ramassa/shared/profile';
-import type { LanguageCode } from '@ramassa/shared/schemas';
-import { updateMySeasonAnswers } from '@ramassa/shared/seasons';
+import { profileFormOf, type LanguageCode } from '@ramassa/shared/schemas';
+import { mySeasonAnswers, updateMySeasonAnswers } from '@ramassa/shared/seasons';
 import { tokens } from '@ramassa/shared/tokens';
 
 function ActionButton({
@@ -121,6 +124,7 @@ export function ReregistrationSteps({
       t(AUTHORIZATION_BUNDLED_TEXT_KEYS.texts[field], { season: seasonName })
     ).replace(/\{\{\s*season\s*\}\}/gu, seasonName);
   const [phase, setPhase] = useState<'review' | 'season'>('review');
+  const intro = words(phase === 'review' ? 'reregistration_intro' : 'reregistration_season_intro');
   const [answers, setAnswers] = useState<SeasonAnswers | null>(null);
   const [hasFailed, setHasFailed] = useState(false);
   const [customDraft, setCustomDraft] = useState<CustomAnswerDraft>({});
@@ -145,15 +149,18 @@ export function ReregistrationSteps({
           fetchMyCustomAnswers(supabase),
         ]);
         return { catalog, answers };
-      } catch {
+      } catch (error) {
+        logger.warn('reregistration.catalog.load_failed', { error: toAppError(error) });
         return { catalog: EMPTY_INTAKE_CATALOG, answers: {} };
       }
     },
     refetchOnMount: 'always',
   });
+  // Her answers are read and written by field, through her organization's fields (RAPP-663).
+  const fields: SystemFieldIndex = profile.data?.fields ?? new Map();
   const catalog = staffQuestions.data?.catalog ?? EMPTY_INTAKE_CATALOG;
   const storedCustom = staffQuestions.data?.answers ?? {};
-  const customScreens = seasonScreens(catalog);
+  const customQuestions = seasonFormQuestions(catalog);
   // The same hide rule as her wizard (RAPP-612): a hidden season screen hides its question here too.
   const asks = reregistrationAsks(catalog);
   const wording = useBuiltinWording(catalog);
@@ -165,20 +172,24 @@ export function ReregistrationSteps({
       readonly season: SeasonAnswers;
       readonly custom: CustomAnswerDraft;
     }) => {
-      // Her staff answers first: the season call ends the re-registration and
-      // re-checks every required answer, staff ones included (RAPP-611).
-      await saveMyCustomAnswers(supabase, customAnswersToSave(customScreens, custom, storedCustom));
+      // The app's season questions and the team's, by field, in the one call
+      // that ends her re-registration and re-checks every required answer
+      // (RAPP-611, RAPP-663).
       await updateMySeasonAnswers(supabase, {
-        applicantStatus: value.applicantStatus ?? undefined,
-        supportingEntities: [...value.supportingEntities],
-        childcareNeed: value.childcareNeed ?? undefined,
-        specificNeeds: value.specificNeeds.trim() === '' ? undefined : value.specificNeeds,
+        ...mySeasonAnswers(fields, {
+          applicantStatus: value.applicantStatus ?? undefined,
+          supportingEntities: [...value.supportingEntities],
+          childcareNeed: value.childcareNeed ?? undefined,
+          specificNeeds: value.specificNeeds.trim() === '' ? undefined : value.specificNeeds,
+        }),
+        ...customAnswersToSave(customQuestions, custom, storedCustom),
       });
     },
   });
 
   const data = profile.data;
-  if (profile.isPending || staffQuestions.isPending || data === undefined || data === null) {
+  const her = data === undefined || data === null ? null : profileFormOf(data);
+  if (profile.isPending || staffQuestions.isPending || her === null) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-50">
         <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
@@ -189,11 +200,11 @@ export function ReregistrationSteps({
   const shown = (value: string | null | undefined) =>
     value === null || value === undefined || value === '' ? notGiven : value;
   const current: SeasonAnswers = answers ?? {
-    applicantStatus: data.applicant_status ?? null,
-    supportingEntities: data.supporting_entities ?? [],
+    applicantStatus: (her.applicantStatus as SeasonAnswers['applicantStatus']) ?? null,
+    supportingEntities: her.supportingEntities,
     seasonNumber: null,
-    childcareNeed: data.childcare_need ?? null,
-    specificNeeds: data.specific_needs ?? '',
+    childcareNeed: (her.childcareNeed as SeasonAnswers['childcareNeed']) ?? null,
+    specificNeeds: her.specificNeeds ?? '',
   };
 
   return (
@@ -216,41 +227,40 @@ export function ReregistrationSteps({
             >
               {words('reregistration_title')}
             </Text>
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-              {phase === 'review'
-                ? words('reregistration_intro')
-                : words('reregistration_season_intro')}
-            </Text>
+            {/* Staff may clear the intro (RAPP-710): then there is none. */}
+            {intro === '' ? null : (
+              <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>{intro}</Text>
+            )}
           </View>
 
           {phase === 'review' ? (
             <>
               <ProfileSection title={t('summarySectionName')}>
-                <ProfileRow label={t('firstNameLabel')} value={data.first_name} />
-                <ProfileRow label={t('lastNameLabel')} value={data.last_name} />
-                <ProfileRow label={t('dateOfBirthLabel')} value={shown(data.date_of_birth)} />
+                <ProfileRow label={t('firstNameLabel')} value={her.firstName} />
+                <ProfileRow label={t('lastNameLabel')} value={her.lastName} />
+                <ProfileRow label={t('dateOfBirthLabel')} value={shown(her.dateOfBirth)} />
                 <ProfileRow
                   label={t('nationalityLabel')}
                   value={shown(
-                    data.nationality === null
+                    her.nationality === ''
                       ? null
-                      : (countryLabelForCanonical(data.nationality, locale) ?? data.nationality),
+                      : (countryLabelForCanonical(her.nationality, locale) ?? her.nationality),
                   )}
                 />
               </ProfileSection>
               <ProfileSection title={t('logisticsTitle')}>
-                <ProfileRow label={t('phoneLabel')} value={shown(data.phone)} />
-                <ProfileRow label={t('addressLabel')} value={shown(data.address)} />
+                <ProfileRow label={t('phoneLabel')} value={shown(her.phone)} />
+                <ProfileRow label={t('addressLabel')} value={shown(her.address)} />
                 <ProfileRow
                   label={t('cityLabel')}
                   value={shown(
-                    data.city === null
+                    her.city === undefined
                       ? null
-                      : (municipalityLabelForCanonical(data.city, locale) ?? data.city),
+                      : (municipalityLabelForCanonical(her.city, locale) ?? her.city),
                   )}
                 />
-                <ProfileRow label={t('clothingSizeLabel')} value={shown(data.clothing_size)} />
-                <ProfileRow label={t('shoeSizeLabel')} value={shown(data.shoe_size)} />
+                <ProfileRow label={t('clothingSizeLabel')} value={shown(her.clothingSize)} />
+                <ProfileRow label={t('shoeSizeLabel')} value={shown(her.shoeSize)} />
               </ProfileSection>
               <ActionButton
                 testID="reregistration-correct"
@@ -280,8 +290,9 @@ export function ReregistrationSteps({
                 shows={(question: IntakeQuestion) => asks(question)}
                 wording={wording}
               />
-              <CustomQuestionSections
-                screens={customScreens}
+              <CustomQuestionList
+                testID="reregistration-fields"
+                questions={customQuestions}
                 answers={mergedCustomAnswers(storedCustom, customDraft)}
                 errors={customErrors}
                 onChange={(questionId, value) => {
@@ -313,7 +324,7 @@ export function ReregistrationSteps({
                   // The same check and words as her wizard: nothing is sent
                   // while an answer does not fit its question.
                   const checked = checkCustomAnswers(
-                    customScreens.flatMap((screen) => screen.questions),
+                    customQuestions,
                     mergedCustomAnswers(storedCustom, customDraft),
                     t,
                   );

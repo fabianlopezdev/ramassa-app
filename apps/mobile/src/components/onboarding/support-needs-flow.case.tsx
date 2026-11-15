@@ -1,10 +1,17 @@
+import { wizardDraftStoreOn } from '@/lib/wizard-draft';
 import { fireEvent, render } from '@testing-library/react';
 import { afterAll, beforeEach, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
+import { EMPTY_INTAKE_CATALOG, systemFieldIndexFromCatalog } from '@ramassa/shared/intake-builder';
 import { createInMemoryOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
 import { decodeSupportNeeds } from '@ramassa/shared/schemas';
+import { systemFieldsCatalogFixture } from '@ramassa/shared/testing';
 
-const store = createInMemoryOnboardingDraftStore();
+// Her draft is kept by field (RAPP-663): the screens save through her fields.
+const store = wizardDraftStoreOn(
+  createInMemoryOnboardingDraftStore(),
+  systemFieldIndexFromCatalog(systemFieldsCatalogFixture()),
+);
 const push = mock(() => {});
 const replace = mock(() => {});
 const goNext = mock(() => {});
@@ -12,6 +19,7 @@ let category = 'accessibility';
 let editing = false;
 mock.module('@/lib/onboarding', () => ({ onboardingDraftStore: store }));
 mock.module('expo-router', () => ({
+  useNavigation: () => ({ getState: () => undefined }),
   useRouter: () => ({ push, replace }),
   useLocalSearchParams: () => ({ category }),
   Redirect: () => null,
@@ -20,6 +28,7 @@ mock.module('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, values?: Record<string, string>) =>
       values ? `${key} ${Object.values(values).join(' ')}` : key,
+    i18n: { resolvedLanguage: 'ca' },
   }),
 }));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
@@ -31,6 +40,7 @@ mock.module('@/components/onboarding/wizard-validation-summary', () => ({
   WizardValidationSummary: () => null,
 }));
 mock.module('@/components/onboarding/field-error-text', () => ({ FieldErrorText: () => null }));
+mock.module('@/components/onboarding/question-help', () => ({ QuestionHelp: () => null }));
 mock.module('@/lib/onboarding-intake-context', () => ({
   useWizardStep: () => ({
     // Nothing staff made required here (RAPP-611).
@@ -41,7 +51,11 @@ mock.module('@/lib/onboarding-intake-context', () => ({
     goNext,
     previousDraftStep: 'participation-support',
     goBack: () => {},
+    // The screen under this one is not the choice, so Back replaces (RAPP-707).
+    isBelow: () => false,
   }),
+  // A catalog with no app fields: each follow-up starts as the app's own (RAPP-782).
+  useWizardIntake: () => ({ catalog: EMPTY_INTAKE_CATALOG, hidden: new Set() }),
 }));
 mock.module('@/components/onboarding/wizard-frame', () => ({
   WizardFrame: ({
@@ -127,7 +141,8 @@ test('multiple needs share one explanation screen, preserve Back answers and fin
   expect(details.getByRole('heading').textContent).toContain('supportNeedsCombinedQuestion');
   expect(details.getByRole('heading').textContent).toContain('supportNeedAccessibility');
   expect(details.getByRole('heading').textContent).toContain('supportNeedCommunication');
-  expect((details.getByRole('textbox') as HTMLTextAreaElement).maxLength).toBe(2000);
+  // The details field's long text limit (RAPP-663).
+  expect((details.getByRole('textbox') as HTMLTextAreaElement).maxLength).toBe(4000);
   fireEvent.input(details.getByRole('textbox'), {
     target: { value: 'Step-free access and an interpreter' },
   });

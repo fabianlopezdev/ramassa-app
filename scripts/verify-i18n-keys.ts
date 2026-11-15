@@ -4,7 +4,7 @@
  * 1. Parity: every namespace has the same keys, non-empty texts and the same
  *    `{{placeholders}}` in each language it must ship in. Staff-only namespaces
  *    ship in Catalan, Spanish and English (ADR-026); every other namespace is
- *    seen by players and ships in all five languages (ADR-006).
+ *    seen by players and ships in every player language (ADR-006, RAPP-781).
  * 2. Missing: every literal `namespace:key` in the code exists in Catalan.
  * 3. Orphans: every Catalan key is used by the code. Keys the code builds at
  *    runtime count as used through their literal prefix (`status.${value}`).
@@ -15,7 +15,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Glob } from 'bun';
 
-export const PLAYER_LANGUAGES = ['ca', 'es', 'en', 'ar', 'fa'] as const;
+export const PLAYER_LANGUAGES = ['ca', 'es', 'en', 'fr', 'ar', 'fa'] as const;
 export const STAFF_LANGUAGES = ['ca', 'es', 'en'] as const;
 
 // Namespaces only the web admin and entity portal render.

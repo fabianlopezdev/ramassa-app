@@ -2,7 +2,7 @@
  * Generated IDESCAT municipality options (RAPP-100).
  *
  * The official Catalan toponym is the canonical stored value. Labels come
- * from IDESCAT for its supported app locales; Arabic and Farsi deliberately
+ * from IDESCAT for its supported app locales; French, Arabic and Farsi deliberately
  * retain that official toponym because IDESCAT publishes no translation for
  * those languages. The surrounding picker copy remains fully localized.
  */

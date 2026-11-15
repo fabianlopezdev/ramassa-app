@@ -62,3 +62,24 @@ test('empty checkbox is visible before selection and the same frame holds the dr
   expect(view.getByTestId('drawn-check').getAttribute('data-active')).toBe('true');
   expect(view.getByTestId('drawn-check').parentElement).toBe(frame);
 });
+
+test('an Onboarding consent left unticked says why the form waits (RAPP-699)', () => {
+  const props = {
+    testID: 'wizard-consent-sortides',
+    label: 'Vinc a les sortides.',
+    required: true,
+    requiredMark: 'Obligatori',
+    checked: false,
+    onToggle: () => {},
+  };
+  const view = render(createElement(ConsentRow, props));
+  expect(view.queryByText('Marca aquesta autorització per continuar.')).toBeNull();
+  view.rerender(
+    createElement(ConsentRow, {
+      ...props,
+      errorMessage: 'Marca aquesta autorització per continuar.',
+    }),
+  );
+  expect(view.getByText('Marca aquesta autorització per continuar.')).toBeTruthy();
+  expect(view.getByRole('checkbox', { name: 'Vinc a les sortides. (Obligatori)' })).toBeTruthy();
+});

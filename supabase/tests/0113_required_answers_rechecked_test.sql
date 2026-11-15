@@ -6,45 +6,82 @@
 --     built-in and staff ones. A staff tablet signing is not refused: signing
 --     mode has no season questions (RAPP-305, RAPP-306), and a refused
 --     offline signing would lose a witnessed signature.
--- 19. Joining re-checks a required staff question placed every season, as
---     her wizard asks it, not only the wizard-placed ones.
+-- 19. Joining re-checks a required field placed on the season form too,
+--     besides the ones placed on her onboarding.
 --
 -- Seed: design role ...097, staff ...002, player ...022 (has not signed this
--- season), screen ...8044...001, organization ...000.
+-- season), organization ...000.
 
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select plan(10);
 
+-- An app answer given by option key, as the app's screens send it by option id.
+create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
+  select case
+    when f.question_type in ('single_choice', 'search_choice') and jsonb_typeof(v) = 'string' then
+      coalesce((select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v #>> '{}'), v)
+    when f.question_type = 'multiple_choice' and jsonb_typeof(v) = 'array' then
+      coalesce((select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+                 where o.question_id = f.id and o.key in (select jsonb_array_elements_text(v))
+                having count(*) = jsonb_array_length(v)), v)
+    else v
+  end;
+$$;
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, pg_temp.by_option_key(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
 where not exists (select 1 from vault.secrets where name = 'app_encryption_key');
 
 -- Setup: a past season she signed on paper (she is returning), the applicant
--- status required, and a required staff question asked every season.
+-- status required, and a field required on the season form.
 insert into public.seasons (id, org_id, name, starts_on, is_current)
 values ('00000000-0000-0000-0000-0000000007a1', '5eed0000-0000-4000-8000-000000000000',
         '2025/26', '2025-09-01', false);
 insert into public.authorization_signatures (org_id, profile_id, season_id, method, paper_signed_on)
 values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000022',
         '00000000-0000-0000-0000-0000000007a1', 'paper', '2025-09-15');
-update public.profiles set applicant_status = null where id = '5eed0000-0000-4000-8000-000000000022';
-insert into public.custom_questions (id, org_id, screen_id, question_type, label, privacy, placements, sort_order)
-values ('00000000-0000-0000-0000-0000000007c1', '5eed0000-0000-4000-8000-000000000000',
-        '5eed0000-0000-4000-8044-000000000001', 'short_text', '{"ca": "Com vas aquesta temporada?"}',
-        'normal', array['season'], 92);
+delete from public.custom_answers
+ where profile_id = '5eed0000-0000-4000-8000-000000000022'
+   and question_id = pg_temp.field('applicant_status')::uuid;
+-- A Fitxa field placed on the season form only, required there.
+insert into public.profile_fields (id, org_id, section_id, kind, question_type, label, privacy, sort_order)
+select '00000000-0000-0000-0000-0000000007c1', '5eed0000-0000-4000-8000-000000000000', s.id, 'custom',
+       'short_text', '{"ca": "Com vas aquesta temporada?"}', 'normal', 92
+  from public.profile_sections s
+ where s.org_id = '5eed0000-0000-4000-8000-000000000000' and s.key = 'situation';
+insert into public.field_placements (org_id, field_id, surface, sort_order, required)
+values ('5eed0000-0000-4000-8000-000000000000', '00000000-0000-0000-0000-0000000007c1', 'season', 92, true);
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select public.save_builtin_question_required('applicant_status', true);
-select public.save_custom_question_required('00000000-0000-0000-0000-0000000007c1', true);
 reset role;
 
 -- 18. Re-registration ----------------------------------------------------------------------------------
 
+-- Every field by its id since RAPP-661, the app's and the staff's alike.
 select is(
-  private.missing_required_season_answers('5eed0000-0000-4000-8000-000000000022'),
-  array['applicant_status', 'custom:00000000-0000-0000-0000-0000000007c1'],
+  (select array_agg(m order by m) from unnest(private.missing_required_season_answers('5eed0000-0000-4000-8000-000000000022')) m),
+  (select array_agg(m order by m) from unnest(array['custom:' || pg_temp.field('applicant_status'),
+                                                   'custom:00000000-0000-0000-0000-0000000007c1']) m),
   'her missing required season answers, built-in and staff'
 );
 
@@ -74,7 +111,7 @@ select throws_ok(
   '23502', null::text, 'the built-in one is still missing'
 );
 select lives_ok(
-  $$ select public.update_my_season_answers('{"applicant_status": "refugee"}'::jsonb) $$,
+  $$ select public.update_my_season_answers(jsonb_build_object('answers', pg_temp.answers('{"applicant_status": "refugee"}'))) $$,
   'she answers it'
 );
 select lives_ok(
@@ -85,7 +122,9 @@ select lives_ok(
 
 -- A staff tablet signing still syncs: signing mode has no season questions.
 reset role;
-update public.profiles set applicant_status = null where id = '5eed0000-0000-4000-8000-000000000022';
+delete from public.custom_answers
+ where profile_id = '5eed0000-0000-4000-8000-000000000022'
+   and question_id = pg_temp.field('applicant_status')::uuid;
 delete from public.authorization_signatures
  where profile_id = '5eed0000-0000-4000-8000-000000000022' and season_id <> '00000000-0000-0000-0000-0000000007a1';
 set local role authenticated;
@@ -96,7 +135,7 @@ select lives_ok(
   'a witnessed tablet signing is never refused for her season answers'
 );
 
--- 19. Joining checks the questions asked every season --------------------------------------------------
+-- 19. Joining checks the fields on the season form --------------------------------------------------
 
 reset role;
 insert into auth.users (id, email) values
@@ -105,23 +144,23 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000007c3", "role": "authenticated"}';
 select throws_like(
   $$ select public.complete_onboarding_signed(
-       '{"first_name": "Nadia", "last_name": "Khoury", "date_of_birth": "1993-11-02",
-         "place_of_birth": "Homs", "nationality": "Síria", "reference_entity": null,
-         "has_dependents": false, "applicant_status": "refugee", "clothing_size": "M",
-         "shoe_size": "38", "media_consent": false,
-         "terms_version": "2026-07-01", "locale_shown": "ca"}'::jsonb,
+       jsonb_build_object('first_name', 'Nadia', 'last_name', 'Khoury', 'media_consent', false,
+         'terms_version', '2026-07-01', 'locale_shown', 'ca',
+         'answers', pg_temp.answers('{"date_of_birth": "1993-11-02", "place_of_birth": "Homs",
+           "nationality": "Síria", "reference_entity": null, "has_dependents": "no",
+           "applicant_status": "refugee", "clothing_size": "M", "shoe_size": "38"}')),
        '{"terms_accepted": true, "media_consent": false, "unable_to_draw": true}'::jsonb) $$,
-  '%required staff question%',
+  '%requires an answer to a required question%',
   'joining is refused while a required question asked every season has no answer'
 );
 select lives_ok(
   $$ select public.complete_onboarding_signed(
-       '{"first_name": "Nadia", "last_name": "Khoury", "date_of_birth": "1993-11-02",
-         "place_of_birth": "Homs", "nationality": "Síria", "reference_entity": null,
-         "has_dependents": false, "applicant_status": "refugee", "clothing_size": "M",
-         "shoe_size": "38", "media_consent": false,
-         "custom_answers": {"00000000-0000-0000-0000-0000000007c1": "Bé"},
-         "terms_version": "2026-07-01", "locale_shown": "ca"}'::jsonb,
+       jsonb_build_object('first_name', 'Nadia', 'last_name', 'Khoury', 'media_consent', false,
+         'terms_version', '2026-07-01', 'locale_shown', 'ca',
+         'answers', pg_temp.answers('{"date_of_birth": "1993-11-02", "place_of_birth": "Homs",
+           "nationality": "Síria", "reference_entity": null, "has_dependents": "no",
+           "applicant_status": "refugee", "clothing_size": "M", "shoe_size": "38"}')
+           || '{"00000000-0000-0000-0000-0000000007c1": "Bé"}'),
        '{"terms_accepted": true, "media_consent": false, "unable_to_draw": true}'::jsonb) $$,
   'with it answered, she joins'
 );

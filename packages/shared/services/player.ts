@@ -48,6 +48,7 @@ const completeLocalizedTextSchema = z.object({
   ca: z.string().min(1),
   es: z.string().min(1),
   en: z.string().min(1),
+  fr: z.string().min(1).optional(),
   ar: z.string().min(1),
   fa: z.string().min(1),
 });

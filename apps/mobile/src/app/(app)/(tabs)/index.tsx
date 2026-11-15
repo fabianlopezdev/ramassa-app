@@ -13,6 +13,7 @@ import {
   AnnouncementFeedSkeleton,
   OfflineBanner,
 } from '@/components/announcements/feed-states';
+import { PendingFormPrompt } from '@/components/forms/pending-form-prompt';
 import { KnowledgeQuickActions } from '@/components/knowledge/knowledge-quick-actions';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -184,6 +185,8 @@ export default function HomeScreen() {
       onLoad={onListLoad}
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
+          {/* Her pending form comes first (RAPP-700). */}
+          <PendingFormPrompt />
           <View className="gap-xs">
             <Text
               accessibilityRole="header"

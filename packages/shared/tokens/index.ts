@@ -37,6 +37,10 @@ export const tokens = {
       900: '#0F172A',
     },
 
+    // The warm page canvas behind cards (RAPP-631): the same warm white as the
+    // player app's splash screen, so both apps share one paper colour.
+    surface: { warm: '#F7F5EE' },
+
     white: '#FFFFFF',
     black: '#000000',
   },

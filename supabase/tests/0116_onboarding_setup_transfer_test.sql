@@ -7,7 +7,7 @@
 --   2. The export never carries anything about a person: no profile id, no
 --      address, no test player, answer, acceptance or signature, and no
 --      `*_by` column. Every export is audited with its counts.
---   3. A round trip: a rich setup (every question type, a condition, archived
+--   3. A round trip: a rich setup (a field of every type, a condition, archived
 --      rows, a moved flow, a hidden screen, required flags, presets, the
 --      document note, terms and authorization drafts) exported, imported into
 --      a fresh organization and exported again gives the same document apart
@@ -15,7 +15,9 @@
 --      published.
 --   4. The import runs once: an organization with onboarding settings is
 --      refused, in the preview and in the import. A preview writes nothing.
---   5. An unknown schema version is refused with a clear message.
+--   5. An unknown schema version is refused with a clear message. The file is
+--      version 3 (RAPP-656): screens, sections, fields and placements, and
+--      nothing of the old question shape.
 --
 -- Seed: admin ...001, staff ...002 (no settings.organization), design role
 -- ...097, real player ...011, test player ...096, organization ...000.
@@ -23,18 +25,58 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(42);
+select plan(44);
+
+-- An app answer given by option key, as the app's screens send it by option id.
+create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
+  select case
+    when f.question_type in ('single_choice', 'search_choice') and jsonb_typeof(v) = 'string' then
+      coalesce((select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v #>> '{}'), v)
+    when f.question_type = 'multiple_choice' and jsonb_typeof(v) = 'array' then
+      coalesce((select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+                 where o.question_id = f.id and o.key in (select jsonb_array_elements_text(v))
+                having count(*) = jsonb_array_length(v)), v)
+    else v
+  end;
+$$;
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, pg_temp.by_option_key(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
 
 create temp table run (label text primary key, doc jsonb) on commit drop;
 grant all on run to authenticated;
 
 -- Normalizes a document for comparison: every id becomes its order of first
--- appearance, and the times and the legal texts (compared apart) go.
+-- appearance, and the times and the legal texts (compared apart) go. Fields
+-- and placements are compared as sets: built-in fields tie on their order.
 create function pg_temp.normalized(p_doc jsonb) returns jsonb language plpgsql as $$
 declare
-  body text := (p_doc - 'exported_at' - 'app_commit' - 'app_terms' - 'authorization')::text;
+  stable jsonb := (p_doc - 'exported_at' - 'app_commit' - 'app_terms' - 'authorization' - 'placements'
+                   - 'signature_blocks')
+    || jsonb_build_object('fields', (
+         select coalesce(jsonb_agg(f order by f ->> 'kind', f ->> 'system_key', f -> 'label' ->> 'ca', f ->> 'sort_order'), '[]'::jsonb)
+           from jsonb_array_elements(p_doc -> 'fields') f));
+  -- Blocks are ordered by their screen's id, which an import renews, so they
+  -- are compared as a set like the placements (RAPP-690).
+  body text := stable::text || chr(10) || (p_doc -> 'placements')::text
+    || chr(10) || coalesce(p_doc -> 'signature_blocks', '[]'::jsonb)::text;
   found_id text;
   position integer := 0;
+  result jsonb;
 begin
   for found_id in
     select m.id from (
@@ -47,7 +89,13 @@ begin
     position := position + 1;
     body := replace(body, found_id, 'ref-' || position);
   end loop;
-  return body::jsonb;
+  result := split_part(body, chr(10), 1)::jsonb;
+  return result || jsonb_build_object('placements', (
+    select coalesce(jsonb_agg(p order by p::text), '[]'::jsonb)
+      from jsonb_array_elements(split_part(body, chr(10), 2)::jsonb) p),
+    'signature_blocks', (
+    select coalesce(jsonb_agg(b order by b::text), '[]'::jsonb)
+      from jsonb_array_elements(split_part(body, chr(10), 3)::jsonb) b));
 end;
 $$;
 grant execute on function pg_temp.normalized(jsonb) to authenticated;
@@ -60,34 +108,46 @@ values ('5eed0000-0000-4000-8044-0000000006b1', '5eed0000-0000-4000-8000-0000000
        ('5eed0000-0000-4000-8044-0000000006b2', '5eed0000-0000-4000-8000-000000000000',
         '{"ca": "Pantalla arxivada"}', null, 'identity', 3);
 update public.intake_screens set is_archived = true where id = '5eed0000-0000-4000-8044-0000000006b2';
-insert into public.custom_questions (id, org_id, screen_id, question_type, label, privacy, placements, settings, is_required, sort_order)
-select ('5eed0000-0000-4000-8045-0000000006' || lpad(t.n::text, 2, '0'))::uuid,
-       '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8044-0000000006b1',
-       t.question_type, jsonb_build_object('ca', 'Pregunta ' || t.question_type), 'normal', array['wizard'],
-       t.settings::jsonb, t.n = 1, t.n
-  from (values
+-- Fifteen Fitxa fields, one of each type, placed on that screen; the first required there.
+create temp table every_type (n integer, question_type text, settings jsonb) on commit drop;
+insert into every_type values
     (1, 'short_text', '{}'), (2, 'long_text', '{}'), (3, 'yes_no_maybe', '{}'), (4, 'single_choice', '{}'),
     (5, 'multiple_choice', '{}'), (6, 'number', '{"integer": true, "min": 1, "max": 10}'),
     (7, 'date', '{"min_age": 16}'), (8, 'yes_no', '{}'), (9, 'phone', '{}'), (10, 'email', '{}'),
     (11, 'search_choice', '{}'), (12, 'item_list', '{"max_items": 5}'),
-    (13, 'consent', '{"text": {"ca": "Hi estic d''acord"}}'), (14, 'file_upload', '{"accept": "photo"}'),
-    (15, 'signature', '{}')
-  ) as t(n, question_type, settings);
+    (13, 'country', '{}'), (14, 'file_upload', '{"accept": "photo"}'),
+    (15, 'municipality', '{}');
+insert into public.profile_fields (id, org_id, section_id, kind, question_type, label, privacy, settings, sort_order)
+select ('5eed0000-0000-4000-8045-0000000006' || lpad(t.n::text, 2, '0'))::uuid,
+       '5eed0000-0000-4000-8000-000000000000', s.id, 'custom',
+       t.question_type, jsonb_build_object('ca', 'Pregunta ' || t.question_type), 'normal', t.settings, 200 + t.n
+  from every_type t
+  join public.profile_sections s on s.org_id = '5eed0000-0000-4000-8000-000000000000' and s.key = 'support';
+insert into public.field_placements (org_id, field_id, surface, screen_key, sort_order, required)
+select '5eed0000-0000-4000-8000-000000000000', ('5eed0000-0000-4000-8045-0000000006' || lpad(t.n::text, 2, '0'))::uuid,
+       'onboarding', '5eed0000-0000-4000-8044-0000000006b1', t.n, t.n = 1
+  from every_type t;
 insert into public.custom_question_options (id, org_id, question_id, label, sort_order, is_archived)
 values ('5eed0000-0000-4000-8046-0000000006c1', '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000604', '{"ca": "Sí, molt"}', 0, false),
        ('5eed0000-0000-4000-8046-0000000006c2', '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000604', '{"ca": "Gens"}', 1, false),
        ('5eed0000-0000-4000-8046-0000000006c3', '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000604', '{"ca": "Antiga"}', 2, true),
        ('5eed0000-0000-4000-8046-0000000006c4', '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000605', '{"ca": "A"}', 0, false),
        ('5eed0000-0000-4000-8046-0000000006c5', '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000611', '{"ca": "B"}', 0, false);
--- A condition on the same screen, and an archived question.
-update public.custom_questions
-   set show_when_question_id = '5eed0000-0000-4000-8045-000000000604',
+-- A condition on the same screen, and an archived field.
+update public.profile_fields
+   set show_when_field_id = '5eed0000-0000-4000-8045-000000000604',
        show_when_option_id = '5eed0000-0000-4000-8046-0000000006c1'
  where id = '5eed0000-0000-4000-8045-000000000602';
-update public.custom_questions set is_archived = true where id = '5eed0000-0000-4000-8045-000000000603';
+update public.profile_fields set is_archived = true where id = '5eed0000-0000-4000-8045-000000000603';
 update public.organizations
    set document_step_explanation = '{"ca": "Porta el teu document si el tens.", "en": "Bring your document if you have it."}'
  where id = '5eed0000-0000-4000-8000-000000000000';
+-- Two signature blocks (RAPP-690): one among the fields of that screen, one on the entity form.
+insert into public.form_blocks (org_id, surface, screen_key, kind, body, sort_order)
+values ('5eed0000-0000-4000-8000-000000000000', 'onboarding', '5eed0000-0000-4000-8044-0000000006b1', 'signature',
+        '{"ca": "Autoritzo el transport", "ar": "أوافق على النقل"}', 2),
+       ('5eed0000-0000-4000-8000-000000000000', 'entity_form', null, 'signature',
+        '{"ca": "La jugadora hi està d''acord"}', 0);
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
@@ -117,15 +177,15 @@ select lives_ok(
 );
 -- A test player with answers and an acceptance: none of it may travel.
 select lives_ok(
-  $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096', '{
-       "kind": "answers",
-       "fill": {
-         "first_name": "Joana", "last_name": "Provatura", "date_of_birth": "1995-05-15",
-         "place_of_birth": "Marroc", "nationality": "Marroc", "preferred_language": "ca",
-         "reference_entity": "Entitat de prova", "has_dependents": false, "num_dependents": 0,
-         "clothing_size": "M", "shoe_size": "38"
-       }
-     }'::jsonb) $$,
+  $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096', jsonb_build_object(
+       'kind', 'answers',
+       'fill', jsonb_build_object(
+         'first_name', 'Joana', 'last_name', 'Provatura', 'preferred_language', 'ca',
+         -- Her answers by field (RAPP-661).
+         'answers', pg_temp.answers('{
+           "date_of_birth": "1995-05-15", "place_of_birth": "Marroc", "nationality": "Marroc",
+           "reference_entity": "Entitat de prova", "has_dependents": "no",
+           "clothing_size": "M", "shoe_size": "38"}')))) $$,
   'a test player has answers'
 );
 
@@ -158,7 +218,7 @@ reset role;
 -- 2. Never people data ----------------------------------------------------------------------------------
 
 select ok(
-  (select doc ->> 'format' = 'ramassa.onboarding-setup' and (doc ->> 'schema_version')::integer = 1
+  (select doc ->> 'format' = 'ramassa.onboarding-setup' and (doc ->> 'schema_version')::integer = 3
           and doc ->> 'app_commit' = 'abc1234' from run where label = 'first'),
   'one versioned document with the app commit'
 );
@@ -197,14 +257,18 @@ select is(
   'no test fixture season'
 );
 select ok(
-  (select jsonb_array_length(doc -> 'screens') = 5
-          and (select count(*) from jsonb_array_elements(doc -> 'screens') s, jsonb_array_elements(s -> 'questions')) = 20
+  -- Six screens: the seed's archived one holds the seeded signature block (RAPP-690).
+  (select jsonb_array_length(doc -> 'screens') = 6
+          and (select count(*) from jsonb_array_elements(doc -> 'fields') f where f ->> 'kind' = 'custom') = 20
+          and not exists (select 1 from jsonb_array_elements(doc -> 'screens') s
+                           where s ? 'questions' or s ? 'builtin_screen')
+          and not exists (select 1 from jsonb_array_elements(doc -> 'fields') f where f ? 'legacy_screen_id')
           and doc -> 'app_terms' -> 'draft' -> 'content' -> 'body' ->> 'ca' = 'Termes dissenyats per en Marc.'
           and doc -> 'authorization' -> 'draft' -> 'content' -> 'title' ->> 'ca' = 'Autorització dissenyada'
           and jsonb_array_length(doc -> 'app_terms' -> 'published') = 1
           and jsonb_array_length(doc -> 'authorization' -> 'published') = 1
      from run where label = 'first'),
-  'screens, questions, archived rows and both legal drafts are in it'
+  'screens, fields, archived rows and both legal drafts are in it, and nothing of the old question shape'
 );
 select is(
   (select changes -> 'counts' ->> 'questions' from public.audit_log
@@ -231,7 +295,7 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-0000000006a1", 
 select throws_ok(
   $$ select public.preview_onboarding_setup_import(
        jsonb_set((select doc from run where label = 'first'), '{schema_version}', '99')) $$,
-  '22023', 'ONBOARDING_SETUP/UNKNOWN_SCHEMA_VERSION: this file uses onboarding setup schema version 99; this app reads version 1. Export it again from an app at the same version.',
+  '22023', 'ONBOARDING_SETUP/UNKNOWN_SCHEMA_VERSION: this file uses onboarding setup schema version 99; this app reads versions 1, 2 and 3. Export it again from an app at the same version.',
   'an unknown schema version is refused with a clear message'
 );
 select throws_ok(
@@ -241,7 +305,7 @@ select throws_ok(
 );
 select ok(
   (select (p ->> 'can_import')::boolean and p -> 'blockers' = '[]'::jsonb and p ->> 'problem' is null
-          and (p -> 'counts' ->> 'questions')::integer = 20 and (p -> 'counts' ->> 'screens')::integer = 5
+          and (p -> 'counts' ->> 'questions')::integer = 20 and (p -> 'counts' ->> 'screens')::integer = 6
           and p -> 'legal' -> 'app_terms' ->> 'source' = 'draft'
           and p -> 'legal' -> 'authorization' ->> 'source' = 'draft'
           and p -> 'warnings' @> '[{"code": "legal_drafts"}]'
@@ -268,6 +332,16 @@ select is(
   (select pg_temp.normalized(doc) from run where label = 'second'),
   (select pg_temp.normalized(doc) from run where label = 'first'),
   'exported again, it is the same document apart from ids and times'
+);
+select results_eq(
+  $$ select b.surface, b.screen_key = s.id::text, b.body, b.sort_order
+       from public.form_blocks b
+       left join public.intake_screens s on s.org_id = b.org_id and s.title ->> 'ca' = 'Totes les preguntes'
+      where b.org_id = '5eed0000-0000-4000-8000-0000000006a0'
+        and b.body ->> 'ca' <> 'Accepto les normes de convivència.' order by b.surface $$,
+  $$ values ('entity_form', null::boolean, '{"ca": "La jugadora hi està d''acord"}'::jsonb, 0),
+            ('onboarding', true, '{"ca": "Autoritzo el transport", "ar": "أوافق على النقل"}'::jsonb, 2) $$,
+  'the signature blocks arrive on their new screen and form, text and place kept (RAPP-690)'
 );
 select is(
   (select doc -> 'app_terms' -> 'draft' from run where label = 'second'),
@@ -307,13 +381,13 @@ select is(
   'every screen has a new id'
 );
 select is(
-  (select count(*)::integer from public.custom_questions q
-     join public.custom_questions gate on gate.id = q.show_when_question_id
+  (select count(*)::integer from public.profile_fields q
+     join public.profile_fields gate on gate.id = q.show_when_field_id
      join public.custom_question_options o on o.id = q.show_when_option_id
     where q.org_id = '5eed0000-0000-4000-8000-0000000006a0'
       and gate.org_id = q.org_id and o.org_id = q.org_id),
-  (select count(*)::integer from public.custom_questions
-    where org_id = '5eed0000-0000-4000-8000-000000000000' and show_when_question_id is not null),
+  (select count(*)::integer from public.profile_fields
+    where org_id = '5eed0000-0000-4000-8000-000000000000' and show_when_field_id is not null),
   'every condition points inside the new organization'
 );
 select ok(
@@ -364,15 +438,24 @@ select throws_ok(
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-0000000006a1", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 reset role;
 delete from public.intake_screens where org_id = '5eed0000-0000-4000-8000-0000000006a0';
-delete from public.builtin_question_overrides where org_id = '5eed0000-0000-4000-8000-0000000006a0';
+delete from public.profile_fields where org_id = '5eed0000-0000-4000-8000-0000000006a0' and kind = 'custom';
+-- The app questions' wording and required flags live on their placements (RAPP-666).
+update public.field_placements p
+   set label_override = null, help_override = null
+  from public.profile_fields f
+ where f.id = p.field_id and f.org_id = '5eed0000-0000-4000-8000-0000000006a0' and f.kind = 'builtin';
+select private.set_app_question_required('5eed0000-0000-4000-8000-0000000006a0', q.question,
+         q.question = any (private.default_required_intake_questions()))
+  from unnest(private.wizard_intake_questions()) q(question)
+ where not (q.question = any (private.locked_required_intake_questions()));
 delete from public.intake_builtin_screens where org_id = '5eed0000-0000-4000-8000-0000000006a0';
 delete from public.intake_flow_orders where org_id = '5eed0000-0000-4000-8000-0000000006a0';
-delete from public.intake_required_questions where org_id = '5eed0000-0000-4000-8000-0000000006a0';
 delete from public.intake_state_presets where org_id = '5eed0000-0000-4000-8000-0000000006a0';
 update public.organizations set document_step_explanation = null where id = '5eed0000-0000-4000-8000-0000000006a0';
 delete from public.app_terms_versions where org_id = '5eed0000-0000-4000-8000-0000000006a0' and published_at is null;
 delete from public.authorization_versions where org_id = '5eed0000-0000-4000-8000-0000000006a0';
 delete from public.seasons where org_id = '5eed0000-0000-4000-8000-0000000006a0';
+delete from public.form_blocks where org_id = '5eed0000-0000-4000-8000-0000000006a0';
 set local role authenticated;
 select ok(
   (select (p ->> 'can_import')::boolean
@@ -380,15 +463,27 @@ select ok(
   'emptied again, the organization can import again'
 );
 select ok(
+  (select (p ->> 'can_import')::boolean
+     from public.preview_onboarding_setup_import((select doc - 'signature_blocks' from run where label = 'first')) p),
+  'a file from before the signature blocks still imports'
+);
+select ok(
   (select not (p ->> 'can_import')::boolean
           and p ->> 'problem' like 'ONBOARDING_SETUP/REFUSED_VALUE: a question in the file%'
-     from public.preview_onboarding_setup_import(jsonb_set((select doc from run where label = 'first'),
-       '{screens,1,questions,0,question_type}', '"not_a_type"')) p),
+     from public.preview_onboarding_setup_import((
+       select jsonb_set(r.doc,
+                array['fields', (select (f.ordinality - 1)::text
+                                   from jsonb_array_elements(r.doc -> 'fields') with ordinality as f(field, ordinality)
+                                  where f.field ->> 'kind' = 'custom' order by f.ordinality limit 1),
+                      'question_type'],
+                '"not_a_type"')
+         from run r where r.label = 'first')) p),
   'a file the database would refuse is reported by the preview'
 );
 reset role;
 select is(
-  (select count(*)::integer from public.custom_questions where org_id = '5eed0000-0000-4000-8000-0000000006a0'),
+  (select count(*)::integer from public.profile_fields
+    where org_id = '5eed0000-0000-4000-8000-0000000006a0' and kind = 'custom'),
   0,
   'and nothing was written'
 );

@@ -1,13 +1,24 @@
+import { wizardDraftStoreOn } from '@/lib/wizard-draft';
 import { render } from '@testing-library/react';
 import { afterAll, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
 import type { WizardFlow } from '@ramassa/shared/intake';
-import { EMPTY_INTAKE_CATALOG, type IntakeScreen } from '@ramassa/shared/intake-builder';
+import {
+  EMPTY_INTAKE_CATALOG,
+  systemFieldIndexFromCatalog,
+  type IntakeScreen,
+} from '@ramassa/shared/intake-builder';
 import { createInMemoryOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
+import { systemFieldsCatalogFixture } from '@ramassa/shared/testing';
 
-const store = createInMemoryOnboardingDraftStore();
+// Her draft is kept by field (RAPP-663): the screens save through her fields.
+const store = wizardDraftStoreOn(
+  createInMemoryOnboardingDraftStore(),
+  systemFieldIndexFromCatalog(systemFieldsCatalogFixture()),
+);
 mock.module('@/lib/onboarding', () => ({ onboardingDraftStore: store }));
 mock.module('expo-router', () => ({
+  useNavigation: () => ({ getState: () => undefined }),
   useRouter: () => ({ push: () => {}, replace: () => {} }),
   useFocusEffect: () => {},
 }));
@@ -49,6 +60,11 @@ const transport: IntakeScreen = {
 let flow: WizardFlow = { order: [], hiddenScreens: new Set() };
 let hidden = new Set<string>();
 mock.module('@/lib/onboarding-intake-context', () => ({
+  // Her answers as the real one reads them: stored ones under her draft's (RAPP-715).
+  herWizardAnswers: (intake: { customAnswers: Record<string, unknown> }) => ({
+    ...intake.customAnswers,
+    ...store.loadStoredDraft()?.answers,
+  }),
   useWizardIntake: () => ({
     customAnswers: {},
     hidden,

@@ -10,17 +10,19 @@
  *    returns the same object, so a failing assertion is reproducible.
  * 2. **Overrides win.** Every factory takes a partial row and merges it last,
  *    so a test states only the field it is actually about.
- * 3. **Encrypted columns carry PLAINTEXT here.** `phone`, `address`,
- *    `postal_code`, and `document_number` are `bytea` in the database
- *    (ADR-004), but a factory models the object app code handles once it is
- *    past `decrypt_field`. A ciphertext blob would make a redaction test or a
- *    rendering test prove nothing.
+ * 3. **Sensitive answers carry PLAINTEXT here.** Her phone, address, postal
+ *    code and document number are stored encrypted (ADR-004), but a factory
+ *    models what app code handles once it is past `decrypt_field`. A
+ *    ciphertext blob would make a redaction test or a rendering test prove
+ *    nothing.
  *
  * The identity fields come from `fixtures.ts`, which `supabase/seed.sql`
- * mirrors; the derived filler below is generated from the same ordinal on both
- * sides, so a factory-built participant and the seeded row agree.
+ * mirrors. Her answers to the app's fields are by field (ADR-031):
+ * `buildAppAnswersFromFixture` derives them from the same ordinal the seed
+ * uses, so a factory-built participant and the seeded one agree.
  */
 
+import type { SystemFieldKey } from '../onboarding/system-fields';
 import {
   serializeServiceCategoryMetadataSchema,
   SERVICE_CATEGORY_DEFINITIONS,
@@ -75,15 +77,16 @@ export type EquipmentDeliveryRow = Database['public']['Tables']['equipment_deliv
 export type StockAlertRow = Database['public']['Tables']['stock_alerts']['Row'];
 export type AuditLogRow = Database['public']['Tables']['audit_log']['Row'];
 export type InviteRow = Database['public']['Tables']['invites']['Row'];
-export type ProfileAnswerRow = Database['public']['Tables']['profile_answers']['Row'];
 export type SeasonRow = Database['public']['Tables']['seasons']['Row'];
 export type AuthorizationVersionRow = Database['public']['Tables']['authorization_versions']['Row'];
 export type AppTermsVersionRow = Database['public']['Tables']['app_terms_versions']['Row'];
 export type AuthorizationSignatureRow =
   Database['public']['Tables']['authorization_signatures']['Row'];
-export type AuthorizationConsentEventRow =
-  Database['public']['Tables']['authorization_consent_events']['Row'];
-export type IntakeQuestionStateRow = Database['public']['Tables']['intake_question_states']['Row'];
+export type ConsentEventRow = Database['public']['Tables']['consent_events']['Row'];
+export type ConsentRow = Database['public']['Tables']['consents']['Row'];
+export type ConsentPlacementRow = Database['public']['Tables']['consent_placements']['Row'];
+export type WalkInConsentRow = Database['public']['Tables']['walk_in_consents']['Row'];
+export type CustomQuestionStateRow = Database['public']['Tables']['custom_question_states']['Row'];
 export type ServiceCategoryRow = Database['public']['Tables']['service_categories']['Row'];
 export type ServiceRow = Database['public']['Tables']['services']['Row'];
 export type ServiceImageRow = Database['public']['Tables']['service_images']['Row'];
@@ -149,39 +152,15 @@ const REFERRING_ENTITIES = [
 ] as const;
 
 /**
- * The filler fields, derived from the ordinal exactly as `supabase/seed.sql`
- * derives them. Deriving beats listing: twenty rows of hand-written sizes and
- * postal codes would be noise to read and a second place to update.
+ * The account settings, derived from the ordinal exactly as `supabase/seed.sql`
+ * derives them. A handful of accounts are deliberately imperfect: the app has
+ * to cope with a participant who never accepted the terms, one who was
+ * deactivated, and one banned from the forum. A uniformly happy dataset hides
+ * those screens.
  */
-function derivedProfileFields(fixture: PersonFixture) {
+function derivedAccountFields(fixture: PersonFixture) {
   const { ordinal } = fixture;
-  const hasNoDocument = ordinal % 5 === 0;
-  const hasNoPlaceOfBirth = ordinal % 11 === 0;
-  const hasDependents = ordinal % 3 === 0;
-  const referral = REFERRING_ENTITIES[ordinal % REFERRING_ENTITIES.length]!;
-
   return {
-    date_of_birth: `${1985 + (ordinal % 15)}-${pad(1 + (ordinal % 12), 2)}-${pad(1 + (ordinal % 28), 2)}`,
-    // Two participants keep a NULL birthplace, as the seed leaves them: a
-    // profile created before the field was required carries one, and staff have
-    // to supply it before they can save anything else about her.
-    place_of_birth: hasNoPlaceOfBirth
-      ? null
-      : (PLACES_OF_BIRTH_BY_NATIONALITY[fixture.nationality] ?? 'Vic'),
-    phone: `+346${pad(ordinal, 8)}`,
-    address: `Carrer de Prova, ${ordinal}`,
-    postal_code: POSTAL_CODES_BY_CITY[fixture.city] ?? '08500',
-    document_type: hasNoDocument ? 'none' : 'nie',
-    document_number: hasNoDocument ? null : `Y${pad(ordinal, 7)}Z`,
-    reference_entity: referral.entity,
-    reference_contact_name: referral.contact,
-    has_dependents: hasDependents,
-    num_dependents: hasDependents ? 1 + (ordinal % 4) : 0,
-    clothing_size: CLOTHING_SIZES[ordinal % CLOTHING_SIZES.length]!,
-    shoe_size: String(36 + (ordinal % 6)),
-    // A handful of accounts are deliberately imperfect: the app has to cope with
-    // a participant who never accepted the terms, one who was deactivated, and
-    // one banned from the forum. A uniformly happy dataset hides those screens.
     terms_accepted_at: ordinal % 7 === 0 ? null : FIXTURE_TIMESTAMP,
     is_active: ordinal % 13 !== 0,
     is_forum_banned: ordinal % 17 === 0,
@@ -189,6 +168,51 @@ function derivedProfileFields(fixture: PersonFixture) {
     // goes in RAPP-211.
     sessions_valid_after: null,
   };
+}
+
+/** One answer of an app field as the seed gives it: a choice by its option key. */
+export type AppAnswerFixture = string | number | readonly string[];
+
+/**
+ * A participant's answers to the app's fields, by system key, derived from the
+ * ordinal exactly as `supabase/seed.sql` derives them (ADR-031: her answers
+ * are by field, her profile holds her names and her account settings). A
+ * choice is its option key, as the seed writes it. Deriving beats listing:
+ * twenty rows of hand-written sizes and postal codes would be noise to read
+ * and a second place to update.
+ */
+export function buildAppAnswersFromFixture(
+  fixture: PersonFixture,
+): Readonly<Partial<Record<SystemFieldKey, AppAnswerFixture>>> {
+  const { ordinal } = fixture;
+  const hasNoDocument = ordinal % 5 === 0;
+  const hasDependents = ordinal % 3 === 0;
+  const referral = REFERRING_ENTITIES[ordinal % REFERRING_ENTITIES.length]!;
+  // Two participants have no birthplace, as the seed leaves them: a profile
+  // from before the field was required has none, and staff have to supply it
+  // before they can save anything else about her.
+  const placeOfBirth =
+    ordinal % 11 === 0 ? null : (PLACES_OF_BIRTH_BY_NATIONALITY[fixture.nationality] ?? 'Vic');
+  const answers: Partial<Record<SystemFieldKey, AppAnswerFixture | null>> = {
+    date_of_birth: `${1985 + (ordinal % 15)}-${pad(1 + (ordinal % 12), 2)}-${pad(1 + (ordinal % 28), 2)}`,
+    place_of_birth: placeOfBirth,
+    nationality: fixture.nationality,
+    address: `Carrer de Prova, ${ordinal}`,
+    city: fixture.city,
+    postal_code: POSTAL_CODES_BY_CITY[fixture.city] ?? '08500',
+    phone: `+346${pad(ordinal, 8)}`,
+    document_type: hasNoDocument ? 'none' : 'nie',
+    document_number: hasNoDocument ? null : `Y${pad(ordinal, 7)}Z`,
+    reference_entity: referral.entity,
+    reference_contact_name: referral.contact,
+    has_dependents: hasDependents ? 'yes' : 'no',
+    num_dependents: hasDependents ? 1 + (ordinal % 4) : null,
+    clothing_size: CLOTHING_SIZES[ordinal % CLOTHING_SIZES.length]!,
+    shoe_size: String(36 + (ordinal % 6)),
+  };
+  return Object.fromEntries(
+    Object.entries(answers).filter(([, value]) => value !== null && value !== undefined),
+  ) as Partial<Record<SystemFieldKey, AppAnswerFixture>>;
 }
 
 function pad(value: number, length: number): string {
@@ -204,7 +228,7 @@ export function buildOrganization(overrides: Partial<OrganizationRow> = {}): Org
     primary_color: '#0077B6',
     secondary_color: '#FFD166',
     default_language: 'ca',
-    available_languages: ['ca', 'es', 'en', 'ar', 'fa'],
+    available_languages: ['ca', 'es', 'en', 'fr', 'ar', 'fa'],
     locked_default_language: null,
     contact_email: 'contacte@example.test',
     contact_phone: '+34600000000',
@@ -243,6 +267,7 @@ export function buildService(overrides: Partial<ServiceRow> = {}): ServiceRow {
       ca: 'Habitació compartida per a dones',
       es: 'Habitación compartida para mujeres',
       en: 'Shared room for women',
+      fr: 'Chambre partagée pour femmes',
       ar: 'غرفة مشتركة للنساء',
       fa: 'اتاق مشترک برای زنان',
     },
@@ -292,6 +317,7 @@ export function buildServiceImage(overrides: Partial<ServiceImageRow> = {}): Ser
       ca: 'Habitació doble amb llum natural',
       es: 'Habitación doble con luz natural',
       en: 'Twin room with natural light',
+      fr: 'Chambre double lumineuse',
       ar: 'غرفة مزدوجة بإضاءة طبيعية',
       fa: 'اتاق دو نفره با نور طبیعی',
     },
@@ -322,6 +348,7 @@ export function buildForumCategory(overrides: Partial<ForumCategoryRow> = {}): F
       ca: 'Feina',
       es: 'Empleo',
       en: 'Jobs',
+      fr: 'Emplois',
       ar: 'العمل',
       fa: 'کار',
     },
@@ -431,6 +458,7 @@ export function buildAnnouncement(overrides: Partial<AnnouncementRow> = {}): Ann
       ca: 'Trobada de famílies',
       es: 'Encuentro de familias',
       en: 'Family gathering',
+      fr: 'Rencontre en famille',
       ar: 'لقاء العائلات',
       fa: 'گردهمایی خانواده‌ها',
     },
@@ -438,6 +466,7 @@ export function buildAnnouncement(overrides: Partial<AnnouncementRow> = {}): Ann
       ca: 'Dissabte compartirem un dinar al club.',
       es: 'El sábado compartiremos una comida en el club.',
       en: 'We will share lunch at the club on Saturday.',
+      fr: 'Nous partagerons le déjeuner au club samedi.',
       ar: 'سنتناول الغداء معًا في النادي يوم السبت.',
       fa: 'شنبه در باشگاه ناهار را با هم صرف می‌کنیم.',
     },
@@ -462,6 +491,7 @@ export function buildEventCategory(overrides: Partial<EventCategoryRow> = {}): E
       ca: 'Entrenaments',
       es: 'Entrenamientos',
       en: 'Training',
+      fr: 'Entraînement',
       ar: 'التدريبات',
       fa: 'تمرین ها',
     },
@@ -485,6 +515,7 @@ export function buildEvent(overrides: Partial<EventRow> = {}): EventRow {
       ca: 'Entrenament setmanal',
       es: 'Entrenamiento semanal',
       en: 'Weekly training',
+      fr: 'Entraînement de la semaine',
       ar: 'تدريب أسبوعي',
       fa: 'تمرین هفتگی',
     },
@@ -560,6 +591,7 @@ export function buildKnowledgeCategory(
       ca: 'Drets i asil',
       es: 'Derechos y asilo',
       en: 'Rights and asylum',
+      fr: 'Droits et asile',
       ar: 'الحقوق واللجوء',
       fa: 'حقوق و پناهندگی',
     },
@@ -577,7 +609,7 @@ export function buildKnowledgeArticle(
 ): KnowledgeArticleRow {
   const author = STAFF_FIXTURES.find((person) => person.role === 'staff')!;
   const body = Object.fromEntries(
-    ['ca', 'es', 'en', 'ar', 'fa'].map((language) => [
+    ['ca', 'es', 'en', 'fr', 'ar', 'fa'].map((language) => [
       language,
       [{ type: 'paragraph', text: `Safe account guide (${language})` }],
     ]),
@@ -591,6 +623,7 @@ export function buildKnowledgeArticle(
       ca: 'Protegeix el teu compte',
       es: 'Protege tu cuenta',
       en: 'Protect your account',
+      fr: 'Protège ton compte',
       ar: 'احمي حسابك',
       fa: 'از حساب خود محافظت کنید',
     },
@@ -687,14 +720,8 @@ export function buildProfileFromFixture(
     org_id: SEED_ORGANIZATION_ID,
     role: 'player',
     collaborating_entity_id: null,
-    // Postgres GENERATES this from the searchable fields (RAPP-23), so a
-    // fixture cannot meaningfully supply one: null stands for "whatever the
-    // database will derive", and no test should assert on it.
-    search_document: null,
     first_name: fixture.firstName,
     last_name: fixture.lastName,
-    nationality: fixture.nationality,
-    city: fixture.city,
     preferred_language: fixture.preferredLanguage,
     avatar_url: null,
     // Media consent defaults to NOT granted, which is the only defensible
@@ -709,25 +736,17 @@ export function buildProfileFromFixture(
     push_notifications_enabled: true,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
-    // The season registration answers (RAPP-303): not given unless a test says so.
-    applicant_status: null,
-    applicant_status_details: null,
-    supporting_entities: null,
+    // Her season count (RAPP-303): not given unless a test says so.
     season_number: null,
-    childcare_need: null,
-    specific_needs: null,
-    // The authorization's medical answer and emergency contact (RAPP-304).
-    health_info: null,
-    emergency_contact_name: null,
-    emergency_contact_relation: null,
-    emergency_contact_phone: null,
-    emergency_contact_privacy: null,
     // Seasons played before the app (RAPP-306).
     prior_seasons: 0,
-    document_name: null,
     // A real person unless a test says otherwise (RAPP-615).
     is_test_account: false,
-    ...derivedProfileFields(fixture),
+    // The forms chained after her Onboarding are behind her (RAPP-703).
+    onboarding_chain_done_at: FIXTURE_TIMESTAMP,
+    // Her number in her organization (RAPP-693): "Jugadora 0042" where her name is private.
+    member_number: fixture.ordinal,
+    ...derivedAccountFields(fixture),
     ...overrides,
   };
 }
@@ -909,6 +928,7 @@ const WEEKLY_NOTIFICATION_TITLE = {
   ca: 'Recordatori de l’entrenament setmanal',
   es: 'Recordatorio del entrenamiento semanal',
   en: 'Weekly training reminder',
+  fr: 'Rappel de l’entraînement de la semaine',
   ar: 'تذكير بالتدريب الأسبوعي',
   fa: 'یادآوری تمرین هفتگی',
 } as const;
@@ -916,6 +936,7 @@ const WEEKLY_NOTIFICATION_BODY = {
   ca: 'Recorda que aquesta tarda tenim entrenament.',
   es: 'Recuerda que esta tarde tenemos entrenamiento.',
   en: 'Remember that training is this afternoon.',
+  fr: 'N’oublie pas : l’entraînement est cet après-midi.',
   ar: 'تذكّري أن التدريب سيكون بعد ظهر اليوم.',
   fa: 'یادت باشد تمرین امروز بعدازظهر است.',
 } as const;
@@ -995,6 +1016,7 @@ export function buildSurvey(overrides: Partial<SurveyRow> = {}): SurveyRow {
       ca: 'La teva opinió',
       es: 'Tu opinión',
       en: 'Your feedback',
+      fr: 'Ton avis',
       ar: 'رأيك',
       fa: 'نظر شما',
     }),
@@ -1018,6 +1040,7 @@ export function buildSurveyQuestion(overrides: Partial<SurveyQuestionRow> = {}):
       ca: 'Com ho valores?',
       es: '¿Cómo lo valoras?',
       en: 'How do you rate it?',
+      fr: 'Quelle note lui donnes-tu ?',
       ar: 'كيف تقيمينه؟',
       fa: 'چه امتیازی می دهید؟',
     }),
@@ -1286,31 +1309,16 @@ export function buildInternalDocument(
 }
 
 /**
- * One answered intake question (RAPP-300). Defaults to a staff answer for the
- * seeded invited woman, the state the wizard reads to skip a question.
+ * A staff choice for one Ramassà field (RAPP-643): the seeded invited woman is
+ * asked the transport field even if she answered it.
  */
-export function buildProfileAnswer(overrides: Partial<ProfileAnswerRow> = {}): ProfileAnswerRow {
+export function buildCustomQuestionState(
+  overrides: Partial<CustomQuestionStateRow> = {},
+): CustomQuestionStateRow {
   return {
     profile_id: INVITED_ACCOUNT_ID,
     org_id: SEED_ORGANIZATION_ID,
-    question: 'nationality',
-    source: 'staff',
-    answered_at: FIXTURE_TIMESTAMP,
-    ...overrides,
-  };
-}
-
-/**
- * A staff choice for one wizard question (RAPP-301): the seeded invited woman
- * reviews her clothing size although staff answered it.
- */
-export function buildIntakeQuestionState(
-  overrides: Partial<IntakeQuestionStateRow> = {},
-): IntakeQuestionStateRow {
-  return {
-    profile_id: INVITED_ACCOUNT_ID,
-    org_id: SEED_ORGANIZATION_ID,
-    question: 'clothing_size',
+    question_id: SEED_CUSTOM_QUESTION_ID,
     state: 'ask',
     updated_at: FIXTURE_TIMESTAMP,
     updated_by: null,
@@ -1373,6 +1381,9 @@ export function buildAuthorizationVersion(
     published_by: null,
     updated_at: FIXTURE_TIMESTAMP,
     updated_by: null,
+    is_correction: false,
+    form_snapshot: null,
+    legacy_compatible: true,
     ...overrides,
   };
 }
@@ -1404,6 +1415,10 @@ export function buildAppTermsVersion(
     published_by: null,
     updated_at: FIXTURE_TIMESTAMP,
     updated_by: null,
+    is_correction: false,
+    // A published version keeps the form it showed (RAPP-772).
+    form_snapshot: {},
+    legacy_compatible: true,
     ...overrides,
   };
 }
@@ -1433,24 +1448,86 @@ export function buildAuthorizationSignature(
   };
 }
 
-/** One consent given while signing (RAPP-304). */
-export function buildAuthorizationConsentEvent(
-  overrides: Partial<AuthorizationConsentEventRow> = {},
-): AuthorizationConsentEventRow {
+const SEED_STAFF_CONSENT_ID = '5eed0000-0000-4000-8099-000000000001';
+
+/** One consent given while signing (RAPP-304), on the seeded version (RAPP-699). */
+export function buildConsentEvent(overrides: Partial<ConsentEventRow> = {}): ConsentEventRow {
   return {
     id: 1,
     org_id: SEED_ORGANIZATION_ID,
     profile_id: seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal),
     signature_id: '5eed0000-0000-4000-8042-000000000011',
+    consent_id: SEED_STAFF_CONSENT_ID,
     consent_key: 'participation',
     granted: true,
     method: 'app',
     decided_at: FIXTURE_TIMESTAMP,
     // The version and the words she was shown (RAPP-614).
     version_id: SEED_AUTHORIZATION_VERSION_ID,
+    form: 'authorization',
+    screen_key: null,
     language: 'ca',
     wording: 'Participo.',
     required: true,
+    recorded_by: null,
+    reason: null,
+    custom_form_id: null,
+    ...overrides,
+  };
+}
+
+/** The consent the team added in the seeds (RAPP-699): Dades legals' catalogue. */
+export function buildConsent(overrides: Partial<ConsentRow> = {}): ConsentRow {
+  return {
+    id: SEED_STAFF_CONSENT_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    key: 'fotos_de_partit',
+    system_key: null,
+    name: { ca: 'Fotos de partit' },
+    body: { ca: "Accepto que l'equip comparteixi fotos dels partits al grup de l'equip." },
+    is_archived: false,
+    created_by: seedUserId(1),
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/** Where the seeded consent is asked: the archived Onboarding screen (RAPP-699). */
+export function buildConsentPlacement(
+  overrides: Partial<ConsentPlacementRow> = {},
+): ConsentPlacementRow {
+  return {
+    id: '5eed0000-0000-4000-8099-000000000002',
+    body_override: null,
+    org_id: SEED_ORGANIZATION_ID,
+    consent_id: SEED_STAFF_CONSENT_ID,
+    surface: 'onboarding',
+    screen_key: '5eed0000-0000-4000-8090-000000000001',
+    sort_order: 1,
+    required: false,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    custom_form_id: null,
+    ...overrides,
+  };
+}
+
+/** The walk-in Salma's tick of the seeded consent on the tablet (RAPP-699). */
+export function buildWalkInConsent(overrides: Partial<WalkInConsentRow> = {}): WalkInConsentRow {
+  return {
+    id: '5eed0000-0000-4000-8099-000000000003',
+    walk_in_id: '5eed0000-0000-4000-8043-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    consent_id: SEED_STAFF_CONSENT_ID,
+    consent_key: 'fotos_de_partit',
+    granted: true,
+    required: false,
+    screen_key: '5eed0000-0000-4000-8090-000000000001',
+    wording: 'أوافق على أن يشارك الفريق صور المباريات في مجموعة الفريق.',
+    language: 'ar',
+    decided_at: FIXTURE_TIMESTAMP,
+    recorded_by: seedUserId(2),
     ...overrides,
   };
 }
@@ -1482,14 +1559,94 @@ export function buildWalkInSigning(overrides: Partial<WalkInSigningRow> = {}): W
   };
 }
 
+export type FormBlockRow = Database['public']['Tables']['form_blocks']['Row'];
+export type FormSignatureRow = Database['public']['Tables']['form_signatures']['Row'];
+export type WalkInFormSignatureRow = Database['public']['Tables']['walk_in_form_signatures']['Row'];
+
+const SEED_SIGNATURE_BLOCK_ID = '5eed0000-0000-4000-8090-000000000002';
+const SEED_SIGNATURE_SCREEN_ID = '5eed0000-0000-4000-8090-000000000001';
+const SEED_STROKES = [
+  [
+    [120, 620],
+    [200, 480],
+    [290, 560],
+  ],
+];
+
+/** A signature block on the seeded archived Onboarding screen (RAPP-690). */
+export function buildFormBlock(overrides: Partial<FormBlockRow> = {}): FormBlockRow {
+  return {
+    id: SEED_SIGNATURE_BLOCK_ID,
+    org_id: SEED_ORGANIZATION_ID,
+    surface: 'onboarding',
+    screen_key: SEED_SIGNATURE_SCREEN_ID,
+    kind: 'signature',
+    body: { ca: 'Accepto les normes de convivència.' },
+    title: null,
+    points: null,
+    settings: {},
+    sort_order: 0,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    custom_form_id: null,
+    ...overrides,
+  };
+}
+
+/** Amina's signature of the seeded block, on her phone (RAPP-690). */
+export function buildFormSignature(overrides: Partial<FormSignatureRow> = {}): FormSignatureRow {
+  return {
+    id: '5eed0000-0000-4000-8090-000000000003',
+    unable_to_draw: false,
+    org_id: SEED_ORGANIZATION_ID,
+    profile_id: seedUserId(11),
+    referral_id: null,
+    surface: 'wizard',
+    block_id: SEED_SIGNATURE_BLOCK_ID,
+    screen_key: SEED_SIGNATURE_SCREEN_ID,
+    body: 'Accepto les normes de convivència.',
+    language: 'ca',
+    signer_kind: 'player',
+    signer_user_id: seedUserId(11),
+    signer_name: 'Amina Al-Hassan',
+    strokes: SEED_STROKES,
+    signed_at: FIXTURE_TIMESTAMP,
+    signed_on_tablet: false,
+    witnessed_by: null,
+    custom_form_id: null,
+    ...overrides,
+  };
+}
+
+/** The walk-in's pending tablet signature of the seeded block (RAPP-691). */
+export function buildWalkInFormSignature(
+  overrides: Partial<WalkInFormSignatureRow> = {},
+): WalkInFormSignatureRow {
+  return {
+    id: '5eed0000-0000-4000-8090-000000000004',
+    walk_in_id: '5eed0000-0000-4000-8043-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    block_id: SEED_SIGNATURE_BLOCK_ID,
+    screen_key: SEED_SIGNATURE_SCREEN_ID,
+    body: 'Accepto les normes de convivència.',
+    language: 'ca',
+    strokes: SEED_STROKES,
+    unable_to_draw: false,
+    signed_at: FIXTURE_TIMESTAMP,
+    witnessed_by: seedUserId(2),
+    ...overrides,
+  };
+}
+
 type PublicRow<Name extends keyof Database['public']['Tables']> =
   Database['public']['Tables'][Name]['Row'];
 export type IntakeScreenRow = PublicRow<'intake_screens'>;
-export type CustomQuestionRow = PublicRow<'custom_questions'>;
+export type ProfileSectionRow = PublicRow<'profile_sections'>;
+export type ProfileFieldRow = PublicRow<'profile_fields'>;
+export type FieldPlacementRow = PublicRow<'field_placements'>;
 export type CustomQuestionOptionRow = PublicRow<'custom_question_options'>;
 export type CustomAnswerRow = PublicRow<'custom_answers'>;
 export type ReferralCustomAnswerRow = PublicRow<'referral_custom_answers'>;
-export type BuiltinQuestionOverrideRow = PublicRow<'builtin_question_overrides'>;
 export type IntakeStatePresetRow = PublicRow<'intake_state_presets'>;
 
 export const SEED_INTAKE_SCREEN_ID = '5eed0000-0000-4000-8044-000000000001';
@@ -1500,6 +1657,7 @@ const NO_SEASON_KEY = '00000000-0000-0000-0000-000000000000';
 export function buildIntakeScreen(overrides: Partial<IntakeScreenRow> = {}): IntakeScreenRow {
   return {
     id: SEED_INTAKE_SCREEN_ID,
+    texts: {},
     org_id: SEED_ORGANIZATION_ID,
     title: { ca: 'Com arribes als entrenaments' },
     intro: null,
@@ -1509,31 +1667,53 @@ export function buildIntakeScreen(overrides: Partial<IntakeScreenRow> = {}): Int
     home_after_screen: overrides.after_screen ?? 'logistics',
     home_sort_order: overrides.sort_order ?? 0,
     is_archived: false,
+    is_hidden: false,
+    show_when_field_id: null,
+    show_when_values: null,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }
 
-/** A Normal yes/no/maybe question on the wizard and the referral form (RAPP-307). */
-export function buildCustomQuestion(overrides: Partial<CustomQuestionRow> = {}): CustomQuestionRow {
+export const SEED_SUPPORT_SECTION_KEY = 'support';
+
+/** A section of the profile layout (RAPP-649): the seeded organization's Support. */
+export function buildProfileSection(overrides: Partial<ProfileSectionRow> = {}): ProfileSectionRow {
+  return {
+    id: '5eed0000-0000-4000-8047-000000000007',
+    org_id: SEED_ORGANIZATION_ID,
+    key: SEED_SUPPORT_SECTION_KEY,
+    title: { ca: 'Suport', es: 'Apoyo', en: 'Support' },
+    sort_order: 6,
+    is_builtin: true,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/** The seeded transport field (RAPP-649): the first seeded question, same id. */
+export function buildProfileField(overrides: Partial<ProfileFieldRow> = {}): ProfileFieldRow {
   return {
     id: SEED_CUSTOM_QUESTION_ID,
     org_id: SEED_ORGANIZATION_ID,
-    screen_id: SEED_INTAKE_SCREEN_ID,
-    show_when_question_id: null,
-    show_when_option_id: null,
+    section_id: '5eed0000-0000-4000-8047-000000000007',
+    kind: 'custom',
+    system_key: null,
     question_type: 'yes_no_maybe',
     label: { ca: 'Vens amb transport públic?' },
     help: null,
     privacy: 'normal',
-    placements: ['wizard', 'entity_form'],
-    sort_order: 0,
-    is_archived: false,
-    // A yes/no/maybe question takes no settings (RAPP-610).
+    // Most fields need no permission on top of their level (RAPP-698).
+    read_permission: null,
+    default_required: false,
     settings: {},
-    // Optional unless staff say so (RAPP-611).
-    is_required: false,
+    show_when_field_id: null,
+    show_when_option_id: null,
+    sort_order: 100,
+    created_by: null,
+    is_archived: false,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
@@ -1541,21 +1721,35 @@ export function buildCustomQuestion(overrides: Partial<CustomQuestionRow> = {}):
 }
 
 /**
- * A question of any type with its settings (RAPP-610), for tests that need a
+ * A field of any type with its settings (RAPP-610), for tests that need a
  * number, a date, a list, a consent, a file or a signature.
  */
-export function buildTypedCustomQuestion(
-  type: CustomQuestionRow['question_type'],
-  settings: CustomQuestionRow['settings'],
-  overrides: Partial<CustomQuestionRow> = {},
-): CustomQuestionRow {
-  return buildCustomQuestion({
-    question_type: type,
-    settings,
-    placements:
-      type === 'file_upload' || type === 'signature' ? ['wizard'] : ['wizard', 'entity_form'],
+export function buildTypedProfileField(
+  type: ProfileFieldRow['question_type'],
+  settings: ProfileFieldRow['settings'],
+  overrides: Partial<ProfileFieldRow> = {},
+): ProfileFieldRow {
+  return buildProfileField({ question_type: type, settings, ...overrides });
+}
+
+/** The transport field on its onboarding screen (RAPP-649). */
+export function buildFieldPlacement(overrides: Partial<FieldPlacementRow> = {}): FieldPlacementRow {
+  return {
+    id: '5eed0000-0000-4000-8048-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    field_id: SEED_CUSTOM_QUESTION_ID,
+    surface: 'onboarding',
+    screen_key: SEED_INTAKE_SCREEN_ID,
+    shared_screen: null,
+    sort_order: 0,
+    required: false,
+    label_override: null,
+    help_override: null,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    custom_form_id: null,
     ...overrides,
-  });
+  };
 }
 
 export function buildCustomQuestionOption(
@@ -1565,6 +1759,7 @@ export function buildCustomQuestionOption(
     id: '5eed0000-0000-4000-8046-000000000001',
     org_id: SEED_ORGANIZATION_ID,
     question_id: '5eed0000-0000-4000-8045-000000000002',
+    key: null,
     label: { ca: 'Una entitat' },
     sort_order: 0,
     is_archived: false,
@@ -1583,6 +1778,7 @@ export function buildCustomAnswer(overrides: Partial<CustomAnswerRow> = {}): Cus
     value: 'yes',
     value_encrypted: null,
     source: 'player',
+    answered_by: null,
     answered_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
@@ -1602,38 +1798,6 @@ export function buildReferralCustomAnswer(
   };
 }
 
-export function buildBuiltinQuestionOverride(
-  overrides: Partial<BuiltinQuestionOverrideRow> = {},
-): BuiltinQuestionOverrideRow {
-  return {
-    org_id: SEED_ORGANIZATION_ID,
-    question: 'reference_entity',
-    label: { ca: "Quina entitat t'acompanya?" },
-    help: null,
-    is_hidden: false,
-    option_overrides: {},
-    updated_at: FIXTURE_TIMESTAMP,
-    updated_by: null,
-    ...overrides,
-  };
-}
-
-export type IntakeRequiredQuestionRow = PublicRow<'intake_required_questions'>;
-
-/** The seeded choice (RAPP-611): the phone stays optional, as by default. */
-export function buildIntakeRequiredQuestion(
-  overrides: Partial<IntakeRequiredQuestionRow> = {},
-): IntakeRequiredQuestionRow {
-  return {
-    org_id: SEED_ORGANIZATION_ID,
-    question: 'phone',
-    is_required: false,
-    updated_at: FIXTURE_TIMESTAMP,
-    updated_by: null,
-    ...overrides,
-  };
-}
-
 export type IntakeBuiltinScreenRow = PublicRow<'intake_builtin_screens'>;
 export type IntakeFlowOrderRow = PublicRow<'intake_flow_orders'>;
 
@@ -1646,8 +1810,86 @@ export function buildIntakeBuiltinScreen(
     screen: 'summary',
     texts: { help: { ca: "Pots canviar qualsevol resposta abans d'acceptar els termes." } },
     is_hidden: false,
+    is_deleted: false,
     updated_at: FIXTURE_TIMESTAMP,
     updated_by: null,
+    ...overrides,
+  };
+}
+
+export type CustomFormRow = PublicRow<'custom_forms'>;
+
+/** The seeded form for every player, published (RAPP-700, RAPP-701). */
+export function buildCustomForm(overrides: Partial<CustomFormRow> = {}): CustomFormRow {
+  return {
+    id: '5eed0000-0000-4000-8100-000000000001',
+    kind: 'other',
+    system_key: null,
+    org_id: SEED_ORGANIZATION_ID,
+    name: {
+      ca: 'Com véns als entrenaments',
+      es: 'Cómo vienes a los entrenamientos',
+      en: 'How you get to training',
+    },
+    filled_by: 'player',
+    mandatory: 'optional',
+    deadline: null,
+    audience: 'all',
+    repeats_each_season: false,
+    version: 1,
+    published_at: '2026-10-01T08:00:00.000Z',
+    is_archived: false,
+    created_by: seedUserId(2),
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export type CustomFormScreenRow = PublicRow<'custom_form_screens'>;
+
+/** The seeded form's one screen (RAPP-700). */
+export function buildCustomFormScreen(
+  overrides: Partial<CustomFormScreenRow> = {},
+): CustomFormScreenRow {
+  return {
+    id: '5eed0000-0000-4000-8101-000000000001',
+    texts: {},
+    system_screen: null,
+    attachments: null,
+    org_id: SEED_ORGANIZATION_ID,
+    form_id: buildCustomForm().id,
+    title: { ca: 'Transport', es: 'Transporte', en: 'Transport' },
+    intro: null,
+    sort_order: 0,
+    is_archived: false,
+    is_hidden: false,
+    show_when_field_id: null,
+    show_when_values: null,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+export type CustomFormResponseRow = PublicRow<'custom_form_responses'>;
+
+/** Fàtima's pending ask of the seeded form (RAPP-700). */
+export function buildCustomFormResponse(
+  overrides: Partial<CustomFormResponseRow> = {},
+): CustomFormResponseRow {
+  return {
+    id: '5eed0000-0000-4000-8102-000000000002',
+    org_id: SEED_ORGANIZATION_ID,
+    form_id: buildCustomForm().id,
+    version: 1,
+    profile_id: seedUserId(12),
+    season_id: null,
+    status: 'pending',
+    asked_at: '2026-10-01T08:00:00.000Z',
+    answered_at: null,
+    answered_by: null,
+    filled_by: null,
     ...overrides,
   };
 }
@@ -1688,24 +1930,6 @@ export function buildIntakeStatePreset(
     states: { clothing_size: 'ask', shoe_size: 'ask' },
     created_at: FIXTURE_TIMESTAMP,
     created_by: null,
-    ...overrides,
-  };
-}
-
-export type SeasonAnswersRow = Database['public']['Tables']['season_answers']['Row'];
-
-/** Her registration answers for the current season (RAPP-306). */
-export function buildSeasonAnswers(overrides: Partial<SeasonAnswersRow> = {}): SeasonAnswersRow {
-  return {
-    profile_id: seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal),
-    season_id: SEED_SEASON_ID,
-    org_id: SEED_ORGANIZATION_ID,
-    applicant_status: null,
-    applicant_status_details: null,
-    supporting_entities: null,
-    childcare_need: 'no',
-    specific_needs: null,
-    updated_at: FIXTURE_TIMESTAMP,
     ...overrides,
   };
 }

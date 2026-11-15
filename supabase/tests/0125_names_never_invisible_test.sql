@@ -25,7 +25,37 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(351);
+select plan(324);
+
+-- An app answer given by option key, as the app's screens send it by option id.
+create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
+  select case
+    when f.question_type in ('single_choice', 'search_choice') and jsonb_typeof(v) = 'string' then
+      coalesce((select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v #>> '{}'), v)
+    when f.question_type = 'multiple_choice' and jsonb_typeof(v) = 'array' then
+      coalesce((select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+                 where o.question_id = f.id and o.key in (select jsonb_array_elements_text(v))
+                having count(*) = jsonb_array_length(v)), v)
+    else v
+  end;
+$$;
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, pg_temp.by_option_key(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
 
 create temp table blank (ordinal integer primary key, label text, value text) on commit drop;
 grant all on blank to authenticated;
@@ -143,25 +173,10 @@ select throws_ok(
   '23514', null::text, 'a referral refuses a last name of ' || label)
   from blank order by ordinal;
 
--- A required emergency contact (the check every signing path runs).
-reset role;
-select throws_ok(
-  format($$ select private.validate_signing_payload(
-              jsonb_set((select payload from walk_in_payload), '{emergency_contact}',
-                        jsonb_build_object('name', %L, 'relation', 'Germana', 'phone', '+34600222333')),
-              (select content from contact_required_version)) $$, value),
-  '23514', null::text, 'a required emergency contact refuses a name of ' || label)
-  from blank order by ordinal;
+-- The emergency contact is an answer to a field since RAPP-698: its name is
+-- read through `name_trim` when an older build sends it (below).
 
 -- 2. A real letter with an invisible character is still a name -----------------------------------
-
-select lives_ok(
-  $$ select private.validate_signing_payload(
-       jsonb_set((select payload from walk_in_payload), '{emergency_contact}',
-                 jsonb_build_object('name', U&'Olena\200F', 'relation', 'Germana', 'phone', '+34600222333')),
-       (select content from contact_required_version)) $$,
-  'a required emergency contact accepts a name with a trailing direction mark'
-);
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
@@ -182,8 +197,9 @@ select lives_ok(
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000004", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
   $$ select public.create_entity_referral(jsonb_build_object(
-       'firstName', U&'\+0E0020Awa', 'lastName', U&'Sylla\00AD', 'documentationStatus', 'missing',
-       'referenceContactName', U&'\200E\3164', 'consentConfirmed', true)) $$,
+       'first_name', U&'\+0E0020Awa', 'last_name', U&'Sylla\00AD', 'documentationStatus', 'missing',
+       'answers', jsonb_build_object(pg_temp.field('reference_contact_name'), U&'\200E\3164'),
+       'consentConfirmed', true)) $$,
   'a referral with invisible edges around real names is accepted'
 );
 
@@ -220,9 +236,11 @@ select is(
 
 -- 3. An optional contact's name of only invisible characters is no answer -------------------------
 
-select is(
-  (select emergency_contact_name from public.profiles where id = '5eed0000-0000-4000-8000-000000000022'),
-  null,
+select ok(
+  not exists (select 1 from public.custom_answers
+               where profile_id = '5eed0000-0000-4000-8000-000000000022'
+                 and question_id = (private.authorization_field('5eed0000-0000-4000-8000-000000000000',
+                                                                'emergency_contact_name')).id),
   'the emergency contact name of only invisible characters is saved as no answer'
 );
 select is(

@@ -7,14 +7,18 @@
  *
  * The sections follow the wizard's order as staff arranged it (RAPP-612):
  * built-in screens and staff screens (RAPP-307), each under its title with its
- * own Change button. A built-in question staff removed, or a screen staff hid,
- * shows no row: it is never asked.
+ * own Change button. Her answers to Fitxa fields show under the screen they
+ * are placed on, worded as they were asked (RAPP-655). A built-in question staff removed, or a screen staff hid,
+ * shows no row: it is never asked. Each signature block she signed (RAPP-690)
+ * shows its text, marked as signed, under its screen; the ones she signed on
+ * the walk-in tablet (RAPP-691) close the summary in a section of their own.
  */
 
 import { ReviewEditAction, ReviewRow, ReviewSection } from '@/components/onboarding/review-section';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { SeasonAnswerRows } from '@/components/profile/season-answer-rows';
+import { FOLLOW_UP_TITLE_KEYS } from '@/lib/follow-up-steps';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
 import { normalizeDecimalDigits } from '@/lib/onboarding-form';
@@ -23,7 +27,12 @@ import {
   WIZARD_SCREEN_ROUTES,
   wizardStepRoute,
 } from '@/lib/onboarding-intake';
-import { useBuiltinWording, useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
+import {
+  herWizardAnswers,
+  useBuiltinWording,
+  useWizardIntake,
+  useWizardStep,
+} from '@/lib/onboarding-intake-context';
 import { useScreenTitle } from '@/lib/screen-wording';
 import { SEASON_SCREEN_TITLE_KEYS } from '@/lib/season-draft';
 import { firstIncompleteStep } from '@/lib/wizard-completeness';
@@ -32,11 +41,14 @@ import { Fragment, useCallback, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LANGUAGE_NATIVE_NAMES } from '@ramassa/shared/i18n';
 import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
+import { teamTextIn } from '@ramassa/shared/i18n/localized-content';
 import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
 import {
   customStepId,
   customStepKey,
   DEFAULT_WIZARD_FLOW,
+  detailScreensOf,
+  opensForAnswers,
   SEASON_WIZARD_SCREENS,
   WIZARD_SCREEN_QUESTIONS,
   wizardFlowOrder,
@@ -46,14 +58,26 @@ import {
 } from '@ramassa/shared/intake';
 import {
   answerText,
+  appScreenFields,
+  followUpAsking,
+  followUpGroupOf,
+  followUpOfGroupId,
+  followUpOpens,
+  formBlocksOn,
+  formBlockText,
   isCustomQuestionVisible,
   isEmptyAnswer,
+  signatureBlocks,
   textIn,
   type CustomAnswers,
   type IntakeScreen,
 } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraft } from '@ramassa/shared/onboarding-drafts';
-import type { LanguageCode } from '@ramassa/shared/schemas';
+import {
+  documentDetailAsking,
+  type DocumentType,
+  type LanguageCode,
+} from '@ramassa/shared/schemas';
 
 const DOCUMENT_TYPE_LABEL_KEYS: Readonly<Record<string, string>> = {
   nie: 'documentTypeNie',
@@ -98,26 +122,82 @@ function EditButton({
   );
 }
 
-/** A staff screen with her answers (RAPP-307). */
-function CustomSection({
+/**
+ * Her answers to staff questions, one row each (RAPP-307), then each signature
+ * block of the screen she signed: the text she accepts, marked as signed
+ * (RAPP-690).
+ */
+function CustomRows({
   screen,
   answers,
+  signatures,
   language,
 }: {
   readonly screen: IntakeScreen;
   readonly answers: CustomAnswers;
+  /** The strokes she drew, by block id, from her draft. */
+  readonly signatures: OnboardingDraft['signatures'];
   readonly language: LanguageCode;
 }) {
   const { t } = useTranslation('onboarding');
-  const router = useRouter();
+  const { catalog } = useWizardIntake();
+  const signed = signatureBlocks(
+    formBlocksOn(catalog.blocks, 'onboarding', screen.builtinScreen ?? screen.id),
+  )
+    .filter((block) => signatures?.[block.id] != null)
+    .map((block) => (
+      <ReviewRow
+        key={block.id}
+        label={formBlockText(block, language).text}
+        value={t('summarySigned')}
+      />
+    ));
   const words = {
     yes: t('yesOption'),
     no: t('noOption'),
     maybe: t('customMaybeOption'),
     archived: t('customArchivedOption'),
-    signed: t('customSigned'),
   };
-  const title = textIn(screen.title, language);
+  const rows = screen.questions
+    .filter((question) => isCustomQuestionVisible(question, answers))
+    .map((question) => {
+      const value = answers[question.id];
+      return (
+        <ReviewRow
+          key={question.id}
+          label={textIn(question.label, language)}
+          value={
+            value === undefined || isEmptyAnswer(value)
+              ? t('summaryNotGiven')
+              : answerText(question, value, language, words)
+          }
+        />
+      );
+    });
+  return [...rows, ...signed];
+}
+
+/** A staff screen with her answers (RAPP-307). */
+function CustomSection({
+  screen,
+  answers,
+  signatures,
+  language,
+}: {
+  readonly screen: IntakeScreen;
+  readonly answers: CustomAnswers;
+  readonly signatures: OnboardingDraft['signatures'];
+  readonly language: LanguageCode;
+}) {
+  const router = useRouter();
+  const { t } = useTranslation('onboarding');
+  const screenTitle = useScreenTitle();
+  // A follow-up that is a step of its own (RAPP-782) is named as the follow-up.
+  const followUp = followUpOfGroupId(screen.id);
+  const title =
+    followUp === null
+      ? teamTextIn(screen.title, language, false)
+      : screenTitle(followUp, t(FOLLOW_UP_TITLE_KEYS[followUp]));
   return (
     <ReviewSection
       title={title}
@@ -131,22 +211,7 @@ function CustomSection({
         />
       }
     >
-      {screen.questions
-        .filter((question) => isCustomQuestionVisible(question, answers))
-        .map((question) => {
-          const value = answers[question.id];
-          return (
-            <ReviewRow
-              key={question.id}
-              label={textIn(question.label, language)}
-              value={
-                value === undefined || isEmptyAnswer(value)
-                  ? t('summaryNotGiven')
-                  : answerText(question, value, language, words)
-              }
-            />
-          );
-        })}
+      <CustomRows screen={screen} answers={answers} signatures={signatures} language={language} />
     </ReviewSection>
   );
 }
@@ -155,6 +220,7 @@ export default function SummaryStepScreen() {
   const { t, i18n } = useTranslation('onboarding');
   const router = useRouter();
   const step = useWizardStep('summary');
+  const intake = useWizardIntake();
   const {
     customAnswers,
     hidden,
@@ -162,14 +228,21 @@ export default function SummaryStepScreen() {
     customPlan,
     flow = DEFAULT_WIZARD_FLOW,
     required,
-  } = useWizardIntake();
-  const completeness = {
+    catalog,
+    signedBlocks = [],
+  } = intake;
+  // Her answers by field decide which screens that depend on one she saw (RAPP-715).
+  const completeness = () => ({
     custom: customPlan,
     flow,
     required,
     customScreens,
     storedCustom: customAnswers,
-  };
+    blocks: catalog.blocks,
+    consentCatalog: catalog,
+    catalog: catalog,
+    answers: herWizardAnswers(intake),
+  });
   const wording = useBuiltinWording();
   // A section is titled as staff worded its screen (RAPP-612), or as before.
   const screenTitle = useScreenTitle();
@@ -198,9 +271,13 @@ export default function SummaryStepScreen() {
               required,
               customScreens,
               storedCustom: customAnswers,
+              blocks: catalog.blocks,
+              consentCatalog: catalog,
+              catalog: catalog,
+              answers: herWizardAnswers(intake),
             }),
       );
-    }, [customPlan, flow, required, customScreens, customAnswers]),
+    }, [intake, customPlan, flow, required, customScreens, customAnswers, catalog]),
   );
 
   const identity: Section = draft?.identity ?? {};
@@ -210,10 +287,41 @@ export default function SummaryStepScreen() {
   const notGiven = t('summaryNotGiven');
   const show = (value: string | null) => value ?? notGiven;
   const answers = mergedCustomAnswers(customAnswers, draft?.custom);
+  // Read again with the draft: she may have changed an answer on another screen.
+  const shownAnswers = draft === null ? customAnswers : herWizardAnswers(intake);
   const shows = (question: IntakeQuestion) => !hidden.has(question);
+  // The Fitxa fields placed on a built-in screen (RAPP-655), under its own rows.
+  const added = (screen: WizardQuestionScreen): ReactNode => {
+    // Then the fields of its follow-ups her answers open (RAPP-720).
+    const groups = [
+      appScreenFields(customScreens, screen),
+      ...detailScreensOf(screen).map((branch) =>
+        followUpOpens(catalog, branch.screen, shownAnswers)
+          ? followUpGroupOf(customScreens, branch.screen)
+          : undefined,
+      ),
+    ].filter((group): group is IntakeScreen => group !== undefined);
+    return groups.length === 0
+      ? null
+      : groups.map((group) => (
+          <CustomRows
+            key={group.id}
+            screen={group}
+            answers={answers}
+            signatures={draft?.signatures}
+            language={locale}
+          />
+        ));
+  };
+  // Her document's follow-up asks its number and name as staff placed them (RAPP-720).
+  const documentAsking = documentDetailAsking(
+    followUpAsking(catalog),
+    (text(documentation.documentType) ?? undefined) as DocumentType | undefined,
+  );
   // A built-in screen whose every question staff removed has nothing to correct.
   const hasQuestions = (screen: WizardQuestionScreen) =>
-    WIZARD_SCREEN_QUESTIONS[screen].some(shows);
+    WIZARD_SCREEN_QUESTIONS[screen].some(shows) ||
+    appScreenFields(customScreens, screen) !== undefined;
 
   const edit = (screen: WizardQuestionScreen) =>
     router.push(`${String(WIZARD_SCREEN_ROUTES[screen])}?edit=1` as Href);
@@ -251,17 +359,17 @@ export default function SummaryStepScreen() {
           shows={(question) =>
             WIZARD_SCREEN_QUESTIONS[screen].includes(question) && shows(question)
           }
-          profile={{
-            applicant_status: (season.applicantStatus as never) ?? null,
-            applicant_status_details: text(season.applicantStatusDetails),
-            supporting_entities: Array.isArray(season.supportingEntities)
+          answers={{
+            applicantStatus: text(season.applicantStatus),
+            applicantStatusDetails: text(season.applicantStatusDetails),
+            supportingEntities: Array.isArray(season.supportingEntities)
               ? (season.supportingEntities as string[])
               : null,
-            season_number: null,
-            childcare_need: (season.childcareNeed as never) ?? null,
-            specific_needs: text(season.specificNeeds),
+            childcareNeed: text(season.childcareNeed),
+            specificNeeds: text(season.specificNeeds),
           }}
         />
+        {added(screen)}
       </ReviewSection>
     ) : null;
   const sections: Readonly<Partial<Record<WizardQuestionScreen, ReactNode>>> = {
@@ -276,16 +384,22 @@ export default function SummaryStepScreen() {
           />
         }
       >
-        <ReviewRow
-          icon="person"
-          label={wording.label('first_name', t('firstNameLabel'))}
-          value={show(text(identity.firstName))}
-        />
-        <ReviewRow
-          icon="person"
-          label={wording.label('last_name', t('lastNameLabel'))}
-          value={show(text(identity.lastName))}
-        />
+        {/* A name staff moved to another screen shows with that screen's fields (RAPP-782). */}
+        {shows('first_name') ? (
+          <ReviewRow
+            icon="person"
+            label={wording.label('first_name', t('firstNameLabel'))}
+            value={show(text(identity.firstName))}
+          />
+        ) : null}
+        {shows('last_name') ? (
+          <ReviewRow
+            icon="person"
+            label={wording.label('last_name', t('lastNameLabel'))}
+            value={show(text(identity.lastName))}
+          />
+        ) : null}
+        {added('identity')}
       </ReviewSection>
     ),
     background: (
@@ -299,25 +413,32 @@ export default function SummaryStepScreen() {
           />
         }
       >
-        <ReviewRow
-          icon="calendar"
-          label={wording.label('date_of_birth', t('dateOfBirthLabel'))}
-          value={show(birthDate)}
-        />
-        <ReviewRow
-          icon="location"
-          label={wording.label('place_of_birth', t('placeOfBirthLabel'))}
-          value={show(text(identity.placeOfBirth))}
-        />
-        <ReviewRow
-          icon="globe"
-          label={wording.label('nationality', t('nationalityLabel'))}
-          value={show(
-            nationality === null
-              ? null
-              : (countryLabelForCanonical(nationality, locale) ?? nationality),
-          )}
-        />
+        {/* A question off its control is listed with the fields placed here (RAPP-665). */}
+        {shows('date_of_birth') ? (
+          <ReviewRow
+            icon="calendar"
+            label={wording.label('date_of_birth', t('dateOfBirthLabel'))}
+            value={show(birthDate)}
+          />
+        ) : null}
+        {shows('place_of_birth') ? (
+          <ReviewRow
+            icon="location"
+            label={wording.label('place_of_birth', t('placeOfBirthLabel'))}
+            value={show(text(identity.placeOfBirth))}
+          />
+        ) : null}
+        {shows('nationality') ? (
+          <ReviewRow
+            icon="globe"
+            label={wording.label('nationality', t('nationalityLabel'))}
+            value={show(
+              nationality === null
+                ? null
+                : (countryLabelForCanonical(nationality, locale) ?? nationality),
+            )}
+          />
+        ) : null}
         <ReviewRow
           icon="conversation"
           label={wording.label('preferred_language', t('preferredLanguageLabel'))}
@@ -336,6 +457,7 @@ export default function SummaryStepScreen() {
                 )[0]?.label ?? language),
           )}
         />
+        {added('background')}
       </ReviewSection>
     ),
     documentation: hasQuestions('documentation') ? (
@@ -367,18 +489,21 @@ export default function SummaryStepScreen() {
                 )[0]?.label ?? null),
           )}
         />
-        {documentType === 'other' ? (
+        {documentType === 'other' && documentAsking?.name !== 'not_asked' ? (
           <ReviewRow
             label={t('documentNameLabel')}
             value={show(text(documentation.documentName))}
           />
         ) : null}
-        {documentType === null || documentType === 'none' ? null : (
+        {documentType === null ||
+        documentType === 'none' ||
+        documentAsking?.number === 'not_asked' ? null : (
           <ReviewRow
             label={t('documentNumberLabel')}
             value={show(text(documentation.documentNumber))}
           />
         )}
+        {added('documentation')}
       </ReviewSection>
     ) : null,
     logistics: (
@@ -447,6 +572,7 @@ export default function SummaryStepScreen() {
                 : t('noOption')
           }
         />
+        {added('logistics')}
       </ReviewSection>
     ),
     equipment: hasQuestions('equipment') ? (
@@ -474,6 +600,7 @@ export default function SummaryStepScreen() {
             value={show(text(logistics.shoeSize))}
           />
         ) : null}
+        {added('equipment')}
       </ReviewSection>
     ) : null,
     ...Object.fromEntries(SEASON_WIZARD_SCREENS.map((screen) => [screen, seasonSection(screen)])),
@@ -483,7 +610,9 @@ export default function SummaryStepScreen() {
     const customId = customStepId(step);
     if (customId !== null) {
       const screen = customScreens.find((candidate) => candidate.id === customId);
-      return screen === undefined ? t('summaryTitle') : textIn(screen.title, locale);
+      const followUp = followUpOfGroupId(customId);
+      if (followUp !== null) return screenTitle(followUp, t(FOLLOW_UP_TITLE_KEYS[followUp]));
+      return screen === undefined ? t('summaryTitle') : teamTextIn(screen.title, locale, false);
     }
     return builtinSectionTitle(step as WizardQuestionScreen);
   };
@@ -500,7 +629,7 @@ export default function SummaryStepScreen() {
   function confirm() {
     // A required answer is missing (staff may have moved a screen she never
     // saw): she cannot confirm, and goes to that screen to answer it.
-    const incomplete = firstIncompleteStep(onboardingDraftStore.loadDraft(), completeness);
+    const incomplete = firstIncompleteStep(onboardingDraftStore.loadDraft(), completeness());
     if (incomplete !== null) {
       setMissingStep(incomplete);
       playHaptic('warning');
@@ -547,6 +676,9 @@ export default function SummaryStepScreen() {
       />
       {wizardFlowOrder(customPlan, flow).map((step) => {
         const customId = customStepId(step);
+        // Only the screens she saw: one her answers do not open is left out (RAPP-715).
+        const planned = customPlan.find((screen) => screen.id === customId);
+        if (planned !== undefined && !opensForAnswers(planned, shownAnswers)) return null;
         const custom =
           customId === null ? undefined : customScreens.find((screen) => screen.id === customId);
         return (
@@ -554,11 +686,28 @@ export default function SummaryStepScreen() {
             {custom === undefined ? (
               (sections[step as WizardQuestionScreen] ?? null)
             ) : (
-              <CustomSection screen={custom} answers={answers} language={locale} />
+              <CustomSection
+                screen={custom}
+                answers={answers}
+                signatures={draft?.signatures}
+                language={locale}
+              />
             )}
           </Fragment>
         );
       })}
+      {/* The blocks she signed on the walk-in tablet, unchanged since (RAPP-691). */}
+      {signedBlocks.length === 0 ? null : (
+        <ReviewSection title={t('summarySignaturesTitle')} action={null}>
+          {signedBlocks.map((block) => (
+            <ReviewRow
+              key={block.id}
+              label={formBlockText(block, locale).text}
+              value={t('summarySigned')}
+            />
+          ))}
+        </ReviewSection>
+      )}
     </WizardFrame>
   );
 }

@@ -1,23 +1,35 @@
 import type { WizardIntake } from '@/lib/onboarding-intake-context';
-import { fireEvent, render } from '@testing-library/react';
+import { createWizardDraftStore } from '@/lib/wizard-draft';
+import { fireEvent, render, waitFor } from '@testing-library/react';
 import { afterAll, beforeEach, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
+import { systemFieldIndexFromCatalog } from '@ramassa/shared/intake-builder';
 import { createAccountOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
+import { systemFieldsCatalogFixture } from '@ramassa/shared/testing';
 
 const backing = new Map<string, string>();
-const store = createAccountOnboardingDraftStore({
+const accountStore = createAccountOnboardingDraftStore({
   getString: (key) => backing.get(key),
   set: (key, value) => void backing.set(key, value),
   remove: (key) => backing.delete(key),
 });
+const store = createWizardDraftStore(accountStore);
+const fields = systemFieldIndexFromCatalog(systemFieldsCatalogFixture());
 let userId = 'player-a';
-const refetch = mock(async () => {});
+const retrySteps: string[] = [];
+const refetch = mock(async () => {
+  retrySteps.push('refetch');
+});
 const observed: { userId: string; firstName: unknown }[] = [];
 const ready = {
-  profile: null,
+  names: {},
+  fields,
+  customAnswers: {},
+  customScreens: [],
   answered: new Set(),
   notAsked: new Set(),
   customPlan: [],
+  catalog: systemFieldsCatalogFixture(),
 } as unknown as WizardIntake;
 let query: {
   data: WizardIntake | undefined;
@@ -28,7 +40,16 @@ let query: {
 };
 const box = ({ children }: { children?: ReactNode }) => createElement('div', null, children);
 mock.module('@/lib/onboarding', () => ({ onboardingDraftStore: store }));
+mock.module('@/lib/network-status', () => ({
+  isWaitingForNetwork: (queries: readonly { data: unknown; fetchStatus: string }[]) =>
+    queries.some((each) => each.data === undefined && each.fetchStatus === 'paused'),
+  retryAfterNetworkCheck: async (again: () => Promise<unknown>) => {
+    retrySteps.push('network-check');
+    await again();
+  },
+}));
 mock.module('@/lib/supabase', () => ({ supabase: {} }));
+mock.module('@/lib/observability', () => ({ logger: { warn: () => {}, error: () => {} } }));
 mock.module('@ramassa/shared/profile', () => ({ fetchOwnProfile: mock(async () => null) }));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
 mock.module('@tanstack/react-query', () => ({ useQuery: () => ({ ...query, refetch }) }));
@@ -45,7 +66,10 @@ mock.module('expo-router/stack', () => ({
     return createElement('p', { 'data-testid': 'wizard' }, (firstName as string) ?? 'new player');
   },
 }));
-mock.module('@/lib/onboarding-intake-context', () => ({ WizardIntakeProvider: box }));
+mock.module('@/lib/onboarding-intake-context', () => ({
+  WizardIntakeProvider: box,
+  herWizardAnswers: () => ({}),
+}));
 mock.module('@/components/announcements/feed-states', () => ({
   AnnouncementFeedSkeleton: () => createElement('p', { role: 'progressbar' }, 'Loading'),
   AnnouncementFeedError: ({
@@ -71,16 +95,22 @@ beforeEach(() => {
   store.setUser(null);
   userId = 'player-a';
   refetch.mockClear();
+  retrySteps.length = 0;
   observed.length = 0;
   query = { data: ready, isError: false, isFetching: false, error: null, fetchStatus: 'idle' };
 });
 
 test('the wizard binds each account before children read its draft and restores only that account', () => {
-  store.setUser('player-a');
-  store.saveDraft({ currentStep: 'terms', identity: { firstName: 'Amina' } });
-  store.setUser(null);
+  // A draft from before RAPP-663, as her phone kept it: converted when she comes back.
+  accountStore.setUser('player-a');
+  accountStore.saveDraft({ currentStep: 'terms', identity: { firstName: 'Amina' } });
+  accountStore.setUser(null);
   const view = render(createElement(OnboardingLayout));
   expect(view.getByTestId('wizard').textContent).toBe('Amina');
+  expect(store.loadStoredDraft()).toMatchObject({
+    version: 2,
+    account: { firstName: 'Amina', preferredLanguage: 'ca' },
+  });
   userId = 'player-b';
   view.rerender(createElement(OnboardingLayout));
   expect(view.getByTestId('wizard').textContent).toBe('new player');
@@ -97,13 +127,15 @@ test('the wizard binds each account before children read its draft and restores 
   expect(store.loadDraft()).toBeNull();
 });
 
-test('paused initial loading explains the missing connection, permits retry and resumes normally', () => {
+test('paused initial loading explains the missing connection, permits retry and resumes normally', async () => {
   query = { ...query, data: undefined, fetchStatus: 'paused' };
   const view = render(createElement(OnboardingLayout));
   expect(view.getByRole('alert').textContent).toBe('errors:NETWORK-1');
   expect(view.queryByRole('progressbar') === null).toBe(true);
   fireEvent.click(view.getByRole('button', { name: 'retryAction' }));
-  expect(refetch).toHaveBeenCalledTimes(1);
+  // The network is read again before asking again (RAPP-775).
+  await waitFor(() => expect(refetch).toHaveBeenCalledTimes(1));
+  expect(retrySteps).toEqual(['network-check', 'refetch']);
   query = { ...query, fetchStatus: 'fetching', isFetching: true };
   view.rerender(createElement(OnboardingLayout));
   expect(view.getByRole('progressbar').textContent).toBe('Loading');

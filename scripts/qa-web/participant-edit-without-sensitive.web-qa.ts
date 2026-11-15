@@ -4,8 +4,9 @@
  *
  * Such a person gets no document number, phone, address or postal code from
  * `get_participant_profile`. The database keeps the stored values when she
- * saves and checks the document rule on the stored number. The form has to do
- * its part: it hides the four fields, says why, and does not refuse to save a
+ * saves and checks the document rule on the stored number. Her page does its
+ * part (RAPP-653): the Sensible fields of the Fitxa show locked, with the
+ * level they need and no Edit, and saving another field does not refuse a
  * participant with a NIE because of a number it was never shown.
  *
  * The permission is removed for the spec and put back after it, the way the
@@ -13,7 +14,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { queryDatabase, signIn } from './session';
+import { appAnswerSql, queryDatabase, signIn, writeAppAnswerSql } from './session';
 
 const LIMITED_EMAIL = 'nuria.serra@example.test';
 const SEED_ORG_ID = '5eed0000-0000-4000-8000-000000000000';
@@ -22,19 +23,20 @@ const SENSITIVE_PERMISSION = 'participants.view_sensitive';
 /** A participant with a NIE, so the document rule applies to her. */
 const participantId = () =>
   queryDatabase(`
-    select id from public.profiles
-     where role = 'player' and last_name = 'Mamani' and document_type = 'nie';
+    select r.id from public.profiles r
+     where r.role = 'player' and r.last_name = 'Mamani'
+       and ${appAnswerSql('r.id', 'document_type')} = 'nie';
   `).trim();
 
 const storedSensitiveValues = (id: string) =>
   queryDatabase(`
-    select concat_ws('|', public.decrypt_field(document_number), public.decrypt_field(phone),
-                     public.decrypt_field(address), public.decrypt_field(postal_code))
-      from public.profiles where id = '${id}';
+    select concat_ws('|', ${appAnswerSql(`'${id}'`, 'document_number')},
+                     ${appAnswerSql(`'${id}'`, 'phone')}, ${appAnswerSql(`'${id}'`, 'address')},
+                     ${appAnswerSql(`'${id}'`, 'postal_code')});
   `);
 
 const placeOfBirth = (id: string) =>
-  queryDatabase(`select place_of_birth from public.profiles where id = '${id}';`);
+  queryDatabase(`select ${appAnswerSql(`'${id}'`, 'place_of_birth')};`);
 
 test.describe('editing a record without the sensitive fields', () => {
   let hadSensitivePermission = false;
@@ -74,38 +76,45 @@ test.describe('editing a record without the sensitive fields', () => {
       await signIn(page, LIMITED_EMAIL);
       await page.goto(`/participants/${id}`);
       await expect(page.getByRole('heading', { level: 1, name: /Mamani/ })).toBeVisible();
-      await page
-        .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
-        .click();
-
-      await page.locator('#participant-placeOfBirth').fill(nextPlace);
-      await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
+      await page.getByTestId('fitxa-field-place_of_birth-edit').click();
+      const editor = page.getByTestId('fitxa-field-place_of_birth-editor');
+      await editor.getByRole('textbox').fill(nextPlace);
+      await editor.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
       await expect.poll(() => placeOfBirth(id), { timeout: 15_000 }).toBe(nextPlace);
       expect(storedSensitiveValues(id)).toBe(sensitiveBefore);
     } finally {
-      queryDatabase(
-        `update public.profiles set place_of_birth = '${originalPlace}' where id = '${id}';`,
-      );
+      queryDatabase(`
+        begin;
+        ${writeAppAnswerSql(`'${id}'`, 'place_of_birth', originalPlace === '' ? null : originalPlace, 'player')}
+        commit;
+      `);
     }
   });
 
-  test('the form hides the four sensitive fields and says so', async ({ page }) => {
+  test('her page locks the Sensible fields and says which level they need', async ({ page }) => {
     const id = participantId();
+    const phone = queryDatabase(`select ${appAnswerSql(`'${id}'`, 'phone')};`);
 
     await signIn(page, LIMITED_EMAIL);
     await page.goto(`/participants/${id}`);
     await expect(page.getByRole('heading', { level: 1, name: /Mamani/ })).toBeVisible();
-    await page
-      .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
-      .click();
 
-    await expect(page.locator('#participant-placeOfBirth')).toBeVisible();
-    for (const field of ['documentNumber', 'phone', 'address', 'postalCode']) {
-      await expect(page.locator(`#participant-${field}`)).toHaveCount(0);
+    await expect(page.getByTestId('fitxa-field-place_of_birth-edit')).toBeVisible();
+    // The document is three fields since RAPP-660 (D4): its type is Personal,
+    // so she reads and edits it; the number is Sensible.
+    await expect(page.getByTestId('fitxa-field-document-edit')).toBeVisible();
+    for (const field of ['document_number', 'phone', 'address', 'postal_code']) {
+      await expect(page.getByTestId(`fitxa-field-${field}`)).toHaveAttribute(
+        'data-locked',
+        'sensitive',
+      );
+      await expect(page.getByTestId(`fitxa-field-${field}-value`)).toHaveText(
+        /sensibles|sensitive|sensibles/i,
+      );
+      await expect(page.getByTestId(`fitxa-field-${field}-edit`)).toHaveCount(0);
     }
-    await expect(page.getByTestId('participant-edit-sensitive-hidden')).toBeVisible();
-    // The document TYPE is not sensitive: she can still be moved to "no document".
-    await expect(page.locator('#participant-documentType')).toBeVisible();
+    // The value never reached the page.
+    if (phone !== '') await expect(page.getByText(phone)).toHaveCount(0);
   });
 });

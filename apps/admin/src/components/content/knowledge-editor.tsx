@@ -1,3 +1,4 @@
+import { pageClassName } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -272,7 +273,7 @@ export function KnowledgeEditor({ article, categories, onSaved }: KnowledgeEdito
 
   const normalizedVideo = videoUrl.trim() ? normalizeVideoEmbedUrl(videoUrl) : null;
   return (
-    <form className="flex flex-col gap-6 p-6" onSubmit={submit} data-testid="knowledge-editor">
+    <form className={pageClassName()} onSubmit={submit} data-testid="knowledge-editor">
       <h1 className="text-2xl font-semibold">
         {article === undefined ? t('knowledge:newAction') : t('knowledge:editTitle')}
       </h1>

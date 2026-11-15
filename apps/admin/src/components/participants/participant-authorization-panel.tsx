@@ -3,34 +3,21 @@
  *
  * Each season she signed: how (in the app, on a staff device, on paper), which
  * version, when, and whether she signed with a drawing or with the ticks alone.
- * The drawn signature shows only with participants.view_sensitive; the medical
- * answer only with participants.view_health. Staff record a paper signature
+ * The drawn signature shows only with participants.view_sensitive. Her health
+ * and her emergency contact are answers since RAPP-698: they show with her
+ * other answers, each by its field's level. Her consents have their own
+ * section since RAPP-699 (`participant-consents.tsx`). Staff record a paper signature
  * for the current season here, so a player who signed in September is not
  * asked again.
  */
 
 import { Button } from '@/components/ui/button';
+import type { SeasonAnswersLine } from '@/lib/participant-fitxa';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ParticipantAuthorization, ParticipantConsent } from '@ramassa/shared/authorization';
+import type { ParticipantAuthorization } from '@ramassa/shared/authorization';
 import type { SignatureStrokes } from '@ramassa/shared/equipment';
-import type { ParticipantDetailRow } from '@ramassa/shared/participants';
-import { formatSupportNeeds } from '@ramassa/shared/schemas';
-import type { ParticipantSeasonAnswers } from '@ramassa/shared/seasons';
-
-const APPLICANT_STATUS_KEYS = {
-  asylum_seeker: 'applicantStatusAsylumSeeker',
-  refugee: 'applicantStatusRefugee',
-  migrant: 'applicantStatusMigrant',
-  other: 'applicantStatusOther',
-  prefer_not_to_say: 'applicantStatusPreferNotToSay',
-} as const;
-
-const CHILDCARE_KEYS = {
-  yes: 'childcareNeedYes',
-  no: 'childcareNeedNo',
-  maybe: 'childcareNeedMaybe',
-} as const;
+import type { ParticipantRecord } from '@ramassa/shared/participants';
 
 /** The strokes are 0..1000 on both axes, so they fill any box the same way. */
 export function SignatureDrawing({
@@ -64,35 +51,18 @@ export function SignatureDrawing({
   );
 }
 
-/**
- * What her health line shows: her answer, that she withdrew the health data
- * consent (her answer was then deleted, pending fix 25), or nothing given.
- */
-export function healthAnswerState(
-  healthInfo: string | null | undefined,
-  consents: readonly ParticipantConsent[],
-): 'answer' | 'withdrawn' | 'none' {
-  if (healthInfo != null && healthInfo !== '') return 'answer';
-  const health = consents.find((consent) => consent.key === 'health_data');
-  return health !== undefined && !health.granted ? 'withdrawn' : 'none';
-}
-
 export interface ParticipantAuthorizationPanelProps {
-  readonly participant: ParticipantDetailRow;
+  readonly participant: ParticipantRecord;
   readonly authorizations: readonly ParticipantAuthorization[];
-  readonly consents: readonly ParticipantConsent[];
-  readonly canSeeHealth: boolean;
   readonly onRecordPaper: (signedOn: string) => Promise<void>;
-  /** Her answers by season (RAPP-306). */
-  readonly seasonAnswers?: readonly ParticipantSeasonAnswers[];
+  /** Her answers by season (RAPP-306), in words, read by field (RAPP-664). */
+  readonly seasonAnswers?: readonly SeasonAnswersLine[];
   readonly onSetPriorSeasons?: (count: number) => Promise<void>;
 }
 
 export function ParticipantAuthorizationPanel({
   participant,
   authorizations,
-  consents,
-  canSeeHealth,
   onRecordPaper,
   seasonAnswers = [],
   onSetPriorSeasons,
@@ -114,11 +84,6 @@ export function ParticipantAuthorizationPanel({
     }
   }
   const date = (value: string) => new Date(value).toLocaleDateString(locale);
-  // A record from before the wording was kept (or a change outside the
-  // authorization) names the consent by its built-in name, or its key.
-  const consentName = (consent: ParticipantConsent) =>
-    consent.wording ??
-    t(`settings:authorizationConsent.${consent.key}`, { defaultValue: consent.key });
   const notProvided = t('profile:notProvided');
 
   async function recordPaper(event: FormEvent<HTMLFormElement>) {
@@ -181,71 +146,6 @@ export function ParticipantAuthorizationPanel({
         </ul>
       )}
 
-      {consents.length === 0 ? null : (
-        <div className="flex flex-col gap-1">
-          <h3 className="text-start text-sm font-semibold">
-            {t('participants:authorizationConsentsTitle')}
-          </h3>
-          <ul className="flex flex-col gap-1" data-testid="participant-consents">
-            {consents.map((consent) => (
-              <li key={consent.key} className="flex flex-col text-start text-sm">
-                {/* The words she was shown (RAPP-614), in the language she read them. */}
-                <span lang={consent.language ?? undefined} dir="auto">
-                  {consentName(consent)}
-                </span>
-                <span>
-                  {consent.granted
-                    ? t('participants:authorizationGranted')
-                    : t('participants:authorizationNotGranted')}{' '}
-                  <span className="text-xs text-muted-foreground">
-                    (
-                    {consent.versionNumber === null
-                      ? date(consent.decidedAt)
-                      : t('participants:authorizationConsentVersion', {
-                          date: date(consent.decidedAt),
-                          season: consent.seasonName ?? '',
-                          number: consent.versionNumber,
-                        })}
-                    {consent.required === true ? ` · ${t('settings:authorizationRequired')}` : ''})
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <dl className="grid gap-2 sm:grid-cols-2">
-        <div className="flex flex-col">
-          <dt className="text-start text-xs text-muted-foreground">
-            {t('participants:authorizationEmergencyContact')}
-          </dt>
-          <dd className="text-start text-sm">
-            {participant.emergency_contact_name == null
-              ? notProvided
-              : [
-                  participant.emergency_contact_name,
-                  participant.emergency_contact_relation,
-                  participant.emergency_contact_phone,
-                ]
-                  .filter((part) => part != null && part !== '')
-                  .join(' · ')}
-          </dd>
-        </div>
-        {canSeeHealth ? (
-          <div className="flex flex-col" data-testid="participant-health">
-            <dt className="text-start text-xs text-muted-foreground">
-              {t('participants:authorizationHealth')}
-            </dt>
-            <dd className="whitespace-pre-wrap text-start text-sm">
-              {healthAnswerState(participant.health_info, consents) === 'withdrawn'
-                ? t('participants:authorizationHealthConsentWithdrawn')
-                : (participant.health_info ?? notProvided)}
-            </dd>
-          </div>
-        ) : null}
-      </dl>
-
       {/* The season number is counted: earlier seasons plus the seasons she
           signed (RAPP-306). Staff enter the seasons before the app. */}
       <div className="flex flex-col gap-2">
@@ -298,22 +198,7 @@ export function ParticipantAuthorizationPanel({
               <li key={answers.seasonName} className="text-start text-sm">
                 <span className="font-medium">{answers.seasonName}</span>
                 {': '}
-                {[
-                  answers.applicantStatus === null
-                    ? null
-                    : t(
-                        `onboarding:${APPLICANT_STATUS_KEYS[answers.applicantStatus as keyof typeof APPLICANT_STATUS_KEYS] ?? 'applicantStatusOther'}`,
-                      ),
-                  answers.childcareNeed === null
-                    ? null
-                    : `${t('onboarding:childcareNeedLabel')} ${t(`onboarding:${CHILDCARE_KEYS[answers.childcareNeed as keyof typeof CHILDCARE_KEYS] ?? 'childcareNeedMaybe'}`)}`,
-                  answers.supportingEntities.length === 0
-                    ? null
-                    : answers.supportingEntities.join(', '),
-                  formatSupportNeeds(answers.specificNeeds, t),
-                ]
-                  .filter((part) => part !== null && part !== '')
-                  .join(' · ') || notProvided}
+                {answers.text === '' ? notProvided : answers.text}
               </li>
             ))}
           </ul>

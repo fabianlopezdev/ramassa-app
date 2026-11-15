@@ -9,7 +9,8 @@ export const SUPPORT_NEED_CATEGORIES = [
 ] as const;
 export type SupportNeedCategory = (typeof SUPPORT_NEED_CATEGORIES)[number];
 export type SupportNeedChoice = SupportNeedCategory | 'none';
-export const SUPPORT_NEED_DETAIL_MAX_LENGTH = 2000;
+/** The details text is one long text field (RAPP-660): the long text limit of every field. */
+export const SUPPORT_NEED_DETAIL_MAX_LENGTH = 4000;
 export const SUPPORT_NEEDS_MAX_LENGTH = 32000;
 export const SUPPORT_NEED_LABEL_KEYS = {
   accessibility: 'onboarding:supportNeedAccessibility',

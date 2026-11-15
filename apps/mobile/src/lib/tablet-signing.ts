@@ -13,10 +13,21 @@ import { useAuth } from '@ramassa/shared/auth';
 import {
   fetchAuthorizationForSigning,
   sendTabletSigning,
+  type AuthorizationForSigning,
   type TabletSigner,
   type TabletSigning,
 } from '@ramassa/shared/authorization';
 import { AppError } from '@ramassa/shared/errors';
+import {
+  EMPTY_INTAKE_CATALOG,
+  fetchIntakeCatalog,
+  liveOnboardingBlocks,
+  liveOnboardingConsents,
+  parseCatalogWithFormVersion,
+  type IntakeCatalog,
+  type PlacedConsent,
+  type SignatureFormBlock,
+} from '@ramassa/shared/intake-builder';
 import { isNetworkStateOnline } from './network-status';
 import { finishesWithin, SCREEN_SEND_WAIT_MS } from './outbox-drain-loop';
 import {
@@ -171,6 +182,66 @@ export function useAuthorizationForSigning(enabled: boolean) {
         ? undefined
         : (readAuthorizationForSigning(privateStorage, userId) ?? undefined),
     initialDataUpdatedAt: 0,
+    enabled: enabled && userId !== null,
+    retry: false,
+  });
+}
+
+const signingCatalogKey = (userId: string) => `ramassa.signing-catalog.v1:${userId}`;
+
+/**
+ * Her catalog for the version the tablet collects (RAPP-773): the
+ * authorization form as that version froze it, with the fields, consents and
+ * blocks it asks. Read online and kept on the tablet, like the version, so
+ * signing mode opens with no connection.
+ */
+export function useSigningCatalog(version: AuthorizationForSigning | null | undefined) {
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+  return useQuery({
+    queryKey: ['signing-catalog', userId ?? 'signed-out', version?.versionId ?? 'none'],
+    queryFn: async (): Promise<IntakeCatalog> => {
+      if (userId === null || version == null) return EMPTY_INTAKE_CATALOG;
+      let raw: unknown;
+      try {
+        const { data, error } = await supabase.rpc('intake_catalog');
+        if (error) throw new AppError('DB-1', { message: error.message });
+        raw = data;
+        privateStorage.set(signingCatalogKey(userId), JSON.stringify(data));
+      } catch (error) {
+        const kept = privateStorage.getString(signingCatalogKey(userId));
+        if (kept === undefined) throw error;
+        raw = JSON.parse(kept) as unknown;
+      }
+      return parseCatalogWithFormVersion(raw, version);
+    },
+    enabled: userId !== null && version != null,
+    retry: false,
+  });
+}
+
+/**
+ * What a walk-in answers of her Onboarding on the tablet after the
+ * authorization: the signature blocks of the live screens (RAPP-691) and the
+ * consents placed on them (RAPP-699). Read online; with no connection there
+ * are none, and she answers them on her own phone later.
+ */
+export function useWalkInOnboardingAsks(enabled: boolean) {
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+  return useQuery({
+    queryKey: ['walk-in-onboarding-asks', userId ?? 'signed-out'],
+    queryFn: async (): Promise<{
+      readonly blocks: readonly SignatureFormBlock[];
+      readonly consents: readonly PlacedConsent[];
+    }> => {
+      try {
+        const catalog = await fetchIntakeCatalog(supabase);
+        return { blocks: liveOnboardingBlocks(catalog), consents: liveOnboardingConsents(catalog) };
+      } catch {
+        return { blocks: [], consents: [] };
+      }
+    },
     enabled: enabled && userId !== null,
     retry: false,
   });

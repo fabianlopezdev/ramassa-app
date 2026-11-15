@@ -21,7 +21,19 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(38);
+select plan(34);
+
+-- Her answer to an app field in a reader's `answers` (RAPP-662): a choice by its
+-- option's key, anything else as text.
+create function pg_temp.column_of(p_answers jsonb, p_key text) returns text language sql security definer as $$
+  select coalesce(
+    (select o.key from public.custom_question_options o
+      where o.question_id = f.id and o.id::text = p_answers ->> f.id::text),
+    p_answers ->> f.id::text)
+    from public.profile_fields f
+   where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = p_key;
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
 
 -- 1 and 2. Function privileges ----------------------------------------------------------------------
 
@@ -69,40 +81,12 @@ select ok(not has_function_privilege('anon', 'private.referral_update_content(uu
 select ok(not has_function_privilege('anon', 'private.feedback_content(uuid)', 'execute'),
   'anon cannot run the feedback helper');
 
--- The trigger decrypts as its owner; a trigger function cannot be called directly.
-select ok(
-  (select prosecdef from pg_proc where oid = 'private.normalize_applicant_status_details()'::regprocedure),
-  'the applicant status trigger decrypts as its owner'
-);
-
 -- 3. No ciphertext transplant ------------------------------------------------------------------------
 
--- A player copies a ciphertext she can read into her own phone field: her
--- own profile read would decrypt it. The guard refuses the direct write.
+-- Her profile holds no encrypted column since RAPP-698: her Sensible answers
+-- are written only through the answer functions, which encrypt on the server.
 set local role authenticated;
-set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal1"}';
-select throws_ok(
-  $$ update public.profiles
-        set phone = (select content_encrypted from public.feedback_submissions
-                      where id = '5eed0000-0000-4000-8017-000000000001')
-      where id = '5eed0000-0000-4000-8000-000000000011' $$,
-  '42501', 'PROFILES/PRIVILEGED_COLUMN', 'a player cannot write a ciphertext into her own profile'
-);
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
-select throws_ok(
-  $$ update public.profiles
-        set health_info = (select intake_answers from public.entity_referrals
-                            where id = '5eed0000-0000-4000-8010-000000000001')
-      where id = '5eed0000-0000-4000-8000-000000000002' $$,
-  '42501', 'PROFILES/PRIVILEGED_COLUMN', 'a staff member cannot write a ciphertext into her own profile'
-);
-select throws_ok(
-  $$ update public.profiles
-        set specific_needs = (select intake_answers from public.entity_referrals
-                               where id = '5eed0000-0000-4000-8010-000000000001')
-      where id = '5eed0000-0000-4000-8000-000000000012' $$,
-  '42501', 'PROFILES/PRIVILEGED_COLUMN', 'a staff member cannot write a ciphertext into a player''s profile'
-);
 
 -- 4. The six functions -------------------------------------------------------------------------------
 
@@ -117,7 +101,7 @@ select is(
   'Pendent de primera entrevista.', 'an entity contact reads the notes of her own referral'
 );
 select is(
-  (select intake_answers ->> 'specific_needs' from public.get_entity_referral('5eed0000-0000-4000-8010-000000000001')),
+  (select pg_temp.column_of(answers, 'specific_needs_details') from public.get_entity_referral('5eed0000-0000-4000-8010-000000000001')),
   'Prefereix entrenar a la tarda.', 'the sender reads every answer she sent'
 );
 
@@ -193,7 +177,7 @@ select is(
   'M’agradaria una activitat de conversa en català.', 'staff with feedback.view read her feedback in her activity'
 );
 select is(
-  (select intake_answers ->> 'applicant_status' from public.get_entity_referral('5eed0000-0000-4000-8010-000000000001')),
+  (select pg_temp.column_of(answers, 'applicant_status') from public.get_entity_referral('5eed0000-0000-4000-8010-000000000001')),
   'migrant', 'staff with participants.view_sensitive read the sensitive answers'
 );
 
@@ -205,12 +189,12 @@ delete from public.team_member_permissions
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
-  (select intake_answers ?| array['applicant_status', 'specific_needs']
+  (select pg_temp.column_of(answers, 'applicant_status') is not null or pg_temp.column_of(answers, 'specific_needs') is not null
      from public.get_entity_referral('5eed0000-0000-4000-8010-000000000001')),
   false, 'staff without participants.view_sensitive never receive the sensitive answers'
 );
 select is(
-  (select intake_answers ->> 'city' from public.get_entity_referral('5eed0000-0000-4000-8010-000000000001')),
+  (select pg_temp.column_of(answers, 'city') from public.get_entity_referral('5eed0000-0000-4000-8010-000000000001')),
   'Vic', 'staff without participants.view_sensitive still read the other answers'
 );
 

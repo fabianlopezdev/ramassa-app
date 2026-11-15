@@ -5,7 +5,13 @@
  * sign in.
  */
 import { expect, test } from '@playwright/test';
-import { completeSecondFactor, queryDatabase, signInPlayer, STAFF_EMAIL } from './session';
+import {
+  completeSecondFactor,
+  queryDatabase,
+  questionStatesSql,
+  signInPlayer,
+  STAFF_EMAIL,
+} from './session';
 
 test.setTimeout(240_000);
 
@@ -31,9 +37,18 @@ test('invite, renew an expired invite, and cancel it', async ({ page }) => {
 
     // The last step shows what she will be asked before the invite exists (RAPP-618).
     await expect(page.getByTestId('invite-questions-step')).toBeVisible({ timeout: 30_000 });
+    // Each screen opens to show its questions (RAPP-643).
+    const show = async (screen: string, question: string) => {
+      if ((await page.getByTestId(`invite-question-${question}`).count()) === 0) {
+        await page.getByTestId(`invite-screen-open-${screen}`).click();
+      }
+      await expect(page.getByTestId(`invite-question-${question}`)).toBeVisible();
+    };
+    await show('logistics', 'reference_entity');
     await expect(page.getByTestId('invite-question-reference_entity-status')).toContainText(
       'She is not asked',
     );
+    await show('background', 'date_of_birth');
     await expect(page.getByTestId('invite-question-date_of_birth-status')).toContainText(
       'She is asked',
     );
@@ -42,6 +57,7 @@ test('invite, renew an expired invite, and cancel it', async ({ page }) => {
     expect(
       queryDatabase(`select count(*) from public.invites where email = '${email}';`).trim(),
     ).toBe('0');
+    await show('logistics', 'phone');
     await page.getByTestId('invite-question-phone-skip').click();
     await expect(page.getByTestId('invite-question-phone-status')).toContainText(
       'She is not asked',
@@ -53,8 +69,7 @@ test('invite, renew an expired invite, and cancel it', async ({ page }) => {
     ).toBe('Creu Roja Osona');
     expect(
       queryDatabase(
-        `select string_agg(s.question || ':' || s.state, ',') from public.intake_question_states s
-           join auth.users u on u.id = s.profile_id where u.email = '${email}';`,
+        `select ${questionStatesSql(`(select id from auth.users where email = '${email}')`)};`,
       ).trim(),
     ).toBe('phone:skip');
     await page.getByTestId('invite-done').click();

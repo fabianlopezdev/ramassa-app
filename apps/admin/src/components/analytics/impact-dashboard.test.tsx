@@ -15,6 +15,7 @@ const report: ImpactReport = {
           ca: 'Entrenament',
           es: 'Entrenamiento',
           en: 'Training',
+          fr: 'Entraînement',
           ar: 'تدريب',
           fa: 'تمرین',
         },

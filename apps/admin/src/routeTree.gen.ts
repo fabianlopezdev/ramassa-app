@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as EntityRouteImport } from './routes/_entity'
 import { Route as StaffRouteImport } from './routes/_staff'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as StaffAccountRouteImport } from './routes/_staff.account'
 import { Route as StaffAttendanceRouteImport } from './routes/_staff.attendance'
 import { Route as StaffContentRouteImport } from './routes/_staff.content'
 import { Route as StaffDashboardRouteImport } from './routes/_staff.dashboard'
@@ -20,12 +21,15 @@ import { Route as StaffDataRouteImport } from './routes/_staff.data'
 import { Route as StaffFeedbackRouteImport } from './routes/_staff.feedback'
 import { Route as StaffForumRouteImport } from './routes/_staff.forum'
 import { Route as StaffGalleryRouteImport } from './routes/_staff.gallery'
+import { Route as StaffLegalRouteImport } from './routes/_staff.legal'
+import { Route as StaffLegalDataRouteImport } from './routes/_staff.legal-data'
 import { Route as StaffMentoringRouteImport } from './routes/_staff.mentoring'
 import { Route as StaffMessagesRouteImport } from './routes/_staff.messages'
 import { Route as StaffNotificationsRouteImport } from './routes/_staff.notifications'
-import { Route as StaffOnboardingRouteImport } from './routes/_staff.onboarding'
+import { Route as StaffProfileLayoutRouteImport } from './routes/_staff.profile-layout'
 import { Route as StaffSettingsRouteImport } from './routes/_staff.settings'
 import { Route as StaffSurveysRouteImport } from './routes/_staff.surveys'
+import { Route as StaffTeamRouteImport } from './routes/_staff.team'
 import { Route as EntityPortalIndexRouteImport } from './routes/_entity.portal.index'
 import { Route as EntityPortalEventsRouteImport } from './routes/_entity.portal.events'
 import { Route as EntityPortalMessagesRouteImport } from './routes/_entity.portal.messages'
@@ -34,8 +38,11 @@ import { Route as EntityPortalServicesRouteImport } from './routes/_entity.porta
 import { Route as StaffAttendanceIndexRouteImport } from './routes/_staff.attendance.index'
 import { Route as StaffAttendanceOccurrenceIdRouteImport } from './routes/_staff.attendance.$occurrenceId'
 import { Route as StaffContentIndexRouteImport } from './routes/_staff.content.index'
+import { Route as StaffEntitiesIndexRouteImport } from './routes/_staff.entities.index'
+import { Route as StaffEntitiesReferralFormRouteImport } from './routes/_staff.entities.referral-form'
 import { Route as StaffMessagesIndexRouteImport } from './routes/_staff.messages.index'
 import { Route as StaffMessagesConversationIdRouteImport } from './routes/_staff.messages.$conversationId'
+import { Route as StaffOnboardingIndexRouteImport } from './routes/_staff.onboarding.index'
 import { Route as StaffParticipantsIndexRouteImport } from './routes/_staff.participants.index'
 import { Route as StaffParticipantsParticipantIdRouteImport } from './routes/_staff.participants.$participantId'
 import { Route as StaffParticipantsDeletionRequestsRouteImport } from './routes/_staff.participants.deletion-requests'
@@ -65,8 +72,17 @@ import { Route as StaffContentServicesIndexRouteImport } from './routes/_staff.c
 import { Route as StaffContentServicesServiceIdRouteImport } from './routes/_staff.content.services.$serviceId'
 import { Route as StaffContentServicesCategoriesRouteImport } from './routes/_staff.content.services.categories'
 import { Route as StaffContentServicesNewRouteImport } from './routes/_staff.content.services.new'
+import { Route as StaffFormsAuthorizationIndexRouteImport } from './routes/_staff.forms.authorization.index'
+import { Route as StaffFormsAuthorizationStepRouteImport } from './routes/_staff.forms.authorization.$step'
+import { Route as StaffFormsCustomIndexRouteImport } from './routes/_staff.forms.custom.index'
+import { Route as StaffFormsLegalIndexRouteImport } from './routes/_staff.forms.legal.index'
+import { Route as StaffFormsTermsIndexRouteImport } from './routes/_staff.forms.terms.index'
+import { Route as StaffFormsTermsStepRouteImport } from './routes/_staff.forms.terms.$step'
+import { Route as StaffOnboardingScreensScreenIdRouteImport } from './routes/_staff.onboarding.screens.$screenId'
 import { Route as StaffContentServicesReviewsIndexRouteImport } from './routes/_staff.content.services.reviews.index'
 import { Route as StaffContentServicesReviewsServiceIdRouteImport } from './routes/_staff.content.services.reviews.$serviceId'
+import { Route as StaffFormsCustomFormIdIndexRouteImport } from './routes/_staff.forms.custom.$formId.index'
+import { Route as StaffFormsCustomFormIdScreensScreenIdRouteImport } from './routes/_staff.forms.custom.$formId.screens.$screenId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -85,6 +101,11 @@ const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
+} as any)
+const StaffAccountRoute = StaffAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => StaffRoute,
 } as any)
 const StaffAttendanceRoute = StaffAttendanceRouteImport.update({
   id: '/attendance',
@@ -121,6 +142,16 @@ const StaffGalleryRoute = StaffGalleryRouteImport.update({
   path: '/gallery',
   getParentRoute: () => StaffRoute,
 } as any)
+const StaffLegalRoute = StaffLegalRouteImport.update({
+  id: '/legal',
+  path: '/legal',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffLegalDataRoute = StaffLegalDataRouteImport.update({
+  id: '/legal-data',
+  path: '/legal-data',
+  getParentRoute: () => StaffRoute,
+} as any)
 const StaffMentoringRoute = StaffMentoringRouteImport.update({
   id: '/mentoring',
   path: '/mentoring',
@@ -136,9 +167,9 @@ const StaffNotificationsRoute = StaffNotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => StaffRoute,
 } as any)
-const StaffOnboardingRoute = StaffOnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
+const StaffProfileLayoutRoute = StaffProfileLayoutRouteImport.update({
+  id: '/profile-layout',
+  path: '/profile-layout',
   getParentRoute: () => StaffRoute,
 } as any)
 const StaffSettingsRoute = StaffSettingsRouteImport.update({
@@ -149,6 +180,11 @@ const StaffSettingsRoute = StaffSettingsRouteImport.update({
 const StaffSurveysRoute = StaffSurveysRouteImport.update({
   id: '/surveys',
   path: '/surveys',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffTeamRoute = StaffTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
   getParentRoute: () => StaffRoute,
 } as any)
 const EntityPortalIndexRoute = EntityPortalIndexRouteImport.update({
@@ -192,6 +228,17 @@ const StaffContentIndexRoute = StaffContentIndexRouteImport.update({
   path: '/',
   getParentRoute: () => StaffContentRoute,
 } as any)
+const StaffEntitiesIndexRoute = StaffEntitiesIndexRouteImport.update({
+  id: '/entities/',
+  path: '/entities/',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffEntitiesReferralFormRoute =
+  StaffEntitiesReferralFormRouteImport.update({
+    id: '/entities/referral-form',
+    path: '/entities/referral-form',
+    getParentRoute: () => StaffRoute,
+  } as any)
 const StaffMessagesIndexRoute = StaffMessagesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -203,6 +250,11 @@ const StaffMessagesConversationIdRoute =
     path: '/$conversationId',
     getParentRoute: () => StaffMessagesRoute,
   } as any)
+const StaffOnboardingIndexRoute = StaffOnboardingIndexRouteImport.update({
+  id: '/onboarding/',
+  path: '/onboarding/',
+  getParentRoute: () => StaffRoute,
+} as any)
 const StaffParticipantsIndexRoute = StaffParticipantsIndexRouteImport.update({
   id: '/participants/',
   path: '/participants/',
@@ -370,6 +422,45 @@ const StaffContentServicesNewRoute = StaffContentServicesNewRouteImport.update({
   path: '/services/new',
   getParentRoute: () => StaffContentRoute,
 } as any)
+const StaffFormsAuthorizationIndexRoute =
+  StaffFormsAuthorizationIndexRouteImport.update({
+    id: '/forms/authorization/',
+    path: '/forms/authorization/',
+    getParentRoute: () => StaffRoute,
+  } as any)
+const StaffFormsAuthorizationStepRoute =
+  StaffFormsAuthorizationStepRouteImport.update({
+    id: '/forms/authorization/$step',
+    path: '/forms/authorization/$step',
+    getParentRoute: () => StaffRoute,
+  } as any)
+const StaffFormsCustomIndexRoute = StaffFormsCustomIndexRouteImport.update({
+  id: '/forms/custom/',
+  path: '/forms/custom/',
+  getParentRoute: () => StaffRoute,
+} as any)
+
+const StaffFormsLegalIndexRoute = StaffFormsLegalIndexRouteImport.update({
+  id: '/forms/legal/',
+  path: '/forms/legal/',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffFormsTermsIndexRoute = StaffFormsTermsIndexRouteImport.update({
+  id: '/forms/terms/',
+  path: '/forms/terms/',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffFormsTermsStepRoute = StaffFormsTermsStepRouteImport.update({
+  id: '/forms/terms/$step',
+  path: '/forms/terms/$step',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffOnboardingScreensScreenIdRoute =
+  StaffOnboardingScreensScreenIdRouteImport.update({
+    id: '/onboarding/screens/$screenId',
+    path: '/onboarding/screens/$screenId',
+    getParentRoute: () => StaffRoute,
+  } as any)
 const StaffContentServicesReviewsIndexRoute =
   StaffContentServicesReviewsIndexRouteImport.update({
     id: '/services/reviews/',
@@ -382,10 +473,23 @@ const StaffContentServicesReviewsServiceIdRoute =
     path: '/services/reviews/$serviceId',
     getParentRoute: () => StaffContentRoute,
   } as any)
+const StaffFormsCustomFormIdIndexRoute =
+  StaffFormsCustomFormIdIndexRouteImport.update({
+    id: '/forms/custom/$formId/',
+    path: '/forms/custom/$formId/',
+    getParentRoute: () => StaffRoute,
+  } as any)
+const StaffFormsCustomFormIdScreensScreenIdRoute =
+  StaffFormsCustomFormIdScreensScreenIdRouteImport.update({
+    id: '/forms/custom/$formId/screens/$screenId',
+    path: '/forms/custom/$formId/screens/$screenId',
+    getParentRoute: () => StaffRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/account': typeof StaffAccountRoute
   '/attendance': typeof StaffAttendanceRouteWithChildren
   '/content': typeof StaffContentRouteWithChildren
   '/dashboard': typeof StaffDashboardRoute
@@ -393,17 +497,21 @@ export interface FileRoutesByFullPath {
   '/feedback': typeof StaffFeedbackRoute
   '/forum': typeof StaffForumRoute
   '/gallery': typeof StaffGalleryRoute
+  '/legal': typeof StaffLegalRoute
+  '/legal-data': typeof StaffLegalDataRoute
   '/mentoring': typeof StaffMentoringRoute
   '/messages': typeof StaffMessagesRouteWithChildren
   '/notifications': typeof StaffNotificationsRoute
-  '/onboarding': typeof StaffOnboardingRoute
+  '/profile-layout': typeof StaffProfileLayoutRoute
   '/settings': typeof StaffSettingsRoute
   '/surveys': typeof StaffSurveysRoute
+  '/team': typeof StaffTeamRoute
   '/portal/events': typeof EntityPortalEventsRoute
   '/portal/messages': typeof EntityPortalMessagesRoute
   '/portal/referrals': typeof EntityPortalReferralsRouteWithChildren
   '/portal/services': typeof EntityPortalServicesRouteWithChildren
   '/attendance/$occurrenceId': typeof StaffAttendanceOccurrenceIdRoute
+  '/entities/referral-form': typeof StaffEntitiesReferralFormRoute
   '/messages/$conversationId': typeof StaffMessagesConversationIdRoute
   '/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/participants/deletion-requests': typeof StaffParticipantsDeletionRequestsRoute
@@ -416,7 +524,9 @@ export interface FileRoutesByFullPath {
   '/portal/': typeof EntityPortalIndexRoute
   '/attendance/': typeof StaffAttendanceIndexRoute
   '/content/': typeof StaffContentIndexRoute
+  '/entities/': typeof StaffEntitiesIndexRoute
   '/messages/': typeof StaffMessagesIndexRoute
+  '/onboarding/': typeof StaffOnboardingIndexRoute
   '/participants/': typeof StaffParticipantsIndexRoute
   '/portal/referrals/$referralId': typeof EntityPortalReferralsReferralIdRoute
   '/portal/referrals/new': typeof EntityPortalReferralsNewRoute
@@ -432,31 +542,45 @@ export interface FileRoutesByFullPath {
   '/content/services/$serviceId': typeof StaffContentServicesServiceIdRoute
   '/content/services/categories': typeof StaffContentServicesCategoriesRoute
   '/content/services/new': typeof StaffContentServicesNewRoute
+  '/forms/authorization/$step': typeof StaffFormsAuthorizationStepRoute
+  '/forms/terms/$step': typeof StaffFormsTermsStepRoute
+  '/onboarding/screens/$screenId': typeof StaffOnboardingScreensScreenIdRoute
   '/portal/referrals/': typeof EntityPortalReferralsIndexRoute
   '/portal/services/': typeof EntityPortalServicesIndexRoute
   '/content/announcements/': typeof StaffContentAnnouncementsIndexRoute
   '/content/events/': typeof StaffContentEventsIndexRoute
   '/content/knowledge/': typeof StaffContentKnowledgeIndexRoute
   '/content/services/': typeof StaffContentServicesIndexRoute
+  '/forms/authorization/': typeof StaffFormsAuthorizationIndexRoute
+  '/forms/custom/': typeof StaffFormsCustomIndexRoute
+  '/forms/legal/': typeof StaffFormsLegalIndexRoute
+  '/forms/terms/': typeof StaffFormsTermsIndexRoute
   '/content/services/reviews/$serviceId': typeof StaffContentServicesReviewsServiceIdRoute
   '/content/services/reviews/': typeof StaffContentServicesReviewsIndexRoute
+  '/forms/custom/$formId/': typeof StaffFormsCustomFormIdIndexRoute
+  '/forms/custom/$formId/screens/$screenId': typeof StaffFormsCustomFormIdScreensScreenIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/account': typeof StaffAccountRoute
   '/dashboard': typeof StaffDashboardRoute
   '/data': typeof StaffDataRoute
   '/feedback': typeof StaffFeedbackRoute
   '/forum': typeof StaffForumRoute
   '/gallery': typeof StaffGalleryRoute
+  '/legal': typeof StaffLegalRoute
+  '/legal-data': typeof StaffLegalDataRoute
   '/mentoring': typeof StaffMentoringRoute
   '/notifications': typeof StaffNotificationsRoute
-  '/onboarding': typeof StaffOnboardingRoute
+  '/profile-layout': typeof StaffProfileLayoutRoute
   '/settings': typeof StaffSettingsRoute
   '/surveys': typeof StaffSurveysRoute
+  '/team': typeof StaffTeamRoute
   '/portal/events': typeof EntityPortalEventsRoute
   '/portal/messages': typeof EntityPortalMessagesRoute
   '/attendance/$occurrenceId': typeof StaffAttendanceOccurrenceIdRoute
+  '/entities/referral-form': typeof StaffEntitiesReferralFormRoute
   '/messages/$conversationId': typeof StaffMessagesConversationIdRoute
   '/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/participants/deletion-requests': typeof StaffParticipantsDeletionRequestsRoute
@@ -469,7 +593,9 @@ export interface FileRoutesByTo {
   '/portal': typeof EntityPortalIndexRoute
   '/attendance': typeof StaffAttendanceIndexRoute
   '/content': typeof StaffContentIndexRoute
+  '/entities': typeof StaffEntitiesIndexRoute
   '/messages': typeof StaffMessagesIndexRoute
+  '/onboarding': typeof StaffOnboardingIndexRoute
   '/participants': typeof StaffParticipantsIndexRoute
   '/portal/referrals/$referralId': typeof EntityPortalReferralsReferralIdRoute
   '/portal/referrals/new': typeof EntityPortalReferralsNewRoute
@@ -485,14 +611,23 @@ export interface FileRoutesByTo {
   '/content/services/$serviceId': typeof StaffContentServicesServiceIdRoute
   '/content/services/categories': typeof StaffContentServicesCategoriesRoute
   '/content/services/new': typeof StaffContentServicesNewRoute
+  '/forms/authorization/$step': typeof StaffFormsAuthorizationStepRoute
+  '/forms/terms/$step': typeof StaffFormsTermsStepRoute
+  '/onboarding/screens/$screenId': typeof StaffOnboardingScreensScreenIdRoute
   '/portal/referrals': typeof EntityPortalReferralsIndexRoute
   '/portal/services': typeof EntityPortalServicesIndexRoute
   '/content/announcements': typeof StaffContentAnnouncementsIndexRoute
   '/content/events': typeof StaffContentEventsIndexRoute
   '/content/knowledge': typeof StaffContentKnowledgeIndexRoute
   '/content/services': typeof StaffContentServicesIndexRoute
+  '/forms/authorization': typeof StaffFormsAuthorizationIndexRoute
+  '/forms/custom': typeof StaffFormsCustomIndexRoute
+  '/forms/legal': typeof StaffFormsLegalIndexRoute
+  '/forms/terms': typeof StaffFormsTermsIndexRoute
   '/content/services/reviews/$serviceId': typeof StaffContentServicesReviewsServiceIdRoute
   '/content/services/reviews': typeof StaffContentServicesReviewsIndexRoute
+  '/forms/custom/$formId': typeof StaffFormsCustomFormIdIndexRoute
+  '/forms/custom/$formId/screens/$screenId': typeof StaffFormsCustomFormIdScreensScreenIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -500,6 +635,7 @@ export interface FileRoutesById {
   '/_entity': typeof EntityRouteWithChildren
   '/_staff': typeof StaffRouteWithChildren
   '/login': typeof LoginRoute
+  '/_staff/account': typeof StaffAccountRoute
   '/_staff/attendance': typeof StaffAttendanceRouteWithChildren
   '/_staff/content': typeof StaffContentRouteWithChildren
   '/_staff/dashboard': typeof StaffDashboardRoute
@@ -507,17 +643,21 @@ export interface FileRoutesById {
   '/_staff/feedback': typeof StaffFeedbackRoute
   '/_staff/forum': typeof StaffForumRoute
   '/_staff/gallery': typeof StaffGalleryRoute
+  '/_staff/legal': typeof StaffLegalRoute
+  '/_staff/legal-data': typeof StaffLegalDataRoute
   '/_staff/mentoring': typeof StaffMentoringRoute
   '/_staff/messages': typeof StaffMessagesRouteWithChildren
   '/_staff/notifications': typeof StaffNotificationsRoute
-  '/_staff/onboarding': typeof StaffOnboardingRoute
+  '/_staff/profile-layout': typeof StaffProfileLayoutRoute
   '/_staff/settings': typeof StaffSettingsRoute
   '/_staff/surveys': typeof StaffSurveysRoute
+  '/_staff/team': typeof StaffTeamRoute
   '/_entity/portal/events': typeof EntityPortalEventsRoute
   '/_entity/portal/messages': typeof EntityPortalMessagesRoute
   '/_entity/portal/referrals': typeof EntityPortalReferralsRouteWithChildren
   '/_entity/portal/services': typeof EntityPortalServicesRouteWithChildren
   '/_staff/attendance/$occurrenceId': typeof StaffAttendanceOccurrenceIdRoute
+  '/_staff/entities/referral-form': typeof StaffEntitiesReferralFormRoute
   '/_staff/messages/$conversationId': typeof StaffMessagesConversationIdRoute
   '/_staff/participants/$participantId': typeof StaffParticipantsParticipantIdRoute
   '/_staff/participants/deletion-requests': typeof StaffParticipantsDeletionRequestsRoute
@@ -530,7 +670,9 @@ export interface FileRoutesById {
   '/_entity/portal/': typeof EntityPortalIndexRoute
   '/_staff/attendance/': typeof StaffAttendanceIndexRoute
   '/_staff/content/': typeof StaffContentIndexRoute
+  '/_staff/entities/': typeof StaffEntitiesIndexRoute
   '/_staff/messages/': typeof StaffMessagesIndexRoute
+  '/_staff/onboarding/': typeof StaffOnboardingIndexRoute
   '/_staff/participants/': typeof StaffParticipantsIndexRoute
   '/_entity/portal/referrals/$referralId': typeof EntityPortalReferralsReferralIdRoute
   '/_entity/portal/referrals/new': typeof EntityPortalReferralsNewRoute
@@ -546,20 +688,30 @@ export interface FileRoutesById {
   '/_staff/content/services/$serviceId': typeof StaffContentServicesServiceIdRoute
   '/_staff/content/services/categories': typeof StaffContentServicesCategoriesRoute
   '/_staff/content/services/new': typeof StaffContentServicesNewRoute
+  '/_staff/forms/authorization/$step': typeof StaffFormsAuthorizationStepRoute
+  '/_staff/forms/terms/$step': typeof StaffFormsTermsStepRoute
+  '/_staff/onboarding/screens/$screenId': typeof StaffOnboardingScreensScreenIdRoute
   '/_entity/portal/referrals/': typeof EntityPortalReferralsIndexRoute
   '/_entity/portal/services/': typeof EntityPortalServicesIndexRoute
   '/_staff/content/announcements/': typeof StaffContentAnnouncementsIndexRoute
   '/_staff/content/events/': typeof StaffContentEventsIndexRoute
   '/_staff/content/knowledge/': typeof StaffContentKnowledgeIndexRoute
   '/_staff/content/services/': typeof StaffContentServicesIndexRoute
+  '/_staff/forms/authorization/': typeof StaffFormsAuthorizationIndexRoute
+  '/_staff/forms/custom/': typeof StaffFormsCustomIndexRoute
+  '/_staff/forms/legal/': typeof StaffFormsLegalIndexRoute
+  '/_staff/forms/terms/': typeof StaffFormsTermsIndexRoute
   '/_staff/content/services/reviews/$serviceId': typeof StaffContentServicesReviewsServiceIdRoute
   '/_staff/content/services/reviews/': typeof StaffContentServicesReviewsIndexRoute
+  '/_staff/forms/custom/$formId/': typeof StaffFormsCustomFormIdIndexRoute
+  '/_staff/forms/custom/$formId/screens/$screenId': typeof StaffFormsCustomFormIdScreensScreenIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/login'
+    | '/account'
     | '/attendance'
     | '/content'
     | '/dashboard'
@@ -567,17 +719,21 @@ export interface FileRouteTypes {
     | '/feedback'
     | '/forum'
     | '/gallery'
+    | '/legal'
+    | '/legal-data'
     | '/mentoring'
     | '/messages'
     | '/notifications'
-    | '/onboarding'
+    | '/profile-layout'
     | '/settings'
     | '/surveys'
+    | '/team'
     | '/portal/events'
     | '/portal/messages'
     | '/portal/referrals'
     | '/portal/services'
     | '/attendance/$occurrenceId'
+    | '/entities/referral-form'
     | '/messages/$conversationId'
     | '/participants/$participantId'
     | '/participants/deletion-requests'
@@ -590,7 +746,9 @@ export interface FileRouteTypes {
     | '/portal/'
     | '/attendance/'
     | '/content/'
+    | '/entities/'
     | '/messages/'
+    | '/onboarding/'
     | '/participants/'
     | '/portal/referrals/$referralId'
     | '/portal/referrals/new'
@@ -606,31 +764,45 @@ export interface FileRouteTypes {
     | '/content/services/$serviceId'
     | '/content/services/categories'
     | '/content/services/new'
+    | '/forms/authorization/$step'
+    | '/forms/terms/$step'
+    | '/onboarding/screens/$screenId'
     | '/portal/referrals/'
     | '/portal/services/'
     | '/content/announcements/'
     | '/content/events/'
     | '/content/knowledge/'
     | '/content/services/'
+    | '/forms/authorization/'
+    | '/forms/custom/'
+    | '/forms/legal/'
+    | '/forms/terms/'
     | '/content/services/reviews/$serviceId'
     | '/content/services/reviews/'
+    | '/forms/custom/$formId/'
+    | '/forms/custom/$formId/screens/$screenId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
+    | '/account'
     | '/dashboard'
     | '/data'
     | '/feedback'
     | '/forum'
     | '/gallery'
+    | '/legal'
+    | '/legal-data'
     | '/mentoring'
     | '/notifications'
-    | '/onboarding'
+    | '/profile-layout'
     | '/settings'
     | '/surveys'
+    | '/team'
     | '/portal/events'
     | '/portal/messages'
     | '/attendance/$occurrenceId'
+    | '/entities/referral-form'
     | '/messages/$conversationId'
     | '/participants/$participantId'
     | '/participants/deletion-requests'
@@ -643,7 +815,9 @@ export interface FileRouteTypes {
     | '/portal'
     | '/attendance'
     | '/content'
+    | '/entities'
     | '/messages'
+    | '/onboarding'
     | '/participants'
     | '/portal/referrals/$referralId'
     | '/portal/referrals/new'
@@ -659,20 +833,30 @@ export interface FileRouteTypes {
     | '/content/services/$serviceId'
     | '/content/services/categories'
     | '/content/services/new'
+    | '/forms/authorization/$step'
+    | '/forms/terms/$step'
+    | '/onboarding/screens/$screenId'
     | '/portal/referrals'
     | '/portal/services'
     | '/content/announcements'
     | '/content/events'
     | '/content/knowledge'
     | '/content/services'
+    | '/forms/authorization'
+    | '/forms/custom'
+    | '/forms/legal'
+    | '/forms/terms'
     | '/content/services/reviews/$serviceId'
     | '/content/services/reviews'
+    | '/forms/custom/$formId'
+    | '/forms/custom/$formId/screens/$screenId'
   id:
     | '__root__'
     | '/'
     | '/_entity'
     | '/_staff'
     | '/login'
+    | '/_staff/account'
     | '/_staff/attendance'
     | '/_staff/content'
     | '/_staff/dashboard'
@@ -680,17 +864,21 @@ export interface FileRouteTypes {
     | '/_staff/feedback'
     | '/_staff/forum'
     | '/_staff/gallery'
+    | '/_staff/legal'
+    | '/_staff/legal-data'
     | '/_staff/mentoring'
     | '/_staff/messages'
     | '/_staff/notifications'
-    | '/_staff/onboarding'
+    | '/_staff/profile-layout'
     | '/_staff/settings'
     | '/_staff/surveys'
+    | '/_staff/team'
     | '/_entity/portal/events'
     | '/_entity/portal/messages'
     | '/_entity/portal/referrals'
     | '/_entity/portal/services'
     | '/_staff/attendance/$occurrenceId'
+    | '/_staff/entities/referral-form'
     | '/_staff/messages/$conversationId'
     | '/_staff/participants/$participantId'
     | '/_staff/participants/deletion-requests'
@@ -703,7 +891,9 @@ export interface FileRouteTypes {
     | '/_entity/portal/'
     | '/_staff/attendance/'
     | '/_staff/content/'
+    | '/_staff/entities/'
     | '/_staff/messages/'
+    | '/_staff/onboarding/'
     | '/_staff/participants/'
     | '/_entity/portal/referrals/$referralId'
     | '/_entity/portal/referrals/new'
@@ -719,14 +909,23 @@ export interface FileRouteTypes {
     | '/_staff/content/services/$serviceId'
     | '/_staff/content/services/categories'
     | '/_staff/content/services/new'
+    | '/_staff/forms/authorization/$step'
+    | '/_staff/forms/terms/$step'
+    | '/_staff/onboarding/screens/$screenId'
     | '/_entity/portal/referrals/'
     | '/_entity/portal/services/'
     | '/_staff/content/announcements/'
     | '/_staff/content/events/'
     | '/_staff/content/knowledge/'
     | '/_staff/content/services/'
+    | '/_staff/forms/authorization/'
+    | '/_staff/forms/custom/'
+    | '/_staff/forms/legal/'
+    | '/_staff/forms/terms/'
     | '/_staff/content/services/reviews/$serviceId'
     | '/_staff/content/services/reviews/'
+    | '/_staff/forms/custom/$formId/'
+    | '/_staff/forms/custom/$formId/screens/$screenId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -765,6 +964,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_staff/account': {
+      id: '/_staff/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof StaffAccountRouteImport
+      parentRoute: typeof StaffRoute
     }
     '/_staff/attendance': {
       id: '/_staff/attendance'
@@ -815,6 +1021,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffGalleryRouteImport
       parentRoute: typeof StaffRoute
     }
+    '/_staff/legal': {
+      id: '/_staff/legal'
+      path: '/legal'
+      fullPath: '/legal'
+      preLoaderRoute: typeof StaffLegalRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/legal-data': {
+      id: '/_staff/legal-data'
+      path: '/legal-data'
+      fullPath: '/legal-data'
+      preLoaderRoute: typeof StaffLegalDataRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/_staff/mentoring': {
       id: '/_staff/mentoring'
       path: '/mentoring'
@@ -836,11 +1056,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffNotificationsRouteImport
       parentRoute: typeof StaffRoute
     }
-    '/_staff/onboarding': {
-      id: '/_staff/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof StaffOnboardingRouteImport
+    '/_staff/profile-layout': {
+      id: '/_staff/profile-layout'
+      path: '/profile-layout'
+      fullPath: '/profile-layout'
+      preLoaderRoute: typeof StaffProfileLayoutRouteImport
       parentRoute: typeof StaffRoute
     }
     '/_staff/settings': {
@@ -855,6 +1075,13 @@ declare module '@tanstack/react-router' {
       path: '/surveys'
       fullPath: '/surveys'
       preLoaderRoute: typeof StaffSurveysRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/team': {
+      id: '/_staff/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof StaffTeamRouteImport
       parentRoute: typeof StaffRoute
     }
     '/_entity/portal/': {
@@ -913,6 +1140,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffContentIndexRouteImport
       parentRoute: typeof StaffContentRoute
     }
+    '/_staff/entities/': {
+      id: '/_staff/entities/'
+      path: '/entities'
+      fullPath: '/entities/'
+      preLoaderRoute: typeof StaffEntitiesIndexRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/entities/referral-form': {
+      id: '/_staff/entities/referral-form'
+      path: '/entities/referral-form'
+      fullPath: '/entities/referral-form'
+      preLoaderRoute: typeof StaffEntitiesReferralFormRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/_staff/messages/': {
       id: '/_staff/messages/'
       path: '/'
@@ -926,6 +1167,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/messages/$conversationId'
       preLoaderRoute: typeof StaffMessagesConversationIdRouteImport
       parentRoute: typeof StaffMessagesRoute
+    }
+    '/_staff/onboarding/': {
+      id: '/_staff/onboarding/'
+      path: '/onboarding'
+      fullPath: '/onboarding/'
+      preLoaderRoute: typeof StaffOnboardingIndexRouteImport
+      parentRoute: typeof StaffRoute
     }
     '/_staff/participants/': {
       id: '/_staff/participants/'
@@ -1130,6 +1378,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffContentServicesNewRouteImport
       parentRoute: typeof StaffContentRoute
     }
+    '/_staff/forms/authorization/': {
+      id: '/_staff/forms/authorization/'
+      path: '/forms/authorization'
+      fullPath: '/forms/authorization/'
+      preLoaderRoute: typeof StaffFormsAuthorizationIndexRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/forms/authorization/$step': {
+      id: '/_staff/forms/authorization/$step'
+      path: '/forms/authorization/$step'
+      fullPath: '/forms/authorization/$step'
+      preLoaderRoute: typeof StaffFormsAuthorizationStepRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/forms/custom/': {
+      id: '/_staff/forms/custom/'
+      path: '/forms/custom'
+      fullPath: '/forms/custom/'
+      preLoaderRoute: typeof StaffFormsCustomIndexRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/forms/legal/': {
+      id: '/_staff/forms/legal/'
+      path: '/forms/legal'
+      fullPath: '/forms/legal/'
+      preLoaderRoute: typeof StaffFormsLegalIndexRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/forms/terms/': {
+      id: '/_staff/forms/terms/'
+      path: '/forms/terms'
+      fullPath: '/forms/terms/'
+      preLoaderRoute: typeof StaffFormsTermsIndexRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/forms/terms/$step': {
+      id: '/_staff/forms/terms/$step'
+      path: '/forms/terms/$step'
+      fullPath: '/forms/terms/$step'
+      preLoaderRoute: typeof StaffFormsTermsStepRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/onboarding/screens/$screenId': {
+      id: '/_staff/onboarding/screens/$screenId'
+      path: '/onboarding/screens/$screenId'
+      fullPath: '/onboarding/screens/$screenId'
+      preLoaderRoute: typeof StaffOnboardingScreensScreenIdRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/_staff/content/services/reviews/': {
       id: '/_staff/content/services/reviews/'
       path: '/services/reviews'
@@ -1143,6 +1440,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/content/services/reviews/$serviceId'
       preLoaderRoute: typeof StaffContentServicesReviewsServiceIdRouteImport
       parentRoute: typeof StaffContentRoute
+    }
+    '/_staff/forms/custom/$formId/': {
+      id: '/_staff/forms/custom/$formId/'
+      path: '/forms/custom/$formId'
+      fullPath: '/forms/custom/$formId/'
+      preLoaderRoute: typeof StaffFormsCustomFormIdIndexRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/forms/custom/$formId/screens/$screenId': {
+      id: '/_staff/forms/custom/$formId/screens/$screenId'
+      path: '/forms/custom/$formId/screens/$screenId'
+      fullPath: '/forms/custom/$formId/screens/$screenId'
+      preLoaderRoute: typeof StaffFormsCustomFormIdScreensScreenIdRouteImport
+      parentRoute: typeof StaffRoute
     }
   }
 }
@@ -1273,6 +1584,7 @@ const StaffMessagesRouteWithChildren = StaffMessagesRoute._addFileChildren(
 )
 
 interface StaffRouteChildren {
+  StaffAccountRoute: typeof StaffAccountRoute
   StaffAttendanceRoute: typeof StaffAttendanceRouteWithChildren
   StaffContentRoute: typeof StaffContentRouteWithChildren
   StaffDashboardRoute: typeof StaffDashboardRoute
@@ -1280,12 +1592,16 @@ interface StaffRouteChildren {
   StaffFeedbackRoute: typeof StaffFeedbackRoute
   StaffForumRoute: typeof StaffForumRoute
   StaffGalleryRoute: typeof StaffGalleryRoute
+  StaffLegalRoute: typeof StaffLegalRoute
+  StaffLegalDataRoute: typeof StaffLegalDataRoute
   StaffMentoringRoute: typeof StaffMentoringRoute
   StaffMessagesRoute: typeof StaffMessagesRouteWithChildren
   StaffNotificationsRoute: typeof StaffNotificationsRoute
-  StaffOnboardingRoute: typeof StaffOnboardingRoute
+  StaffProfileLayoutRoute: typeof StaffProfileLayoutRoute
   StaffSettingsRoute: typeof StaffSettingsRoute
   StaffSurveysRoute: typeof StaffSurveysRoute
+  StaffTeamRoute: typeof StaffTeamRoute
+  StaffEntitiesReferralFormRoute: typeof StaffEntitiesReferralFormRoute
   StaffParticipantsParticipantIdRoute: typeof StaffParticipantsParticipantIdRoute
   StaffParticipantsDeletionRequestsRoute: typeof StaffParticipantsDeletionRequestsRoute
   StaffParticipantsInvitesRoute: typeof StaffParticipantsInvitesRoute
@@ -1294,10 +1610,22 @@ interface StaffRouteChildren {
   StaffParticipantsSeasonRoute: typeof StaffParticipantsSeasonRoute
   StaffParticipantsWalkInsRoute: typeof StaffParticipantsWalkInsRoute
   StaffPhotoHandoffHandoffIdRoute: typeof StaffPhotoHandoffHandoffIdRoute
+  StaffEntitiesIndexRoute: typeof StaffEntitiesIndexRoute
+  StaffOnboardingIndexRoute: typeof StaffOnboardingIndexRoute
   StaffParticipantsIndexRoute: typeof StaffParticipantsIndexRoute
+  StaffFormsAuthorizationStepRoute: typeof StaffFormsAuthorizationStepRoute
+  StaffFormsTermsStepRoute: typeof StaffFormsTermsStepRoute
+  StaffOnboardingScreensScreenIdRoute: typeof StaffOnboardingScreensScreenIdRoute
+  StaffFormsAuthorizationIndexRoute: typeof StaffFormsAuthorizationIndexRoute
+  StaffFormsCustomIndexRoute: typeof StaffFormsCustomIndexRoute
+  StaffFormsLegalIndexRoute: typeof StaffFormsLegalIndexRoute
+  StaffFormsTermsIndexRoute: typeof StaffFormsTermsIndexRoute
+  StaffFormsCustomFormIdIndexRoute: typeof StaffFormsCustomFormIdIndexRoute
+  StaffFormsCustomFormIdScreensScreenIdRoute: typeof StaffFormsCustomFormIdScreensScreenIdRoute
 }
 
 const StaffRouteChildren: StaffRouteChildren = {
+  StaffAccountRoute: StaffAccountRoute,
   StaffAttendanceRoute: StaffAttendanceRouteWithChildren,
   StaffContentRoute: StaffContentRouteWithChildren,
   StaffDashboardRoute: StaffDashboardRoute,
@@ -1305,12 +1633,16 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffFeedbackRoute: StaffFeedbackRoute,
   StaffForumRoute: StaffForumRoute,
   StaffGalleryRoute: StaffGalleryRoute,
+  StaffLegalRoute: StaffLegalRoute,
+  StaffLegalDataRoute: StaffLegalDataRoute,
   StaffMentoringRoute: StaffMentoringRoute,
   StaffMessagesRoute: StaffMessagesRouteWithChildren,
   StaffNotificationsRoute: StaffNotificationsRoute,
-  StaffOnboardingRoute: StaffOnboardingRoute,
+  StaffProfileLayoutRoute: StaffProfileLayoutRoute,
   StaffSettingsRoute: StaffSettingsRoute,
   StaffSurveysRoute: StaffSurveysRoute,
+  StaffTeamRoute: StaffTeamRoute,
+  StaffEntitiesReferralFormRoute: StaffEntitiesReferralFormRoute,
   StaffParticipantsParticipantIdRoute: StaffParticipantsParticipantIdRoute,
   StaffParticipantsDeletionRequestsRoute:
     StaffParticipantsDeletionRequestsRoute,
@@ -1320,7 +1652,19 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffParticipantsSeasonRoute: StaffParticipantsSeasonRoute,
   StaffParticipantsWalkInsRoute: StaffParticipantsWalkInsRoute,
   StaffPhotoHandoffHandoffIdRoute: StaffPhotoHandoffHandoffIdRoute,
+  StaffEntitiesIndexRoute: StaffEntitiesIndexRoute,
+  StaffOnboardingIndexRoute: StaffOnboardingIndexRoute,
   StaffParticipantsIndexRoute: StaffParticipantsIndexRoute,
+  StaffFormsAuthorizationStepRoute: StaffFormsAuthorizationStepRoute,
+  StaffFormsTermsStepRoute: StaffFormsTermsStepRoute,
+  StaffOnboardingScreensScreenIdRoute: StaffOnboardingScreensScreenIdRoute,
+  StaffFormsAuthorizationIndexRoute: StaffFormsAuthorizationIndexRoute,
+  StaffFormsCustomIndexRoute: StaffFormsCustomIndexRoute,
+  StaffFormsLegalIndexRoute: StaffFormsLegalIndexRoute,
+  StaffFormsTermsIndexRoute: StaffFormsTermsIndexRoute,
+  StaffFormsCustomFormIdIndexRoute: StaffFormsCustomFormIdIndexRoute,
+  StaffFormsCustomFormIdScreensScreenIdRoute:
+    StaffFormsCustomFormIdScreensScreenIdRoute,
 }
 
 const StaffRouteWithChildren = StaffRoute._addFileChildren(StaffRouteChildren)

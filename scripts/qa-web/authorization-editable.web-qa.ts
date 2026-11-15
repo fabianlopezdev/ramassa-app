@@ -1,8 +1,9 @@
 /**
  * The season authorization fully editable (RAPP-614), end to end in real
- * browsers. On the onboarding page the design role adds a required consent
- * worded in Catalan and Arabic, makes the health question optional and
- * rewords the final button in Catalan, and saves a draft she cannot publish.
+ * browsers. The design role defines a consent in Dades legals, worded in
+ * Catalan and Arabic, places it required on the consents screen with the
+ * shared picker (RAPP-699), makes the health field of the Health screen
+ * optional (a placement since RAPP-698) and rewords the final button in Catalan, and saves a draft she cannot publish.
  * An admin publishes it. A player who has not signed meets it on her phone in
  * Arabic: the new consent in its place, the app's own Arabic button where
  * staff wrote only Catalan. She signs, and her page lists the consent with
@@ -19,6 +20,9 @@ const PLAYER_EMAIL = 'nataliia.shevchenko@example.test';
 const PLAYER = '5eed0000-0000-4000-8000-000000000022';
 const CONSENT_CA = 'Accepto les fotos d’equip (prova)';
 const CONSENT_AR = 'أوافق على صور الفريق';
+// Its key is its Catalan name, written plain (RAPP-699).
+const CONSENT_NAME = "Fotos d'equip prova";
+const CONSENT_KEY = 'fotos_d_equip_prova';
 const startedAt = new Date().toISOString();
 const ar = JSON.parse(
   readFileSync('packages/shared/i18n/locales/ar/onboarding.json', 'utf8'),
@@ -37,11 +41,18 @@ function cleanUp(): void {
     delete from public.authorization_versions
      where org_id = '${ORG}' and (published_at is null or version_number > 1);
     alter table public.authorization_versions enable trigger authorization_versions_immutable;
-    update public.profiles set health_info = null, emergency_contact_name = null,
-           emergency_contact_relation = null, emergency_contact_phone = null
-     where id = '${PLAYER}';
+    delete from public.custom_answers a
+     using public.profile_fields f
+     where f.id = a.question_id and a.profile_id = '${PLAYER}'
+       and f.system_key = any (private.authorization_field_keys());
+    update public.field_placements pl set required = (f.system_key = 'health_info')
+      from public.profile_fields f
+     where f.id = pl.field_id and pl.surface = 'authorization' and f.org_id = '${ORG}';
     delete from public.audit_log
      where created_at >= '${startedAt}'::timestamptz and action like 'authorization.%';
+    set local ramassa.consent_event_erasure = 'on';
+    delete from public.consent_events where consent_key = '${CONSENT_KEY}';
+    delete from public.consents where org_id = '${ORG}' and key = '${CONSENT_KEY}';
     commit;
   `);
 }
@@ -53,38 +64,60 @@ test('the design role adds a required consent and saves a draft she cannot publi
   page,
 }) => {
   await signIn(page, ONBOARDING_DESIGNER_EMAIL);
-  await page.goto('/onboarding');
+  // The Health screen's fields are placements (RAPP-698): the health field
+  // made optional there, saved at once like any screen's.
+  await page.goto('/forms/authorization/health');
+  const healthEditor = page.getByTestId('authorization-editor');
+  await expect(healthEditor).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('screen-questions')).toBeVisible();
+  queryDatabase(`
+    update public.field_placements pl set required = false
+      from public.profile_fields f
+     where f.id = pl.field_id and pl.surface = 'authorization' and f.org_id = '${ORG}'
+       and f.system_key = 'health_info';
+  `);
+
+  // Dades legals: the consent, defined once in Catalan and Arabic (RAPP-699).
+  await page.goto('/legal-data');
+  await page.getByTestId('legal-consent-add').click({ timeout: 30_000 });
+  const form = page.getByTestId('legal-consent-form');
+  await form.locator('[name="consent-name.ca"]').fill(CONSENT_NAME);
+  await form.locator('[name="consent-body.ca"]').fill(CONSENT_CA);
+  await form
+    .getByTestId('legal-consent-form-language')
+    .getByRole('radio', { name: 'العربية' })
+    .click();
+  await form.locator('[name="consent-body.ar"]').fill(CONSENT_AR);
+  await form.getByTestId('legal-consent-form-save').click();
+  await expect(page.getByTestId(`legal-consent-${CONSENT_KEY}`)).toBeVisible();
+
+  // The consents and signature screen places it with the shared picker, required.
+  await page.goto('/forms/authorization/consents');
   const editor = page.getByTestId('authorization-editor');
   await expect(editor).toBeVisible({ timeout: 30_000 });
-
-  await editor.locator('#authorization-language').selectOption('ca');
-  await editor.getByTestId('authorization-consent-add').click();
-  await editor.locator('#authorization-consent-label-consent_8').fill(CONSENT_CA);
-  await editor.locator('#authorization-consent-required-consent_8').check();
+  await editor.getByTestId('screen-consents-add').click();
+  await page.getByTestId(`field-picker-consent-${CONSENT_KEY}`).click();
+  await page.getByTestId('field-picker-confirm').click();
+  await editor.getByTestId(`consent-required-${CONSENT_KEY}`).click();
+  await editor.getByTestId('editor-language').getByRole('radio', { name: 'Català' }).click();
   await editor.locator('#authorization-text-sign_and_enter_label').fill('Signa i juga');
-  // The health question optional: its consent may stay required.
-  await editor.locator('#authorization-health-required').uncheck();
-  await editor.locator('#authorization-language').selectOption('ar');
-  await expect(editor.locator('#authorization-consent-label-consent_8')).toHaveAttribute(
-    'dir',
-    'rtl',
-  );
-  await editor.locator('#authorization-consent-label-consent_8').fill(CONSENT_AR);
-  await expect(page.getByTestId('authorization-preview-consents')).toContainText(CONSENT_AR);
-  await expect(page.getByTestId('authorization-preview-consents')).toHaveAttribute('dir', 'rtl');
+  await editor.getByTestId('editor-language').getByRole('radio', { name: 'العربية' }).click();
+  // Her phone, on the consents screen, in the editor's frame (RAPP-695).
+  await expect(page.getByTestId('phone-screen')).toContainText(CONSENT_AR);
+  await expect(page.getByTestId('phone-screen')).toHaveAttribute('dir', 'rtl');
 
   await editor.getByTestId('authorization-save').click();
   await expect
     .poll(() =>
       queryDatabase(
-        `select (content -> 'consents' -> 'consent_8' ->> 'required') || '|' ||
-                (content -> 'questions' -> 'health' ->> 'required')
+        `select content -> 'consents' -> '${CONSENT_KEY}' ->> 'required'
            from public.authorization_versions where org_id = '${ORG}' and published_at is null`,
       ),
     )
-    .toBe('true|false');
-  await expect(editor.getByTestId('authorization-draft-row')).toBeVisible();
+    .toBe('true');
   await expect(editor.getByTestId('authorization-publish')).toHaveCount(0);
+  await page.goto('/forms/authorization');
+  await expect(page.getByTestId('authorization-draft-row')).toBeVisible({ timeout: 30_000 });
   expect(
     queryDatabase(
       `select count(*) from public.audit_log where action = 'authorization.draft_saved'
@@ -93,13 +126,16 @@ test('the design role adds a required consent and saves a draft she cannot publi
   ).toBe('1');
 });
 
-test('an admin publishes the draft after confirming', async ({ page }) => {
+test('an admin saves the draft as a new version everyone signs', async ({ page }) => {
   await signIn(page, ADMIN_EMAIL);
-  await page.goto('/onboarding');
+  // Any screen of the authorization's board saves the whole form (RAPP-696).
+  await page.goto('/forms/authorization/consents');
   const editor = page.getByTestId('authorization-editor');
-  await expect(editor.getByTestId('authorization-draft-row')).toBeVisible({ timeout: 30_000 });
+  await expect(editor).toBeVisible({ timeout: 30_000 });
   await editor.getByTestId('authorization-publish').click();
-  await editor.getByTestId('authorization-publish').click();
+  // Players signed version 1, so Desa asks: a new version asks them again.
+  await page.getByTestId('save-kind-new').click();
+  await page.getByTestId('save-kind-confirm').click();
   await expect
     .poll(() =>
       queryDatabase(
@@ -141,9 +177,11 @@ test('in Arabic she meets the new consent, signs, and her page shows its words',
     )
     .toBe(true);
   await action.click();
-  // The health question is optional now: she goes on without answering it.
+  // The health field is optional now: she goes on without answering it.
   await action.click();
-  await expect(player.getByTestId('authorization-consent-consent_8')).toContainText(CONSENT_AR);
+  await expect(player.getByTestId(`authorization-consent-${CONSENT_KEY}`)).toContainText(
+    CONSENT_AR,
+  );
   // Staff reworded the button in Catalan only: in Arabic the app's own words show.
   await expect(action).toHaveText(ar.authorizationSignAndEnterAction!);
   for (const consent of [
@@ -151,7 +189,7 @@ test('in Arabic she meets the new consent, signs, and her page shows its words',
     'data_processing',
     'code_of_conduct',
     'health_data',
-    'consent_8',
+    CONSENT_KEY,
   ])
     await player.getByTestId(`authorization-consent-${consent}`).click();
   await player.getByTestId('authorization-cannot-draw').click();
@@ -161,8 +199,8 @@ test('in Arabic she meets the new consent, signs, and her page shows its words',
     .poll(() =>
       queryDatabase(
         `select e.wording || '|' || e.language || '|' || e.granted
-           from public.authorization_consent_events e
-          where e.profile_id = '${PLAYER}' and e.consent_key = 'consent_8'`,
+           from public.consent_events e
+          where e.profile_id = '${PLAYER}' and e.consent_key = '${CONSENT_KEY}'`,
       ),
     )
     .toBe(`${CONSENT_AR}|ar|true`);

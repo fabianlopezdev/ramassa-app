@@ -6,27 +6,35 @@
  * whether she accepted the app terms, whether she signed this season's
  * authorization, and whether she is returning from an earlier season.
  *
- * An answer staff fill in is a fixed sample per question, in her language,
- * that passes the same shared schema her own answers pass
- * (`profileEditSchema`). The database records it as a staff answer, so her
- * wizard treats the question as answered (RAPP-300). Every switch is one call
- * of `set_test_player_scenario`, which refuses any woman who is not a test
- * player.
+ * An answer staff fill in is a fixed sample per field, in her language, that
+ * passes the same rules her own answers pass. It travels by field id, a
+ * choice as its option's id (RAPP-664). The database records it as a staff
+ * answer, so her wizard treats the question as answered (RAPP-300). Every
+ * switch is one call of `set_test_player_scenario`, which refuses any woman
+ * who is not a test player.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
 import {
-  isAskedOfHer,
+  placementsOf,
+  questionOfField,
   sampleCustomAnswer,
   type CustomAnswerValue,
   type CustomQuestion,
   type IntakeCatalog,
 } from '../intake-builder';
-import { QUESTION_PAYLOAD_KEYS, type IntakeQuestion } from '../onboarding/intake';
-import type { LanguageCode } from '../schemas/language';
-import { encodeSupportNeeds } from '../schemas/support-needs';
-import type { Database } from '../types/database';
+import { optionIdOf } from '../intake-builder/app-field-form';
+import {
+  fetchSystemFieldIndex,
+  systemFieldIdsOfQuestions,
+  type SystemFieldIndex,
+} from '../intake-builder/field-answers';
+import { isOptionType } from '../intake-builder/question-types';
+import type { IntakeQuestion } from '../onboarding/intake';
+import { systemKeysOfQuestion, type SystemFieldKey } from '../onboarding/system-fields';
+import { languageCodeSchema, type LanguageCode } from '../schemas/language';
+import type { Database, Json } from '../types/database';
 
 type Client = SupabaseClient<Database>;
 
@@ -59,6 +67,12 @@ const SAMPLE_TEXTS: Readonly<
     contact: 'Test contact person',
     need: 'Test answer: she prefers to train in the afternoon.',
   },
+  fr: {
+    address: '1 rue du Test',
+    entity: 'Entité de test',
+    contact: 'Personne de référence de test',
+    need: 'Réponse de test : elle préfère s’entraîner l’après-midi.',
+  },
   ar: {
     address: 'شارع الاختبار 1',
     entity: 'جهة اختبار',
@@ -73,12 +87,18 @@ const SAMPLE_TEXTS: Readonly<
   },
 };
 
+/** A sample answer of an app field: text, a number, a list, or a choice by its option's key. */
+export type SystemSample = string | number | readonly string[];
+
 /**
- * A complete sample profile, in the database's keys. Canonical values for the
- * lists (country, municipality, sizes) are the same in every language, as
- * every stored answer is (rule 18).
+ * A complete sample of her app answers, by system key. A choice is its
+ * option's key (`none`, `M`); the lists (country, municipality) store the
+ * same canonical name in every language, as every stored answer does
+ * (rule 18).
  */
-export function sampleProfileAnswers(language: LanguageCode): Readonly<Record<string, unknown>> {
+export function sampleSystemAnswers(
+  language: LanguageCode,
+): Readonly<Partial<Record<SystemFieldKey, SystemSample>>> {
   const texts = SAMPLE_TEXTS[language];
   return {
     first_name: 'Prova',
@@ -86,7 +106,6 @@ export function sampleProfileAnswers(language: LanguageCode): Readonly<Record<st
     date_of_birth: '1995-05-15',
     place_of_birth: 'Marroc',
     nationality: 'Marroc',
-    preferred_language: language,
     document_type: 'none',
     phone: '+34600111222',
     address: texts.address,
@@ -94,50 +113,81 @@ export function sampleProfileAnswers(language: LanguageCode): Readonly<Record<st
     postal_code: '08500',
     reference_entity: texts.entity,
     reference_contact_name: texts.contact,
-    has_dependents: false,
-    num_dependents: 0,
+    has_dependents: 'no',
     clothing_size: 'M',
     shoe_size: '38',
     applicant_status: 'prefer_not_to_say',
     supporting_entities: [texts.entity],
     childcare_need: 'no',
-    specific_needs: encodeSupportNeeds({
-      categories: ['other'],
-      details: { other: texts.need },
-    }),
+    specific_needs: ['other'],
+    specific_needs_details: texts.need,
   };
 }
 
-/** The sample answer of one question: only that question's keys. */
-export function sampleAnswerPayload(
-  question: IntakeQuestion,
-  language: LanguageCode,
-): Readonly<Record<string, unknown>> {
-  const sample = sampleProfileAnswers(language);
-  return Object.fromEntries(
-    QUESTION_PAYLOAD_KEYS[question].filter((key) => key in sample).map((key) => [key, sample[key]]),
-  );
+/** What a fill sends: her names and app language when asked, and her answers by field. */
+export interface ScenarioFill {
+  readonly first_name?: string;
+  readonly last_name?: string;
+  readonly preferred_language?: LanguageCode;
+  readonly answers: Readonly<Record<string, CustomAnswerValue>>;
 }
 
-/** The sample answers of several questions, as one `fill`. */
-export function sampleAnswersFor(
+/**
+ * The sample answers of some app questions, by field (RAPP-664): every field
+ * of each question that has a sample. A choice is the option with the
+ * sample's key; a field whose type staff changed so that no option fits is
+ * left out, as the features leave it (D7).
+ */
+export function sampleFillByField(
+  fields: SystemFieldIndex,
   questions: readonly IntakeQuestion[],
   language: LanguageCode,
-): Readonly<Record<string, unknown>> {
-  return Object.assign({}, ...questions.map((question) => sampleAnswerPayload(question, language)));
+): ScenarioFill {
+  const sample = sampleSystemAnswers(language);
+  const answers: Record<string, CustomAnswerValue> = {};
+  const fill: { first_name?: string; last_name?: string; preferred_language?: LanguageCode } = {};
+  for (const question of questions) {
+    if (question === 'preferred_language') fill.preferred_language = language;
+    for (const key of systemKeysOfQuestion(question)) {
+      const value = sample[key];
+      if (value === undefined) continue;
+      if (key === 'first_name' || key === 'last_name') {
+        fill[key] = String(value);
+        continue;
+      }
+      const field = fields.get(key);
+      if (field === undefined) continue;
+      if (!isOptionType(field.type)) {
+        answers[field.id] = (Array.isArray(value) ? [...value] : value) as CustomAnswerValue;
+        continue;
+      }
+      const ids = (Array.isArray(value) ? value : [value as string]).map((option) =>
+        optionIdOf(field, option),
+      );
+      if (ids.some((id) => id === undefined)) continue;
+      answers[field.id] = (field.type === 'multiple_choice' ? ids : ids[0]) as CustomAnswerValue;
+    }
+  }
+  return { ...fill, answers };
 }
 
-/** The staff questions her wizard or her season asks, live ones only. */
+/** The live Ramassà fields her onboarding or her season form asks. */
 export function scenarioCustomQuestions(catalog: IntakeCatalog): readonly CustomQuestion[] {
-  return catalog.screens
-    .filter((screen) => !screen.isArchived)
-    .flatMap((screen) => screen.questions)
-    .filter((question) => !question.isArchived && isAskedOfHer(question));
+  const layout = catalog.layout;
+  if (layout === undefined) return [];
+  return layout.fields
+    .filter(
+      (field) =>
+        field.kind === 'custom' &&
+        !field.isArchived &&
+        placementsOf(layout, field.id).some((placement) => placement.surface !== 'entity_form'),
+    )
+    .map((field) => questionOfField(layout, field));
 }
 
 /**
  * A valid sample answer for each of these staff questions, in her language
- * (RAPP-610): every type, a file and a signature included. A choice question
+ * (RAPP-610): every type, a file and a signed consent included. A choice question
  * with no live option has no sample and is left out.
  */
 export function sampleCustomAnswersFor(
@@ -157,9 +207,12 @@ export function sampleCustomAnswersFor(
 
 export type TestPlayerScenarioChange =
   | {
+      /** The app's questions: these filled with her samples, these cleared. */
       readonly kind: 'answers';
-      readonly fill?: Readonly<Record<string, unknown>>;
+      readonly fill?: readonly IntakeQuestion[];
       readonly clear?: readonly IntakeQuestion[];
+      /** The language of the text samples; Catalan when not said. */
+      readonly language?: LanguageCode;
     }
   | {
       /** Staff questions (RAPP-610): {question id: sample answer} and ids to clear. */
@@ -172,6 +225,31 @@ export type TestPlayerScenarioChange =
   | { readonly kind: 'returning'; readonly returning: boolean }
   | { readonly kind: 'reset' };
 
+/**
+ * The change as the database takes it (RAPP-661): answers by field. The app
+ * questions are filled and cleared through their fields; the staff fields'
+ * switch is the same `answers` switch.
+ */
+async function scenarioChangeByField(
+  client: Client,
+  change: TestPlayerScenarioChange,
+): Promise<Json> {
+  if (change.kind === 'custom_answers') {
+    return {
+      kind: 'answers',
+      fill: { answers: { ...change.fill } as Json },
+      clear: [...(change.clear ?? [])],
+    };
+  }
+  if (change.kind !== 'answers') return change as unknown as Json;
+  const fields = await fetchSystemFieldIndex(client);
+  return {
+    kind: 'answers',
+    fill: sampleFillByField(fields, change.fill ?? [], change.language ?? 'ca') as unknown as Json,
+    clear: [...systemFieldIdsOfQuestions(fields, change.clear ?? [])],
+  };
+}
+
 export async function setTestPlayerScenario(
   client: Client,
   profileId: string,
@@ -179,8 +257,7 @@ export async function setTestPlayerScenario(
 ): Promise<void> {
   const { error } = await client.rpc('set_test_player_scenario', {
     p_profile_id: z.uuid().parse(profileId),
-    p_change:
-      change as unknown as Database['public']['Functions']['set_test_player_scenario']['Args']['p_change'],
+    p_change: await scenarioChangeByField(client, change),
   });
   if (error) throw new AppError(databaseErrorCode(error.message), { message: error.message });
 }
@@ -195,7 +272,7 @@ export const testPlayerScenarioSchema = z
     // The staff questions she has an answer to (RAPP-610); an older server sends none.
     custom_answered: z.array(z.string()).optional(),
     org_id: z.uuid().optional(),
-    preferred_language: z.enum(['ca', 'es', 'en', 'ar', 'fa']).catch('ca'),
+    preferred_language: languageCodeSchema.catch('ca'),
     // Her phone shows the draft terms or authorization (RAPP-619); an older server sends neither.
     terms_draft: z.boolean().optional().default(false),
     authorization_draft: z.boolean().optional().default(false),

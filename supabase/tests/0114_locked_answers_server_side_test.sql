@@ -9,6 +9,36 @@ create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 select plan(4);
 
+-- An app answer given by option key, as the app's screens send it by option id.
+create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
+  select case
+    when f.question_type in ('single_choice', 'search_choice') and jsonb_typeof(v) = 'string' then
+      coalesce((select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v #>> '{}'), v)
+    when f.question_type = 'multiple_choice' and jsonb_typeof(v) = 'array' then
+      coalesce((select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+                 where o.question_id = f.id and o.key in (select jsonb_array_elements_text(v))
+                having count(*) = jsonb_array_length(v)), v)
+    else v
+  end;
+$$;
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, pg_temp.by_option_key(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
 where not exists (select 1 from vault.secrets where name = 'app_encryption_key');
 
@@ -28,13 +58,14 @@ select throws_ok(
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
   $$ select public.update_participant_profile('5eed0000-0000-4000-8000-000000000022',
-       '{"first_name": "", "last_name": "Prova", "place_of_birth": "Vic", "document_type": "none"}'::jsonb) $$,
+       jsonb_build_object('first_name', '', 'last_name', 'Prova',
+         'answers', pg_temp.answers('{"place_of_birth": "Vic", "document_type": "none"}'))) $$,
   '23514', null::text, 'staff cannot empty it either'
 );
 
 select lives_ok(
   $$ select public.update_participant_profile('5eed0000-0000-4000-8000-000000000098',
-       '{"clothing_size": "L"}'::jsonb) $$,
+       jsonb_build_object('answers', pg_temp.answers('{"clothing_size": "L"}'))) $$,
   'a partial staff edit of an invited woman that sends no name still saves'
 );
 

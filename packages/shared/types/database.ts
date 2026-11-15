@@ -149,7 +149,10 @@ export type Database = {
       app_terms_versions: {
         Row: {
           content: Json;
+          form_snapshot: Json | null;
           id: string;
+          is_correction: boolean;
+          legacy_compatible: boolean | null;
           org_id: string;
           published_at: string | null;
           published_by: string | null;
@@ -159,7 +162,10 @@ export type Database = {
         };
         Insert: {
           content: Json;
+          form_snapshot?: Json | null;
           id?: string;
+          is_correction?: boolean;
+          legacy_compatible?: boolean | null;
           org_id: string;
           published_at?: string | null;
           published_by?: string | null;
@@ -169,7 +175,10 @@ export type Database = {
         };
         Update: {
           content?: Json;
+          form_snapshot?: Json | null;
           id?: string;
+          is_correction?: boolean;
+          legacy_compatible?: boolean | null;
           org_id?: string;
           published_at?: string | null;
           published_by?: string | null;
@@ -311,80 +320,6 @@ export type Database = {
           },
         ];
       };
-      authorization_consent_events: {
-        Row: {
-          consent_key: string;
-          decided_at: string;
-          granted: boolean;
-          id: number;
-          language: string | null;
-          method: string;
-          org_id: string;
-          profile_id: string;
-          required: boolean | null;
-          signature_id: string | null;
-          version_id: string | null;
-          wording: string | null;
-        };
-        Insert: {
-          consent_key: string;
-          decided_at?: string;
-          granted: boolean;
-          id?: never;
-          language?: string | null;
-          method: string;
-          org_id: string;
-          profile_id: string;
-          required?: boolean | null;
-          signature_id?: string | null;
-          version_id?: string | null;
-          wording?: string | null;
-        };
-        Update: {
-          consent_key?: string;
-          decided_at?: string;
-          granted?: boolean;
-          id?: never;
-          language?: string | null;
-          method?: string;
-          org_id?: string;
-          profile_id?: string;
-          required?: boolean | null;
-          signature_id?: string | null;
-          version_id?: string | null;
-          wording?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'authorization_consent_events_org_id_fkey';
-            columns: ['org_id'];
-            isOneToOne: false;
-            referencedRelation: 'organizations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'authorization_consent_events_profile_id_fkey';
-            columns: ['profile_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'authorization_consent_events_signature_id_fkey';
-            columns: ['signature_id'];
-            isOneToOne: false;
-            referencedRelation: 'authorization_signatures';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'authorization_consent_events_version_id_fkey';
-            columns: ['version_id'];
-            isOneToOne: false;
-            referencedRelation: 'authorization_versions';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       authorization_signatures: {
         Row: {
           device: string | null;
@@ -485,7 +420,10 @@ export type Database = {
       authorization_versions: {
         Row: {
           content: Json;
+          form_snapshot: Json | null;
           id: string;
+          is_correction: boolean;
+          legacy_compatible: boolean | null;
           org_id: string;
           published_at: string | null;
           published_by: string | null;
@@ -496,7 +434,10 @@ export type Database = {
         };
         Insert: {
           content: Json;
+          form_snapshot?: Json | null;
           id?: string;
+          is_correction?: boolean;
+          legacy_compatible?: boolean | null;
           org_id: string;
           published_at?: string | null;
           published_by?: string | null;
@@ -507,7 +448,10 @@ export type Database = {
         };
         Update: {
           content?: Json;
+          form_snapshot?: Json | null;
           id?: string;
+          is_correction?: boolean;
+          legacy_compatible?: boolean | null;
           org_id?: string;
           published_at?: string | null;
           published_by?: string | null;
@@ -540,54 +484,6 @@ export type Database = {
           },
           {
             foreignKeyName: 'authorization_versions_updated_by_fkey';
-            columns: ['updated_by'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
-      builtin_question_overrides: {
-        Row: {
-          help: Json | null;
-          is_hidden: boolean;
-          label: Json | null;
-          option_overrides: Json;
-          org_id: string;
-          question: string;
-          updated_at: string;
-          updated_by: string | null;
-        };
-        Insert: {
-          help?: Json | null;
-          is_hidden?: boolean;
-          label?: Json | null;
-          option_overrides?: Json;
-          org_id: string;
-          question: string;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Update: {
-          help?: Json | null;
-          is_hidden?: boolean;
-          label?: Json | null;
-          option_overrides?: Json;
-          org_id?: string;
-          question?: string;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'builtin_question_overrides_org_id_fkey';
-            columns: ['org_id'];
-            isOneToOne: false;
-            referencedRelation: 'organizations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'builtin_question_overrides_updated_by_fkey';
             columns: ['updated_by'];
             isOneToOne: false;
             referencedRelation: 'profiles';
@@ -633,6 +529,237 @@ export type Database = {
           },
           {
             foreignKeyName: 'collaborating_entities_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      consent_events: {
+        Row: {
+          consent_id: string;
+          consent_key: string;
+          custom_form_id: string | null;
+          decided_at: string;
+          form: string | null;
+          granted: boolean;
+          id: number;
+          language: string | null;
+          method: string;
+          org_id: string;
+          profile_id: string;
+          reason: string | null;
+          recorded_by: string | null;
+          required: boolean | null;
+          screen_key: string | null;
+          signature_id: string | null;
+          version_id: string | null;
+          wording: string | null;
+        };
+        Insert: {
+          consent_id: string;
+          consent_key: string;
+          custom_form_id?: string | null;
+          decided_at?: string;
+          form?: string | null;
+          granted: boolean;
+          id?: never;
+          language?: string | null;
+          method: string;
+          org_id: string;
+          profile_id: string;
+          reason?: string | null;
+          recorded_by?: string | null;
+          required?: boolean | null;
+          screen_key?: string | null;
+          signature_id?: string | null;
+          version_id?: string | null;
+          wording?: string | null;
+        };
+        Update: {
+          consent_id?: string;
+          consent_key?: string;
+          custom_form_id?: string | null;
+          decided_at?: string;
+          form?: string | null;
+          granted?: boolean;
+          id?: never;
+          language?: string | null;
+          method?: string;
+          org_id?: string;
+          profile_id?: string;
+          reason?: string | null;
+          recorded_by?: string | null;
+          required?: boolean | null;
+          screen_key?: string | null;
+          signature_id?: string | null;
+          version_id?: string | null;
+          wording?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'consent_events_consent_id_fkey';
+            columns: ['consent_id'];
+            isOneToOne: false;
+            referencedRelation: 'consents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consent_events_custom_form_id_fkey';
+            columns: ['custom_form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consent_events_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consent_events_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consent_events_recorded_by_fkey';
+            columns: ['recorded_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consent_events_signature_id_fkey';
+            columns: ['signature_id'];
+            isOneToOne: false;
+            referencedRelation: 'authorization_signatures';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consent_events_version_id_fkey';
+            columns: ['version_id'];
+            isOneToOne: false;
+            referencedRelation: 'authorization_versions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      consent_placements: {
+        Row: {
+          body_override: Json | null;
+          consent_id: string;
+          created_at: string;
+          custom_form_id: string | null;
+          id: string;
+          org_id: string;
+          required: boolean;
+          screen_key: string | null;
+          sort_order: number;
+          surface: string;
+          updated_at: string;
+        };
+        Insert: {
+          body_override?: Json | null;
+          consent_id: string;
+          created_at?: string;
+          custom_form_id?: string | null;
+          id?: string;
+          org_id: string;
+          required?: boolean;
+          screen_key?: string | null;
+          sort_order?: number;
+          surface: string;
+          updated_at?: string;
+        };
+        Update: {
+          body_override?: Json | null;
+          consent_id?: string;
+          created_at?: string;
+          custom_form_id?: string | null;
+          id?: string;
+          org_id?: string;
+          required?: boolean;
+          screen_key?: string | null;
+          sort_order?: number;
+          surface?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'consent_placements_consent_id_fkey';
+            columns: ['consent_id'];
+            isOneToOne: false;
+            referencedRelation: 'consents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consent_placements_custom_form_id_fkey';
+            columns: ['custom_form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consent_placements_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      consents: {
+        Row: {
+          body: Json;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          is_archived: boolean;
+          key: string;
+          name: Json;
+          org_id: string;
+          system_key: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          body: Json;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          is_archived?: boolean;
+          key: string;
+          name: Json;
+          org_id: string;
+          system_key?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          body?: Json;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          is_archived?: boolean;
+          key?: string;
+          name?: Json;
+          org_id?: string;
+          system_key?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'consents_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'consents_org_id_fkey';
             columns: ['org_id'];
             isOneToOne: false;
             referencedRelation: 'organizations';
@@ -818,6 +945,7 @@ export type Database = {
       custom_answers: {
         Row: {
           answered_at: string;
+          answered_by: string | null;
           org_id: string;
           profile_id: string;
           question_id: string;
@@ -829,6 +957,7 @@ export type Database = {
         };
         Insert: {
           answered_at?: string;
+          answered_by?: string | null;
           org_id: string;
           profile_id: string;
           question_id: string;
@@ -840,6 +969,7 @@ export type Database = {
         };
         Update: {
           answered_at?: string;
+          answered_by?: string | null;
           org_id?: string;
           profile_id?: string;
           question_id?: string;
@@ -850,6 +980,13 @@ export type Database = {
           value_encrypted?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: 'custom_answers_answered_by_fkey';
+            columns: ['answered_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'custom_answers_org_id_fkey';
             columns: ['org_id'];
@@ -868,7 +1005,7 @@ export type Database = {
             foreignKeyName: 'custom_answers_question_id_fkey';
             columns: ['question_id'];
             isOneToOne: false;
-            referencedRelation: 'custom_questions';
+            referencedRelation: 'profile_fields';
             referencedColumns: ['id'];
           },
           {
@@ -876,6 +1013,376 @@ export type Database = {
             columns: ['season_id'];
             isOneToOne: false;
             referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      custom_form_recipients: {
+        Row: {
+          added_at: string;
+          form_id: string;
+          org_id: string;
+          profile_id: string;
+        };
+        Insert: {
+          added_at?: string;
+          form_id: string;
+          org_id: string;
+          profile_id: string;
+        };
+        Update: {
+          added_at?: string;
+          form_id?: string;
+          org_id?: string;
+          profile_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_form_recipients_form_id_fkey';
+            columns: ['form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_recipients_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_recipients_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      custom_form_reminders: {
+        Row: {
+          form_id: string;
+          org_id: string;
+          season_id: string;
+          sent_at: string;
+        };
+        Insert: {
+          form_id: string;
+          org_id: string;
+          season_id: string;
+          sent_at?: string;
+        };
+        Update: {
+          form_id?: string;
+          org_id?: string;
+          season_id?: string;
+          sent_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_form_reminders_form_id_fkey';
+            columns: ['form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_reminders_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_reminders_season_id_fkey';
+            columns: ['season_id'];
+            isOneToOne: false;
+            referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      custom_form_responses: {
+        Row: {
+          answered_at: string | null;
+          answered_by: string | null;
+          asked_at: string;
+          filled_by: string | null;
+          form_id: string;
+          id: string;
+          org_id: string;
+          profile_id: string;
+          season_id: string | null;
+          status: string;
+          version: number;
+        };
+        Insert: {
+          answered_at?: string | null;
+          answered_by?: string | null;
+          asked_at?: string;
+          filled_by?: string | null;
+          form_id: string;
+          id?: string;
+          org_id: string;
+          profile_id: string;
+          season_id?: string | null;
+          status?: string;
+          version: number;
+        };
+        Update: {
+          answered_at?: string | null;
+          answered_by?: string | null;
+          asked_at?: string;
+          filled_by?: string | null;
+          form_id?: string;
+          id?: string;
+          org_id?: string;
+          profile_id?: string;
+          season_id?: string | null;
+          status?: string;
+          version?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_form_responses_answered_by_fkey';
+            columns: ['answered_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_responses_form_id_fkey';
+            columns: ['form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_responses_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_responses_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_responses_season_id_fkey';
+            columns: ['season_id'];
+            isOneToOne: false;
+            referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      custom_form_screens: {
+        Row: {
+          system_screen: string | null;
+          texts: Json;
+          attachments: Json | null;
+          created_at: string;
+          form_id: string;
+          id: string;
+          intro: Json | null;
+          is_archived: boolean;
+          is_hidden: boolean;
+          org_id: string;
+          show_when_field_id: string | null;
+          show_when_values: string[] | null;
+          sort_order: number;
+          title: Json;
+          updated_at: string;
+        };
+        Insert: {
+          system_screen?: string | null;
+          texts?: Json;
+          attachments?: Json | null;
+          created_at?: string;
+          form_id: string;
+          id?: string;
+          intro?: Json | null;
+          is_archived?: boolean;
+          is_hidden?: boolean;
+          org_id: string;
+          show_when_field_id?: string | null;
+          show_when_values?: string[] | null;
+          sort_order?: number;
+          title: Json;
+          updated_at?: string;
+        };
+        Update: {
+          system_screen?: string | null;
+          texts?: Json;
+          attachments?: Json | null;
+          created_at?: string;
+          form_id?: string;
+          id?: string;
+          intro?: Json | null;
+          is_archived?: boolean;
+          is_hidden?: boolean;
+          org_id?: string;
+          show_when_field_id?: string | null;
+          show_when_values?: string[] | null;
+          sort_order?: number;
+          title?: Json;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_form_screens_form_id_fkey';
+            columns: ['form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_screens_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      custom_form_versions: {
+        Row: {
+          content: Json;
+          form_id: string;
+          id: string;
+          is_correction: boolean;
+          org_id: string;
+          published_at: string;
+          published_by: string | null;
+          season_id: string | null;
+          version: number;
+        };
+        Insert: {
+          content: Json;
+          form_id: string;
+          id?: string;
+          is_correction?: boolean;
+          org_id: string;
+          published_at?: string;
+          published_by?: string | null;
+          season_id?: string | null;
+          version: number;
+        };
+        Update: {
+          content?: Json;
+          form_id?: string;
+          id?: string;
+          is_correction?: boolean;
+          org_id?: string;
+          published_at?: string;
+          published_by?: string | null;
+          season_id?: string | null;
+          version?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_form_versions_form_id_fkey';
+            columns: ['form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_versions_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_versions_published_by_fkey';
+            columns: ['published_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_versions_season_id_fkey';
+            columns: ['season_id'];
+            isOneToOne: false;
+            referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      custom_forms: {
+        Row: {
+          kind: string;
+          system_key: string | null;
+          audience: string;
+          created_at: string;
+          created_by: string | null;
+          deadline: string | null;
+          filled_by: string;
+          id: string;
+          is_archived: boolean;
+          mandatory: string;
+          name: Json;
+          org_id: string;
+          published_at: string | null;
+          repeats_each_season: boolean;
+          updated_at: string;
+          version: number;
+        };
+        Insert: {
+          kind?: string;
+          system_key?: string | null;
+          audience?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deadline?: string | null;
+          filled_by: string;
+          id?: string;
+          is_archived?: boolean;
+          mandatory?: string;
+          name: Json;
+          org_id: string;
+          published_at?: string | null;
+          repeats_each_season?: boolean;
+          updated_at?: string;
+          version?: number;
+        };
+        Update: {
+          kind?: string;
+          system_key?: string | null;
+          audience?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deadline?: string | null;
+          filled_by?: string;
+          id?: string;
+          is_archived?: boolean;
+          mandatory?: string;
+          name?: Json;
+          org_id?: string;
+          published_at?: string | null;
+          repeats_each_season?: boolean;
+          updated_at?: string;
+          version?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_forms_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_forms_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
             referencedColumns: ['id'];
           },
         ];
@@ -969,6 +1476,7 @@ export type Database = {
         Row: {
           id: string;
           is_archived: boolean;
+          key: string | null;
           label: Json;
           org_id: string;
           question_id: string;
@@ -977,6 +1485,7 @@ export type Database = {
         Insert: {
           id?: string;
           is_archived?: boolean;
+          key?: string | null;
           label: Json;
           org_id: string;
           question_id: string;
@@ -985,6 +1494,7 @@ export type Database = {
         Update: {
           id?: string;
           is_archived?: boolean;
+          key?: string | null;
           label?: Json;
           org_id?: string;
           question_id?: string;
@@ -1002,93 +1512,56 @@ export type Database = {
             foreignKeyName: 'custom_question_options_question_id_fkey';
             columns: ['question_id'];
             isOneToOne: false;
-            referencedRelation: 'custom_questions';
+            referencedRelation: 'profile_fields';
             referencedColumns: ['id'];
           },
         ];
       };
-      custom_questions: {
+      custom_question_states: {
         Row: {
-          created_at: string;
-          help: Json | null;
-          id: string;
-          is_archived: boolean;
-          is_required: boolean;
-          label: Json;
           org_id: string;
-          placements: string[];
-          privacy: string;
-          question_type: string;
-          screen_id: string;
-          settings: Json;
-          show_when_option_id: string | null;
-          show_when_question_id: string | null;
-          sort_order: number;
+          profile_id: string;
+          question_id: string;
+          state: string;
           updated_at: string;
+          updated_by: string | null;
         };
         Insert: {
-          created_at?: string;
-          help?: Json | null;
-          id?: string;
-          is_archived?: boolean;
-          is_required?: boolean;
-          label: Json;
           org_id: string;
-          placements: string[];
-          privacy: string;
-          question_type: string;
-          screen_id: string;
-          settings?: Json;
-          show_when_option_id?: string | null;
-          show_when_question_id?: string | null;
-          sort_order?: number;
+          profile_id: string;
+          question_id: string;
+          state: string;
           updated_at?: string;
+          updated_by?: string | null;
         };
         Update: {
-          created_at?: string;
-          help?: Json | null;
-          id?: string;
-          is_archived?: boolean;
-          is_required?: boolean;
-          label?: Json;
           org_id?: string;
-          placements?: string[];
-          privacy?: string;
-          question_type?: string;
-          screen_id?: string;
-          settings?: Json;
-          show_when_option_id?: string | null;
-          show_when_question_id?: string | null;
-          sort_order?: number;
+          profile_id?: string;
+          question_id?: string;
+          state?: string;
           updated_at?: string;
+          updated_by?: string | null;
         };
         Relationships: [
           {
-            foreignKeyName: 'custom_questions_org_id_fkey';
+            foreignKeyName: 'custom_question_states_org_id_fkey';
             columns: ['org_id'];
             isOneToOne: false;
             referencedRelation: 'organizations';
             referencedColumns: ['id'];
           },
           {
-            foreignKeyName: 'custom_questions_screen_id_fkey';
-            columns: ['screen_id'];
+            foreignKeyName: 'custom_question_states_profile_id_fkey';
+            columns: ['profile_id'];
             isOneToOne: false;
-            referencedRelation: 'intake_screens';
+            referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
           {
-            foreignKeyName: 'custom_questions_show_when_option_id_fkey';
-            columns: ['show_when_option_id'];
+            foreignKeyName: 'custom_question_states_question_id_fkey';
+            columns: ['question_id'];
             isOneToOne: false;
-            referencedRelation: 'custom_question_options';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'custom_questions_show_when_question_id_fkey';
-            columns: ['show_when_question_id'];
-            isOneToOne: false;
-            referencedRelation: 'custom_questions';
+            referencedRelation: 'profile_fields';
             referencedColumns: ['id'];
           },
         ];
@@ -1803,6 +2276,252 @@ export type Database = {
           },
         ];
       };
+      field_placements: {
+        Row: {
+          created_at: string;
+          custom_form_id: string | null;
+          field_id: string;
+          help_override: Json | null;
+          id: string;
+          label_override: Json | null;
+          org_id: string;
+          required: boolean;
+          screen_key: string | null;
+          shared_screen: string | null;
+          sort_order: number;
+          surface: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          custom_form_id?: string | null;
+          field_id: string;
+          help_override?: Json | null;
+          id?: string;
+          label_override?: Json | null;
+          org_id: string;
+          required?: boolean;
+          screen_key?: string | null;
+          shared_screen?: never;
+          sort_order?: number;
+          surface: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          custom_form_id?: string | null;
+          field_id?: string;
+          help_override?: Json | null;
+          id?: string;
+          label_override?: Json | null;
+          org_id?: string;
+          required?: boolean;
+          screen_key?: string | null;
+          shared_screen?: never;
+          sort_order?: number;
+          surface?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'field_placements_custom_form_id_fkey';
+            columns: ['custom_form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'field_placements_field_id_fkey';
+            columns: ['field_id'];
+            isOneToOne: false;
+            referencedRelation: 'profile_fields';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'field_placements_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      form_blocks: {
+        Row: {
+          body: Json | null;
+          created_at: string;
+          custom_form_id: string | null;
+          id: string;
+          kind: string;
+          org_id: string;
+          points: Json | null;
+          screen_key: string | null;
+          settings: Json;
+          sort_order: number;
+          surface: string;
+          title: Json | null;
+          updated_at: string;
+        };
+        Insert: {
+          body?: Json | null;
+          created_at?: string;
+          custom_form_id?: string | null;
+          id?: string;
+          kind?: string;
+          org_id: string;
+          points?: Json | null;
+          screen_key?: string | null;
+          settings?: Json;
+          sort_order?: number;
+          surface: string;
+          title?: Json | null;
+          updated_at?: string;
+        };
+        Update: {
+          body?: Json | null;
+          created_at?: string;
+          custom_form_id?: string | null;
+          id?: string;
+          kind?: string;
+          org_id?: string;
+          points?: Json | null;
+          screen_key?: string | null;
+          settings?: Json;
+          sort_order?: number;
+          surface?: string;
+          title?: Json | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'form_blocks_custom_form_id_fkey';
+            columns: ['custom_form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'form_blocks_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      form_signatures: {
+        Row: {
+          unable_to_draw: boolean;
+          block_id: string | null;
+          body: string;
+          custom_form_id: string | null;
+          id: string;
+          language: string;
+          org_id: string;
+          profile_id: string | null;
+          referral_id: string | null;
+          screen_key: string | null;
+          signed_at: string;
+          signed_on_tablet: boolean;
+          signer_kind: string;
+          signer_name: string;
+          signer_user_id: string | null;
+          strokes: Json | null;
+          surface: string;
+          witnessed_by: string | null;
+        };
+        Insert: {
+          unable_to_draw?: boolean;
+          block_id?: string | null;
+          body: string;
+          custom_form_id?: string | null;
+          id?: string;
+          language: string;
+          org_id: string;
+          profile_id?: string | null;
+          referral_id?: string | null;
+          screen_key?: string | null;
+          signed_at?: string;
+          signed_on_tablet?: boolean;
+          signer_kind: string;
+          signer_name: string;
+          signer_user_id?: string | null;
+          strokes?: Json | null;
+          surface: string;
+          witnessed_by?: string | null;
+        };
+        Update: {
+          unable_to_draw?: boolean;
+          block_id?: string | null;
+          body?: string;
+          custom_form_id?: string | null;
+          id?: string;
+          language?: string;
+          org_id?: string;
+          profile_id?: string | null;
+          referral_id?: string | null;
+          screen_key?: string | null;
+          signed_at?: string;
+          signed_on_tablet?: boolean;
+          signer_kind?: string;
+          signer_name?: string;
+          signer_user_id?: string | null;
+          strokes?: Json;
+          surface?: string;
+          witnessed_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'form_signatures_block_id_fkey';
+            columns: ['block_id'];
+            isOneToOne: false;
+            referencedRelation: 'form_blocks';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'form_signatures_custom_form_id_fkey';
+            columns: ['custom_form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'form_signatures_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'form_signatures_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'form_signatures_referral_id_fkey';
+            columns: ['referral_id'];
+            isOneToOne: false;
+            referencedRelation: 'entity_referrals';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'form_signatures_signer_user_id_fkey';
+            columns: ['signer_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'form_signatures_witnessed_by_fkey';
+            columns: ['witnessed_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       forum_categories: {
         Row: {
           color: string;
@@ -2071,6 +2790,7 @@ export type Database = {
       };
       intake_builtin_screens: {
         Row: {
+          is_deleted: boolean;
           is_hidden: boolean;
           org_id: string;
           screen: string;
@@ -2079,6 +2799,7 @@ export type Database = {
           updated_by: string | null;
         };
         Insert: {
+          is_deleted?: boolean;
           is_hidden?: boolean;
           org_id: string;
           screen: string;
@@ -2087,6 +2808,7 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
+          is_deleted?: boolean;
           is_hidden?: boolean;
           org_id?: string;
           screen?: string;
@@ -2147,89 +2869,9 @@ export type Database = {
           },
         ];
       };
-      intake_question_states: {
-        Row: {
-          org_id: string;
-          profile_id: string;
-          question: string;
-          state: string;
-          updated_at: string;
-          updated_by: string | null;
-        };
-        Insert: {
-          org_id: string;
-          profile_id: string;
-          question: string;
-          state: string;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Update: {
-          org_id?: string;
-          profile_id?: string;
-          question?: string;
-          state?: string;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'intake_question_states_org_id_fkey';
-            columns: ['org_id'];
-            isOneToOne: false;
-            referencedRelation: 'organizations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'intake_question_states_profile_id_fkey';
-            columns: ['profile_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
-      intake_required_questions: {
-        Row: {
-          is_required: boolean;
-          org_id: string;
-          question: string;
-          updated_at: string;
-          updated_by: string | null;
-        };
-        Insert: {
-          is_required: boolean;
-          org_id: string;
-          question: string;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Update: {
-          is_required?: boolean;
-          org_id?: string;
-          question?: string;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'intake_required_questions_org_id_fkey';
-            columns: ['org_id'];
-            isOneToOne: false;
-            referencedRelation: 'organizations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'intake_required_questions_updated_by_fkey';
-            columns: ['updated_by'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       intake_screens: {
         Row: {
+          texts: Json;
           after_screen: string;
           created_at: string;
           home_after_screen: string;
@@ -2237,12 +2879,16 @@ export type Database = {
           id: string;
           intro: Json | null;
           is_archived: boolean;
+          is_hidden: boolean;
           org_id: string;
+          show_when_field_id: string | null;
+          show_when_values: string[] | null;
           sort_order: number;
           title: Json;
           updated_at: string;
         };
         Insert: {
+          texts?: Json;
           after_screen: string;
           created_at?: string;
           home_after_screen: string;
@@ -2250,12 +2896,16 @@ export type Database = {
           id?: string;
           intro?: Json | null;
           is_archived?: boolean;
+          is_hidden?: boolean;
           org_id: string;
+          show_when_field_id?: string | null;
+          show_when_values?: string[] | null;
           sort_order?: number;
           title: Json;
           updated_at?: string;
         };
         Update: {
+          texts?: Json;
           after_screen?: string;
           created_at?: string;
           home_after_screen?: string;
@@ -2263,7 +2913,10 @@ export type Database = {
           id?: string;
           intro?: Json | null;
           is_archived?: boolean;
+          is_hidden?: boolean;
           org_id?: string;
+          show_when_field_id?: string | null;
+          show_when_values?: string[] | null;
           sort_order?: number;
           title?: Json;
           updated_at?: string;
@@ -2915,6 +3568,42 @@ export type Database = {
           },
         ];
       };
+      onboarding_form_chains: {
+        Row: {
+          form_refs: string[];
+          org_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          form_refs?: string[];
+          org_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          form_refs?: string[];
+          org_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'onboarding_form_chains_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: true;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'onboarding_form_chains_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       organizations: {
         Row: {
           available_languages: string[];
@@ -2997,6 +3686,45 @@ export type Database = {
             foreignKeyName: 'participant_notes_profile_id_fkey';
             columns: ['profile_id'];
             isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      participant_search_documents: {
+        Row: {
+          normal_document: unknown;
+          org_id: string;
+          personal_document: unknown;
+          profile_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          normal_document: unknown;
+          org_id: string;
+          personal_document: unknown;
+          profile_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          normal_document?: unknown;
+          org_id?: string;
+          personal_document?: unknown;
+          profile_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'participant_search_documents_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'participant_search_documents_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: true;
             referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
@@ -3162,201 +3890,223 @@ export type Database = {
           },
         ];
       };
-      profile_answers: {
+      profile_fields: {
         Row: {
-          answered_at: string;
+          created_at: string;
+          created_by: string | null;
+          default_required: boolean;
+          help: Json | null;
+          id: string;
+          is_archived: boolean;
+          kind: string;
+          label: Json;
           org_id: string;
-          profile_id: string;
-          question: string;
-          source: string;
+          privacy: string;
+          question_type: string;
+          read_permission: string | null;
+          section_id: string;
+          settings: Json;
+          show_when_field_id: string | null;
+          show_when_option_id: string | null;
+          sort_order: number;
+          system_key: string | null;
+          updated_at: string;
         };
         Insert: {
-          answered_at?: string;
+          created_at?: string;
+          created_by?: string | null;
+          default_required?: boolean;
+          help?: Json | null;
+          id?: string;
+          is_archived?: boolean;
+          kind: string;
+          label: Json;
           org_id: string;
-          profile_id: string;
-          question: string;
-          source: string;
+          privacy: string;
+          question_type: string;
+          read_permission?: string | null;
+          section_id: string;
+          settings?: Json;
+          show_when_field_id?: string | null;
+          show_when_option_id?: string | null;
+          sort_order?: number;
+          system_key?: string | null;
+          updated_at?: string;
         };
         Update: {
-          answered_at?: string;
+          created_at?: string;
+          created_by?: string | null;
+          default_required?: boolean;
+          help?: Json | null;
+          id?: string;
+          is_archived?: boolean;
+          kind?: string;
+          label?: Json;
           org_id?: string;
-          profile_id?: string;
-          question?: string;
-          source?: string;
+          privacy?: string;
+          question_type?: string;
+          read_permission?: string | null;
+          section_id?: string;
+          settings?: Json;
+          show_when_field_id?: string | null;
+          show_when_option_id?: string | null;
+          sort_order?: number;
+          system_key?: string | null;
+          updated_at?: string;
         };
         Relationships: [
           {
-            foreignKeyName: 'profile_answers_org_id_fkey';
+            foreignKeyName: 'profile_fields_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'profile_fields_org_id_fkey';
             columns: ['org_id'];
             isOneToOne: false;
             referencedRelation: 'organizations';
             referencedColumns: ['id'];
           },
           {
-            foreignKeyName: 'profile_answers_profile_id_fkey';
-            columns: ['profile_id'];
+            foreignKeyName: 'profile_fields_section_id_fkey';
+            columns: ['section_id'];
             isOneToOne: false;
-            referencedRelation: 'profiles';
+            referencedRelation: 'profile_sections';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'profile_fields_show_when_field_id_fkey';
+            columns: ['show_when_field_id'];
+            isOneToOne: false;
+            referencedRelation: 'profile_fields';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'profile_fields_show_when_option_id_fkey';
+            columns: ['show_when_option_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_question_options';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      profile_sections: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_builtin: boolean;
+          key: string;
+          org_id: string;
+          sort_order: number;
+          title: Json;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          is_builtin?: boolean;
+          key: string;
+          org_id: string;
+          sort_order?: number;
+          title: Json;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          is_builtin?: boolean;
+          key?: string;
+          org_id?: string;
+          sort_order?: number;
+          title?: Json;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'profile_sections_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
             referencedColumns: ['id'];
           },
         ];
       };
       profiles: {
         Row: {
-          address: string | null;
           anonymized_at: string | null;
-          applicant_status: string | null;
-          applicant_status_details: string | null;
           avatar_url: string | null;
-          childcare_need: string | null;
-          city: string | null;
-          clothing_size: string | null;
           collaborating_entity_id: string | null;
           created_at: string;
-          date_of_birth: string | null;
-          document_name: string | null;
-          document_number: string | null;
-          document_type: string | null;
-          emergency_contact_name: string | null;
-          emergency_contact_phone: string | null;
-          emergency_contact_privacy: string | null;
-          emergency_contact_relation: string | null;
           first_name: string;
-          has_dependents: boolean | null;
-          health_info: string | null;
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
           is_test_account: boolean;
           last_name: string;
           media_consent_at: string | null;
-          nationality: string | null;
-          num_dependents: number;
+          member_number: number;
+          onboarding_chain_done_at: string | null;
           org_id: string;
-          phone: string | null;
-          place_of_birth: string | null;
-          postal_code: string | null;
           preferred_language: string;
           prior_seasons: number;
           push_notifications_enabled: boolean;
-          reference_contact_name: string | null;
-          reference_entity: string | null;
           role: string;
-          search_document: unknown;
           season_number: number | null;
           sessions_valid_after: string | null;
-          shoe_size: string | null;
-          specific_needs: string | null;
-          supporting_entities: string[] | null;
           terms_accepted_at: string | null;
           updated_at: string;
         };
         Insert: {
-          address?: string | null;
           anonymized_at?: string | null;
-          applicant_status?: string | null;
-          applicant_status_details?: string | null;
           avatar_url?: string | null;
-          childcare_need?: string | null;
-          city?: string | null;
-          clothing_size?: string | null;
           collaborating_entity_id?: string | null;
           created_at?: string;
-          date_of_birth?: string | null;
-          document_name?: string | null;
-          document_number?: string | null;
-          document_type?: string | null;
-          emergency_contact_name?: string | null;
-          emergency_contact_phone?: string | null;
-          emergency_contact_privacy?: string | null;
-          emergency_contact_relation?: string | null;
           first_name: string;
-          has_dependents?: boolean | null;
-          health_info?: string | null;
           id: string;
           is_active?: boolean;
           is_forum_banned?: boolean;
           is_test_account?: boolean;
           last_name: string;
           media_consent_at?: string | null;
-          nationality?: string | null;
-          num_dependents?: number;
+          member_number?: number;
+          onboarding_chain_done_at?: string | null;
           org_id: string;
-          phone?: string | null;
-          place_of_birth?: string | null;
-          postal_code?: string | null;
           preferred_language?: string;
           prior_seasons?: number;
           push_notifications_enabled?: boolean;
-          reference_contact_name?: string | null;
-          reference_entity?: string | null;
           role?: string;
-          search_document?: unknown;
           season_number?: number | null;
           sessions_valid_after?: string | null;
-          shoe_size?: string | null;
-          specific_needs?: string | null;
-          supporting_entities?: string[] | null;
           terms_accepted_at?: string | null;
           updated_at?: string;
         };
         Update: {
-          address?: string | null;
           anonymized_at?: string | null;
-          applicant_status?: string | null;
-          applicant_status_details?: string | null;
           avatar_url?: string | null;
-          childcare_need?: string | null;
-          city?: string | null;
-          clothing_size?: string | null;
           collaborating_entity_id?: string | null;
           created_at?: string;
-          date_of_birth?: string | null;
-          document_name?: string | null;
-          document_number?: string | null;
-          document_type?: string | null;
-          emergency_contact_name?: string | null;
-          emergency_contact_phone?: string | null;
-          emergency_contact_privacy?: string | null;
-          emergency_contact_relation?: string | null;
           first_name?: string;
-          has_dependents?: boolean | null;
-          health_info?: string | null;
           id?: string;
           is_active?: boolean;
           is_forum_banned?: boolean;
           is_test_account?: boolean;
           last_name?: string;
           media_consent_at?: string | null;
-          nationality?: string | null;
-          num_dependents?: number;
+          member_number?: number;
+          onboarding_chain_done_at?: string | null;
           org_id?: string;
-          phone?: string | null;
-          place_of_birth?: string | null;
-          postal_code?: string | null;
           preferred_language?: string;
           prior_seasons?: number;
           push_notifications_enabled?: boolean;
-          reference_contact_name?: string | null;
-          reference_entity?: string | null;
           role?: string;
-          search_document?: unknown;
           season_number?: number | null;
           sessions_valid_after?: string | null;
-          shoe_size?: string | null;
-          specific_needs?: string | null;
-          supporting_entities?: string[] | null;
           terms_accepted_at?: string | null;
           updated_at?: string;
         };
         Relationships: [
-          {
-            foreignKeyName: 'profiles_city_municipality_canonical_fkey';
-            columns: ['city'];
-            isOneToOne: false;
-            referencedRelation: 'municipality_catalog';
-            referencedColumns: ['canonical'];
-          },
           {
             foreignKeyName: 'profiles_collaborating_entity_tenant_fkey';
             columns: ['org_id', 'collaborating_entity_id'];
@@ -3609,7 +4359,7 @@ export type Database = {
             foreignKeyName: 'referral_custom_answers_question_id_fkey';
             columns: ['question_id'];
             isOneToOne: false;
-            referencedRelation: 'custom_questions';
+            referencedRelation: 'profile_fields';
             referencedColumns: ['id'];
           },
           {
@@ -3670,64 +4420,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'entity_referrals';
             referencedColumns: ['org_id', 'id'];
-          },
-        ];
-      };
-      season_answers: {
-        Row: {
-          applicant_status: string | null;
-          applicant_status_details: string | null;
-          childcare_need: string | null;
-          org_id: string;
-          profile_id: string;
-          season_id: string;
-          specific_needs: string | null;
-          supporting_entities: string[] | null;
-          updated_at: string;
-        };
-        Insert: {
-          applicant_status?: string | null;
-          applicant_status_details?: string | null;
-          childcare_need?: string | null;
-          org_id: string;
-          profile_id: string;
-          season_id: string;
-          specific_needs?: string | null;
-          supporting_entities?: string[] | null;
-          updated_at?: string;
-        };
-        Update: {
-          applicant_status?: string | null;
-          applicant_status_details?: string | null;
-          childcare_need?: string | null;
-          org_id?: string;
-          profile_id?: string;
-          season_id?: string;
-          specific_needs?: string | null;
-          supporting_entities?: string[] | null;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'season_answers_org_id_fkey';
-            columns: ['org_id'];
-            isOneToOne: false;
-            referencedRelation: 'organizations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'season_answers_profile_id_fkey';
-            columns: ['profile_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'season_answers_season_id_fkey';
-            columns: ['season_id'];
-            isOneToOne: false;
-            referencedRelation: 'seasons';
-            referencedColumns: ['id'];
           },
         ];
       };
@@ -4335,6 +5027,60 @@ export type Database = {
             foreignKeyName: 'staff_invitations_profile_id_fkey';
             columns: ['profile_id'];
             isOneToOne: true;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      staff_notifications: {
+        Row: {
+          created_at: string;
+          deleted_at: string | null;
+          event: string;
+          id: string;
+          org_id: string;
+          params: Json;
+          path: string;
+          read_at: string | null;
+          recipient_id: string;
+          source_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          deleted_at?: string | null;
+          event: string;
+          id?: string;
+          org_id: string;
+          params?: Json;
+          path: string;
+          read_at?: string | null;
+          recipient_id: string;
+          source_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          deleted_at?: string | null;
+          event?: string;
+          id?: string;
+          org_id?: string;
+          params?: Json;
+          path?: string;
+          read_at?: string | null;
+          recipient_id?: string;
+          source_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'staff_notifications_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'staff_notifications_recipient_id_fkey';
+            columns: ['recipient_id'];
+            isOneToOne: false;
             referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
@@ -4955,6 +5701,151 @@ export type Database = {
           },
         ];
       };
+      walk_in_consents: {
+        Row: {
+          consent_id: string;
+          consent_key: string;
+          decided_at: string;
+          granted: boolean;
+          id: string;
+          language: string;
+          org_id: string;
+          recorded_by: string | null;
+          required: boolean;
+          screen_key: string;
+          walk_in_id: string;
+          wording: string;
+        };
+        Insert: {
+          consent_id: string;
+          consent_key: string;
+          decided_at: string;
+          granted: boolean;
+          id?: string;
+          language: string;
+          org_id: string;
+          recorded_by?: string | null;
+          required: boolean;
+          screen_key: string;
+          walk_in_id: string;
+          wording: string;
+        };
+        Update: {
+          consent_id?: string;
+          consent_key?: string;
+          decided_at?: string;
+          granted?: boolean;
+          id?: string;
+          language?: string;
+          org_id?: string;
+          recorded_by?: string | null;
+          required?: boolean;
+          screen_key?: string;
+          walk_in_id?: string;
+          wording?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'walk_in_consents_consent_id_fkey';
+            columns: ['consent_id'];
+            isOneToOne: false;
+            referencedRelation: 'consents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'walk_in_consents_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'walk_in_consents_recorded_by_fkey';
+            columns: ['recorded_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'walk_in_consents_walk_in_id_fkey';
+            columns: ['walk_in_id'];
+            isOneToOne: false;
+            referencedRelation: 'walk_in_signings';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      walk_in_form_signatures: {
+        Row: {
+          block_id: string | null;
+          body: string;
+          id: string;
+          language: string;
+          org_id: string;
+          screen_key: string | null;
+          signed_at: string;
+          strokes: Json | null;
+          unable_to_draw: boolean;
+          walk_in_id: string;
+          witnessed_by: string | null;
+        };
+        Insert: {
+          block_id?: string | null;
+          body: string;
+          id?: string;
+          language: string;
+          org_id: string;
+          screen_key?: string | null;
+          signed_at: string;
+          strokes?: Json | null;
+          unable_to_draw?: boolean;
+          walk_in_id: string;
+          witnessed_by?: string | null;
+        };
+        Update: {
+          block_id?: string | null;
+          body?: string;
+          id?: string;
+          language?: string;
+          org_id?: string;
+          screen_key?: string | null;
+          signed_at?: string;
+          strokes?: Json | null;
+          unable_to_draw?: boolean;
+          walk_in_id?: string;
+          witnessed_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'walk_in_form_signatures_block_id_fkey';
+            columns: ['block_id'];
+            isOneToOne: false;
+            referencedRelation: 'form_blocks';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'walk_in_form_signatures_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'walk_in_form_signatures_walk_in_id_fkey';
+            columns: ['walk_in_id'];
+            isOneToOne: false;
+            referencedRelation: 'walk_in_signings';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'walk_in_form_signatures_witnessed_by_fkey';
+            columns: ['witnessed_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       walk_in_signings: {
         Row: {
           collected_by: string | null;
@@ -5194,15 +6085,7 @@ export type Database = {
           legacy_value: string | null;
           profile_count: number | null;
         };
-        Relationships: [
-          {
-            foreignKeyName: 'profiles_city_municipality_canonical_fkey';
-            columns: ['legacy_value'];
-            isOneToOne: false;
-            referencedRelation: 'municipality_catalog';
-            referencedColumns: ['canonical'];
-          },
-        ];
+        Relationships: [];
       };
     };
     Functions: {
@@ -5227,8 +6110,21 @@ export type Database = {
         Args: { p_preset_id: string; p_profile_ids: string[] };
         Returns: number;
       };
-      archive_custom_question: { Args: { p_id: string }; Returns: undefined };
+      archive_consent: {
+        Args: { p_archived: boolean; p_id: string };
+        Returns: undefined;
+      };
+      archive_custom_form: {
+        Args: { p_archived: boolean; p_id: string };
+        Returns: undefined;
+      };
+      archive_custom_form_screen: { Args: { p_id: string }; Returns: undefined };
       archive_intake_screen: { Args: { p_id: string }; Returns: undefined };
+      delete_builder_screen: {
+        Args: { p_surface: string; p_key: string; p_expected_keys: string[] };
+        Returns: undefined;
+      };
+      archive_profile_field: { Args: { p_id: string }; Returns: undefined };
       assert_within_hourly_limit: {
         Args: { limited_action: string; maximum_per_hour: number };
         Returns: undefined;
@@ -5250,6 +6146,10 @@ export type Database = {
         Returns: boolean;
       };
       can_read_media_object: {
+        Args: { p_object_key: string };
+        Returns: boolean;
+      };
+      can_read_profile_photo_object: {
         Args: { p_object_key: string };
         Returns: boolean;
       };
@@ -5301,6 +6201,10 @@ export type Database = {
           ticket_id: string;
         }[];
       };
+      complete_custom_form: {
+        Args: { p_response_id: string; payload: Json };
+        Returns: undefined;
+      };
       complete_entity_referral: {
         Args: { p_profile_id: string; p_referral_id: string };
         Returns: undefined;
@@ -5320,51 +6224,26 @@ export type Database = {
       complete_onboarding: {
         Args: { payload: Json };
         Returns: {
-          address: string | null;
           anonymized_at: string | null;
-          applicant_status: string | null;
-          applicant_status_details: string | null;
           avatar_url: string | null;
-          childcare_need: string | null;
-          city: string | null;
-          clothing_size: string | null;
           collaborating_entity_id: string | null;
           created_at: string;
-          date_of_birth: string | null;
-          document_name: string | null;
-          document_number: string | null;
-          document_type: string | null;
-          emergency_contact_name: string | null;
-          emergency_contact_phone: string | null;
-          emergency_contact_privacy: string | null;
-          emergency_contact_relation: string | null;
           first_name: string;
-          has_dependents: boolean | null;
-          health_info: string | null;
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
           is_test_account: boolean;
           last_name: string;
           media_consent_at: string | null;
-          nationality: string | null;
-          num_dependents: number;
+          member_number: number;
+          onboarding_chain_done_at: string | null;
           org_id: string;
-          phone: string | null;
-          place_of_birth: string | null;
-          postal_code: string | null;
           preferred_language: string;
           prior_seasons: number;
           push_notifications_enabled: boolean;
-          reference_contact_name: string | null;
-          reference_entity: string | null;
           role: string;
-          search_document: unknown;
           season_number: number | null;
           sessions_valid_after: string | null;
-          shoe_size: string | null;
-          specific_needs: string | null;
-          supporting_entities: string[] | null;
           terms_accepted_at: string | null;
           updated_at: string;
         };
@@ -5378,51 +6257,26 @@ export type Database = {
       complete_onboarding_signed: {
         Args: { p_signing: Json; payload: Json };
         Returns: {
-          address: string | null;
           anonymized_at: string | null;
-          applicant_status: string | null;
-          applicant_status_details: string | null;
           avatar_url: string | null;
-          childcare_need: string | null;
-          city: string | null;
-          clothing_size: string | null;
           collaborating_entity_id: string | null;
           created_at: string;
-          date_of_birth: string | null;
-          document_name: string | null;
-          document_number: string | null;
-          document_type: string | null;
-          emergency_contact_name: string | null;
-          emergency_contact_phone: string | null;
-          emergency_contact_privacy: string | null;
-          emergency_contact_relation: string | null;
           first_name: string;
-          has_dependents: boolean | null;
-          health_info: string | null;
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
           is_test_account: boolean;
           last_name: string;
           media_consent_at: string | null;
-          nationality: string | null;
-          num_dependents: number;
+          member_number: number;
+          onboarding_chain_done_at: string | null;
           org_id: string;
-          phone: string | null;
-          place_of_birth: string | null;
-          postal_code: string | null;
           preferred_language: string;
           prior_seasons: number;
           push_notifications_enabled: boolean;
-          reference_contact_name: string | null;
-          reference_entity: string | null;
           role: string;
-          search_document: unknown;
           season_number: number | null;
           sessions_valid_after: string | null;
-          shoe_size: string | null;
-          specific_needs: string | null;
-          supporting_entities: string[] | null;
           terms_accepted_at: string | null;
           updated_at: string;
         };
@@ -5451,6 +6305,18 @@ export type Database = {
         Returns: number;
       };
       create_collaborating_entity: { Args: { p_name: string }; Returns: string };
+      create_custom_form: {
+        Args: {
+          p_audience: string;
+          p_deadline: string;
+          p_filled_by: string;
+          p_mandatory: string;
+          p_kind?: string;
+          p_name: Json;
+          p_repeats_each_season: boolean;
+        };
+        Returns: string;
+      };
       create_data_export: {
         Args: {
           p_confirmed?: boolean;
@@ -5535,6 +6401,9 @@ export type Database = {
         Args: never;
         Returns: {
           content: Json;
+          form_id: string;
+          form_snapshot: Json;
+          legacy_compatible: boolean;
           season_name: string;
           version_id: string;
           version_number: number;
@@ -5542,6 +6411,22 @@ export type Database = {
       };
       current_collaborating_entity_id: { Args: never; Returns: string };
       current_org_id: { Args: never; Returns: string };
+      custom_form_responses_of: {
+        Args: { p_form_id: string };
+        Returns: {
+          answered_at: string;
+          answered_by_name: string;
+          asked_at: string;
+          display_name: string;
+          filled_by: string;
+          member_number: number;
+          profile_id: string;
+          response_id: string;
+          season_name: string;
+          status: string;
+          version: number;
+        }[];
+      };
       decrypt_field: { Args: { ciphertext: string }; Returns: string };
       default_organization_id: { Args: never; Returns: string };
       delete_custom_notification_group: {
@@ -5566,6 +6451,7 @@ export type Database = {
         Args: { p_preset_id: string };
         Returns: undefined;
       };
+      delete_staff_notifications: { Args: { p_ids: string[] }; Returns: number };
       delete_test_player: {
         Args: { p_participant_id: string };
         Returns: undefined;
@@ -5573,6 +6459,10 @@ export type Database = {
       discard_app_terms_draft: { Args: never; Returns: undefined };
       discard_authorization_draft: { Args: never; Returns: undefined };
       discard_walk_in: { Args: { p_id: string }; Returns: undefined };
+      dismiss_custom_form: {
+        Args: { p_response_id: string };
+        Returns: undefined;
+      };
       edit_own_forum_post: {
         Args: { p_content: string; p_post_id: string };
         Returns: undefined;
@@ -5591,6 +6481,7 @@ export type Database = {
           type: string;
         }[];
       };
+      finish_onboarding_chain: { Args: never; Returns: undefined };
       flag_forum_content: {
         Args: {
           p_comment: string;
@@ -5642,6 +6533,7 @@ export type Database = {
       get_entity_referral: {
         Args: { p_referral_id: string };
         Returns: {
+          answers: Json;
           assigned_staff_id: string;
           consent_confirmed_at: string;
           created_at: string;
@@ -5649,13 +6541,13 @@ export type Database = {
           entity_name: string;
           entity_user_id: string;
           id: string;
-          intake_answers: Json;
           notes: string;
           referred_email: string;
           referred_first_name: string;
           referred_last_name: string;
           referred_phone: string;
           referred_profile_id: string;
+          season_number: number;
           status: string;
           updated_at: string;
         }[];
@@ -5692,38 +6584,14 @@ export type Database = {
       get_own_profile: {
         Args: never;
         Returns: {
-          address: string;
-          applicant_status: string;
-          applicant_status_details: string;
+          answers: Json;
           avatar_url: string;
-          childcare_need: string;
-          city: string;
-          clothing_size: string;
-          date_of_birth: string;
-          document_name: string;
-          document_number: string;
-          document_type: string;
-          emergency_contact_name: string;
-          emergency_contact_phone: string;
-          emergency_contact_relation: string;
           first_name: string;
-          has_dependents: boolean;
-          health_info: string;
           id: string;
           last_name: string;
           media_consent: boolean;
-          nationality: string;
-          num_dependents: number;
-          phone: string;
-          place_of_birth: string;
-          postal_code: string;
           preferred_language: string;
-          reference_contact_name: string;
-          reference_entity: string;
           season_number: number;
-          shoe_size: string;
-          specific_needs: string;
-          supporting_entities: string[];
           terms_accepted_at: string;
         }[];
       };
@@ -5747,46 +6615,31 @@ export type Database = {
           updated_at: string;
         }[];
       };
+      get_player_profile_banner: {
+        Args: { p_profile_id: string };
+        Returns: Json;
+      };
+      set_player_profile_banner: {
+        Args: { p_profile_id: string; p_object_key: string; p_all_players: boolean };
+        Returns: Json;
+      };
       get_participant_profile: {
         Args: { participant_id: string };
         Returns: {
-          address: string;
           anonymized_at: string;
-          applicant_status: string;
-          applicant_status_details: string;
+          answers: Json;
           avatar_url: string;
-          childcare_need: string;
-          city: string;
-          clothing_size: string;
           created_at: string;
-          date_of_birth: string;
-          document_name: string;
-          document_number: string;
-          document_type: string;
-          emergency_contact_name: string;
-          emergency_contact_phone: string;
-          emergency_contact_relation: string;
           first_name: string;
-          has_dependents: boolean;
-          health_info: string;
           id: string;
           is_active: boolean;
           is_forum_banned: boolean;
           is_test_account: boolean;
           last_name: string;
           media_consent: boolean;
-          nationality: string;
-          num_dependents: number;
-          phone: string;
-          place_of_birth: string;
-          postal_code: string;
           preferred_language: string;
-          reference_contact_name: string;
-          reference_entity: string;
+          role: string;
           season_number: number;
-          shoe_size: string;
-          specific_needs: string;
-          supporting_entities: string[];
           terms_accepted_at: string;
           updated_at: string;
         }[];
@@ -5822,6 +6675,22 @@ export type Database = {
           status: string;
           title: Json;
           total_count: number;
+        }[];
+      };
+      get_person_cards: {
+        Args: { p_profile_ids: string[] };
+        Returns: { id: string; first_name: string | null; avatar_url: string | null }[];
+      };
+      set_own_profile_photo: {
+        Args: { p_profile_id: string; p_object_key: string | null };
+        Returns: undefined;
+      };
+      get_staff_cards: {
+        Args: { p_profile_ids: string[] };
+        Returns: {
+          avatar_url: string;
+          first_name: string;
+          id: string;
         }[];
       };
       get_unread_message_count: {
@@ -5928,6 +6797,7 @@ export type Database = {
           acceptance_count: number;
           content: Json;
           id: string;
+          is_correction: boolean;
           published_at: string;
           updated_at: string;
           version_number: number;
@@ -5938,10 +6808,12 @@ export type Database = {
         Returns: {
           content: Json;
           id: string;
+          is_correction: boolean;
           is_current: boolean;
           published_at: string;
           season_id: string;
           season_name: string;
+          signature_count: number;
           updated_at: string;
           version_number: number;
         }[];
@@ -6228,6 +7100,18 @@ export type Database = {
           updated_at: string;
         }[];
       };
+      list_staff_notifications: {
+        Args: { p_limit?: number };
+        Returns: {
+          created_at: string;
+          event: string;
+          id: string;
+          name: string;
+          params: Json;
+          path: string;
+          read_at: string;
+        }[];
+      };
       list_staff_referrals: {
         Args: { p_status?: string };
         Returns: {
@@ -6315,6 +7199,10 @@ export type Database = {
         Args: { p_conversation_id: string; p_message_id: string };
         Returns: undefined;
       };
+      mark_staff_notification_read: {
+        Args: { p_id: string };
+        Returns: undefined;
+      };
       merge_walk_in: {
         Args: { p_id: string; p_profile_id: string };
         Returns: undefined;
@@ -6331,12 +7219,19 @@ export type Database = {
           last_counted_at: string;
         }[];
       };
+      move_profile_field: {
+        Args: { p_id: string; p_ids: string[]; p_section_id: string };
+        Returns: undefined;
+      };
       my_answered_questions: { Args: never; Returns: string[] };
       my_authorization_status: {
         Args: never;
         Returns: {
           content: Json;
+          form_id: string;
+          form_snapshot: Json;
           is_draft: boolean;
+          legacy_compatible: boolean;
           is_returning: boolean;
           required: boolean;
           season_id: string;
@@ -6348,10 +7243,13 @@ export type Database = {
       my_consents: {
         Args: never;
         Returns: {
+          consent_id: string;
           consent_key: string;
           decided_at: string;
+          form: string;
           granted: boolean;
           language: string;
+          name: Json;
           wording: string;
         }[];
       };
@@ -6360,6 +7258,27 @@ export type Database = {
         Returns: {
           question_id: string;
           value: Json;
+        }[];
+      };
+      my_custom_forms: {
+        Args: never;
+        Returns: {
+          asked_at: string;
+          deadline: string;
+          form_id: string;
+          is_blocking: boolean;
+          kind: string;
+          mandatory: string;
+          name: Json;
+          response_id: string;
+          version: number;
+        }[];
+      };
+      my_custom_question_asking: {
+        Args: never;
+        Returns: {
+          is_asked: boolean;
+          question_id: string;
         }[];
       };
       my_entity_invitation: {
@@ -6371,7 +7290,18 @@ export type Database = {
           invited_at: string;
         }[];
       };
+      my_form_signatures: {
+        Args: never;
+        Returns: {
+          block_id: string;
+          body: string;
+          language: string;
+          signed_at: string;
+        }[];
+      };
       my_intake_upload_org: { Args: never; Returns: string };
+      my_onboarding_chain: { Args: never; Returns: string[] };
+      my_onboarding_review: { Args: never; Returns: string[] };
       my_pending_invite: {
         Args: never;
         Returns: {
@@ -6385,6 +7315,7 @@ export type Database = {
       my_session_is_current: { Args: never; Returns: boolean };
       my_terms_acceptance_needed: { Args: never; Returns: boolean };
       my_test_scenario_stamp: { Args: never; Returns: string };
+      notification_audience_entities: { Args: never; Returns: string[] };
       open_staff_checkouts: {
         Args: never;
         Returns: {
@@ -6411,6 +7342,10 @@ export type Database = {
           title: string;
         }[];
       };
+      participant_answered_questions: {
+        Args: { p_profile_id: string };
+        Returns: string[];
+      };
       participant_authorizations: {
         Args: { p_profile_id: string };
         Returns: {
@@ -6425,14 +7360,39 @@ export type Database = {
           version_number: number;
         }[];
       };
-      participant_consents: {
+      participant_consent_history: {
         Args: { p_profile_id: string };
         Returns: {
+          consent_id: string;
           consent_key: string;
           decided_at: string;
+          event_id: number;
+          form: string;
           granted: boolean;
           language: string;
           method: string;
+          name: Json;
+          reason: string;
+          recorded_by_name: string;
+          required: boolean;
+          season_name: string;
+          version_number: number;
+          wording: string;
+        }[];
+      };
+      participant_consents: {
+        Args: { p_profile_id: string };
+        Returns: {
+          consent_id: string;
+          consent_key: string;
+          decided_at: string;
+          form: string;
+          granted: boolean;
+          language: string;
+          method: string;
+          name: Json;
+          reason: string;
+          recorded_by_name: string;
           required: boolean;
           season_name: string;
           version_number: number;
@@ -6443,6 +7403,7 @@ export type Database = {
         Args: { p_profile_id: string };
         Returns: {
           answered_at: string;
+          answered_by_name: string;
           question_id: string;
           season_id: string;
           season_name: string;
@@ -6450,11 +7411,44 @@ export type Database = {
           value: Json;
         }[];
       };
+      participant_custom_forms: {
+        Args: { p_profile_id: string };
+        Returns: {
+          answered_at: string;
+          asked_at: string;
+          deadline: string;
+          filled_by: string;
+          form_id: string;
+          mandatory: string;
+          name: Json;
+          response_id: string;
+          status: string;
+          version: number;
+        }[];
+      };
       participant_filter_options: {
         Args: never;
         Returns: {
           entities: string[];
           nationalities: string[];
+        }[];
+      };
+      participant_form_signatures: {
+        Args: { p_profile_id: string };
+        Returns: {
+          block_id: string;
+          body: string;
+          id: string;
+          language: string;
+          screen_key: string;
+          signed_at: string;
+          signed_on_tablet: boolean;
+          signer_kind: string;
+          signer_name: string;
+          strokes: Json;
+          surface: string;
+          unable_to_draw: boolean;
+          witnessed_by_name: string;
         }[];
       };
       participant_material: {
@@ -6484,6 +7478,16 @@ export type Database = {
           statement_language: string;
         }[];
       };
+      participant_profile_answers: {
+        Args: { p_profile_id: string };
+        Returns: {
+          answered_at: string;
+          answered_by_name: string;
+          field_id: string;
+          question: string;
+          source: string;
+        }[];
+      };
       participant_question_states: {
         Args: { p_profile_id: string };
         Returns: {
@@ -6494,13 +7498,10 @@ export type Database = {
       participant_season_answers: {
         Args: { p_profile_id: string };
         Returns: {
-          applicant_status: string;
-          applicant_status_details: string;
-          childcare_need: string;
+          answers: Json;
+          season_id: string;
           season_name: string;
-          specific_needs: string;
           starts_on: string;
-          supporting_entities: string[];
           updated_at: string;
         }[];
       };
@@ -6513,12 +7514,40 @@ export type Database = {
           table_name: string;
         }[];
       };
+      place_consent: {
+        Args: {
+          p_consent_id: string;
+          p_required?: boolean;
+          p_screen_key?: string;
+          p_surface: string;
+        };
+        Returns: string;
+      };
+      place_field: {
+        Args: {
+          p_field_id: string;
+          p_required?: boolean;
+          p_screen_key?: string;
+          p_surface: string;
+        };
+        Returns: string;
+      };
       prepare_media_item_deletion: {
         Args: { p_media_item_id: string };
         Returns: {
           file_object_key: string;
           thumbnail_object_key: string;
         }[];
+      };
+      preview_field_change: {
+        Args: {
+          p_field_id: string;
+          p_options?: Json;
+          p_privacy: string;
+          p_settings?: Json;
+          p_type: string;
+        };
+        Returns: Json;
       };
       preview_notification_audience: {
         Args: { p_audience_config?: Json; p_audience_kind: string };
@@ -6533,11 +7562,22 @@ export type Database = {
         Args: { p_document: Json };
         Returns: Json;
       };
-      publish_app_terms_draft: { Args: never; Returns: number };
-      publish_authorization_draft: { Args: never; Returns: number };
+      profile_field_answer_count: { Args: { p_id: string }; Returns: number };
+      publish_app_terms_draft: {
+        Args: { p_is_correction?: boolean };
+        Returns: number;
+      };
+      publish_authorization_draft: {
+        Args: { p_is_correction?: boolean; p_season_id?: string };
+        Returns: number;
+      };
       publish_authorization_version: {
         Args: { p_content: Json };
         Returns: string;
+      };
+      publish_custom_form: {
+        Args: { p_id: string; p_is_correction?: boolean; p_season_id?: string };
+        Returns: number;
       };
       purge_expired_entity_invitations: {
         Args: { p_now?: string };
@@ -6587,6 +7627,18 @@ export type Database = {
       record_paper_authorization: {
         Args: { p_profile_id: string; p_signed_on: string };
         Returns: string;
+      };
+      record_participant_consent: {
+        Args: {
+          p_consent_id: string;
+          p_decided_on?: string;
+          p_granted: boolean;
+          p_language?: string;
+          p_method: string;
+          p_profile_id: string;
+          p_reason?: string;
+        };
+        Returns: number;
       };
       record_push_delivery_results: {
         Args: {
@@ -6669,6 +7721,12 @@ export type Database = {
         };
         Returns: string;
       };
+      remove_consent_placement: {
+        Args: { p_placement_id: string };
+        Returns: undefined;
+      };
+      remove_form_block: { Args: { p_id: string }; Returns: undefined };
+      remove_placement: { Args: { p_placement_id: string }; Returns: undefined };
       remove_staff_member: {
         Args: { p_profile_id: string };
         Returns: undefined;
@@ -6677,12 +7735,20 @@ export type Database = {
         Args: { p_invite_id: string };
         Returns: string;
       };
-      reorder_custom_questions: {
-        Args: { p_ids: string[]; p_screen_id: string };
+      reorder_custom_form_screens: {
+        Args: { p_form_id: string; p_ids: string[] };
         Returns: undefined;
       };
       reorder_intake_screens: {
         Args: { p_after_screen: string; p_ids: string[] };
+        Returns: undefined;
+      };
+      reorder_placements: {
+        Args: { p_ids: string[]; p_screen_key: string; p_surface: string };
+        Returns: undefined;
+      };
+      reorder_profile_sections: {
+        Args: { p_ids: string[] };
         Returns: undefined;
       };
       reorder_service_categories: {
@@ -6722,7 +7788,6 @@ export type Database = {
           p_help: Json;
           p_is_hidden: boolean;
           p_label: Json;
-          p_option_overrides: Json;
           p_question: string;
         };
         Returns: undefined;
@@ -6735,29 +7800,70 @@ export type Database = {
         Args: { p_is_hidden: boolean; p_screen: string; p_texts: Json };
         Returns: undefined;
       };
+      save_consent: {
+        Args: { p_body: Json; p_id: string; p_name: Json };
+        Returns: string;
+      };
+      save_consent_placement: {
+        Args: { p_placement_id: string; p_required: boolean };
+        Returns: undefined;
+      };
+      save_consent_placement_wording: {
+        Args: { p_body: Json; p_placement_id: string };
+        Returns: undefined;
+      };
+      save_custom_form: {
+        Args: {
+          p_audience: string;
+          p_deadline: string;
+          p_filled_by: string;
+          p_id: string;
+          p_kind?: string;
+          p_mandatory: string;
+          p_name: Json;
+          p_repeats_each_season: boolean;
+        };
+        Returns: undefined;
+      };
+      save_custom_form_screen: {
+        Args: { p_form_id: string; p_id: string; p_intro: Json; p_texts?: Json; p_title: Json };
+        Returns: string;
+      };
       save_custom_notification_group: {
         Args: { p_id: string; p_name: string; p_participant_ids: string[] };
         Returns: string;
       };
-      save_custom_question: {
-        Args: {
-          p_help: Json;
-          p_id: string;
-          p_label: Json;
-          p_options?: Json;
-          p_placements: string[];
-          p_privacy: string;
-          p_screen_id: string;
-          p_settings?: Json;
-          p_type: string;
-        };
-        Returns: string;
-      };
-      save_custom_question_required: {
-        Args: { p_id: string; p_is_required: boolean };
+      save_entity_service: { Args: { p_payload: Json }; Returns: string };
+      save_form_block_texts: {
+        Args: { p_block_id: string; p_texts: Json };
         Returns: undefined;
       };
-      save_entity_service: { Args: { p_payload: Json }; Returns: string };
+      save_form_screen_attachments: {
+        Args: { p_attachments: Json; p_screen_id: string };
+        Returns: undefined;
+      };
+      save_form_block:
+        | {
+            Args: {
+              p_body: Json;
+              p_id: string;
+              p_screen_key: string;
+              p_surface: string;
+            };
+            Returns: string;
+          }
+        | {
+            Args: {
+              p_body: Json;
+              p_id: string;
+              p_kind: string;
+              p_points: Json;
+              p_screen_key: string;
+              p_surface: string;
+              p_title: Json;
+            };
+            Returns: string;
+          };
       save_forum_category: {
         Args: {
           p_category_id: string;
@@ -6778,6 +7884,7 @@ export type Database = {
           p_after_screen: string;
           p_id: string;
           p_intro: Json;
+          p_texts?: Json;
           p_title: Json;
         };
         Returns: string;
@@ -6809,6 +7916,10 @@ export type Database = {
         };
         Returns: string;
       };
+      save_onboarding_form_chain: {
+        Args: { p_refs: string[] };
+        Returns: undefined;
+      };
       save_permission_preset: {
         Args: {
           p_name: string;
@@ -6817,8 +7928,35 @@ export type Database = {
         };
         Returns: string;
       };
-      save_referral_custom_answers: {
-        Args: { p_answers: Json; p_referral_id: string };
+      save_placement: {
+        Args: {
+          p_help_override?: Json;
+          p_label_override?: Json;
+          p_placement_id: string;
+          p_required: boolean;
+        };
+        Returns: undefined;
+      };
+      save_profile_field: {
+        Args: {
+          p_default_required?: boolean;
+          p_help: Json;
+          p_id: string;
+          p_label: Json;
+          p_options?: Json;
+          p_privacy: string;
+          p_section_id: string;
+          p_settings?: Json;
+          p_type: string;
+        };
+        Returns: string;
+      };
+      save_profile_section: {
+        Args: { p_id: string; p_title: Json };
+        Returns: string;
+      };
+      save_screen_condition: {
+        Args: { p_field_id: string; p_screen_id: string; p_values: string[] };
         Returns: undefined;
       };
       save_survey: {
@@ -6903,9 +8041,13 @@ export type Database = {
         Returns: undefined;
       };
       set_current_season: { Args: { p_season_id: string }; Returns: undefined };
-      set_document_step_explanation: {
-        Args: { p_explanation: Json };
-        Returns: Json;
+      set_custom_form_recipients: {
+        Args: {
+          p_audience_config?: Json;
+          p_audience_kind: string;
+          p_form_id: string;
+        };
+        Returns: number;
       };
       set_entity_collaborator_active: {
         Args: { p_is_active: boolean; p_profile_id: string };
@@ -6951,6 +8093,10 @@ export type Database = {
         Args: { p_count: number; p_profile_id: string };
         Returns: undefined;
       };
+      set_screen_hidden: {
+        Args: { p_hidden: boolean; p_screen_id: string };
+        Returns: undefined;
+      };
       set_service_interest: {
         Args: { p_interested: boolean; p_service_id: string };
         Returns: boolean;
@@ -6975,6 +8121,15 @@ export type Database = {
         Args: { p_change: Json; p_profile_id: string };
         Returns: undefined;
       };
+      shown_names: {
+        Args: { p_ids: string[] };
+        Returns: {
+          first_name: string;
+          id: string;
+          last_name: string;
+          member_number: number;
+        }[];
+      };
       sign_authorization: {
         Args: { p_payload: Json; p_version_id: string };
         Returns: string;
@@ -6996,6 +8151,8 @@ export type Database = {
       };
       submit_walk_in_signing: {
         Args: {
+          p_block_signatures?: Json;
+          p_consents?: Json;
           p_first_name: string;
           p_id: string;
           p_last_name: string;

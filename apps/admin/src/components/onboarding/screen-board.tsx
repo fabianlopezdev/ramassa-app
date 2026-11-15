@@ -1,0 +1,1556 @@
+/**
+ * The registration board (RAPP-641): every onboarding screen as a card, in
+ * the order her phone walks them. Staff drag a card by its grip to move the
+ * screen, open it with Edit, and add a screen of their own with the first
+ * card (RAPP-703): the new screen comes first. The summary and the app terms
+ * end the onboarding (legal): their cards are locked, open but never move,
+ * and nothing drops between them. The app terms are a form of their own
+ * (RAPP-696), one linked card that opens its board.
+ *
+ * Below a divider, the forms chained after Onboarding (RAPP-703): one card
+ * per form, the season authorization by default, dragged only among
+ * themselves. × takes a form out of the chain only; it keeps applying by its
+ * own rules. The last card adds a form not chained yet.
+ *
+ * `FormBoard` is every form's board (RAPP-696): Onboarding, the season
+ * authorization and the app terms draw their cards with it.
+ *
+ * Every card has an eye in its header (RAPP-711): it hides or shows the
+ * screen at once, the setting the editor's switch saves. A hidden card stays
+ * on the board, dimmed and marked. A card that always shows has its eye off,
+ * with the reason on hover.
+ *
+ * A screen with a follow-up screen her answer opens (RAPP-713) carries it as
+ * a branch card right after it, joined by a short line: numbered with a
+ * letter ("Pas 3a"), the condition under it, and it opens the screen's editor
+ * on the follow-up tab. A branch moves with its screen and hides with it.
+ *
+ * Beside the eye, a + adds a screen that depends on that card's screen
+ * (RAPP-717): "Afegeix una pantalla" opens with the screen already chosen.
+ * It is off, with the reason on hover, on a screen without a choice question
+ * and on the cards that never have dependents.
+ */
+
+import { ChoiceCards } from '@/components/custom-forms/form-choices';
+import { useReload } from '@/components/settings/onboarding-design-sections';
+import {
+  useSortableAccessibility,
+  useSortableSensors,
+} from '@/components/ui-patterns/sortable-list';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { Field, FieldError, FieldGroup, FieldLabel, FieldTitle } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { supabase } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
+import {
+  closestCenter,
+  DndContext,
+  DragOverlay,
+  type DragEndEvent,
+  type UniqueIdentifier,
+} from '@dnd-kit/core';
+import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Link } from '@tanstack/react-router';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  GripVertical,
+  Link2,
+  Lock,
+  Plus,
+  X,
+} from 'lucide-react';
+import {
+  useState,
+  type ComponentProps,
+  type CSSProperties,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
+import { customStepKey, type ScreenCondition, type WizardStepKey } from '@ramassa/shared/intake';
+import {
+  AUTHORIZATION_FORM_REF,
+  authorizationForm,
+  authorizationScreenCount,
+  chainedCustomForm,
+  chainedFormScreenCount,
+  customFormRef,
+  detailBranch,
+  flowStepName,
+  followUpAsksSomething,
+  isDetailScreen,
+  isReregistrationScreen,
+  movableOrder,
+  onboardingConditionOf,
+  onboardingFamily,
+  onboardingParentOf,
+  onboardingRootOf,
+  onboardingRoots,
+  saveBuiltinScreen,
+  saveIntakeScreen,
+  saveOnboardingFormChain,
+  saveScreenCondition,
+  saveWizardFlowOrder,
+  screenSettingsFor,
+  setScreenHidden,
+  textIn,
+  wizardFlow,
+  type ChainedFormRef,
+  type IntakeCatalog,
+  type RamassaScreen,
+} from '@ramassa/shared/intake-builder';
+import type { LanguageCode } from '@ramassa/shared/schemas';
+import {
+  appTermsScreenCount,
+  BOARD_LOCKED_STEPS,
+  boardNumbers,
+  boardRootCount,
+  boardStep,
+  isShownToHer,
+  linkedFormOf,
+  routeIdOf,
+  type BoardStep,
+} from './board-steps';
+import { CardFrame, ScreenCardFrame } from './card-frame';
+import { ConfirmDialog } from './confirm-dialog';
+import { FormMiniature, PhoneMiniature } from './phone-preview';
+import {
+  completeCondition,
+  ConditionFields,
+  conditionSources,
+  EMPTY_CONDITION,
+  type ConditionDraft,
+  type ConditionSource,
+} from './screen-condition';
+import { conditionLine, detailScreenContent, stepContent, type Translate } from './screen-content';
+import { DeleteScreenAction, onboardingDeletion, type ScreenDeletion } from './screen-deletion';
+import { builtinHideLockKey, teamHideLockKey } from './screen-hiding';
+
+export { CardFrame } from './card-frame';
+
+/** Every card shares one track width, so each row's cards have one size. */
+export const BOARD_GRID =
+  'grid grid-cols-2 gap-4 sm:grid-cols-[repeat(auto-fill,minmax(11.5rem,1fr))]';
+
+/** The name staff know a screen by, in the dashboard's language. */
+export function stepName(step: BoardStep, language: LanguageCode, t: Translate): string {
+  return flowStepName(step, language, t);
+}
+
+export function ScreenBoard({
+  catalog,
+  chain,
+}: {
+  readonly catalog: IntakeCatalog;
+  readonly chain: readonly ChainedFormRef[];
+}) {
+  const { t, i18n } = useTranslation(['settings', 'onboarding', 'nav']);
+  const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
+  const reload = useReload();
+  const createOnboardingScreen = useCreateOnboardingScreen();
+  // Every movable step in her order, the follow-ups right after their screen (RAPP-715).
+  const order = movableOrder(catalog);
+  const sources = onboardingConditionSources(catalog, order, language, t);
+  const createScreen = async (name: string, condition: NewScreenCondition | null) => {
+    await createOnboardingScreen(catalog, name, order, condition);
+  };
+  const dependent = useAddDependentScreen({ catalog, sources, onCreate: createScreen });
+  // The board's own cards: the screens that depend on no answer.
+  const initial = onboardingRoots(catalog, order);
+  const hidden = wizardFlow(catalog).hiddenScreens;
+  const numbers = boardNumbers(catalog);
+  const total = boardRootCount(catalog);
+  const rootNumber = (key: string) => Number.parseInt(numbers.get(key) ?? '0', 10);
+  const isOwnHidden = (key: string): boolean => {
+    const step = boardStep(catalog, key);
+    if (step === null) return false;
+    if (step.kind === 'builtin') return hidden.has(step.key);
+    return step.kind === 'custom' && step.screen.isHidden === true;
+  };
+  /** The screen above it that hides it (RAPP-711, RAPP-715), if any. */
+  const hidingAncestor = (key: string): string | null => {
+    let current = onboardingParentOf(catalog, key);
+    for (let depth = 0; current !== null && depth < 64; depth += 1) {
+      if (isOwnHidden(current)) return current;
+      current = onboardingParentOf(catalog, current);
+    }
+    return null;
+  };
+  const nameOf = (key: string): string => onboardingStepName(catalog, key, language, t);
+  const teamHide = (screen: RamassaScreen, isHidden: boolean): BoardCardHide => {
+    const lock = teamHideLockKey(catalog, 'onboarding', screen.id);
+    return {
+      isHidden,
+      canHide: lock === null || isHidden,
+      reason: lock === null ? undefined : t(lock),
+      toggle: async () => {
+        await setScreenHidden(supabase, screen.id, !isHidden);
+        await reload();
+      },
+    };
+  };
+  // A follow-up's card (RAPP-713, RAPP-715): the app's own, or a team screen
+  // that depends on an answer, at any depth.
+  const branchCard = (key: string, suffix: string, root: string): BoardCard | null => {
+    const ancestor = hidingAncestor(key);
+    const number = rootNumber(root);
+    const condition = onboardingConditionOf(catalog, key);
+    if (isDetailScreen(key)) {
+      const isHidden = ancestor !== null;
+      return {
+        key,
+        suffix,
+        name: nameOf(key),
+        miniature: (
+          <PhoneMiniature
+            content={detailScreenContent(catalog, key, language, t)}
+            language={language}
+            isDimmed={isHidden}
+            step={number}
+            total={total}
+          />
+        ),
+        // One that asks her nothing never shows (RAPP-720).
+        status: isHidden
+          ? t('builtinScreens.hiddenBadge')
+          : followUpAsksSomething(catalog, key)
+            ? null
+            : t('onboardingBoard.notShown'),
+        note: conditionLine(
+          catalog,
+          condition,
+          language,
+          t,
+          detailBranch(key).condition.repeatsPerAnswer === true,
+        ),
+        hide: {
+          ...lockedHide(t('onboardingBoard.branchFollows', { screen: nameOf(root) })),
+          isHidden,
+        },
+        deletion: onboardingDeletion(catalog, key, language, t),
+        addDependent: dependent.addFor(key),
+        link: {
+          to: '/onboarding/screens/$screenId',
+          params: { screenId: routeIdOf(root) },
+          search: { shown: key },
+        },
+      };
+    }
+    const step = boardStep(catalog, key);
+    if (step === null || step.kind !== 'custom') return null;
+    const isHidden = step.screen.isHidden === true || ancestor !== null;
+    const isOrphan = onboardingParentOf(catalog, key) === null;
+    const status = isHidden
+      ? t('builtinScreens.hiddenBadge')
+      : !isShownToHer(catalog, step.screen) || isOrphan
+        ? t('onboardingBoard.notShown')
+        : null;
+    return {
+      key,
+      suffix,
+      name: nameOf(key),
+      miniature: (
+        <PhoneMiniature
+          content={stepContent(catalog, step, language, t)}
+          language={language}
+          isDimmed={status !== null}
+          step={number}
+          total={total}
+        />
+      ),
+      status,
+      note: conditionLine(catalog, condition, language, t),
+      hide:
+        ancestor === null
+          ? teamHide(step.screen, step.screen.isHidden === true)
+          : {
+              ...lockedHide(t('onboardingBoard.branchFollowsHidden', { screen: nameOf(ancestor) })),
+              isHidden: true,
+            },
+      deletion: onboardingDeletion(catalog, key, language, t),
+      addDependent: dependent.addFor(key),
+      link: { to: '/onboarding/screens/$screenId', params: { screenId: routeIdOf(key) } },
+    };
+  };
+  const card = (key: string): BoardCard | null => {
+    const step = boardStep(catalog, key);
+    if (step === null) return null;
+    const content = stepContent(catalog, step, language, t);
+    const linked = linkedFormOf(step.key, catalog);
+    const isHidden = isOwnHidden(key);
+    const status = isHidden
+      ? t('builtinScreens.hiddenBadge')
+      : step.kind === 'custom' && !isShownToHer(catalog, step.screen)
+        ? t('onboardingBoard.notShown')
+        : // An app screen staff emptied by moving its questions away (RAPP-782).
+          step.kind === 'builtin' && !appScreenAsksSomething(catalog, step.key)
+          ? t('onboardingBoard.skippedEmpty')
+          : null;
+    const hide = (): BoardCardHide => {
+      if (step.kind === 'locked') return lockedHide(t('onboardingBoard.hideLockedFinal'));
+      if (step.kind === 'builtin') {
+        const lock = builtinHideLockKey(catalog, step.key);
+        return {
+          isHidden,
+          canHide: lock === null || isHidden,
+          reason: lock === null ? undefined : t(lock),
+          toggle: async () => {
+            // The editor's switch saves the same setting, with the screen's saved texts.
+            await saveBuiltinScreen(supabase, {
+              screen: step.key,
+              texts: screenSettingsFor(catalog, step.key)?.texts ?? {},
+              isHidden: !isHidden,
+            });
+            await reload();
+          },
+        };
+      }
+      return teamHide(step.screen, isHidden);
+    };
+    const name = linked === null ? stepName(step, language, t) : t(linked.labelKey);
+    const number = rootNumber(step.key);
+    // Every follow-up below it, depth first (RAPP-715): 3a, 3a.1, 3b.
+    const branches = onboardingFamily(catalog, step.key, '', order)
+      .slice(1)
+      .map((member) => branchCard(member.key, member.number, step.key))
+      .filter((each): each is BoardCard => each !== null);
+    // A team screen whose question is asked nowhere keeps its own card, with its condition.
+    const condition = step.kind === 'custom' ? (step.screen.showWhen ?? null) : null;
+    return {
+      key: step.key,
+      name,
+      // The app terms are a form of their own: one card for the whole form (RAPP-703).
+      miniature:
+        step.key === 'terms' ? (
+          <FormMiniature
+            name={t('nav:staff.appTerms')}
+            kind={t('onboardingChain.termsLine')}
+            screens={t('onboardingChain.screens', { count: appTermsScreenCount(catalog) })}
+            language={language}
+          />
+        ) : (
+          <PhoneMiniature
+            content={content}
+            language={language}
+            isDimmed={status !== null || condition !== null}
+            step={number}
+            total={total}
+          />
+        ),
+      status: status ?? (condition === null ? null : t('onboardingBoard.notShown')),
+      ...(condition === null ? {} : { note: conditionLine(catalog, condition, language, t) }),
+      ...(branches.length === 0 ? {} : { branches }),
+      hide: hide(),
+      // The summary and the app terms end the onboarding: nothing comes after them.
+      addDependent:
+        step.kind === 'locked'
+          ? lockedAddDependent(t('onboardingBoard.addDependentLockedFinal'))
+          : dependent.addFor(step.key),
+      deletion: onboardingDeletion(catalog, key, language, t),
+      isLinked: linked !== null,
+      link:
+        linked === null
+          ? { to: '/onboarding/screens/$screenId', params: { screenId: routeIdOf(step.key) } }
+          : linked.link,
+    };
+  };
+  const cards = (keys: readonly string[]) =>
+    keys.map(card).filter((each): each is BoardCard => each !== null);
+  // Keyed by the saved order: a reload after a save or a reset starts again
+  // from what the database holds.
+  return (
+    <div className="flex flex-col gap-6">
+      <FormBoard
+        key={order.join('|')}
+        label={t('onboardingBoard.listLabel')}
+        movable={cards(initial)}
+        trailing={cards(BOARD_LOCKED_STEPS)}
+        addCard={<AddScreenCard sources={sources} catalog={catalog} onCreate={createScreen} />}
+        isAddCardFirst
+        onReorder={async (next) => {
+          // The same call the old order list used (`saveWizardFlowOrder`): each
+          // screen goes with every follow-up below it (RAPP-715).
+          await saveWizardFlowOrder(
+            supabase,
+            next.flatMap((root) =>
+              order.filter((key) => key === root || onboardingRootOf(catalog, key) === root),
+            ) as readonly WizardStepKey[],
+          );
+          await reload();
+        }}
+      />
+      <ChainBoard catalog={catalog} chain={chain} />
+      {dependent.dialog}
+    </div>
+  );
+}
+
+/** The name staff know any Onboarding step by, an app follow-up included (RAPP-715). */
+export function onboardingStepName(
+  catalog: IntakeCatalog,
+  key: string,
+  language: LanguageCode,
+  t: Translate,
+): string {
+  if (isDetailScreen(key)) return t(`builtinScreens.screenName.${key}`);
+  const step = boardStep(catalog, key);
+  return step === null ? '' : stepName(step, language, t);
+}
+
+/** The Onboarding screens that ask a choice question, in her order: what a screen can depend on. */
+export function onboardingConditionSources(
+  catalog: IntakeCatalog,
+  order: readonly string[],
+  language: LanguageCode,
+  t: Translate,
+): readonly ConditionSource[] {
+  const numbers = boardNumbers(catalog);
+  return conditionSources(
+    catalog,
+    order,
+    'onboarding',
+    (key) => ({
+      name: onboardingStepName(catalog, key, language, t),
+      number: numbers.get(key) ?? '',
+      screenKey: routeIdOf(key),
+    }),
+    language,
+  );
+}
+
+/** The forms the add card offers: the authorization and the published forms she fills in. */
+function chainableForms(catalog: IntakeCatalog): readonly ChainedFormRef[] {
+  return [
+    AUTHORIZATION_FORM_REF,
+    // The app's legal forms are asked by their own gates: the authorization is its ref above.
+    ...(catalog.customForms ?? [])
+      .filter(
+        (form) =>
+          form.filledBy === 'player' &&
+          !form.isArchived &&
+          form.publishedAt !== null &&
+          form.systemKey === null,
+      )
+      .map((form) => customFormRef(form.id)),
+  ];
+}
+
+/**
+ * The forms chained after Onboarding (RAPP-703), below the divider: the
+ * same board and cards as Onboarding's screens, each card a form. The
+ * chain is saved as soon as it changes, like Onboarding's own order.
+ */
+function ChainBoard({
+  catalog,
+  chain,
+}: {
+  readonly catalog: IntakeCatalog;
+  readonly chain: readonly ChainedFormRef[];
+}) {
+  const { t, i18n } = useTranslation(['settings', 'nav']);
+  const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
+  const reload = useReload();
+  const nameOf = (ref: ChainedFormRef): string | null => {
+    if (ref === AUTHORIZATION_FORM_REF) {
+      // The chain's 'authorization' is the system form (RAPP-773).
+      const own = authorizationForm(catalog);
+      return own === undefined ? t('nav:staff.authorization') : textIn(own.name, language);
+    }
+    const form = chainedCustomForm(catalog, ref);
+    return form === undefined ? null : textIn(form.name, language);
+  };
+  // A form archived since it was chained leaves the board, and the chain with the next save.
+  const shown = chain.filter((ref) => nameOf(ref) !== null);
+  const save = async (next: readonly ChainedFormRef[]) => {
+    await saveOnboardingFormChain(supabase, next);
+    await reload();
+  };
+  const card = (ref: ChainedFormRef): BoardCard => {
+    const name = nameOf(ref) ?? '';
+    const form =
+      ref === AUTHORIZATION_FORM_REF ? authorizationForm(catalog) : chainedCustomForm(catalog, ref);
+    const repeats = form === undefined || form.repeatsEachSeason;
+    const count =
+      ref !== AUTHORIZATION_FORM_REF
+        ? chainedFormScreenCount(catalog, ref)
+        : form === undefined
+          ? authorizationScreenCount(catalog)
+          : // A new player walks its screens; re-registration is for a returning one.
+            form.screens.filter(
+              (screen) => screen.isHidden !== true && !isReregistrationScreen(screen),
+            ).length;
+    return {
+      key: ref,
+      name,
+      miniature: (
+        <FormMiniature
+          name={name}
+          kind={t(repeats ? 'onboardingChain.repeats' : 'onboardingChain.once')}
+          screens={t('onboardingChain.screens', { count })}
+          language={language}
+        />
+      ),
+      status: null,
+      // A chained form leaves the chain with ×; its screens hide on its own board.
+      hide: lockedHide(t('onboardingBoard.hideLockedChain')),
+      addDependent: lockedAddDependent(t('onboardingBoard.addDependentLockedChain')),
+      isLinked: true,
+      link:
+        form === undefined
+          ? { to: '/forms/authorization' }
+          : { to: '/forms/custom/$formId', params: { formId: form.id } },
+      remove: {
+        label: t('onboardingChain.remove', { form: name }),
+        confirmTitle: t('onboardingChain.removeTitle', { form: name }),
+        confirmBody: t('onboardingChain.removeBody'),
+        run: async () => {
+          try {
+            await save(shown.filter((each) => each !== ref));
+          } catch {
+            toast.error(t('onboardingChain.saveFailed'));
+          }
+        },
+      },
+    };
+  };
+  const addable = chainableForms(catalog)
+    .filter((ref) => !shown.includes(ref))
+    .flatMap((ref) => {
+      const name = nameOf(ref);
+      return name === null ? [] : [{ ref, name }];
+    });
+  return (
+    <section className="flex flex-col gap-4" aria-labelledby="onboarding-chain-divider">
+      <div className="flex items-center gap-3">
+        <h2
+          id="onboarding-chain-divider"
+          className="shrink-0 text-sm font-medium text-muted-foreground"
+        >
+          {t('onboardingChain.divider')}
+        </h2>
+        <span aria-hidden className="h-px flex-1 bg-border" />
+      </div>
+      <FormBoard
+        key={shown.join('|')}
+        label={t('onboardingChain.listLabel')}
+        numberLabelKey="onboardingChain.formStep"
+        movable={shown.map(card)}
+        addCard={
+          <AddFormCard
+            forms={addable}
+            onAdd={async (ref) => {
+              // First in the chain, as a new screen is first on the board.
+              await save([ref, ...shown]);
+            }}
+          />
+        }
+        isAddCardFirst
+        onReorder={async (next) => save(next as readonly ChainedFormRef[])}
+      />
+    </section>
+  );
+}
+
+/** The first card of the chain, as on every board: lists the forms not chained yet and adds the one picked. */
+function AddFormCard({
+  forms,
+  onAdd,
+}: {
+  readonly forms: readonly { readonly ref: ChainedFormRef; readonly name: string }[];
+  readonly onAdd: (ref: ChainedFormRef) => Promise<void>;
+}) {
+  const { t } = useTranslation('settings');
+  const [isOpen, setIsOpen] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
+  async function add(ref: ChainedFormRef) {
+    setIsBusy(true);
+    try {
+      await onAdd(ref);
+      setIsOpen(false);
+    } catch {
+      toast.error(t('onboardingChain.saveFailed'));
+    } finally {
+      setIsBusy(false);
+    }
+  }
+  return (
+    <>
+      <AddCard
+        label={t('onboardingChain.addForm')}
+        onClick={() => setIsOpen(true)}
+        testId="board-add-form"
+      />
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogTitle>{t('onboardingChain.addForm')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('onboardingChain.addForm')}</DialogDescription>
+          {forms.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t('onboardingChain.nothingToAdd')}</p>
+          ) : (
+            <ul className="flex flex-col gap-2" data-testid="board-add-form-list">
+              {forms.map((form) => (
+                <li key={form.ref}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-start"
+                    disabled={isBusy}
+                    onClick={() => void add(form.ref)}
+                    data-testid={`board-add-form-${form.ref}`}
+                  >
+                    {form.name}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+/** Where a card opens: a screen of this form, or another form it links to. */
+export type BoardCardLink =
+  | {
+      readonly to: '/onboarding/screens/$screenId';
+      readonly params: { readonly screenId: string };
+      /** The follow-up the editor opens on: an app follow-up's card opens it (RAPP-713, RAPP-715). */
+      readonly search?: { readonly shown: string };
+    }
+  | { readonly to: '/forms/authorization' | '/forms/terms' }
+  | {
+      // A screen of a form the team created (RAPP-700).
+      readonly to: '/forms/custom/$formId/screens/$screenId';
+      readonly params: { readonly formId: string; readonly screenId: string };
+    }
+  | {
+      // A form the team created, chained after Onboarding (RAPP-703).
+      readonly to: '/forms/custom/$formId';
+      readonly params: { readonly formId: string };
+    };
+
+/** Whether an app screen asks her anything: a field, a block or a consent placed on it. */
+function appScreenAsksSomething(catalog: IntakeCatalog, screen: string): boolean {
+  return (
+    (catalog.layout?.placements ?? []).some(
+      (placement) => placement.surface === 'onboarding' && placement.screenKey === screen,
+    ) ||
+    (catalog.blocks ?? []).some(
+      (block) => block.surface === 'onboarding' && block.screenKey === screen,
+    ) ||
+    (catalog.consentPlacements ?? []).some(
+      (each) => each.surface === 'onboarding' && each.screenKey === screen,
+    )
+  );
+}
+
+/**
+ * The eye on a card (RAPP-711): whether the screen is hidden, and whether it
+ * can be, with the reason when it cannot. `toggle` saves the other state.
+ */
+export interface BoardCardHide {
+  readonly isHidden: boolean;
+  readonly canHide: boolean;
+  readonly reason?: string;
+  readonly toggle: () => Promise<void>;
+}
+
+/** The eye of a card that always shows, off, with the reason on hover. */
+export function lockedHide(reason: string): BoardCardHide {
+  return { isHidden: false, canHide: false, reason, toggle: async () => undefined };
+}
+
+/**
+ * The + beside the eye (RAPP-717): adds a screen that depends on the card's
+ * screen, or is off with the reason on hover.
+ */
+export interface AddDependent {
+  readonly canAdd: boolean;
+  readonly reason?: string;
+  readonly open: () => void;
+}
+
+/** The + of a card that can never have a dependent screen, off, with the reason on hover. */
+export function lockedAddDependent(reason: string): AddDependent {
+  return { canAdd: false, reason, open: () => undefined };
+}
+
+/** One card of a form's board (RAPP-696): its screen, or a linked form. */
+export interface BoardCard {
+  readonly key: string;
+  readonly name: string;
+  readonly miniature: ReactNode;
+  /** Hidden or not shown to her; null when the screen shows normally. */
+  readonly status: string | null;
+  readonly link: BoardCardLink;
+  /** A step that opens another form (RAPP-696), such as the app terms on Onboarding. */
+  readonly isLinked?: boolean;
+  /** One line under the picture, such as why the app terms are there (RAPP-703). */
+  readonly note?: string;
+  /** × on the card: takes a chained form out of the chain (RAPP-703). */
+  readonly remove?: {
+    readonly label: string;
+    /** Asked before it goes (RAPP-776). */
+    readonly confirmTitle: string;
+    readonly confirmBody: string;
+    readonly run: () => Promise<void>;
+  };
+  /** The eye in the header (RAPP-711); absent, the card has none. */
+  readonly hide?: BoardCardHide;
+  readonly deletion?: ScreenDeletion;
+  /** The + beside the eye (RAPP-717); absent, the card has none. */
+  readonly addDependent?: AddDependent;
+  /**
+   * The follow-up screens her answer opens (RAPP-713), each a smaller card
+   * right after this one. They move with it and are never dragged alone. The
+   * app's own follow-ups today; a branch the team makes can be one later.
+   */
+  readonly branches?: readonly BoardCard[];
+  /** A follow-up's number after its screen's: "a", "a.1" (RAPP-715). */
+  readonly suffix?: string;
+}
+
+/**
+ * Every form's board (RAPP-641, shared by every form since RAPP-696): its
+ * screens as cards in the order her phone walks them. The movable cards drag
+ * by their grip; the locked ones before and after them open but never move,
+ * and nothing drops between them. A drop shows the new order at once and
+ * puts the old one back, with a toast, if the save fails. Pointer and
+ * keyboard both drag, and a screen reader hears each move in the staff
+ * member's language.
+ */
+export function FormBoard({
+  label,
+  leading = [],
+  movable,
+  trailing = [],
+  addCard = null,
+  isAddCardFirst = false,
+  numberLabelKey = 'onboardingBoard.step',
+  onReorder,
+}: {
+  /** The list's name for assistive technology. */
+  readonly label: string;
+  /** Locked cards before the movable ones. */
+  readonly leading?: readonly BoardCard[];
+  readonly movable: readonly BoardCard[];
+  /** Locked cards after the movable ones. */
+  readonly trailing?: readonly BoardCard[];
+  /** A card after the last movable one, such as a form's add card. */
+  readonly addCard?: ReactNode;
+  /** The add card comes first, before every other card (Onboarding's, RAPP-703). */
+  readonly isAddCardFirst?: boolean;
+  /** How a card's number reads, "Pas 3" by default. */
+  readonly numberLabelKey?: string;
+  readonly onReorder: (keys: readonly string[]) => Promise<void>;
+}) {
+  const { t } = useTranslation('settings');
+  const [order, setOrder] = useState<readonly string[]>(movable.map((card) => card.key));
+  const [activeKey, setActiveKey] = useState<UniqueIdentifier | null>(null);
+  const sensors = useSortableSensors();
+  const byKey = new Map([...leading, ...movable, ...trailing].map((card) => [card.key, card]));
+  const positionOf = (id: UniqueIdentifier): number =>
+    leading.length + order.indexOf(String(id)) + 1;
+  const accessibility = useSortableAccessibility(
+    (id) => byKey.get(String(id))?.name ?? '',
+    positionOf,
+  );
+
+  async function drop({ active, over }: DragEndEvent) {
+    setActiveKey(null);
+    if (over === null || active.id === over.id) return;
+    const previous = order;
+    const next = arrayMove(
+      [...order],
+      order.indexOf(String(active.id)),
+      order.indexOf(String(over.id)),
+    );
+    setOrder(next);
+    try {
+      await onReorder(next);
+    } catch {
+      setOrder(previous);
+      toast.error(t('onboardingBoard.orderFailed'));
+    }
+  }
+
+  const lockedCard = (card: BoardCard, number: number) => (
+    <li key={card.key} className="flex" data-testid={`board-step-${card.key}`}>
+      <CardUnit
+        card={card}
+        number={number}
+        numberLabelKey={numberLabelKey}
+        handle={null}
+        isLocked
+        // The fixed mark only means something beside cards that move.
+        showFixedMark={movable.length > 0}
+      />
+    </li>
+  );
+  const addItem = addCard === null ? null : <li className="flex">{addCard}</li>;
+  const active = activeKey === null ? null : byKey.get(String(activeKey));
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      accessibility={accessibility}
+      onDragStart={({ active: started }) => setActiveKey(started.id)}
+      onDragCancel={() => setActiveKey(null)}
+      onDragEnd={(event) => void drop(event)}
+    >
+      <SortableContext items={[...order]} strategy={rectSortingStrategy}>
+        <ol className={BOARD_GRID} aria-label={label} data-testid="screen-board">
+          {isAddCardFirst ? addItem : null}
+          {leading.map((card, index) => lockedCard(card, index + 1))}
+          {order.map((key, index) => {
+            const card = byKey.get(key);
+            return card === undefined ? null : (
+              <SortableCard key={key} id={key} style={unitSpan(card)}>
+                {(handle) => (
+                  <CardUnit
+                    card={card}
+                    number={leading.length + index + 1}
+                    numberLabelKey={numberLabelKey}
+                    handle={handle}
+                  />
+                )}
+              </SortableCard>
+            );
+          })}
+          {isAddCardFirst ? null : addItem}
+          {trailing.map((card, index) =>
+            lockedCard(card, leading.length + order.length + index + 1),
+          )}
+        </ol>
+      </SortableContext>
+      <DragOverlay>
+        {active === undefined || active === null ? null : (
+          <CardUnit
+            card={active}
+            number={positionOf(active.key)}
+            numberLabelKey={numberLabelKey}
+            handle={null}
+            isLifted
+          />
+        )}
+      </DragOverlay>
+    </DndContext>
+  );
+}
+
+interface Handle {
+  readonly ref: (element: HTMLElement | null) => void;
+  readonly props: Record<string, unknown>;
+}
+
+function SortableCard({
+  id,
+  style,
+  children,
+}: {
+  readonly id: string;
+  readonly style?: CSSProperties;
+  readonly children: (handle: Handle) => ReactNode;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+  return (
+    <li
+      ref={setNodeRef}
+      className={cn('flex', isDragging && 'opacity-40')}
+      style={{ ...style, transform: CSS.Translate.toString(transform), transition }}
+      data-testid={`board-step-${id}`}
+    >
+      {children({ ref: setActivatorNodeRef, props: { ...attributes, ...listeners } })}
+    </li>
+  );
+}
+
+/** A screen with follow-ups spans two board tracks: itself and its follow-ups' card (RAPP-716). */
+function unitSpan(card: BoardCard): CSSProperties | undefined {
+  return (card.branches?.length ?? 0) === 0 ? undefined : { gridColumn: 'span 2 / span 2' };
+}
+
+/**
+ * A screen and its follow-up screens (RAPP-716): the screen stays alone as
+ * its own card. Next to it, joined by a short line, ONE card holds every
+ * follow-up (3a, 3b, 3a.1...), with frosted arrows inside it to step through
+ * them; Edita opens the one shown. The pair moves as one by the screen's grip.
+ */
+function CardUnit(props: ComponentProps<typeof ScreenCard>) {
+  const { t } = useTranslation('settings');
+  const branches = props.card.branches ?? [];
+  const [shown, setShown] = useState(0);
+  if (branches.length === 0) return <ScreenCard {...props} />;
+  const index = Math.min(shown, branches.length - 1);
+  const branch = branches[index]!;
+  const step = (delta: number) =>
+    setShown((current) => (current + delta + branches.length) % branches.length);
+  // Centred with a margin, so the button's press effect cannot move it, and
+  // set in the card's padding beside the phone, over its frame at most.
+  const arrow =
+    'absolute top-1/2 z-10 -mt-3 size-6 rounded-full border border-white/50 bg-white/55 text-foreground shadow-sm backdrop-blur-md hover:bg-white/75 active:not-aria-[haspopup]:translate-y-0 [&_svg]:size-3.5';
+  return (
+    <div className="grid w-full grid-cols-2 items-start gap-4">
+      <ScreenCard {...props} />
+      <div className="relative flex" data-testid={`board-family-${props.card.key}`}>
+        <span
+          aria-hidden
+          className="absolute top-1/2 -left-4 flex w-4 -translate-y-1/2 items-center"
+        >
+          <span className="size-1.5 shrink-0 rounded-full bg-primary/50" />
+          <span className="h-0.5 flex-1 bg-primary/50" />
+        </span>
+        <ScreenCard
+          card={branch}
+          number={`${props.number}${branch.suffix ?? String.fromCharCode(97 + index)}`}
+          numberLabelKey={props.numberLabelKey}
+          handle={null}
+          isLifted={props.isLifted}
+          isBranch
+          position={branches.length > 1 ? `${index + 1}/${branches.length}` : undefined}
+        />
+        {props.isLifted || branches.length < 2 ? null : (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className={cn(arrow, 'start-1')}
+              aria-label={t('onboardingBoard.previousScreen')}
+              onClick={() => step(-1)}
+              data-testid={`board-family-previous-${props.card.key}`}
+            >
+              <ChevronLeft aria-hidden className="rtl:rotate-180" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className={cn(arrow, 'end-1')}
+              aria-label={t('onboardingBoard.nextScreen')}
+              onClick={() => step(1)}
+              data-testid={`board-family-next-${props.card.key}`}
+            >
+              <ChevronRight aria-hidden className="rtl:rotate-180" />
+            </Button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ScreenCard({
+  card,
+  number,
+  numberLabelKey,
+  handle,
+  isLocked = false,
+  isLifted = false,
+  isBranch = false,
+  showFixedMark = true,
+  position,
+}: {
+  readonly card: BoardCard;
+  /** "3", or "3a" for a branch card. */
+  readonly number: number | string;
+  readonly numberLabelKey: string;
+  /** The grip of a movable card; null for a locked card, a branch or the lifted copy. */
+  readonly handle: Handle | null;
+  readonly isLocked?: boolean;
+  readonly isLifted?: boolean;
+  /** A follow-up screen shown in its family's card (RAPP-713, RAPP-716). */
+  readonly isBranch?: boolean;
+  /** The lock of a card that cannot move; off on a board where no card moves. */
+  readonly showFixedMark?: boolean;
+  /** Which screen of the family is shown, such as "2/5" (RAPP-716). */
+  readonly position?: string;
+}) {
+  const { t } = useTranslation('settings');
+  return (
+    <ScreenCardFrame
+      className={cn(
+        isLocked && 'bg-muted/40',
+        isLifted && 'rotate-1 shadow-xl ring-2 ring-primary',
+      )}
+    >
+      <header className="flex min-h-7 flex-wrap items-center justify-between gap-1">
+        <span className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted-foreground tabular-nums">
+          {t(numberLabelKey, { number })}
+          {position === undefined ? null : <span className="font-normal">· {position}</span>}
+          {card.status === null ? null : (
+            <span className="inline-flex min-w-0 items-center gap-1 font-normal">
+              <EyeOff aria-hidden className="size-3.5 shrink-0" />
+              <span className="truncate">{card.status}</span>
+            </span>
+          )}
+        </span>
+        <span className="flex shrink-0 items-center">
+          {card.addDependent === undefined || isLifted ? null : (
+            <AddDependentButton add={card.addDependent} cardKey={card.key} />
+          )}
+          {card.hide === undefined || isLifted ? null : (
+            <HideButton hide={card.hide} name={card.name} cardKey={card.key} />
+          )}
+          {card.deletion === undefined || isLifted ? null : (
+            <DeleteScreenAction key={card.deletion.key} deletion={card.deletion} variant="icon" />
+          )}
+          {card.remove === undefined || isLifted ? null : (
+            <RemoveCardButton remove={card.remove} cardKey={card.key} />
+          )}
+          {handle === null ? (
+            isLifted || isBranch || !showFixedMark ? null : (
+              <span
+                className="flex size-7 items-center justify-center text-muted-foreground"
+                title={t('onboardingBoard.fixed')}
+              >
+                <Lock aria-hidden className="size-4" />
+                <span className="sr-only">{t('onboardingBoard.fixed')}</span>
+              </span>
+            )
+          ) : (
+            <Button
+              ref={handle.ref}
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
+              aria-label={t('onboardingBoard.dragHandle', { screen: card.name })}
+              {...handle.props}
+            >
+              <GripVertical aria-hidden />
+            </Button>
+          )}
+        </span>
+      </header>
+      {/* Read top to bottom: what the card is for comes before its picture (RAPP-713). */}
+      {card.note === undefined ? null : (
+        <p
+          className={cn(
+            'text-start text-xs leading-5 text-muted-foreground',
+            isBranch && 'line-clamp-2 h-10',
+          )}
+        >
+          {card.note}
+        </p>
+      )}
+      <Link
+        {...card.link}
+        tabIndex={-1}
+        aria-hidden
+        className={cn(
+          'block rounded-xl',
+          // A branch's two-line condition and its gap take 52px; measured on
+          // the board, the phone loses 2.195px of height per px of width, so
+          // it is drawn 25.5px narrower and the card keeps every card's height.
+          isBranch && 'mx-auto w-[calc(100%-25.5px)]',
+        )}
+      >
+        {card.miniature}
+      </Link>
+      <Button asChild variant="outline" size="sm" className="w-full">
+        <Link
+          {...card.link}
+          aria-label={t('onboardingBoard.editScreen', { screen: card.name })}
+          data-testid={`board-edit-${card.key}`}
+        >
+          {card.isLinked === true ? (
+            <>
+              <Link2 aria-hidden data-icon="inline-start" />
+              {t('onboardingChain.openForm')}
+            </>
+          ) : (
+            t('onboardingBoard.edit')
+          )}
+        </Link>
+      </Button>
+    </ScreenCardFrame>
+  );
+}
+
+/**
+ * The eye in a card's header (RAPP-711). It shows the screen's state (open
+ * when shown, crossed when hidden) and names the action on hover; a click
+ * saves the other state at once, with a toast. Off when the screen always
+ * shows, the hover gives the reason.
+ */
+function HideButton({
+  hide,
+  name,
+  cardKey,
+}: {
+  readonly hide: BoardCardHide;
+  readonly name: string;
+  readonly cardKey: string;
+}) {
+  const { t } = useTranslation('settings');
+  const [isBusy, setIsBusy] = useState(false);
+  const label = hide.canHide
+    ? t(hide.isHidden ? 'onboardingBoard.show' : 'onboardingBoard.hide')
+    : (hide.reason ?? '');
+  async function toggle() {
+    setIsBusy(true);
+    try {
+      await hide.toggle();
+      toast.success(
+        t(hide.isHidden ? 'onboardingBoard.screenShown' : 'onboardingBoard.screenHidden'),
+      );
+    } catch {
+      toast.error(t('onboardingBoard.hideFailed'));
+    } finally {
+      setIsBusy(false);
+    }
+  }
+  const Icon = hide.isHidden ? EyeOff : Eye;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {/* A disabled button gets no hover: the wrapper carries the reason. */}
+        <span className="inline-flex" tabIndex={hide.canHide ? undefined : 0}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground"
+            disabled={!hide.canHide || isBusy}
+            aria-label={
+              hide.canHide
+                ? t(hide.isHidden ? 'onboardingBoard.showNamed' : 'onboardingBoard.hideNamed', {
+                    screen: name,
+                  })
+                : label
+            }
+            aria-pressed={hide.canHide ? hide.isHidden : undefined}
+            onClick={() => void toggle()}
+            data-testid={`board-hide-${cardKey}`}
+          >
+            <Icon aria-hidden />
+          </Button>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+/**
+ * The + in a card's header (RAPP-717): opens "Afegeix una pantalla" with the
+ * card's screen already chosen. Off, the hover gives the reason.
+ */
+function AddDependentButton({
+  add,
+  cardKey,
+}: {
+  readonly add: AddDependent;
+  readonly cardKey: string;
+}) {
+  const { t } = useTranslation('settings');
+  const label = add.canAdd ? t('onboardingBoard.addDependent') : (add.reason ?? '');
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {/* A disabled button gets no hover: the wrapper carries the reason. */}
+        <span className="inline-flex" tabIndex={add.canAdd ? undefined : 0}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground"
+            disabled={!add.canAdd}
+            aria-label={label}
+            onClick={add.open}
+            data-testid={`board-add-dependent-${cardKey}`}
+          >
+            <Plus aria-hidden />
+          </Button>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+/**
+ * One "Afegeix una pantalla" dialog for every + of a board or an editor
+ * (RAPP-717). `addFor` gives a screen's +: on when the screen asks a choice
+ * question (the dialog's own rule, `sources`), and it opens the dialog with
+ * that screen as the parent. Render `dialog` once.
+ */
+export function useAddDependentScreen({
+  catalog,
+  sources,
+  onCreate,
+}: {
+  readonly catalog: IntakeCatalog;
+  readonly sources: readonly ConditionSource[];
+  readonly onCreate: (name: string, condition: NewScreenCondition | null) => Promise<void>;
+}): { readonly addFor: (key: string) => AddDependent; readonly dialog: ReactNode } {
+  const { t } = useTranslation('settings');
+  const [parent, setParent] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const addFor = (key: string): AddDependent =>
+    sources.some((source) => source.key === key)
+      ? {
+          canAdd: true,
+          open: () => {
+            setParent(key);
+            setIsOpen(true);
+          },
+        }
+      : lockedAddDependent(t('onboardingBoard.addDependentNoChoice'));
+  return {
+    addFor,
+    dialog:
+      parent === null ? null : (
+        // Keyed by the parent: each + starts from its own screen.
+        <AddScreenDialog
+          key={parent}
+          catalog={catalog}
+          sources={sources}
+          parentKey={parent}
+          onCreate={onCreate}
+          isOpen={isOpen}
+          onOpenChange={setIsOpen}
+        />
+      ),
+  };
+}
+
+/** A new screen's condition (RAPP-715): the screen holding the question, and the answers. */
+export interface NewScreenCondition {
+  readonly sourceKey: string;
+  readonly condition: ScreenCondition;
+}
+
+/**
+ * A Ramassà screen added to Onboarding (RAPP-703): first in her order, right
+ * after the add card, and the board scrolls to it. One that depends on an
+ * answer (RAPP-715) is a follow-up of the screen asking it: it goes right
+ * after that screen and its follow-ups, then takes its condition.
+ */
+export function useCreateOnboardingScreen() {
+  const reload = useReload();
+  return async (
+    catalog: IntakeCatalog,
+    name: string,
+    order: readonly WizardStepKey[],
+    depends: NewScreenCondition | null,
+  ): Promise<WizardStepKey> => {
+    // The title is stored in Catalan, the language every other one falls back to.
+    const id = await saveIntakeScreen(supabase, {
+      id: null,
+      title: { ca: name },
+      intro: null,
+      afterScreen: 'season',
+    });
+    const key = customStepKey(id);
+    if (depends === null) {
+      await saveWizardFlowOrder(supabase, [key, ...order]);
+    } else {
+      const family = order.filter(
+        (step) =>
+          step === depends.sourceKey ||
+          onboardingAncestors(catalog, step).includes(depends.sourceKey),
+      );
+      const at = order.indexOf((family[family.length - 1] ?? depends.sourceKey) as WizardStepKey);
+      await saveWizardFlowOrder(supabase, [...order.slice(0, at + 1), key, ...order.slice(at + 1)]);
+      await saveScreenCondition(supabase, id, depends.condition);
+    }
+    await reload();
+    document
+      .querySelector(`[data-testid="board-step-${key}"], [data-testid="board-branch-${key}"]`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return key;
+  };
+}
+
+/** Every step above one on Onboarding, nearest first. */
+function onboardingAncestors(catalog: IntakeCatalog, key: string): readonly string[] {
+  const above: string[] = [];
+  let current = onboardingParentOf(catalog, key);
+  while (current !== null && above.length < 64) {
+    above.push(current);
+    current = onboardingParentOf(catalog, current);
+  }
+  return above;
+}
+
+/** A dashed card that takes its row's height: a board's add screen or add form card. */
+function AddCard({
+  label,
+  onClick,
+  testId,
+}: {
+  readonly label: string;
+  readonly onClick: () => void;
+  readonly testId: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group/add flex w-full rounded-2xl text-start outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      data-testid={testId}
+    >
+      <CardFrame className="h-full min-h-40 border-dashed border-foreground/20 bg-muted transition-colors group-hover/add:border-primary/60 group-hover/add:bg-primary/5">
+        <span className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-sm font-medium text-muted-foreground transition-colors group-hover/add:text-primary">
+          <span className="flex size-11 items-center justify-center rounded-full border border-dashed border-current">
+            <Plus aria-hidden className="size-5" />
+          </span>
+          {label}
+        </span>
+      </CardFrame>
+    </button>
+  );
+}
+
+/**
+ * The add screen card. Every form's board adds its screens with it
+ * (RAPP-700): `onCreate` makes the screen from its Catalan name, and, when it
+ * depends on an answer of another screen (RAPP-715), with that condition.
+ */
+export function AddScreenCard({
+  catalog,
+  sources,
+  onCreate,
+}: {
+  readonly catalog: IntakeCatalog;
+  /** The screens with a choice question the new screen can depend on. */
+  readonly sources: readonly ConditionSource[];
+  readonly onCreate: (name: string, condition: NewScreenCondition | null) => Promise<void>;
+}) {
+  const { t } = useTranslation('settings');
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <>
+      <AddCard
+        label={t('onboardingBoard.addScreen')}
+        onClick={() => setIsOpen(true)}
+        testId="board-add-screen"
+      />
+      <AddScreenDialog
+        catalog={catalog}
+        sources={sources}
+        onCreate={onCreate}
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+      />
+    </>
+  );
+}
+
+/**
+ * "Afegeix una pantalla": its name and, if it depends on an answer of another
+ * screen (RAPP-715), that screen, its question and the answers. Opened from a
+ * card's + or an editor's + tile (RAPP-717), the parent is already chosen and
+ * shown at the top: staff pick only the question and the answers.
+ */
+function AddScreenDialog({
+  catalog,
+  sources,
+  parentKey = null,
+  onCreate,
+  isOpen,
+  onOpenChange,
+}: {
+  readonly catalog: IntakeCatalog;
+  readonly sources: readonly ConditionSource[];
+  /** The screen the new one depends on, chosen before the dialog opens (RAPP-717). */
+  readonly parentKey?: string | null;
+  readonly onCreate: (name: string, condition: NewScreenCondition | null) => Promise<void>;
+  readonly isOpen: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+}) {
+  const { t } = useTranslation('settings');
+  const parent = parentKey === null ? null : sources.find((source) => source.key === parentKey);
+  const initialDepends = parent === null ? 'no' : 'yes';
+  const initialCondition: ConditionDraft =
+    parent === null || parent === undefined
+      ? EMPTY_CONDITION
+      : {
+          sourceKey: parent.key,
+          // A screen with one choice question picks it.
+          fieldId: parent.questions.length === 1 ? (parent.questions[0]?.fieldId ?? null) : null,
+          values: [],
+        };
+  const [isBusy, setIsBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [depends, setDepends] = useState<'no' | 'yes'>(initialDepends);
+  const [condition, setCondition] = useState<ConditionDraft>(initialCondition);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const name = String(new FormData(event.currentTarget).get('screen-name') ?? '').trim();
+    if (name === '') {
+      setError(t('onboardingBoard.nameNeeded'));
+      return;
+    }
+    const picked = depends === 'yes' ? completeCondition(condition) : null;
+    if (depends === 'yes' && (picked === null || condition.sourceKey === null)) {
+      setError(t('onboardingBoard.condition.incomplete'));
+      return;
+    }
+    setIsBusy(true);
+    setError(null);
+    try {
+      await onCreate(
+        name,
+        picked === null || condition.sourceKey === null
+          ? null
+          : { sourceKey: condition.sourceKey, condition: picked },
+      );
+      onOpenChange(false);
+      setDepends(initialDepends);
+      setCondition(initialCondition);
+    } catch {
+      setError(t('onboardingBoard.createFailed'));
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  return (
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        setError(null);
+        onOpenChange(open);
+      }}
+    >
+      <DialogContent className="max-h-[90dvh] max-w-md overflow-y-auto">
+        <DialogTitle>
+          {t(parent === null ? 'onboardingBoard.newScreen' : 'onboardingBoard.addDependent')}
+        </DialogTitle>
+        <DialogDescription className="sr-only">{t('onboardingBoard.newScreen')}</DialogDescription>
+        <form className="flex flex-col gap-6" onSubmit={(event) => void submit(event)} noValidate>
+          <FieldGroup>
+            {parent === null ? null : (
+              <Field>
+                <FieldTitle>{t('onboardingBoard.condition.screen')}</FieldTitle>
+                <p className="text-sm" data-testid="new-screen-parent">
+                  {parent === undefined ? '' : `${parent.number}. ${parent.name}`}
+                </p>
+              </Field>
+            )}
+            <Field data-invalid={error !== null}>
+              <FieldLabel htmlFor="new-screen-name">{t('onboardingBoard.screenName')}</FieldLabel>
+              <Input
+                id="new-screen-name"
+                name="screen-name"
+                lang="ca"
+                autoComplete="off"
+                autoFocus
+                aria-invalid={error !== null}
+                data-testid="new-screen-name"
+              />
+            </Field>
+            {parent === null ? (
+              <ChoiceCards
+                legend={t('onboardingBoard.dependsQuestion')}
+                name="new-screen-depends"
+                value={depends}
+                options={[
+                  { value: 'no', title: t('questions.answers.no') },
+                  { value: 'yes', title: t('questions.answers.yes') },
+                ]}
+                onChange={(value) => {
+                  setDepends(value);
+                  setError(null);
+                }}
+                testId="new-screen-depends"
+              />
+            ) : null}
+            {depends === 'yes' ? (
+              <ConditionFields
+                catalog={catalog}
+                sources={sources}
+                isSourceFixed={parent !== null}
+                draft={condition}
+                onChange={(next) => {
+                  setCondition(next);
+                  setError(null);
+                }}
+                idPrefix="new-screen"
+              />
+            ) : null}
+            {error === null ? null : <FieldError>{error}</FieldError>}
+          </FieldGroup>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              {t('onboardingBoard.cancel')}
+            </Button>
+            <Button type="submit" disabled={isBusy} data-testid="new-screen-create">
+              {t('onboardingBoard.create')}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** × on a chained form's card, with the board's confirmation first (RAPP-776). */
+function RemoveCardButton({
+  remove,
+  cardKey,
+}: {
+  readonly remove: NonNullable<BoardCard['remove']>;
+  readonly cardKey: string;
+}) {
+  const { t } = useTranslation('settings');
+  const [isOpen, setIsOpen] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
+  async function confirm() {
+    setIsBusy(true);
+    try {
+      await remove.run();
+      setIsOpen(false);
+    } finally {
+      setIsBusy(false);
+    }
+  }
+  return (
+    <>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        className="text-muted-foreground"
+        aria-label={remove.label}
+        title={remove.label}
+        onClick={() => setIsOpen(true)}
+        data-testid={`board-remove-${cardKey}`}
+      >
+        <X aria-hidden />
+      </Button>
+      <ConfirmDialog
+        isOpen={isOpen}
+        onOpenChange={(open) => {
+          if (!isBusy) setIsOpen(open);
+        }}
+        title={remove.confirmTitle}
+        description={remove.confirmBody}
+        action={t('onboardingChain.removeAction')}
+        isBusy={isBusy}
+        onConfirm={() => void confirm()}
+      />
+    </>
+  );
+}

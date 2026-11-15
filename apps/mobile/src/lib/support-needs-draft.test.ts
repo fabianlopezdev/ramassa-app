@@ -1,19 +1,27 @@
 import { expect, test } from 'bun:test';
+import { systemFieldIndexFromCatalog } from '@ramassa/shared/intake-builder';
 import { createMmkvOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
 import { decodeSupportNeeds, toggleSupportNeed } from '@ramassa/shared/schemas';
+import { systemFieldsCatalogFixture } from '@ramassa/shared/testing';
 import { wizardStepRoute } from './onboarding-intake';
 import { referringEntityForAdditionalSupport } from './season-draft';
 import { lastSupportNeedStep, mergeSupportNeedsDraft } from './support-needs-draft';
+import { wizardDraftStoreOn } from './wizard-draft';
 
+// Her draft is kept by field (RAPP-663): every save goes through her fields.
+const fields = systemFieldIndexFromCatalog(systemFieldsCatalogFixture());
 test('combined details resume and preserve the category answers independently of childcare', () => {
   let raw: string | undefined;
-  const store = createMmkvOnboardingDraftStore({
-    getString: () => raw,
-    set: (_key, value) => {
-      raw = String(value);
-    },
-    remove: () => true,
-  });
+  const store = wizardDraftStoreOn(
+    createMmkvOnboardingDraftStore({
+      getString: () => raw,
+      set: (_key, value) => {
+        raw = String(value);
+      },
+      remove: () => true,
+    }),
+    fields,
+  );
   const first = {
     categories: ['accessibility', 'communication'] as const,
     details: { accessibility: 'Step-free access' },
@@ -34,7 +42,12 @@ test('combined details resume and preserve the category answers independently of
   );
   const next = { ...first, details: { ...first.details, communication: 'An interpreter' } };
   store.saveDraft(mergeSupportNeedsDraft(store.loadDraft(), next, 'summary'));
-  expect(decodeSupportNeeds(store.loadDraft()?.season?.specificNeeds as string)).toEqual(next);
+  // The needs keep one details text (RAPP-660): each category's detail joins it.
+  expect(decodeSupportNeeds(store.loadDraft()?.season?.specificNeeds as string)).toEqual({
+    categories: next.categories,
+    details: {},
+    explanation: 'accessibility: Step-free access\n\ncommunication: An interpreter',
+  });
   expect(store.loadDraft()?.season?.childcareNeed).toBe('no');
   store.saveDraft(
     mergeSupportNeedsDraft(store.loadDraft(), toggleSupportNeed(next, 'none'), 'summary'),

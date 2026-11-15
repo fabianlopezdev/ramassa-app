@@ -15,7 +15,14 @@ const questions = [
   {
     id: '10000000-0000-4000-8000-000000000001',
     type: 'rating',
-    prompt: { ca: 'Valoració', es: 'Valoración', en: 'Rating', ar: 'التقييم', fa: 'امتیاز' },
+    prompt: {
+      ca: 'Valoració',
+      es: 'Valoración',
+      en: 'Rating',
+      fr: 'Rating',
+      ar: 'التقييم',
+      fa: 'امتیاز',
+    },
     options: null,
     required: true,
     sortOrder: 10,
@@ -23,7 +30,14 @@ const questions = [
   {
     id: '10000000-0000-4000-8000-000000000002',
     type: 'multiple_choice',
-    prompt: { ca: 'Tria', es: 'Elige', en: 'Choose', ar: 'اختاري', fa: 'انتخاب کنید' },
+    prompt: {
+      ca: 'Tria',
+      es: 'Elige',
+      en: 'Choose',
+      fr: 'Choose',
+      ar: 'اختاري',
+      fa: 'انتخاب کنید',
+    },
     options: [
       {
         id: 'training',
@@ -31,13 +45,21 @@ const questions = [
           ca: 'Entrenament',
           es: 'Entrenamiento',
           en: 'Training',
+          fr: 'Training',
           ar: 'التدريب',
           fa: 'تمرین',
         },
       },
       {
         id: 'support',
-        label: { ca: 'Suport', es: 'Apoyo', en: 'Support', ar: 'الدعم', fa: 'پشتیبانی' },
+        label: {
+          ca: 'Suport',
+          es: 'Apoyo',
+          en: 'Support',
+          fr: 'Support',
+          ar: 'الدعم',
+          fa: 'پشتیبانی',
+        },
       },
     ],
     required: true,
@@ -50,6 +72,7 @@ const questions = [
       ca: 'Tornaries?',
       es: '¿Volverías?',
       en: 'Would you return?',
+      fr: 'Would you return?',
       ar: 'هل ستعودين؟',
       fa: 'بازمی گردید؟',
     },
@@ -60,7 +83,14 @@ const questions = [
   {
     id: '10000000-0000-4000-8000-000000000004',
     type: 'free_text',
-    prompt: { ca: 'Comentari', es: 'Comentario', en: 'Comment', ar: 'تعليق', fa: 'نظر' },
+    prompt: {
+      ca: 'Comentari',
+      es: 'Comentario',
+      en: 'Comment',
+      fr: 'Comment',
+      ar: 'تعليق',
+      fa: 'نظر',
+    },
     options: null,
     required: false,
     sortOrder: 40,
@@ -100,7 +130,14 @@ const responses = [
 
 test('survey definitions require all five languages and type-correct options', () => {
   const parsed = surveyDefinitionSchema.parse({
-    title: { ca: 'Enquesta', es: 'Encuesta', en: 'Survey', ar: 'استبيان', fa: 'نظرسنجی' },
+    title: {
+      ca: 'Enquesta',
+      es: 'Encuesta',
+      en: 'Survey',
+      fr: 'Enquête',
+      ar: 'استبيان',
+      fa: 'نظرسنجی',
+    },
     eventId: null,
     publishedAt: '2026-08-21T09:00:00.000Z',
     closesAt: '2026-08-22T09:00:00.000Z',
@@ -115,7 +152,7 @@ test('survey definitions require all five languages and type-correct options', (
   expect(
     surveyDefinitionSchema.safeParse({
       ...parsed,
-      title: { ca: 'Enquesta', es: 'Encuesta', en: 'Survey', ar: 'استبيان' },
+      title: { ca: 'Enquesta', es: 'Encuesta', en: 'Survey', fr: 'Enquête', ar: 'استبيان' },
     }).success,
   ).toBe(false);
   expect(

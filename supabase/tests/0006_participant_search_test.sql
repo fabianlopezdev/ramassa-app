@@ -10,7 +10,7 @@
 --   2. Arabic and Cyrillic names are searchable as first-class text, not as
 --      transliterations someone has to guess.
 --   3. ENCRYPTED fields are NOT searchable, by construction. A document number
---      cannot be found by typing it, because the column holds ciphertext and no
+--      cannot be found by typing it, because the answer holds ciphertext and no
 --      index could see through it without defeating the encryption. This is a
 --      deliberate limitation and the test pins it so nobody "fixes" it later by
 --      indexing the plaintext.
@@ -28,8 +28,9 @@ where not exists (select 1 from vault.secrets where name = 'app_encryption_key')
 
 -- Schema -------------------------------------------------------------------------
 
-select has_column('public', 'profiles', 'search_document', 'profiles carries a searchable document');
-select has_index('public', 'profiles', 'profiles_search_document_idx', 'the search document is indexed');
+select has_table('public', 'participant_search_documents', 'the search documents live in their own table (RAPP-662)');
+select has_index('public', 'participant_search_documents', 'participant_search_documents_normal_idx',
+                 'the search document is indexed');
 
 -- Searching as staff ---------------------------------------------------------------
 
@@ -147,9 +148,9 @@ select is(
   'and searching for another participant by name does not widen that by one row'
 );
 select throws_ok(
-  $$ select id from public.profiles where search_document @@ to_tsquery('simple', 'Оксана') $$,
+  $$ select profile_id from public.participant_search_documents where normal_document @@ to_tsquery('simple', 'Оксана') $$,
   '42501', null::text,
-  'nor can she run the search document directly: it is not a readable column (RAPP-240)'
+  'nor can she run the search document directly: it is not a readable table (RAPP-240)'
 );
 
 select * from finish();

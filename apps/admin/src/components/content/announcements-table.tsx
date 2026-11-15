@@ -1,5 +1,6 @@
 import { DataTable } from '@/components/data-table/data-table';
 import { DataTablePager } from '@/components/data-table/data-table-pager';
+import { Page } from '@/components/layout/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { safeAsync } from '@/lib/observability';
@@ -154,7 +155,7 @@ export function AnnouncementsTable({ page, search }: AnnouncementsTableProps) {
   const sorting: SortingState = [{ id: search.sort, desc: search.dir === 'desc' }];
 
   return (
-    <section className="flex flex-col gap-4 p-6">
+    <Page className="gap-4">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold">{t('title')}</h1>
@@ -220,7 +221,7 @@ export function AnnouncementsTable({ page, search }: AnnouncementsTableProps) {
           void navigate({ search: (previous) => ({ ...previous, page: next }) })
         }
       />
-    </section>
+    </Page>
   );
 }
 

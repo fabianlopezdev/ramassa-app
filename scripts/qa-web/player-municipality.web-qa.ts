@@ -2,7 +2,12 @@
 
 import { expect, test, type Page } from '@playwright/test';
 import { PARTICIPANT_FIXTURES } from '@ramassa/shared/testing';
-import { queryDatabase, signInPlayer as signInPlayerWithEmailCode } from './session';
+import {
+  appAnswerSql,
+  queryDatabase,
+  signInPlayer as signInPlayerWithEmailCode,
+  writeAppAnswerSql,
+} from './session';
 
 const playerOrigin = `http://localhost:${process.env.RAMASSA_QA_PLAYER_PORT ?? '4194'}`;
 // Ordinal 21 deliberately has no accepted terms in seed.sql and belongs to the
@@ -12,20 +17,16 @@ const player = PARTICIPANT_FIXTURES.find((fixture) => fixture.ordinal === 23)!;
 
 test.setTimeout(180_000);
 
+// Her municipality is an answer by field since RAPP-666, read and put back
+// through the app's own reader and writer.
+const playerId = `(select id from auth.users where email = '${player.email.replaceAll("'", "''")}')`;
+
 function storedMunicipality(): string {
-  return queryDatabase(
-    `select p.city from public.profiles p
-     join auth.users u on u.id = p.id
-     where u.email = '${player.email.replaceAll("'", "''")}'`,
-  );
+  return queryDatabase(`select ${appAnswerSql(playerId, 'city')}`);
 }
 
 test.afterAll(() => {
-  queryDatabase(
-    `update public.profiles p set city = '${player.city.replaceAll("'", "''")}'
-     from auth.users u
-     where u.id = p.id and u.email = '${player.email.replaceAll("'", "''")}'`,
-  );
+  queryDatabase(writeAppAnswerSql(playerId, 'city', player.city));
 });
 
 async function signInPlayer(page: Page): Promise<void> {

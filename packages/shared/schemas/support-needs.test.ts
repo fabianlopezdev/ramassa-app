@@ -44,7 +44,7 @@ test('all five full-length escaped explanations fit while oversized details are 
   expect(encoded.length).toBeLessThanOrEqual(32000);
   expect(decodeSupportNeeds(encoded)).toEqual(answer);
   expect(() =>
-    encodeSupportNeeds({ categories: ['health'], details: { health: 'h'.repeat(2001) } }),
+    encodeSupportNeeds({ categories: ['health'], details: { health: 'h'.repeat(4001) } }),
   ).toThrow();
 });
 
@@ -61,7 +61,7 @@ test('a combined explanation round-trips once and is cleared by None', () => {
   );
   expect(toggleSupportNeed(answer, 'health').explanation).toBe(answer.explanation);
   expect(toggleSupportNeed(answer, 'none')).toEqual({ categories: ['none'], details: {} });
-  expect(() => encodeSupportNeeds({ ...answer, explanation: 'x'.repeat(2001) })).toThrow();
+  expect(() => encodeSupportNeeds({ ...answer, explanation: 'x'.repeat(4001) })).toThrow();
   expect(() =>
     encodeSupportNeeds({ categories: ['none'], details: {}, explanation: 'Hidden text' }),
   ).toThrow();

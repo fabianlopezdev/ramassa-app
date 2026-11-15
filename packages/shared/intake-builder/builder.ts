@@ -1,14 +1,15 @@
 /**
- * The staff question builder (RAPP-307).
+ * Her onboarding as staff design it (RAPP-307, RAPP-612, RAPP-649).
  *
- * Staff add their own registration questions without a new app version, and
- * reword the built-in ones:
+ * The catalog holds the Ramassà screens of her onboarding, the wording of the
+ * app's own questions and screens, the flow order, the required list, and the
+ * profile layout: the Fitxa's fields and where each is placed (her
+ * onboarding at one screen, the entity referral form, the season form). A
+ * Ramassà field reaches her only through a placement, so this module reads
+ * the fields as questions from the placements:
  *
- *   - a screen holds one or more custom questions and sits after one of the
- *     built-in wizard steps, because the wizard asks one topic per screen;
- *   - a question shows in any of: the player wizard, the entity referral form,
- *     each season (one answer per season), or staff only;
- *   - its privacy level (Normal, Personal, Sensitive) and its type are set once;
+ *   - a field's privacy level (Normal, Personal, Sensitive) and type are set
+ *     once, on the field;
  *   - a removed option is archived, and the answers that chose it keep it;
  *   - a built-in question is reworded freely, its options relabelled or hidden,
  *     and the questions the app needs are never hidden.
@@ -19,15 +20,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
-import { resolveLocalizedText } from '../i18n/localized-content';
+import { countryLabelForCanonical } from '../i18n/countries';
+import { resolveLocalizedText, staffTextIn } from '../i18n/localized-content';
+import { municipalityLabelForCanonical } from '../i18n/municipalities';
 import { appTermsFromCatalog, type CurrentAppTerms } from '../onboarding/app-terms';
 import {
-  customStepKey,
   isCustomStep,
   QUESTION_SCREENS,
   WIZARD_QUESTION_SCREENS,
   WIZARD_SCREEN_QUESTIONS,
-  wizardFlowOrder,
   type IntakeQuestion,
   type WizardFlow,
   type WizardQuestionScreen,
@@ -41,15 +42,48 @@ import {
   WIZARD_QUESTIONS,
   type RequiredQuestions,
 } from '../onboarding/question-states';
+import type { ScreenCondition } from '../onboarding/screen-conditions';
 import {
   isEditableWizardScreen,
+  isOptionalScreenTextField,
   SCREEN_TEXT_FIELDS,
   screenTextFields,
+  type DetailScreen,
   type EditableWizardScreen,
   type ScreenTextField,
 } from '../onboarding/screen-texts';
+import { SYSTEM_FIELD_QUESTIONS } from '../onboarding/system-fields';
 import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
+import { questionsOffTheirControl } from './app-controls';
+import {
+  parseConsentPlacements,
+  parseConsents,
+  type Consent,
+  type ConsentPlacement,
+} from './consents';
+import {
+  parseCustomForms,
+  parseFormScreenTexts,
+  type CustomForm,
+  type FormScreenTexts,
+} from './custom-form-model';
+import { systemFieldIndexFromCatalog, type SystemFieldIndex } from './field-answers';
+import { parseFormBlocks, type FormBlock } from './form-blocks';
+import {
+  anyLanguageTextSchema,
+  builtinField,
+  EMPTY_PROFILE_LAYOUT,
+  fieldById,
+  parseProfileLayout,
+  placementsOf,
+  placementsOnSurface,
+  type BuilderText,
+  type FieldPlacement,
+  type ProfileField,
+  type ProfileLayout,
+  type QuestionPrivacy,
+} from './profile-layout';
 import {
   CUSTOM_QUESTION_TYPES,
   customAnswerSchema,
@@ -57,32 +91,20 @@ import {
   isOptionType,
   maxOptionsFor,
   parseQuestionSettings,
-  placementsAllowedFor,
-  QUESTION_PLACEMENTS,
   questionSettingsSchema,
   type CustomAnswerValue,
   type CustomQuestionType,
   type FileAnswer,
-  type QuestionPlacement,
   type QuestionSettings,
 } from './question-types';
 
-export {
-  CUSTOM_QUESTION_TYPES,
-  QUESTION_PLACEMENTS,
-  type CustomAnswerValue,
-  type CustomQuestionType,
-  type QuestionPlacement,
-};
+export { CUSTOM_QUESTION_TYPES, type CustomAnswerValue, type CustomQuestionType };
 
 type Client = SupabaseClient<Database>;
 
 function databaseError(error: { readonly message: string; readonly code?: string }): AppError {
   return new AppError(databaseErrorCode(error.message, error.code), { message: error.message });
 }
-
-export const QUESTION_PRIVACY_LEVELS = ['normal', 'personal', 'sensitive'] as const;
-export type QuestionPrivacy = (typeof QUESTION_PRIVACY_LEVELS)[number];
 
 export const YES_NO_MAYBE = ['yes', 'no', 'maybe'] as const;
 
@@ -94,16 +116,6 @@ export type BuiltinScreen = (typeof BUILTIN_SCREENS)[number];
 export function isChoiceType(type: CustomQuestionType): boolean {
   return isOptionType(type);
 }
-
-// Localized text as stored: any of the five languages, Catalan required for a label.
-const anyLanguageTextSchema = z.object({
-  ca: z.string().optional(),
-  es: z.string().optional(),
-  en: z.string().optional(),
-  ar: z.string().optional(),
-  fa: z.string().optional(),
-});
-export type BuilderText = z.infer<typeof anyLanguageTextSchema>;
 
 export const catalanTextSchema = anyLanguageTextSchema.refine(
   (text) => (text.ca ?? '').trim().length > 0,
@@ -119,6 +131,19 @@ export function cleanText(text: BuilderText): BuilderText {
   ) as BuilderText;
 }
 
+/**
+ * A screen text as stored: trimmed, and a cleared optional text keeps its
+ * blank languages, so her phone shows none there (RAPP-710).
+ */
+function savedScreenText(text: BuilderText, isOptional: boolean): BuilderText {
+  if (!isOptional) return cleanText(text);
+  return Object.fromEntries(
+    Object.entries(text).flatMap(([language, value]) =>
+      typeof value === 'string' ? [[language, value.trim()]] : [],
+    ),
+  ) as BuilderText;
+}
+
 export function textIn(text: BuilderText | null | undefined, language: LanguageCode): string {
   if (text == null) return '';
   return resolveLocalizedText(text, language)?.text ?? '';
@@ -126,30 +151,21 @@ export function textIn(text: BuilderText | null | undefined, language: LanguageC
 
 // The catalog ---------------------------------------------------------------------------------
 
-const optionSchema = z.object({
-  id: z.uuid(),
-  label: anyLanguageTextSchema,
-  sort_order: z.number().int(),
-  is_archived: z.boolean(),
-});
+/** The answer that opens a screen (RAPP-715), as the catalog sends it on every screen. */
+export const screenConditionShape = {
+  show_when_field_id: z.uuid().nullable().optional(),
+  show_when_values: z.array(z.string()).nullable().optional(),
+};
 
-const questionSchema = z.object({
-  id: z.uuid(),
-  question_type: z.enum(CUSTOM_QUESTION_TYPES),
-  show_when_question_id: z.uuid().nullable().optional(),
-  show_when_option_id: z.uuid().nullable().optional(),
-  label: anyLanguageTextSchema,
-  help: anyLanguageTextSchema.nullable(),
-  privacy: z.enum(QUESTION_PRIVACY_LEVELS),
-  placements: z.array(z.enum(QUESTION_PLACEMENTS)),
-  sort_order: z.number().int(),
-  is_archived: z.boolean(),
-  // Per-type settings (RAPP-610); an older server sends none.
-  settings: z.unknown().optional(),
-  // Required where she answers it (RAPP-611); an older server sends none: optional.
-  is_required: z.boolean().optional(),
-  options: z.array(optionSchema),
-});
+/** A screen's condition from the catalog; none when it always shows. */
+export function screenConditionFrom(row: {
+  readonly show_when_field_id?: string | null;
+  readonly show_when_values?: readonly string[] | null;
+}): { readonly showWhen?: ScreenCondition } {
+  return row.show_when_field_id == null || (row.show_when_values ?? []).length === 0
+    ? {}
+    : { showWhen: { fieldId: row.show_when_field_id, values: row.show_when_values ?? [] } };
+}
 
 const screenSchema = z.object({
   id: z.uuid(),
@@ -158,12 +174,12 @@ const screenSchema = z.object({
   after_screen: z.enum(QUESTION_SCREENS),
   sort_order: z.number().int(),
   is_archived: z.boolean(),
-  questions: z.array(questionSchema),
-});
-
-const optionOverrideSchema = z.object({
-  label: anyLanguageTextSchema.optional(),
-  hidden: z.boolean().optional(),
+  // Staff hid it (RAPP-711). An older server sends none: it shows.
+  is_hidden: z.boolean().optional(),
+  // The answer that opens it (RAPP-715). An older server sends none: it always shows.
+  ...screenConditionShape,
+  // Its help line and buttons (RAPP-771). An older server sends none.
+  texts: z.unknown().optional(),
 });
 
 const overrideSchema = z.object({
@@ -171,7 +187,6 @@ const overrideSchema = z.object({
   label: anyLanguageTextSchema.nullable(),
   help: anyLanguageTextSchema.nullable(),
   is_hidden: z.boolean(),
-  option_overrides: z.record(z.string(), optionOverrideSchema),
 });
 
 const presetSchema = z.object({
@@ -182,6 +197,7 @@ const presetSchema = z.object({
 
 const builtinScreenSchema = z.object({
   screen: z.string(),
+  is_deleted: z.boolean().optional(),
   texts: z.record(z.string(), anyLanguageTextSchema),
   is_hidden: z.boolean(),
 });
@@ -200,6 +216,22 @@ export const intakeCatalogSchema = z.object({
   // The built-in questions that need an answer (RAPP-611). An older server
   // sends none: the app's own list.
   required_questions: z.array(z.string()).optional(),
+  // The profile layout (RAPP-649), read by `parseProfileLayout`: every Ramassà
+  // field and where it is asked.
+  sections: z.unknown().optional(),
+  fields: z.unknown().optional(),
+  placements: z.unknown().optional(),
+  // The signature blocks of the forms (RAPP-690), read by `parseFormBlocks`.
+  blocks: z.unknown().optional(),
+  // Dades legals (RAPP-699): the consents and where each is asked.
+  consents: z.unknown().optional(),
+  consent_placements: z.unknown().optional(),
+  // The forms the team created (RAPP-700), apart so an older build never
+  // reads a surface it does not know; merged with the lists above.
+  custom_forms: z.unknown().optional(),
+  custom_form_placements: z.unknown().optional(),
+  custom_form_blocks: z.unknown().optional(),
+  custom_form_consent_placements: z.unknown().optional(),
 });
 
 export interface CustomOption {
@@ -208,33 +240,46 @@ export interface CustomOption {
   readonly isArchived: boolean;
 }
 
+/** A Ramassà field as one surface asks it (RAPP-649): worded and required as its placement says. */
 export interface CustomQuestion {
   readonly id: string;
-  readonly screenId: string;
   readonly showWhen?: { readonly questionId: string; readonly optionId: string };
   readonly type: CustomQuestionType;
   readonly label: BuilderText;
   readonly help: BuilderText | null;
   readonly privacy: QuestionPrivacy;
-  readonly placements: readonly QuestionPlacement[];
   readonly isArchived: boolean;
-  /** The type's settings (RAPP-610): a number's range, a date's ages, a consent's text... */
+  /** The type's settings (RAPP-610): a number's range, a date's ages, what a file accepts... */
   readonly settings: QuestionSettings;
-  /**
-   * She must answer it in her wizard and each season (RAPP-611). Never on the
-   * entity referral form: an entity gives what it knows. Absent: optional.
-   */
+  /** Required where it is asked (RAPP-611): the placement says. Absent: optional. */
   readonly isRequired?: boolean;
   readonly options: readonly CustomOption[];
 }
 
-export interface IntakeScreen {
+/** A Ramassà screen of her onboarding, as staff made it (RAPP-307). */
+export interface RamassaScreen {
   readonly id: string;
   readonly title: BuilderText;
   readonly intro: BuilderText | null;
   readonly afterScreen: BuiltinScreen;
   readonly isArchived: boolean;
+  /** Staff hid it (RAPP-711): her phone skips it. Absent means shown. */
+  readonly isHidden?: boolean;
+  /** The answer that opens it (RAPP-715); absent, it always shows. */
+  readonly showWhen?: ScreenCondition;
+  /** Its help line and button labels (RAPP-771); empty shows the app's own. */
+  readonly texts?: FormScreenTexts;
+}
+
+/**
+ * A screen of her onboarding with the Ramassà fields it asks her: a Ramassà
+ * screen, or the fields placed on an app screen (`builtinScreen` set). Those
+ * show on that app screen after its own questions, and are never a step of
+ * their own. An app follow-up's fields (RAPP-720) show on that follow-up.
+ */
+export interface IntakeScreen extends RamassaScreen {
   readonly questions: readonly CustomQuestion[];
+  readonly builtinScreen?: WizardQuestionScreen | DetailScreen | null;
 }
 
 export interface BuiltinOverride {
@@ -242,13 +287,11 @@ export interface BuiltinOverride {
   readonly label: BuilderText | null;
   readonly help: BuilderText | null;
   readonly isHidden: boolean;
-  readonly optionOverrides: Readonly<
-    Record<string, { readonly label?: BuilderText; readonly hidden?: boolean }>
-  >;
 }
 
 /** Staff wording and the hide switch of one built-in screen (RAPP-612). */
 export interface BuiltinScreenSettings {
+  readonly isDeleted?: boolean;
   readonly screen: EditableWizardScreen;
   readonly texts: Readonly<Partial<Record<ScreenTextField, BuilderText>>>;
   readonly isHidden: boolean;
@@ -261,7 +304,7 @@ export interface IntakePreset {
 }
 
 export interface IntakeCatalog {
-  readonly screens: readonly IntakeScreen[];
+  readonly screens: readonly RamassaScreen[];
   readonly overrides: readonly BuiltinOverride[];
   readonly presets: readonly IntakePreset[];
   /** Staff wording of the built-in screens (RAPP-612); empty means the app's own. */
@@ -272,6 +315,22 @@ export interface IntakeCatalog {
   readonly terms?: CurrentAppTerms | null;
   /** The built-in questions that need an answer (RAPP-611); absent means the app's own list. */
   readonly requiredQuestions?: readonly IntakeQuestion[];
+  /** Sections, fields and placements (RAPP-649); absent when the catalog could not load. */
+  readonly layout?: ProfileLayout;
+  /**
+   * The app's fields by system key, every part of a split question included
+   * (RAPP-663): the app's own screens read and write their answers by these
+   * ids. Absent when the catalog could not load.
+   */
+  readonly systemFields?: SystemFieldIndex;
+  /** The signature blocks of her Onboarding screens and the entity form (RAPP-690). */
+  readonly blocks?: readonly FormBlock[];
+  /** Dades legals (RAPP-699): the consents, archived ones for the people who design them. */
+  readonly consents?: readonly Consent[];
+  /** Where each consent is asked. */
+  readonly consentPlacements?: readonly ConsentPlacement[];
+  /** The forms the team created (RAPP-700); their contents are in the lists above. */
+  readonly customForms?: readonly CustomForm[];
 }
 
 export const EMPTY_INTAKE_CATALOG: IntakeCatalog = {
@@ -292,31 +351,9 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
       intro: screen.intro,
       afterScreen: screen.after_screen,
       isArchived: screen.is_archived,
-      questions: screen.questions.map((question) => ({
-        id: question.id,
-        screenId: screen.id,
-        type: question.question_type,
-        ...(question.show_when_question_id && question.show_when_option_id
-          ? {
-              showWhen: {
-                questionId: question.show_when_question_id,
-                optionId: question.show_when_option_id,
-              },
-            }
-          : {}),
-        label: question.label,
-        help: question.help,
-        privacy: question.privacy,
-        placements: question.placements,
-        isArchived: question.is_archived,
-        settings: parseQuestionSettings(question.question_type, question.settings),
-        isRequired: question.is_required === true,
-        options: question.options.map((option) => ({
-          id: option.id,
-          label: option.label,
-          isArchived: option.is_archived,
-        })),
-      })),
+      isHidden: screen.is_hidden ?? false,
+      texts: parseFormScreenTexts(screen.texts),
+      ...screenConditionFrom(screen),
     })),
     overrides: raw.overrides
       .filter((override) => (WIZARD_QUESTIONS as readonly string[]).includes(override.question))
@@ -325,7 +362,6 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
         label: override.label,
         help: override.help,
         isHidden: override.is_hidden,
-        optionOverrides: override.option_overrides,
       })),
     presets: raw.presets,
     screenSettings: (raw.builtin_screens ?? []).flatMap((entry) =>
@@ -339,6 +375,7 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
                 ),
               ),
               isHidden: entry.is_hidden,
+              isDeleted: entry.is_deleted ?? false,
             },
           ]
         : [],
@@ -348,7 +385,37 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
     ...(raw.required_questions === undefined
       ? {}
       : { requiredQuestions: [...requiredQuestionsFrom(raw.required_questions)] }),
+    ...withLayout(
+      parseProfileLayout({
+        ...raw,
+        placements: withFormRows(raw.placements, raw.custom_form_placements),
+      }),
+    ),
+    ...(raw.fields === undefined
+      ? {}
+      : { systemFields: systemFieldIndexFromCatalog({ fields: raw.fields }) }),
+    blocks: parseFormBlocks(withFormRows(raw.blocks, raw.custom_form_blocks)),
+    consents: parseConsents(raw.consents),
+    consentPlacements: parseConsentPlacements(
+      withFormRows(raw.consent_placements, raw.custom_form_consent_placements),
+    ),
+    customForms: parseCustomForms(raw.custom_forms),
   };
+}
+
+/** A list of the catalog with the forms' rows after it (RAPP-700); absent stays absent. */
+function withFormRows(rows: unknown, formRows: unknown): unknown {
+  if (rows === undefined || !Array.isArray(formRows)) return rows;
+  return Array.isArray(rows) ? [...rows, ...formRows] : rows;
+}
+
+/** The app's fields of a catalog by system key; none when it could not load. */
+export function systemFieldsOf(catalog: IntakeCatalog): SystemFieldIndex {
+  return catalog.systemFields ?? new Map();
+}
+
+function withLayout(layout: ProfileLayout | undefined): { readonly layout?: ProfileLayout } {
+  return layout === undefined ? {} : { layout };
 }
 
 /**
@@ -372,61 +439,71 @@ export async function fetchIntakeCatalog(client: Client): Promise<IntakeCatalog>
   return parseIntakeCatalog(data);
 }
 
-// Where questions show ------------------------------------------------------------------------
+// Where fields are asked ---------------------------------------------------------------------
 
-export function isSeasonal(question: CustomQuestion): boolean {
-  return question.placements.includes('season');
-}
-
-/** Asked of the woman herself: in the wizard, or every season. */
-export function isAskedOfHer(question: CustomQuestion): boolean {
-  return question.placements.includes('wizard') || isSeasonal(question);
+/** A custom field as a question, worded by its own name, required as the placement says. */
+export function questionFromField(
+  field: ProfileField,
+  placement: FieldPlacement | undefined,
+): CustomQuestion {
+  return {
+    id: field.id,
+    type: field.type,
+    ...(field.showWhen === undefined
+      ? {}
+      : { showWhen: { questionId: field.showWhen.fieldId, optionId: field.showWhen.optionId } }),
+    label: field.label,
+    help: field.help,
+    privacy: field.privacy,
+    isArchived: field.isArchived,
+    settings: parseQuestionSettings(field.type, field.settings),
+    isRequired: placement?.required ?? false,
+    options: field.options,
+  };
 }
 
 /**
- * The live screens that hold at least one live question for a place, each with
- * only those questions. `afterScreen` narrows them to one built-in step.
+ * A custom field as a question wherever it is asked: her page reads and
+ * writes every field. Required when a placement of hers (her onboarding or
+ * her season form) is, as the database says.
  */
-export function screensFor(
-  catalog: IntakeCatalog,
-  shows: (question: CustomQuestion) => boolean,
-  afterScreen?: BuiltinScreen,
-): readonly IntakeScreen[] {
-  return catalog.screens
-    .filter((screen) => !screen.isArchived)
-    .filter((screen) => afterScreen === undefined || screen.afterScreen === afterScreen)
-    .map((screen) => ({
-      ...screen,
-      questions: screen.questions.filter((question) => !question.isArchived && shows(question)),
-    }))
-    .filter((screen) => screen.questions.length > 0);
-}
-
-export const wizardScreens = (catalog: IntakeCatalog, afterScreen?: BuiltinScreen) =>
-  screensFor(catalog, isAskedOfHer, afterScreen);
-
-/**
- * Her wizard's staff screens in the order her phone walks them (RAPP-612): the
- * flow staff arranged, so the staff preview of an invitation (RAPP-618) lists
- * them as she will see them, never in the catalog's anchor order.
- */
-export function wizardScreensInFlowOrder(catalog: IntakeCatalog): readonly IntakeScreen[] {
-  const screens = wizardScreens(catalog);
-  const order = wizardFlowOrder(
-    screens.map((screen) => ({
-      id: screen.id,
-      afterScreen: screen.afterScreen,
-      isAnswered: false,
-    })),
-    wizardFlow(catalog),
+export function questionOfField(layout: ProfileLayout, field: ProfileField): CustomQuestion {
+  const forHer = placementsOf(layout, field.id).filter(
+    (placement) => placement.surface !== 'entity_form',
   );
-  const position = (screen: IntakeScreen) => order.indexOf(customStepKey(screen.id));
-  return [...screens].sort((a, b) => position(a) - position(b));
+  return {
+    ...questionFromField(field, forHer[0]),
+    isRequired: forHer.some((placement) => placement.required),
+  };
 }
 
-export const seasonScreens = (catalog: IntakeCatalog) => screensFor(catalog, isSeasonal);
-export const referralScreens = (catalog: IntakeCatalog) =>
-  screensFor(catalog, (question) => question.placements.includes('entity_form'));
+/**
+ * The live Ramassà fields her onboarding asks on one screen (an app screen
+ * key, or a Ramassà screen's id), in their order, by the field's own name:
+ * what staff plan with. Her phone reads them worded for her
+ * (`onboardingScreenQuestions`).
+ */
+export function placedQuestions(
+  catalog: IntakeCatalog,
+  screenKey: string,
+): readonly CustomQuestion[] {
+  const layout = catalog.layout;
+  if (layout === undefined) return [];
+  return placementsOnSurface(layout, 'onboarding', screenKey).flatMap((placement) => {
+    const field = fieldById(layout, placement.fieldId);
+    return field === undefined || field.kind !== 'custom'
+      ? []
+      : [questionFromField(field, placement)];
+  });
+}
+
+/** Whether a field placed on the app screen is required: then the screen always shows. */
+export function hasRequiredPlacedField(
+  catalog: IntakeCatalog,
+  screen: WizardQuestionScreen,
+): boolean {
+  return placedQuestions(catalog, screen).some(isCustomQuestionRequired);
+}
 
 /** A screen she already answered completely is not shown again (RAPP-300). */
 export function isScreenAnswered(screen: IntakeScreen, answers: CustomAnswers): boolean {
@@ -488,7 +565,7 @@ export function customAnswerError(
     : 'invalid';
 }
 
-/** True when the value says nothing: empty text, nothing chosen, an unticked consent. */
+/** True when the value says nothing: empty text, nothing chosen. */
 export function isEmptyAnswer(value: CustomAnswerValue | null | undefined): boolean {
   if (value == null || value === false) return true;
   if (typeof value === 'string') return value.trim() === '';
@@ -512,9 +589,6 @@ export function answerPayload(answers: Readonly<Record<string, CustomAnswerValue
   ) as Json;
 }
 
-/** The time a consent was given, in the organization's time zone. */
-const ORGANIZATION_TIME_ZONE = 'Europe/Madrid';
-
 function isFileAnswer(value: CustomAnswerValue): value is FileAnswer {
   return typeof value === 'object' && !Array.isArray(value) && 'key' in value;
 }
@@ -522,7 +596,7 @@ function isFileAnswer(value: CustomAnswerValue): value is FileAnswer {
 /**
  * An answer in words: option labels in her language (an archived option
  * marked), a date and a number in the reader's language, a list joined, a
- * consent as yes with its time, a signature as signed, a file by its name.
+ * file by its name.
  */
 export function answerText(
   question: CustomQuestion,
@@ -533,9 +607,7 @@ export function answerText(
     readonly no: string;
     readonly maybe: string;
     readonly archived: string;
-    readonly signed?: string;
   },
-  context: { readonly answeredAt?: string } = {},
 ): string {
   if (
     (question.type === 'yes_no_maybe' || question.type === 'yes_no') &&
@@ -543,17 +615,6 @@ export function answerText(
   ) {
     return value === 'yes' ? words.yes : value === 'no' ? words.no : words.maybe;
   }
-  if (question.type === 'consent') {
-    if (value !== true) return words.no;
-    if (context.answeredAt === undefined) return words.yes;
-    const at = new Intl.DateTimeFormat(language, {
-      dateStyle: 'short',
-      timeStyle: 'short',
-      timeZone: ORGANIZATION_TIME_ZONE,
-    }).format(new Date(context.answeredAt));
-    return `${words.yes} (${at})`;
-  }
-  if (question.type === 'signature') return words.signed ?? words.yes;
   if (isFileAnswer(value)) return value.name;
   if (question.type === 'date' && typeof value === 'string') {
     const [year, month, day] = value.split('-').map(Number) as [number, number, number];
@@ -570,6 +631,13 @@ export function answerText(
     );
   }
   if (typeof value === 'boolean') return value ? words.yes : words.no;
+  // A list the app ships stores the canonical name; she reads it in her language.
+  if (question.type === 'country' && typeof value === 'string') {
+    return countryLabelForCanonical(value, language) ?? value;
+  }
+  if (question.type === 'municipality' && typeof value === 'string') {
+    return municipalityLabelForCanonical(value, language) ?? value;
+  }
   if (!isChoiceType(question.type)) {
     return typeof value === 'string' ? value : (value as readonly unknown[]).map(String).join(', ');
   }
@@ -620,6 +688,8 @@ export interface ParticipantCustomAnswer {
   readonly value: CustomAnswerValue;
   readonly source: 'player' | 'entity' | 'staff';
   readonly answeredAt: string;
+  /** The team member's name, or the entity's (RAPP-653); null for hers or when unknown. */
+  readonly answeredByName: string | null;
 }
 
 /** Her answers for the staff page, each season apart, by the reader's levels. */
@@ -640,6 +710,8 @@ export async function fetchParticipantCustomAnswers(
         value: answerValueSchema,
         source: z.enum(['player', 'entity', 'staff']),
         answered_at: z.string(),
+        // An older server sends none.
+        answered_by_name: z.string().nullable().optional(),
       }),
     )
     .parse(data ?? [])
@@ -650,6 +722,7 @@ export async function fetchParticipantCustomAnswers(
       value: row.value,
       source: row.source,
       answeredAt: row.answered_at,
+      answeredByName: row.answered_by_name ?? null,
     }));
 }
 
@@ -661,20 +734,6 @@ export async function setParticipantCustomAnswers(
   const { error } = await client.rpc('set_participant_custom_answers', {
     p_profile_id: profileId,
     p_answers: answerPayload(answers),
-  });
-  if (error) throw databaseError(error);
-}
-
-export async function saveReferralCustomAnswers(
-  client: Client,
-  referralId: string,
-  answers: Readonly<Record<string, CustomAnswerValue | null>>,
-): Promise<void> {
-  const payload = answerPayload(answers) as Record<string, Json>;
-  if (Object.values(payload).every((value) => value === null)) return;
-  const { error } = await client.rpc('save_referral_custom_answers', {
-    p_referral_id: referralId,
-    p_answers: payload,
   });
   if (error) throw databaseError(error);
 }
@@ -699,18 +758,54 @@ export interface ScreenDraft {
   readonly title: BuilderText;
   readonly intro: BuilderText | null;
   readonly afterScreen: BuiltinScreen;
+  /** Its help line and button labels (RAPP-771); left out, they stay as they are. */
+  readonly texts?: FormScreenTexts;
 }
 
 export async function saveIntakeScreen(client: Client, draft: ScreenDraft): Promise<string> {
-  const intro = draft.intro === null ? null : cleanText(draft.intro);
+  const intro = draft.intro === null ? null : savedScreenText(draft.intro, true);
   const { data, error } = await client.rpc('save_intake_screen', {
     p_id: draft.id as string,
     p_title: cleanText(draft.title) as Json,
     p_intro: (intro !== null && Object.keys(intro).length > 0 ? intro : null) as Json,
     p_after_screen: draft.afterScreen,
+    ...(draft.texts === undefined ? {} : { p_texts: draft.texts as Json }),
   });
   if (error) throw databaseError(error);
   return z.uuid().parse(data);
+}
+
+/**
+ * Sets the answer that opens a screen of Onboarding or of a form (RAPP-715),
+ * or removes it with null: the screen then always shows. The database checks
+ * that the question is asked on an earlier screen of the same form and keeps
+ * the screen right after it.
+ */
+export async function saveScreenCondition(
+  client: Client,
+  screenId: string,
+  condition: ScreenCondition | null,
+): Promise<void> {
+  const { error } = await client.rpc('save_screen_condition', {
+    p_screen_id: screenId,
+    p_field_id: (condition?.fieldId ?? null) as string,
+    p_values: (condition === null ? null : [...condition.values]) as string[],
+  });
+  if (error) throw databaseError(error);
+}
+
+export async function deleteBuilderScreen(
+  client: Client,
+  surface: 'onboarding' | 'custom_form',
+  key: string,
+  expectedKeys: readonly string[],
+): Promise<void> {
+  const { error } = await client.rpc('delete_builder_screen', {
+    p_surface: surface,
+    p_key: key,
+    p_expected_keys: [...expectedKeys],
+  });
+  if (error) throw databaseError(error);
 }
 
 export async function archiveIntakeScreen(client: Client, id: string): Promise<void> {
@@ -718,109 +813,39 @@ export async function archiveIntakeScreen(client: Client, id: string): Promise<v
   if (error) throw databaseError(error);
 }
 
-export async function reorderIntakeScreens(
-  client: Client,
-  afterScreen: BuiltinScreen,
-  ids: readonly string[],
-): Promise<void> {
-  const { error } = await client.rpc('reorder_intake_screens', {
-    p_after_screen: afterScreen,
-    p_ids: [...ids],
-  });
-  if (error) throw databaseError(error);
+/** What every field needs: a name, options that fit its type, settings of its type. */
+const fieldShape = {
+  label: catalanTextSchema,
+  type: z.enum(CUSTOM_QUESTION_TYPES),
+  settings: z.unknown().optional(),
+  options: z.array(z.object({ id: z.string().nullable(), label: catalanTextSchema })),
+};
+
+function checkFieldShape(
+  draft: {
+    readonly type: CustomQuestionType;
+    readonly settings?: unknown;
+    readonly options: readonly unknown[];
+  },
+  context: z.RefinementCtx,
+): void {
+  const choice = isChoiceType(draft.type);
+  if (choice && draft.options.length < 2) {
+    context.addIssue({ code: 'custom', path: ['options'], message: 'two options' });
+  }
+  if (choice && draft.options.length > maxOptionsFor(draft.type)) {
+    context.addIssue({ code: 'custom', path: ['options'], message: 'too many options' });
+  }
+  if (!choice && draft.options.length > 0) {
+    context.addIssue({ code: 'custom', path: ['options'], message: 'no options' });
+  }
+  if (!questionSettingsSchema(draft.type).safeParse(draft.settings ?? {}).success) {
+    context.addIssue({ code: 'custom', path: ['settings'], message: 'settings of the type' });
+  }
 }
 
-export interface QuestionDraft {
-  readonly id: string | null;
-  readonly screenId: string;
-  readonly showWhen?: { readonly questionId: string; readonly optionId: string };
-  readonly type: CustomQuestionType;
-  readonly label: BuilderText;
-  readonly help: BuilderText | null;
-  readonly privacy: QuestionPrivacy;
-  readonly placements: readonly QuestionPlacement[];
-  /** The type's settings (RAPP-610); `{}` for a type that has none. */
-  readonly settings: QuestionSettings;
-  /** In order; an option without an id is new, an existing one left out is archived. */
-  readonly options: readonly { readonly id: string | null; readonly label: BuilderText }[];
-}
-
-export const questionDraftSchema = z
-  .object({
-    label: catalanTextSchema,
-    placements: z.array(z.enum(QUESTION_PLACEMENTS)).min(1),
-    type: z.enum(CUSTOM_QUESTION_TYPES),
-    settings: z.unknown().optional(),
-    options: z.array(z.object({ id: z.string().nullable(), label: catalanTextSchema })),
-  })
-  .superRefine((draft, context) => {
-    const choice = isChoiceType(draft.type);
-    if (choice && draft.options.length < 2) {
-      context.addIssue({ code: 'custom', path: ['options'], message: 'two options' });
-    }
-    if (choice && draft.options.length > maxOptionsFor(draft.type)) {
-      context.addIssue({ code: 'custom', path: ['options'], message: 'too many options' });
-    }
-    if (!choice && draft.options.length > 0) {
-      context.addIssue({ code: 'custom', path: ['options'], message: 'no options' });
-    }
-    if (!questionSettingsSchema(draft.type).safeParse(draft.settings ?? {}).success) {
-      context.addIssue({ code: 'custom', path: ['settings'], message: 'settings of the type' });
-    }
-    const allowed = placementsAllowedFor(draft.type);
-    if (draft.placements.some((placement) => !allowed.includes(placement))) {
-      context.addIssue({ code: 'custom', path: ['placements'], message: 'placements of the type' });
-    }
-  });
-
-export async function saveCustomQuestion(client: Client, draft: QuestionDraft): Promise<string> {
-  const help = draft.help === null ? null : cleanText(draft.help);
-  const { data, error } = await client.rpc('save_custom_question', {
-    p_id: draft.id as string,
-    p_screen_id: draft.screenId,
-    p_type: draft.type,
-    p_label: cleanText(draft.label) as Json,
-    p_help: (help !== null && Object.keys(help).length > 0 ? help : null) as Json,
-    p_privacy: draft.privacy,
-    p_placements: [...draft.placements],
-    p_settings: draft.settings as Json,
-    p_options: draft.options.map((option) =>
-      option.id === null
-        ? { label: cleanText(option.label) }
-        : { id: option.id, label: cleanText(option.label) },
-    ) as Json,
-  });
-  if (error) throw databaseError(error);
-  return z.uuid().parse(data);
-}
-
-export async function archiveCustomQuestion(client: Client, id: string): Promise<void> {
-  const { error } = await client.rpc('archive_custom_question', { p_id: id });
-  if (error) throw databaseError(error);
-}
-
-export async function reorderCustomQuestions(
-  client: Client,
-  screenId: string,
-  ids: readonly string[],
-): Promise<void> {
-  const { error } = await client.rpc('reorder_custom_questions', {
-    p_screen_id: screenId,
-    p_ids: [...ids],
-  });
-  if (error) throw databaseError(error);
-}
-
-/** Moves one id up (-1) or down (+1) in a list; the ends stay put. */
-export function moved(ids: readonly string[], id: string, step: -1 | 1): readonly string[] {
-  const from = ids.indexOf(id);
-  const to = from + step;
-  if (from === -1 || to < 0 || to >= ids.length) return ids;
-  const next = [...ids];
-  next.splice(from, 1);
-  next.splice(to, 0, id);
-  return next;
-}
+/** A field of the profile layout (RAPP-650). */
+export const profileFieldDraftSchema = z.object(fieldShape).superRefine(checkFieldShape);
 
 // Built-in questions ---------------------------------------------------------------------------
 
@@ -864,55 +889,17 @@ export async function saveBuiltinQuestionRequired(
   if (error) throw databaseError(error);
 }
 
-/**
- * Whether a staff question can be required: only where she answers it
- * herself, her wizard or each season. A staff-only or referral-only question
- * is never hers to answer.
- */
-export function canRequireCustomQuestion(question: Pick<CustomQuestion, 'placements'>): boolean {
-  return question.placements.includes('wizard') || question.placements.includes('season');
-}
-
-export async function saveCustomQuestionRequired(
-  client: Client,
-  questionId: string,
-  isRequired: boolean,
-): Promise<void> {
-  const { error } = await client.rpc('save_custom_question_required', {
-    p_id: questionId,
-    p_is_required: isRequired,
-  });
-  if (error) throw databaseError(error);
-}
-
 export async function saveBuiltinOverride(
   client: Client,
   override: BuiltinOverride,
 ): Promise<void> {
   const label = override.label === null ? null : cleanText(override.label);
   const help = override.help === null ? null : cleanText(override.help);
-  const options = Object.fromEntries(
-    Object.entries(override.optionOverrides).flatMap(([value, change]) => {
-      const optionLabel = change.label === undefined ? undefined : cleanText(change.label);
-      const hasLabel = optionLabel !== undefined && Object.keys(optionLabel).length > 0;
-      if (!hasLabel && change.hidden !== true) return [];
-      return [
-        [
-          value,
-          {
-            ...(hasLabel ? { label: optionLabel } : {}),
-            ...(change.hidden ? { hidden: true } : {}),
-          },
-        ],
-      ];
-    }),
-  );
   const { error } = await client.rpc('save_builtin_question_override', {
     p_question: override.question,
     p_label: (label !== null && Object.keys(label).length > 0 ? label : null) as Json,
     p_help: (help !== null && Object.keys(help).length > 0 ? help : null) as Json,
     p_is_hidden: override.isHidden,
-    p_option_overrides: options as Json,
   });
   if (error) throw databaseError(error);
 }
@@ -939,7 +926,8 @@ export function builtinLabel(
   question: IntakeQuestion,
   language: LanguageCode,
 ): string | null {
-  return exactText(overrideFor(catalog, question)?.label, language) || null;
+  // One rule with the screen texts (RAPP-719): the label is required.
+  return staffTextIn(overrideFor(catalog, question)?.label, language, false);
 }
 
 export function builtinHelp(
@@ -947,7 +935,8 @@ export function builtinHelp(
   question: IntakeQuestion,
   language: LanguageCode,
 ): string | null {
-  return exactText(overrideFor(catalog, question)?.help, language) || null;
+  // The help is optional and the app has none of its own: no text is null.
+  return staffTextIn(overrideFor(catalog, question)?.help, language, true) || null;
 }
 
 /**
@@ -962,7 +951,41 @@ export function hiddenBuiltinQuestions(catalog: IntakeCatalog): ReadonlySet<Inta
       .filter((override) => override.isHidden && canHideBuiltin(override.question, required))
       .map((override) => override.question),
     ...[...wizardFlow(catalog).hiddenScreens].flatMap((screen) => WIZARD_SCREEN_QUESTIONS[screen]),
+    // Off their own control (RAPP-665): the generic renderer asks their fields.
+    ...(catalog.layout === undefined ? [] : questionsOffTheirControl(catalog.layout)),
   ]);
+}
+
+/**
+ * The app's fields her wizard's own forms ask: every one but the fields of a
+ * question off its control (RAPP-665). The generic renderer asks those where
+ * they are placed, so her draft keeps their answers with the team's fields,
+ * and the forms neither read nor write them.
+ */
+export function wizardFormFields(catalog: IntakeCatalog): SystemFieldIndex {
+  const off: ReadonlySet<IntakeQuestion> =
+    catalog.layout === undefined ? new Set() : questionsOffTheirControl(catalog.layout);
+  return new Map(
+    [...systemFieldsOf(catalog)].filter(([key]) => !off.has(SYSTEM_FIELD_QUESTIONS[key])),
+  );
+}
+
+/**
+ * The required list her phone's app screens check: the organization's list
+ * without the questions those screens no longer ask. A question off its
+ * control (RAPP-665) is asked by the generic renderer, which checks its fields
+ * by their placements, so the app screen's own form never requires it.
+ */
+export function askedRequiredQuestions(catalog: IntakeCatalog): RequiredQuestions {
+  const hidden = hiddenBuiltinQuestions(catalog);
+  const off: ReadonlySet<IntakeQuestion> =
+    catalog.layout === undefined ? new Set() : questionsOffTheirControl(catalog.layout);
+  // A locked question stays required on its screen, unless staff moved it off (RAPP-782).
+  return new Set(
+    [...requiredBuiltinQuestions(catalog)].filter((question) =>
+      isLockedRequiredQuestion(question) ? !off.has(question) : !hidden.has(question),
+    ),
+  );
 }
 
 /**
@@ -977,8 +1000,11 @@ export function reregistrationAsks(catalog: IntakeCatalog): (question: IntakeQue
 }
 
 /**
- * The options of a built-in choice question as she sees them: hidden ones left
- * out (unless it is her stored value), relabelled ones in staff wording.
+ * The options of a built-in choice question as she sees them (RAPP-665): in the
+ * order of its field's options, named as the field names them in her language,
+ * archived ones left out (unless it is her stored value). The options are the
+ * field's, edited on Dades de les jugadores; an option the field does not have
+ * keeps the app's own label.
  */
 export function builtinOptions<Option extends { readonly value: string; readonly label: string }>(
   catalog: IntakeCatalog,
@@ -987,12 +1013,20 @@ export function builtinOptions<Option extends { readonly value: string; readonly
   language: LanguageCode,
   keep: string | null = null,
 ): readonly Option[] {
-  const changes = overrideFor(catalog, question)?.optionOverrides ?? {};
-  return options
-    .filter((option) => changes[option.value]?.hidden !== true || option.value === keep)
-    .map((option) => {
-      const label = exactText(changes[option.value]?.label, language);
-      return label === '' ? option : { ...option, label };
+  const field = catalog.layout === undefined ? undefined : builtinField(catalog.layout, question);
+  if (field === undefined || field.options.length === 0) return options;
+  const position = (value: string) => {
+    const index = field.options.findIndex((option) => option.key === value);
+    return index === -1 ? field.options.length : index;
+  };
+  return [...options]
+    .sort((a, b) => position(a.value) - position(b.value))
+    .flatMap((option) => {
+      const own = field.options.find((candidate) => candidate.key === option.value);
+      if (own === undefined) return [option];
+      if (own.isArchived && option.value !== keep) return [];
+      const label = exactText(own.label, language);
+      return [label === '' ? option : { ...option, label }];
     });
 }
 
@@ -1023,12 +1057,24 @@ export function wizardFlow(catalog: IntakeCatalog): WizardFlow {
   const required = requiredBuiltinQuestions(catalog);
   return {
     order: (catalog.flowOrder ?? []).filter(isFlowStep),
+    deletedScreens: new Set(
+      (catalog.screenSettings ?? []).filter((s) => s.isDeleted).map((s) => s.screen),
+    ),
     hiddenScreens: new Set(
       (catalog.screenSettings ?? [])
-        .filter((settings) => settings.isHidden)
+        .filter((settings) => settings.isHidden || settings.isDeleted)
         .map((settings) => settings.screen)
         .filter(isWizardQuestionScreen)
-        .filter((screen) => canHideBuiltinScreen(screen, required)),
+        .filter(
+          (screen) =>
+            screenSettingsFor(catalog, screen)?.isDeleted || canHideBuiltinScreen(screen, required),
+        )
+        // A required field placed on it keeps the screen shown (RAPP-642).
+        .filter(
+          (screen) =>
+            screenSettingsFor(catalog, screen)?.isDeleted ||
+            !hasRequiredPlacedField(catalog, screen),
+        ),
     ),
   };
 }
@@ -1041,8 +1087,9 @@ export function screenSettingsFor(
 }
 
 /**
- * Staff wording of a built-in screen in exactly her language, or null for the
- * app's own text. As for questions (RAPP-530), Catalan written by staff never
+ * Staff wording of a built-in screen in exactly her language, '' for an
+ * optional text staff cleared, or null for the app's own text (RAPP-710,
+ * `staffTextIn`). As for questions (RAPP-530), Catalan written by staff never
  * replaces her Arabic: the app already has every language bundled.
  */
 export function builtinScreenText(
@@ -1052,7 +1099,11 @@ export function builtinScreenText(
   language: LanguageCode,
 ): string | null {
   if (!screenTextFields(screen).includes(field)) return null;
-  return exactText(screenSettingsFor(catalog, screen)?.texts[field], language) || null;
+  return staffTextIn(
+    screenSettingsFor(catalog, screen)?.texts[field],
+    language,
+    isOptionalScreenTextField(field),
+  );
 }
 
 export async function saveBuiltinScreen(
@@ -1066,7 +1117,8 @@ export async function saveBuiltinScreen(
   const texts = Object.fromEntries(
     screenTextFields(settings.screen).flatMap((field) => {
       const text = settings.texts[field];
-      const cleaned = text === undefined ? {} : cleanText(text);
+      const cleaned =
+        text === undefined ? {} : savedScreenText(text, isOptionalScreenTextField(field));
       return Object.keys(cleaned).length > 0 ? [[field, cleaned]] : [];
     }),
   );
@@ -1109,4 +1161,79 @@ export async function saveIntakePreset(
 export async function deleteIntakePreset(client: Client, id: string): Promise<void> {
   const { error } = await client.rpc('delete_intake_state_preset', { p_id: id });
   if (error) throw databaseError(error);
+}
+
+// Per-player choices on staff questions (RAPP-643) --------------------------------------------------
+
+/**
+ * Staff's Ask or Don't ask on the questions they wrote, for one player, by
+ * question id. No entry is Auto: asked unless she already answered it.
+ */
+export type CustomQuestionStates = Readonly<Record<string, 'ask' | 'skip'>>;
+
+/** How a staff question travels in the `question_states` object, beside the app's own. */
+export function customStateKey(questionId: string): `custom:${string}` {
+  return `custom:${questionId}`;
+}
+
+/** Don't ask is allowed on a staff question: optional, or required and answered. */
+export function canSkipCustomQuestion(
+  question: CustomQuestion,
+  answers: CustomAnswers = {},
+): boolean {
+  return !isCustomQuestionRequired(question) || answers[question.id] !== undefined;
+}
+
+/**
+ * The staff choices to send with the invitation, keyed `custom:<id>`: Don't
+ * ask on a question it is not allowed for falls back to Auto, as the database
+ * would refuse it, and a question no longer live is left out.
+ */
+export function allowedCustomQuestionStates(
+  states: CustomQuestionStates,
+  catalog: IntakeCatalog,
+): Readonly<Record<string, 'ask' | 'skip'>> {
+  const layout = catalog.layout ?? EMPTY_PROFILE_LAYOUT;
+  return Object.fromEntries(
+    Object.entries(states).flatMap(([id, state]) => {
+      const field = fieldById(layout, id);
+      if (field === undefined || field.kind !== 'custom' || field.isArchived) return [];
+      if (state === 'skip' && !canSkipCustomQuestion(questionOfField(layout, field))) return [];
+      return [[customStateKey(id), state]];
+    }),
+  );
+}
+
+/**
+ * Her staff screens with the staff choices applied, as her phone plans
+ * them: a question set to Don't ask is left out, and a screen with nothing
+ * left is no screen.
+ */
+export function withCustomAsking(
+  screens: readonly IntakeScreen[],
+  asking: ReadonlyMap<string, boolean>,
+): readonly IntakeScreen[] {
+  return screens
+    .map((screen) => ({
+      ...screen,
+      questions: screen.questions.filter((question) => asking.get(question.id) !== false),
+    }))
+    .filter((screen) => screen.questions.length > 0);
+}
+
+/**
+ * Whether her wizard asks each staff question with a choice (RAPP-643): true
+ * for Ask, false for Don't ask. She never reads the staff setting itself.
+ */
+export async function fetchMyCustomQuestionAsking(
+  client: Client,
+): Promise<ReadonlyMap<string, boolean>> {
+  const { data, error } = await client.rpc('my_custom_question_asking');
+  if (error) throw databaseError(error);
+  return new Map(
+    z
+      .array(z.object({ question_id: z.uuid(), is_asked: z.boolean() }))
+      .parse(data ?? [])
+      .map((row) => [row.question_id, row.is_asked] as const),
+  );
 }

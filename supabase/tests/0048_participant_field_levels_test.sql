@@ -25,27 +25,32 @@ from public.permission_preset_defaults where builtin_key = 'coach';
 -- A second organization with one participant, to prove the organization filter.
 insert into public.organizations (id, name, slug) values ('48000000-0000-4000-8000-0000000000aa', 'Other NGO', 'rapp-240-other');
 insert into auth.users (id, email) values ('48000000-0000-4000-8000-000000000011', 'other.player@rapp240.test');
-insert into public.profiles (id, org_id, role, first_name, last_name, nationality)
-values ('48000000-0000-4000-8000-000000000011', '48000000-0000-4000-8000-0000000000aa', 'player', 'Elsewhere', 'Player', 'Síria');
+insert into public.profiles (id, org_id, role, first_name, last_name)
+values ('48000000-0000-4000-8000-000000000011', '48000000-0000-4000-8000-0000000000aa', 'player', 'Elsewhere', 'Player');
+select private.write_custom_answer('48000000-0000-4000-8000-000000000011', f, '"Síria"', 'player')
+  from public.profile_fields f
+ where f.org_id = '48000000-0000-4000-8000-0000000000aa' and f.system_key = 'nationality';
 
 -- 1. Direct reads -------------------------------------------------------------------------------
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
-select throws_ok(
-  $$ select date_of_birth from public.profiles limit 1 $$,
-  '42501', null::text, 'even an admin cannot read date of birth straight from the table'
+-- Her answers live by field (RAPP-666): the table shows each woman her own only.
+select is_empty(
+  $$ select a.value from public.custom_answers a
+       join public.profile_fields f on f.id = a.question_id and f.system_key = 'date_of_birth' $$,
+  'even an admin cannot read a date of birth straight from the table'
 );
 select throws_ok(
-  $$ select phone from public.profiles limit 1 $$,
-  '42501', null::text, 'nor an encrypted column'
+  $$ select value_encrypted from public.custom_answers limit 1 $$,
+  '42501', null::text, 'nor an encrypted answer'
 );
-select throws_ok(
-  $$ select id from public.profiles where nationality = 'Síria' $$,
-  '42501', null::text, 'nor filter by a Personal column'
+select is_empty(
+  $$ select profile_id from public.custom_answers where value = '"Síria"'::jsonb $$,
+  'nor filter by a Personal answer'
 );
 select lives_ok(
-  $$ select id, first_name, last_name, reference_entity, is_active from public.profiles limit 1 $$,
+  $$ select id, first_name, last_name, is_active from public.profiles limit 1 $$,
   'Basic columns stay readable directly'
 );
 

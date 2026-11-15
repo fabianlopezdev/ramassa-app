@@ -8,17 +8,18 @@ import {
   answerText,
   customAnswerError,
   isEmptyAnswer,
-  questionDraftSchema,
+  profileFieldDraftSchema,
   type CustomQuestion,
 } from './builder';
 import {
   CUSTOM_ANSWER_FILE_FOLDER,
   CUSTOM_QUESTION_TYPES,
   customAnswerSchema,
+  internationalPhone,
   isOptionType,
+  isStaffWritable,
   normalizeCustomAnswerInput,
   parseQuestionSettings,
-  placementsAllowedFor,
   questionSettingsSchema,
   sampleCustomAnswer,
   uploadsAvailable,
@@ -36,12 +37,10 @@ function question(
 ): CustomQuestion {
   return {
     id: '5eed0000-0000-4000-8045-0000000000aa',
-    screenId: '5eed0000-0000-4000-8044-0000000000aa',
     type,
     label: { ca: 'Pregunta' },
     help: null,
     privacy: 'personal',
-    placements: ['wizard'],
     isArchived: false,
     settings,
     options: isOptionType(type)
@@ -62,13 +61,6 @@ const isoDaysAgo = (years: number, days = 0) => {
 };
 
 const fileKey = `${ORG}/${CUSTOM_ANSWER_FILE_FOLDER}/${HER}/2026/10/${'a'.repeat(32)}.pdf`;
-const strokes: [number, number][][] = [
-  [
-    [10, 20],
-    [30, 40],
-  ],
-];
-
 describe('the types', () => {
   test('the builder offers every field kind the app uses, the five first ones unchanged', () => {
     expect(CUSTOM_QUESTION_TYPES).toEqual([
@@ -84,16 +76,10 @@ describe('the types', () => {
       'email',
       'search_choice',
       'item_list',
-      'consent',
       'file_upload',
-      'signature',
+      'country',
+      'municipality',
     ]);
-  });
-
-  test('only her own answers can be a file or a signature', () => {
-    expect(placementsAllowedFor('file_upload')).toEqual(['wizard', 'season']);
-    expect(placementsAllowedFor('signature')).toEqual(['wizard', 'season']);
-    expect(placementsAllowedFor('number')).toEqual(['wizard', 'entity_form', 'season', 'staff']);
   });
 
   test('a file question warns staff when this app has no upload service', () => {
@@ -126,16 +112,10 @@ describe('settings per type', () => {
     expect(questionSettingsSchema('date').safeParse({ min_age: 1.5 }).success).toBe(false);
   });
 
-  test('a list caps its items; a consent has its own Catalan text; a file what it accepts', () => {
+  test('a list caps its items; a file what it accepts; the consent is gone (RAPP-690)', () => {
     expect(questionSettingsSchema('item_list').safeParse({ max_items: 10 }).success).toBe(true);
     expect(questionSettingsSchema('item_list').safeParse({ max_items: 0 }).success).toBe(false);
-    expect(
-      questionSettingsSchema('consent').safeParse({ text: { ca: 'Accepto', en: 'I agree' } })
-        .success,
-    ).toBe(true);
-    expect(questionSettingsSchema('consent').safeParse({ text: { en: 'I agree' } }).success).toBe(
-      false,
-    );
+    expect((CUSTOM_QUESTION_TYPES as readonly string[]).includes('consent')).toBe(false);
     expect(questionSettingsSchema('file_upload').safeParse({ accept: 'photo' }).success).toBe(true);
     expect(questionSettingsSchema('file_upload').safeParse({ accept: 'video' }).success).toBe(
       false,
@@ -153,29 +133,18 @@ describe('settings per type', () => {
     expect(parseQuestionSettings('item_list', {})).toEqual({ max_items: 20 });
   });
 
-  test('the draft schema checks the settings and the placements of the type', () => {
-    const base = {
-      label: { ca: 'Pregunta' },
-      placements: ['wizard'] as const,
-      options: [],
-    };
+  test('the draft schema checks the settings of the type', () => {
+    const base = { label: { ca: 'Pregunta' }, options: [] };
     expect(
-      questionDraftSchema.safeParse({ ...base, type: 'number', settings: { integer: true } })
+      profileFieldDraftSchema.safeParse({ ...base, type: 'number', settings: { integer: true } })
         .success,
     ).toBe(true);
     expect(
-      questionDraftSchema.safeParse({ ...base, type: 'number', settings: { min: 'a' } }).success,
+      profileFieldDraftSchema.safeParse({ ...base, type: 'number', settings: { min: 'a' } })
+        .success,
     ).toBe(false);
     expect(
-      questionDraftSchema.safeParse({
-        ...base,
-        type: 'signature',
-        placements: ['staff'],
-        settings: {},
-      }).success,
-    ).toBe(false);
-    expect(
-      questionDraftSchema.safeParse({
+      profileFieldDraftSchema.safeParse({
         ...base,
         type: 'search_choice',
         settings: {},
@@ -212,8 +181,6 @@ describe('one answer schema per type', () => {
     ['a list with a repeated item', question('item_list', { max_items: 3 }), ['A', 'A'], false],
     ['a list too long', question('item_list', { max_items: 1 }), ['A', 'B'], false],
     ['an empty item', question('item_list', { max_items: 3 }), ['A', ' '], false],
-    ['a ticked consent', question('consent', { text: { ca: 'Accepto' } }), true, true],
-    ['an unticked consent', question('consent', { text: { ca: 'Accepto' } }), false, false],
     [
       'her file',
       question('file_upload', { accept: 'document' }),
@@ -237,13 +204,15 @@ describe('one answer schema per type', () => {
       },
       false,
     ],
-    ['a drawn signature', question('signature'), strokes, true],
-    ['a signature off the pad', question('signature'), [[[10, 2000]]], false],
+    ['a country by its canonical name', question('country'), 'Síria', true],
+    ['a country in another language', question('country'), 'Syria', false],
+    ['a municipality of Catalonia', question('municipality'), 'Vic', true],
+    ['a place that is not a municipality', question('municipality'), 'Madrid', false],
   ];
   for (const [name, asked, value, valid] of cases) {
     test(`${name}: ${valid ? 'accepted' : 'refused'}`, () => {
       expect(customAnswerSchema(asked).safeParse(value).success).toBe(valid);
-      // An empty value (an unticked consent) clears the answer instead.
+      // An empty value clears the answer instead.
       expect(customAnswerError(asked, value as never)).toBe(
         valid || isEmptyAnswer(value as never) ? null : 'invalid',
       );
@@ -252,6 +221,8 @@ describe('one answer schema per type', () => {
 
   test('a phone, an email and a list are tidied before they are checked', () => {
     expect(normalizeCustomAnswerInput(question('phone'), '+34 600 11-12-22')).toBe('+34600111222');
+    // A local Spanish number gets +34, as the team and the entities type it (RAPP-664).
+    expect(normalizeCustomAnswerInput(question('phone'), '612 345 678')).toBe('+34612345678');
     expect(normalizeCustomAnswerInput(question('email'), '  Ana@Example.ORG ')).toBe(
       'ana@example.org',
     );
@@ -261,7 +232,7 @@ describe('one answer schema per type', () => {
     ]);
   });
 
-  test('an unticked consent, no file and no signature are empty answers', () => {
+  test('false and nothing are empty answers', () => {
     expect(isEmptyAnswer(false)).toBe(true);
     expect(isEmptyAnswer(true)).toBe(false);
     expect(isEmptyAnswer(0)).toBe(false);
@@ -274,9 +245,8 @@ describe('each answer reads well', () => {
     no: 'No',
     maybe: 'Potser',
     archived: 'arxivada',
-    signed: 'Signat',
   };
-  test('dates, numbers and lists in her language; consent with its time', () => {
+  test('dates, numbers and lists in her language', () => {
     expect(answerText(question('date'), '2001-02-28', 'ca', words)).toBe('28/2/2001');
     expect(answerText(question('number', { integer: false }), 1234.5, 'ca', words)).toBe('1234,5');
     expect(answerText(question('item_list', { max_items: 5 }), ['A', 'B'], 'ca', words)).toBe(
@@ -284,15 +254,9 @@ describe('each answer reads well', () => {
     );
     expect(answerText(question('yes_no'), 'no', 'ca', words)).toBe('No');
     expect(answerText(question('search_choice'), OPTION_A, 'ca', words)).toBe('Primera');
-    expect(
-      answerText(question('consent', { text: { ca: 'Accepto' } }), true, 'ca', words, {
-        answeredAt: '2026-10-21T08:30:00Z',
-      }),
-    ).toMatch(/^Sí \(21\/10\/26,? 10:30\)$/);
   });
 
-  test('a signature says signed and a file its name; neither shows its raw data', () => {
-    expect(answerText(question('signature'), strokes, 'en', words)).toBe('Signat');
+  test('a file says its name, never its raw data', () => {
     expect(
       answerText(
         question('file_upload', { accept: 'document' }),
@@ -314,14 +278,26 @@ describe('the scenario tool fills every type with a valid sample', () => {
             ? { min_age: 18, max_age: 40 }
             : type === 'item_list'
               ? { max_items: 1 }
-              : type === 'consent'
-                ? { text: { ca: 'Accepto' } }
-                : type === 'file_upload'
-                  ? { accept: 'photo' }
-                  : {};
+              : type === 'file_upload'
+                ? { accept: 'photo' }
+                : {};
       const asked = question(type, settings as CustomQuestion['settings']);
       const sample = sampleCustomAnswer(asked, 'ar', { orgId: ORG, profileId: HER });
       expect(customAnswerError(asked, sample)).toBeNull();
     });
   }
+});
+
+test('a file is hers to give; staff write every other answer', () => {
+  expect(isStaffWritable(question('yes_no'))).toBe(true);
+  expect(isStaffWritable(question('file_upload', { accept: 'photo' }))).toBe(false);
+});
+
+test('a phone takes its international form: +34 before a local Spanish number (RAPP-663)', () => {
+  expect(internationalPhone('612 345 678')).toBe('+34612345678');
+  expect(internationalPhone('93-000-54-99')).toBe('+34930005499');
+  expect(internationalPhone('0034 612 345 678')).toBe('+34612345678');
+  expect(internationalPhone('+212 6 12 34 56 78')).toBe('+212612345678');
+  // Not a Spanish number: left as typed, for the check to refuse.
+  expect(internationalPhone('12345')).toBe('12345');
 });

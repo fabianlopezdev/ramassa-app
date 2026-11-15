@@ -27,7 +27,7 @@ import {
 const NOW = new Date('2026-10-14T10:00:00.000Z');
 const CATEGORY = '11111111-1111-4111-8111-111111111111';
 const AUTHOR = '33333333-3333-4333-8333-333333333333';
-const TARGETS = ['es', 'en', 'ar', 'fa'] as const;
+const TARGETS = ['es', 'en', 'fr', 'ar', 'fa'] as const;
 
 function approvedTitle(text: string, from = 'ca' as const): TranslationReview {
   const review = createTranslationReview({
@@ -95,7 +95,7 @@ describe('the knowledge form (RAPP-343)', () => {
     const form = translatedForm();
     expect(Object.keys(withSourceBlocks(form, 'ca', form.body.ca ?? []).body)).toEqual(['ca']);
     const corrected = withTranslatedBlocks(form, 'ar', form.body.ar ?? []);
-    expect(corrected.approvedLanguages).toEqual(['es', 'en', 'fa']);
+    expect(corrected.approvedLanguages).toEqual(['es', 'en', 'fr', 'fa']);
     expect(areKnowledgeTranslationsApproved(corrected, approvedTitle('Guia'), 'ca')).toBe(false);
     expect(areKnowledgeTranslationsApproved(form, approvedTitle('Guia'), 'ca')).toBe(true);
   });

@@ -1,11 +1,17 @@
+import { wizardDraftStoreOn } from '@/lib/wizard-draft';
 import { fireEvent, render } from '@testing-library/react';
 import { afterAll, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
 import type { WizardFlow } from '@ramassa/shared/intake';
-import { EMPTY_INTAKE_CATALOG } from '@ramassa/shared/intake-builder';
+import { EMPTY_INTAKE_CATALOG, systemFieldIndexFromCatalog } from '@ramassa/shared/intake-builder';
 import { createInMemoryOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
+import { systemFieldsCatalogFixture } from '@ramassa/shared/testing';
 
-const store = createInMemoryOnboardingDraftStore();
+// Her draft is kept by field (RAPP-663): the screens save through her fields.
+const store = wizardDraftStoreOn(
+  createInMemoryOnboardingDraftStore(),
+  systemFieldIndexFromCatalog(systemFieldsCatalogFixture()),
+);
 const pushed: string[] = [];
 const haptics: string[] = [];
 let wentNext = 0;
@@ -14,6 +20,7 @@ mock.module('@/lib/haptics/haptics', () => ({
   playHaptic: (kind: string) => void haptics.push(kind),
 }));
 mock.module('expo-router', () => ({
+  useNavigation: () => ({ getState: () => undefined }),
   useRouter: () => ({ push: (href: string) => void pushed.push(href), replace: () => {} }),
   useFocusEffect: () => {},
 }));
@@ -59,6 +66,11 @@ const flow: WizardFlow = {
   hiddenScreens: new Set(),
 };
 mock.module('@/lib/onboarding-intake-context', () => ({
+  // Her answers as the real one reads them: stored ones under her draft's (RAPP-715).
+  herWizardAnswers: (intake: { customAnswers: Record<string, unknown> }) => ({
+    ...intake.customAnswers,
+    ...store.loadStoredDraft()?.answers,
+  }),
   useWizardIntake: () => ({
     customAnswers: {},
     hidden: new Set(),

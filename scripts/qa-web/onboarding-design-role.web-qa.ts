@@ -1,8 +1,9 @@
 /**
  * The onboarding design role in the admin (RAPP-615), signed in as the seeded
- * design account: it lands on the onboarding page, its menu holds the
- * onboarding and the test players only, every other admin URL sends it back,
- * and its roster holds test players only.
+ * design account: it lands on the onboarding page, its menu holds the test
+ * players, the onboarding and Dades de les jugadores (RAPP-650, its own page
+ * since RAPP-654), every other admin URL sends it back, and its roster holds
+ * test players only.
  */
 
 import { expect, test } from '@playwright/test';
@@ -13,6 +14,7 @@ import {
   TEST_PLAYER_EMAIL,
   TEST_PLAYER_NAME,
 } from '@ramassa/shared/testing';
+import { choose } from './invite-review';
 import {
   completeSecondFactor,
   countInDatabase,
@@ -24,20 +26,31 @@ import {
 test.setTimeout(120_000);
 
 test.describe.serial('the onboarding design role', () => {
-  test('lands on the onboarding page and its menu holds its two areas only', async ({ page }) => {
+  test('lands on the onboarding page and its menu holds its three areas only', async ({ page }) => {
     await signIn(page, ONBOARDING_DESIGNER_EMAIL);
     await expect(page).toHaveURL(/\/onboarding$/, { timeout: 30_000 });
     await expect(page.getByTestId('onboarding-design-page')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Registration', level: 1 })).toBeVisible();
-    // The question builder and the authorization are both on the page.
-    await expect(page.getByRole('heading', { name: 'Questions', level: 2 })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Authorization', level: 2 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Onboarding', level: 1 })).toBeVisible();
+    // Her screens as a board (RAPP-641); the legal texts open from their cards.
+    await expect(page.getByTestId('screen-board')).toBeVisible();
+    await expect(page.getByTestId('board-step-terms')).toBeVisible();
+    await expect(page.getByTestId('board-step-authorization')).toBeVisible();
 
     const menu = page.getByRole('navigation', { name: 'Staff navigation' });
     const items = menu.getByRole('link');
-    await expect(items).toHaveCount(2);
+    await expect(items).toHaveCount(3);
     await expect(menu.getByRole('link', { name: 'Participants' })).toBeVisible();
-    await expect(menu.getByRole('link', { name: 'Registration' })).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'Onboarding' })).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'Player data' })).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'Settings' })).toHaveCount(0);
+
+    // The Fitxa opens from the menu, and its old Settings address forwards to it.
+    await menu.getByRole('link', { name: 'Player data' }).click();
+    await expect(page).toHaveURL(/\/profile-layout$/, { timeout: 20_000 });
+    await expect(page.getByTestId('profile-layout')).toBeVisible({ timeout: 20_000 });
+    await page.goto('/settings?tab=profile-layout');
+    await expect(page).toHaveURL(/\/profile-layout$/, { timeout: 20_000 });
+    await expect(page.getByTestId('profile-layout')).toBeVisible({ timeout: 20_000 });
   });
 
   test('every other admin URL sends it back to the onboarding', async ({ page }) => {
@@ -58,7 +71,7 @@ test.describe.serial('the onboarding design role', () => {
     });
     await signIn(page, ONBOARDING_DESIGNER_EMAIL);
     await expect(page).toHaveURL(/\/onboarding$/, { timeout: 30_000 });
-    for (const path of ['/dashboard', '/settings', '/data', '/participants/invites', '/messages']) {
+    for (const path of ['/dashboard', '/data', '/participants/invites', '/messages', '/settings']) {
       await page.goto(path);
       await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20_000 });
       await expect(page.getByTestId('onboarding-design-page')).toBeVisible({ timeout: 20_000 });
@@ -167,8 +180,9 @@ test.describe.serial('the onboarding design role', () => {
     // The last step shows what she will be asked (RAPP-618); the design role
     // chooses for its test player too.
     await page.getByRole('button', { name: 'Next: what she will be asked' }).click();
-    const review = page.getByTestId('invite-questions-review');
-    await review.locator('#invite-question-phone').selectOption('skip');
+    await expect(page.getByTestId('invite-questions-review')).toBeVisible();
+    await choose(page, 'phone', 'skip');
+    await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Create the invitation' }).click();
     await expect(page.getByRole('heading', { name: 'Invitation created', level: 2 })).toBeVisible({
       timeout: 20_000,
@@ -179,9 +193,12 @@ test.describe.serial('the onboarding design role', () => {
       ),
     ).toBe(1);
     expect(
+      // An app question's state lives on its first field (ADR-031).
       countInDatabase(
-        `select count(*) from public.intake_question_states s join auth.users u on u.id = s.profile_id
-          where u.email = '${TEST_PLAYER_EMAIL}' and s.question = 'phone' and s.state = 'skip'`,
+        `select count(*) from public.custom_question_states s
+           join auth.users u on u.id = s.profile_id
+           join public.profile_fields f on f.id = s.question_id and f.system_key = 'phone'
+          where u.email = '${TEST_PLAYER_EMAIL}' and s.state = 'skip'`,
       ),
     ).toBe(1);
   });

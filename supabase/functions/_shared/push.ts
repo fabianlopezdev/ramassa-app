@@ -20,7 +20,14 @@ export const SUPPORTED_PUSH_LANGUAGES = Object.keys(
 
 export type PushLanguage = PushCatalogLanguage;
 export type PushContentType =
-  'announcement' | 'event' | 'message' | 'forum_flag' | 'referral_update' | 'mentoring_update';
+  | 'announcement'
+  | 'event'
+  | 'message'
+  | 'forum_flag'
+  | 'referral_update'
+  | 'mentoring_update'
+  // A form the team created asks her (RAPP-700): its name is the title, the link her response.
+  | 'custom_form';
 export type LocalizedPushText = Readonly<Partial<Record<PushLanguage, string>>>;
 
 export interface PushContent {
@@ -147,7 +154,9 @@ export function resolvePushText(
   const fallbackBody =
     content.contentType === 'event'
       ? fallbackCatalog.eventFallbackBody
-      : fallbackCatalog.announcementFallbackBody;
+      : content.contentType === 'custom_form'
+        ? fallbackCatalog.customFormFallbackBody
+        : fallbackCatalog.announcementFallbackBody;
 
   return {
     title: resolvedTitle.text,

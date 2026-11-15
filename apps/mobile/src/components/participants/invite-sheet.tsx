@@ -34,14 +34,14 @@ import {
 import { isAppError } from '@ramassa/shared/errors';
 import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
+import { answeredByInvitation } from '@ramassa/shared/intake';
 import {
-  allowedQuestionStates,
-  answeredAtInvitation,
-  type QuestionStates,
-} from '@ramassa/shared/intake';
-import { EMPTY_INTAKE_CATALOG, requiredBuiltinQuestions } from '@ramassa/shared/intake-builder';
+  choicesPayload,
+  EMPTY_INTAKE_CATALOG,
+  NO_CHOICES,
+  type PlayerChoices,
+} from '@ramassa/shared/intake-builder';
 import {
-  buildCreateParticipantInvitePayload,
   createParticipantInviteSchema,
   type CreateParticipantInvite,
 } from '@ramassa/shared/schemas';
@@ -110,12 +110,10 @@ export function InviteSheet({
   const [created, setCreated] = useState<CreatedParticipantInvite | null>(null);
   // Her parsed details once staff move on to the questions (RAPP-618).
   const [details, setDetails] = useState<CreateParticipantInvite | null>(null);
-  const [questionStates, setQuestionStates] = useState<QuestionStates>({});
+  // Her choices on every question, the app's and Ramassà's (RAPP-644).
+  const [choices, setChoices] = useState<PlayerChoices>(NO_CHOICES);
   const catalog = useInviteIntakeCatalog(visible).data ?? EMPTY_INTAKE_CATALOG;
-  const answered =
-    details === null
-      ? new Set<never>()
-      : answeredAtInvitation(buildCreateParticipantInvitePayload(details));
+  const answered = details === null ? new Set<never>() : answeredByInvitation(details);
   const formatDate = useMemo(() => {
     const format = new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, {
       dateStyle: 'long',
@@ -134,7 +132,7 @@ export function InviteSheet({
     setEmailError(null);
     setCreated(null);
     setDetails(null);
-    setQuestionStates({});
+    setChoices(NO_CHOICES);
     create.reset();
   };
   const close = () => {
@@ -168,11 +166,8 @@ export function InviteSheet({
     create.mutate(
       {
         input: details,
-        questionStates: allowedQuestionStates(
-          questionStates,
-          answered,
-          requiredBuiltinQuestions(catalog),
-        ),
+        // Ramassà's questions travel as `custom:<id>` beside the app's own.
+        questionStates: choicesPayload(catalog, answered, choices),
       },
       {
         onSuccess: (invite) => {
@@ -225,8 +220,8 @@ export function InviteSheet({
                 </Text>
                 <InviteQuestionsStep
                   answered={answered}
-                  states={questionStates}
-                  onChange={setQuestionStates}
+                  choices={choices}
+                  onChange={setChoices}
                   catalog={catalog}
                 />
                 {create.isError ? (

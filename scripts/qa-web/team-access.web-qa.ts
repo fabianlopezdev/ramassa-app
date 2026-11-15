@@ -38,7 +38,7 @@ test.afterAll(() => {
 });
 
 async function openTeam(page: Page): Promise<void> {
-  await page.goto('/settings?tab=staff');
+  await page.goto('/team');
   await expect(page.getByTestId('team-access')).toBeVisible({ timeout: 30_000 });
 }
 
@@ -69,7 +69,7 @@ test.describe.serial('the Team screen', () => {
       queryDatabase(`select string_agg(permission_code, ',' order by permission_code)
         from public.team_member_permissions where profile_id = '${MEMBER_ID}'`),
     ).toBe(
-      'attendance.mark,attendance.reports,equipment.handover,feedback.view,messages.inbox,participants.view',
+      'attendance.mark,attendance.reports,consents.collect,equipment.handover,feedback.view,messages.inbox,participants.view',
     );
     expect(
       queryDatabase(`select count(*) from public.audit_log

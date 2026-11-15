@@ -729,22 +729,17 @@ join seed_roster r on r.email = u.email
 on conflict (provider_id, provider) do nothing;
 
 -- Profiles -----------------------------------------------------------------------
--- The RGPD-sensitive columns go through public.encrypt_field, the same helper the
--- app uses (ADR-004), so a detail view exercises real decryption instead of
--- reading plaintext that a broken decrypt would still render.
+-- A profile holds her names and her account settings (ADR-031, D2). Everything
+-- else she answers is an answer by field, written below.
 --
 -- A handful of rows are deliberately imperfect: three accounts never accepted the
--- terms, two participants are deactivated, one is forum-banned, and five hold no
--- identity document, four of them participants (the just-arrived case). A
--- uniformly happy dataset hides exactly the screens that break.
+-- terms, two participants are deactivated, one is forum-banned, and four
+-- participants hold no identity document (the just-arrived case). A uniformly
+-- happy dataset hides exactly the screens that break.
 
 insert into public.profiles (
-  id, org_id, role, first_name, last_name, date_of_birth, place_of_birth, nationality,
-  address, city, postal_code, phone, document_type, document_number,
-  reference_entity, collaborating_entity_id, reference_contact_name,
-  has_dependents, num_dependents,
-  clothing_size, shoe_size, preferred_language, is_active, is_forum_banned,
-  terms_accepted_at
+  id, org_id, role, first_name, last_name, collaborating_entity_id,
+  preferred_language, is_active, is_forum_banned, terms_accepted_at
 )
 select
   ('5eed0000-0000-4000-8000-' || lpad(r.ordinal::text, 12, '0'))::uuid,
@@ -752,19 +747,94 @@ select
   r.app_role,
   r.first_name,
   r.last_name,
-  make_date(1985 + (r.ordinal % 15), 1 + (r.ordinal % 12), 1 + (r.ordinal % 28)),
-  -- Where she was born, in the script she writes it in. Required at intake
-  -- since 2026-07-31 (RAPP-21), so a roster of NULLs would leave the staff edit
-  -- form (RAPP-24) unable to save ANY seeded participant without inventing a
-  -- birthplace first: the form re-validates the same rule the wizard applies.
-  --
-  -- Two participants keep a NULL on purpose. Profiles created before the field
-  -- existed carry one, and that case has its own behaviour (staff must supply
-  -- it before they can save anything else); a uniformly complete dataset would
-  -- hide it, exactly as the deactivated and undocumented rows exist to stop
-  -- their screens hiding.
-  case when r.ordinal % 11 = 0 then null else
-    case r.nationality
+  case r.ordinal
+    when 4 then '5eed0000-0000-4000-8030-000000000001'::uuid
+    when 5 then '5eed0000-0000-4000-8030-000000000002'::uuid
+    else null
+  end,
+  r.preferred_language,
+  r.ordinal % 13 <> 0,
+  r.ordinal % 17 = 0,
+  case when r.ordinal % 7 = 0 then null else now() end
+from seed_roster r
+on conflict (id) do nothing;
+
+-- Her answers, by field (ADR-031) ------------------------------------------------
+-- Written the way the app's writers write them: through
+-- `private.write_custom_answer`, so a Sensitive answer (phone, address, postal
+-- code, document number) is stored with public.encrypt_field (ADR-004) and a
+-- detail view exercises real decryption. A choice is given by its option key.
+-- Only players carry a participant record; the team's own profiles hold none.
+
+create function pg_temp.seed_app_answer(
+  p_profile_id uuid, p_system_key text, p_value jsonb, p_source text, p_answered_by uuid default null)
+returns void
+language plpgsql
+as $$
+declare
+  field public.profile_fields;
+  stored jsonb := p_value;
+begin
+  if p_value is null or jsonb_typeof(p_value) = 'null' then
+    return;
+  end if;
+  select * into field from public.profile_fields f
+   where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = p_system_key;
+  if field.question_type in ('single_choice', 'search_choice') then
+    select to_jsonb(o.id::text) into stored from public.custom_question_options o
+     where o.question_id = field.id and o.key = p_value #>> '{}';
+  elsif field.question_type = 'multiple_choice' then
+    select jsonb_agg(o.id::text order by o.sort_order) into stored from public.custom_question_options o
+     where o.question_id = field.id and o.key in (select jsonb_array_elements_text(p_value));
+  end if;
+  if stored is null then
+    raise exception 'seed: % has no option %', p_system_key, p_value;
+  end if;
+  perform private.write_custom_answer(p_profile_id, field, stored, p_source, p_answered_by);
+end;
+$$;
+
+-- The same answers for a referral, encrypted as every referral answer is.
+create function pg_temp.seed_referral_answer(p_referral_id uuid, p_system_key text, p_value jsonb)
+returns void
+language plpgsql
+as $$
+declare
+  field public.profile_fields;
+  stored jsonb := p_value;
+begin
+  select * into field from public.profile_fields f
+   where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = p_system_key;
+  if field.question_type in ('single_choice', 'search_choice') then
+    select to_jsonb(o.id::text) into stored from public.custom_question_options o
+     where o.question_id = field.id and o.key = p_value #>> '{}';
+  elsif field.question_type = 'multiple_choice' then
+    select jsonb_agg(o.id::text order by o.sort_order) into stored from public.custom_question_options o
+     where o.question_id = field.id and o.key in (select jsonb_array_elements_text(p_value));
+  end if;
+  insert into public.referral_custom_answers (referral_id, question_id, org_id, value_encrypted)
+  values (p_referral_id, field.id, field.org_id, public.encrypt_field(stored::text))
+  on conflict do nothing;
+end;
+$$;
+
+perform pg_temp.seed_app_answer(player.id, answer.system_key, answer.value, 'player')
+from (
+  select r.*, ('5eed0000-0000-4000-8000-' || lpad(r.ordinal::text, 12, '0'))::uuid as id,
+         coalesce(
+           r.own_reference_entity,
+           case r.ordinal % 3 when 0 then 'Creu Roja Osona' when 1 then 'CEAR Catalunya' else null end
+         ) as reference_entity
+    from seed_roster r
+   where r.app_role = 'player'
+) player
+cross join lateral (values
+  ('date_of_birth', to_jsonb(make_date(1985 + (player.ordinal % 15), 1 + (player.ordinal % 12), 1 + (player.ordinal % 28))::text)),
+  -- Where she was born, in the script she writes it in. Two participants have
+  -- none on purpose: a profile from before the field existed, whose staff edit
+  -- must supply it first.
+  ('place_of_birth', case when player.ordinal % 11 = 0 then null else to_jsonb(
+    case player.nationality
       when 'Síria'      then 'حلب'
       when 'Marroc'     then 'الرباط'
       when 'Tunísia'    then 'تونس'
@@ -778,45 +848,30 @@ select
       when 'Senegal'    then 'Dakar'
       when 'Gàmbia'     then 'Banjul'
       else 'Vic'
-    end
-  end,
-  r.nationality,
-  public.encrypt_field('Carrer de Prova, ' || r.ordinal),
-  r.city,
-  public.encrypt_field(
-    case r.city
+    end) end),
+  ('nationality', to_jsonb(player.nationality)),
+  ('address', to_jsonb('Carrer de Prova, ' || player.ordinal)),
+  ('city', to_jsonb(player.city)),
+  ('postal_code', to_jsonb(
+    case player.city
       when 'Vic' then '08500'
       when 'Manlleu' then '08560'
       when 'Torelló' then '08570'
       when 'Roda de Ter' then '08510'
       else '08500'
-    end
-  ),
-  public.encrypt_field('+346' || lpad(r.ordinal::text, 8, '0')),
-  case when r.ordinal % 5 = 0 then 'none' else 'nie' end,
-  case when r.ordinal % 5 = 0 then null
-       else public.encrypt_field('Y' || lpad(r.ordinal::text, 7, '0') || 'Z') end,
-  coalesce(
-    r.own_reference_entity,
-    case r.ordinal % 3 when 0 then 'Creu Roja Osona' when 1 then 'CEAR Catalunya' else null end
-  ),
-  case r.ordinal
-    when 4 then '5eed0000-0000-4000-8030-000000000001'::uuid
-    when 5 then '5eed0000-0000-4000-8030-000000000002'::uuid
-    else null
-  end,
-  case when r.own_reference_entity is not null then null
-       else case r.ordinal % 3 when 0 then 'Sílvia Bosch' when 1 then 'Jordi Camps' else null end end,
-  r.ordinal % 3 = 0,
-  case when r.ordinal % 3 = 0 then 1 + (r.ordinal % 4) else 0 end,
-  (array['S', 'M', 'L', 'XL'])[1 + (r.ordinal % 4)],
-  (36 + (r.ordinal % 6))::text,
-  r.preferred_language,
-  r.ordinal % 13 <> 0,
-  r.ordinal % 17 = 0,
-  case when r.ordinal % 7 = 0 then null else now() end
-from seed_roster r
-on conflict (id) do nothing;
+    end)),
+  ('phone', to_jsonb('+346' || lpad(player.ordinal::text, 8, '0'))),
+  ('document_type', to_jsonb(case when player.ordinal % 5 = 0 then 'none' else 'nie' end)),
+  ('document_number', case when player.ordinal % 5 = 0 then null
+                           else to_jsonb('Y' || lpad(player.ordinal::text, 7, '0') || 'Z') end),
+  ('reference_entity', to_jsonb(player.reference_entity)),
+  ('reference_contact_name', case player.ordinal % 3 when 0 then '"Sílvia Bosch"'::jsonb
+                                                     when 1 then '"Jordi Camps"'::jsonb end),
+  ('has_dependents', to_jsonb(case when player.ordinal % 3 = 0 then 'yes' else 'no' end)),
+  ('num_dependents', case when player.ordinal % 3 = 0 then to_jsonb(1 + (player.ordinal % 4)) end),
+  ('clothing_size', to_jsonb((array['S', 'M', 'L', 'XL'])[1 + (player.ordinal % 4)])),
+  ('shoe_size', to_jsonb((36 + (player.ordinal % 6))::text))
+) as answer(system_key, value);
 
 -- Entity referrals and encrypted participant updates (RAPP-54) -----------------
 -- Creu Roja has one pending and three linked referrals. Its linked denominator
@@ -928,24 +983,38 @@ values
 on conflict (id) do nothing;
 
 -- The pending referral carries the season registration answers and the
--- entity's consent (RAPP-303), so accepting it fills her profile.
+-- entity's consent (RAPP-303), so accepting it fills her profile. Its answers
+-- are by field (ADR-031); its blob keeps only her season count.
 update public.entity_referrals
 set
-  intake_answers = public.encrypt_field(jsonb_build_object(
-    'date_of_birth', '1996-02-20',
-    'nationality', 'Marroc',
-    'document_type', 'none',
-    'city', 'Vic',
-    'applicant_status', 'migrant',
-    'supporting_entities', jsonb_build_array('Càritas Vic'),
-    'reference_contact_name', 'Sílvia Bosch',
-    'season_number', 2,
-    'childcare_need', 'yes',
-    'specific_needs', 'Prefereix entrenar a la tarda.'
-  )::text),
+  intake_answers = public.encrypt_field(jsonb_build_object('season_number', 2)::text),
   consent_confirmed_at = now() - interval '2 days',
   consent_confirmed_by = '5eed0000-0000-4000-8000-000000000004'
 where id = '5eed0000-0000-4000-8010-000000000001';
+
+perform pg_temp.seed_referral_answer('5eed0000-0000-4000-8010-000000000001', answer.system_key, answer.value)
+from (values
+  ('date_of_birth', '"1996-02-20"'::jsonb),
+  ('nationality', '"Marroc"'),
+  ('document_type', '"none"'),
+  ('city', '"Vic"'),
+  ('phone', '"+34930005401"'),
+  ('applicant_status', '"migrant"'),
+  ('supporting_entities', '["Càritas Vic"]'),
+  ('reference_contact_name', '"Sílvia Bosch"'),
+  ('childcare_need', '"yes"'),
+  ('specific_needs', '["other"]'),
+  ('specific_needs_details', '"Prefereix entrenar a la tarda."')
+) as answer(system_key, value);
+
+-- The phone each linked referral was sent with.
+perform pg_temp.seed_referral_answer(referral.id, 'phone', to_jsonb(referral.phone))
+from (values
+  ('5eed0000-0000-4000-8010-000000000002'::uuid, '+34600000011'),
+  ('5eed0000-0000-4000-8010-000000000003'::uuid, '+34600000012'),
+  ('5eed0000-0000-4000-8010-000000000004'::uuid, '+34600000013'),
+  ('5eed0000-0000-4000-8010-000000000005'::uuid, '+34600000014')
+) as referral(id, phone);
 
 insert into public.entity_invitations (
   id, org_id, collaborating_entity_id, email, profile_id, invited_by,
@@ -1149,38 +1218,35 @@ values (
 )
 on conflict (provider_id, provider) do nothing;
 
-insert into public.profiles (
-  id, org_id, role, first_name, last_name, date_of_birth, nationality,
-  reference_entity, clothing_size, preferred_language
-)
+insert into public.profiles (id, org_id, role, first_name, last_name, preferred_language)
 values (
   '5eed0000-0000-4000-8000-000000000098',
   '5eed0000-0000-4000-8000-000000000000',
   'invited',
   'Mariam',
   'Keita',
-  '1999-03-14',
-  'Mali',
-  'Creu Roja Osona',
-  'M',
   'ca'
 )
 on conflict (id) do nothing;
 
-insert into public.profile_answers (profile_id, org_id, question, source)
-select '5eed0000-0000-4000-8000-000000000098', '5eed0000-0000-4000-8000-000000000000', question, 'staff'
-from unnest(array[
-  'first_name', 'last_name', 'date_of_birth', 'nationality', 'reference_entity', 'clothing_size'
-]) as question
-on conflict (profile_id, question) do nothing;
+-- What staff filled in before she joined: answers by field, given by the team.
+perform pg_temp.seed_app_answer('5eed0000-0000-4000-8000-000000000098', answer.system_key, answer.value, 'staff',
+                               '5eed0000-0000-4000-8000-000000000002')
+from (values
+  ('date_of_birth', '"1999-03-14"'::jsonb),
+  ('nationality', '"Mali"'),
+  ('reference_entity', '"Creu Roja Osona"'),
+  ('clothing_size', '"M"')
+) as answer(system_key, value);
 
--- Staff choices for her wizard (RAPP-301): she reviews the clothing size staff
--- entered, and she is not asked her phone.
-insert into public.intake_question_states (profile_id, org_id, question, state)
-values
-  ('5eed0000-0000-4000-8000-000000000098', '5eed0000-0000-4000-8000-000000000000', 'clothing_size', 'ask'),
-  ('5eed0000-0000-4000-8000-000000000098', '5eed0000-0000-4000-8000-000000000000', 'phone', 'skip')
-on conflict (profile_id, question) do nothing;
+-- Staff choices for her wizard (RAPP-301), on the fields: she reviews the
+-- clothing size staff entered, and she is not asked her phone.
+insert into public.custom_question_states (profile_id, org_id, question_id, state)
+select '5eed0000-0000-4000-8000-000000000098', f.org_id, f.id, choice.state
+from (values ('clothing_size', 'ask'), ('phone', 'skip')) as choice(system_key, state)
+join public.profile_fields f
+  on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = choice.system_key
+on conflict (profile_id, question_id) do nothing;
 
 -- The participation authorization (RAPP-304) -----------------------------------
 -- The 2026/27 season and version 1 of Ramassà's authorization: the text of the
@@ -1195,12 +1261,16 @@ values ('5eed0000-0000-4000-8040-000000000001', '5eed0000-0000-4000-8000-0000000
         '2026/27', '2026-09-01', true)
 on conflict (org_id, name) where not is_test_fixture do nothing;
 
-insert into public.authorization_versions (id, org_id, season_id, version_number, content, published_at, published_by)
-values (
-  '5eed0000-0000-4000-8041-000000000001',
-  '5eed0000-0000-4000-8000-000000000000',
-  (select id from public.seasons where org_id = '5eed0000-0000-4000-8000-000000000000' and name = '2026/27'),
-  1,
+-- The authorization is a legal form (RAPP-773): the version is written the way
+-- `20261104160000_authorization_as_legal_form.sql` converts a published one.
+-- Its form gets the version's screens, texts and consents, keeping the Health
+-- screen's questions, and the version freezes that form as its snapshot.
+declare
+  seed_org constant uuid := '5eed0000-0000-4000-8000-000000000000';
+  seed_form uuid;
+  seed_content jsonb;
+begin
+seed_content :=
   -- The addresses are written with [at] so they are not read as seeded accounts.
   replace($auth${
   "title": {
@@ -1460,11 +1530,33 @@ values (
     }
   },
   "texts": {}
-}$auth$, '[at]', '@')::jsonb,
+}$auth$, '[at]', '@')::jsonb;
+seed_form := private.ensure_authorization_form(seed_org);
+perform private.consents_from_authorization(seed_org, seed_content);
+-- The seed's own writes open no draft.
+perform set_config('ramassa.app_terms_form_sync', 'on', true);
+perform private.restore_legal_form(seed_form, private.authorization_snapshot_from_content(
+  seed_org, seed_form, seed_content, private.custom_form_content(seed_form) -> 'placements', null));
+update public.custom_forms
+   set version = 1, published_at = timestamptz '2026-09-01 09:00:00+02'
+ where id = seed_form;
+insert into public.authorization_versions (id, org_id, season_id, version_number, content, published_at,
+                                           published_by, form_snapshot, legacy_compatible)
+values (
+  '5eed0000-0000-4000-8041-000000000001',
+  seed_org,
+  (select id from public.seasons where org_id = seed_org and name = '2026/27'),
+  1,
+  seed_content,
   '2026-09-01 09:00:00+02',
-  '5eed0000-0000-4000-8000-000000000001'
+  '5eed0000-0000-4000-8000-000000000001',
+  private.authorization_snapshot_from_content(
+    seed_org, seed_form, seed_content, private.custom_form_content(seed_form) -> 'placements', null),
+  true
 )
 on conflict (id) do nothing;
+perform set_config('ramassa.app_terms_form_sync', '', true);
+end;
 
 insert into public.authorization_signatures (org_id, profile_id, season_id, method, paper_signed_on, recorded_by, signed_at)
 select p.org_id, p.id,
@@ -1487,7 +1579,7 @@ values (
 )
 on conflict (id) do nothing;
 
-insert into public.authorization_consent_events (org_id, profile_id, signature_id, consent_key, granted, method, decided_at)
+insert into public.consent_events (org_id, profile_id, signature_id, consent_key, granted, method, decided_at)
 select '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000011',
        '5eed0000-0000-4000-8042-000000000011', consent.key, consent.granted, 'app',
        timestamptz '2026-09-20 18:30:00+02'
@@ -1495,12 +1587,13 @@ select '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-00000000
                ('health_data', true), ('image_rights', false), ('newsletter', true),
                ('messaging_groups', true)) as consent(key, granted);
 
-update public.profiles
-set health_info = public.encrypt_field('No'),
-    emergency_contact_name = 'Layla Al-Hassan',
-    emergency_contact_relation = 'Germana',
-    emergency_contact_phone = public.encrypt_field('+34600000099')
-where id = '5eed0000-0000-4000-8000-000000000011';
+-- Her health answer and her emergency contact, as answers to the
+-- authorization's fields (RAPP-698).
+perform private.write_custom_answer('5eed0000-0000-4000-8000-000000000011',
+         private.authorization_field('5eed0000-0000-4000-8000-000000000000', d.key), d.value, 'player', null)
+  from (values ('health_info', '"No"'::jsonb), ('emergency_contact_name', '"Layla Al-Hassan"'::jsonb),
+               ('emergency_contact_relation', '"Germana"'::jsonb),
+               ('emergency_contact_phone', '"+34600000099"'::jsonb)) as d(key, value);
 
 -- A walk-in signed on a coach's tablet at the first training (RAPP-305): a new
 -- woman with only her name, waiting for staff to confirm her with her email.
@@ -1537,30 +1630,49 @@ values
    null, 'logistics', 2)
 on conflict (id) do nothing;
 
-insert into public.custom_questions
-  (id, org_id, screen_id, question_type, label, help, privacy, placements, sort_order)
-values
-  ('5eed0000-0000-4000-8045-000000000001', '5eed0000-0000-4000-8000-000000000000',
-   '5eed0000-0000-4000-8044-000000000001', 'yes_no_maybe',
-   '{"ca":"Vens amb transport públic?","es":"¿Vienes en transporte público?","en":"Do you come by public transport?","ar":"هل تأتين بالمواصلات العامة؟","fa":"آیا با حمل و نقل عمومی می‌آیید؟"}'::jsonb,
-   null, 'normal', array['wizard', 'entity_form'], 0),
-  ('5eed0000-0000-4000-8045-000000000002', '5eed0000-0000-4000-8000-000000000000',
-   '5eed0000-0000-4000-8044-000000000002', 'single_choice',
-   '{"ca":"Com et vas assabentar de Ramassà?","es":"¿Cómo te enteraste de Ramassà?","en":"How did you hear about Ramassà?","ar":"كيف سمعتِ عن راماسا؟","fa":"چطور با راماسا آشنا شدید؟"}'::jsonb,
-   null, 'normal', array['wizard'], 0),
-  ('5eed0000-0000-4000-8045-000000000003', '5eed0000-0000-4000-8000-000000000000',
-   '5eed0000-0000-4000-8044-000000000003', 'long_text',
-   '{"ca":"Què et dificulta venir als entrenaments?","es":"¿Qué te dificulta venir a los entrenamientos?","en":"What makes it difficult for you to attend training?","ar":"ما الذي يصعّب عليكِ الحضور إلى التدريبات؟","fa":"چه چیزی آمدن شما به تمرین را دشوار می‌کند؟"}'::jsonb,
-   null, 'sensitive', array['season'], 1),
-  ('5eed0000-0000-4000-8045-000000000004', '5eed0000-0000-4000-8000-000000000000',
-   '5eed0000-0000-4000-8044-000000000001', 'short_text',
-   '{"ca":"Parada de metro més propera"}'::jsonb,
-   null, 'personal', array['staff'], 3),
-  ('5eed0000-0000-4000-8045-000000000005', '5eed0000-0000-4000-8000-000000000000',
-   '5eed0000-0000-4000-8044-000000000003', 'single_choice',
-   '{"ca":"Hi ha res que dificulti venir aquesta temporada?","es":"¿Hay algo que te dificulte venir esta temporada?","en":"Is anything making it hard to come this season?","ar":"هل هناك ما يصعّب عليكِ الحضور هذا الموسم؟","fa":"آیا چیزی آمدن شما را در این فصل دشوار می‌کند؟"}'::jsonb,
-   null, 'sensitive', array['season'], 0)
+-- The fields Ramassà added (RAPP-649): the seeded organization's Support
+-- section, then where each is asked. The fourth is filled in by the team only.
+insert into public.profile_fields
+  (id, org_id, section_id, kind, question_type, label, help, privacy, sort_order)
+select v.id::uuid, '5eed0000-0000-4000-8000-000000000000', s.id, 'custom', v.question_type, v.label::jsonb,
+       null, v.privacy, v.sort_order
+  from (values
+  ('5eed0000-0000-4000-8045-000000000001', 'yes_no_maybe',
+   '{"ca":"Vens amb transport públic?","es":"¿Vienes en transporte público?","en":"Do you come by public transport?","ar":"هل تأتين بالمواصلات العامة؟","fa":"آیا با حمل و نقل عمومی می‌آیید؟"}',
+   'normal', 100),
+  ('5eed0000-0000-4000-8045-000000000002', 'single_choice',
+   '{"ca":"Com et vas assabentar de Ramassà?","es":"¿Cómo te enteraste de Ramassà?","en":"How did you hear about Ramassà?","ar":"كيف سمعتِ عن راماسا؟","fa":"چطور با راماسا آشنا شدید؟"}',
+   'normal', 101),
+  ('5eed0000-0000-4000-8045-000000000003', 'long_text',
+   '{"ca":"Què et dificulta venir als entrenaments?","es":"¿Qué te dificulta venir a los entrenamientos?","en":"What makes it difficult for you to attend training?","ar":"ما الذي يصعّب عليكِ الحضور إلى التدريبات؟","fa":"چه چیزی آمدن شما به تمرین را دشوار می‌کند؟"}',
+   'sensitive', 103),
+  ('5eed0000-0000-4000-8045-000000000004', 'short_text',
+   '{"ca":"Parada de metro més propera"}',
+   'personal', 104),
+  ('5eed0000-0000-4000-8045-000000000005', 'single_choice',
+   '{"ca":"Hi ha res que dificulti venir aquesta temporada?","es":"¿Hay algo que te dificulte venir esta temporada?","en":"Is anything making it hard to come this season?","ar":"هل هناك ما يصعّب عليكِ الحضور هذا الموسم؟","fa":"آیا چیزی آمدن شما را در این فصل دشوار می‌کند؟"}',
+   'sensitive', 102)
+  ) as v(id, question_type, label, privacy, sort_order)
+  join public.profile_sections s
+    on s.org_id = '5eed0000-0000-4000-8000-000000000000' and s.key = 'support'
 on conflict (id) do nothing;
+
+-- Her onboarding asks the first three and the fifth on their screens; the
+-- entity form asks the first; the third and the fifth come back every season.
+insert into public.field_placements (org_id, field_id, surface, screen_key, sort_order)
+values
+  ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000001', 'onboarding',
+   '5eed0000-0000-4000-8044-000000000001', 0),
+  ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000002', 'onboarding',
+   '5eed0000-0000-4000-8044-000000000002', 0),
+  ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000003', 'onboarding',
+   '5eed0000-0000-4000-8044-000000000003', 1),
+  ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000005', 'onboarding',
+   '5eed0000-0000-4000-8044-000000000003', 0),
+  ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000001', 'entity_form', null, 0),
+  ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000003', 'season', null, 1),
+  ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8045-000000000005', 'season', null, 0)
+on conflict (field_id, surface, custom_form_id, shared_screen) do nothing;
 
 insert into public.custom_question_options (id, org_id, question_id, label, sort_order, is_archived)
 values
@@ -1577,9 +1689,16 @@ values
 on conflict (id) do nothing;
 
 -- Conditional participation follow-up, with existing encrypted answers retained (RAPP-572).
-update public.custom_questions
-   set show_when_question_id='5eed0000-0000-4000-8045-000000000005', show_when_option_id='5eed0000-0000-4000-8046-000000000004'
+update public.profile_fields
+   set show_when_field_id='5eed0000-0000-4000-8045-000000000005', show_when_option_id='5eed0000-0000-4000-8046-000000000004'
  where id='5eed0000-0000-4000-8045-000000000003' and org_id='5eed0000-0000-4000-8000-000000000000';
+
+-- Staff's choice on a Ramassà field for the invited woman (RAPP-643): asked
+-- even if answered. She has not answered it, so her wizard is unchanged.
+insert into public.custom_question_states (profile_id, org_id, question_id, state)
+values ('5eed0000-0000-4000-8000-000000000098', '5eed0000-0000-4000-8000-000000000000',
+        '5eed0000-0000-4000-8045-000000000001', 'ask')
+on conflict (profile_id, question_id) do nothing;
 
 insert into public.custom_answers
   (profile_id, question_id, season_key, season_id, org_id, value, value_encrypted, source)
@@ -1602,11 +1721,12 @@ values ('5eed0000-0000-4000-8010-000000000001', '5eed0000-0000-4000-8045-0000000
         '5eed0000-0000-4000-8000-000000000000', public.encrypt_field('"maybe"'))
 on conflict do nothing;
 
-insert into public.builtin_question_overrides (org_id, question, label, help, option_overrides)
-values ('5eed0000-0000-4000-8000-000000000000', 'reference_entity',
-        '{"ca":"Quina entitat t''acompanya?","es":"¿Qué entidad te acompaña?","en":"Which organization supports you?"}'::jsonb,
-        null, '{}'::jsonb)
-on conflict do nothing;
+-- Staff wording of an app question: on its field's onboarding placement.
+update public.field_placements p
+   set label_override = '{"ca":"Quina entitat t''acompanya?","es":"¿Qué entidad te acompaña?","en":"Which organization supports you?"}'::jsonb
+  from public.profile_fields f
+ where f.id = p.field_id and p.surface = 'onboarding'
+   and f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = 'reference_entity';
 
 -- Built-in screen wording and the flow order (RAPP-612). The order is the app's
 -- own, with the three staff screens after the equipment step, so the seeded
@@ -1624,12 +1744,6 @@ values ('5eed0000-0000-4000-8000-000000000000',
               'custom:5eed0000-0000-4000-8044-000000000002',
               'custom:5eed0000-0000-4000-8044-000000000003',
               'season', 'supporting-entities', 'participation-support', 'specific-needs'])
-on conflict do nothing;
-
--- Which built-in questions are required (RAPP-611): the seed keeps the app's
--- own list; one explicit row says the phone stays optional, as by default.
-insert into public.intake_required_questions (org_id, question, is_required)
-values ('5eed0000-0000-4000-8000-000000000000', 'phone', false)
 on conflict do nothing;
 
 insert into public.intake_state_presets (id, org_id, name, states)
@@ -2838,3 +2952,143 @@ select gen_random_uuid(), '5eed0000-0000-4000-8000-000000000097', 'Ramassà (see
 where not exists (
   select 1 from auth.mfa_factors where user_id = '5eed0000-0000-4000-8000-000000000097'
 );
+
+-- Signature blocks (RAPP-690, RAPP-691) ----------------------------------------------
+-- On an archived screen, so no live flow asks for a signature: one block, Amina's
+-- signature of it, and the pending tablet signature of the walk-in Salma.
+insert into public.intake_screens (id, org_id, title, intro, after_screen, sort_order, is_archived)
+values ('5eed0000-0000-4000-8090-000000000001', '5eed0000-0000-4000-8000-000000000000',
+        '{"ca":"Autoritzacions antigues","es":"Autorizaciones antiguas","en":"Old authorizations"}'::jsonb,
+        null, 'logistics', 90, true)
+on conflict (id) do nothing;
+
+insert into public.form_blocks (id, org_id, surface, screen_key, body, sort_order)
+values ('5eed0000-0000-4000-8090-000000000002', '5eed0000-0000-4000-8000-000000000000',
+        'onboarding', '5eed0000-0000-4000-8090-000000000001',
+        '{"ca":"Accepto les normes de convivència.","es":"Acepto las normas de convivencia.","en":"I accept the code of conduct.","ar":"أوافق على قواعد السلوك."}'::jsonb, 0)
+on conflict (id) do nothing;
+
+insert into public.form_signatures
+  (id, org_id, profile_id, surface, block_id, screen_key, body, language,
+   signer_kind, signer_user_id, signer_name, strokes, signed_at)
+values ('5eed0000-0000-4000-8090-000000000003', '5eed0000-0000-4000-8000-000000000000',
+        '5eed0000-0000-4000-8000-000000000011', 'wizard', '5eed0000-0000-4000-8090-000000000002',
+        '5eed0000-0000-4000-8090-000000000001', 'أوافق على قواعد السلوك.', 'ar',
+        'player', '5eed0000-0000-4000-8000-000000000011', 'أمينة الحسن',
+        '[[[120,620],[200,480],[290,560],[380,410],[470,590],[560,450]],[[640,520],[760,500],[880,540]]]'::jsonb,
+        timestamptz '2026-09-20 18:28:00+02')
+on conflict (id) do nothing;
+
+insert into public.walk_in_form_signatures
+  (id, walk_in_id, org_id, block_id, screen_key, body, language, strokes, signed_at, witnessed_by)
+values ('5eed0000-0000-4000-8090-000000000004', '5eed0000-0000-4000-8043-000000000001',
+        '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8090-000000000002',
+        '5eed0000-0000-4000-8090-000000000001', 'أوافق على قواعد السلوك.', 'ar',
+        '[[[110,600],[210,470],[300,550],[390,420]]]'::jsonb,
+        timestamptz '2026-09-15 19:12:00+02', '5eed0000-0000-4000-8000-000000000002')
+on conflict (id) do nothing;
+
+-- Dades legals (RAPP-699) -------------------------------------------------------------
+-- The seeded version brought its consents into the catalogue and placed them on the
+-- authorization. One consent the team added, asked on the archived screen above so no
+-- live flow asks it: Amina gave it on paper, then staff recorded her withdrawal.
+insert into public.consents (id, org_id, key, name, body, created_by, created_at, updated_at)
+values ('5eed0000-0000-4000-8099-000000000001', '5eed0000-0000-4000-8000-000000000000',
+        'fotos_de_partit',
+        '{"ca":"Fotos de partit","es":"Fotos de partido","en":"Match photos","ar":"صور المباريات","fa":"عکس‌های مسابقه"}'::jsonb,
+        '{"ca":"Accepto que l''equip comparteixi fotos dels partits al grup de l''equip.","es":"Acepto que el equipo comparta fotos de los partidos en el grupo del equipo.","en":"I agree that the team shares match photos in the team group.","ar":"أوافق على أن يشارك الفريق صور المباريات في مجموعة الفريق.","fa":"موافقم که تیم عکس‌های مسابقه را در گروه تیم به اشتراک بگذارد."}'::jsonb,
+        '5eed0000-0000-4000-8000-000000000001',
+        timestamptz '2026-09-01 10:00:00+02', timestamptz '2026-09-01 10:00:00+02')
+on conflict (id) do nothing;
+
+insert into public.consent_placements (id, org_id, consent_id, surface, screen_key, sort_order, required)
+values ('5eed0000-0000-4000-8099-000000000002', '5eed0000-0000-4000-8000-000000000000',
+        '5eed0000-0000-4000-8099-000000000001', 'onboarding', '5eed0000-0000-4000-8090-000000000001', 1, false)
+on conflict (id) do nothing;
+
+insert into public.consent_events
+  (org_id, profile_id, consent_id, consent_key, granted, method, decided_at, language, wording,
+   recorded_by, reason)
+select '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000011',
+       '5eed0000-0000-4000-8099-000000000001', 'fotos_de_partit', e.granted, e.method, e.decided_at, 'ca',
+       'Accepto que l''equip comparteixi fotos dels partits al grup de l''equip.',
+       '5eed0000-0000-4000-8000-000000000002', e.reason
+  from (values (true, 'paper', timestamptz '2026-09-15 19:00:00+02', null::text),
+               (false, 'staff', timestamptz '2026-10-02 18:00:00+02', 'Ho va demanar a l''entrenament.'))
+       as e(granted, method, decided_at, reason)
+ where not exists (select 1 from public.consent_events x
+                    where x.profile_id = '5eed0000-0000-4000-8000-000000000011'
+                      and x.consent_key = 'fotos_de_partit');
+
+-- The walk-in Salma's tick of the team's consent on the tablet (RAPP-699), waiting
+-- with her signing until staff confirm her.
+insert into public.walk_in_consents
+  (id, walk_in_id, org_id, consent_id, consent_key, granted, required, screen_key, wording, language,
+   decided_at, recorded_by)
+values ('5eed0000-0000-4000-8099-000000000003', '5eed0000-0000-4000-8043-000000000001',
+        '5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8099-000000000001', 'fotos_de_partit',
+        true, false, '5eed0000-0000-4000-8090-000000000001',
+        'أوافق على أن يشارك الفريق صور المباريات في مجموعة الفريق.', 'ar',
+        timestamptz '2026-09-15 19:12:00+02', '5eed0000-0000-4000-8000-000000000002')
+on conflict (id) do nothing;
+
+-- Forms the team created (RAPP-700, RAPP-701): a form for every player, live,
+-- which Amina answered and Fàtima still has pending, and a form for the players
+-- picked (Natàlia), live too. Each has its published version.
+insert into public.custom_forms
+  (id, org_id, name, filled_by, mandatory, deadline, audience, version, published_at, created_by)
+values
+  ('5eed0000-0000-4000-8100-000000000001', '5eed0000-0000-4000-8000-000000000000',
+   '{"ca":"Com véns als entrenaments","es":"Cómo vienes a los entrenamientos","en":"How you get to training"}'::jsonb,
+   'player', 'optional', null, 'all', 1, timestamptz '2026-10-01 10:00:00+02',
+   '5eed0000-0000-4000-8000-000000000002'),
+  ('5eed0000-0000-4000-8100-000000000002', '5eed0000-0000-4000-8000-000000000000',
+   '{"ca":"Seguiment social","es":"Seguimiento social","en":"Social follow-up"}'::jsonb,
+   'player', 'optional', null, 'chosen', 1, timestamptz '2026-10-01 10:00:00+02',
+   '5eed0000-0000-4000-8000-000000000002')
+on conflict (id) do nothing;
+
+insert into public.custom_form_screens (id, org_id, form_id, title, sort_order)
+values
+  ('5eed0000-0000-4000-8101-000000000001', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8100-000000000001', '{"ca":"Transport","es":"Transporte","en":"Transport"}'::jsonb, 0),
+  ('5eed0000-0000-4000-8101-000000000002', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8100-000000000002', '{"ca":"Seguiment","es":"Seguimiento","en":"Follow-up"}'::jsonb, 0)
+on conflict (id) do nothing;
+
+insert into public.field_placements
+  (id, org_id, field_id, surface, screen_key, custom_form_id, sort_order, required)
+values
+  ('5eed0000-0000-4000-8101-000000000011', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8045-000000000001', 'custom_form', '5eed0000-0000-4000-8101-000000000001',
+   '5eed0000-0000-4000-8100-000000000001', 0, true),
+  ('5eed0000-0000-4000-8101-000000000012', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8045-000000000004', 'custom_form', '5eed0000-0000-4000-8101-000000000002',
+   '5eed0000-0000-4000-8100-000000000002', 0, false)
+on conflict (id) do nothing;
+
+insert into public.custom_form_responses
+  (id, org_id, form_id, version, profile_id, status, asked_at, answered_at, answered_by, filled_by)
+values
+  ('5eed0000-0000-4000-8102-000000000001', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8100-000000000001', 1, '5eed0000-0000-4000-8000-000000000011', 'done',
+   timestamptz '2026-10-01 10:00:00+02', timestamptz '2026-10-02 18:30:00+02',
+   '5eed0000-0000-4000-8000-000000000011', 'player'),
+  ('5eed0000-0000-4000-8102-000000000002', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8100-000000000001', 1, '5eed0000-0000-4000-8000-000000000012', 'pending',
+   timestamptz '2026-10-01 10:00:00+02', null, null, null),
+  ('5eed0000-0000-4000-8102-000000000003', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8100-000000000002', 1, '5eed0000-0000-4000-8000-000000000022', 'pending',
+   timestamptz '2026-10-01 10:00:00+02', null, null, null)
+on conflict (id) do nothing;
+
+insert into public.custom_form_recipients (form_id, profile_id, org_id)
+values ('5eed0000-0000-4000-8100-000000000002', '5eed0000-0000-4000-8000-000000000022',
+        '5eed0000-0000-4000-8000-000000000000')
+on conflict do nothing;
+
+insert into public.custom_form_versions (org_id, form_id, version, content, published_at)
+select f.org_id, f.id, 1, private.custom_form_content(f.id), f.published_at
+  from public.custom_forms f
+ where f.id in ('5eed0000-0000-4000-8100-000000000001', '5eed0000-0000-4000-8100-000000000002')
+on conflict (form_id, version) do nothing;

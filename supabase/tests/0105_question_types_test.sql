@@ -2,15 +2,15 @@
 -- Run with: bunx supabase test db
 --
 -- What these assertions defend:
---   1. The builder saves every new type with its settings, refuses settings
---      that do not fit the type, a file or signature question anywhere but
---      her own answers, and a list of choices that is too short. The type
---      still never changes; the settings travel in the catalog.
+--   1. The Fitxa saves a field of every type with its settings, refuses
+--      settings that do not fit the type, a file on the entity form, and a
+--      list of choices that is too short. The consent type is gone (RAPP-690):
+--      a signature is a block of the forms. The settings travel in the catalog.
 --   2. The database checks each answer by the type's rules, the same rules as
 --      the shared Zod schema (`tests/custom-answer-parity.test.ts`).
 --   3. A file is hers alone: its key must be in her own private folder. Staff
---      never write a file or a signature for a real woman; the scenario tool
---      does for a test player. A Sensitive answer is stored encrypted.
+--      never write a file for a real woman; the scenario tool does for a test
+--      player. A Sensitive answer is stored encrypted.
 --   4. A private file is read by her and by staff who may read the answer's
 --      level; nobody else.
 --   5. Exports read every type in words.
@@ -22,7 +22,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(51);
+select plan(47);
 
 create temp table q (label text primary key, id uuid) on commit drop;
 grant all on q to authenticated;
@@ -32,105 +32,121 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", 
 
 insert into q select 'screen', public.save_intake_screen(null, '{"ca": "Més dades"}'::jsonb, null, 'logistics');
 
+-- A field of the Support section, placed where it is asked: 'onboarding' on
+-- the screen above, 'entity_form' on the referral form.
+create or replace function pg_temp.field(
+  p_type text, p_label jsonb, p_privacy text, p_surfaces text[], p_options jsonb, p_settings jsonb)
+returns uuid language plpgsql as $$
+declare
+  saved uuid := public.save_profile_field(
+    null, (select id from public.profile_sections
+            where org_id = '5eed0000-0000-4000-8000-000000000000' and key = 'support'),
+    p_type, p_label, null, p_privacy, false, p_options, p_settings);
+  surface text;
+begin
+  foreach surface in array p_surfaces loop
+    perform public.place_field(saved, surface,
+      case when surface = 'onboarding' then (select id::text from q where label = 'screen') end);
+  end loop;
+  return saved;
+end $$;
+
 -- 1. Building ------------------------------------------------------------------------------------------
 
-insert into q select 'number', public.save_custom_question(null, (select id from q where label = 'screen'),
-  'number', '{"ca": "Quants fills?"}'::jsonb, null, 'normal', array['wizard', 'staff'], '[]'::jsonb,
-  '{"integer": true, "min": 0, "max": 15}'::jsonb);
-insert into q select 'date', public.save_custom_question(null, (select id from q where label = 'screen'),
-  'date', '{"ca": "Data d''arribada"}'::jsonb, null, 'personal', array['wizard'], '[]'::jsonb,
-  '{"min_age": 16}'::jsonb);
-insert into q select 'yes_no', public.save_custom_question(null, (select id from q where label = 'screen'),
-  'yes_no', '{"ca": "Tens bicicleta?"}'::jsonb, null, 'normal', array['wizard'], '[]'::jsonb, '{}'::jsonb);
-insert into q select 'phone', public.save_custom_question(null, (select id from q where label = 'screen'),
-  'phone', '{"ca": "Telèfon d''un familiar"}'::jsonb, null, 'personal', array['wizard'], '[]'::jsonb, '{}'::jsonb);
-insert into q select 'email', public.save_custom_question(null, (select id from q where label = 'screen'),
-  'email', '{"ca": "Correu de l''escola"}'::jsonb, null, 'personal', array['wizard', 'entity_form'], '[]'::jsonb, '{}'::jsonb);
-insert into q select 'search', public.save_custom_question(null, (select id from q where label = 'screen'),
-  'search_choice', '{"ca": "Barri"}'::jsonb, null, 'normal', array['wizard'],
-  '[{"label": {"ca": "Gràcia"}}, {"label": {"ca": "Sants"}}, {"label": {"ca": "Horta"}}]'::jsonb, '{}'::jsonb);
-insert into q select 'list', public.save_custom_question(null, (select id from q where label = 'screen'),
-  'item_list', '{"ca": "Idiomes que parles"}'::jsonb, null, 'normal', array['wizard'], '[]'::jsonb,
-  '{"max_items": 3}'::jsonb);
-insert into q select 'consent', public.save_custom_question(null, (select id from q where label = 'screen'),
-  'consent', '{"ca": "Transport"}'::jsonb, null, 'normal', array['wizard'], '[]'::jsonb,
-  '{"text": {"ca": "Accepto que m''acompanyin amb cotxe", "ar": "أوافق"}}'::jsonb);
-insert into q select 'file', public.save_custom_question(null, (select id from q where label = 'screen'),
-  'file_upload', '{"ca": "Informe mèdic"}'::jsonb, null, 'sensitive', array['wizard'], '[]'::jsonb,
-  '{"accept": "document"}'::jsonb);
-insert into q select 'signature', public.save_custom_question(null, (select id from q where label = 'screen'),
-  'signature', '{"ca": "Signatura"}'::jsonb, null, 'personal', array['wizard'], '[]'::jsonb, '{}'::jsonb);
+insert into q select 'number', pg_temp.field('number', '{"ca": "Quants fills?"}'::jsonb, 'normal',
+  array['onboarding'], '[]'::jsonb, '{"integer": true, "min": 0, "max": 15}'::jsonb);
+insert into q select 'date', pg_temp.field('date', '{"ca": "Data d''arribada"}'::jsonb, 'personal',
+  array['onboarding'], '[]'::jsonb, '{"min_age": 16}'::jsonb);
+insert into q select 'yes_no', pg_temp.field('yes_no', '{"ca": "Tens bicicleta?"}'::jsonb, 'normal',
+  array['onboarding'], '[]'::jsonb, '{}'::jsonb);
+insert into q select 'phone', pg_temp.field('phone', '{"ca": "Telèfon d''un familiar"}'::jsonb, 'personal',
+  array['onboarding'], '[]'::jsonb, '{}'::jsonb);
+insert into q select 'email', pg_temp.field('email', '{"ca": "Correu de l''escola"}'::jsonb, 'personal',
+  array['onboarding', 'entity_form'], '[]'::jsonb, '{}'::jsonb);
+insert into q select 'search', pg_temp.field('search_choice', '{"ca": "Barri"}'::jsonb, 'normal',
+  array['onboarding'], '[{"label": {"ca": "Gràcia"}}, {"label": {"ca": "Sants"}}, {"label": {"ca": "Horta"}}]'::jsonb,
+  '{}'::jsonb);
+insert into q select 'list', pg_temp.field('item_list', '{"ca": "Idiomes que parles"}'::jsonb, 'normal',
+  array['onboarding'], '[]'::jsonb, '{"max_items": 3}'::jsonb);
+insert into q select 'file', pg_temp.field('file_upload', '{"ca": "Informe mèdic"}'::jsonb, 'sensitive',
+  array['onboarding'], '[]'::jsonb, '{"accept": "document"}'::jsonb);
 
-select is((select count(*)::integer from q), 11, 'every new type is saved, with its settings');
+select is((select count(*)::integer from q), 9, 'every new type is saved, with its settings');
 select is(
-  (select settings from public.custom_questions where id = (select id from q where label = 'number')),
+  (select settings from public.profile_fields where id = (select id from q where label = 'number')),
   '{"integer": true, "min": 0, "max": 15}'::jsonb,
   'a number keeps its range and that it is whole'
 );
 select throws_ok(
-  $$ select public.save_custom_question(null, (select id from q where label = 'screen'), 'number',
-       '{"ca": "X"}'::jsonb, null, 'normal', array['wizard'], '[]'::jsonb, '{"integer": true, "min": 9, "max": 1}'::jsonb) $$,
+  $$ select pg_temp.field('number', '{"ca": "X"}'::jsonb, 'normal', array['onboarding'], '[]'::jsonb,
+       '{"integer": true, "min": 9, "max": 1}'::jsonb) $$,
   '23514', 'the settings do not fit the type',
   'a range upside down is refused'
 );
 select throws_ok(
-  $$ select public.save_custom_question(null, (select id from q where label = 'screen'), 'email',
-       '{"ca": "X"}'::jsonb, null, 'normal', array['wizard'], '[]'::jsonb, '{"max_items": 3}'::jsonb) $$,
+  $$ select pg_temp.field('email', '{"ca": "X"}'::jsonb, 'normal', array['onboarding'], '[]'::jsonb,
+       '{"max_items": 3}'::jsonb) $$,
   '23514', 'the settings do not fit the type',
   'settings of another type are refused'
 );
 select throws_ok(
-  $$ select public.save_custom_question(null, (select id from q where label = 'screen'), 'consent',
-       '{"ca": "X"}'::jsonb, null, 'normal', array['wizard'], '[]'::jsonb, '{"text": {"en": "I agree"}}'::jsonb) $$,
-  '23514', 'the settings do not fit the type',
-  'a consent needs its own text in Catalan'
+  $$ select pg_temp.field('consent', '{"ca": "X"}'::jsonb, 'normal', array['onboarding'], '[]'::jsonb,
+       '{"text": {"ca": "Accepto"}}'::jsonb) $$,
+  '23514', 'not a question type',
+  'the consent is no answer type (RAPP-690)'
 );
 select throws_ok(
-  $$ select public.save_custom_question(null, (select id from q where label = 'screen'), 'signature',
-       '{"ca": "X"}'::jsonb, null, 'normal', array['entity_form'], '[]'::jsonb, '{}'::jsonb) $$,
+  $$ select public.place_field((select id from q where label = 'file'), 'entity_form') $$,
   '23514', 'a file or a signature is asked of her only',
-  'a signature cannot be asked on the entity form'
+  'a file cannot be asked on the entity form'
 );
 select throws_ok(
-  $$ select public.save_custom_question(null, (select id from q where label = 'screen'), 'search_choice',
-       '{"ca": "X"}'::jsonb, null, 'normal', array['wizard'], '[{"label": {"ca": "A"}}]'::jsonb, '{}'::jsonb) $$,
+  $$ select public.save_profile_field((select id from q where label = 'email'), null, 'file_upload',
+       '{"ca": "Correu de l''escola"}'::jsonb, null, 'personal', false, '[]'::jsonb,
+       '{"accept": "photo"}'::jsonb) $$,
+  '23514', 'a file or a signature is asked of her only',
+  'a field on the entity form never becomes a file'
+);
+select throws_ok(
+  $$ select pg_temp.field('search_choice', '{"ca": "X"}'::jsonb, 'normal', array['onboarding'],
+       '[{"label": {"ca": "A"}}]'::jsonb, '{}'::jsonb) $$,
   '23514', 'a choice question needs at least two options',
   'a searchable list needs two options too'
 );
-select throws_ok(
-  $$ select public.save_custom_question((select id from q where label = 'number'), (select id from q where label = 'screen'),
-       'date', '{"ca": "X"}'::jsonb, null, 'normal', array['wizard'], '[]'::jsonb, '{}'::jsonb) $$,
-  '23514', 'the type of a question never changes',
-  'the type still never changes'
+select is(
+  public.preview_field_change((select id from q where label = 'number'), 'date', 'normal') ->> 'type_to',
+  'date',
+  'a new type is previewed before it is saved (RAPP-665)'
 );
 select lives_ok(
-  $$ select public.save_custom_question((select id from q where label = 'number'), (select id from q where label = 'screen'),
-       'number', '{"ca": "Quants fills tens?"}'::jsonb, null, 'normal', array['wizard', 'staff'], '[]'::jsonb,
+  $$ select public.save_profile_field((select id from q where label = 'number'), null,
+       'number', '{"ca": "Quants fills tens?"}'::jsonb, null, 'normal', false, '[]'::jsonb,
        '{"integer": true, "min": 0, "max": 12}'::jsonb) $$,
   'the settings may change'
 );
 select is(
-  (select q2 -> 'settings'
-     from jsonb_array_elements(public.intake_catalog() -> 'screens') s,
-          jsonb_array_elements(s -> 'questions') q2
-    where q2 ->> 'id' = (select id::text from q where label = 'consent')),
-  '{"text": {"ca": "Accepto que m''acompanyin amb cotxe", "ar": "أوافق"}}'::jsonb,
-  'the catalog carries each question''s settings'
+  (select f -> 'settings'
+     from jsonb_array_elements(public.intake_catalog() -> 'fields') f
+    where f ->> 'id' = (select id::text from q where label = 'list')),
+  '{"max_items": 3}'::jsonb,
+  'the catalog carries each field''s settings'
 );
 select ok(
   (select count(*) = 1 from public.audit_log
-    where action = 'intake.question_save' and target_id = (select id from q where label = 'list')
+    where action = 'intake.field_save' and target_id = (select id from q where label = 'list')
       and changes -> 'settings' = '{"max_items": 3}'::jsonb),
   'the settings are in the audit log'
 );
 reset role;
 select throws_ok(
-  $$ update public.custom_questions set placements = array['staff'] where id = (select id from q where label = 'file') $$,
+  $$ insert into public.field_placements (org_id, field_id, surface, screen_key, sort_order, required)
+     values ('5eed0000-0000-4000-8000-000000000000', (select id from q where label = 'number'),
+             'entity_form', 'logistics', 0, false) $$,
   '23514', null::text,
-  'the table itself keeps a file question on her own answers'
+  'the table itself names a screen only on her onboarding'
 );
 select throws_ok(
-  $$ update public.custom_questions set settings = '{"accept": "video"}' where id = (select id from q where label = 'file') $$,
+  $$ update public.profile_fields set settings = '{"accept": "video"}' where id = (select id from q where label = 'file') $$,
   '23514', null::text,
   'and keeps settings that fit the type'
 );
@@ -171,16 +187,6 @@ select is(pg_temp.try_answer('search',
 select is(pg_temp.try_answer('list', '["Català", "Àrab"]'), true, 'a list of items');
 select is(pg_temp.try_answer('list', '["A", "B", "C", "D"]'), false, 'more items than allowed is refused');
 select is(pg_temp.try_answer('list', '["A", "A"]'), false, 'a repeated item is refused');
-select is(pg_temp.try_answer('consent', 'true'), true, 'a ticked consent');
-select is(pg_temp.try_answer('consent', 'false'), true, 'unticking clears it');
-select is(
-  (select count(*)::integer from public.custom_answers
-    where profile_id = '5eed0000-0000-4000-8000-000000000011' and question_id = (select id from q where label = 'consent')),
-  0,
-  'so no consent is kept'
-);
-select is(pg_temp.try_answer('signature', '[[[100, 200], [300, 400]]]'), true, 'a drawn signature');
-select is(pg_temp.try_answer('signature', '[[[100, 2000]]]'), false, 'a signature off the pad is refused');
 
 -- 3. Files are hers ---------------------------------------------------------------------------------------
 
@@ -199,9 +205,10 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
   $$ select public.set_participant_custom_answers('5eed0000-0000-4000-8000-000000000012',
-       jsonb_build_object((select id::text from q where label = 'signature'), '[[[1, 2]]]'::jsonb)) $$,
-  '42501', 'a file or a signature is hers to give',
-  'staff never sign for a real woman'
+       jsonb_build_object((select id::text from q where label = 'file'),
+         '{"key": "5eed0000-0000-4000-8000-000000000000/intake-answers/5eed0000-0000-4000-8000-000000000012/2026/10/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.pdf", "name": "informe.pdf", "content_type": "application/pdf", "size": 2048}'::jsonb)) $$,
+  '42501', 'a file is hers to give',
+  'staff never give a file for a real woman'
 );
 
 -- 4. Who reads her file -------------------------------------------------------------------------------------
@@ -235,36 +242,37 @@ select is(
   'she opens her own'
 );
 
--- The scenario tool answers every type for a test player, files and signatures included.
+-- The scenario tool answers every type for a test player, files included.
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
   $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096', jsonb_build_object(
-       'kind', 'custom_answers',
-       'fill', jsonb_build_object(
-         (select id::text from q where label = 'signature'), '[[[100, 500], [300, 400]]]'::jsonb,
+       -- The staff fields' switch folded into answers (RAPP-661).
+       'kind', 'answers',
+       'fill', jsonb_build_object('answers', jsonb_build_object(
          (select id::text from q where label = 'file'), '{"key": "5eed0000-0000-4000-8000-000000000000/intake-answers/5eed0000-0000-4000-8000-000000000096/2026/01/00000000000000000000000000000000.pdf", "name": "prova.pdf", "content_type": "application/pdf", "size": 1024}'::jsonb,
-         (select id::text from q where label = 'number'), '2'::jsonb))) $$,
-  'the scenario tool fills a test player''s file, signature and number'
+         (select id::text from q where label = 'number'), '2'::jsonb)))) $$,
+  'the scenario tool fills a test player''s file and number'
 );
 select is(
   (select jsonb_array_length(public.test_player_scenario('5eed0000-0000-4000-8000-000000000096') -> 'custom_answered')),
-  3,
+  -- With her two names, answers too (RAPP-693).
+  4,
   'and her page lists them as answered'
 );
 select lives_ok(
   $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096', jsonb_build_object(
-       'kind', 'custom_answers', 'clear', jsonb_build_array((select id::text from q where label = 'number')))) $$,
+       'kind', 'answers', 'clear', jsonb_build_array((select id::text from q where label = 'number')))) $$,
   'and clears one'
 );
 select throws_ok(
   $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000096', jsonb_build_object(
-       'kind', 'custom_answers', 'fill', jsonb_build_object((select id::text from q where label = 'number'), '99'::jsonb))) $$,
+       'kind', 'answers', 'fill', jsonb_build_object('answers', jsonb_build_object((select id::text from q where label = 'number'), '99'::jsonb)))) $$,
   '23514', 'the answer does not fit the question',
   'a sample that does not fit is refused like any answer'
 );
 select throws_ok(
   $$ select public.set_test_player_scenario('5eed0000-0000-4000-8000-000000000011', jsonb_build_object(
-       'kind', 'custom_answers', 'clear', '[]'::jsonb)) $$,
+       'kind', 'answers', 'clear', '[]'::jsonb)) $$,
   '42501', 'scenario switches are for test players only',
   'never on a real woman'
 );
@@ -273,19 +281,17 @@ select throws_ok(
 
 reset role;
 select is(
-  private.custom_answer_text((select c from public.custom_questions c where id = (select id from q where label = 'date')), '"2001-02-28"'),
+  private.custom_answer_text((select f from public.profile_fields f where id = (select id from q where label = 'date')), '"2001-02-28"'),
   '28/02/2001', 'a date as day/month/year');
 select is(
-  private.custom_answer_text((select c from public.custom_questions c where id = (select id from q where label = 'list')), '["Català", "Àrab"]'),
+  private.custom_answer_text((select f from public.profile_fields f where id = (select id from q where label = 'list')), '["Català", "Àrab"]'),
   'Català; Àrab', 'a list joined');
 select is(
-  private.custom_answer_text((select c from public.custom_questions c where id = (select id from q where label = 'consent')), 'true')
-  || ' / ' || private.custom_answer_text((select c from public.custom_questions c where id = (select id from q where label = 'yes_no')), '"no"')
-  || ' / ' || private.custom_answer_text((select c from public.custom_questions c where id = (select id from q where label = 'signature')), '[[[1, 2]]]')
-  || ' / ' || private.custom_answer_text((select c from public.custom_questions c where id = (select id from q where label = 'file')),
+  private.custom_answer_text((select f from public.profile_fields f where id = (select id from q where label = 'yes_no')), '"no"')
+  || ' / ' || private.custom_answer_text((select f from public.profile_fields f where id = (select id from q where label = 'file')),
        '{"key": "k", "name": "informe.pdf", "content_type": "application/pdf", "size": 1}'),
-  'Sí / No / Signat / Fitxer: informe.pdf',
-  'a consent, a yes/no, a signature and a file in words, never their data'
+  'No / Fitxer: informe.pdf',
+  'a yes/no and a file in words, never their data'
 );
 
 select * from finish();

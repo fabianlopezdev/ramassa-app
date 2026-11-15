@@ -13,7 +13,7 @@ import {
   toCategoryInput,
 } from './service-category-form';
 
-const label = (text: string) => ({ ca: text, es: text, en: text, ar: text, fa: text });
+const label = (text: string) => ({ ca: text, es: text, en: text, fr: text, ar: text, fa: text });
 
 function approved(text: string): TranslationReview {
   const review = createTranslationReview({
@@ -22,6 +22,7 @@ function approved(text: string): TranslationReview {
     translations: {
       es: `[es] ${text}`,
       en: `[en] ${text}`,
+      fr: `[fr] ${text}`,
       ar: `[ar] ${text}`,
       fa: `[fa] ${text}`,
     },
@@ -79,7 +80,7 @@ describe('the service category form (RAPP-347)', () => {
     expect(fieldKey({ ...form.fields[0]!, label: 'Una altra cosa' })).toBe('age_restriction');
   });
 
-  test('a new select field needs options and five approved languages', () => {
+  test('a new select field needs options and every language approved', () => {
     const field = { ...emptyField(), label: 'Nivell', type: 'select' as const };
     expect(fieldKey(field)).toBe('nivell');
     expect(isFieldValid(field, approved('Nivell'))).toBe(false);

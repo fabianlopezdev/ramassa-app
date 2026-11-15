@@ -4,32 +4,26 @@ import { createFileRoute } from '@tanstack/react-router';
 import {
   EMPTY_INTAKE_CATALOG,
   fetchIntakeCatalog,
-  fetchReferralCustomAnswers,
+  systemFieldsOf,
 } from '@ramassa/shared/intake-builder';
-import { fetchReferral, fetchReferralUpdates } from '@ramassa/shared/referrals';
+import { fetchReferralRecord, fetchReferralUpdates } from '@ramassa/shared/referrals';
 
 export const Route = createFileRoute('/_entity/portal/referrals/$referralId')({
   ssr: false,
   loader: async ({ params }) => {
-    const [referral, updates, catalog, customAnswers] = await Promise.all([
-      fetchReferral(supabase, params.referralId),
+    // The Fitxa layout reads the entity's answers by field (RAPP-664); read once.
+    const catalogRead = fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG);
+    const [referral, updates, catalog] = await Promise.all([
+      fetchReferralRecord(supabase, params.referralId, catalogRead.then(systemFieldsOf)),
       fetchReferralUpdates(supabase, params.referralId),
-      // The answers to the questions staff added (RAPP-307); the page works without them.
-      fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
-      fetchReferralCustomAnswers(supabase, params.referralId).catch(() => ({})),
+      catalogRead,
     ]);
-    return { referral, updates, catalog, customAnswers };
+    return { referral, updates, catalog };
   },
   component: ReferralPage,
 });
 
 function ReferralPage() {
-  const { referral, updates, catalog, customAnswers } = Route.useLoaderData();
-  return (
-    <ReferralDetail
-      referral={referral}
-      initialUpdates={updates}
-      custom={{ catalog, answers: customAnswers }}
-    />
-  );
+  const { referral, updates, catalog } = Route.useLoaderData();
+  return <ReferralDetail referral={referral} initialUpdates={updates} catalog={catalog} />;
 }

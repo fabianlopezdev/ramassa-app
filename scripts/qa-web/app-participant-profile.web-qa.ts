@@ -4,7 +4,14 @@
  * member with only the Basic level sees the Basic fields and no actions.
  */
 import { expect, test, type Page } from '@playwright/test';
-import { completeSecondFactor, queryDatabase, signInPlayer, STAFF_EMAIL } from './session';
+import {
+  appAnswerSql,
+  completeSecondFactor,
+  queryDatabase,
+  signInPlayer,
+  STAFF_EMAIL,
+  writeAppAnswerSql,
+} from './session';
 
 test.setTimeout(240_000);
 
@@ -23,7 +30,7 @@ const participantId = () =>
   `).trim();
 
 const placeOfBirth = (id: string) =>
-  queryDatabase(`select place_of_birth from public.profiles where id = '${id}';`).trim();
+  queryDatabase(`select ${appAnswerSql(`'${id}'`, 'place_of_birth')};`).trim();
 
 async function openCard(page: Page, email: string): Promise<void> {
   await signInPlayer(page, email);
@@ -64,8 +71,10 @@ test('an admin edits the record and changes her status from the card', async ({ 
     });
   } finally {
     queryDatabase(`
-      update public.profiles set place_of_birth = '${original}', is_active = true
-       where id = '${id}';
+      begin;
+      ${writeAppAnswerSql(`'${id}'`, 'place_of_birth', original === '' ? null : original, 'player')}
+      update public.profiles set is_active = true where id = '${id}';
+      commit;
     `);
   }
 });

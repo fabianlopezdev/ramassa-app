@@ -1,15 +1,38 @@
+import { wizardDraftStoreOn } from '@/lib/wizard-draft';
 import { fireEvent, render } from '@testing-library/react';
 import { afterAll, beforeEach, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
+import { EMPTY_INTAKE_CATALOG, systemFieldIndexFromCatalog } from '@ramassa/shared/intake-builder';
 import { createInMemoryOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
+import { encodeSupportNeeds } from '@ramassa/shared/schemas';
+import { systemFieldsCatalogFixture } from '@ramassa/shared/testing';
 
-const store = createInMemoryOnboardingDraftStore();
+// Her draft is kept by field (RAPP-663): the screens save through her fields.
+const store = wizardDraftStoreOn(
+  createInMemoryOnboardingDraftStore(),
+  systemFieldIndexFromCatalog(systemFieldsCatalogFixture()),
+);
+const quietRoom = encodeSupportNeeds({
+  categories: ['other'],
+  details: {},
+  explanation: 'Quiet room',
+});
 const push = mock(() => {});
 const replace = mock(() => {});
 const goNext = mock(() => {});
 mock.module('@/lib/onboarding', () => ({ onboardingDraftStore: store }));
-mock.module('expo-router', () => ({ useRouter: () => ({ push, replace }), Redirect: () => null }));
-mock.module('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+mock.module('expo-router', () => ({
+  useNavigation: () => ({ getState: () => undefined }),
+  useRouter: () => ({ push, replace }),
+  Redirect: () => null,
+}));
+mock.module('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key, i18n: { resolvedLanguage: 'ca' } }),
+}));
+mock.module('react-native', () => ({
+  View: ({ children }: { children: ReactNode }) => createElement('div', null, children),
+}));
+mock.module('@/components/onboarding/question-help', () => ({ QuestionHelp: () => null }));
 mock.module('@/lib/haptics/haptics', () => ({ playHaptic: () => {} }));
 mock.module('@/components/onboarding/wizard-validation-summary', () => ({
   WizardValidationSummary: () => null,
@@ -27,7 +50,11 @@ mock.module('@/lib/onboarding-intake-context', () => ({
     goNext,
     goBack: () => {},
     previousDraftStep: 'season',
+    // The screen under this one is not the choice, so Back replaces (RAPP-707).
+    isBelow: () => false,
   }),
+  // A catalog with no app fields: each follow-up starts as the app's own (RAPP-782).
+  useWizardIntake: () => ({ catalog: EMPTY_INTAKE_CATALOG, hidden: new Set() }),
 }));
 mock.module('@/components/onboarding/wizard-frame', () => ({
   WizardFrame: ({
@@ -102,7 +129,7 @@ test('a situation other than Other goes directly to the next main screen', () =>
 test('Other opens its explanation on Continue, and Back preserves text in the same question', () => {
   store.saveDraft({
     currentStep: 'season',
-    season: { applicantStatus: 'migrant', specificNeeds: 'Quiet room' },
+    season: { applicantStatus: 'migrant', specificNeeds: quietRoom },
   });
   const picker = render(createElement(SeasonWizardStep, { screen: 'season' }));
   expect(picker.queryByText('seasonStepIntro')).toBeNull();
@@ -118,7 +145,7 @@ test('Other opens its explanation on Continue, and Back preserves text in the sa
   fireEvent.input(input, { target: { value: 'Example situation' } });
   fireEvent.click(details.getByRole('button', { name: 'Back' }));
   expect(store.loadDraft()?.season?.applicantStatusDetails).toBe('Example situation');
-  expect(store.loadDraft()?.season?.specificNeeds).toBe('Quiet room');
+  expect(store.loadDraft()?.season?.specificNeeds).toBe(quietRoom);
   expect(replace).toHaveBeenCalledWith('/onboarding/season?entrance=none');
   details.unmount();
   const reopened = render(createElement(Details));

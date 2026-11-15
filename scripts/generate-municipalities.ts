@@ -8,7 +8,7 @@
  * carries both the official six-digit municipality code and comarca
  * membership. The API localizes its document chrome in Catalan, Spanish and
  * English, but municipality names are official Catalan toponyms in all three
- * responses. Arabic and Farsi therefore display that same official name: a
+ * responses. French, Arabic and Farsi therefore display that same official name: a
  * generated fallback is honest; an invented translation would not be.
  */
 
@@ -141,7 +141,7 @@ async function generateMunicipalityData(options: GeneratorOptions) {
       return {
         code: row.code,
         comarcaCode: row.comarcaCode,
-        names: { ca, es, en, ar: ca, fa: ca },
+        names: { ca, es, en, fr: ca, ar: ca, fa: ca },
       };
     })
     .sort((first, second) => first.names.ca.localeCompare(second.names.ca, 'ca'));
@@ -153,7 +153,7 @@ async function generateMunicipalityData(options: GeneratorOptions) {
       apiVersion: 'v1',
       retrievedAt: options.date,
       sourceLocales: API_LOCALES,
-      fallbackLocales: ['ar', 'fa'],
+      fallbackLocales: ['fr', 'ar', 'fa'],
     },
     municipalities,
   } as const;

@@ -40,7 +40,8 @@ test.afterAll(() => {
 
 test('the design role writes a draft but cannot publish it', async ({ page }) => {
   await signIn(page, 'disseny@example.test');
-  await page.goto('/onboarding');
+  // The terms screen of the app terms' board (RAPP-696).
+  await page.goto('/forms/terms/terms');
   const editor = page.getByTestId('app-terms-editor');
   await expect(editor).toBeVisible({ timeout: 30_000 });
   await expect(editor.getByTestId('app-terms-publish')).toHaveCount(0);
@@ -57,25 +58,26 @@ test('the design role writes a draft but cannot publish it', async ({ page }) =>
 
 test('an admin previews the draft in each language and publishes it', async ({ page }) => {
   await signIn(page, 'laia.ferrer@example.test');
-  await page.goto('/onboarding');
+  // The terms screen of the app terms' board (RAPP-696).
+  await page.goto('/forms/terms/terms');
   const editor = page.getByTestId('app-terms-editor');
   await expect(editor).toBeVisible({ timeout: 30_000 });
   // The draft the design role saved opens here.
   await expect(editor.locator('#app-terms-body')).toHaveValue(`Esborrany del disseny ${RUN_TAG}.`);
   await editor.locator('#app-terms-body').fill(`Text legal nou ${RUN_TAG}.`);
 
-  await editor.locator('#app-terms-language').selectOption('es');
+  await editor.getByTestId('editor-language').getByRole('radio', { name: 'Español' }).click();
   await editor.locator('#app-terms-body').fill(NEW_BODY);
-  const preview = editor.getByTestId('app-terms-preview-terms');
+  // Her phone shows the terms screen, in the editor's frame (RAPP-695).
+  const preview = editor.getByTestId('phone-screen');
   await expect(preview).toContainText(NEW_BODY);
   await expect(preview).toHaveAttribute('dir', 'ltr');
 
-  await editor.locator('#app-terms-language').selectOption('ar');
+  await editor.getByTestId('editor-language').getByRole('radio', { name: 'العربية' }).click();
   await expect(preview).toHaveAttribute('dir', 'rtl');
   await expect(editor.locator('#app-terms-body')).toHaveAttribute('dir', 'rtl');
-  // Arabic emptied: the preview shows the Catalan text, and says so.
+  // Arabic emptied: her phone shows the Catalan text.
   await editor.locator('#app-terms-body').fill('');
-  await expect(editor.getByTestId('app-terms-fallback')).toBeVisible();
   await expect(preview).toContainText(`Text legal nou ${RUN_TAG}.`);
 
   await editor.getByTestId('app-terms-save').click();
@@ -87,9 +89,10 @@ test('an admin previews the draft in each language and publishes it', async ({ p
     )
     .toBe(NEW_BODY);
 
+  // Players accepted version 1, so Desa asks: a new version asks them again (RAPP-696).
   await editor.getByTestId('app-terms-publish').click();
-  await expect(editor.getByRole('alert')).toBeVisible();
-  await editor.getByTestId('app-terms-publish').click();
+  await page.getByTestId('save-kind-new').click();
+  await page.getByTestId('save-kind-confirm').click();
   await expect
     .poll(() =>
       queryDatabase(
@@ -102,7 +105,8 @@ test('an admin previews the draft in each language and publishes it', async ({ p
       `select changes ->> 'version_number' from public.audit_log where action = 'app_terms.publish' order by created_at desc limit 1`,
     ),
   ).toBe('2');
-  await expect(editor.getByTestId('app-terms-versions')).toContainText('2');
+  await page.goto('/forms/terms');
+  await expect(page.getByTestId('app-terms-versions')).toContainText('2');
 });
 
 test('a player who joined accepts version 2 on its own screen, then reaches her home', async ({

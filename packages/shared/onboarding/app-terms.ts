@@ -22,8 +22,12 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import type { SaveKind } from '../authorization/authorization';
 import { AppError, databaseErrorCode } from '../errors';
 import { resolveLocalizedText } from '../i18n/localized-content';
+import type { Consent, ConsentPlacement } from '../intake-builder/consents';
+import type { CustomForm } from '../intake-builder/custom-form-model';
+import type { FormBlock } from '../intake-builder/form-blocks';
 import type { LanguageCode } from '../schemas/language';
 import type { Database, Json } from '../types/database';
 
@@ -33,13 +37,14 @@ function databaseError(error: { readonly message: string; readonly code?: string
   return new AppError(databaseErrorCode(error.message, error.code), { message: error.message });
 }
 
-/** At most this many introduction points: the screen stays one read. */
+/** At most this many points, on the terms' introduction or a points block: the screen stays one read. */
 export const APP_TERMS_MAX_POINTS = 8;
 
 const termsTextSchema = z.object({
   ca: z.string().optional(),
   es: z.string().optional(),
   en: z.string().optional(),
+  fr: z.string().optional(),
   ar: z.string().optional(),
   fa: z.string().optional(),
 });
@@ -49,7 +54,15 @@ const catalanRequired = termsTextSchema.refine((text) => (text.ca ?? '').trim().
   message: 'catalan required',
 });
 
-const pointSchema = z.object({ title: catalanRequired, body: catalanRequired });
+/** One point: a title and a text, each with its Catalan written. */
+export const localizedPointSchema = z.object({ title: catalanRequired, body: catalanRequired });
+export type LocalizedPoint = z.infer<typeof localizedPointSchema>;
+
+/**
+ * The points of the app terms' introduction and of a points block of a form
+ * (RAPP-770): one rule, `private.form_points_valid`.
+ */
+export const localizedPointsSchema = z.array(localizedPointSchema).min(1).max(APP_TERMS_MAX_POINTS);
 
 /** A version's content as stored. Mirrors `private.app_terms_content_valid`. */
 export const appTermsDraftSchema = z.object({
@@ -57,7 +70,7 @@ export const appTermsDraftSchema = z.object({
   body: catalanRequired,
   intro_title: catalanRequired,
   intro: catalanRequired,
-  points: z.array(pointSchema).min(1).max(APP_TERMS_MAX_POINTS),
+  points: localizedPointsSchema,
   accept_label: catalanRequired,
   media_label: catalanRequired,
   media_hint: catalanRequired,
@@ -92,9 +105,12 @@ const BUNDLED_KEYS: Readonly<Record<AppTermsTextField, string>> = {
 
 const BUNDLED_POINT_KEYS = ['Purpose', 'Protected', 'Private', 'Control'] as const;
 
-/** The bundled `onboarding` strings of the five languages, as one version. */
+/**
+ * The bundled `onboarding` strings of the given languages, as one version.
+ * Version 1 holds the five languages it shipped in, before French (RAPP-781).
+ */
 export function bundledAppTermsContent(
-  strings: Readonly<Record<LanguageCode, OnboardingStrings>>,
+  strings: Readonly<Partial<Record<LanguageCode, OnboardingStrings>>>,
 ): AppTermsContent {
   const field = (key: string): AppTermsText =>
     Object.fromEntries(
@@ -165,33 +181,174 @@ export interface CurrentAppTerms {
   /** Null for a draft. */
   readonly versionNumber: number | null;
   readonly isDraft: boolean;
-  readonly content: AppTermsContent;
+  /**
+   * The old content an older build reads (RAPP-613); null when this build
+   * cannot read it. Her phone reads the terms form instead (RAPP-772).
+   */
+  readonly content: AppTermsContent | null;
+  /**
+   * The terms form (RAPP-772): its screens, as the version froze them, are in
+   * the catalog's forms. Null from an older server, which knows the old
+   * content only (`appTermsAsForm`).
+   */
+  readonly formId: string | null;
 }
 
 const catalogTermsSchema = z
   .object({
     id: z.uuid(),
     version_number: z.number().int().min(1).nullable(),
-    content: appTermsDraftSchema,
+    content: appTermsDraftSchema.nullable().catch(null),
     // Older servers omit it: every version they send is published.
     is_draft: z.boolean().optional().default(false),
+    // The terms form (RAPP-772); an older server sends none.
+    form_id: z.uuid().nullable().optional().catch(null),
   })
   .refine((terms) => terms.is_draft === (terms.version_number === null), {
     message: 'a published version has its number and a draft has none',
   });
 
 /**
- * The catalog's `terms`. A version this build cannot read gives null, and the
- * phone shows the bundled text: the screen is never blank.
+ * The catalog's `terms`. A version this build cannot read gives null: her
+ * phone then asks her to try again and never lets her past the terms.
  */
 export function appTermsFromCatalog(raw: unknown): CurrentAppTerms | null {
   const parsed = catalogTermsSchema.safeParse(raw);
   if (!parsed.success) return null;
+  if (parsed.data.content === null && (parsed.data.form_id ?? null) === null) return null;
   return {
     id: parsed.data.id,
     versionNumber: parsed.data.version_number,
     isDraft: parsed.data.is_draft,
     content: parsed.data.content,
+    formId: parsed.data.form_id ?? null,
+  };
+}
+
+// The old content as a form -------------------------------------------------------------------------
+
+/**
+ * Ids of the terms form an older server's content stands for. They are never
+ * sent: what she gives on them travels as the old acceptance.
+ */
+export const LEGACY_TERMS_IDS = {
+  form: '00000000-0000-4000-8000-00000000a770',
+  introScreen: '00000000-0000-4000-8000-00000000a771',
+  signScreen: '00000000-0000-4000-8000-00000000a772',
+  pointsBlock: '00000000-0000-4000-8000-00000000a773',
+  textBlock: '00000000-0000-4000-8000-00000000a774',
+  signatureBlock: '00000000-0000-4000-8000-00000000a775',
+  acceptConsent: '00000000-0000-4000-8000-00000000a776',
+  mediaConsent: '00000000-0000-4000-8000-00000000a777',
+} as const;
+
+/** The consent keys the terms ask (RAPP-772): her acceptance, and her photo and video choice. */
+export const APP_TERMS_ACCEPTANCE_KEY = 'app_terms';
+export const APP_TERMS_MEDIA_KEY = 'image_rights';
+
+/** The terms form as the catalog lists its parts. */
+export interface AppTermsAsForm {
+  readonly form: CustomForm;
+  readonly blocks: readonly FormBlock[];
+  readonly consents: readonly Consent[];
+  readonly consentPlacements: readonly ConsentPlacement[];
+}
+
+/**
+ * An older server's content as the terms form (RAPP-772), the way the
+ * migration converts it: the introduction with its points, then the screen
+ * she signs (the text, her acceptance, her photo and video choice, her
+ * signature). Null when the content could not be read.
+ */
+export function appTermsAsForm(
+  terms: CurrentAppTerms,
+  signatureText: AppTermsText,
+): AppTermsAsForm | null {
+  const content = terms.content;
+  if (content === null) return null;
+  const ids = LEGACY_TERMS_IDS;
+  const place = (screenKey: string, sortOrder: number) => ({
+    surface: 'custom_form' as const,
+    screenKey,
+    customFormId: ids.form,
+    sortOrder,
+  });
+  const consent = (id: string, key: string, body: AppTermsText): Consent => ({
+    id,
+    key,
+    systemKey: key,
+    name: body,
+    body,
+    isArchived: false,
+  });
+  return {
+    form: {
+      id: ids.form,
+      name: content.title,
+      filledBy: 'player',
+      mandatory: 'required_to_use_app',
+      deadline: null,
+      audience: 'all',
+      repeatsEachSeason: false,
+      kind: 'legal',
+      systemKey: 'app_terms',
+      recipientCount: null,
+      version: terms.versionNumber ?? 1,
+      publishedAt: null,
+      isArchived: false,
+      versions: [],
+      screens: [
+        {
+          id: ids.introScreen,
+          title: content.intro_title,
+          intro: content.intro,
+          sortOrder: 0,
+          texts: {},
+        },
+        {
+          id: ids.signScreen,
+          title: content.title,
+          intro: content.media_hint,
+          sortOrder: 1,
+          texts: {},
+          systemScreen: 'terms_sign',
+        },
+      ],
+    },
+    blocks: [
+      { id: ids.pointsBlock, kind: 'points', points: content.points, ...place(ids.introScreen, 0) },
+      {
+        id: ids.textBlock,
+        kind: 'text',
+        title: null,
+        body: content.body,
+        ...place(ids.signScreen, 0),
+      },
+      {
+        id: ids.signatureBlock,
+        kind: 'signature',
+        body: signatureText,
+        ...place(ids.signScreen, 3),
+      },
+    ],
+    consents: [
+      consent(ids.acceptConsent, APP_TERMS_ACCEPTANCE_KEY, content.accept_label),
+      consent(ids.mediaConsent, APP_TERMS_MEDIA_KEY, content.media_label),
+    ],
+    consentPlacements: [
+      {
+        id: ids.acceptConsent,
+        consentId: ids.acceptConsent,
+        required: true,
+        ...place(ids.signScreen, 1),
+      },
+      {
+        id: ids.mediaConsent,
+        consentId: ids.mediaConsent,
+        required: false,
+        ...place(ids.signScreen, 2),
+      },
+    ],
   };
 }
 
@@ -205,6 +362,8 @@ export interface AppTermsVersion {
   readonly publishedAt: string | null;
   readonly updatedAt: string;
   readonly acceptanceCount: number;
+  /** Published as a correction (RAPP-696): acceptances of the version before it still count. */
+  readonly isCorrection: boolean;
 }
 
 const versionRowSchema = z.object({
@@ -214,6 +373,7 @@ const versionRowSchema = z.object({
   published_at: z.string().nullable(),
   updated_at: z.string(),
   acceptance_count: z.number().int(),
+  is_correction: z.boolean().default(false),
 });
 
 /** Every version of the organization, newest first, the draft on top. */
@@ -230,6 +390,7 @@ export async function fetchAppTermsVersions(client: Client): Promise<readonly Ap
       publishedAt: row.published_at,
       updatedAt: row.updated_at,
       acceptanceCount: row.acceptance_count,
+      isCorrection: row.is_correction,
     }));
 }
 
@@ -241,6 +402,14 @@ function cleanTermsText(text: AppTermsText): AppTermsText {
   ) as AppTermsText;
 }
 
+/** Points with empty languages dropped: the terms' and a points block's (RAPP-770). */
+export function cleanLocalizedPoints(points: readonly LocalizedPoint[]): LocalizedPoint[] {
+  return points.map((point) => ({
+    title: cleanTermsText(point.title),
+    body: cleanTermsText(point.body),
+  }));
+}
+
 /** The content with empty languages dropped, so "" never hides the Catalan fallback. */
 export function cleanAppTermsContent(content: AppTermsContent): AppTermsContent {
   return {
@@ -248,10 +417,7 @@ export function cleanAppTermsContent(content: AppTermsContent): AppTermsContent 
     body: cleanTermsText(content.body),
     intro_title: cleanTermsText(content.intro_title),
     intro: cleanTermsText(content.intro),
-    points: content.points.map((point) => ({
-      title: cleanTermsText(point.title),
-      body: cleanTermsText(point.body),
-    })),
+    points: cleanLocalizedPoints(content.points),
     accept_label: cleanTermsText(content.accept_label),
     media_label: cleanTermsText(content.media_label),
     media_hint: cleanTermsText(content.media_hint),
@@ -272,9 +438,18 @@ export async function discardAppTermsDraft(client: Client): Promise<void> {
   if (error) throw databaseError(error);
 }
 
-/** Publishes the draft and returns its number. Only settings.organization may. */
-export async function publishAppTermsDraft(client: Client): Promise<number> {
-  const { data, error } = await client.rpc('publish_app_terms_draft');
+/**
+ * Publishes the draft and returns its number. Only settings.organization may.
+ * A correction (RAPP-696) keeps whoever accepted the version before it
+ * covered; a new version asks every player again.
+ */
+export async function publishAppTermsDraft(
+  client: Client,
+  kind: SaveKind = 'new',
+): Promise<number> {
+  const { data, error } = await client.rpc('publish_app_terms_draft', {
+    p_is_correction: kind === 'correction',
+  });
   if (error) throw databaseError(error);
   return z.number().int().min(1).parse(data);
 }
@@ -291,7 +466,11 @@ export async function fetchTermsAcceptanceNeeded(client: Client): Promise<boolea
 export interface AcceptCurrentAppTermsInput {
   readonly versionId: string;
   readonly localeShown: LanguageCode;
-  /** `termsSigningPayload` output: the acceptance, the photo choice and the signature. */
+  /**
+   * What she gave on the terms form (`appTermsSubmission`): her answers, her
+   * consents and her signatures (RAPP-772); for an older server, the old
+   * acceptance, photo choice and signature.
+   */
   readonly signing: Readonly<Record<string, unknown>>;
 }
 

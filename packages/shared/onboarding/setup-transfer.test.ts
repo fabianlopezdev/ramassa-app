@@ -129,11 +129,42 @@ describe('reading a setup file', () => {
   });
 
   test('an unknown schema version is refused by number', () => {
-    expect(readOnboardingSetupFile(asFile(document({ schema_version: 2 })))).toEqual({
+    expect(readOnboardingSetupFile(asFile(document({ schema_version: 4 })))).toEqual({
       ok: false,
       reason: 'unknown_version',
-      version: 2,
+      version: 4,
     });
+  });
+
+  test('a version 3 file carries screens and the profile layout, and nothing older', () => {
+    const screen = { ...document().screens[0]! } as Record<string, unknown>;
+    delete screen.questions;
+    const layout = {
+      sections: [{ id: 'support', key: 'support', title: { ca: 'Suport' }, sort_order: 6 }],
+      fields: [{ id: GATE, kind: 'custom', section_id: 'support', options: [] }],
+      placements: [{ field_id: GATE, surface: 'season', screen_key: null }],
+    };
+    const current = document({ schema_version: 3, screens: [screen], ...layout });
+    expect(readOnboardingSetupFile(asFile(current)).ok).toBe(true);
+    expect(
+      readOnboardingSetupFile(asFile(document({ schema_version: 3, screens: [screen] }))),
+    ).toMatchObject({ ok: false, reason: 'damaged' });
+    // Fields alone are a setup: a team-only field travels too.
+    const fieldsOnly = document({
+      schema_version: 3,
+      ...layout,
+      screens: [],
+      builtin_question_overrides: [],
+      builtin_screens: [],
+      flow_order: null,
+      required_questions: [],
+      presets: [],
+      document_step_explanation: null,
+      app_terms: { published: [], draft: null },
+      seasons: [],
+      authorization: { published: [], draft: null },
+    });
+    expect(readOnboardingSetupFile(asFile(fieldsOnly)).ok).toBe(true);
   });
 
   test('schema_version must be the number 1: a string or nothing is named as such', () => {
@@ -166,6 +197,80 @@ describe('reading a setup file', () => {
     expect(
       readOnboardingSetupFile(asFile({ ...empty, presets: [{ name: 'Derivada', states: {} }] })).ok,
     ).toBe(true);
+  });
+
+  test('the signature blocks travel, each on its screen; an older file has none (RAPP-690)', () => {
+    const block = {
+      surface: 'onboarding',
+      screen_key: SCREEN,
+      body: { ca: 'Accepto' },
+      sort_order: 1,
+    };
+    expect(readOnboardingSetupFile(asFile(document({ signature_blocks: [block] }))).ok).toBe(true);
+    expect(readOnboardingSetupFile(asFile(document())).ok).toBe(true);
+    expect(
+      readOnboardingSetupFile(
+        asFile(document({ signature_blocks: [{ ...block, screen_key: null }] })),
+      ).ok,
+    ).toBe(false);
+    expect(
+      readOnboardingSetupFile(
+        asFile(document({ signature_blocks: [{ ...block, body: { es: 'Sí' } }] })),
+      ).ok,
+    ).toBe(false);
+  });
+
+  test('a screen that depends on an answer travels with its field; an older file has none (RAPP-715)', () => {
+    const v3 = {
+      ...document(),
+      schema_version: 3,
+      screens: [
+        {
+          id: SCREEN,
+          title: { ca: 'Més sobre tu' },
+          intro: null,
+          after_screen: 'logistics',
+          sort_order: 0,
+          home_after_screen: 'logistics',
+          home_sort_order: 0,
+          is_archived: false,
+          show_when_field_id: GATE,
+          show_when_values: [OPTION],
+        },
+      ],
+      sections: [],
+      fields: [{ id: GATE, kind: 'custom', options: [] }],
+      placements: [],
+    };
+    expect(readOnboardingSetupFile(asFile(v3)).ok).toBe(true);
+    const outside = { ...v3, screens: [{ ...v3.screens[0], show_when_field_id: CHILD }] };
+    expect(readOnboardingSetupFile(asFile(outside)).ok).toBe(false);
+    const noAnswer = { ...v3, screens: [{ ...v3.screens[0], show_when_values: [] }] };
+    expect(readOnboardingSetupFile(asFile(noAnswer)).ok).toBe(false);
+  });
+
+  test('the consents of Dades legals travel by key; an older file has none (RAPP-699)', () => {
+    const consent = {
+      key: 'transport',
+      system_key: null,
+      name: { ca: 'Transport' },
+      body: { ca: 'Accepto el transport.' },
+      is_archived: false,
+    };
+    const placement = {
+      consent_key: 'transport',
+      screen_key: 'logistics',
+      sort_order: 2,
+      required: true,
+    };
+    expect(
+      readOnboardingSetupFile(
+        asFile(document({ consents: [consent], consent_placements: [placement] })),
+      ).ok,
+    ).toBe(true);
+    expect(
+      readOnboardingSetupFile(asFile(document({ consents: [{ ...consent, key: 'Bad Key' }] }))).ok,
+    ).toBe(false);
   });
 
   test('the flow order passes the same checks as the screen order editor', () => {

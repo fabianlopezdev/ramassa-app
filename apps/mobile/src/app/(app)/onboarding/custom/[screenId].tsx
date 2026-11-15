@@ -1,33 +1,46 @@
 /**
- * A screen of questions staff added in the question builder (RAPP-307). It
- * sits right after the built-in step staff chose, one topic per screen like
- * the others, and asks only its questions for her wizard or for this season.
- * Every question is optional. A screen she already answered completely is
- * skipped (RAPP-300), unless she opens it from the summary to correct it.
+ * A Ramassà screen of her onboarding (RAPP-307): it sits where staff put it in
+ * her flow, one topic per screen like the others, and asks the Fitxa fields
+ * placed on it, in their order, worded and required as each placement says
+ * (RAPP-655). A screen she already answered completely is skipped (RAPP-300),
+ * unless staff set a field to Ask or she opens it from the summary to correct it.
  *
- * Her answers stay in the draft until the terms step sends them.
+ * Her answers stay in the draft until the terms step sends them, and so do
+ * her strokes on the screen's signature blocks, which show among the fields in
+ * their order, each required (RAPP-690), and her ticks of the screen's
+ * consents (RAPP-699). A text or points block shows in its place too
+ * (RAPP-770). An app follow-up whose question staff moved (RAPP-782) is a
+ * step here too, with the follow-up's own blocks, consents and wording.
  */
 
 import {
   CustomQuestionField,
   type CustomAnswerDraft,
 } from '@/components/onboarding/custom-question-field';
+import { useFormBlocks } from '@/components/onboarding/form-blocks';
+import { useScreenConsents } from '@/components/onboarding/screen-consents';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
+import { FOLLOW_UP_TITLE_KEYS, placementKeyOfStep } from '@/lib/follow-up-steps';
 import { playHaptic } from '@/lib/haptics/haptics';
-import { onboardingDraftStore } from '@/lib/onboarding';
+import { draftDocumentType, onboardingDraftStore } from '@/lib/onboarding';
 import { mergedCustomAnswers, WIZARD_SCREEN_ROUTES } from '@/lib/onboarding-intake';
 import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
+import { useScreenTitle } from '@/lib/screen-wording';
+import { supportNeedsTitle, tickedSupportNeeds } from '@/lib/support-needs-title';
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { useLanguage } from '@ramassa/shared/i18n';
+import { teamTextIn } from '@ramassa/shared/i18n/localized-content';
 import { customStepKey } from '@ramassa/shared/intake';
 import {
+  documentNumberRule,
+  followUpOfGroupId,
+  formScreenTextsIn,
   isCustomQuestionVisible,
-  textIn,
   updateCustomAnswer,
 } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
@@ -36,7 +49,7 @@ export default function CustomStepScreen() {
   const { t } = useTranslation('onboarding');
   const { language } = useLanguage();
   const { screenId = '' } = useLocalSearchParams<{ screenId: string }>();
-  const { customScreens, customAnswers } = useWizardIntake();
+  const { customScreens, customAnswers, catalog } = useWizardIntake();
   const step = useWizardStep(customStepKey(screenId));
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [answers, setAnswers] = useState<CustomAnswerDraft>(() =>
@@ -44,6 +57,12 @@ export default function CustomStepScreen() {
   );
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
   const [isDrawing, setIsDrawing] = useState(false);
+  // A moved follow-up keeps its blocks, consents and wording under its own key.
+  const placementKey = placementKeyOfStep(screenId);
+  const followUp = followUpOfGroupId(screenId);
+  const screenTitle = useScreenTitle();
+  const signatures = useFormBlocks(placementKey, setIsDrawing);
+  const consents = useScreenConsents(placementKey);
   const screen = customScreens.find((candidate) => candidate.id === screenId);
 
   // Staff removed the screen since her draft was saved: the summary shows the rest.
@@ -62,27 +81,44 @@ export default function CustomStepScreen() {
       ...latest,
       currentStep,
       custom: { ...latest?.custom, ...mine },
+      signatures: signatures.drafted(latest?.signatures),
+      consents: consents.drafted(latest?.consents),
     });
   }
 
-  const intro = textIn(screen.intro, language);
+  // One rule with the admin (RAPP-710): a language never written follows the Catalan.
+  const intro = teamTextIn(screen.intro, language, true);
 
   return (
     <WizardFrame
-      screenId={customStepKey(screenId)}
+      screenId={followUp ?? customStepKey(screenId)}
       stepNumber={step.position.step}
       totalSteps={step.position.total}
-      title={textIn(screen.title, language)}
+      title={
+        followUp === null
+          ? teamTextIn(screen.title, language, false)
+          : // Her needs details name the needs she ticked, as on her needs screen.
+            ((followUp === 'specific-needs-details'
+              ? supportNeedsTitle(tickedSupportNeeds(catalog, answers), t)
+              : null) ?? screenTitle(followUp, t(FOLLOW_UP_TITLE_KEYS[followUp])))
+      }
       intro={intro === '' ? undefined : intro}
       scrollEnabled={!isDrawing}
-      continueLabel={t('continueAction')}
+      // The screen's own help line and main button (RAPP-771).
+      help={formScreenTextsIn(screen.texts, language).help}
+      continueLabel={formScreenTextsIn(screen.texts, language).continueLabel ?? t('continueAction')}
       onContinue={() => {
         // The shared schema checks each answer before she leaves the screen,
         // as the database will (RAPP-610); a phone or an email is tidied first.
-        const checked = checkCustomAnswers(screen.questions, answers, t);
+        // Her document number keeps her document type's check here too (RAPP-782).
+        const checked = checkCustomAnswers(screen.questions, answers, t, {
+          documentNumber: documentNumberRule(catalog, answers, draftDocumentType()),
+        });
         setAnswers(checked.answers);
         setErrors(checked.errors);
-        if (Object.keys(checked.errors).length > 0) {
+        const isSigned = signatures.check();
+        const isTicked = consents.check();
+        if (Object.keys(checked.errors).length > 0 || !isSigned || !isTicked) {
           playHaptic('warning');
           return;
         }
@@ -99,19 +135,18 @@ export default function CustomStepScreen() {
       }
     >
       <WizardValidationSummary
-        isVisible={Object.keys(errors).length > 0}
+        isVisible={Object.keys(errors).length > 0 || signatures.hasErrors || consents.hasErrors}
         message={t('errorSummary')}
       />
       <View testID={`wizard-custom-${screen.id}`} className="gap-lg">
-        {screen.questions
-          .filter((question) => isCustomQuestionVisible(question, answers))
-          .map((question) => (
+        {signatures.interleave(
+          screen.questions.filter((question) => isCustomQuestionVisible(question, answers)),
+          (question) => (
             <CustomQuestionField
               key={question.id}
               question={question}
               value={answers[question.id]}
               errorMessage={errors[question.id]}
-              onDrawingChange={setIsDrawing}
               onChange={(value) => {
                 setAnswers((current) =>
                   updateCustomAnswer(screen.questions, current, question.id, value),
@@ -125,7 +160,9 @@ export default function CustomStepScreen() {
                 }
               }}
             />
-          ))}
+          ),
+          consents.entries,
+        )}
       </View>
     </WizardFrame>
   );

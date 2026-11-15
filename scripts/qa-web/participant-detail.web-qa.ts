@@ -22,7 +22,15 @@
  */
 
 import { expect, test, type Page } from '@playwright/test';
-import { countInDatabase, ENTITY_EMAIL, queryDatabase, signIn, STAFF_EMAIL } from './session';
+import {
+  appAnswerSql,
+  countInDatabase,
+  ENTITY_EMAIL,
+  queryDatabase,
+  signIn,
+  STAFF_EMAIL,
+  writeAppAnswerSql,
+} from './session';
 
 /**
  * The subject, looked up by NAME rather than by a hardcoded seed id. The seeds
@@ -53,6 +61,14 @@ function noteCount(participantId: string): number {
 async function openDetail(page: Page, participantId: string): Promise<void> {
   await page.goto(`/participants/${participantId}`);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+}
+
+/** Opens one field's editor on its row of the Fitxa (RAPP-653) and returns it. */
+async function editField(page: Page, key: string) {
+  await page.getByTestId(`fitxa-field-${key}-edit`).click();
+  const editor = page.getByTestId(`fitxa-field-${key}-editor`);
+  await expect(editor).toBeVisible();
+  return editor;
 }
 
 test.describe('the participant detail view', () => {
@@ -131,24 +147,23 @@ test.describe('the participant detail view', () => {
    */
   test('the sensitive fields on screen match what the database holds', async ({ page }) => {
     const participantId = queryDatabase(
-      `select id from public.profiles
-        where role = 'player' and document_number is not null
-        order by last_name limit 1`,
+      `select r.id from public.profiles r
+        where r.role = 'player' and ${appAnswerSql('r.id', 'document_number')} is not null
+        order by r.last_name limit 1`,
     );
     expect(participantId).not.toBe('');
-    const phone = queryDatabase(
-      `select public.decrypt_field(phone) from public.profiles where id = '${participantId}'`,
-    );
+    const phone = queryDatabase(`select ${appAnswerSql(`'${participantId}'`, 'phone')}`);
     const documentNumber = queryDatabase(
-      `select public.decrypt_field(document_number) from public.profiles where id = '${participantId}'`,
+      `select ${appAnswerSql(`'${participantId}'`, 'document_number')}`,
     );
     expect(phone).not.toBe('');
     expect(documentNumber).not.toBe('');
 
     await openDetail(page, participantId);
 
-    await expect(page.getByText(phone, { exact: true })).toBeVisible();
-    await expect(page.getByText(documentNumber, { exact: true })).toBeVisible();
+    // Her page on the Fitxa layout: the document number is a field of its own (RAPP-664).
+    await expect(page.getByTestId('fitxa-field-phone-value')).toHaveText(phone);
+    await expect(page.getByTestId('fitxa-field-document_number-value')).toHaveText(documentNumber);
     // The screen says the look was logged, rather than logging it silently.
     await expect(page.getByText(/registrada|logged|registrado/i)).toBeVisible();
   });
@@ -161,7 +176,8 @@ test.describe('the participant detail view', () => {
    */
   test('an edited field reaches the database, and the roster shows it', async ({ page }) => {
     const participantId = participantIdByLastName('Ortega');
-    const before = queryDatabase(`select city from public.profiles where id = '${participantId}'`);
+    const city = `select ${appAnswerSql(`'${participantId}'`, 'city')}`;
+    const before = queryDatabase(city);
     // Two Osona towns that share no word with any other seeded town. That is
     // not fussiness: the roster spec asserts that searching "Torelló" finds
     // exactly the participants whose town IS Torelló, and a value like "Sant
@@ -170,20 +186,31 @@ test.describe('the participant detail view', () => {
     const nextCity = before === 'Gurb' ? 'Calldetenes' : 'Gurb';
 
     await openDetail(page, participantId);
-    await page
-      .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
-      .click();
-
-    const cityField = page.locator('#participant-city');
+    // Inline, on the field's own row (RAPP-653).
+    const editor = await editField(page, 'city');
+    // The municipality is searched in the list the app ships (RAPP-665).
+    const cityField = editor.getByRole('combobox');
     await expect(cityField).toBeVisible();
     await cityField.fill(nextCity);
-    await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
+    await editor.getByRole('option', { name: nextCity, exact: true }).click();
+    await expect(cityField).toHaveValue(nextCity);
+    await editor.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
     await expect
-      .poll(() => queryDatabase(`select city from public.profiles where id = '${participantId}'`), {
+      .poll(() => queryDatabase(city), {
         timeout: 15_000,
       })
       .toBe(nextCity);
+    // Her page says who gave the answer, and the database agrees (RAPP-653).
+    await expect(page.getByTestId('fitxa-field-city-source')).toContainText('Marta Puig');
+    expect(
+      queryDatabase(
+        // Each answer by field records who gave it (ADR-031).
+        `select a.source || '/' || a.answered_by from public.custom_answers a
+           join public.profile_fields f on f.id = a.question_id and f.system_key = 'city'
+          where a.profile_id = '${participantId}'`,
+      ),
+    ).toBe('staff/5eed0000-0000-4000-8000-000000000002');
 
     // "Reflected in the table" is an acceptance criterion, so it is asserted in
     // the table rather than inferred from the detail view having re-rendered.
@@ -199,36 +226,26 @@ test.describe('the participant detail view', () => {
    */
   test('staff can leave the document empty, and it stays empty', async ({ page }) => {
     const participantId = participantIdByLastName('Rojas');
-    const original = queryDatabase(
-      `select document_type || '|' || document_number::text from public.profiles where id = '${participantId}'`,
-    );
-    const [originalType, originalNumber] = original.split('|');
+    const document = `select coalesce(${appAnswerSql(`'${participantId}'`, 'document_type')}, 'empty')
+      || '|' || coalesce(${appAnswerSql(`'${participantId}'`, 'document_number')}, 'empty')`;
+    const [originalType = 'empty', originalNumber = 'empty'] = queryDatabase(document).split('|');
     try {
       await openDetail(page, participantId);
-      await page
-        .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
-        .click();
-      await page.locator('#participant-documentType').selectOption({ label: 'Not given' });
-      await expect(page.locator('#participant-documentNumber')).toHaveCount(0);
-      await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
+      const editor = await editField(page, 'document');
+      // No answer to the type asks no number (RAPP-664).
+      await editor.locator('select').selectOption('');
+      await expect(editor.getByRole('textbox')).toHaveCount(0);
+      await editor.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
-      await expect
-        .poll(
-          () =>
-            queryDatabase(
-              `select coalesce(document_type, 'empty') || '|' || coalesce(document_number::text, 'empty')
-                 from public.profiles where id = '${participantId}'`,
-            ),
-          { timeout: 15_000 },
-        )
-        .toBe('empty|empty');
+      await expect.poll(() => queryDatabase(document), { timeout: 15_000 }).toBe('empty|empty');
       await expect(page.getByText('Not filled in').first()).toBeVisible();
     } finally {
-      queryDatabase(
-        `update public.profiles
-            set document_type = '${originalType}', document_number = '${originalNumber}'::bytea
-          where id = '${participantId}'`,
-      );
+      queryDatabase(`
+        begin;
+        ${writeAppAnswerSql(`'${participantId}'`, 'document_type', originalType === 'empty' ? null : originalType, 'player')}
+        ${writeAppAnswerSql(`'${participantId}'`, 'document_number', originalNumber === 'empty' ? null : originalNumber, 'player')}
+        commit;
+      `);
     }
   });
 
@@ -271,18 +288,14 @@ test.describe('the participant detail view', () => {
     const participantId = participantIdByLastName('Ribes');
 
     await openDetail(page, participantId);
-    await page
-      .getByRole('button', { name: /^(edita la fitxa|edita la ficha|edit the record)$/i })
-      .click();
-    await page.locator('#participant-placeOfBirth').fill('Sant Julià de Vilatorta');
-    await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
+    const editor = await editField(page, 'place_of_birth');
+    await editor.getByRole('textbox').fill('Sant Julià de Vilatorta');
+    await editor.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
 
     await expect
-      .poll(
-        () =>
-          queryDatabase(`select place_of_birth from public.profiles where id = '${participantId}'`),
-        { timeout: 15_000 },
-      )
+      .poll(() => queryDatabase(`select ${appAnswerSql(`'${participantId}'`, 'place_of_birth')}`), {
+        timeout: 15_000,
+      })
       .toBe('Sant Julià de Vilatorta');
   });
 

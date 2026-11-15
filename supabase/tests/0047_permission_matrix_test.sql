@@ -16,6 +16,46 @@
 begin;
 select plan(33);
 
+-- An app answer given by option key, as the app's screens send it by option id.
+create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
+  select case
+    when f.question_type in ('single_choice', 'search_choice') and jsonb_typeof(v) = 'string' then
+      coalesce((select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v #>> '{}'), v)
+    when f.question_type = 'multiple_choice' and jsonb_typeof(v) = 'array' then
+      coalesce((select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+                 where o.question_id = f.id and o.key in (select jsonb_array_elements_text(v))
+                having count(*) = jsonb_array_length(v)), v)
+    else v
+  end;
+$$;
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, pg_temp.by_option_key(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+-- Her answer to an app field in a reader's `answers` (RAPP-662): a choice by its
+-- option's key, anything else as text.
+create function pg_temp.column_of(p_answers jsonb, p_key text) returns text language sql security definer as $$
+  select coalesce(
+    (select o.key from public.custom_question_options o
+      where o.question_id = f.id and o.id::text = p_answers ->> f.id::text),
+    p_answers ->> f.id::text)
+    from public.profile_fields f
+   where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = p_key;
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 -- 1. Structure -------------------------------------------------------------------------------
 
 select hasnt_function('public', 'is_staff_or_admin', array[]::text[], 'the staff-or-admin helper is gone');
@@ -43,7 +83,11 @@ select is(
         'checkout_recipients', 'record_staff_checkout',
         -- Only a team account is marked as a test account; a player is a test
         -- player from her creation or never (RAPP-615).
-        'set_team_member_test_account'
+        'set_team_member_test_account',
+        -- Players see the first name and photo of team members only (RAPP-639).
+        'get_staff_cards', 'can_read_profile_photo_object',
+        -- The bell rings for team members only (RAPP-640).
+        'staff_notification_recipients'
       )),
   '{}'::text[], 'a literal staff/admin role check remains only where it defines team membership'
 );
@@ -87,7 +131,7 @@ select is((select count(*)::int from public.audit_log), 0, 'no audit log');
 select is((select count(*)::int from public.internal_documents), 0, 'no internal documents');
 select is((select count(*)::int from public.entity_invitations), 0, 'no entity invitations');
 select is(
-  (select first_name is not null and date_of_birth is not null and phone is null and document_number is null
+  (select first_name is not null and pg_temp.column_of(answers, 'date_of_birth') is not null and pg_temp.column_of(answers, 'phone') is null and pg_temp.column_of(answers, 'document_number') is null
      from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
   true, 'a participant profile shows her Personal fields and hides the Sensitive ones'
 );
@@ -99,7 +143,7 @@ select throws_ok(
 -- Today's staff keep both (the adjustment).
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
-  (select phone is not null from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
+  (select pg_temp.column_of(answers, 'phone') is not null from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
   true, 'today''s staff still see the sensitive fields'
 );
 select ok((select count(*) from public.deletion_requests) >= 0 and (select public.has_permission('rgpd.erase')),
@@ -118,7 +162,7 @@ select is((select count(*)::int from public.feedback_submissions), 0, 'but no pr
 select is((select count(*)::int from public.mentoring_requests), 0, 'no mentoring requests');
 select is((select count(*)::int from public.notification_templates), 0, 'no notification templates');
 select is(
-  (select first_name is not null and date_of_birth is null and phone is null
+  (select first_name is not null and pg_temp.column_of(answers, 'date_of_birth') is null and pg_temp.column_of(answers, 'phone') is null
      from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
   true, 'a coach sees a participant''s Basic fields only'
 );
@@ -166,13 +210,13 @@ set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000003", 
 select lives_ok(
   $$ select public.update_organization_settings(
        'AE Ramassà', 'laia.ferrer@example.test', '+34600000000', null, '#005F92', '#FFD166',
-       array['ca', 'es', 'en', 'ar', 'fa'], 'ca') $$,
+       array['ca', 'es', 'en', 'fr', 'ar', 'fa'], 'ca') $$,
   'settings.branding changes the colours'
 );
 select throws_ok(
   $$ select public.update_organization_settings(
        'Renamed', 'laia.ferrer@example.test', '+34600000000', null, '#005F92', '#FFD166',
-       array['ca', 'es', 'en', 'ar', 'fa'], 'ca') $$,
+       array['ca', 'es', 'en', 'fr', 'ar', 'fa'], 'ca') $$,
   '42501', null::text, 'but not the organization name'
 );
 
@@ -195,17 +239,14 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select lives_ok(
   $$ select public.update_participant_profile('5eed0000-0000-4000-8000-000000000026',
-       (select jsonb_build_object(
-          'first_name', first_name, 'last_name', last_name, 'date_of_birth', date_of_birth,
-          'place_of_birth', place_of_birth, 'nationality', nationality, 'document_type', document_type,
-          'city', 'Manlleu', 'phone', '', 'address', '', 'postal_code', '', 'document_number', '')
-        from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026'))) $$,
+       jsonb_build_object('answers', pg_temp.answers(jsonb_build_object(
+          'city', 'Manlleu', 'phone', '', 'address', '', 'postal_code', '', 'document_number', '')))) $$,
   'an editor without sensitive access saves the Personal fields'
 );
 reset role;
 select is(
-  (select public.decrypt_field(phone) is not null and city = 'Manlleu'
-     from public.profiles where id = '5eed0000-0000-4000-8000-000000000026'),
+  pg_temp.stored('5eed0000-0000-4000-8000-000000000026', 'phone') is not null
+    and pg_temp.stored('5eed0000-0000-4000-8000-000000000026', 'city') = '"Manlleu"'::jsonb,
   true, 'and the phone she could not see is kept, not wiped'
 );
 

@@ -2,9 +2,10 @@ import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { FieldErrorText } from '@/components/onboarding/field-error-text';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
+import { followUpShows } from '@/lib/follow-up-screens';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
-import { useWizardStep } from '@/lib/onboarding-intake-context';
+import { useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import { mergeSupportNeedsDraft } from '@/lib/support-needs-draft';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
@@ -22,6 +23,7 @@ import {
 export function SupportNeedsStep() {
   const { t } = useTranslation('onboarding');
   const step = useWizardStep('specific-needs');
+  const { catalog } = useWizardIntake();
   const router = useRouter();
   const fontClass = useLanguageFontClass();
   // Staff can make this question required (RAPP-611): "None" is an answer.
@@ -50,7 +52,8 @@ export function SupportNeedsStep() {
           return;
         }
         const first = selectedSupportNeeds(answer)[0];
-        if (first) {
+        // A follow-up that asks nothing is skipped (RAPP-720).
+        if (first && followUpShows(catalog, 'specific-needs-details')) {
           onboardingDraftStore.saveDraft(
             mergeSupportNeedsDraft(
               onboardingDraftStore.loadDraft(),

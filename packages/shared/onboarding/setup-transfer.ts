@@ -18,15 +18,20 @@ import { authorizationContentSchema } from '../authorization/authorization';
 import { AppError, databaseErrorCode } from '../errors';
 import { languageCodeSchema } from '../schemas/language';
 import type { Database, Json } from '../types/database';
-import { appTermsDraftSchema } from './app-terms';
+import { appTermsDraftSchema, localizedPointsSchema } from './app-terms';
 
 type Client = SupabaseClient<Database>;
 
 export const ONBOARDING_SETUP_FORMAT = 'ramassa.onboarding-setup';
-/** The one schema version this build reads and writes. */
-export const ONBOARDING_SETUP_SCHEMA_VERSION = 1;
+/**
+ * The schema version this build writes: 3 carries the profile layout alone
+ * (RAPP-656). Version 2 added it beside the old question shape (RAPP-649).
+ */
+export const ONBOARDING_SETUP_SCHEMA_VERSION = 3;
+/** The versions this build reads: the database reads a version 1 or 2 file as version 3. */
+export const ONBOARDING_SETUP_READABLE_VERSIONS: readonly number[] = [1, 2, 3];
 
-/** Text in any of the five languages (help lines, intros, overrides). */
+/** Text in any of the supported languages (help lines, intros, overrides). */
 const anyLanguageText = z.partialRecord(languageCodeSchema, z.string());
 /** Text whose Catalan is required (titles, labels). */
 const catalanText = anyLanguageText.refine((text) => (text.ca ?? '').trim().length > 0, {
@@ -49,7 +54,8 @@ const optionSchema = z.strictObject({
   is_archived: z.boolean(),
 });
 
-const questionSchema = z.strictObject({
+/** A question on a screen, in a version 1 or 2 file: version 3 has fields and placements. */
+const olderQuestionSchema = z.strictObject({
   id: configId,
   question_type: z.string().min(1),
   label: catalanText,
@@ -74,16 +80,36 @@ const screenSchema = z.strictObject({
   home_after_screen: z.string().min(1),
   home_sort_order: position,
   is_archived: z.boolean(),
-  questions: z.array(questionSchema),
+  // From RAPP-711; an older file has none and its screens show.
+  is_hidden: z.boolean().optional(),
+  // From RAPP-715: the answer that opens it, a field of the file and its
+  // answers. An older file has none and its screens always show.
+  show_when_field_id: configId.nullable().optional(),
+  show_when_values: z.array(z.string().min(1).max(64)).max(500).nullable().optional(),
+  // A version 1 or 2 file only: the app screen a holder held (RAPP-642), and
+  // the screen's questions. The database reads them as fields and placements.
+  builtin_screen: z.string().min(1).nullable().optional(),
+  questions: z.array(olderQuestionSchema).optional(),
 });
 
 export const onboardingSetupDocumentSchema = z
   .strictObject({
     format: z.literal(ONBOARDING_SETUP_FORMAT),
-    schema_version: z.literal(ONBOARDING_SETUP_SCHEMA_VERSION),
+    schema_version: z.union([z.literal(1), z.literal(2), z.literal(3)]),
     app_commit: z.string().max(64).nullable(),
     exported_at: z.string().min(1),
     screens: z.array(screenSchema),
+    // The profile layout (RAPP-649), from version 2 on; the database checks each row.
+    sections: z.array(z.record(z.string(), z.unknown())).optional(),
+    fields: z
+      .array(
+        z.looseObject({ kind: z.string(), options: z.array(z.record(z.string(), z.unknown())) }),
+      )
+      .optional(),
+    placements: z.array(z.record(z.string(), z.unknown())).optional(),
+    // The wording, hiding and required flag of the app's questions live on
+    // their placements (ADR-031). An export writes these two lists empty; an
+    // older file may fill them, and the database applies them on import.
     builtin_question_overrides: z.array(
       z.strictObject({
         question: z.string().min(1),
@@ -95,6 +121,7 @@ export const onboardingSetupDocumentSchema = z
     ),
     builtin_screens: z.array(
       z.strictObject({
+        is_deleted: z.boolean().optional(),
         screen: z.string().min(1),
         texts: z.record(z.string(), z.unknown()),
         is_hidden: z.boolean(),
@@ -140,10 +167,67 @@ export const onboardingSetupDocumentSchema = z
       ),
       draft: z.strictObject({ content: authorizationContentSchema }).nullable(),
     }),
+    // The blocks of the screens and the entity form (RAPP-690): a signature,
+    // a text or points (RAPP-770). An older file has none, and a file from
+    // before RAPP-770 holds signatures with no kind. The key keeps its name.
+    signature_blocks: z
+      .array(
+        z.strictObject({
+          surface: z.enum(['onboarding', 'entity_form']),
+          screen_key: z.string().min(1).nullable(),
+          kind: z.enum(['signature', 'text', 'points']).optional(),
+          body: catalanText.nullable().optional(),
+          title: anyLanguageText.nullable().optional(),
+          points: localizedPointsSchema.nullable().optional(),
+          sort_order: position,
+        }),
+      )
+      .optional(),
+    // Dades legals (RAPP-699): the consents by key and where Onboarding asks
+    // them. An older file has none; the database checks each row.
+    consents: z
+      .array(
+        z.strictObject({
+          key: z.string().regex(/^[a-z][a-z0-9_]{0,39}$/),
+          system_key: z.string().nullable(),
+          name: catalanText,
+          body: catalanText,
+          is_archived: z.boolean(),
+        }),
+      )
+      .optional(),
+    consent_placements: z
+      .array(
+        z.strictObject({
+          consent_key: z.string().min(1),
+          screen_key: z.string().min(1),
+          sort_order: position,
+          required: z.boolean(),
+        }),
+      )
+      .optional(),
   })
   .superRefine((document, context) => {
+    if (
+      document.schema_version >= 2 &&
+      (document.sections === undefined ||
+        document.fields === undefined ||
+        document.placements === undefined)
+    ) {
+      context.addIssue({ code: 'custom', message: 'the file carries the profile layout' });
+    }
+    if (
+      document.schema_version === 1 &&
+      document.screens.some((screen) => screen.questions === undefined)
+    ) {
+      context.addIssue({ code: 'custom', message: 'a version 1 screen carries its questions' });
+    }
     const screens = new Set(document.screens.map((screen) => screen.id));
-    const questions = document.screens.flatMap((screen) => screen.questions);
+    // A version 1 file's questions; a later file's are read from its fields.
+    const questions =
+      document.schema_version === 1
+        ? document.screens.flatMap((screen) => screen.questions ?? [])
+        : [];
     const questionIds = new Set(questions.map((question) => question.id));
     const optionIds = new Set(
       questions.flatMap((question) => question.options.map((option) => option.id)),
@@ -181,6 +265,21 @@ export const onboardingSetupDocumentSchema = z
         }
       }
     }
+    // A screen depends on a field of the file, with at least one answer (RAPP-715).
+    const fieldIds = new Set((document.fields ?? []).map((field) => String(field.id)));
+    for (const screen of document.screens) {
+      const fieldId = screen.show_when_field_id ?? null;
+      const values = screen.show_when_values ?? [];
+      if (
+        (fieldId === null) !== (values.length === 0) ||
+        (fieldId !== null && !fieldIds.has(fieldId))
+      ) {
+        context.addIssue({
+          code: 'custom',
+          message: 'a screen depends on a field outside the file',
+        });
+      }
+    }
     for (const version of document.authorization.published) {
       if (!seasons.has(version.season_id)) {
         context.addIssue({ code: 'custom', message: 'a version names a missing season' });
@@ -188,6 +287,21 @@ export const onboardingSetupDocumentSchema = z
     }
     if (document.seasons.filter((season) => season.is_current).length > 1) {
       context.addIssue({ code: 'custom', message: 'more than one current season' });
+    }
+    for (const block of document.signature_blocks ?? []) {
+      // An Onboarding block names its screen; the entity form names none.
+      if ((block.surface === 'onboarding') !== (block.screen_key !== null)) {
+        context.addIssue({ code: 'custom', message: 'a signature block names its screen' });
+      }
+      // Each kind holds its own content, as the database checks it.
+      const kind = block.kind ?? 'signature';
+      const holds =
+        kind === 'points'
+          ? block.points != null && block.body == null && block.title == null
+          : block.body != null && block.points == null && (kind === 'text' || block.title == null);
+      if (!holds) {
+        context.addIssue({ code: 'custom', message: 'a block holds what its kind holds' });
+      }
     }
   });
 export type OnboardingSetupDocument = z.infer<typeof onboardingSetupDocumentSchema>;
@@ -213,6 +327,7 @@ export type OnboardingSetupFileRead =
 function holdsNoSetup(document: OnboardingSetupDocument): boolean {
   return (
     document.screens.length === 0 &&
+    !(document.fields ?? []).some((field) => field.kind === 'custom') &&
     document.builtin_question_overrides.length === 0 &&
     document.builtin_screens.length === 0 &&
     (document.flow_order ?? []).length === 0 &&
@@ -223,7 +338,8 @@ function holdsNoSetup(document: OnboardingSetupDocument): boolean {
     document.app_terms.draft === null &&
     document.seasons.length === 0 &&
     document.authorization.published.length === 0 &&
-    document.authorization.draft === null
+    document.authorization.draft === null &&
+    (document.signature_blocks ?? []).length === 0
   );
 }
 
@@ -246,7 +362,7 @@ export function readOnboardingSetupFile(text: string): OnboardingSetupFileRead {
   const raw = value as Record<string, unknown>;
   // "1" as a string is not a version (pending fix 33).
   if (typeof raw.schema_version !== 'number') return { ok: false, reason: 'version_not_number' };
-  if (raw.schema_version !== ONBOARDING_SETUP_SCHEMA_VERSION) {
+  if (!ONBOARDING_SETUP_READABLE_VERSIONS.includes(raw.schema_version)) {
     return { ok: false, reason: 'unknown_version', version: raw.schema_version };
   }
   const parsed = onboardingSetupDocumentSchema.safeParse(raw);

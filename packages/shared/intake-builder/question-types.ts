@@ -5,8 +5,8 @@
  * she answered. Each type has:
  *
  *   - its settings (`questionSettingsSchema`): a number's range and whether it
- *     is whole, a date's age range, how many items a list takes, a consent's
- *     own text, what a file question accepts;
+ *     is whole, a date's age range, how many items a list takes, what a file
+ *     question accepts;
  *   - ONE answer schema (`customAnswerSchema`), used by her phone before she
  *     continues, by the admin before staff save, and mirrored rule for rule by
  *     the database function that saves the answer
@@ -16,14 +16,16 @@
  *
  * Stored values: a number is a JSON number; a date `YYYY-MM-DD`; yes / no,
  * phone (E.164), email and a choice are strings; a list is a list of strings; a
- * consent is `true`; a signature is the strokes of the authorization pad; a
  * file is `{key, name, content_type, size}`, its key in the private folder of
- * the woman who answered. Sensitive answers are encrypted as before.
+ * the woman who answered; a country or a municipality is its canonical name.
+ * Sensitive answers are encrypted as before. A signature is no answer: it is a
+ * block of the forms (RAPP-690, `form-blocks.ts`).
  *
  * Docs: https://zod.dev/api (z.iso.date, refinements, discriminated settings).
  */
 import { z } from 'zod';
-import { signatureStrokesSchema, type SignatureStrokes } from '../equipment/handover';
+import { isCanonicalCountry } from '../i18n/countries';
+import { isCanonicalMunicipality } from '../i18n/municipalities';
 import type { LanguageCode } from '../schemas/language';
 
 export const CUSTOM_QUESTION_TYPES = [
@@ -39,14 +41,18 @@ export const CUSTOM_QUESTION_TYPES = [
   'email',
   'search_choice',
   'item_list',
-  'consent',
   'file_upload',
-  'signature',
+  'country',
+  'municipality',
 ] as const;
 export type CustomQuestionType = (typeof CUSTOM_QUESTION_TYPES)[number];
 
-export const QUESTION_PLACEMENTS = ['wizard', 'entity_form', 'season', 'staff'] as const;
-export type QuestionPlacement = (typeof QUESTION_PLACEMENTS)[number];
+/**
+ * The two lists the app ships (D6, RAPP-660): every country and every
+ * municipality of Catalonia. The answer is the canonical name the pickers
+ * already store (`Síria`, `Vic`), whatever language she reads.
+ */
+export const LIST_TYPES = ['country', 'municipality'] as const;
 
 /** Types answered by picking options staff wrote. */
 export const OPTION_TYPES = ['single_choice', 'multiple_choice', 'search_choice'] as const;
@@ -61,18 +67,11 @@ export function maxOptionsFor(type: CustomQuestionType): number {
 }
 
 /**
- * A file or a signature is hers to give: never the entity's form, never staff
- * only. The database refuses the same.
+ * Staff may complete or correct every answer but a file, which is hers to
+ * give. `private.field_is_hers_only` says the same.
  */
-export function placementsAllowedFor(type: CustomQuestionType): readonly QuestionPlacement[] {
-  return type === 'file_upload' || type === 'signature'
-    ? ['wizard', 'season']
-    : QUESTION_PLACEMENTS;
-}
-
-/** Staff may complete or correct every answer but a file or a signature, which are hers to give. */
-export function isStaffWritable(type: CustomQuestionType): boolean {
-  return type !== 'file_upload' && type !== 'signature';
+export function isStaffWritable(question: { readonly type: CustomQuestionType }): boolean {
+  return question.type !== 'file_upload';
 }
 
 export const YES_NO = ['yes', 'no'] as const;
@@ -114,15 +113,6 @@ export const FILE_CONTENT_TYPES: Readonly<Record<FileAccept, readonly string[]>>
 
 // Settings ------------------------------------------------------------------------------------
 
-const localizedTextSchema = z.object({
-  ca: z.string().optional(),
-  es: z.string().optional(),
-  en: z.string().optional(),
-  ar: z.string().optional(),
-  fa: z.string().optional(),
-});
-const catalanText = localizedTextSchema.refine((text) => (text.ca ?? '').trim().length > 0);
-
 const boundedNumber = z.number().min(-NUMBER_LIMIT).max(NUMBER_LIMIT);
 const age = z.int().min(0).max(120);
 
@@ -145,22 +135,15 @@ const dateSettingsSchema = z
       settings.min_age <= settings.max_age,
   );
 const itemListSettingsSchema = z.strictObject({ max_items: z.int().min(1).max(LIST_MAX_ITEMS) });
-const consentSettingsSchema = z.strictObject({ text: catalanText });
 const fileSettingsSchema = z.strictObject({ accept: z.enum(FILE_ACCEPTS) });
 const noSettingsSchema = z.strictObject({});
 
 export type NumberSettings = z.infer<typeof numberSettingsSchema>;
 export type DateSettings = z.infer<typeof dateSettingsSchema>;
 export type ItemListSettings = z.infer<typeof itemListSettingsSchema>;
-export type ConsentSettings = z.infer<typeof consentSettingsSchema>;
 export type FileSettings = z.infer<typeof fileSettingsSchema>;
 export type QuestionSettings =
-  | NumberSettings
-  | DateSettings
-  | ItemListSettings
-  | ConsentSettings
-  | FileSettings
-  | Readonly<Record<string, never>>;
+  NumberSettings | DateSettings | ItemListSettings | FileSettings | Readonly<Record<string, never>>;
 
 /** The settings a type takes; every other type takes none. */
 export function questionSettingsSchema(type: CustomQuestionType): z.ZodType<QuestionSettings> {
@@ -171,8 +154,6 @@ export function questionSettingsSchema(type: CustomQuestionType): z.ZodType<Ques
       return dateSettingsSchema;
     case 'item_list':
       return itemListSettingsSchema;
-    case 'consent':
-      return consentSettingsSchema;
     case 'file_upload':
       return fileSettingsSchema;
     default:
@@ -183,7 +164,6 @@ export function questionSettingsSchema(type: CustomQuestionType): z.ZodType<Ques
 const DEFAULT_SETTINGS: Readonly<Partial<Record<CustomQuestionType, QuestionSettings>>> = {
   number: { integer: false },
   item_list: { max_items: LIST_DEFAULT_MAX_ITEMS },
-  consent: { text: { ca: '' } },
   file_upload: { accept: 'document' },
 };
 
@@ -204,9 +184,6 @@ export function itemListSettings(settings: QuestionSettings): ItemListSettings {
   return 'max_items' in settings
     ? (settings as ItemListSettings)
     : { max_items: LIST_DEFAULT_MAX_ITEMS };
-}
-export function consentSettings(settings: QuestionSettings): ConsentSettings {
-  return 'text' in settings ? (settings as ConsentSettings) : { text: { ca: '' } };
 }
 export function fileSettings(settings: QuestionSettings): FileSettings {
   return 'accept' in settings ? (settings as FileSettings) : { accept: 'document' };
@@ -230,8 +207,7 @@ export interface FileAnswer {
   readonly size: number;
 }
 
-export type CustomAnswerValue =
-  string | number | boolean | readonly string[] | SignatureStrokes | FileAnswer;
+export type CustomAnswerValue = string | number | boolean | readonly string[] | FileAnswer;
 
 /** What every answer of every type can be, for reading stored rows. */
 export const customAnswerValueSchema = z.union([
@@ -239,7 +215,6 @@ export const customAnswerValueSchema = z.union([
   z.number(),
   z.boolean(),
   z.array(z.string()),
-  signatureStrokesSchema,
   z.object({
     key: z.string(),
     name: z.string(),
@@ -355,8 +330,6 @@ export function customAnswerSchema(question: AnswerQuestionShape): z.ZodType<Cus
         )
         .refine((items) => new Set(items).size === items.length);
     }
-    case 'consent':
-      return z.literal(true);
     case 'file_upload': {
       const accepted = FILE_CONTENT_TYPES[fileSettings(question.settings).accept];
       return z.strictObject({
@@ -370,18 +343,36 @@ export function customAnswerSchema(question: AnswerQuestionShape): z.ZodType<Cus
         size: z.int().min(1).max(FILE_MAX_BYTES),
       });
     }
-    case 'signature':
-      return signatureStrokesSchema;
+    case 'country':
+      return z.string().refine(isCanonicalCountry);
+    case 'municipality':
+      return z.string().refine(isCanonicalMunicipality);
   }
 }
 
-/** What she typed, tidied the way the field shows it: separators out of a phone, an email lowercased, list items trimmed. */
+/**
+ * A phone as the field stores it (E.164, RAPP-663): separators out, a leading
+ * 00 as +, and a Spanish number typed without its country code (nine digits,
+ * 6 to 9 first) with +34 in front. Anything else stays as typed, so the check
+ * refuses it.
+ */
+export function internationalPhone(value: string): string {
+  const tidy = value.replace(/[\s\-.()]/g, '');
+  if (tidy.startsWith('00')) return `+${tidy.slice(2)}`;
+  if (/^[6-9]\d{8}$/.test(tidy)) return `+34${tidy}`;
+  return tidy;
+}
+
+/**
+ * What she typed, tidied the way the field shows it: a phone in its
+ * international form (a Spanish number typed without +34 gets it), an email
+ * lowercased, list items trimmed.
+ */
 export function normalizeCustomAnswerInput(
   question: Pick<AnswerQuestionShape, 'type'>,
   value: CustomAnswerValue,
 ): CustomAnswerValue {
-  if (question.type === 'phone' && typeof value === 'string')
-    return value.replace(/[\s\-.()]/g, '');
+  if (question.type === 'phone' && typeof value === 'string') return internationalPhone(value);
   if (question.type === 'email' && typeof value === 'string') return value.trim().toLowerCase();
   if (question.type === 'item_list' && Array.isArray(value))
     return (value as unknown as readonly string[])
@@ -398,6 +389,7 @@ const SAMPLE_TEXT: Readonly<
   ca: { short: 'Resposta de prova', item: 'Element de prova' },
   es: { short: 'Respuesta de prueba', item: 'Elemento de prueba' },
   en: { short: 'Test answer', item: 'Test item' },
+  fr: { short: 'Réponse de test', item: 'Élément de test' },
   ar: { short: 'إجابة اختبار', item: 'عنصر اختبار' },
   fa: { short: 'پاسخ آزمایشی', item: 'مورد آزمایشی' },
 };
@@ -450,8 +442,10 @@ export function sampleCustomAnswer(
       return 'prova@example.test';
     case 'item_list':
       return [text.item];
-    case 'consent':
-      return true;
+    case 'country':
+      return 'Espanya';
+    case 'municipality':
+      return 'Vic';
     case 'file_upload': {
       const isPhoto = fileSettings(question.settings).accept === 'photo';
       return {
@@ -461,14 +455,5 @@ export function sampleCustomAnswer(
         size: 1024,
       };
     }
-    case 'signature':
-      return [
-        [
-          [100, 500],
-          [300, 400],
-          [500, 600],
-          [700, 450],
-        ],
-      ];
   }
 }

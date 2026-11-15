@@ -20,9 +20,7 @@ import { AppError, databaseErrorCode } from '../errors';
 import type { Database } from '../types/database';
 import {
   DEFAULT_WIZARD_FLOW,
-  INTAKE_QUESTIONS,
   isCustomStep,
-  QUESTION_PAYLOAD_KEYS,
   SCREEN_QUESTIONS,
   WIZARD_SCREEN_QUESTIONS,
   wizardFlowOrder,
@@ -43,42 +41,57 @@ import {
   type QuestionStates,
   type RequiredQuestions,
 } from './question-states';
+import { isSystemFieldKey, SYSTEM_FIELD_QUESTIONS } from './system-fields';
 
-/** The questions her wizard does not ask: not asked by the rules, or removed in Settings. */
+/**
+ * The questions her wizard always asks, known or not (RAPP-708): her names.
+ * The app is invitation only, and every way to create a player needs her
+ * names, so they are always known. Her name screen opens first, with them
+ * filled in, so she checks them. Both are locked required, so never removed.
+ */
+const ALWAYS_ASKED_QUESTIONS: readonly IntakeQuestion[] = SCREEN_QUESTIONS.identity;
+
+/**
+ * The questions her wizard does not ask: not asked by the rules, or removed in
+ * Settings. Her names are always asked; one in `hidden` is asked on the screen
+ * staff moved it to (RAPP-782), so her name screen does not ask it.
+ */
 export function wizardNotAsked(
   toAsk: ReadonlySet<IntakeQuestion>,
   hidden: ReadonlySet<IntakeQuestion>,
 ): AnsweredQuestions {
-  return new Set([...questionsNotAsked(toAsk), ...hidden]);
-}
-
-function hasValue(value: unknown): boolean {
-  if (value === null || value === undefined) return false;
-  if (typeof value === 'string') return value.trim() !== '';
-  if (Array.isArray(value)) return value.length > 0;
-  return true;
+  return new Set([
+    ...[...questionsNotAsked(toAsk)].filter(
+      (question) => !ALWAYS_ASKED_QUESTIONS.includes(question),
+    ),
+    ...hidden,
+  ]);
 }
 
 /**
- * The questions an invitation records as answered: the profile keys staff
- * send (`buildCreateParticipantInvitePayload`), then the profile keys the
- * entity answered on the referral (`referral_answer_keys`), for the questions
- * staff left out.
+ * The questions an invitation answers (RAPP-663, RAPP-664): her names, her
+ * entity when staff name one, and what the referral it answers holds
+ * (`referral_answer_keys`: system keys, field ids and `season_number`). Her
+ * entity is the invitation's to name, so the referral's never counts for it.
+ * The staff preview plans her wizard with it.
  */
-export function answeredAtInvitation(
-  payload: Readonly<Record<string, unknown>>,
+export function answeredByInvitation(
+  invite: { readonly referenceEntity?: string | null },
   entityAnswerKeys: readonly string[] = [],
 ): AnsweredQuestions {
-  const sent = new Set(Object.keys(payload));
-  const fromEntity = new Set(entityAnswerKeys.filter((key) => !sent.has(key)));
-  return new Set(
-    INTAKE_QUESTIONS.filter((question) => {
-      const keys = QUESTION_PAYLOAD_KEYS[question];
-      const staffSent = keys.filter((key) => sent.has(key));
-      if (staffSent.length > 0) return staffSent.some((key) => hasValue(payload[key]));
-      return keys.some((key) => fromEntity.has(key));
-    }),
-  );
+  const entity = invite.referenceEntity?.trim() ?? '';
+  const fromEntity = entityAnswerKeys.flatMap((key): IntakeQuestion[] => {
+    if (key === 'season_number') return ['season_number'];
+    return isSystemFieldKey(key) && SYSTEM_FIELD_QUESTIONS[key] !== 'reference_entity'
+      ? [SYSTEM_FIELD_QUESTIONS[key]]
+      : [];
+  });
+  return new Set<IntakeQuestion>([
+    'first_name',
+    'last_name',
+    ...(entity === '' ? [] : (['reference_entity'] as const)),
+    ...fromEntity,
+  ]);
 }
 
 /**

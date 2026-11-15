@@ -8,10 +8,13 @@
  *   - a date: day, month and year fields, as her date of birth;
  *   - yes / no / maybe, yes / no, a choice: option chips; several: chips too;
  *   - a long list: the searchable picker, as her country;
+ *   - a country, a municipality of Catalonia: the app's own pickers, the
+ *     ones of her nationality and her municipality (RAPP-663);
  *   - a list she adds to: the supporting organizations list;
- *   - one consent: the consent row of the authorization, with its own text;
- *   - a file: a photo or a PDF, uploaded to her private folder;
- *   - a signature: the authorization signature pad.
+ *   - a file: a photo or a PDF, uploaded to her private folder.
+ *
+ * A signature is no question: it is a block of the screen (RAPP-690,
+ * `signature-block-field.tsx`).
  *
  * Every staff question is optional (RAPP-611 adds required ones), so tapping a
  * chosen chip again clears it. The texts are staff's, in her app language with
@@ -22,12 +25,12 @@
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
-import { ConsentRow } from '@/components/authorization/consent-row';
-import { SignaturePad } from '@/components/equipment/signature-pad';
 import { FormTextArea } from '@/components/forms/form-text-area';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { CountryPicker } from '@/components/onboarding/country-picker';
 import { FieldErrorText } from '@/components/onboarding/field-error-text';
+import { MunicipalityPicker } from '@/components/onboarding/municipality-picker';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { ChoiceGrid } from '@/components/onboarding/option-grid';
 import { OptionSearchPicker } from '@/components/onboarding/option-search-picker';
@@ -43,11 +46,9 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, View, type TextStyle } from 'react-native';
-import type { SignatureStrokes } from '@ramassa/shared/equipment';
 import { toAppError } from '@ramassa/shared/errors';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
-  consentSettings,
   fileSettings,
   isCustomQuestionVisible,
   itemListSettings,
@@ -63,7 +64,6 @@ import {
   type CustomAnswerValue,
   type CustomQuestion,
   type FileAnswer,
-  type IntakeScreen,
 } from '@ramassa/shared/intake-builder';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -84,8 +84,6 @@ export interface CustomQuestionFieldProps {
   readonly onChange: (value: CustomAnswerValue) => void;
   /** Shown under the control when her answer does not fit the question. */
   readonly errorMessage?: string;
-  /** A signature question stops the screen scrolling while she draws. */
-  readonly onDrawingChange?: (isDrawing: boolean) => void;
 }
 
 function QuestionLabel({ text }: { readonly text: string }) {
@@ -289,51 +287,6 @@ function FileField({ question, value, onChange, errorMessage, label, help, testI
   );
 }
 
-function SignatureField({
-  value,
-  onChange,
-  errorMessage,
-  label,
-  help,
-  testID,
-  onDrawingChange,
-}: FieldProps) {
-  const { t } = useTranslation('onboarding');
-  const fontClass = useLanguageFontClass();
-  const strokes =
-    Array.isArray(value) && value.length > 0 && Array.isArray(value[0])
-      ? (value as unknown as SignatureStrokes)
-      : null;
-  return (
-    <View className="gap-sm" testID={testID}>
-      <QuestionLabel text={label} />
-      <QuestionHelp text={help} />
-      <SignaturePad
-        strokes={strokes}
-        onChange={(next) => onChange(next === null ? '' : next)}
-        onDrawingChange={onDrawingChange}
-        prompt={t('authorizationSignaturePrompt')}
-        promptClassName={fontClass}
-        accessibilityLabel={label}
-      />
-      {strokes === null ? null : (
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel={t('authorizationClearSignature')}
-          onPress={() => onChange('')}
-          haptic="tapLight"
-          className="min-h-recommended justify-center self-start"
-        >
-          <Text className={`text-form font-semibold text-primary-dark ${fontClass}`}>
-            {t('authorizationClearSignature')}
-          </Text>
-        </PressableScale>
-      )}
-      <FieldErrorText message={errorMessage} />
-    </View>
-  );
-}
-
 interface FieldProps extends CustomQuestionFieldProps {
   readonly label: string;
   readonly help: string | null;
@@ -412,24 +365,6 @@ export function CustomQuestionField(props: CustomQuestionFieldProps) {
       return <DateField {...field} />;
     case 'file_upload':
       return <FileField {...field} />;
-    case 'signature':
-      return <SignatureField {...field} />;
-    case 'consent':
-      return (
-        <View testID={testID} className="gap-sm">
-          <QuestionLabel text={label} />
-          <QuestionHelp text={help} />
-          <ConsentRow
-            testID={`${testID}-tick`}
-            label={textIn(consentSettings(question.settings).text, language)}
-            required={false}
-            requiredMark=""
-            checked={value === true}
-            onToggle={() => onChange(value !== true)}
-          />
-          <FieldErrorText message={errorMessage} />
-        </View>
-      );
     case 'item_list':
       return (
         <View testID={testID}>
@@ -446,6 +381,30 @@ export function CustomQuestionField(props: CustomQuestionFieldProps) {
             maxLength={LIST_ITEM_MAX_LENGTH}
           />
           <FieldErrorText message={errorMessage} />
+        </View>
+      );
+    case 'country':
+      return (
+        <View testID={testID} className="gap-xs">
+          <CountryPicker
+            label={label}
+            value={asText(value)}
+            onChange={onChange}
+            errorMessage={errorMessage}
+          />
+          <QuestionHelp text={help} />
+        </View>
+      );
+    case 'municipality':
+      return (
+        <View testID={testID} className="gap-xs">
+          <MunicipalityPicker
+            label={label}
+            value={asText(value)}
+            onChange={onChange}
+            errorMessage={errorMessage}
+          />
+          <QuestionHelp text={help} />
         </View>
       );
     case 'search_choice': {
@@ -536,62 +495,40 @@ export function CustomQuestionField(props: CustomQuestionFieldProps) {
 }
 
 /**
- * Staff screens as sections of a longer form (re-registration, the entity's
- * referral): each screen's title, its intro, then its questions.
+ * Fitxa fields as part of a longer form (re-registration, the entity's
+ * referral), in their order, each worded for that form (RAPP-655). A field
+ * whose condition does not apply is not shown.
  */
-export function CustomQuestionSections({
-  screens,
+export function CustomQuestionList({
+  questions,
   answers,
   onChange,
   errors = {},
-  onDrawingChange,
+  testID,
 }: {
-  readonly screens: readonly IntakeScreen[];
+  readonly questions: readonly CustomQuestion[];
   readonly answers: CustomAnswerDraft;
   readonly onChange: (questionId: string, value: CustomAnswerValue) => void;
   readonly errors?: Readonly<Record<string, string>>;
-  readonly onDrawingChange?: (isDrawing: boolean) => void;
+  readonly testID?: string;
 }) {
-  const { language } = useLanguage();
-  const fontClass = useLanguageFontClass();
   return (
-    <>
-      {screens.map((screen) => {
-        const intro = textIn(screen.intro, language);
-        return (
-          <View key={screen.id} testID={`custom-screen-${screen.id}`} className="gap-lg">
-            <View className="gap-xs">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-form font-bold text-neutral-900 ${fontClass}`}
-              >
-                {textIn(screen.title, language)}
-              </Text>
-              {intro === '' ? null : (
-                <Text className={`text-start text-form text-neutral-700 ${fontClass}`}>
-                  {intro}
-                </Text>
-              )}
-            </View>
-            {screen.questions
-              .filter((question) => isCustomQuestionVisible(question, answers))
-              .map((question) => (
-                <CustomQuestionField
-                  key={question.id}
-                  question={question}
-                  value={answers[question.id]}
-                  errorMessage={errors[question.id]}
-                  onDrawingChange={onDrawingChange}
-                  onChange={(value) => {
-                    const next = updateCustomAnswer(screen.questions, answers, question.id, value);
-                    for (const [id, answer] of Object.entries(next))
-                      if (answer !== answers[id]) onChange(id, answer);
-                  }}
-                />
-              ))}
-          </View>
-        );
-      })}
-    </>
+    <View testID={testID} className="gap-lg">
+      {questions
+        .filter((question) => isCustomQuestionVisible(question, answers))
+        .map((question) => (
+          <CustomQuestionField
+            key={question.id}
+            question={question}
+            value={answers[question.id]}
+            errorMessage={errors[question.id]}
+            onChange={(value) => {
+              const next = updateCustomAnswer(questions, answers, question.id, value);
+              for (const [id, answer] of Object.entries(next))
+                if (answer !== answers[id]) onChange(id, answer);
+            }}
+          />
+        ))}
+    </View>
   );
 }

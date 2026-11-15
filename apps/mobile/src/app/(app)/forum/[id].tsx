@@ -7,9 +7,11 @@ import { ForumReplyCard } from '@/components/forum/forum-reply-card';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
+import { AuthorLine } from '@/components/people/person-avatar';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { isNetworkStateOnline } from '@/lib/network-status';
+import { usePersonCards } from '@/lib/person-cards';
 import {
   useCreateForumReply,
   useDeleteForumPost,
@@ -55,6 +57,15 @@ export default function ForumPostDetailScreen() {
   const isOnline = isNetworkStateOnline(networkState);
   const postQuery = useForumPost(postId);
   const repliesQuery = useForumReplies(postId);
+  // The post's and the replies' authors in one lookup (RAPP-639).
+  const authorIds = useMemo(
+    () => [
+      postQuery.data?.author_id,
+      ...(repliesQuery.data ?? EMPTY_REPLIES).map((row) => row.author_id),
+    ],
+    [postQuery.data?.author_id, repliesQuery.data],
+  );
+  const personCards = usePersonCards(authorIds);
   const createReply = useCreateForumReply(postId);
   const editPost = useEditForumPost(postId);
   const deletePost = useDeleteForumPost(postId);
@@ -164,6 +175,7 @@ export default function ForumPostDetailScreen() {
       <ForumReplyCard
         reply={item}
         authorLabel={t('forum:postBy', { name: item.author_first_name })}
+        authorAvatarKey={personCards.get(item.author_id)?.avatarKey ?? null}
         tombstone={t('forum:deletedTombstone')}
         languageFontClass={languageFontClass}
         openLinkLabel={openLinkLabel}
@@ -173,7 +185,7 @@ export default function ForumPostDetailScreen() {
         onFlag={item.author_id === user?.id || item.visibility !== 'visible' ? null : flagReply}
       />
     ),
-    [flagReply, isOnline, languageFontClass, openLinkLabel, t, user?.id],
+    [flagReply, isOnline, languageFontClass, openLinkLabel, personCards, t, user?.id],
   );
 
   const confirmFlag = useCallback(() => {
@@ -247,11 +259,12 @@ export default function ForumPostDetailScreen() {
               >
                 {t('forum:detailTitle')}
               </Text>
-              <Text
-                className={`text-start text-sm font-bold text-primary-dark ${languageFontClass}`}
-              >
-                {t('forum:postBy', { name: post.author_first_name })}
-              </Text>
+              <AuthorLine
+                name={post.author_first_name}
+                avatarKey={personCards.get(post.author_id)?.avatarKey ?? null}
+                label={t('forum:postBy', { name: post.author_first_name })}
+                languageFontClass={languageFontClass}
+              />
             </View>
             {imageSource === null ? null : (
               <Image

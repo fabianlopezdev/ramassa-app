@@ -1,0 +1,425 @@
+/**
+ * Her phone, drawn (RAPP-641): a frame in the Ramassà colours with one
+ * onboarding screen in it, so staff spot its title, its questions and its
+ * buttons. The board shows a miniature of the same screen on each card.
+ *
+ * Every control is drawn disabled: this is a picture, and the real screen is
+ * checked on a phone with "Preview as player".
+ *
+ * The season authorization and the app terms draw their screens in the same
+ * frame (RAPP-695), on their own boards since RAPP-696: one phone for every
+ * form.
+ */
+
+import { QuestionControl } from '@/components/settings/question-type-fields';
+import { cn } from '@/lib/utils';
+import { ChevronDown, Files } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getLanguageDirection } from '@ramassa/shared/i18n/languages';
+import type { LanguageCode } from '@ramassa/shared/schemas';
+import type { PhoneContent } from './screen-content';
+
+export function PhoneFrame({
+  content,
+  language,
+  step,
+  total = 0,
+  flowLabel,
+  highlight,
+}: {
+  readonly content: PhoneContent;
+  readonly language: LanguageCode;
+  /** Her place in the flow; a screen outside a numbered flow leaves it out (RAPP-695). */
+  readonly step?: number;
+  readonly total?: number;
+  /** The flow's name before the step, as the authorization's progress bar names it. */
+  readonly flowLabel?: string;
+  /** The question an open form is editing, marked on the phone. */
+  readonly highlight?: string;
+}) {
+  const { t } = useTranslation(['settings', 'onboarding']);
+  const phone = (key: string, options: Record<string, unknown> = {}) =>
+    t(`onboarding:${key}`, { ...options, lng: language });
+  return (
+    <div
+      className="mx-auto w-full max-w-[var(--editor-phone-width,20rem)] rounded-[2.75rem] bg-(--ramassa-color-neutral-900) p-2.5 shadow-xl ring-1 ring-black/10"
+      data-testid="phone-preview"
+    >
+      <div
+        lang={language}
+        dir={getLanguageDirection(language)}
+        className="relative flex aspect-[9/19] flex-col overflow-hidden rounded-[2.2rem] bg-white text-foreground [overflow-wrap:anywhere]"
+        data-testid="phone-screen"
+      >
+        <div aria-hidden className="flex h-8 shrink-0 items-center justify-center">
+          <span className="h-5 w-20 rounded-full bg-(--ramassa-color-neutral-900)" />
+        </div>
+        {step === undefined ? null : (
+          <div className="flex flex-col gap-2 px-5 pt-2">
+            <div className="flex items-center justify-between gap-2">
+              {flowLabel === undefined ? null : (
+                <p className="min-w-0 truncate text-start text-[11px] font-semibold text-primary">
+                  {flowLabel}
+                </p>
+              )}
+              <p className="text-start text-[11px] font-medium text-muted-foreground tabular-nums">
+                {phone('stepOf', { current: step, total })}
+              </p>
+            </div>
+            <div aria-hidden className="h-1 overflow-hidden rounded-full bg-primary/15">
+              <div
+                className="h-full rounded-full bg-primary"
+                style={{ width: `${Math.round((step / Math.max(total, 1)) * 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-5 pb-4">
+          <div className="flex flex-col gap-1.5">
+            <p className="text-start text-xl leading-7 font-semibold" data-testid="phone-title">
+              {content.title === '' ? ' ' : content.title}
+            </p>
+            {content.intro === '' ? null : (
+              <p className="text-start text-sm leading-5 text-muted-foreground">{content.intro}</p>
+            )}
+            {content.help === '' ? null : (
+              <p className="text-start text-sm leading-5">{content.help}</p>
+            )}
+          </div>
+          {(content.sections ?? []).map((section, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-2 rounded-md bg-muted/60 p-3 text-start text-sm font-semibold"
+            >
+              <span className="min-w-0 flex-1">{section === '' ? ' ' : section}</span>
+              <ChevronDown aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+            </div>
+          ))}
+          {content.links === undefined || content.links.labels.length === 0 ? null : (
+            <div className="flex flex-col gap-1.5">
+              <p className="text-start text-base font-semibold">{content.links.title}</p>
+              {content.links.labels.map((label, index) => (
+                <p key={index} className="text-start text-sm font-medium text-primary underline">
+                  {label}
+                </p>
+              ))}
+            </div>
+          )}
+          {content.body === undefined ? null : <PhoneText body={content.body} />}
+          {content.blocks === undefined ? null : <PhonePoints points={content.blocks} />}
+          {(content.details ?? []).map((group, index) => (
+            <div key={index} className="flex flex-col gap-1.5">
+              <p className="text-start text-sm font-semibold">{group.title}</p>
+              <div className="flex flex-col divide-y rounded-md border bg-background">
+                {group.rows.map((row, at) => (
+                  <div key={at} className="flex flex-col px-3 py-1.5">
+                    <span className="text-start text-[11px] text-muted-foreground">
+                      {row.label}
+                    </span>
+                    <span className="text-start text-sm">{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          {content.questions.map((question) =>
+            question.isConsent === true || question.isSignature === true ? (
+              // A consent tick or a signature as her phone draws them (RAPP-777).
+              <div
+                key={question.id}
+                className={cn(
+                  'flex flex-col gap-2 rounded-lg transition-[box-shadow]',
+                  highlight === question.id &&
+                    'ring-2 ring-primary ring-offset-4 ring-offset-canvas',
+                )}
+                data-testid={`phone-question-${question.id}`}
+              >
+                {question.isConsent === true ? (
+                  <PhoneTick
+                    label={question.label}
+                    requiredMark={question.isRequired ? phone('authorizationRequiredMark') : null}
+                  />
+                ) : (
+                  <>
+                    <p className="text-start text-sm font-medium">
+                      {question.label === '' ? ' ' : question.label}
+                    </p>
+                    <PhoneSignature
+                      title={question.signatureTexts?.title ?? phone('authorizationSignatureTitle')}
+                      prompt={
+                        question.signatureTexts?.prompt ?? phone('authorizationSignaturePrompt')
+                      }
+                      cannotDraw={
+                        question.signatureTexts?.cannotDraw ?? phone('authorizationCannotDraw')
+                      }
+                    />
+                  </>
+                )}
+              </div>
+            ) : question.block !== undefined ? (
+              // A text or points block (RAPP-770): the terms' own visuals, in its place.
+              <div
+                key={question.id}
+                className={cn(
+                  'rounded-lg transition-[box-shadow]',
+                  highlight === question.id &&
+                    'ring-2 ring-primary ring-offset-4 ring-offset-canvas',
+                )}
+                data-testid={`phone-question-${question.id}`}
+              >
+                {question.block.kind === 'text' ? (
+                  <PhoneText title={question.block.title} body={question.block.body} />
+                ) : (
+                  <PhonePoints points={question.block.points} />
+                )}
+              </div>
+            ) : (
+              <div
+                key={question.id}
+                className={cn(
+                  'flex flex-col gap-1.5 rounded-lg transition-[box-shadow]',
+                  highlight === question.id &&
+                    'ring-2 ring-primary ring-offset-4 ring-offset-canvas',
+                )}
+                data-testid={`phone-question-${question.id}`}
+              >
+                {question.heading === undefined ? null : (
+                  <p className="pb-1 text-start text-base font-semibold">{question.heading}</p>
+                )}
+                <p className="text-start text-sm font-medium">
+                  {question.label === '' ? ' ' : question.label}
+                  {question.isRequired ? (
+                    <span className="text-primary" aria-label={t('onboardingBoard.required')}>
+                      {' *'}
+                    </span>
+                  ) : null}
+                </p>
+                {question.help === '' ? null : (
+                  <p className="text-start text-xs text-muted-foreground">{question.help}</p>
+                )}
+                <div inert className="pointer-events-none">
+                  <QuestionControl
+                    draft={question.draft}
+                    language={language}
+                    showOptionCount={false}
+                  />
+                </div>
+              </div>
+            ),
+          )}
+          {content.lines.map((line, index) => (
+            <p key={index} className="text-start text-sm leading-5 text-muted-foreground">
+              {line}
+            </p>
+          ))}
+          {content.checkbox === null ? null : (
+            <PhoneTick label={content.checkbox} requiredMark={null} />
+          )}
+          {(content.checkboxes ?? []).map((checkbox, index) => (
+            <PhoneTick key={index} label={checkbox.label} requiredMark={checkbox.requiredMark} />
+          ))}
+          {content.signatureTexts === undefined ? null : (
+            <PhoneSignature {...content.signatureTexts} />
+          )}
+          {content.signature ? (
+            <PhoneSignatureBox prompt={phone('authorizationSignaturePrompt')} />
+          ) : null}
+        </div>
+        <div className="flex shrink-0 flex-col gap-2 px-5 pt-2 pb-6">
+          <span className="rounded-full bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground">
+            {content.continueLabel === '' ? ' ' : content.continueLabel}
+          </span>
+          {content.secondaryLabel === undefined ? null : (
+            <span className="rounded-full border border-primary px-4 py-2.5 text-center text-sm font-semibold text-primary">
+              {content.secondaryLabel}
+            </span>
+          )}
+          {content.declineLabel === null ? null : (
+            <span className="text-center text-sm font-medium text-primary">
+              {content.declineLabel}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * A text she reads (RAPP-695, RAPP-770): the terms' legal text, and a text
+ * block of any form, under its heading when it has one.
+ */
+function PhoneText({ title = '', body }: { readonly title?: string; readonly body: string }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {title === '' ? null : <p className="text-start text-base font-semibold">{title}</p>}
+      <p className="rounded-md bg-muted/60 p-3 text-start text-sm leading-5 whitespace-pre-line">
+        {body === '' ? ' ' : body}
+      </p>
+    </div>
+  );
+}
+
+/** Points, each a title and a text (RAPP-695, RAPP-770): the terms' and a points block's. */
+function PhonePoints({
+  points,
+}: {
+  readonly points: readonly { readonly title: string; readonly body: string }[];
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      {points.map((point, index) => (
+        <div key={index} className="flex flex-col gap-0.5">
+          <p className="text-start text-sm font-semibold">{point.title}</p>
+          <p className="text-start text-sm leading-5 text-muted-foreground">{point.body}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** The empty box she signs in, its prompt inside. */
+/** The signing her phone shows under a signature's text: its title, the box, "No puc signar". */
+function PhoneSignature({
+  title,
+  prompt,
+  cannotDraw,
+}: {
+  readonly title: string;
+  readonly prompt: string;
+  readonly cannotDraw: string;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-start text-base font-semibold">{title}</p>
+      <PhoneSignatureBox prompt={prompt} />
+      <PhoneTick label={cannotDraw} requiredMark={null} />
+    </div>
+  );
+}
+
+function PhoneSignatureBox({ prompt }: { readonly prompt: string }) {
+  return (
+    <div className="flex h-20 items-center justify-center rounded-md border border-dashed border-input bg-background text-sm text-muted-foreground">
+      {prompt}
+    </div>
+  );
+}
+
+/** A tick box and its words, with the required mark under them as her phone shows it. */
+function PhoneTick({
+  label,
+  requiredMark,
+}: {
+  readonly label: string;
+  readonly requiredMark: string | null;
+}) {
+  return (
+    <div className="flex items-start gap-2 text-start text-sm">
+      <span aria-hidden className="mt-0.5 size-4 shrink-0 rounded border-2 border-primary" />
+      <span className="flex flex-col">
+        <span>{label === '' ? ' ' : label}</span>
+        {requiredMark === null ? null : <span className="font-semibold">{requiredMark}</span>}
+      </span>
+    </div>
+  );
+}
+
+/** The phone frame's own size, so a card can draw it smaller (RAPP-706). */
+const PHONE_WIDTH = 320;
+// 10px of frame on each side, the screen 9:19 inside it.
+const PHONE_HEIGHT = ((PHONE_WIDTH - 20) * 19) / 9 + 20;
+const PHONE_ASPECT = `${PHONE_WIDTH} / ${PHONE_HEIGHT}`;
+
+/**
+ * The card's picture of a screen (RAPP-706): the very same `PhoneFrame` the
+ * screen editor shows, scaled down to the card, so a card and its preview
+ * never differ. It is a picture: hidden from assistive technology and inert.
+ */
+export function PhoneMiniature({
+  content,
+  language,
+  isDimmed = false,
+  step,
+  total,
+  flowLabel,
+}: {
+  readonly content: PhoneContent;
+  readonly language: LanguageCode;
+  readonly isDimmed?: boolean;
+  readonly step?: number;
+  readonly total?: number;
+  readonly flowLabel?: string;
+}) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.5);
+  useEffect(() => {
+    const box = boxRef.current;
+    if (box === null) return;
+    const fit = () => setScale(box.clientWidth / PHONE_WIDTH);
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, []);
+  return (
+    <div
+      ref={boxRef}
+      aria-hidden
+      inert
+      className={cn('relative w-full overflow-hidden', isDimmed && 'opacity-50')}
+      style={{ aspectRatio: PHONE_ASPECT }}
+    >
+      <div
+        className="absolute start-0 top-0 origin-top-left rtl:origin-top-right"
+        style={{ width: PHONE_WIDTH, transform: `scale(${scale})` }}
+      >
+        <PhoneFrame
+          content={content}
+          language={language}
+          step={step}
+          total={total}
+          flowLabel={flowLabel}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * A whole form as one card on the Onboarding board (RAPP-703): the app terms
+ * and every form chained after Onboarding. It is the size of a screen's card
+ * and draws no phone, because it stands for the form: its name, one line on
+ * what kind it is, and how many screens it shows her.
+ */
+export function FormMiniature({
+  name,
+  kind,
+  screens,
+  language,
+}: {
+  readonly name: string;
+  readonly kind: string;
+  readonly screens: string;
+  readonly language: LanguageCode;
+}) {
+  return (
+    <div
+      aria-hidden
+      lang={language}
+      dir={getLanguageDirection(language)}
+      className="flex w-full flex-col items-center justify-center gap-3 rounded-[2rem] border bg-muted/40 p-4 text-center"
+      style={{ aspectRatio: PHONE_ASPECT }}
+    >
+      <span className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <Files className="size-6" />
+      </span>
+      <p className="line-clamp-3 text-sm leading-5 font-semibold">{name}</p>
+      <p className="text-xs leading-4 text-muted-foreground">{kind}</p>
+      <span className="rounded-full border bg-card px-2.5 py-1 text-xs leading-4 font-medium tabular-nums">
+        {screens}
+      </span>
+    </div>
+  );
+}

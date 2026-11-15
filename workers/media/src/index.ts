@@ -29,6 +29,7 @@ import {
   canReadFeedbackObject,
   canReadInternalDocumentObject,
   canReadMediaObject,
+  canReadProfilePhotoObject,
   canReadStockObject,
   completeMediaItemDeletion,
   prepareMediaItemDeletion,
@@ -255,6 +256,13 @@ const handler: ExportedHandler<Env> = {
           }),
         authorizeCustomAnswerObject: (objectKey) =>
           canReadCustomAnswerObject({
+            objectKey,
+            token: readBearerToken(request),
+            supabaseUrl: config.supabaseUrl,
+            supabasePublishableKey: config.supabasePublishableKey,
+          }),
+        authorizeProfilePhotoObject: (objectKey) =>
+          canReadProfilePhotoObject({
             objectKey,
             token: readBearerToken(request),
             supabaseUrl: config.supabaseUrl,

@@ -1,0 +1,163 @@
+/**
+ * The blocks of one screen of her Onboarding (RAPP-690, RAPP-770), for the
+ * screen that draws them among its fields: an app screen (`placed-fields.tsx`)
+ * or a Ramassà screen (`custom/[screenId].tsx`).
+ *
+ * Each block shows in its place among the fields placed on the screen, by the
+ * order they share (a field first on a tie): a signature with its pad, a text
+ * (`TextBlock`) or points (`PointsBlock`), the visuals the terms screens use.
+ * Only a signature asks something, and it is required: Continue refuses while
+ * one has neither strokes nor "No puc signar" (RAPP-771). The strokes stay in her draft (`signatures`, by block id)
+ * on Continue and on Back, so saved progress keeps them until the terms step
+ * sends them with her registration.
+ *
+ * A form the team created (RAPP-700) draws its screens with the same hook:
+ * `form` gives its catalog and the strokes she already drew on it.
+ */
+
+import { PointsBlock } from '@/components/forms/points-block';
+import { TextBlock } from '@/components/forms/text-block';
+import { SignatureBlockField } from '@/components/onboarding/signature-block-field';
+import { onboardingDraftStore } from '@/lib/onboarding';
+import { useWizardIntake } from '@/lib/onboarding-intake-context';
+import { useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@ramassa/shared/i18n';
+import {
+  formBlocksOn,
+  placementOn,
+  resolveFormBlock,
+  signatureBlocks,
+  unsignedFormBlocks,
+  type CustomQuestion,
+  type FormBlock,
+  type FormSignatureDrafts,
+  type IntakeCatalog,
+} from '@ramassa/shared/intake-builder';
+
+/** Her strokes or "No puc signar" (RAPP-771), by block id. */
+type Drafts = FormSignatureDrafts;
+
+export interface FormBlocks {
+  /** Every block of the screen, in order: signatures, texts and points. */
+  readonly blocks: readonly FormBlock[];
+  readonly hasErrors: boolean;
+  /**
+   * The screen's visible fields, its blocks and its consents (RAPP-699), in
+   * their shared order: on a tie a field first, then a block, then a consent.
+   */
+  readonly interleave: (
+    questions: readonly CustomQuestion[],
+    renderQuestion: (question: CustomQuestion) => ReactNode,
+    consents?: readonly { readonly sortOrder: number; readonly node: ReactNode }[],
+  ) => ReactNode[];
+  /** Marks the unsigned signature blocks; true when every one is signed. */
+  readonly check: () => boolean;
+  /** Her draft's signatures with this screen's strokes in them. */
+  readonly drafted: (saved: Drafts | undefined) => Drafts;
+}
+
+/** A screen of a form the team created (RAPP-700): its catalog and her strokes so far. */
+export interface FormScreenSource {
+  readonly catalog: IntakeCatalog;
+  readonly signatures?: Drafts;
+  readonly consents?: Readonly<Record<string, boolean>>;
+}
+
+export function useFormBlocks(
+  screenKey: string | undefined,
+  onDrawingChange: (isDrawing: boolean) => void,
+  form?: FormScreenSource,
+): FormBlocks {
+  const { t } = useTranslation('onboarding');
+  const { language } = useLanguage();
+  const wizard = useWizardIntake();
+  const catalog = form?.catalog ?? wizard.catalog;
+  const surface = form === undefined ? 'onboarding' : 'custom_form';
+  const blocks = screenKey === undefined ? [] : formBlocksOn(catalog.blocks, surface, screenKey);
+  const [strokes, setStrokes] = useState<Drafts>(() => {
+    const saved =
+      form === undefined ? onboardingDraftStore.loadDraft()?.signatures : form.signatures;
+    return Object.fromEntries(
+      signatureBlocks(blocks).map((block) => [block.id, saved?.[block.id] ?? null]),
+    );
+  });
+  const [unsigned, setUnsigned] = useState<ReadonlySet<string>>(new Set());
+
+  const field = (block: FormBlock) => {
+    if (block.kind !== 'signature') {
+      const shown = resolveFormBlock(block, language);
+      return shown.kind === 'points' ? (
+        <PointsBlock key={block.id} points={shown.points} testID={`form-block-${block.id}`} />
+      ) : (
+        <TextBlock
+          key={block.id}
+          title={shown.kind === 'text' ? shown.title : ''}
+          body={shown.body}
+          testID={`form-block-${block.id}`}
+        />
+      );
+    }
+    return (
+      <SignatureBlockField
+        key={block.id}
+        block={block}
+        strokes={strokes[block.id] ?? null}
+        onDrawingChange={onDrawingChange}
+        errorMessage={unsigned.has(block.id) ? t('customErrorSignature') : undefined}
+        onChange={(next) => {
+          setStrokes((current) => ({ ...current, [block.id]: next }));
+          if (next !== null && unsigned.has(block.id)) {
+            setUnsigned((current) => new Set([...current].filter((id) => id !== block.id)));
+          }
+        }}
+      />
+    );
+  };
+
+  return {
+    blocks,
+    hasErrors: unsigned.size > 0,
+    interleave(questions, renderQuestion, consents = []) {
+      const order = (question: CustomQuestion) =>
+        catalog.layout === undefined
+          ? Number.POSITIVE_INFINITY
+          : ((form === undefined
+              ? placementOn(catalog.layout, question.id, 'onboarding', screenKey)
+              : catalog.layout.placements.find(
+                  (placement) =>
+                    placement.fieldId === question.id &&
+                    placement.surface === 'custom_form' &&
+                    placement.screenKey === screenKey,
+                )
+            )?.sortOrder ?? Number.POSITIVE_INFINITY);
+      const items = [
+        ...questions.map((question) => ({
+          sortOrder: order(question),
+          kind: 0,
+          render: () => renderQuestion(question),
+        })),
+        ...blocks.map((block) => ({
+          sortOrder: block.sortOrder,
+          kind: 1,
+          render: () => field(block),
+        })),
+        ...consents.map((consent) => ({
+          sortOrder: consent.sortOrder,
+          kind: 2,
+          render: () => consent.node,
+        })),
+      ];
+      // A stable sort keeps the fields in the order they came.
+      return items
+        .sort((a, b) => a.sortOrder - b.sortOrder || a.kind - b.kind)
+        .map((item) => item.render());
+    },
+    check() {
+      const missing = unsignedFormBlocks(blocks, strokes);
+      setUnsigned(new Set(missing));
+      return missing.length === 0;
+    },
+    drafted: (saved) => ({ ...saved, ...strokes }),
+  };
+}

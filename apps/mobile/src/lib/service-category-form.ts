@@ -6,7 +6,7 @@
  *
  * A field's key is what services store their answer under, so a stored
  * field keeps its key; only a new field gets a key from its Catalan label.
- * Labels need all five languages, as players read them.
+ * Labels need every supported language, as players read them.
  */
 import { localizedTextFromReview } from '@ramassa/shared/announcements';
 import {

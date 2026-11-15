@@ -1,20 +1,20 @@
--- The staff question builder (RAPP-307).
+-- The staff question builder (RAPP-307), on Fitxa fields and placements (RAPP-656).
 -- Run with: bunx supabase test db
 --
 -- What these assertions defend:
 --   1. Only settings.organization builds; every change is audited.
---   2. A question's type and privacy level never change; a removed option is
---      archived and the answer that chose it keeps it.
+--   2. Her names keep their type and are never archived (RAPP-665 lets every
+--      other field change); a removed option is archived and the answer that
+--      chose it keeps it.
 --   3. Sensitive answers are encrypted, and each level gates its readers.
 --   4. A seasonal question keeps one answer per season.
 --   5. A built-in question the app needs cannot be hidden.
 --   6. Referral answers become hers when she is invited, and what staff typed wins.
 --   7. The export holds Sensitive answers only in the full scope.
 --
--- Seed: the "Transport" screen (8044-...1) with questions 8045-...1 (Normal
--- yes/no/maybe, wizard + referral form), ...2 (Normal single choice, option
--- ...3 archived), ...3 (Sensitive long text, every season), ...4 (Personal,
--- staff only). Player 0011 answered 1, 2 and 3. Admin 0001, staff 0002, a
+-- Seed: fields 8045-...1 (Normal yes/no/maybe, onboarding + referral form),
+-- ...2 (Normal single choice, option ...3 archived), ...3 (Sensitive long
+-- text, onboarding + season), ...4 (Personal, team only, no placement). Player 0011 answered 1, 2 and 3. Admin 0001, staff 0002, a
 -- coach-preset staff member 0003 (no Personal level after the deletes below).
 
 begin;
@@ -40,46 +40,47 @@ select throws_ok(
 insert into run (label, id)
 select 'screen', public.save_intake_screen(null, '{"ca":"Família","en":"Family"}'::jsonb, null, 'background');
 insert into run (label, id)
-select 'choice', public.save_custom_question(
-  null, (select id from run where label = 'screen'), 'multiple_choice',
-  '{"ca":"Qui viu amb tu?"}'::jsonb, null, 'personal', array['wizard', 'staff'],
+select 'choice', public.save_profile_field(
+  null, (select id from public.profile_sections
+          where org_id = '5eed0000-0000-4000-8000-000000000000' and key = 'support'),
+  'multiple_choice', '{"ca":"Qui viu amb tu?"}'::jsonb, null, 'personal', false,
   '[{"label":{"ca":"Fills"}},{"label":{"ca":"Parella"}},{"label":{"ca":"Altres"}}]'::jsonb);
+select public.place_field((select id from run where label = 'choice'), 'onboarding',
+                          (select id from run where label = 'screen')::text);
 select is(
   (select count(*)::integer from public.custom_question_options
     where question_id = (select id from run where label = 'choice') and not is_archived),
-  3, 'a choice question is saved with its options'
+  3, 'a choice field is saved with its options'
+);
+select lives_ok(
+  $$ select public.save_profile_field(
+       (select id from public.profile_fields
+         where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = 'first_name'), null,
+       'long_text', '{"ca":"Nom"}'::jsonb, null, 'normal', false, '[]'::jsonb) $$,
+  'her names change type like any field (RAPP-693)'
 );
 select throws_ok(
-  $$ select public.save_custom_question(
-       (select id from run where label = 'choice'), (select id from run where label = 'screen'),
-       'single_choice', '{"ca":"Qui viu amb tu?"}'::jsonb, null, 'personal', array['wizard'],
-       '[{"label":{"ca":"A"}},{"label":{"ca":"B"}}]'::jsonb) $$,
-  '23514', 'the type of a question never changes', 'the type never changes'
+  $$ select public.archive_profile_field(
+       (select id from public.profile_fields
+         where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = 'last_name')) $$,
+  '23514', 'her names are always asked', 'her names are never archived (RAPP-665)'
 );
 select throws_ok(
-  $$ select public.save_custom_question(
-       (select id from run where label = 'choice'), (select id from run where label = 'screen'),
-       'multiple_choice', '{"ca":"Qui viu amb tu?"}'::jsonb, null, 'sensitive', array['wizard'],
-       '[{"label":{"ca":"A"}},{"label":{"ca":"B"}}]'::jsonb) $$,
-  '23514', 'the privacy level of a question never changes', 'the privacy level never changes'
+  $$ select public.save_profile_field(
+       null, (select id from public.profile_sections
+               where org_id = '5eed0000-0000-4000-8000-000000000000' and key = 'support'),
+       'single_choice', '{"ca":"Una"}'::jsonb, null, 'normal', false, '[{"label":{"ca":"Sola"}}]'::jsonb) $$,
+  '23514', null::text, 'a choice field needs two options'
 );
 select throws_ok(
-  $$ select public.save_custom_question(
-       null, (select id from run where label = 'screen'), 'single_choice',
-       '{"ca":"Una"}'::jsonb, null, 'normal', array['wizard'], '[{"label":{"ca":"Sola"}}]'::jsonb) $$,
-  '23514', null::text, 'a choice question needs two options'
-);
-select throws_ok(
-  $$ select public.save_custom_question(
-       null, (select id from run where label = 'screen'), 'short_text',
-       '{"ca":"On?"}'::jsonb, null, 'normal', array['nowhere'], '[]'::jsonb) $$,
-  '23514', null::text, 'a placement is one of wizard, entity form, season or staff'
+  $$ select public.place_field((select id from run where label = 'choice'), 'nowhere') $$,
+  '23514', null::text, 'a placement is on her onboarding, the entity form or the season'
 );
 
--- Removing "Un cartell" from question 2 archives it: player 0011's answer keeps it.
-select public.save_custom_question(
-  '5eed0000-0000-4000-8045-000000000002', '5eed0000-0000-4000-8044-000000000001', 'single_choice',
-  '{"ca":"Com et vas assabentar de Ramassà?"}'::jsonb, null, 'normal', array['wizard'],
+-- Removing "Un cartell" from field 2 archives it: player 0011's answer keeps it.
+select public.save_profile_field(
+  '5eed0000-0000-4000-8045-000000000002', null, 'single_choice',
+  '{"ca":"Com et vas assabentar de Ramassà?"}'::jsonb, null, 'normal', false,
   '[{"id":"5eed0000-0000-4000-8046-000000000002","label":{"ca":"Xarxes"}},{"label":{"ca":"Una amiga"}}]'::jsonb);
 reset role;
 select ok(
@@ -98,7 +99,7 @@ select is(
 );
 select ok(
   (select count(*) from public.audit_log
-    where action in ('intake.screen_save', 'intake.question_save')) >= 3,
+    where action in ('intake.screen_save', 'intake.field_save', 'intake.field_place')) >= 4,
   'every change is in the audit log'
 );
 
@@ -106,29 +107,35 @@ select ok(
 
 set local role authenticated;
 select throws_ok(
-  $$ select public.save_builtin_question_override('clothing_size', null, null, true, '{}'::jsonb) $$,
+  $$ select public.save_builtin_question_override('clothing_size', null, null, true) $$,
   '23514', 'the app needs this question, so it cannot be hidden', 'a size the stock reads cannot be hidden'
 );
 select lives_ok(
-  $$ select public.save_builtin_question_override(
-       'phone', '{"ca":"Mòbil"}'::jsonb, null, true, '{}'::jsonb) $$,
+  $$ select public.save_builtin_question_override('phone', '{"ca":"Mòbil"}'::jsonb, null, true) $$,
   'an optional built-in question is reworded and hidden'
 );
-select lives_ok(
-  $$ select public.save_builtin_question_override(
-       'childcare_need', null, null, false, '{"daily":{"hidden":true}}'::jsonb) $$,
-  'an option of a built-in question is hidden, its stored value unchanged'
+-- Hidden is a field placed nowhere on her onboarding (RAPP-666).
+reset role;
+select is(
+  (select count(*)::int from public.field_placements p
+     join public.profile_fields f on f.id = p.field_id
+    where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = 'phone'
+      and p.surface = 'onboarding'),
+  0, 'the hidden question leaves her onboarding'
 );
+set local role authenticated;
 
 -- 3 and 4. Answers ---------------------------------------------------------------------------------------------
 
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal1"}';
+-- The details open on Sí: since RAPP-661 an answer whose condition does not hold goes.
 select public.save_my_custom_answers(jsonb_build_object(
+  '5eed0000-0000-4000-8045-000000000005', '5eed0000-0000-4000-8046-000000000004',
   '5eed0000-0000-4000-8045-000000000003', 'Ara treballo els dimarts.',
   '5eed0000-0000-4000-8045-000000000001', 'no'));
 select throws_ok(
   $$ select public.save_my_custom_answers('{"5eed0000-0000-4000-8045-000000000004":"Sants"}'::jsonb) $$,
-  '42501', null::text, 'she never answers a staff-only question'
+  '42501', null::text, 'she never answers a team-only field'
 );
 select throws_ok(
   $$ select public.save_my_custom_answers('{"5eed0000-0000-4000-8045-000000000001":"often"}'::jsonb) $$,
@@ -155,13 +162,14 @@ update public.seasons set is_current = (id = '0b5e0000-0000-4000-8000-0000000003
  where org_id = '5eed0000-0000-4000-8000-000000000000';
 set local role authenticated;
 select public.save_my_custom_answers(
-  '{"5eed0000-0000-4000-8045-000000000003":"Res, tot bé."}'::jsonb);
+  '{"5eed0000-0000-4000-8045-000000000005":"5eed0000-0000-4000-8046-000000000004",
+    "5eed0000-0000-4000-8045-000000000003":"Res, tot bé."}'::jsonb);
 reset role;
 select is(
   (select count(*)::integer from public.custom_answers
     where profile_id = '5eed0000-0000-4000-8000-000000000011'
       and question_id = '5eed0000-0000-4000-8045-000000000003'),
-  2, 'a seasonal question keeps one answer per season'
+  2, 'a field on the season form keeps one answer per season'
 );
 
 -- Staff 0003 without the Personal or Sensitive level sees Normal answers only.
@@ -171,8 +179,10 @@ delete from public.team_member_permissions
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000003", "role": "authenticated", "aal": "aal2"}';
 select is(
+  -- Ramassà's own fields here; every field's levels are in 0143 (RAPP-662).
   (select array_agg(question_id::text order by question_id)
-     from public.participant_custom_answers('5eed0000-0000-4000-8000-000000000011')),
+     from public.participant_custom_answers('5eed0000-0000-4000-8000-000000000011')
+    where question_id::text like '5eed0000-0000-4000-8045-%'),
   array['5eed0000-0000-4000-8045-000000000001', '5eed0000-0000-4000-8045-000000000002'],
   'without the Sensitive level, a Sensitive answer is not read'
 );
@@ -196,7 +206,10 @@ update public.entity_referrals
  where id = '5eed0000-0000-4000-8010-000000000001';
 select is(
   (select string_agg(question_id::text || '=' || (value #>> '{}') || '/' || source, ',' order by question_id)
-     from public.custom_answers where profile_id = '5eed0000-0000-4000-8000-000000000022'),
+     from public.custom_answers a
+    -- Ramassà's fields: the app's answers are hers already (RAPP-660).
+    where a.profile_id = '5eed0000-0000-4000-8000-000000000022'
+      and exists (select 1 from public.profile_fields f where f.id = a.question_id and f.kind = 'custom')),
   '5eed0000-0000-4000-8045-000000000001=yes/staff,5eed0000-0000-4000-8045-000000000002=5eed0000-0000-4000-8046-000000000002/entity',
   'referral answers become hers when she is invited, and what staff typed wins'
 );

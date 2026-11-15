@@ -1,3 +1,4 @@
+import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
@@ -175,7 +176,7 @@ export function EventCategoryManager({
   }
 
   return (
-    <section className="grid gap-8 p-6 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,0.8fr)]">
+    <Page className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,0.8fr)]">
       <div className="flex flex-col gap-4">
         <header className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold">{t('events:categoriesTitle')}</h1>
@@ -330,7 +331,7 @@ export function EventCategoryManager({
           )}
         </div>
       </form>
-    </section>
+    </Page>
   );
 }
 

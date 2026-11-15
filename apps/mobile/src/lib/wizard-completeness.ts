@@ -8,26 +8,48 @@
  * form schema its Continue button uses, with the organization's required
  * list; a staff screen by its required questions. The first one in the flow
  * that does not pass is where she goes, on resume and when she confirms the
- * summary. Pure: no React, so bun tests run it.
+ * summary. A screen with a signature block she has not signed in her draft
+ * does not pass either (RAPP-690). Pure: no React, so bun tests run it.
  */
 import {
   customStepId,
+  DEFAULT_FOLLOW_UP_ASKING,
   DEFAULT_REQUIRED_QUESTIONS,
+  detailScreensOf,
   isRequiredQuestion,
+  opensForAnswers,
   WIZARD_QUESTION_SCREENS,
   wizardFlowOrder,
   type CustomWizardScreen,
+  type FollowUpAsking,
   type IntakeQuestion,
   type RequiredQuestions,
+  type WizardAnswers,
   type WizardFlow,
   type WizardQuestionScreen,
   type WizardStepKey,
 } from '@ramassa/shared/intake';
 import {
+  appScreenFields,
+  consentsOn,
+  documentNumberIssue,
+  documentNumberRule,
+  followUpAsking,
+  followUpGroupOf,
+  followUpOfGroupId,
+  followUpOpens,
+  formBlocksOn,
   isCustomQuestionRequired,
   isCustomQuestionVisible,
   isEmptyAnswer,
+  isFollowUpOwnStep,
+  unsignedFormBlocks,
+  untickedRequiredConsents,
+  type Consent,
+  type ConsentPlacement,
   type CustomAnswers,
+  type FormBlock,
+  type IntakeCatalog,
   type IntakeScreen,
 } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraft, OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
@@ -39,6 +61,7 @@ import {
   identityFormSchemaFor,
   identityNameFormSchema,
 } from './onboarding-form';
+import { withPlacedNames } from './placed-names';
 
 type Section = Readonly<Record<string, unknown>>;
 
@@ -77,6 +100,7 @@ export function isScreenComplete(
   screen: WizardQuestionScreen,
   draft: OnboardingDraft | null,
   required: RequiredQuestions = DEFAULT_REQUIRED_QUESTIONS,
+  asking: FollowUpAsking = DEFAULT_FOLLOW_UP_ASKING,
 ): boolean {
   switch (screen) {
     case 'identity':
@@ -84,7 +108,8 @@ export function isScreenComplete(
     case 'background':
       return identityFormSchemaFor(required).safeParse(section(draft?.identity)).success;
     case 'documentation':
-      return documentationFormSchemaFor(required).safeParse(section(draft?.documentation)).success;
+      return documentationFormSchemaFor(required, asking).safeParse(section(draft?.documentation))
+        .success;
     case 'logistics':
       return contactFormSchemaFor(required).safeParse(section(draft?.logistics)).success;
     case 'equipment':
@@ -116,6 +141,23 @@ export interface CompletenessContext {
   /** Her staff screens with their questions, and her stored answers to them. */
   readonly customScreens?: readonly IntakeScreen[];
   readonly storedCustom?: CustomAnswers;
+  /** The signature blocks of her Onboarding (RAPP-690): each needs her strokes. */
+  readonly blocks?: readonly FormBlock[];
+  /** The consents placed on her screens (RAPP-699): each required one needs her tick. */
+  readonly consentCatalog?: {
+    readonly consents?: readonly Consent[];
+    readonly consentPlacements?: readonly ConsentPlacement[];
+  };
+  /**
+   * Her answers by field id, the app's included (RAPP-715): a screen her
+   * answers do not open is never asked, so it never blocks her.
+   */
+  readonly answers?: WizardAnswers;
+  /**
+   * Her catalog, for the app's follow-ups (RAPP-720): what each one requires,
+   * and whether her answers open it. Without it they read as they start.
+   */
+  readonly catalog?: IntakeCatalog;
 }
 
 /**
@@ -124,20 +166,69 @@ export interface CompletenessContext {
  * hid is never asked, so it never blocks her.
  */
 export function firstIncompleteStep(
-  draft: OnboardingDraft | null,
+  given: OnboardingDraft | null,
   context: CompletenessContext,
 ): WizardStepKey | null {
   const required = context.required ?? DEFAULT_REQUIRED_QUESTIONS;
-  const answers: CustomAnswers = { ...context.storedCustom, ...draft?.custom };
+  const asking =
+    context.catalog === undefined ? DEFAULT_FOLLOW_UP_ASKING : followUpAsking(context.catalog);
+  const answers: CustomAnswers = { ...context.storedCustom, ...given?.custom };
+  // A name staff moved to another screen is answered there (RAPP-782).
+  const draft = withPlacedNames(given, context.catalog, answers);
+  // Her document number keeps her document type's check wherever it is (RAPP-782).
+  const numberRule =
+    context.catalog === undefined
+      ? undefined
+      : documentNumberRule(
+          context.catalog,
+          answers,
+          (draft?.documentation as { readonly documentType?: string } | undefined)?.documentType,
+        );
+  const isComplete = (screen: IntakeScreen) =>
+    isCustomScreenComplete(screen, answers) &&
+    !(
+      screen.questions.some((question) => question.id === numberRule?.fieldId) &&
+      documentNumberIssue(numberRule, answers) !== null
+    );
+  const isUnsignedOrUnticked = (screenKey: string) =>
+    unsignedFormBlocks(formBlocksOn(context.blocks, 'onboarding', screenKey), draft?.signatures)
+      .length > 0 ||
+    untickedRequiredConsents(
+      consentsOn(context.consentCatalog ?? {}, 'onboarding', screenKey),
+      draft?.consents,
+    ).length > 0;
   for (const step of wizardFlowOrder(context.custom, context.flow)) {
     const customId = customStepId(step);
     if (customId !== null) {
+      const planned = context.custom.find((candidate) => candidate.id === customId);
+      if (planned !== undefined && !opensForAnswers(planned, context.answers ?? answers)) continue;
       const screen = context.customScreens?.find((candidate) => candidate.id === customId);
-      if (screen !== undefined && !isCustomScreenComplete(screen, answers)) return step;
+      if (screen !== undefined && !isComplete(screen)) return step;
+      // A follow-up that is a step of its own keeps its blocks under its key (RAPP-782).
+      if (screen !== undefined && isUnsignedOrUnticked(followUpOfGroupId(customId) ?? customId)) {
+        return step;
+      }
       continue;
     }
     if (!isQuestionScreen(step) || context.flow.hiddenScreens.has(step)) continue;
-    if (!isScreenComplete(step, draft, required)) return step;
+    if (!isScreenComplete(step, draft, required, asking)) return step;
+    if (isUnsignedOrUnticked(step)) return step;
+    // The Fitxa fields placed on this screen (RAPP-655).
+    const placed = appScreenFields(context.customScreens ?? [], step);
+    if (placed !== undefined && !isComplete(placed)) return step;
+    // And on its follow-ups her answers open (RAPP-720): she answers them from this step.
+    for (const branch of context.catalog === undefined ? [] : detailScreensOf(step)) {
+      // One that is a step of its own is checked as its own step (RAPP-782).
+      if (context.catalog !== undefined && isFollowUpOwnStep(context.catalog, branch.screen))
+        continue;
+      if (
+        !followUpOpens(context.catalog as IntakeCatalog, branch.screen, context.answers ?? answers)
+      )
+        continue;
+      const onFollowUp = followUpGroupOf(context.customScreens ?? [], branch.screen);
+      if (onFollowUp !== undefined && !isComplete(onFollowUp)) return step;
+      if (isUnsignedOrUnticked(branch.screen)) return step;
+    }
   }
   return null;
 }

@@ -7,6 +7,7 @@
  */
 import { PlayerStructuredContent } from '@/components/knowledge/player-structured-content';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { AuthorLine } from '@/components/people/person-avatar';
 import { composeContinuousViewStyle, continuousCorners } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
@@ -32,6 +33,8 @@ export interface KnowledgeArticleContent {
   readonly title: LocalizedContent;
   readonly categoryName: LocalizedContent;
   readonly authorFirstName: string | null;
+  /** The team author's photo (RAPP-639); a story's author shows her initial. */
+  readonly authorAvatarKey?: string | null;
   readonly body: LocalizedKnowledgeBody;
   readonly imageUrl: string | null;
   readonly videoUrl: string | null;
@@ -89,9 +92,16 @@ export function KnowledgeArticle({
           {title}
         </Text>
         {article.authorFirstName === null ? null : (
-          <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-            {t('knowledge:byAuthor', { name: article.authorFirstName })}
-          </Text>
+          <View className="pt-xs">
+            <AuthorLine
+              name={article.authorFirstName}
+              avatarKey={article.authorAvatarKey ?? null}
+              label={t('knowledge:byAuthor', { name: article.authorFirstName })}
+              languageFontClass={languageFontClass}
+              size="medium"
+              textClassName="text-sm font-semibold text-neutral-700"
+            />
+          </View>
         )}
       </View>
       {coverSource === null ? null : (

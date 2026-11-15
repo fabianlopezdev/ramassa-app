@@ -17,6 +17,7 @@
  * opening.
  */
 
+import { Page } from '@/components/layout/page';
 import { ParticipantDetail } from '@/components/participants/participant-detail';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
@@ -28,31 +29,38 @@ import {
 } from '@ramassa/shared/attendance';
 import {
   fetchParticipantAuthorizations,
-  fetchParticipantConsents,
+  fetchParticipantConsentHistory,
 } from '@ramassa/shared/authorization';
 import { fetchEquipmentDeliveries, fetchHandoverItemTypes } from '@ramassa/shared/equipment';
-import { fetchParticipantQuestionStates } from '@ramassa/shared/intake';
 import {
   EMPTY_INTAKE_CATALOG,
   fetchIntakeCatalog,
+  fetchParticipantChoices,
   fetchParticipantCustomAnswers,
+  fetchParticipantCustomForms,
+  fetchParticipantFormSignatures,
+  NO_CHOICES,
+  systemFieldsOf,
 } from '@ramassa/shared/intake-builder';
 import {
   fetchParticipantActivity,
   fetchParticipantAnsweredQuestions,
-  fetchParticipantDetail,
   fetchParticipantNotes,
+  fetchParticipantRecord,
   fetchTestPlayerScenario,
+  hasJoined,
 } from '@ramassa/shared/participants';
 import { fetchMyPermissions, isLimitedToTestPlayers } from '@ramassa/shared/permissions';
 import { fetchDeletionRequests } from '@ramassa/shared/rgpd';
-import { fetchParticipantSeasonAnswers } from '@ramassa/shared/seasons';
 
 export const Route = createFileRoute('/_staff/participants/$participantId')({
   ssr: false,
   loader: async ({ params }) => {
+    // The Fitxa layout plans her page; her record reads its fields from it, so
+    // the catalog is read once.
+    const catalog = fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG);
     const [participant, permissions] = await Promise.all([
-      fetchParticipantDetail(supabase, params.participantId),
+      fetchParticipantRecord(supabase, params.participantId, catalog.then(systemFieldsOf)),
       fetchMyPermissions(supabase),
     ]);
     // Nobody by that id, or nobody this staff member may read. The screen tells
@@ -70,12 +78,13 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         openDeletionRequestReason: undefined,
         answeredQuestions: [],
         questionStates: {},
+        customQuestionStates: {},
         authorizations: [],
-        consents: [],
-        seasonAnswers: [],
+        consentHistory: [],
         intakeCatalog: EMPTY_INTAKE_CATALOG,
         customAnswers: [],
         testScenario: null,
+        formSignatures: [],
       };
     }
     // A test player's situation, for the scenario switches (RAPP-619). The
@@ -87,18 +96,22 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
     // with her record and her answers: the team's notes, material, attendance
     // and authorization belong to real participants and are not read at all.
     if (isLimitedToTestPlayers(permissions)) {
-      const [answered, questionStates, intakeCatalog, customAnswers, scenario] = await Promise.all([
-        participant.terms_accepted_at === null
-          ? fetchParticipantAnsweredQuestions(supabase, params.participantId)
-          : Promise.resolve(new Set<never>()),
-        // What a test player's wizard asks (RAPP-618): the design role sets it too.
-        participant.terms_accepted_at === null
-          ? fetchParticipantQuestionStates(supabase, params.participantId).catch(() => ({}))
-          : Promise.resolve({}),
-        fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
-        fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
-        testScenario,
-      ]);
+      const [answered, choices, intakeCatalog, customAnswers, scenario, formSignatures] =
+        await Promise.all([
+          !hasJoined(participant)
+            ? fetchParticipantAnsweredQuestions(supabase, params.participantId)
+            : Promise.resolve(new Set<never>()),
+          // What a test player's wizard asks (RAPP-618): the design role sets it too.
+          !hasJoined(participant)
+            ? fetchParticipantChoices(supabase, params.participantId).catch(() => NO_CHOICES)
+            : Promise.resolve(NO_CHOICES),
+          catalog,
+          // Her answers to every field, with who gave each (RAPP-664).
+          fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
+          testScenario,
+          // Her signatures of the form blocks (RAPP-690); participants.view_personal.
+          fetchParticipantFormSignatures(supabase, params.participantId).catch(() => []),
+        ]);
       return {
         participant,
         notes: [],
@@ -109,13 +122,15 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
         attendanceHistory: [],
         openDeletionRequestReason: undefined,
         answeredQuestions: [...answered],
-        questionStates,
+        // The app's questions and Ramassà's (RAPP-645).
+        questionStates: choices.states,
+        customQuestionStates: choices.customStates,
         authorizations: [],
-        consents: [],
-        seasonAnswers: [],
+        consentHistory: [],
         intakeCatalog,
         customAnswers,
         testScenario: scenario,
+        formSignatures,
       };
     }
     const [
@@ -127,13 +142,14 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       attendanceStats,
       attendanceHistory,
       answered,
-      questionStates,
+      choices,
       authorizations,
-      consents,
-      seasonAnswers,
+      consentHistory,
       intakeCatalog,
       customAnswers,
       scenario,
+      formSignatures,
+      customForms,
     ] = await Promise.all([
       fetchParticipantNotes(supabase, params.participantId),
       fetchParticipantActivity(supabase, params.participantId),
@@ -146,23 +162,26 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       fetchAttendanceHistory(supabase, params.participantId),
       // A woman who has not joined is completed in parts (RAPP-300): the form
       // shows only what somebody answered. A joined player does not need it.
-      participant.terms_accepted_at === null
+      !hasJoined(participant)
         ? fetchParticipantAnsweredQuestions(supabase, params.participantId)
         : Promise.resolve(new Set<never>()),
       // What her wizard asks (RAPP-301): set only before she joins.
-      participant.terms_accepted_at === null
-        ? fetchParticipantQuestionStates(supabase, params.participantId)
-        : Promise.resolve({}),
-      // Her season authorizations and consents (RAPP-304). They need
-      // participants.view_personal; without it the panel simply shows none.
+      !hasJoined(participant)
+        ? fetchParticipantChoices(supabase, params.participantId)
+        : Promise.resolve(NO_CHOICES),
+      // Her season authorizations (RAPP-304) and every consent decision
+      // (RAPP-699). They need participants.view_personal; without it the
+      // panels simply show none.
       fetchParticipantAuthorizations(supabase, params.participantId).catch(() => []),
-      fetchParticipantConsents(supabase, params.participantId).catch(() => []),
-      // Her answers by season (RAPP-306).
-      fetchParticipantSeasonAnswers(supabase, params.participantId).catch(() => []),
-      // The questions staff added and her answers (RAPP-307); the page works without them.
-      fetchIntakeCatalog(supabase).catch(() => EMPTY_INTAKE_CATALOG),
+      fetchParticipantConsentHistory(supabase, params.participantId).catch(() => []),
+      catalog,
+      // Her answers to every field, every season, with who gave each (RAPP-664).
       fetchParticipantCustomAnswers(supabase, params.participantId).catch(() => []),
       testScenario,
+      // Her signatures of the form blocks (RAPP-690); participants.view_personal.
+      fetchParticipantFormSignatures(supabase, params.participantId).catch(() => []),
+      // The forms the team created that ask her (RAPP-700); participants.view_personal.
+      fetchParticipantCustomForms(supabase, params.participantId).catch(() => []),
     ]);
     // Filtered here rather than asked for by participant: the queue read is one
     // round trip either way, and the same call feeds the staff-wide queue, so
@@ -180,13 +199,16 @@ export const Route = createFileRoute('/_staff/participants/$participantId')({
       openDeletionRequestReason: hers === undefined ? undefined : hers.reason,
       // An array, not the Set: loader data stays plain and serializable.
       answeredQuestions: [...answered],
-      questionStates,
+      // The app's questions and Ramassà's (RAPP-645).
+      questionStates: choices.states,
+      customQuestionStates: choices.customStates,
       authorizations,
-      consents,
-      seasonAnswers,
+      consentHistory,
       intakeCatalog,
       customAnswers,
       testScenario: scenario,
+      formSignatures,
+      customForms,
     };
   },
   component: ParticipantDetailPage,
@@ -204,12 +226,14 @@ function ParticipantDetailPage() {
     openDeletionRequestReason,
     answeredQuestions,
     questionStates,
+    customQuestionStates,
     authorizations,
-    consents,
-    seasonAnswers,
+    consentHistory,
     intakeCatalog,
     customAnswers,
     testScenario,
+    formSignatures,
+    customForms,
   } = Route.useLoaderData();
 
   if (participant === null) {
@@ -227,12 +251,14 @@ function ParticipantDetailPage() {
       openDeletionRequestReason={openDeletionRequestReason}
       answeredQuestions={answeredQuestions}
       questionStates={questionStates}
+      customQuestionStates={customQuestionStates}
       authorizations={authorizations}
-      consents={consents}
-      seasonAnswers={seasonAnswers}
+      consentHistory={consentHistory}
       intakeCatalog={intakeCatalog}
       customAnswers={customAnswers}
       testScenario={testScenario}
+      formSignatures={formSignatures}
+      customForms={customForms}
     />
   );
 }
@@ -246,12 +272,12 @@ function ParticipantDetailPage() {
 function ParticipantNotFound() {
   const { t } = useTranslation('participants');
   return (
-    <section className="flex flex-col items-start gap-3 p-6">
+    <Page className="items-start gap-3">
       <h1 className="text-start text-2xl font-semibold">{t('detailNotFoundTitle')}</h1>
       <p className="text-start text-sm text-muted-foreground">{t('detailNotFoundBody')}</p>
       <Button asChild variant="outline" size="lg">
         <Link to="/participants">{t('detailBackToList')}</Link>
       </Button>
-    </section>
+    </Page>
   );
 }

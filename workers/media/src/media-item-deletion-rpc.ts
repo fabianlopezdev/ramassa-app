@@ -112,6 +112,25 @@ export async function canReadStockObject(
   return (await response.json()) === true;
 }
 
+/**
+ * A profile photo (RAPP-639): `can_read_profile_photo_object` with her own
+ * token, so the database decides who she is.
+ */
+export async function canReadProfilePhotoObject(
+  options: Omit<RpcOptions, 'mediaItemId'> & { readonly objectKey: string },
+): Promise<boolean> {
+  const response = await (options.fetchImplementation ?? fetch)(
+    `${options.supabaseUrl}/rest/v1/rpc/can_read_profile_photo_object`,
+    {
+      method: 'POST',
+      headers: rpcHeaders({ ...options, mediaItemId: '' }),
+      body: JSON.stringify({ p_object_key: options.objectKey }),
+    },
+  );
+  if (!response.ok) throw new AppError('DB-1');
+  return (await response.json()) === true;
+}
+
 export async function canReadInternalDocumentObject(
   options: Omit<RpcOptions, 'mediaItemId'> & { readonly objectKey: string },
 ): Promise<boolean> {

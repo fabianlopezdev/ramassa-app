@@ -34,7 +34,7 @@ test.beforeAll(() => {
 test.afterAll(() => {
   queryDatabase(`
     delete from public.walk_in_signings where id = '${DISCARDED}';
-    delete from public.authorization_consent_events
+    delete from public.consent_events
      where signature_id in (select id from public.authorization_signatures
                              where profile_id = '${NATALIIA}' and method = 'staff_device');
     delete from public.authorization_signatures

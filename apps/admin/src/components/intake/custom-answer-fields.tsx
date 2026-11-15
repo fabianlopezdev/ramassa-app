@@ -1,18 +1,20 @@
 /**
- * Inputs for the questions staff added (RAPP-307), grouped by their screen:
- * on the participant page and on the entity referral form. Uncontrolled, read
- * back with `readCustomAnswers` from the form's FormData.
+ * The input of a question staff added (RAPP-307), on her page (RAPP-653) and
+ * on the entity referral form. Uncontrolled, read back with
+ * `readCustomAnswersOf` from the form's FormData.
  *
  * Every type has its input (RAPP-610): a number and a date input, yes / no, a
  * phone and an email field, a list of options however long, a list typed one
- * item per line, one consent tick. A file or a signature is hers to give, so
+ * item per line, one consent tick, and the two lists the app ships (every
+ * country, every municipality of Catalonia, RAPP-664) by their canonical name,
+ * picked with a search (`ListPicker`, RAPP-665). A file or a signature is hers to give, so
  * staff read it and never write it: it is not an input here, and
- * `readCustomAnswers` leaves it out.
+ * `readCustomAnswersOf` leaves it out.
  */
 
+import { ListPicker } from '@/components/fields/list-picker';
 import { useTranslation } from 'react-i18next';
 import {
-  consentSettings,
   customAnswerMessage,
   dateSettings,
   isStaffWritable,
@@ -26,10 +28,8 @@ import {
   YES_NO,
   YES_NO_MAYBE,
   type AnswerTranslate,
-  type CustomAnswers,
   type CustomAnswerValue,
   type CustomQuestion,
-  type IntakeScreen,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
@@ -48,7 +48,6 @@ function readOne(
       .filter((value): value is string => typeof value === 'string');
     return chosen.length === 0 ? null : chosen;
   }
-  if (question.type === 'consent') return fields.get(name) === 'on' ? true : null;
   const raw = fields.get(name);
   const text = typeof raw === 'string' ? raw.trim() : '';
   if (text === '') return null;
@@ -72,13 +71,13 @@ function readOne(
  * {question id: message} for each answer that does not fit its question, in
  * the words her wizard uses (RAPP-610). An empty answer is not checked here.
  */
-export function customAnswerErrors(
-  screens: readonly IntakeScreen[],
+export function customAnswerErrorsOf(
+  questions: readonly CustomQuestion[],
   answers: Readonly<Record<string, CustomAnswerValue | null>>,
   t: AnswerTranslate,
 ): Record<string, string> {
   const errors: Record<string, string> = {};
-  for (const question of screens.flatMap((screen) => screen.questions)) {
+  for (const question of questions) {
     const value = answers[question.id];
     const message = value == null ? undefined : customAnswerMessage(question, value, t);
     if (message !== undefined) errors[question.id] = message;
@@ -87,25 +86,28 @@ export function customAnswerErrors(
 }
 
 /** {question id: value, or null to clear} for every question staff may write. */
-export function readCustomAnswers(
+export function readCustomAnswersOf(
   fields: FormData,
-  screens: readonly IntakeScreen[],
+  questions: readonly CustomQuestion[],
   prefix: string,
 ): Record<string, CustomAnswerValue | null> {
   const answers: Record<string, CustomAnswerValue | null> = {};
-  for (const question of screens.flatMap((screen) => screen.questions)) {
-    if (!isStaffWritable(question.type)) continue;
+  for (const question of questions) {
+    if (!isStaffWritable(question)) continue;
     answers[question.id] = readOne(fields, fieldName(prefix, question), question);
   }
   return answers;
 }
 
-function QuestionInput({
+/** One question's input, also drawn alone in the entity form's order (RAPP-652). */
+export function CustomAnswerInput({
   question,
   value,
   prefix,
   language,
   error,
+  isRequired = false,
+  inputClassName = inputClass,
 }: {
   readonly question: CustomQuestion;
   readonly value: CustomAnswerValue | undefined;
@@ -113,10 +115,15 @@ function QuestionInput({
   readonly language: LanguageCode;
   /** What does not fit, in the words her wizard uses (RAPP-610). */
   readonly error?: string;
+  /** Marked with an asterisk; the form checks it on sending. */
+  readonly isRequired?: boolean;
+  /** The text inputs' and list's look, to match the form around them. */
+  readonly inputClassName?: string;
 }) {
-  const { t } = useTranslation('settings');
+  // Its words follow the form's language, as the entity form's preview shows it (RAPP-652).
+  const { t } = useTranslation('settings', { lng: language });
   const name = fieldName(prefix, question);
-  const label = textIn(question.label, language);
+  const label = `${textIn(question.label, language)}${isRequired ? ' *' : ''}`;
   const help = question.help === null ? '' : textIn(question.help, language);
   const helpId = help === '' ? undefined : `${name}-help`;
   const current =
@@ -145,7 +152,7 @@ function QuestionInput({
       </span>
     );
 
-  if (!isStaffWritable(question.type)) {
+  if (!isStaffWritable(question)) {
     return (
       <p className="text-start text-sm text-muted-foreground" data-testid={`${name}-hers`}>
         {label}: {t('questions.answers.hersOnly')}
@@ -178,20 +185,6 @@ function QuestionInput({
     );
   }
 
-  if (question.type === 'consent') {
-    return (
-      <fieldset className="flex flex-col gap-1.5" aria-describedby={helpId}>
-        <legend className="text-start text-sm font-medium">{label}</legend>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name={name} defaultChecked={value === true} />
-          <span>{textIn(consentSettings(question.settings).text, language)}</span>
-        </label>
-        {helpLine}
-        {errorLine}
-      </fieldset>
-    );
-  }
-
   const number = numberSettings(question.settings);
   const control = (() => {
     switch (question.type) {
@@ -205,7 +198,8 @@ function QuestionInput({
             maxLength={SHORT_TEXT_MAX_LENGTH}
             defaultValue={current}
             aria-describedby={helpId}
-            className={inputClass}
+            aria-required={isRequired}
+            className={inputClassName}
           />
         );
       case 'long_text':
@@ -226,7 +220,7 @@ function QuestionInput({
             placeholder={
               question.type === 'item_list' ? t('questions.answers.onePerLine') : undefined
             }
-            className={`${inputClass} h-auto py-2`}
+            className={`${inputClassName} h-auto py-2`}
           />
         );
       case 'number':
@@ -240,7 +234,8 @@ function QuestionInput({
             max={number.max}
             defaultValue={current}
             aria-describedby={helpId}
-            className={inputClass}
+            aria-required={isRequired}
+            className={inputClassName}
           />
         );
       case 'date': {
@@ -254,7 +249,7 @@ function QuestionInput({
             aria-describedby={helpId}
             data-min-age={ages.min_age}
             data-max-age={ages.max_age}
-            className={inputClass}
+            className={inputClassName}
           />
         );
       }
@@ -268,7 +263,24 @@ function QuestionInput({
             dir="ltr"
             defaultValue={current}
             aria-describedby={helpId}
-            className={inputClass}
+            aria-required={isRequired}
+            className={inputClassName}
+          />
+        );
+      case 'country':
+      case 'municipality':
+        return (
+          <ListPicker
+            kind={question.type}
+            language={language}
+            id={name}
+            name={name}
+            value={current}
+            noneLabel={t('questions.noAnswer')}
+            isRequired={isRequired}
+            describedBy={helpId}
+            className={inputClassName}
+            testId={`${name}-list`}
           />
         );
       default:
@@ -278,7 +290,8 @@ function QuestionInput({
             name={name}
             defaultValue={current}
             aria-describedby={helpId}
-            className={inputClass}
+            aria-required={isRequired}
+            className={inputClassName}
           >
             <option value="">{t('questions.noAnswer')}</option>
             {question.type === 'yes_no_maybe' || question.type === 'yes_no'
@@ -305,42 +318,5 @@ function QuestionInput({
       {helpLine}
       {errorLine}
     </label>
-  );
-}
-
-export function CustomAnswerFields({
-  screens,
-  values,
-  prefix,
-  language,
-  errors = {},
-}: {
-  readonly screens: readonly IntakeScreen[];
-  readonly values: CustomAnswers;
-  readonly prefix: string;
-  readonly language: LanguageCode;
-  /** {question id: message} for answers that do not fit (RAPP-610). */
-  readonly errors?: Readonly<Record<string, string>>;
-}) {
-  return (
-    <div className="flex flex-col gap-4">
-      {screens.map((screen) => (
-        <fieldset key={screen.id} className="flex flex-col gap-3 rounded-lg border p-3">
-          <legend className="px-1 text-start text-sm font-semibold">
-            {textIn(screen.title, language)}
-          </legend>
-          {screen.questions.map((question) => (
-            <QuestionInput
-              key={question.id}
-              question={question}
-              value={values[question.id]}
-              prefix={prefix}
-              language={language}
-              error={errors[question.id]}
-            />
-          ))}
-        </fieldset>
-      ))}
-    </div>
   );
 }

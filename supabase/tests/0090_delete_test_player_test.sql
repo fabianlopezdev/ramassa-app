@@ -18,10 +18,14 @@ begin;
 select plan(17);
 
 -- Some of her onboarding, as a test player has after a run.
-insert into public.profile_answers (profile_id, org_id, question, source)
-values ('5eed0000-0000-4000-8000-000000000096', '5eed0000-0000-4000-8000-000000000000', 'clothing_size', 'staff');
-insert into public.intake_question_states (profile_id, org_id, question, state)
-values ('5eed0000-0000-4000-8000-000000000096', '5eed0000-0000-4000-8000-000000000000', 'phone', 'skip');
+select private.write_custom_answer('5eed0000-0000-4000-8000-000000000096', f, '"Vic"', 'staff',
+                                   '5eed0000-0000-4000-8000-000000000001')
+  from public.profile_fields f
+ where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = 'place_of_birth';
+insert into public.custom_question_states (profile_id, org_id, question_id, state)
+select '5eed0000-0000-4000-8000-000000000096', f.org_id, f.id, 'skip'
+  from public.profile_fields f
+ where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = 'phone';
 
 -- 1. Who may delete whom ----------------------------------------------------------------------------
 
@@ -93,8 +97,8 @@ select is(
   0, 'her profile is gone'
 );
 select is(
-  (select count(*)::int from public.profile_answers where profile_id = '5eed0000-0000-4000-8000-000000000096')
-  + (select count(*)::int from public.intake_question_states where profile_id = '5eed0000-0000-4000-8000-000000000096'),
+  (select count(*)::int from public.custom_answers where profile_id = '5eed0000-0000-4000-8000-000000000096')
+  + (select count(*)::int from public.custom_question_states where profile_id = '5eed0000-0000-4000-8000-000000000096'),
   0, 'her answers and intake states are gone'
 );
 select is(

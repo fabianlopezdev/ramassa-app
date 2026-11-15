@@ -33,6 +33,36 @@
 begin;
 select plan(24);
 
+-- An app answer given by option key, as the app's screens send it by option id.
+create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
+  select case
+    when f.question_type in ('single_choice', 'search_choice') and jsonb_typeof(v) = 'string' then
+      coalesce((select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v #>> '{}'), v)
+    when f.question_type = 'multiple_choice' and jsonb_typeof(v) = 'array' then
+      coalesce((select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+                 where o.question_id = f.id and o.key in (select jsonb_array_elements_text(v))
+                having count(*) = jsonb_array_length(v)), v)
+    else v
+  end;
+$$;
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, pg_temp.by_option_key(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 -- The unsigned path is closed to clients (RAPP-624); this file checks its merge
 -- rules as the participant, so it grants it inside this rolled-back transaction.
 grant execute on function public.complete_onboarding(jsonb) to authenticated;
@@ -160,15 +190,15 @@ set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000099", 
 select lives_ok(
   $$ select public.complete_onboarding(
        jsonb_build_object(
-         'first_name', 'Convidada', 'last_name', 'Prova',
-         'date_of_birth', '1994-05-05', 'place_of_birth', 'Kyiv',
-         'nationality', 'Ucraïna', 'preferred_language', 'es',
-         'document_type', 'none',
-         'city', 'Vic', 'has_dependents', false, 'num_dependents', 0,
-         'clothing_size', 'M', 'shoe_size', '38',
-         'reference_entity', 'Creu Roja Osona',
+         'first_name', 'Convidada', 'last_name', 'Prova', 'preferred_language', 'es',
          'media_consent', false,
-         'terms_version', '2026-07-01', 'locale_shown', 'es'
+         'terms_version', '2026-07-01', 'locale_shown', 'es',
+         'answers', pg_temp.answers(jsonb_build_object(
+           'date_of_birth', '1994-05-05', 'place_of_birth', 'Kyiv',
+           'nationality', 'Ucraïna', 'document_type', 'none',
+           'city', 'Vic', 'has_dependents', 'no',
+           'clothing_size', 'M', 'shoe_size', '38',
+           'reference_entity', 'Creu Roja Osona'))
        )
      ) $$,
   'she finishes the wizard'

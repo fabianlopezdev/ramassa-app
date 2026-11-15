@@ -17,7 +17,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const LANGUAGES = ['ca', 'es', 'en', 'ar', 'fa'];
+const LANGUAGES = ['ca', 'es', 'en', 'fr', 'ar', 'fa'];
 
 // ICU names these, but they are not countries a person is a national of.
 const NON_COUNTRY_REGIONS = new Set([

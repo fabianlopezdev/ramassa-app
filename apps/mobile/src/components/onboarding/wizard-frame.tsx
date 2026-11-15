@@ -16,19 +16,34 @@
  * the title, intro and button the screen passes, in her language only, and a
  * help line staff wrote shows first in the body. Validation messages are the
  * screens' own and never change.
+ *
+ * A Ramassà screen and a form's screen (RAPP-771) pass their own help line
+ * and main button (`formScreenTextsIn`, the rule the Control Center
+ * previews).
+ *
+ * The Fitxa fields placed on a built-in screen (RAPP-655) follow the screen's
+ * own questions. Continue checks and saves them before the screen's own
+ * Continue runs; Back saves them.
  */
 
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTitle } from '@/components/auth/auth-title';
 import { FormScreen } from '@/components/layout/form-screen';
+import { usePlacedFields } from '@/components/onboarding/placed-fields';
 import { QuestionHelp } from '@/components/onboarding/question-help';
 import { WizardProgress } from '@/components/onboarding/wizard-progress';
+import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { useOnboardingEntrance } from '@/lib/onboarding-entrance';
 import { useScreenWording } from '@/lib/screen-wording';
 import { useLocalSearchParams } from 'expo-router';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { WIZARD_QUESTION_SCREENS, type WizardStepKey } from '@ramassa/shared/intake';
+import {
+  WIZARD_QUESTION_SCREENS,
+  type DetailScreen,
+  type WizardStepKey,
+} from '@ramassa/shared/intake';
 
 /** Question screens followed by review, introduction and app terms. */
 const WIZARD_TOTAL_STEPS = WIZARD_QUESTION_SCREENS.length + 3;
@@ -36,7 +51,11 @@ const WIZARD_TOTAL_STEPS = WIZARD_QUESTION_SCREENS.length + 3;
 export interface WizardFrameProps {
   /** Stable identity, independent of language and position in a personalized wizard. */
   readonly screenId?:
-    WizardStepKey | 'documentation-details' | 'applicant-status-details' | `needs-detail:${string}`;
+    | WizardStepKey
+    | DetailScreen
+    | 'documentation-details'
+    | 'applicant-status-details'
+    | `needs-detail:${string}`;
   /**
    * Omit outside the wizard. The profile edit screen reuses this frame for its
    * header, keyboard handling and pinned action, but it is not step N of
@@ -58,6 +77,10 @@ export interface WizardFrameProps {
   readonly isContinueBusy?: boolean;
   /** Omit on the first step: there is nowhere to go back to. */
   readonly onBack?: () => void;
+  /** A Ramassà or form screen's own help line (RAPP-771); its button comes as `continueLabel`. */
+  readonly help?: string;
+  /** Above the progress: the staff tablet's way back to the coach and her language (RAPP-773). */
+  readonly header?: ReactNode;
 }
 
 export function WizardFrame(props: WizardFrameProps) {
@@ -76,22 +99,36 @@ function WizardFrameContent({
   onContinue,
   isContinueBusy,
   onBack,
+  help,
+  header,
 }: WizardFrameProps) {
   const { entrance, edit } = useLocalSearchParams<{ entrance?: string; edit?: string }>();
   const showProgress = stepNumber !== undefined && edit !== '1';
   const entranceMode = useOnboardingEntrance(screenId, entrance !== 'none' && edit !== '1');
   const wording = useScreenWording(screenId);
+  const { t } = useTranslation('onboarding');
+  const added = usePlacedFields(screenId);
 
   return (
     <FormScreen
       entrance={entranceMode}
-      scrollEnabled={scrollEnabled}
+      scrollEnabled={added.isDrawing ? false : scrollEnabled}
       navigation={
-        <WizardProgress
-          step={showProgress ? stepNumber : undefined}
-          total={totalSteps}
-          onBack={onBack}
-        />
+        <View>
+          {header === undefined ? null : <View className="px-lg pt-sm">{header}</View>}
+          <WizardProgress
+            step={showProgress ? stepNumber : undefined}
+            total={totalSteps}
+            onBack={
+              onBack === undefined || !added.hasQuestions
+                ? onBack
+                : () => {
+                    added.save();
+                    onBack();
+                  }
+            }
+          />
+        </View>
       }
       heading={
         <AuthTitle
@@ -103,14 +140,26 @@ function WizardFrameContent({
       bottomAction={
         <AuthSubmitButton
           label={wording.text('continue_label', continueLabel)}
-          onPress={onContinue}
+          onPress={
+            added.hasQuestions
+              ? () => {
+                  if (added.checkAndSave()) onContinue();
+                }
+              : onContinue
+          }
           isLoading={isContinueBusy}
         />
       }
     >
       <View className="gap-lg">
-        <QuestionHelp text={wording.help} />
+        <QuestionHelp text={wording.help ?? help ?? null} />
         {children}
+        <WizardValidationSummary
+          testID="wizard-added-errors"
+          isVisible={added.hasErrors}
+          message={t('errorSummary')}
+        />
+        {added.fields}
       </View>
     </FormScreen>
   );

@@ -17,9 +17,10 @@ test.afterAll(() => {
   `);
 });
 
-test('an admin creates a season in Settings', async ({ page }) => {
+test('an admin creates a season on the authorization board', async ({ page }) => {
   await signIn(page, ADMIN_EMAIL);
-  await page.goto('/settings?tab=authorization');
+  // The seasons sit with the authorization's board (RAPP-694, RAPP-696).
+  await page.goto('/forms/authorization');
   const panel = page.getByTestId('seasons-panel');
   await expect(panel).toBeVisible();
   await expect(panel).toContainText('2026/27');

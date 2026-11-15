@@ -1,3 +1,4 @@
+import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +9,7 @@ export function StaffReferralQueue({ referrals }: { readonly referrals: readonly
   const locale = i18n.resolvedLanguage ?? 'ca';
 
   return (
-    <section className="flex flex-col gap-6 p-6">
+    <Page>
       <header>
         <Link to="/participants" className="text-sm text-muted-foreground hover:text-foreground">
           {t('back')}
@@ -54,6 +55,6 @@ export function StaffReferralQueue({ referrals }: { readonly referrals: readonly
           ))}
         </ul>
       )}
-    </section>
+    </Page>
   );
 }

@@ -1,5 +1,6 @@
 import { DataTable } from '@/components/data-table/data-table';
 import { DataTablePager } from '@/components/data-table/data-table-pager';
+import { Page } from '@/components/layout/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { safeAsync } from '@/lib/observability';
@@ -160,7 +161,7 @@ export function EventsTable({ page, categories, search }: EventsTableProps) {
   const sorting: SortingState = [{ id: search.sort, desc: search.dir === 'desc' }];
 
   return (
-    <section className="flex flex-col gap-4 p-6">
+    <Page className="gap-4">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold">{t('events:title')}</h1>
@@ -178,7 +179,7 @@ export function EventsTable({ page, categories, search }: EventsTableProps) {
         </div>
       </header>
 
-      <div className="grid max-w-2xl gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <label className="flex flex-col gap-2">
           <span className="text-sm font-medium">{t('events:filterStatus')}</span>
           <select
@@ -250,7 +251,7 @@ export function EventsTable({ page, categories, search }: EventsTableProps) {
           void navigate({ search: (previous) => ({ ...previous, page: next }) })
         }
       />
-    </section>
+    </Page>
   );
 }
 

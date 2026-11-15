@@ -19,11 +19,10 @@
 --      objects are removed first, by the media Worker, which records a receipt in
 --      the audit trail. This function refuses to run without a fresh one. A
 --      client that skips that call cannot delete the rows.
---   5. **Anonymization keeps the aggregate and drops the person.** She still
---      counts in a report by nationality; her name, papers, contact details and
---      the team's notes about her are gone, and her birth date is coarsened to a
---      year because an exact date plus a nationality plus a town identifies one
---      woman in a roster this size.
+--   5. **Anonymization drops the person and keeps one aggregate.** Her name,
+--      every answer of hers (the app's fields and the team's, RAPP-662 D11) and
+--      the team's notes about her are gone; her birth date survives only as its
+--      year, so she still counts in an age band.
 --   6. **The audit trail survives her**, as target. Decided by Fabián
 --      2026-08-01 and recorded in ADR-023: those rows carry opaque IDs and no
 --      personal data (ADR-021), they are the evidence the erasure happened and
@@ -220,14 +219,20 @@ select cmp_ok(
 -- column entirely.
 update public.profiles
    set media_consent_at = now(),
-       reference_entity = 'Creu Roja Osona',
-       reference_contact_name = 'Marta Vidal',
-       phone = public.encrypt_field('600111222'),
-       address = public.encrypt_field('Carrer de la Riera 14'),
-       postal_code = public.encrypt_field('08500'),
-       document_number = public.encrypt_field('X1234567L'),
        avatar_url = 'profile-photos/fatima.jpg'
  where id = '5eed0000-0000-4000-8000-000000000012'::uuid;
+
+-- The seed gives her every encrypted answer and the free-text ones that name
+-- or place her (her entity contact, her place of birth).
+select is(
+  (select count(*)::int from public.custom_answers a
+     join public.profile_fields f on f.id = a.question_id
+    where a.profile_id = '5eed0000-0000-4000-8000-000000000012'::uuid
+      and f.system_key in ('document_number', 'phone', 'address', 'postal_code',
+                           'reference_contact_name', 'place_of_birth')),
+  6,
+  'the erasure subject starts with her encrypted and free-text answers'
+);
 
 -- And one staff note about her. The seeds give this participant none, so
 -- without it the "the notes are removed" assertion below would compare zero to
@@ -318,43 +323,45 @@ select ok(
   'her name no longer appears on the row'
 );
 
-select ok(
-  (
-    select document_number is null and phone is null and address is null and postal_code is null
-    from public.profiles where id = '5eed0000-0000-4000-8000-000000000012'::uuid
-  ),
-  'the four encrypted fields are emptied, not merely re-encrypted'
+select is(
+  (select count(*)::int from public.custom_answers a
+     join public.profile_fields f on f.id = a.question_id
+    where a.profile_id = '5eed0000-0000-4000-8000-000000000012'::uuid
+      and f.system_key in ('document_number', 'phone', 'address', 'postal_code')),
+  0,
+  'the four encrypted answers are deleted: no ciphertext of them is left'
 );
 
 select ok(
   (
-    select reference_contact_name is null and place_of_birth is null and avatar_url is null
-    from public.profiles where id = '5eed0000-0000-4000-8000-000000000012'::uuid
+    select avatar_url is null
+       and not exists (
+         select 1 from public.custom_answers a
+           join public.profile_fields f on f.id = a.question_id
+          where a.profile_id = p.id and f.system_key in ('reference_contact_name', 'place_of_birth'))
+    from public.profiles p where p.id = '5eed0000-0000-4000-8000-000000000012'::uuid
   ),
-  'and so are the free-text fields that name her or place her'
+  'and so are the free-text answers that name her or place her, and her photo'
 );
 
 -- An exact birth date next to a nationality and a town identifies one woman in a
 -- roster this size. The year alone still answers every age-band question a
--- funder report asks.
+-- funder report asks. It is the one answer left, in her date of birth field.
 select is(
-  (select date_of_birth from public.profiles where id = '5eed0000-0000-4000-8000-000000000012'::uuid),
-  '1997-01-01'::date,
+  private.system_field_answer('5eed0000-0000-4000-8000-000000000012'::uuid, 'date_of_birth') #>> '{}',
+  '1997-01-01',
   'her birth date is coarsened to the first of her birth year'
 );
 
--- THE OTHER HALF OF ANONYMIZATION, and the reason it is not just deletion: the
--- row still carries what a report counts.
+-- Every other answer goes (RAPP-662, D11): nationality, entity, the team's
+-- fields, every season.
 select is(
-  (select nationality from public.profiles where id = '5eed0000-0000-4000-8000-000000000012'::uuid),
-  'Marroc',
-  'her nationality survives, because the impact report counts it'
-);
-
-select is(
-  (select reference_entity from public.profiles where id = '5eed0000-0000-4000-8000-000000000012'::uuid),
-  'Creu Roja Osona',
-  'and so does the entity that referred her'
+  (select count(*)::int from public.custom_answers a
+     join public.profile_fields f on f.id = a.question_id
+    where a.profile_id = '5eed0000-0000-4000-8000-000000000012'::uuid
+      and f.system_key is distinct from 'date_of_birth'),
+  0,
+  'no other answer of hers survives, the team''s fields included'
 );
 
 -- Consent to appear in photographs cannot outlive the person it belonged to: a

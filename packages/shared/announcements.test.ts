@@ -18,6 +18,7 @@ const completeText = {
   ca: 'Entrenament cancel·lat',
   es: 'Entrenamiento cancelado',
   en: 'Training cancelled',
+  fr: 'Training cancelled',
   ar: 'تم إلغاء التدريب',
   fa: 'تمرین لغو شد',
 } as const;
@@ -29,11 +30,12 @@ function approvedReview(sourceText: string): TranslationReview {
     translations: {
       es: completeText.es,
       en: completeText.en,
+      fr: completeText.en,
       ar: completeText.ar,
       fa: completeText.fa,
     },
   });
-  for (const language of ['es', 'en', 'ar', 'fa'] as const) {
+  for (const language of ['es', 'en', 'fr', 'ar', 'fa'] as const) {
     review = approveTranslation(review, language);
   }
   return review;

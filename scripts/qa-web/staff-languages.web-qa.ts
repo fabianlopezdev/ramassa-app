@@ -1,19 +1,28 @@
 /**
  * The staff side's languages in the web admin (RAPP-238): Catalan, Spanish and
- * English. The picker changes the language at once and keeps it after a reload.
+ * English. Her account page (RAPP-634) changes the language at once and keeps
+ * it after a reload.
  */
 import { expect, test } from '@playwright/test';
 import { signIn } from './session';
 
 const ADMIN_EMAIL = 'laia.ferrer@example.test';
 
-test('the picker offers the three staff languages and the choice sticks', async ({ page }) => {
+test('the account page offers the three staff languages and the choice sticks', async ({
+  page,
+}) => {
   await signIn(page, ADMIN_EMAIL);
-  const picker = page.getByTestId('language-picker').first();
-  await expect(picker).toBeVisible({ timeout: 30_000 });
-  await expect(picker.locator('option')).toHaveText(['Català', 'Español', 'English']);
+  // The user menu in the top bar opens her account page (RAPP-634).
+  const menu = page.getByTestId('user-menu-trigger');
+  await expect(menu).toBeVisible({ timeout: 30_000 });
+  await menu.click();
+  await page.getByTestId('user-menu-account').click();
+  // A shadcn Select that applies at once (RAPP-634).
+  const select = page.getByTestId('account-language-select');
+  await select.click();
+  await expect(page.getByRole('option')).toHaveText(['Català', 'Español', 'English']);
 
-  await picker.selectOption('en');
+  await page.getByTestId('language-choice-en').click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await expect(
     page.getByRole('navigation').first().getByRole('link', { name: 'Participants' }),
@@ -21,8 +30,9 @@ test('the picker offers the three staff languages and the choice sticks', async 
 
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-
-  await page.getByTestId('language-picker').first().selectOption('ca');
+  await expect(select).toHaveText('English');
+  await select.click();
+  await page.getByTestId('language-choice-ca').click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'ca');
 });
 

@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
+import { EMPTY_INTAKE_CATALOG } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraft } from '@ramassa/shared/onboarding-drafts';
 import ca from '../../../../packages/shared/i18n/locales/ca/onboarding.json';
 
@@ -22,6 +23,7 @@ mock.module('react-i18next', () => ({
   }),
 }));
 mock.module('expo-router', () => ({
+  useNavigation: () => ({ getState: () => undefined }),
   useRouter: () => ({ push, replace }),
   Redirect: ({ href }: { href: string }) => createElement('div', null, href),
 }));
@@ -46,8 +48,11 @@ mock.module('@/lib/onboarding-intake-context', () => ({
     previousDraftStep: 'background',
     goNext,
     goBack: () => undefined,
+    // The screen under this one is not the choice, so Back replaces (RAPP-707).
+    isBelow: () => false,
   }),
-  useWizardIntake: () => ({ documentExplanation: null }),
+  // A catalog with no app fields: each follow-up starts as the app's own (RAPP-782).
+  useWizardIntake: () => ({ catalog: EMPTY_INTAKE_CATALOG, hidden: new Set() }),
   useBuiltinWording: () => ({
     label: (_key: string, fallback: string) => fallback,
     help: () => null,

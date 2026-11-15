@@ -130,6 +130,7 @@ const PLAYER_LANGUAGES = [
   'ca',
   'es',
   'en',
+  'fr',
   'ar',
   'fa',
 ] as const satisfies readonly SupportedLanguage[];
@@ -225,7 +226,9 @@ export async function acceptInvitationFromEmail(
   await page.getByLabel(copy.emailLabel, { exact: true }).fill(email);
   await page.getByLabel(copy.emailOtpCodeLabel, { exact: true }).fill(code);
   await page.getByRole('button', { name: copy.emailOtpVerifyAction, exact: true }).click();
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
+  // The code was accepted: the login page moves on to the second factor, on the
+  // same URL since RAPP-615.
+  await expect(page.getByTestId('second-factor')).toBeVisible({ timeout: 30_000 });
   // A new team member or entity contact sets up her authenticator (RAPP-233).
   await completeSecondFactor(page, email);
   // Her own code was enough: signing in sent her no second email.
@@ -362,6 +365,122 @@ export function queryDatabase(sql: string): string {
   ).trim();
 }
 
+/**
+ * Her current answer to an app field (ADR-031), as SQL that reads one text:
+ * decrypted, a choice by its option key (several choices joined by commas),
+ * anything else as text; null when she has none. Her answers live by field in
+ * `custom_answers` since RAPP-666, so the specs read them here. `profileId` is
+ * an SQL expression: a quoted uuid or a subquery.
+ */
+export function appAnswerSql(profileId: string, systemKey: string): string {
+  return `(select case
+      when f.question_type in ('single_choice', 'search_choice', 'multiple_choice') then (
+        select string_agg(coalesce(o.key, o.id::text), ',' order by o.sort_order)
+          from public.custom_question_options o
+         where o.question_id = f.id
+           and o.id::text in (select jsonb_array_elements_text(
+                 case when jsonb_typeof(a.v) = 'array' then a.v else jsonb_build_array(a.v) end)))
+      when jsonb_typeof(a.v) = 'string' then a.v #>> '{}'
+      else a.v::text end
+    from public.profiles p
+    join public.profile_fields f on f.org_id = p.org_id and f.system_key = '${systemKey}'
+    cross join lateral (select private.field_answer_now(p.id, f) as v) a
+   where p.id = ${profileId})`;
+}
+
+/**
+ * Staff's Ask or Don't ask for her, as SQL listing `question:state` by question
+ * name, comma separated: an app question's state lives on its first field
+ * since RAPP-666, a Ramassà field's as `custom:<id>`. `profileId` is an SQL
+ * expression.
+ */
+export function questionStatesSql(profileId: string): string {
+  return `(select string_agg(q.question || ':' || s.state, ',' order by q.question)
+     from public.custom_question_states s
+     join public.profile_fields f on f.id = s.question_id
+     cross join lateral (select case when f.kind = 'custom' then 'custom:' || f.id::text
+                                     else private.system_key_question(f.system_key) end as question) q
+    where s.profile_id = ${profileId})`;
+}
+
+/**
+ * A referral's answer to an app field, as SQL that reads one text: decrypted
+ * (a referral's answers are always encrypted), a choice by its option key.
+ * `referralId` is an SQL expression.
+ */
+export function referralAnswerSql(referralId: string, systemKey: string): string {
+  return `(select case
+      when f.question_type in ('single_choice', 'search_choice', 'multiple_choice') then (
+        select string_agg(coalesce(o.key, o.id::text), ',' order by o.sort_order)
+          from public.custom_question_options o
+         where o.question_id = f.id
+           and o.id::text in (select jsonb_array_elements_text(
+                 case when jsonb_typeof(a.v) = 'array' then a.v else jsonb_build_array(a.v) end)))
+      when jsonb_typeof(a.v) = 'string' then a.v #>> '{}'
+      else a.v::text end
+    from public.referral_custom_answers r
+    join public.profile_fields f on f.id = r.question_id and f.system_key = '${systemKey}'
+    cross join lateral (select public.decrypt_field(r.value_encrypted)::jsonb as v) a
+   where r.referral_id = ${referralId})`;
+}
+
+/** An app answer the way the specs give it: a choice by its option key. */
+export type AppAnswerFixture = string | number | boolean | readonly string[] | null;
+
+/**
+ * SQL that sets her answer to an app field through the app's own writer
+ * (`private.write_custom_answer`, Sensitive answers encrypted), or removes it
+ * when `value` is null. A choice is given by its option key.
+ */
+export function writeAppAnswerSql(
+  profileId: string,
+  systemKey: string,
+  value: AppAnswerFixture,
+  source: 'staff' | 'player' = 'staff',
+): string {
+  const field = `public.profile_fields f join public.profiles p
+      on p.org_id = f.org_id and p.id = ${profileId} and f.system_key = '${systemKey}'`;
+  const remove = `delete from public.custom_answers a using ${field}
+     where a.profile_id = p.id and a.question_id = f.id;`;
+  if (value === null) return remove;
+  const raw = `'${JSON.stringify(value).replaceAll("'", "''")}'::jsonb`;
+  return `${remove}
+    select private.write_custom_answer(p.id, f, case
+        when f.question_type in ('single_choice', 'search_choice') then (
+          select to_jsonb(o.id::text) from public.custom_question_options o
+           where o.question_id = f.id and o.key = ${raw} #>> '{}')
+        when f.question_type = 'multiple_choice' then (
+          select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+           where o.question_id = f.id and o.key in (select jsonb_array_elements_text(${raw})))
+        else ${raw} end, '${source}', null)
+      from ${field};`;
+}
+
+/**
+ * SQL that gives a referral an answer to an app field, encrypted as every
+ * referral answer is, unless it has one. A choice is given by its option key.
+ */
+export function writeReferralAnswerSql(
+  referralId: string,
+  systemKey: string,
+  value: Exclude<AppAnswerFixture, null>,
+): string {
+  const raw = `'${JSON.stringify(value).replaceAll("'", "''")}'::jsonb`;
+  return `insert into public.referral_custom_answers (referral_id, question_id, org_id, value_encrypted)
+    select r.id, f.id, f.org_id, public.encrypt_field((case
+        when f.question_type in ('single_choice', 'search_choice') then (
+          select to_jsonb(o.id::text) from public.custom_question_options o
+           where o.question_id = f.id and o.key = ${raw} #>> '{}')
+        when f.question_type = 'multiple_choice' then (
+          select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+           where o.question_id = f.id and o.key in (select jsonb_array_elements_text(${raw})))
+        else ${raw} end)::text)
+      from public.entity_referrals r
+      join public.profile_fields f on f.org_id = r.org_id and f.system_key = '${systemKey}'
+     where r.id = ${referralId}
+    on conflict do nothing;`;
+}
+
 export function countInDatabase(sql: string): number {
   return Number(queryDatabase(sql));
 }
@@ -436,8 +555,8 @@ export function queryDatabaseAsAddress(email: string, sql: string): string {
  *
  * It is needed because `/login` on an authenticated session redirects to that
  * role's landing, so a second `signIn` in one test would silently never see a
- * login form. Every landing carries the button: the staff sidebar, the entity
- * portal, and the terminal "no admin access" screen a participant lands on.
+ * login form. Every landing carries it: the user menu in the staff and entity
+ * top bars, and the terminal "no admin access" screen a participant lands on.
  */
 export async function signOut(page: Page): Promise<void> {
   const hasStoredSession = (await page.context().storageState()).origins.some((origin) =>
@@ -445,18 +564,16 @@ export async function signOut(page: Page): Promise<void> {
   );
   if (!hasStoredSession) return;
 
-  // A team member signs out from the staff sidebar (RAPP-615): every staff
-  // page has it, the design role's onboarding page included. An entity
-  // contact and an account without admin access have their own button.
-  const staffSignOut = page.getByTestId('staff-sign-out');
-  const signOutButton = staffSignOut
-    .or(
-      page.getByRole('button', {
-        name: /tanca la sessió|sign out|log out|cerrar sesión|تسجيل الخروج|خروج(?: از حساب)?/i,
-      }),
-    )
-    .first();
-  const sidebarToggle = page.locator('[data-sidebar="trigger"]').first();
+  // A team member and an entity contact sign out from the user menu at the
+  // end of the top bar (RAPP-632): every staff page has it, the design role's
+  // onboarding page included. An account without admin access and the
+  // second-factor step have their own button.
+  const userMenu = page.getByTestId('user-menu-trigger');
+  const menuSignOut = page.getByTestId('staff-sign-out');
+  const screenSignOut = page.getByRole('button', {
+    name: /tanca la sessió|sign out|log out|cerrar sesión|تسجيل الخروج|خروج(?: از حساب)?/i,
+  });
+  const signOutEntry = userMenu.or(screenSignOut).first();
   const loginEmailField = page.locator('input[type="email"]');
 
   // A stored browser session must be cleared through the product. The guarded
@@ -466,20 +583,22 @@ export async function signOut(page: Page): Promise<void> {
   // holding the whole retry open until goto's default timeout.
   await expect(async () => {
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 10_000 });
-    await expect(signOutButton.or(loginEmailField).first()).toBeAttached({ timeout: 3_000 });
+    await expect(signOutEntry.or(loginEmailField).first()).toBeAttached({ timeout: 3_000 });
     await waitForHydration(page);
   }).toPass({ timeout: 30_000 });
 
   // Already signed out: the guard sent an unauthenticated visitor to /login.
-  if ((await signOutButton.count()) === 0) return;
+  if ((await signOutEntry.count()) === 0) return;
 
-  // The same hydration retry the sign-in below needs, for the same reason. On
-  // a narrow screen the sidebar is a drawer: open it first.
+  // The same hydration retry the sign-in below needs, for the same reason. The
+  // menu opens first; a retry with the menu already open goes straight on.
   await expect(async () => {
-    if (!(await signOutButton.isVisible()) && (await sidebarToggle.isVisible())) {
-      await sidebarToggle.click();
+    if ((await userMenu.count()) > 0) {
+      if (!(await menuSignOut.isVisible())) await userMenu.click({ timeout: 2_000 });
+      await menuSignOut.click({ timeout: 2_000 });
+    } else {
+      await screenSignOut.first().click({ timeout: 2_000 });
     }
-    await signOutButton.click({ timeout: 2_000 });
     await expect(page).toHaveURL(/\/login/, { timeout: 2_000 });
   }).toPass({ timeout: 20_000 });
 }

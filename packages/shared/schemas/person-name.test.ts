@@ -1,13 +1,7 @@
 import { describe, expect, it } from 'bun:test';
-import {
-  authorizationContentSchema,
-  authorizationSigningSchemaFor,
-  type AuthorizationContent,
-} from '../authorization/authorization';
 import { walkInNameSchema } from '../authorization/tablet';
 import { inviteEntityCollaboratorSchema } from '../entity-management';
 import { createReferralSchema } from '../referrals';
-import { buildAuthorizationVersion } from '../testing/factories';
 import { createParticipantInviteSchema } from './accounts';
 import { identityStepSchema } from './onboarding';
 import { personNameSchema, trimPersonName } from './person-name';
@@ -59,33 +53,6 @@ const MIXED_NAMES: ReadonlyArray<readonly [string, string, string]> = [
   ['a letter after a leading combining mark', '́a', '́a'],
 ];
 
-/** The seeded version with the emergency contact required. */
-function contactRequired(): AuthorizationContent {
-  const content = authorizationContentSchema.parse(buildAuthorizationVersion().content);
-  return {
-    ...content,
-    questions: {
-      ...content.questions,
-      emergency_contact: { asked: true, required: true, privacy: 'personal', texts: {} },
-    },
-  };
-}
-
-function signingWithContactName(name: string) {
-  return authorizationSigningSchemaFor(contactRequired()).safeParse({
-    consents: {
-      participation: true,
-      data_processing: true,
-      code_of_conduct: true,
-      health_data: true,
-    },
-    healthInfo: 'No',
-    emergencyContact: { name, relation: 'Germana', phone: '+34600222333' },
-    strokes: null,
-    unableToDraw: true,
-  });
-}
-
 describe('person names (RAPP-624)', () => {
   it.each(BLANK_NAMES)('refuses a name made only of %s', (_label, value) => {
     expect(trimPersonName(value)).toBe('');
@@ -114,13 +81,11 @@ describe('person names (RAPP-624)', () => {
         consentConfirmed: true,
       }).success,
     ).toBe(false);
-    expect(signingWithContactName(value).success).toBe(false);
   });
 
   it.each(MIXED_NAMES)('accepts a name with %s', (_label, value, saved) => {
     expect(personNameSchema.parse(value)).toBe(saved);
     expect(walkInNameSchema.parse({ firstName: value, lastName: 'Haddad' }).firstName).toBe(saved);
-    expect(signingWithContactName(value).success).toBe(true);
   });
 
   it('trims invisible characters from the edges and keeps inner spaces', () => {

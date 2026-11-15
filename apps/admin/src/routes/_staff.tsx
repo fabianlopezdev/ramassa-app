@@ -1,12 +1,16 @@
 import { RouteFocusManager } from '@/components/accessibility/route-focus-manager';
 import { RequireAuth } from '@/components/auth/require-auth';
+import { NotificationBell } from '@/components/nav/notification-bell';
 import { StaffSidebar } from '@/components/nav/staff-sidebar';
+import { UserMenu } from '@/components/nav/user-menu';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { Toaster } from '@/components/ui/sonner';
 import { logout } from '@/lib/auth';
 import { designRoleRedirect } from '@/lib/design-role-access';
+import { movedSettingsTab } from '@/lib/moved-settings-tabs';
 import { guardStaffRoute } from '@/lib/staff-route-guard';
 import { supabase } from '@/lib/supabase';
-import { createFileRoute, Navigate, Outlet, useLocation } from '@tanstack/react-router';
+import { createFileRoute, Navigate, Outlet, redirect, useLocation } from '@tanstack/react-router';
 import { useEffect, type ReactNode } from 'react';
 import { assuranceLevelOf, useAuth } from '@ramassa/shared/auth';
 
@@ -17,8 +21,13 @@ export const Route = createFileRoute('/_staff')({
   ssr: false,
   // The second-factor step and the design role's redirect are thrown before
   // any child loader runs, so a page never asks the database for data it
-  // would refuse (RAPP-615).
-  beforeLoad: ({ location, context }) => guardStaffRoute(supabase, context.staffAccess, location),
+  // would refuse (RAPP-615). A Settings tab that became its own page
+  // (RAPP-654) forwards first, so the guard judges the page it now lives on.
+  beforeLoad: ({ location, context }) => {
+    const moved = movedSettingsTab(location.pathname, location.search);
+    if (moved !== null) throw redirect({ ...moved, replace: true });
+    return guardStaffRoute(supabase, context.staffAccess, location);
+  },
   component: StaffLayout,
 });
 
@@ -33,15 +42,24 @@ function StaffLayout() {
       <DesignRoleGate>
         <SidebarProvider>
           <RouteFocusManager targetId="main-content" />
-          <StaffSidebar onSignOut={logout} />
+          <StaffSidebar />
           {/* SidebarInset renders the page's single `main` landmark, so child
             routes render sections rather than nesting another `main`. */}
-          <SidebarInset id="main-content" tabIndex={-1}>
-            <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
+          <SidebarInset id="main-content" tabIndex={-1} className="min-w-0 bg-canvas">
+            {/* The top bar (RAPP-632): the sidebar toggle at the start, the
+              notification bell (RAPP-640) and her user menu at the end. The language
+              moved to her account page (RAPP-634). */}
+            <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/90 px-4 shadow-xs backdrop-blur">
               <SidebarTrigger />
+              <div className="ms-auto flex items-center gap-2" data-testid="top-bar-actions">
+                <NotificationBell />
+                <UserMenu onSignOut={logout} accountPage="/account" />
+              </div>
             </header>
             <Outlet />
           </SidebarInset>
+          {/* Confirmations such as a deleted notification (RAPP-640). */}
+          <Toaster position="top-center" />
         </SidebarProvider>
       </DesignRoleGate>
     </RequireAuth>

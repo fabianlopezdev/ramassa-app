@@ -59,20 +59,3 @@ export const seasonAnswerFields = z.object({
 });
 
 export type SeasonAnswerFields = z.infer<typeof seasonAnswerFields>;
-
-/** The database payload keys for the season answers; absent answers are sent empty. */
-export function seasonAnswersPayload(values: Partial<SeasonAnswerFields>) {
-  return {
-    applicant_status: values.applicantStatus ?? null,
-    ...(values.applicantStatusDetails === undefined
-      ? {}
-      : { applicant_status_details: values.applicantStatusDetails }),
-    supporting_entities:
-      values.supportingEntities === undefined || values.supportingEntities.length === 0
-        ? null
-        : values.supportingEntities,
-    season_number: values.seasonNumber ?? null,
-    childcare_need: values.childcareNeed ?? null,
-    specific_needs: values.specificNeeds ?? null,
-  };
-}

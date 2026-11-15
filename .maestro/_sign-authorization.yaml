@@ -4,8 +4,9 @@ name: _sign-authorization
 # lawful path. A new player meets it right after the wizard, before the tabs.
 # The medical answer is "No", the four required consents are ticked and she
 # signs with the ticks alone ("I cannot draw"), because Maestro cannot draw a
-# signature reliably on both platforms. Every tap is "until selected": a tap
+# signature reliably on both platforms. Every tap is "until checked": a tap
 # that only reports COMPLETED proves nothing about the state it changed.
+# These are radios and ticks, which Android reports as checked, not selected.
 ---
 - extendedWaitUntil:
     visible:
@@ -14,28 +15,36 @@ name: _sign-authorization
 - waitForAnimationToEnd:
     timeout: 3000
 # Continue reads the document; consent is selected only on the final screen.
-- tapOn:
-    id: 'authorization-sign'
-- waitForAnimationToEnd:
-    timeout: 1500
+# Continue may still be settling when first tapped, so it is pressed until
+# the second screen shows, scrolling to its medical question in between.
 - repeat:
     times: 15
     while:
       notVisible:
         id: 'authorization-health-no'
     commands:
-      - swipe:
-          start: 50%, 60%
-          end: 50%, 25%
-          duration: 600
+      - tapOn:
+          id: 'authorization-sign'
+          optional: true
       - waitForAnimationToEnd:
-          timeout: 1200
+          timeout: 1500
+      - runFlow:
+          when:
+            notVisible:
+              id: 'authorization-health-no'
+          commands:
+            - swipe:
+                start: 50%, 60%
+                end: 50%, 25%
+                duration: 600
+            - waitForAnimationToEnd:
+                timeout: 1200
 - repeat:
     times: 4
     while:
       notVisible:
         id: 'authorization-health-no'
-        selected: true
+        checked: true
     commands:
       - tapOn:
           id: 'authorization-health-no'
@@ -44,7 +53,7 @@ name: _sign-authorization
           timeout: 1500
 - assertVisible:
     id: 'authorization-health-no'
-    selected: true
+    checked: true
 - tapOn:
     id: 'authorization-sign'
 - waitForAnimationToEnd:
@@ -66,7 +75,7 @@ name: _sign-authorization
     while:
       notVisible:
         id: 'authorization-consent-participation'
-        selected: true
+        checked: true
     commands:
       - tapOn:
           id: 'authorization-consent-participation'
@@ -75,7 +84,7 @@ name: _sign-authorization
           timeout: 1500
 - assertVisible:
     id: 'authorization-consent-participation'
-    selected: true
+    checked: true
 - repeat:
     times: 15
     while:
@@ -93,7 +102,7 @@ name: _sign-authorization
     while:
       notVisible:
         id: 'authorization-consent-data_processing'
-        selected: true
+        checked: true
     commands:
       - tapOn:
           id: 'authorization-consent-data_processing'
@@ -102,7 +111,7 @@ name: _sign-authorization
           timeout: 1500
 - assertVisible:
     id: 'authorization-consent-data_processing'
-    selected: true
+    checked: true
 - repeat:
     times: 15
     while:
@@ -120,7 +129,7 @@ name: _sign-authorization
     while:
       notVisible:
         id: 'authorization-consent-code_of_conduct'
-        selected: true
+        checked: true
     commands:
       - tapOn:
           id: 'authorization-consent-code_of_conduct'
@@ -129,7 +138,7 @@ name: _sign-authorization
           timeout: 1500
 - assertVisible:
     id: 'authorization-consent-code_of_conduct'
-    selected: true
+    checked: true
 - repeat:
     times: 15
     while:
@@ -147,7 +156,7 @@ name: _sign-authorization
     while:
       notVisible:
         id: 'authorization-consent-health_data'
-        selected: true
+        checked: true
     commands:
       - tapOn:
           id: 'authorization-consent-health_data'
@@ -156,7 +165,7 @@ name: _sign-authorization
           timeout: 1500
 - assertVisible:
     id: 'authorization-consent-health_data'
-    selected: true
+    checked: true
 - repeat:
     times: 15
     while:
@@ -174,7 +183,7 @@ name: _sign-authorization
     while:
       notVisible:
         id: 'authorization-cannot-draw'
-        selected: true
+        checked: true
     commands:
       - tapOn:
           id: 'authorization-cannot-draw'
@@ -183,7 +192,7 @@ name: _sign-authorization
           timeout: 1500
 - assertVisible:
     id: 'authorization-cannot-draw'
-    selected: true
+    checked: true
 - repeat:
     times: 15
     while:

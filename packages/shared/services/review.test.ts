@@ -139,6 +139,7 @@ test('approval sends the staff-edited multilingual publication and optional publ
     ca: 'Servei <script>alert(1)</script> Àgora',
     es: 'Servicio Àgora',
     en: 'Àgora service',
+    fr: 'Àgora service',
     ar: 'خدمة أغورا',
     fa: 'خدمات آگورا',
   };

@@ -17,6 +17,7 @@ import {
   fetchForumCategories,
   fetchForumModerationQueue,
   moderateForumTarget,
+  moveForumCategory,
   saveForumCategory,
   setForumPostCategory,
   setForumPostPinned,
@@ -105,27 +106,6 @@ export function useForumModerationActions() {
   return { act, contact };
 }
 
-/** A category as the save call takes it, with a new order or not. */
-function forumCategoryInput(
-  category: ForumCategoryRow,
-  sortOrder = category.sort_order,
-): ForumCategoryInput {
-  return {
-    id: category.id,
-    name: {
-      ca: category.name.ca ?? '',
-      es: category.name.es ?? '',
-      en: category.name.en ?? '',
-      ar: category.name.ar ?? '',
-      fa: category.name.fa ?? '',
-    },
-    slug: category.slug,
-    icon: category.icon,
-    color: category.color,
-    sortOrder,
-  };
-}
-
 /**
  * Save, delete and reorder the forum categories (RAPP-386). A new order is
  * saved as 10, 20, 30 and on, as the seeded categories are numbered, and only
@@ -149,7 +129,7 @@ export function useForumCategoryActions() {
       for (const [index, category] of ordered.entries()) {
         const sortOrder = (index + 1) * 10;
         if (category.sort_order !== sortOrder) {
-          await saveForumCategory(supabase, forumCategoryInput(category, sortOrder));
+          await moveForumCategory(supabase, category, sortOrder);
         }
       }
     },

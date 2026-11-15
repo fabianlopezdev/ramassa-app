@@ -2,16 +2,14 @@
  * The intake questions and how the wizard walks them (RAPP-300).
  *
  * Staff or a partner entity may answer part of a woman's intake before her
- * first login. `public.profile_answers` records which questions somebody
- * really answered, because profile defaults (no dependants, Catalan) look like
- * answers. The wizard then asks only the rest, shows a summary of everything,
- * and sends only what is new or changed, so a stored value is never replaced
- * by something she was not asked.
- *
- * `INTAKE_QUESTIONS` mirrors the CHECK on `profile_answers.question`; a parity
- * test reads the migration block marked `intake-questions`.
+ * first login. Each answer is stored by field and records who gave it
+ * (ADR-031), so an answer somebody really gave is told apart from a question
+ * nobody asked. The wizard then asks only the rest, shows a summary of
+ * everything, and sends only what is new or changed, so a stored value is
+ * never replaced by something she was not asked.
  */
 import { z } from 'zod';
+import { branchesAfterParents, conditionsHold, type ScreenCondition } from './screen-conditions';
 
 export const INTAKE_QUESTIONS = [
   'first_name',
@@ -107,36 +105,6 @@ export const WIZARD_SCREEN_QUESTIONS: Readonly<
 };
 
 /**
- * The `complete_onboarding` payload keys behind each question. Two-field
- * questions travel whole: a document type without its number, or a count
- * without its yes or no, means nothing on its own.
- */
-export const QUESTION_PAYLOAD_KEYS: Readonly<Record<IntakeQuestion, readonly string[]>> = {
-  first_name: ['first_name'],
-  last_name: ['last_name'],
-  date_of_birth: ['date_of_birth'],
-  place_of_birth: ['place_of_birth'],
-  nationality: ['nationality'],
-  preferred_language: ['preferred_language'],
-  document: ['document_type', 'document_number', 'document_name'],
-  phone: ['phone'],
-  address: ['address'],
-  city: ['city'],
-  postal_code: ['postal_code'],
-  reference_entity: ['reference_entity'],
-  reference_contact_name: ['reference_contact_name'],
-  dependents: ['has_dependents', 'num_dependents'],
-  clothing_size: ['clothing_size'],
-  shoe_size: ['shoe_size'],
-  avatar: ['avatar_url'],
-  applicant_status: ['applicant_status', 'applicant_status_details'],
-  supporting_entities: ['supporting_entities'],
-  season_number: ['season_number'],
-  childcare_need: ['childcare_need'],
-  specific_needs: ['specific_needs'],
-};
-
-/**
  * The answered questions as the server lists them. A question this build does
  * not know (a newer server) is dropped: it cannot be asked here anyway.
  */
@@ -170,11 +138,39 @@ export interface CustomWizardScreen {
   readonly id: string;
   readonly afterScreen: QuestionScreen;
   readonly isAnswered: boolean;
+  /**
+   * Set for the Ramassà fields placed on an app screen (RAPP-642, RAPP-649):
+   * they show on that screen, so it is never a step of its own, and while one
+   * is unanswered that app screen shows.
+   */
+  readonly builtinScreen?: WizardQuestionScreen | null;
+  /**
+   * A screen that depends on an answer (RAPP-715): the step holding its
+   * question, which it follows, and the conditions of the screen and every
+   * screen above it, all of which her answers must meet.
+   */
+  readonly parent?: WizardStepKey | null;
+  readonly opensWhen?: readonly ScreenCondition[];
 }
 
-/** A wizard step: a built-in screen, or a staff screen as `custom:<id>`. */
+/** Her answers by field id, the stored ones under her draft (RAPP-715). */
+export type WizardAnswers = Readonly<Record<string, unknown>>;
+
+/** Whether a staff screen opens for her answers: always, or when its conditions hold. */
+export function opensForAnswers(screen: CustomWizardScreen, answers: WizardAnswers): boolean {
+  return conditionsHold(screen.opensWhen ?? [], answers);
+}
+
+/** A staff screen of its own, a step of the wizard. */
+function isOwnStep(screen: CustomWizardScreen): boolean {
+  return screen.builtinScreen == null;
+}
+
+/** A wizard step: a built-in screen, a staff screen as `custom:<id>`, or a screen of the app terms. */
 export type CustomStepKey = `custom:${string}`;
-export type WizardStepKey = WizardScreen | CustomStepKey;
+/** A screen of the app terms form at the end of her Onboarding (RAPP-772): `terms:<screen id>`. */
+export type TermsStepKey = `terms:${string}`;
+export type WizardStepKey = WizardScreen | CustomStepKey | TermsStepKey;
 
 const CUSTOM_STEP_PREFIX = 'custom:';
 
@@ -191,9 +187,35 @@ export function customStepId(step: string): string | null {
   return isCustomStep(step) ? step.slice(CUSTOM_STEP_PREFIX.length) : null;
 }
 
+const TERMS_STEP_PREFIX = 'terms:';
+
+export function termsStepKey(screenId: string): TermsStepKey {
+  return `${TERMS_STEP_PREFIX}${screenId}`;
+}
+
+export function isTermsStep(step: string): step is TermsStepKey {
+  return step.startsWith(TERMS_STEP_PREFIX);
+}
+
+/** The terms form's screen id of a step, or null for any other step. */
+export function termsStepId(step: string): string | null {
+  return isTermsStep(step) ? step.slice(TERMS_STEP_PREFIX.length) : null;
+}
+
 /**
- * The screens that always end the wizard, in this order: the summary of what
- * she gave, then the terms (legal). Staff never move or hide them (RAPP-612).
+ * One screen of the app terms form as her wizard walks it (RAPP-772), in the
+ * form's order: it shows while her answers meet its conditions (RAPP-715).
+ */
+export interface TermsWizardStep {
+  readonly key: TermsStepKey;
+  readonly opensWhen?: readonly ScreenCondition[];
+}
+
+/**
+ * The screens that end the wizard of a catalog with no terms form (an older
+ * server): the summary of what she gave, then the terms' two screens. Staff
+ * never move or hide them (RAPP-612). The terms form's own screens take their
+ * place (RAPP-772, `finalWizardSteps`).
  */
 export const FINAL_WIZARD_SCREENS = ['summary', 'terms-intro', 'terms'] as const;
 
@@ -205,8 +227,15 @@ export const FINAL_WIZARD_SCREENS = ['summary', 'terms-intro', 'terms'] as const
  * the catalog only lists ones with no required question.
  */
 export interface WizardFlow {
+  readonly deletedScreens?: ReadonlySet<string>;
   readonly order: readonly WizardStepKey[];
   readonly hiddenScreens: ReadonlySet<WizardQuestionScreen>;
+  /**
+   * The app terms form's screens, in its order (RAPP-772); they end the wizard
+   * after the summary. Absent for a catalog with no terms form: the terms'
+   * two built-in screens end it.
+   */
+  readonly termsSteps?: readonly TermsWizardStep[];
 }
 
 export const DEFAULT_WIZARD_FLOW: WizardFlow = { order: [], hiddenScreens: new Set() };
@@ -218,9 +247,32 @@ function defaultFlowOrder(custom: readonly CustomWizardScreen[]): WizardStepKey[
     ...(screen === 'logistics' ? ['equipment' as const] : []),
     ...(screen === 'season' ? SEASON_WIZARD_SCREENS.slice(1) : []),
     ...custom
-      .filter((customScreen) => customScreen.afterScreen === screen)
+      .filter((customScreen) => isOwnStep(customScreen) && customScreen.afterScreen === screen)
       .map((customScreen) => customStepKey(customScreen.id)),
   ]);
+}
+
+/** The steps that end the wizard: the summary, then the terms form's screens (RAPP-772). */
+export function finalWizardSteps(flow: WizardFlow = DEFAULT_WIZARD_FLOW): WizardStepKey[] {
+  return flow.termsSteps === undefined
+    ? [...FINAL_WIZARD_SCREENS]
+    : ['summary', ...flow.termsSteps.map((step) => step.key)];
+}
+
+/**
+ * Where a step saved before the terms became a form resumes (RAPP-772): the
+ * introduction at the first terms screen, the terms at the last. Any other
+ * step stays as it is.
+ */
+export function currentTermsStep<Step extends string>(
+  step: Step,
+  flow: WizardFlow = DEFAULT_WIZARD_FLOW,
+): Step | TermsStepKey {
+  const steps = flow.termsSteps ?? [];
+  if (steps.length === 0) return step;
+  if (step === 'terms-intro') return steps[0]?.key ?? step;
+  if (step === 'terms') return steps[steps.length - 1]?.key ?? step;
+  return step;
 }
 
 /**
@@ -246,28 +298,59 @@ export function wizardFlowOrder(
       .find((earlier) => placed.includes(earlier));
     placed.splice(before === undefined ? 0 : placed.indexOf(before) + 1, 0, step);
   });
-  return [...placed, ...FINAL_WIZARD_SCREENS];
+  const parents = new Map(
+    custom.flatMap((screen) =>
+      screen.parent == null ? [] : [[customStepKey(screen.id), screen.parent] as const],
+    ),
+  );
+  return [
+    ...branchesAfterParents(placed, (step) => parents.get(step as CustomStepKey)),
+    ...finalWizardSteps(flow),
+  ].filter((key) => !flow.deletedScreens?.has(key));
 }
 
 function isHiddenScreen(step: WizardStepKey, flow: WizardFlow): boolean {
   return !isCustomStep(step) && flow.hiddenScreens.has(step as WizardQuestionScreen);
 }
 
-/** Every screen she will see, in order: the asked ones, the summary and the terms. */
+/**
+ * Every screen she will see, in order: the asked ones, the summary and the
+ * terms. A screen that depends on an answer shows while her answers open it.
+ */
 function visibleScreens(
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[],
   flow: WizardFlow,
+  answers: WizardAnswers,
 ): WizardStepKey[] {
-  const asked = new Set<WizardStepKey>(screensToAsk(answered));
+  const asked = new Set<WizardStepKey>([
+    ...screensToAsk(answered),
+    // An app screen with a placed field she has not answered (RAPP-642), or
+    // with a follow-up her answers open that has one (RAPP-720).
+    ...custom.flatMap((screen) =>
+      screen.builtinScreen == null || screen.isAnswered || !opensForAnswers(screen, answers)
+        ? []
+        : [screen.builtinScreen],
+    ),
+  ]);
   const answeredCustom = new Set(
-    custom.filter((screen) => screen.isAnswered).map((screen) => customStepKey(screen.id)),
+    custom
+      .filter((screen) => screen.isAnswered || !opensForAnswers(screen, answers))
+      .map((screen) => customStepKey(screen.id)),
   );
-  const final = new Set<WizardStepKey>(FINAL_WIZARD_SCREENS);
+  const final = new Set<WizardStepKey>(finalWizardSteps(flow));
+  // A terms screen that depends on an answer shows while her answers open it (RAPP-772).
+  const closedTerms = new Set(
+    (flow.termsSteps ?? [])
+      .filter((step) => !conditionsHold(step.opensWhen ?? [], answers))
+      .map((step) => step.key),
+  );
   return wizardFlowOrder(custom, flow).filter((step) =>
     isCustomStep(step)
       ? !answeredCustom.has(step)
-      : final.has(step) || (asked.has(step) && !isHiddenScreen(step, flow)),
+      : isTermsStep(step)
+        ? !closedTerms.has(step)
+        : final.has(step) || (asked.has(step) && !isHiddenScreen(step, flow)),
   );
 }
 
@@ -284,14 +367,16 @@ export function nextWizardScreen(
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[],
   flow?: WizardFlow,
+  answers?: WizardAnswers,
 ): WizardStepKey;
 export function nextWizardScreen(
   from: WizardStepKey | 'start',
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[] = [],
   flow: WizardFlow = DEFAULT_WIZARD_FLOW,
+  answers: WizardAnswers = {},
 ): WizardStepKey {
-  const screens = visibleScreens(answered, custom, flow);
+  const screens = visibleScreens(answered, custom, flow, answers);
   if (from === 'start') return screens[0] ?? 'summary';
   const index = screens.indexOf(from);
   if (index === -1) {
@@ -302,7 +387,7 @@ export function nextWizardScreen(
       order.slice(order.indexOf(from) + 1).find((screen) => screens.includes(screen)) ?? 'summary'
     );
   }
-  return screens[index + 1] ?? 'terms';
+  return screens[index + 1] ?? finalWizardSteps(flow).at(-1) ?? 'terms';
 }
 
 /** The screen before `from`, or null on the first one she sees. */
@@ -315,15 +400,28 @@ export function previousWizardScreen(
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[],
   flow?: WizardFlow,
+  answers?: WizardAnswers,
 ): WizardStepKey | null;
 export function previousWizardScreen(
   from: WizardStepKey,
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[] = [],
   flow: WizardFlow = DEFAULT_WIZARD_FLOW,
+  answers: WizardAnswers = {},
 ): WizardStepKey | null {
-  const screens = visibleScreens(answered, custom, flow);
+  const screens = visibleScreens(answered, custom, flow, answers);
   const index = screens.indexOf(from);
+  if (index === -1) {
+    // A screen her answers no longer open (she changed one above it): the
+    // last screen she does see before it.
+    const order = wizardFlowOrder(custom, flow);
+    return (
+      order
+        .slice(0, Math.max(order.indexOf(from), 0))
+        .reverse()
+        .find((screen) => screens.includes(screen)) ?? null
+    );
+  }
   return index > 0 ? (screens[index - 1] ?? null) : null;
 }
 
@@ -333,45 +431,8 @@ export function wizardScreenPosition(
   answered: AnsweredQuestions,
   custom: readonly CustomWizardScreen[] = [],
   flow: WizardFlow = DEFAULT_WIZARD_FLOW,
+  answers: WizardAnswers = {},
 ): { step: number; total: number } {
-  const screens = visibleScreens(answered, custom, flow);
+  const screens = visibleScreens(answered, custom, flow, answers);
   return { step: Math.max(screens.indexOf(screen), 0) + 1, total: screens.length };
-}
-
-/** Keys the server always needs, whatever was answered before. */
-const ALWAYS_SENT_KEYS = ['media_consent', 'terms_version', 'locale_shown'] as const;
-
-/**
- * The payload with only the questions that were unanswered or that she
- * changed. `complete_onboarding` keeps the stored value of every question the
- * payload leaves out, so a question she only confirmed on the summary is not
- * sent and its staff or entity record stays.
- */
-export function trimPayloadToAnswers<T extends Record<string, unknown>>(
-  payload: T,
-  answered: AnsweredQuestions,
-  stored: Readonly<Record<string, unknown>>,
-): Partial<T> {
-  const kept: Record<string, unknown> = {};
-  for (const key of ALWAYS_SENT_KEYS) {
-    if (key in payload) kept[key] = payload[key];
-  }
-  for (const question of INTAKE_QUESTIONS) {
-    const keys = QUESTION_PAYLOAD_KEYS[question];
-    const presentKeys = keys.filter((key) => key in payload);
-    if (presentKeys.length === 0) continue;
-    const isChanged = presentKeys.some(
-      (key) => normalizeForComparison(payload[key]) !== normalizeForComparison(stored[key]),
-    );
-    if (!answered.has(question) || isChanged) {
-      for (const key of presentKeys) kept[key] = payload[key];
-    }
-  }
-  return kept as Partial<T>;
-}
-
-/** An empty string and a missing value are the same answer: none. */
-function normalizeForComparison(value: unknown): unknown {
-  if (value === undefined || value === null || value === '') return null;
-  return value;
 }

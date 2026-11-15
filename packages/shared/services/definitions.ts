@@ -11,10 +11,12 @@ export const SERVICE_METADATA_FIELD_TYPES = [
 
 export type ServiceMetadataFieldType = (typeof SERVICE_METADATA_FIELD_TYPES)[number];
 
+/** A stored label: French is optional, since labels saved before it have none (RAPP-781). */
 export interface ServiceLocalizedLabel {
   readonly ca: string;
   readonly es: string;
   readonly en: string;
+  readonly fr?: string;
   readonly ar: string;
   readonly fa: string;
 }

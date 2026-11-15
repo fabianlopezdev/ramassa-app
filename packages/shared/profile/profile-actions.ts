@@ -15,15 +15,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { z } from 'zod';
 import { AppError } from '../errors';
+import { answerPayload } from '../intake-builder/builder';
+import { fetchSystemFieldIndex } from '../intake-builder/field-answers';
 import { withCancellation, type CancellableRequest } from '../lib/cancellation';
 import {
   ownDeletionRequestSchema,
-  profileRowSchema,
+  profileRecordSchema,
   type OwnDeletionRequest,
-  type ProfileRow,
-  type UpdateOwnProfilePayload,
+  type ProfileRecordWithFields,
+  type ProfileUpdate,
 } from '../schemas/profile';
-import type { Database } from '../types/database';
+import type { Database, Json } from '../types/database';
 
 type Client = SupabaseClient<Database>;
 
@@ -52,14 +54,16 @@ function parseRow<Schema extends z.ZodType>(
 }
 
 /**
- * The caller's own profile with the encrypted columns decrypted server-side, or
- * null when she has none yet. The RPC takes no argument: there is no id to pass
- * and therefore no id to get wrong.
+ * The caller's own record, or null when she has none yet: her account, her
+ * answers by field id (RAPP-662), each decrypted server-side, and her
+ * organization's app fields, so her screens read each answer by field
+ * (RAPP-663). The RPC takes no argument: there is no id to pass and therefore
+ * no id to get wrong.
  */
 export async function fetchOwnProfile(
   client: Client,
   options: CancellableRequest = {},
-): Promise<ProfileRow | null> {
+): Promise<ProfileRecordWithFields | null> {
   const { data, error } = await withCancellation(client.rpc('get_own_profile'), options);
   if (error) {
     throw new AppError('DB-1', { message: error.message });
@@ -68,17 +72,16 @@ export async function fetchOwnProfile(
   const first: unknown = Array.isArray(rows) ? rows[0] : undefined;
   // Absent stays absent: no row is the expected state for a woman who has not
   // finished onboarding, and it must not be parsed as a malformed one.
-  return first === undefined || first === null
-    ? null
-    : parseRow(profileRowSchema, first, 'get_own_profile');
+  if (first === undefined || first === null) return null;
+  const record = parseRow(profileRecordSchema, first, 'get_own_profile');
+  return { ...record, fields: await fetchSystemFieldIndex(client) };
 }
 
-/** Writes an edited profile through the re-encrypting RPC. */
-export async function updateOwnProfile(
-  client: Client,
-  payload: UpdateOwnProfilePayload,
-): Promise<void> {
-  const { error } = await client.rpc('update_own_profile', { payload });
+/** Writes an edited profile: her names (stored as her answers), her settings, every answer by field. */
+export async function updateOwnProfile(client: Client, update: ProfileUpdate): Promise<void> {
+  const { error } = await client.rpc('update_own_profile', {
+    payload: { ...update, answers: answerPayload(update.answers) } as Json,
+  });
   if (error) {
     throw new AppError('DB-1', { message: error.message });
   }
@@ -132,4 +135,17 @@ export async function fetchOwnDeletionRequest(
   return data === null || data === undefined
     ? null
     : parseRow(ownDeletionRequestSchema, data, 'deletion_requests');
+}
+
+/** A photo edit does not resubmit or validate unrelated profile answers. */
+export async function setOwnProfilePhoto(
+  client: Client,
+  profileId: string,
+  objectKey: string | null,
+): Promise<void> {
+  const { error } = await client.rpc('set_own_profile_photo', {
+    p_profile_id: profileId,
+    p_object_key: objectKey,
+  });
+  if (error) throw new AppError('DB-1', { message: error.message });
 }

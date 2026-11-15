@@ -1,8 +1,11 @@
 import { AuthenticatedMediaImage } from '@/components/content/authenticated-media-image';
+import { Page } from '@/components/layout/page';
+import { PersonAvatar } from '@/components/participants/person-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { safeAsync } from '@/lib/observability';
+import { usePersonCards } from '@/lib/person-cards';
 import { adminClientEnv, supabase } from '@/lib/supabase';
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { useMemo, useState, type FormEvent } from 'react';
@@ -21,7 +24,7 @@ import {
   type ForumModerationAction,
   type ForumModerationQueueRow,
 } from '@ramassa/shared/forum';
-import { resolveLocalizedText } from '@ramassa/shared/i18n';
+import { resolveLocalizedText, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import { deleteMediaItem } from '@ramassa/shared/upload-client';
 
@@ -32,6 +35,8 @@ export interface ForumModerationProps {
 
 export function ForumModeration({ queue, categories }: ForumModerationProps) {
   const { t, i18n } = useTranslation('forum');
+  const authorIds = useMemo(() => queue.map((row) => row.author_id), [queue]);
+  const cards = usePersonCards(authorIds);
   const router = useRouter();
   const navigate = useNavigate();
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -100,7 +105,7 @@ export function ForumModeration({ queue, categories }: ForumModerationProps) {
   }
 
   return (
-    <section className="flex flex-col gap-6 p-6">
+    <Page>
       <header className="space-y-1">
         <h1 className="text-start text-2xl font-semibold">{t('moderationTitle')}</h1>
         <p className="text-start text-sm text-muted-foreground">
@@ -142,7 +147,13 @@ export function ForumModeration({ queue, categories }: ForumModerationProps) {
                         <Badge variant="secondary">{categoryLabel}</Badge>
                       )}
                     </div>
-                    <p className="text-sm font-medium">{row.author_first_name}</p>
+                    <div className="flex items-center gap-2">
+                      <PersonAvatar
+                        name={row.author_first_name ?? ''}
+                        avatarKey={cards.get(row.author_id)?.avatarKey}
+                      />
+                      <p className="text-sm font-medium">{row.author_first_name}</p>
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       {formatter.format(new Date(row.first_flagged_at))}
                     </p>
@@ -241,7 +252,7 @@ export function ForumModeration({ queue, categories }: ForumModerationProps) {
         </ol>
       )}
       <ForumCategoryManager categories={categories} />
-    </section>
+    </Page>
   );
 }
 
@@ -270,7 +281,7 @@ function ActionButton({
 
 const emptyCategory = (): ForumCategoryInput => ({
   id: null,
-  name: { ca: '', es: '', en: '', ar: '', fa: '' },
+  name: { ca: '', es: '', en: '', fr: '', ar: '', fa: '' },
   slug: '',
   icon: 'message-circle',
   color: 'primary',
@@ -309,6 +320,7 @@ function ForumCategoryManager({
         ca: category.name.ca ?? '',
         es: category.name.es ?? '',
         en: category.name.en ?? '',
+        fr: category.name.fr ?? '',
         ar: category.name.ar ?? '',
         fa: category.name.fa ?? '',
       },
@@ -355,7 +367,7 @@ function ForumCategoryManager({
         ))}
       </ul>
       <form onSubmit={(event) => void submit(event)} className="grid gap-3 md:grid-cols-2">
-        {(['ca', 'es', 'en', 'ar', 'fa'] as const).map((language) => (
+        {SUPPORTED_LANGUAGES.map((language) => (
           <label key={language} className="space-y-1 text-sm font-medium">
             <span>{t('categoryName', { language: language.toUpperCase() })}</span>
             <Input

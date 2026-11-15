@@ -16,5 +16,11 @@
   "emptyBody": "Cuando el equipo publique una novedad, la encontrarás aquí.",
   "loadFailed": "No hemos podido cargar los avisos.",
   "retryAction": "Volver a intentar",
-  "loading": "Cargando los avisos"
+  "loading": "Cargando los avisos",
+  "pendingForm": {
+    "eyebrow": "Formulario",
+    "deadline": "Hasta el {{date}}",
+    "answer": "Responder",
+    "dismiss": "Ahora no"
+  }
 }

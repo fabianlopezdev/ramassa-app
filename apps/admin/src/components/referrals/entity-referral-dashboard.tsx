@@ -1,3 +1,4 @@
+import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link } from '@tanstack/react-router';
@@ -20,7 +21,7 @@ export function EntityReferralDashboard({
   const visibleReferrals = useMemo(() => filterReferrals(referrals, search), [referrals, search]);
 
   return (
-    <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
+    <Page>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-start text-2xl font-semibold">{t('title')}</h1>
@@ -87,6 +88,6 @@ export function EntityReferralDashboard({
           ))}
         </ul>
       )}
-    </section>
+    </Page>
   );
 }

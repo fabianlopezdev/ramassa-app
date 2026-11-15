@@ -1,3 +1,4 @@
+import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
@@ -59,7 +60,7 @@ export function EntityServiceDashboard({
   }
 
   return (
-    <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
+    <Page>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">{t('entity-services:title')}</h1>
@@ -192,6 +193,6 @@ export function EntityServiceDashboard({
           })}
         </ul>
       )}
-    </section>
+    </Page>
   );
 }

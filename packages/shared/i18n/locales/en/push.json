@@ -12,5 +12,6 @@
   "referralUpdateTitle": "New referral update",
   "referralUpdateBody": "Open the participant record to review it.",
   "mentoringUpdateTitle": "Update to your private appointment",
-  "mentoringUpdateBody": "Open Ramassà to see the date and time."
+  "mentoringUpdateBody": "Open Ramassà to see the date and time.",
+  "customFormFallbackBody": "Tap to answer it."
 }

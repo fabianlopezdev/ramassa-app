@@ -11,13 +11,21 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
 import {
+  appAnswersFromForm,
+  appFormToSend,
+  type AppFormKey,
+} from '../intake-builder/app-field-form';
+import { answerPayload } from '../intake-builder/builder';
+import type { SystemFieldIndex } from '../intake-builder/field-answers';
+import type { CustomAnswerValue } from '../intake-builder/question-types';
+import {
   createTargetedNotificationSend,
   fetchCustomNotificationGroups,
   previewNotificationAudience,
   saveCustomNotificationGroup,
-  type NotificationContent,
+  type PublishedNotificationContent,
 } from '../notifications';
-import { seasonAnswersPayload, type SeasonAnswerFields } from '../schemas/season';
+import type { SeasonAnswerFields } from '../schemas/season';
 import type { Database, Json } from '../types/database';
 
 type Client = SupabaseClient<Database>;
@@ -55,6 +63,25 @@ export async function fetchSeasons(client: Client): Promise<readonly Season[]> {
       startsOn: row.starts_on,
       isCurrent: row.is_current,
     }));
+}
+
+/**
+ * The seasons a season authorization can be published to (RAPP-694): the
+ * current one, then the later ones by start date. A season starting before
+ * the current one is past. With no current season, a season starting today
+ * or later. The database checks the same rule (`publish_authorization_draft`).
+ * `today` is an ISO date (YYYY-MM-DD).
+ */
+export function publishableSeasons(seasons: readonly Season[], today: string): readonly Season[] {
+  const current = seasons.find((season) => season.isCurrent);
+  const later = [
+    ...seasons.filter((season) =>
+      current === undefined
+        ? season.startsOn >= today
+        : !season.isCurrent && season.startsOn > current.startsOn,
+    ),
+  ].sort((a, b) => a.startsOn.localeCompare(b.startsOn));
+  return current === undefined ? later : [current, ...later];
 }
 
 export const newSeasonSchema = z.object({
@@ -95,63 +122,39 @@ export async function setPriorSeasons(
   if (error) failure(error.message);
 }
 
-/** Her season answers, from the re-registration flow. Only the four questions travel. */
-export function buildMySeasonAnswersPayload(answers: Partial<SeasonAnswerFields>): Json {
-  const payload = seasonAnswersPayload(answers);
-  return {
-    applicant_status: payload.applicant_status,
-    supporting_entities: payload.supporting_entities,
-    childcare_need: payload.childcare_need,
-    specific_needs: payload.specific_needs,
-  };
+/** The app's season questions her re-registration asks. Her status details stay as they are. */
+const MY_SEASON_FORM_KEYS = [
+  'applicantStatus',
+  'supportingEntities',
+  'childcareNeed',
+  'specificNeeds',
+] as const satisfies readonly AppFormKey[];
+
+/**
+ * Her answers to the app's season questions, by field (RAPP-663). A question
+ * she left empty is null, which removes its answer.
+ */
+export function mySeasonAnswers(
+  fields: SystemFieldIndex,
+  values: Partial<SeasonAnswerFields>,
+): Record<string, CustomAnswerValue | null> {
+  return appAnswersFromForm(fields, appFormToSend(values, MY_SEASON_FORM_KEYS));
 }
 
+/**
+ * Her season answers by field (RAPP-661, RAPP-663): the app's season fields and
+ * the team's alike, every one placed on the season form. Null removes an
+ * answer. The call ends her re-registration: every required season answer is
+ * checked there.
+ */
 export async function updateMySeasonAnswers(
   client: Client,
-  answers: Partial<SeasonAnswerFields>,
+  answers: Readonly<Record<string, CustomAnswerValue | null>>,
 ): Promise<void> {
   const { error } = await client.rpc('update_my_season_answers', {
-    p_payload: buildMySeasonAnswersPayload(answers),
+    p_payload: { answers: answerPayload(answers) } as Json,
   });
   if (error) failure(error.message);
-}
-
-const seasonAnswersRowSchema = z.object({
-  season_name: z.string(),
-  starts_on: z.string(),
-  applicant_status: z.string().nullable(),
-  supporting_entities: z.array(z.string()).nullable(),
-  childcare_need: z.string().nullable(),
-  specific_needs: z.string().nullable(),
-  updated_at: z.string(),
-});
-
-export interface ParticipantSeasonAnswers {
-  readonly seasonName: string;
-  readonly applicantStatus: string | null;
-  readonly supportingEntities: readonly string[];
-  readonly childcareNeed: string | null;
-  readonly specificNeeds: string | null;
-}
-
-export async function fetchParticipantSeasonAnswers(
-  client: Client,
-  profileId: string,
-): Promise<readonly ParticipantSeasonAnswers[]> {
-  const { data, error } = await client.rpc('participant_season_answers', {
-    p_profile_id: profileId,
-  });
-  if (error) failure(error.message);
-  return z
-    .array(seasonAnswersRowSchema)
-    .parse(data ?? [])
-    .map((row) => ({
-      seasonName: row.season_name,
-      applicantStatus: row.applicant_status,
-      supportingEntities: row.supporting_entities ?? [],
-      childcareNeed: row.childcare_need,
-      specificNeeds: row.specific_needs,
-    }));
 }
 
 const registrationRowSchema = z.object({
@@ -219,8 +222,8 @@ export async function remindUnregisteredPlayers(
   input: {
     readonly seasonName: string;
     readonly participantIds: readonly string[];
-    readonly title: NotificationContent;
-    readonly body: NotificationContent;
+    readonly title: PublishedNotificationContent;
+    readonly body: PublishedNotificationContent;
   },
 ): Promise<number> {
   if (input.participantIds.length === 0) return 0;

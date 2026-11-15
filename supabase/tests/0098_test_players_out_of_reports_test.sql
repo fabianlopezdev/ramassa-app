@@ -51,10 +51,14 @@ insert into before_values values
 reset role;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000001", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 update public.profiles
-   set role = 'player', terms_accepted_at = now(), is_active = true,
-       nationality = 'Islàndia', reference_entity = 'Entitat de prova 619',
-       date_of_birth = '1990-01-01', push_notifications_enabled = true
+   set role = 'player', terms_accepted_at = now(), is_active = true, push_notifications_enabled = true
  where id = '5eed0000-0000-4000-8000-000000000096';
+-- Her answers by field: a nationality, an entity and a birth date no real player has.
+select private.write_custom_answer('5eed0000-0000-4000-8000-000000000096', f, answer.value, 'player')
+  from (values ('nationality', '"Islàndia"'::jsonb), ('reference_entity', '"Entitat de prova 619"'),
+               ('date_of_birth', '"1990-01-01"')) as answer(system_key, value)
+  join public.profile_fields f
+    on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = answer.system_key;
 insert into public.push_tokens (user_id, token, platform, device_id)
 values ('5eed0000-0000-4000-8000-000000000096', 'tok-test-player-619', 'android', 'dev-test-player-619');
 insert into public.attendance (org_id, occurrence_id, player_id, status, marked_by)

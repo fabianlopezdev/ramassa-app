@@ -2,9 +2,11 @@
  * The wording of the built-in wizard screens that staff edit (RAPP-612).
  *
  * Each built-in screen has a title, an intro, an optional help line and its
- * button labels, bundled in the app's five languages. Staff write their own
- * per language in the admin; a language they leave empty shows the bundled
- * text in her language, so a screen is never blank. Validation messages are
+ * button labels, bundled in every app language. Staff write their own
+ * per language in the admin; a language they never wrote shows the bundled
+ * text in her language (RAPP-710). The intro and the help line are optional:
+ * staff may clear them, and that language then shows none. The title and the
+ * buttons are required, so a screen is never blank. Validation messages are
  * not here: they stay in the app (spec guard).
  *
  * The introduction to the terms and the terms screen take their title and
@@ -15,12 +17,17 @@
  * `builtin-screen-text-fields` (a parity test reads it).
  */
 import type { WizardQuestionScreen } from './intake';
+import { conditionHolds } from './screen-conditions';
+import type { SystemFieldKey } from './system-fields';
 
 export const EDITABLE_WIZARD_SCREENS = [
   'identity',
   'background',
   'documentation',
-  'documentation-details',
+  // The document follow-up, one screen per answer (RAPP-715).
+  'documentation-nie',
+  'documentation-passport',
+  'documentation-other',
   'logistics',
   'equipment',
   'season',
@@ -44,6 +51,16 @@ export const SCREEN_TEXT_FIELDS = [
 ] as const;
 export type ScreenTextField = (typeof SCREEN_TEXT_FIELDS)[number];
 
+/**
+ * The texts her screen can do without (RAPP-710): staff may clear them. The
+ * database lists the same fields in `private.screen_text_optional`.
+ */
+export const OPTIONAL_SCREEN_TEXT_FIELDS: readonly ScreenTextField[] = ['intro', 'help'];
+
+export function isOptionalScreenTextField(field: ScreenTextField): boolean {
+  return OPTIONAL_SCREEN_TEXT_FIELDS.includes(field);
+}
+
 const QUESTION_SCREEN_FIELDS: readonly ScreenTextField[] = [
   'title',
   'intro',
@@ -66,14 +83,19 @@ export function screenTextFields(screen: EditableWizardScreen): readonly ScreenT
 export const BUNDLED_SCREEN_TEXT_KEYS: Readonly<
   Record<EditableWizardScreen, Readonly<Partial<Record<ScreenTextField, string>>>>
 > = {
-  identity: { title: 'identityTitle', intro: 'identityIntro', continue_label: 'continueAction' },
+  identity: { title: 'identityTitle', continue_label: 'continueAction' },
   background: { title: 'backgroundTitle', continue_label: 'continueAction' },
   documentation: {
     title: 'documentationTitle',
     intro: 'documentationIntro',
     continue_label: 'continueAction',
   },
-  'documentation-details': { title: 'documentNieNumberTitle', continue_label: 'continueAction' },
+  'documentation-nie': { title: 'documentNieNumberTitle', continue_label: 'continueAction' },
+  'documentation-passport': {
+    title: 'documentPassportNumberTitle',
+    continue_label: 'continueAction',
+  },
+  'documentation-other': { title: 'documentOtherDetailsTitle', continue_label: 'continueAction' },
   logistics: { title: 'logisticsTitle', intro: 'logisticsIntro', continue_label: 'continueAction' },
   equipment: { title: 'equipmentTitle', intro: 'equipmentIntro', continue_label: 'continueAction' },
   season: { title: 'currentSituationTitle', continue_label: 'continueAction' },
@@ -97,14 +119,91 @@ export const BUNDLED_SCREEN_TEXT_KEYS: Readonly<
   terms: { continue_label: 'finishAction', decline_label: 'termsDeclineAction' },
 };
 
+/**
+ * When one of the app's follow-up screens opens (RAPP-713, RAPP-715): her
+ * answer to an app field is one of `answers`, by the options' stable keys.
+ * It is the model every screen uses (`screen-conditions.ts`), with the app's
+ * field and options named by key, because their ids belong to each
+ * organization: `appBranchCondition` (intake-builder) reads them as ids.
+ * `repeatsPerAnswer`: the screen shows once for each answer she ticks.
+ */
+export interface AppBranchCondition {
+  readonly field: SystemFieldKey;
+  readonly answers: readonly string[];
+  readonly repeatsPerAnswer?: boolean;
+}
+
+/** A follow-up screen of the app, the screen it opens from and when it opens. */
+export interface DetailScreenBranch {
+  readonly screen: EditableWizardScreen;
+  readonly parent: WizardQuestionScreen;
+  readonly condition: AppBranchCondition;
+}
+
+/**
+ * The app's own follow-up screens, in her order: the board, the screen
+ * editor and her phone read them, so the three agree. The document follow-up
+ * is one screen per answer (RAPP-715).
+ */
+export const DETAIL_SCREEN_BRANCHES = [
+  {
+    screen: 'documentation-nie',
+    parent: 'documentation',
+    condition: { field: 'document_type', answers: ['nie'] },
+  },
+  {
+    screen: 'documentation-passport',
+    parent: 'documentation',
+    condition: { field: 'document_type', answers: ['passport'] },
+  },
+  {
+    screen: 'documentation-other',
+    parent: 'documentation',
+    condition: { field: 'document_type', answers: ['other'] },
+  },
+  {
+    screen: 'applicant-status-details',
+    parent: 'season',
+    condition: { field: 'applicant_status', answers: ['other'] },
+  },
+  {
+    screen: 'specific-needs-details',
+    parent: 'specific-needs',
+    condition: {
+      field: 'specific_needs',
+      answers: ['accessibility', 'health', 'communication', 'wellbeing', 'other'],
+      repeatsPerAnswer: true,
+    },
+  },
+] as const satisfies readonly DetailScreenBranch[];
+
+export type DetailScreen = (typeof DETAIL_SCREEN_BRANCHES)[number]['screen'];
+
 /** The detail screens that open from a question screen, and the screen they belong to. */
 export const DETAIL_SCREEN_PARENTS: Readonly<
   Partial<Record<EditableWizardScreen, WizardQuestionScreen>>
-> = {
-  'documentation-details': 'documentation',
-  'applicant-status-details': 'season',
-  'specific-needs-details': 'specific-needs',
-};
+> = Object.fromEntries(DETAIL_SCREEN_BRANCHES.map((branch) => [branch.screen, branch.parent]));
+
+/** The app's follow-up screens of one screen, in her order. */
+export function detailScreensOf(
+  parent: string,
+): readonly (typeof DETAIL_SCREEN_BRANCHES)[number][] {
+  return DETAIL_SCREEN_BRANCHES.filter((branch) => branch.parent === parent);
+}
+
+/** Whether her answer (by option key, as her app screens keep it) opens this follow-up. */
+export function opensDetailScreen(screen: DetailScreen, answer: unknown): boolean {
+  const branch = DETAIL_SCREEN_BRANCHES.find((each) => each.screen === screen);
+  return branch !== undefined && conditionHolds(branch.condition.answers, answer);
+}
+
+/** The document follow-up her answer opens, or null for none (RAPP-715). */
+export function documentDetailScreen(answer: unknown): DetailScreen | null {
+  const branch = DETAIL_SCREEN_BRANCHES.find(
+    (each) => each.parent === 'documentation' && conditionHolds(each.condition.answers, answer),
+  );
+  return branch?.screen ?? null;
+}
 
 export function isEditableWizardScreen(screen: string): screen is EditableWizardScreen {
   return (EDITABLE_WIZARD_SCREENS as readonly string[]).includes(screen);

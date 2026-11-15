@@ -10,9 +10,11 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { AppError } from '../errors';
+import { appFormField } from '../intake-builder/app-field-form';
+import type { SystemFieldIndex } from '../intake-builder/field-answers';
 import { withCancellation, type CancellableRequest } from '../lib/cancellation';
 import type { CreateParticipantInvitePayload } from '../schemas/accounts';
-import type { Database } from '../types/database';
+import type { Database, Json } from '../types/database';
 import { INVITE_COLUMNS, type InviteRow } from './invites';
 
 type Client = SupabaseClient<Database>;
@@ -29,9 +31,26 @@ export interface CreatedParticipantInvite {
 /** Set on the thrown error when the address already belongs to an account. */
 export const INVITE_ALREADY_HAS_ACCOUNT = 'already_has_account';
 
-export async function createParticipantInvite(
+/**
+ * The invitation with her answers by field (RAPP-663): the entity staff name is
+ * the invitation's own (her wizard offers it first) and her answer to the
+ * entity question.
+ */
+export async function inviteParticipant(
   client: Client,
   payload: CreateParticipantInvitePayload,
+  fields: SystemFieldIndex,
+): Promise<CreatedParticipantInvite> {
+  const entity = appFormField(fields, 'referenceEntity');
+  return sendParticipantInvite(client, {
+    ...payload,
+    answers: entity === undefined ? {} : { [entity.id]: payload.reference_entity },
+  } as Json);
+}
+
+async function sendParticipantInvite(
+  client: Client,
+  payload: Json,
 ): Promise<CreatedParticipantInvite> {
   const { data, error } = await client.rpc('create_participant_invite', { payload });
   if (error) {

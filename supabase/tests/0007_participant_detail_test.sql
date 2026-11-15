@@ -39,6 +39,46 @@
 begin;
 select plan(44);
 
+-- An app answer given by option key, as the app's screens send it by option id.
+create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
+  select case
+    when f.question_type in ('single_choice', 'search_choice') and jsonb_typeof(v) = 'string' then
+      coalesce((select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v #>> '{}'), v)
+    when f.question_type = 'multiple_choice' and jsonb_typeof(v) = 'array' then
+      coalesce((select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+                 where o.question_id = f.id and o.key in (select jsonb_array_elements_text(v))
+                having count(*) = jsonb_array_length(v)), v)
+    else v
+  end;
+$$;
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, pg_temp.by_option_key(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+-- Her answer to an app field in a reader's `answers` (RAPP-662): a choice by its
+-- option's key, anything else as text.
+create function pg_temp.column_of(p_answers jsonb, p_key text) returns text language sql security definer as $$
+  select coalesce(
+    (select o.key from public.custom_question_options o
+      where o.question_id = f.id and o.id::text = p_answers ->> f.id::text),
+    p_answers ->> f.id::text)
+    from public.profile_fields f
+   where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = p_key;
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
 where not exists (select 1 from vault.secrets where name = 'app_encryption_key');
 
@@ -83,13 +123,13 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 select is(
-  (select document_number from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
+  (select pg_temp.column_of(answers, 'document_number') from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
   'Y0000026Z',
   'staff read a participant document number in clear'
 );
 
 select is(
-  (select phone from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
+  (select pg_temp.column_of(answers, 'phone') from public.get_participant_profile('5eed0000-0000-4000-8000-000000000026')),
   '+34600000026',
   'and her phone, decrypted server-side'
 );
@@ -202,15 +242,16 @@ select lives_ok(
   $$ select public.update_participant_profile(
        '5eed0000-0000-4000-8000-000000000026',
        jsonb_build_object(
-         'first_name', 'Rosa', 'last_name', 'Mamani',
-         'date_of_birth', '1996-03-27', 'place_of_birth', 'Oruro',
-         'nationality', 'Bolívia', 'preferred_language', 'es',
-         'document_type', 'nie', 'document_number', 'Y0000026Z',
-         'phone', '+34600999026', 'address', 'Carrer de Prova, 26',
-         'city', 'Manlleu', 'postal_code', '08560',
-         'reference_entity', 'Creu Roja Osona', 'reference_contact_name', 'Sílvia Bosch',
-         'has_dependents', true, 'num_dependents', 3,
-         'clothing_size', 'M', 'shoe_size', '38', 'media_consent', false
+         'first_name', 'Rosa', 'last_name', 'Mamani', 'preferred_language', 'es', 'media_consent', false,
+         'answers', pg_temp.answers(jsonb_build_object(
+           'date_of_birth', '1996-03-27', 'place_of_birth', 'Oruro',
+           'nationality', 'Bolívia',
+           'document_type', 'nie', 'document_number', 'Y0000026Z',
+           'phone', '+34600999026', 'address', 'Carrer de Prova, 26',
+           'city', 'Manlleu', 'postal_code', '08560',
+           'reference_entity', 'Creu Roja Osona', 'reference_contact_name', 'Sílvia Bosch',
+           'has_dependents', 'yes', 'num_dependents', 3,
+           'clothing_size', 'M', 'shoe_size', '38'))
        )
      ) $$,
   'staff edit a participant profile'
@@ -220,18 +261,18 @@ select lives_ok(
 -- columns are not readable directly by any signed-in user.
 reset role;
 select is(
-  (select public.decrypt_field(phone) from public.profiles
-    where id = '5eed0000-0000-4000-8000-000000000026'),
-  '+34600999026',
+  pg_temp.stored('5eed0000-0000-4000-8000-000000000026', 'phone'),
+  '"+34600999026"'::jsonb,
   'the edited phone round-trips through the encryption helpers'
 );
 
 -- Ciphertext in the column, not plaintext. A second write path that forgot to
 -- encrypt is exactly the drift this asserts against.
 select is_empty(
-  $$ select id from public.profiles
-     where id = '5eed0000-0000-4000-8000-000000000026'
-       and encode(phone, 'escape') like '%+34600999026%' $$,
+  $$ select a.profile_id from public.custom_answers a
+     where a.profile_id = '5eed0000-0000-4000-8000-000000000026'
+       and a.question_id::text = pg_temp.field('phone')
+       and (a.value is not null or encode(a.value_encrypted, 'escape') like '%+34600999026%') $$,
   'and it is stored as ciphertext, not as text that happens to decrypt'
 );
 set local role authenticated;
@@ -247,7 +288,7 @@ select is(
 );
 
 select ok(
-  (select changes ? 'city' and changes ? 'phone' from public.audit_log
+  (select changes ? pg_temp.field('city') and changes ? pg_temp.field('phone') from public.audit_log
     where action = 'profile.update'
       and target_id = '5eed0000-0000-4000-8000-000000000026'
       and created_at >= now()),
@@ -255,7 +296,7 @@ select ok(
 );
 
 select ok(
-  (select not (changes ? 'nationality') from public.audit_log
+  (select not (changes ? pg_temp.field('nationality')) from public.audit_log
     where action = 'profile.update'
       and target_id = '5eed0000-0000-4000-8000-000000000026'
       and created_at >= now()),
@@ -263,7 +304,7 @@ select ok(
 );
 
 select is(
-  (select changes -> 'city' from public.audit_log
+  (select changes -> pg_temp.field('city') from public.audit_log
     where action = 'profile.update'
       and target_id = '5eed0000-0000-4000-8000-000000000026'
       and created_at >= now()),
@@ -274,7 +315,7 @@ select is(
 -- THE OTHER ASSERTION THIS ISSUE EXISTS FOR. An audit log that stores the old
 -- and new phone number is a plaintext mirror of the column ADR-004 encrypts.
 select is(
-  (select changes -> 'phone' from public.audit_log
+  (select changes -> pg_temp.field('phone') from public.audit_log
     where action = 'profile.update'
       and target_id = '5eed0000-0000-4000-8000-000000000026'
       and created_at >= now()),

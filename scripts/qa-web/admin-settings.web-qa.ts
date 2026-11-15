@@ -97,7 +97,6 @@ test.describe.serial('admin organization settings', () => {
         async () => (await page.getByTestId('organization-theme-root').getAttribute('style')) ?? '',
       )
       .toContain('--ramassa-primary-rgb: 0 90 140');
-    await expect(page.getByTestId('generalitat-credit')).toBeVisible();
     const adminLogo = page.getByRole('img', { name: 'AE Ramassà' }).first();
     await expect(adminLogo).toBeVisible();
     await expect
@@ -140,7 +139,7 @@ test.describe.serial('admin organization settings', () => {
     browser,
   }) => {
     await signIn(page, ADMIN_EMAIL);
-    await page.goto('/settings?tab=staff');
+    await page.goto('/team');
     await page.getByLabel('First name').fill('نورا');
     await page.getByLabel('Last name').fill('Коваль');
     await page.getByLabel('Email').fill(invitedEmail);
@@ -195,6 +194,8 @@ test.describe.serial('admin organization settings', () => {
     await expect(invitedPage.getByRole('heading', { name: 'Staff dashboard' })).toHaveCount(0);
     await invitedContext.close();
 
+    // The documents are a Settings tab; the team has its own page (RAPP-654).
+    await page.goto('/settings');
     await page.getByRole('tab', { name: 'Documents' }).click();
     await expect(page).toHaveURL(/tab=documents/);
     const search = page.getByLabel('Search documents');
@@ -236,48 +237,6 @@ test.describe.serial('admin organization settings', () => {
 });
 
 /**
- * The note under the wizard's document step (RAPP-302). Written in Catalan and
- * Arabic, stored without the empty languages, audited, and refused without
- * Catalan. Cleared again at the end, so the wizard specs see the seeded note.
- */
-test('an admin writes the note under the wizard document step', async ({ page }) => {
-  const seeded = queryDatabase(
-    "select coalesce(document_step_explanation::text, '') from public.organizations where slug = 'ramassa'",
-  );
-  try {
-    await signIn(page, ADMIN_EMAIL);
-    await page.goto('/settings');
-    const form = page.getByTestId('document-explanation-form');
-    await expect(form).toBeVisible();
-
-    await form.locator('#document-explanation-ca').fill('');
-    await form.locator('#document-explanation-es').fill('Solo en castellano.');
-    await form.getByRole('button', { name: 'Save note' }).click();
-    await expect(form.getByText(/Catalan/)).toBeVisible();
-
-    await form.locator('#document-explanation-ca').fill(`Per als cursos ${runTag}.`);
-    await form.locator('#document-explanation-es').fill('');
-    await form.locator('#document-explanation-ar').fill('للدورات.');
-    await form.getByRole('button', { name: 'Save note' }).click();
-    await expect(form.getByText('Note saved.')).toBeVisible();
-    expect(
-      queryDatabase(
-        "select document_step_explanation::text from public.organizations where slug = 'ramassa'",
-      ),
-    ).toBe(`{"ar": "للدورات.", "ca": "Per als cursos ${runTag}."}`);
-  } finally {
-    queryDatabase(`
-      update public.organizations
-         set document_step_explanation = ${seeded === '' ? 'null' : `'${seeded.replaceAll("'", "''")}'::jsonb`}
-       where slug = 'ramassa';
-      delete from public.audit_log
-       where created_at >= '${startedAt}'::timestamptz
-         and action = 'organization.document_explanation_update';
-    `);
-  }
-});
-
-/**
  * The season authorization (RAPP-304): an admin saves a draft from the
  * current version (RAPP-614) and publishes it, after confirming, and it
  * becomes the current version. The new version is removed again, so the
@@ -291,19 +250,19 @@ test('an admin publishes a new authorization version', async ({ page }) => {
   );
   try {
     await signIn(page, ADMIN_EMAIL);
-    await page.goto('/settings?tab=authorization');
+    // The authorization is a board of screens (RAPP-696): its versions on the board.
+    await page.goto('/forms/authorization');
+    await expect(page.getByTestId('authorization-versions')).toContainText('2026/27');
+    await page.goto('/forms/authorization/document');
     const editor = page.getByTestId('authorization-editor');
     await expect(editor).toBeVisible();
-    await expect(editor.getByTestId('authorization-versions')).toContainText('2026/27');
 
-    await editor.locator('#authorization-language').selectOption('ca');
+    await editor.getByTestId('editor-language').getByRole('radio', { name: 'Català' }).click();
     await editor.locator('#authorization-title').fill(`Autorització ${runTag}`);
-    await editor.getByTestId('authorization-save').click();
-    await expect(editor.getByTestId('authorization-draft-row')).toBeVisible();
+    // Players signed this season, so Desa asks: a new version asks them again (RAPP-696).
     await editor.getByTestId('authorization-publish').click();
-    // Publishing is final: it asks once more.
-    await expect(editor.getByRole('alert')).toContainText(/sign it again|signar de nou/);
-    await editor.getByTestId('authorization-publish').click();
+    await page.getByTestId('save-kind-new').click();
+    await page.getByTestId('save-kind-confirm').click();
 
     await expect
       .poll(

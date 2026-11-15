@@ -1,6 +1,11 @@
-/** Shared picker surface for each explicit authorization checkbox. */
+/**
+ * The one tick of a consent, on every form: the authorization, the app terms,
+ * her profile and the consents placed on an Onboarding screen (RAPP-699),
+ * which also show why Continue waits (`errorMessage`).
+ */
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
 import { DrawnCheckmark } from '@/components/motion/drawn-checkmark';
+import { FieldErrorText } from '@/components/onboarding/field-error-text';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { Text, View } from 'react-native';
@@ -12,6 +17,7 @@ export function ConsentRow({
   checked,
   onToggle,
   testID,
+  errorMessage,
 }: {
   readonly label: string;
   readonly required: boolean;
@@ -19,9 +25,11 @@ export function ConsentRow({
   readonly checked: boolean;
   readonly onToggle: () => void;
   readonly testID: string;
+  /** Why the form waits for this tick; a required consent left unticked. */
+  readonly errorMessage?: string;
 }) {
   const fontClass = useLanguageFontClass();
-  return (
+  const tick = (
     <SelectionChoiceSurface
       testID={testID}
       accessibilityRole="checkbox"
@@ -53,5 +61,13 @@ export function ConsentRow({
         ) : null}
       </View>
     </SelectionChoiceSurface>
+  );
+  return errorMessage === undefined ? (
+    tick
+  ) : (
+    <View className="gap-xs">
+      {tick}
+      <FieldErrorText message={errorMessage} testID={`${testID}-error`} />
+    </View>
   );
 }

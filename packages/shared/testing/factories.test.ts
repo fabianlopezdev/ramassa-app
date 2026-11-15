@@ -2,31 +2,36 @@ import { describe, expect, test } from 'bun:test';
 import { authorizationContentSchema } from '../authorization';
 import { SUPPORTED_LANGUAGES } from '../i18n/languages';
 import { questionSettingsSchema } from '../intake-builder/question-types';
+import { STORED_TRANSLATION_LANGUAGES } from '../schemas/language';
 import {
   buildAnnouncement,
+  buildAppAnswersFromFixture,
   buildAppTermsSignature,
   buildAttendance,
   buildAuditLogEntry,
-  buildAuthorizationConsentEvent,
   buildAuthorizationSignature,
   buildAuthorizationVersion,
-  buildBuiltinQuestionOverride,
+  buildConsent,
+  buildConsentEvent,
+  buildConsentPlacement,
   buildCustomAnswer,
-  buildCustomQuestion,
+  buildCustomForm,
+  buildCustomFormResponse,
+  buildCustomFormScreen,
   buildCustomQuestionOption,
+  buildCustomQuestionState,
   buildEquipmentDelivery,
   buildEvent,
   buildEventCategory,
   buildEventOccurrence,
   buildEventSignup,
+  buildFieldPlacement,
   buildForumCategory,
   buildForumFlag,
   buildForumPost,
   buildForumReply,
   buildIntakeBuiltinScreen,
   buildIntakeFlowOrder,
-  buildIntakeQuestionState,
-  buildIntakeRequiredQuestion,
   buildIntakeScreen,
   buildIntakeStatePreset,
   buildInvite,
@@ -40,19 +45,20 @@ import {
   buildParticipants,
   buildParticipantStory,
   buildProfile,
-  buildProfileAnswer,
+  buildProfileField,
   buildPushToken,
   buildReferralCustomAnswer,
   buildSeason,
-  buildSeasonAnswers,
   buildService,
   buildServiceCategory,
   buildServiceImage,
   buildServiceInterest,
   buildStockAlert,
   buildTestPlayer,
-  buildTypedCustomQuestion,
+  buildTypedProfileField,
+  buildWalkInConsent,
   buildWalkInSigning,
+  SEED_CUSTOM_QUESTION_ID,
 } from './factories';
 import {
   INVITED_ACCOUNT_ID,
@@ -73,9 +79,10 @@ describe('fixtures — the roster the seed and the factories share', () => {
     }
   });
 
-  test('the participant roster spans all five supported languages', () => {
+  // The seeded roster predates French (RAPP-781): it spans the five grant languages.
+  test('the participant roster spans all five grant languages', () => {
     const languages = new Set(PARTICIPANT_FIXTURES.map((fixture) => fixture.preferredLanguage));
-    for (const language of SUPPORTED_LANGUAGES) {
+    for (const language of STORED_TRANSLATION_LANGUAGES) {
       expect(languages.has(language)).toBe(true);
     }
   });
@@ -115,7 +122,7 @@ describe('fixtures — the roster the seed and the factories share', () => {
 });
 
 describe('buildOrganization', () => {
-  test('defaults to the seeded tenant with all five languages available', () => {
+  test('defaults to the seeded tenant with every supported language available', () => {
     const organization = buildOrganization();
 
     expect(organization.id).toBe(SEED_ORGANIZATION_ID);
@@ -289,7 +296,32 @@ describe('buildParticipant', () => {
   });
 
   test('overrides win over the fixture', () => {
-    expect(buildParticipant({ city: 'Manlleu' }).city).toBe('Manlleu');
+    expect(buildParticipant({ preferred_language: 'es' }).preferred_language).toBe('es');
+  });
+
+  test('her profile holds her names and her account settings only (ADR-031)', () => {
+    const participant = buildParticipant();
+    for (const key of ['nationality', 'city', 'phone', 'date_of_birth', 'document_type']) {
+      expect(participant).not.toHaveProperty(key);
+    }
+  });
+});
+
+describe('buildAppAnswersFromFixture', () => {
+  test('her answers by system key, a choice by its option key, as the seed writes them', () => {
+    const answers = buildAppAnswersFromFixture(PARTICIPANT_FIXTURES[0]!);
+    expect(answers.nationality).toBe(PARTICIPANT_FIXTURES[0]!.nationality);
+    expect(answers.city).toBe(PARTICIPANT_FIXTURES[0]!.city);
+    expect(answers.document_type).toBe('nie');
+    expect(answers.phone).toMatch(/^\+346\d{8}$/);
+    expect(['yes', 'no']).toContain(String(answers.has_dependents));
+  });
+
+  test('an answer she never gave is left out', () => {
+    const noDocument = PARTICIPANT_FIXTURES.find((fixture) => fixture.ordinal % 5 === 0)!;
+    const answers = buildAppAnswersFromFixture(noDocument);
+    expect(answers.document_type).toBe('none');
+    expect(answers).not.toHaveProperty('document_number');
   });
 });
 
@@ -435,11 +467,19 @@ describe('the authorization factories (RAPP-304)', () => {
     const paper = buildAuthorizationSignature();
     expect(paper.method).toBe('paper');
     expect(paper.signature).toBeNull();
-    expect(buildAuthorizationConsentEvent().granted).toBe(true);
-    expect(buildAuthorizationConsentEvent().wording).toBe('Participo.');
+    expect(buildConsentEvent().granted).toBe(true);
+    expect(buildConsentEvent().wording).toBe('Participo.');
+    // Dades legals (RAPP-699): the catalogue and where a consent is asked.
+    expect(buildConsentEvent().form).toBe('authorization');
+    expect(buildConsent().system_key).toBeNull();
+    expect(buildConsentPlacement().consent_id).toBe(buildConsent().id);
+    expect(buildWalkInConsent().consent_id).toBe(buildConsent().id);
+    // Nou formulari (RAPP-700): a form, its screen and a pending ask.
+    expect(buildCustomFormScreen().form_id).toBe(buildCustomForm().id);
+    expect(buildCustomFormResponse().status).toBe('pending');
+    expect(buildCustomFormResponse().answered_at).toBeNull();
     // The factory version is a valid editable version (RAPP-614).
     expect(authorizationContentSchema.safeParse(version.content).success).toBe(true);
-    expect(buildSeasonAnswers().season_id).toBe(buildSeason().id);
   });
 
   test('a walk-in waits for review on the current version, with no profile yet', () => {
@@ -450,32 +490,23 @@ describe('the authorization factories (RAPP-304)', () => {
   });
 });
 
-describe('buildIntakeQuestionState', () => {
-  test("is a staff choice for the seeded invited woman's wizard", () => {
-    const state = buildIntakeQuestionState();
+describe('buildCustomQuestionState', () => {
+  test('is a staff choice on the seeded Ramassà field for the invited woman', () => {
+    const state = buildCustomQuestionState();
     expect(state.profile_id).toBe(INVITED_ACCOUNT_ID);
     expect(state.org_id).toBe(SEED_ORGANIZATION_ID);
+    expect(state.question_id).toBe(SEED_CUSTOM_QUESTION_ID);
     expect(['ask', 'skip']).toContain(state.state);
   });
 });
 
-describe('buildProfileAnswer', () => {
-  test('is a staff answer for the seeded invited woman, the state the wizard skips', () => {
-    const answer = buildProfileAnswer();
-
-    expect(answer.source).toBe('staff');
-    expect(answer.profile_id).toBe(INVITED_ACCOUNT_ID);
-    expect(answer.org_id).toBe(SEED_ORGANIZATION_ID);
-  });
-});
-
 describe('the question builder rows (RAPP-307)', () => {
-  test('a question sits on its screen, and an answer names both', () => {
+  test('a field is placed on its screen, and an answer names the field', () => {
     const screen = buildIntakeScreen();
-    const question = buildCustomQuestion();
-    expect(question.screen_id).toBe(screen.id);
-    expect(buildCustomAnswer().question_id).toBe(question.id);
-    expect(buildReferralCustomAnswer().question_id).toBe(question.id);
+    const field = buildProfileField();
+    expect(buildFieldPlacement().screen_key).toBe(screen.id);
+    expect(buildCustomAnswer().question_id).toBe(field.id);
+    expect(buildReferralCustomAnswer().question_id).toBe(field.id);
     expect(buildCustomQuestionOption().is_archived).toBe(false);
   });
 
@@ -485,23 +516,21 @@ describe('the question builder rows (RAPP-307)', () => {
     expect(answer.season_key).toBe('00000000-0000-0000-0000-000000000000');
   });
 
-  test('a typed question carries settings the shared schema accepts (RAPP-610)', () => {
-    const signature = buildTypedCustomQuestion('signature', {});
-    expect(signature.placements).toEqual(['wizard']);
-    const number = buildTypedCustomQuestion('number', { integer: true, max: 15 });
+  test('a typed field carries settings the shared schema accepts (RAPP-610)', () => {
+    const file = buildTypedProfileField('file_upload', { accept: 'photo' });
+    expect(questionSettingsSchema('file_upload').safeParse(file.settings).success).toBe(true);
+    const number = buildTypedProfileField('number', { integer: true, max: 15 });
     expect(questionSettingsSchema('number').safeParse(number.settings).success).toBe(true);
-    expect(buildCustomQuestion().settings).toEqual({});
+    expect(buildProfileField().settings).toEqual({});
   });
 
-  test('the override rewords and the preset asks the sizes', () => {
-    expect(buildBuiltinQuestionOverride().is_hidden).toBe(false);
+  test('the preset asks the sizes', () => {
     expect(buildIntakeStatePreset().states).toEqual({ clothing_size: 'ask', shoe_size: 'ask' });
   });
 });
 
-test('the required choice matches the seed and stays optional by default (RAPP-611)', () => {
-  expect(buildIntakeRequiredQuestion()).toMatchObject({ question: 'phone', is_required: false });
-  expect(buildCustomQuestion().is_required).toBe(false);
+test('a placement stays optional by default (RAPP-611)', () => {
+  expect(buildFieldPlacement().required).toBe(false);
 });
 
 test('built-in screen wording and the flow order match the seed (RAPP-612)', () => {

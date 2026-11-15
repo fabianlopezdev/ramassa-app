@@ -43,5 +43,19 @@
   "fieldMediaConsent": "Fotos e historias",
   "saveBlocked": "Faltan datos. Revisa los campos marcados arriba.",
   "consentsTitle": "Mis autorizaciones",
-  "consentsIntro": "Puedes cambiarlas cuando quieras. Las obligatorias forman parte de la autorización que firmaste."
+  "consentsIntro": "Puedes cambiarlas cuando quieras. Las obligatorias forman parte de la autorización que firmaste.",
+  "photo": {
+    "add": "Añade una foto",
+    "change": "Cambia la foto",
+    "camera": "Haz una foto",
+    "library": "Elige de la galería",
+    "remove": "Elimina la foto",
+    "removeTitle": "¿Eliminar la foto?",
+    "removeBody": "Volverán a mostrarse tus iniciales.",
+    "cancel": "Cancelar",
+    "saving": "Guardando la foto…",
+    "cameraDenied": "Permite el acceso a la cámara desde los ajustes del teléfono.",
+    "settings": "Abrir ajustes",
+    "failed": "No se ha podido guardar el cambio. Inténtalo de nuevo."
+  }
 }

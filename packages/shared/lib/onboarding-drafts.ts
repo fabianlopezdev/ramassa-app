@@ -22,6 +22,7 @@
 
 import { z } from 'zod';
 import { AppError } from '../errors';
+import { formSignatureDraftsSchema, type FormSignatureDraft } from '../intake-builder/form-blocks';
 import { customAnswerValueSchema, type CustomAnswerValue } from '../intake-builder/question-types';
 import { SUPPORT_NEED_CATEGORIES, type SupportNeedCategory } from '../schemas/support-needs';
 import type { MmkvLike } from './supabase';
@@ -48,35 +49,84 @@ export const ONBOARDING_STEPS = [
 ] as const;
 export type OnboardingStepName = (typeof ONBOARDING_STEPS)[number];
 
-/** A step the draft can resume at: a built-in one, or a staff screen as `custom:<id>` (RAPP-307). */
+/**
+ * A step the draft can resume at: a built-in one, a staff screen as
+ * `custom:<id>` (RAPP-307), or a screen of the app terms as `terms:<id>`
+ * (RAPP-772). 'terms-intro' and 'terms' are what a draft saved before then names.
+ */
 export type OnboardingDraftStep =
-  OnboardingStepName | `custom:${string}` | `needs-detail:${SupportNeedCategory}`;
+  | OnboardingStepName
+  | `custom:${string}`
+  | `terms:${string}`
+  | `needs-detail:${SupportNeedCategory}`;
+
+const currentStepSchema = z.union([
+  z.enum(ONBOARDING_STEPS),
+  z.templateLiteral(['custom:', z.string()]),
+  z.templateLiteral(['terms:', z.string()]),
+  z.templateLiteral(['needs-detail:', z.enum(SUPPORT_NEED_CATEGORIES)]),
+]);
 
 /**
  * Partial, permissive shapes on purpose: a draft holds whatever the player has
  * typed SO FAR, which by definition need not validate yet. The step schemas
  * (schemas/onboarding.ts) judge completeness when the player presses Continue;
  * this schema only guards against structural drift from older app versions.
+ *
+ * Version 1 kept each screen's form. It is still the shape the screens edit
+ * (`OnboardingDraft`), and a version 1 draft on her phone is converted, never
+ * dropped (RAPP-663).
  */
-const draftSchema = z.object({
-  currentStep: z.union([
-    z.enum(ONBOARDING_STEPS),
-    z.templateLiteral(['custom:', z.string()]),
-    z.templateLiteral(['needs-detail:', z.enum(SUPPORT_NEED_CATEGORIES)]),
-  ]),
+const legacyDraftSchema = z.object({
+  currentStep: currentStepSchema,
   identity: z.record(z.string(), z.unknown()).optional(),
   documentation: z.record(z.string(), z.unknown()).optional(),
   logistics: z.record(z.string(), z.unknown()).optional(),
   season: z.record(z.string(), z.unknown()).optional(),
   terms: z.record(z.string(), z.unknown()).optional(),
   // Her answers to the staff questions, by question id (RAPP-307).
-  // Every type of answer (RAPP-610): text, a number, true, a list, a signature, a file.
+  // Every type of answer (RAPP-610): text, a number, true, a list, a file.
   custom: z.record(z.string(), customAnswerValueSchema).optional(),
+  // The strokes she drew on each signature block, not yet sent (RAPP-690).
+  signatures: formSignatureDraftsSchema.optional(),
+  // Her ticks of the consents placed on her screens, by consent key (RAPP-699).
+  consents: z.record(z.string(), z.boolean()).optional(),
   // A test player's situation when the draft began (RAPP-619): a later change
   // on her page makes the draft stale.
   scenarioStamp: z.string().optional(),
 });
 
+/**
+ * Version 2 (RAPP-663): her answers by field id, every field alike, the app's
+ * and the team's. Her names travel apart, as she typed them (the database
+ * keeps them as her answers, RAPP-693), and her app language is an account setting.
+ * `screen` keeps what a screen shows that no answer holds, such as her "No"
+ * to the entity question.
+ */
+const storedDraftSchema = z.object({
+  version: z.literal(2),
+  currentStep: currentStepSchema,
+  account: z
+    .object({
+      firstName: z.string().optional(),
+      lastName: z.string().optional(),
+      preferredLanguage: z.string().optional(),
+    })
+    .optional(),
+  answers: z.record(z.string(), customAnswerValueSchema).optional(),
+  screen: z.record(z.string(), z.unknown()).optional(),
+  terms: z.record(z.string(), z.unknown()).optional(),
+  signatures: formSignatureDraftsSchema.optional(),
+  consents: z.record(z.string(), z.boolean()).optional(),
+  scenarioStamp: z.string().optional(),
+});
+
+const draftSchema = z.union([storedDraftSchema, legacyDraftSchema]);
+
+/**
+ * The wizard screens' view of her draft: each screen's form, and her answers
+ * to the team's fields by id. Version 1 stored exactly this.
+ */
 export interface OnboardingDraft {
   currentStep: OnboardingDraftStep;
   identity?: Record<string, unknown>;
@@ -85,12 +135,38 @@ export interface OnboardingDraft {
   season?: Record<string, unknown>;
   terms?: Record<string, unknown>;
   custom?: Record<string, CustomAnswerValue>;
+  /** The strokes she drew on each signature block, or "No puc signar" (RAPP-690, RAPP-771). */
+  signatures?: Record<string, FormSignatureDraft | null>;
+  /** Her ticks of the consents placed on her screens, by consent key (RAPP-699). */
+  consents?: Record<string, boolean>;
   scenarioStamp?: string;
 }
 
+/** Her draft as her phone keeps it since RAPP-663: answers by field id. */
+export interface StoredOnboardingDraft {
+  version: 2;
+  currentStep: OnboardingDraftStep;
+  account?: { firstName?: string; lastName?: string; preferredLanguage?: string };
+  answers?: Record<string, CustomAnswerValue>;
+  screen?: Record<string, unknown>;
+  terms?: Record<string, unknown>;
+  signatures?: Record<string, FormSignatureDraft | null>;
+  consents?: Record<string, boolean>;
+  scenarioStamp?: string;
+}
+
+/** What may be on her phone: the current version, or a version 1 draft to convert. */
+export type PersistedOnboardingDraft = StoredOnboardingDraft | OnboardingDraft;
+
+export function isStoredOnboardingDraft(
+  draft: PersistedOnboardingDraft,
+): draft is StoredOnboardingDraft {
+  return 'version' in draft && draft.version === 2;
+}
+
 export interface OnboardingDraftStore {
-  loadDraft(): OnboardingDraft | null;
-  saveDraft(draft: OnboardingDraft): void;
+  loadDraft(): PersistedOnboardingDraft | null;
+  saveDraft(draft: PersistedOnboardingDraft): void;
   clearDraft(): void;
 }
 
@@ -99,11 +175,11 @@ export interface AccountOnboardingDraftStore extends OnboardingDraftStore {
   clearUserDraft(userId: string): void;
 }
 
-function parseStoredDraft(raw: string | undefined | null): OnboardingDraft | null {
+function parseStoredDraft(raw: string | undefined | null): PersistedOnboardingDraft | null {
   if (raw === undefined || raw === null) return null;
   try {
     const parsed = draftSchema.safeParse(JSON.parse(raw));
-    return parsed.success ? (parsed.data as OnboardingDraft) : null;
+    return parsed.success ? (parsed.data as PersistedOnboardingDraft) : null;
   } catch {
     return null;
   }
@@ -159,7 +235,7 @@ export function createLocalStorageOnboardingDraftStore(): OnboardingDraftStore {
 
 /** Non-persisting store for tests and storage-less environments. */
 export function createInMemoryOnboardingDraftStore(): OnboardingDraftStore {
-  let storedDraft: OnboardingDraft | null = null;
+  let storedDraft: PersistedOnboardingDraft | null = null;
   return {
     loadDraft: () => (storedDraft === null ? null : structuredClone(storedDraft)),
     saveDraft: (draft) => {

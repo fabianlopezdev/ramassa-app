@@ -4,19 +4,27 @@ import { expect, test } from 'bun:test';
 import arOnboarding from '../../../../packages/shared/i18n/locales/ar/onboarding.json';
 import faOnboarding from '../../../../packages/shared/i18n/locales/fa/onboarding.json';
 
-// The body both terms screens show (RAPP-613: onboarding and a new version).
+// The texts both terms screens show (RAPP-613: onboarding and a new version).
 const termsBodySource = readFileSync(
-  join(import.meta.dir, '../components/onboarding/terms-body.tsx'),
+  join(import.meta.dir, '../components/forms/text-block.tsx'),
   'utf8',
 );
 const termsBodyElement = termsBodySource.match(
   /<Text\s+(?:selectable\s+)?className=\{`([^`]+)`\}\s*>\s*\{body\}\s*<\/Text>/,
 );
 
-test('both terms screens show the body through that component', () => {
-  for (const screen of ['../app/(app)/onboarding/terms.tsx', '../app/(app)/terms-update.tsx']) {
-    expect(readFileSync(join(import.meta.dir, screen), 'utf8')).toContain('<TermsBody body=');
+test('both terms screens show their texts through that component (RAPP-772: the form walker)', () => {
+  for (const screen of [
+    '../app/(app)/onboarding/terms/[screenId].tsx',
+    '../app/(app)/terms-update.tsx',
+  ]) {
+    expect(readFileSync(join(import.meta.dir, screen), 'utf8')).toMatch(/FormWalk(Step|er)/);
   }
+  const blocks = readFileSync(
+    join(import.meta.dir, '../components/onboarding/form-blocks.tsx'),
+    'utf8',
+  );
+  expect(blocks).toContain('<TextBlock');
 });
 
 test('the consent body component uses token-backed leading and the active language font', () => {

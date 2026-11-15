@@ -10,27 +10,37 @@ import { InviteQuestionsReview } from './invite-questions-review';
 
 const answered = new Set<IntakeQuestion>(['first_name', 'last_name']);
 
-function row(view: ReturnType<typeof render>, question: string): HTMLElement {
-  return view.getByTestId(`invite-question-${question}`);
+/**
+ * The question's row, in the sheet of the screen card that asks it (RAPP-643):
+ * the cards open one sheet at a time, so each is opened until one holds it.
+ */
+function questionRow(view: ReturnType<typeof render>, question: string): HTMLElement {
+  for (const open of view.queryAllByTestId(/^invite-screen-open-/)) {
+    fireEvent.click(open);
+    const found = view.queryByTestId(`invite-question-${question}`);
+    if (found !== null) return found;
+  }
+  throw new Error(`no screen asks ${question}`);
 }
 
-function choice(view: ReturnType<typeof render>, question: string): HTMLSelectElement {
-  const element = view.container.querySelector<HTMLSelectElement>(`#invite-question-${question}`);
-  if (element === null) throw new Error(`no ${question} choice`);
-  return element;
+function choiceButton(row: HTMLElement, state: 'auto' | 'ask' | 'skip'): HTMLButtonElement {
+  const button = row.querySelector<HTMLButtonElement>(`[data-testid$="-${state}"]`);
+  if (button === null) throw new Error(`no ${state} choice`);
+  return button;
 }
 
-test('an answered question is not asked on Auto, an unanswered one is', () => {
+test('on Auto an answered question is not asked and an unanswered one is; her names always are (RAPP-708)', () => {
   const view = render(
     <InviteQuestionsReview
-      answered={answered}
+      answered={new Set<IntakeQuestion>([...answered, 'city'])}
       states={{}}
       onChange={() => undefined}
       catalog={EMPTY_INTAKE_CATALOG}
     />,
   );
-  expect(row(view, 'first_name').dataset.asked).toBe('false');
-  expect(row(view, 'date_of_birth').dataset.asked).toBe('true');
+  expect(questionRow(view, 'city').dataset.asking).toBe('not-asked');
+  expect(questionRow(view, 'date_of_birth').dataset.asking).toBe('asked');
+  expect(questionRow(view, 'first_name').dataset.asking).toBe('asked');
 });
 
 test('Ask on an answered question makes it asked; the change goes to the caller', () => {
@@ -43,10 +53,10 @@ test('Ask on an answered question makes it asked; the change goes to the caller'
       catalog={EMPTY_INTAKE_CATALOG}
     />,
   );
-  expect(row(view, 'first_name').dataset.asked).toBe('true');
-  fireEvent.change(choice(view, 'phone'), { target: { value: 'skip' } });
+  expect(questionRow(view, 'first_name').dataset.asking).toBe('asked');
+  fireEvent.click(choiceButton(questionRow(view, 'phone'), 'skip'));
   expect(onChange).toHaveBeenCalledWith({ first_name: 'ask', phone: 'skip' });
-  fireEvent.change(choice(view, 'first_name'), { target: { value: 'auto' } });
+  fireEvent.click(choiceButton(questionRow(view, 'first_name'), 'auto'));
   expect(onChange).toHaveBeenLastCalledWith({});
 });
 
@@ -59,14 +69,11 @@ test("Don't ask is not offered on a required question nobody answered, and says 
       catalog={EMPTY_INTAKE_CATALOG}
     />,
   );
-  const skip = (question: string) =>
-    choice(view, question).querySelector<HTMLOptionElement>('option[value="skip"]');
-  expect(skip('date_of_birth')?.disabled).toBe(true);
-  expect(choice(view, 'date_of_birth').getAttribute('aria-describedby')).toBe(
-    'invite-question-date_of_birth-hint',
-  );
-  expect(skip('first_name')?.disabled).toBe(false);
-  expect(skip('phone')?.disabled).toBe(false);
+  const birth = questionRow(view, 'date_of_birth');
+  expect(choiceButton(birth, 'skip').disabled).toBe(true);
+  expect(birth.textContent).toContain('questionStatesRequiredHint');
+  expect(choiceButton(questionRow(view, 'first_name'), 'skip').disabled).toBe(false);
+  expect(choiceButton(questionRow(view, 'phone'), 'skip').disabled).toBe(false);
 });
 
 test('the presets fill every choice, the organization ones too', () => {
@@ -88,9 +95,7 @@ test('the presets fill every choice, the organization ones too', () => {
 test('a question removed in Settings is never asked and cannot be changed', () => {
   const catalog: IntakeCatalog = {
     ...EMPTY_INTAKE_CATALOG,
-    overrides: [
-      { question: 'phone', label: null, help: null, isHidden: true, optionOverrides: {} },
-    ],
+    overrides: [{ question: 'phone', label: null, help: null, isHidden: true }],
   };
   const view = render(
     <InviteQuestionsReview
@@ -100,8 +105,10 @@ test('a question removed in Settings is never asked and cannot be changed', () =
       catalog={catalog}
     />,
   );
-  expect(row(view, 'phone').dataset.asked).toBe('false');
-  expect(choice(view, 'phone').disabled).toBe(true);
+  // Its screen still asks her the other questions; the removed one has no row to change.
+  expect(questionRow(view, 'address').dataset.asking).toBe('asked');
+  expect(view.queryByTestId('invite-question-phone')).toBeNull();
+  expect(() => questionRow(view, 'phone')).toThrow('no screen asks phone');
 });
 
 test('staff screens are listed in the order her phone shows them (RAPP-612)', () => {
@@ -111,26 +118,46 @@ test('staff screens are listed in the order her phone shows them (RAPP-612)', ()
     intro: null,
     afterScreen,
     isArchived: false,
-    questions: [
-      {
-        id: `${id}-question`,
-        screenId: id,
-        type: 'short_text' as const,
-        label: { ca: `Pregunta ${id}` },
-        help: null,
-        privacy: 'normal' as const,
-        placements: ['wizard' as const],
-        isArchived: false,
-        settings: {},
-        options: [],
-      },
-    ],
+  });
+  const field = (id: string) => ({
+    id: `${id}-question`,
+    sectionId: 'support',
+    kind: 'custom' as const,
+    builtinKey: null,
+    type: 'short_text' as const,
+    label: { ca: `Pregunta ${id}` },
+    help: null,
+    privacy: 'normal' as const,
+    defaultRequired: false,
+    settings: {},
+    sortOrder: 0,
+    isArchived: false,
+    createdAt: '2026-10-23T10:00:00Z',
+    createdBy: null,
+    createdByName: null,
+    hasAnswers: null,
+    options: [],
+  });
+  const placement = (id: string) => ({
+    id: `${id}-placement`,
+    fieldId: `${id}-question`,
+    surface: 'onboarding' as const,
+    screenKey: id,
+    sortOrder: 0,
+    required: false,
+    labelOverride: null,
+    helpOverride: null,
   });
   // The catalog lists screens by their anchor: C2 first.
   const catalog: IntakeCatalog = {
     ...EMPTY_INTAKE_CATALOG,
     screens: [screen('C2', 'identity'), screen('C1', 'logistics'), screen('C3', 'season')],
     flowOrder: ['custom:C1', 'custom:C2', 'custom:C3', 'identity'],
+    layout: {
+      sections: [],
+      fields: ['C1', 'C2', 'C3'].map(field),
+      placements: ['C2', 'C1', 'C3'].map(placement),
+    },
   };
   const view = render(
     <InviteQuestionsReview
@@ -140,12 +167,12 @@ test('staff screens are listed in the order her phone shows them (RAPP-612)', ()
       catalog={catalog}
     />,
   );
-  const listed = [
-    ...view.container.querySelectorAll('[data-testid^="invite-custom-question-"]'),
-  ].map((element) => element.getAttribute('data-testid'));
+  const listed = [...view.container.querySelectorAll('[data-testid^="invite-screen-custom:"]')].map(
+    (element) => element.getAttribute('data-testid'),
+  );
   expect(listed).toEqual([
-    'invite-custom-question-C1-question',
-    'invite-custom-question-C2-question',
-    'invite-custom-question-C3-question',
+    'invite-screen-custom:C1',
+    'invite-screen-custom:C2',
+    'invite-screen-custom:C3',
   ]);
 });

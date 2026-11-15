@@ -7,40 +7,72 @@
 import { safeAsync } from '@/lib/observability';
 import { privateStorage } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
+import { createWizardDraftStore } from '@/lib/wizard-draft';
 import { useEffect, useState } from 'react';
-import { Platform } from 'react-native';
+import type { Database } from '@ramassa/shared';
 import { fetchMyPendingInvite } from '@ramassa/shared/accounts';
 import { AppError, type Result } from '@ramassa/shared/errors';
-import { answerPayload, type CustomAnswerValue } from '@ramassa/shared/intake-builder';
+import {
+  answerPayload,
+  type FieldAnswers,
+  type formSignaturesPayload,
+} from '@ramassa/shared/intake-builder';
 import { createAccountOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
-import type { CompleteOnboardingPayload } from '@ramassa/shared/schemas';
-import { termsSigningPayload, type TermsSigning } from '@ramassa/shared/schemas';
-
-/** The one draft store the wizard screens share. */
-export const onboardingDraftStore = createAccountOnboardingDraftStore(privateStorage);
 
 /**
- * Completes onboarding through `public.complete_onboarding`: profile plus
- * terms acceptance in one server-side transaction, sensitive fields encrypted
- * there so the key never touches this device. On success the caller clears the
- * protected draft copy of the intake answers and refreshes the auth
- * profile so the gate flips.
+ * The one draft store the wizard screens share. Her phone keeps the draft by
+ * field (RAPP-663); the screens load and save their forms through it, which
+ * needs her organization's fields: the onboarding layout sets them before any
+ * screen mounts.
+ */
+export const onboardingDraftStore = createWizardDraftStore(
+  createAccountOnboardingDraftStore(privateStorage),
+);
+
+/** The document type her document screen saved in her draft, if any (RAPP-782). */
+export function draftDocumentType(): string | undefined {
+  const saved = onboardingDraftStore.loadDraft()?.documentation as
+    { readonly documentType?: string } | undefined;
+  return saved?.documentType;
+}
+
+/**
+ * What she sends when she finishes: her names, her settings, her answers by
+ * field and her signatures of the signature blocks, by block id (RAPP-690).
+ * The terms' version, language and photo choice travel here only for an
+ * older server's terms; the terms form names them itself (RAPP-772).
+ */
+export interface CompleteOnboardingRequest {
+  readonly first_name: string;
+  readonly last_name: string;
+  readonly preferred_language: string;
+  readonly media_consent?: boolean;
+  readonly terms_version?: string;
+  readonly locale_shown?: string;
+  readonly answers: FieldAnswers;
+  readonly signatures: ReturnType<typeof formSignaturesPayload>;
+  /** Her ticks of the consents her Onboarding asks, by key (RAPP-699), when it asks one. */
+  readonly consents?: Readonly<Record<string, boolean>>;
+}
+
+/**
+ * Completes onboarding through `public.complete_onboarding_signed`: profile,
+ * answers, terms acceptance, signatures and consents in one server-side
+ * transaction, sensitive fields encrypted there so the key never touches this
+ * device. `signing` is what she gave on the terms (`appTermsSubmission`).
+ * On success the caller clears the protected draft copy of the intake answers
+ * and refreshes the auth profile so the gate flips.
  */
 export function completeOnboarding(
-  payload: Partial<CompleteOnboardingPayload>,
-  signing: TermsSigning,
-  customAnswers: Readonly<Record<string, CustomAnswerValue | null>> = {},
+  request: CompleteOnboardingRequest,
+  signing: Readonly<Record<string, unknown>>,
 ): Promise<Result<void, AppError>> {
   return safeAsync(
     async () => {
       const { error } = await supabase.rpc('complete_onboarding_signed', {
-        // Her staff answers travel in the same call (RAPP-611): saved with her
-        // profile in one transaction, and the required ones re-checked there.
-        payload:
-          Object.keys(customAnswers).length === 0
-            ? payload
-            : { ...payload, custom_answers: answerPayload(customAnswers) },
-        p_signing: termsSigningPayload(signing, `${Platform.OS} ${String(Platform.Version)}`),
+        payload: { ...request, answers: answerPayload(request.answers) },
+        p_signing:
+          signing as Database['public']['Functions']['complete_onboarding_signed']['Args']['p_signing'],
       });
       if (error) {
         throw new AppError('DB-1', { message: error.message });

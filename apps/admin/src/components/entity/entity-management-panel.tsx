@@ -96,9 +96,9 @@ export function EntityManagementPanel({
   }
 
   return (
-    <section className="space-y-8 p-4 sm:p-6">
-      <header className="max-w-3xl space-y-2">
-        <h1 className="text-2xl font-semibold text-foreground">{t('managementTitle')}</h1>
+    <section className="space-y-8">
+      <header className="space-y-2">
+        <h1 className="text-2xl font-semibold">{t('managementTitle')}</h1>
         <p className="text-sm leading-6 text-muted-foreground">{t('managementIntro')}</p>
       </header>
 
@@ -169,7 +169,7 @@ export function EntityManagementPanel({
 
             {confirmation?.kind === 'entity' && confirmation.entityId === selectedEntity.id ? (
               <div
-                className="max-w-2xl space-y-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4"
+                className="space-y-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4"
                 role="group"
                 aria-label={t('confirmDeactivateEntity')}
               >

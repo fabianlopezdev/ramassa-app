@@ -12,7 +12,6 @@ import type { BuiltinWording } from '@/lib/onboarding-intake-context';
 import type { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatSupportNeeds } from '@ramassa/shared/schemas';
-import type { ProfileRow as ProfileRecord } from '@ramassa/shared/schemas';
 
 const APPLICANT_STATUS_KEYS = {
   asylum_seeker: 'onboarding:applicantStatusAsylumSeeker',
@@ -31,8 +30,27 @@ const CHILDCARE_KEYS = {
 type SeasonQuestion =
   'applicant_status' | 'supporting_entities' | 'childcare_need' | 'specific_needs';
 
+/** Her season answers by form name (RAPP-663): read by field, an unknown key reads as none. */
+export interface SeasonAnswerValues {
+  readonly applicantStatus?: string | null;
+  readonly applicantStatusDetails?: string | null;
+  readonly supportingEntities?: readonly string[] | null;
+  readonly seasonNumber?: number | null;
+  readonly childcareNeed?: string | null;
+  readonly specificNeeds?: string | null;
+}
+
+function keyed<Key extends string>(
+  value: string | null | undefined,
+  keys: Readonly<Record<Key, string>>,
+): Key | null {
+  return value !== null && value !== undefined && Object.hasOwn(keys, value)
+    ? (value as Key)
+    : null;
+}
+
 export function SeasonAnswerRows({
-  profile,
+  answers,
   emptyLabel,
   showSeasonNumber = true,
   wording,
@@ -42,14 +60,7 @@ export function SeasonAnswerRows({
   /** Hidden in the wizard summary: the number is counted, not answered (RAPP-306). */
   readonly showSeasonNumber?: boolean;
   readonly rowComponent?: ComponentType<ProfileRowProps>;
-  readonly profile: Pick<
-    ProfileRecord,
-    | 'applicant_status'
-    | 'supporting_entities'
-    | 'season_number'
-    | 'childcare_need'
-    | 'specific_needs'
-  > & { readonly applicant_status_details?: string | null };
+  readonly answers: SeasonAnswerValues;
   readonly emptyLabel: string;
   /** Staff's wording of these questions (RAPP-307); the app's own without it. */
   readonly wording?: BuiltinWording;
@@ -62,6 +73,8 @@ export function SeasonAnswerRows({
   // A relabelled choice reads in staff's words; her stored value is always kept.
   const optionLabel = (question: SeasonQuestion, value: string, appLabel: string) =>
     wording?.options(question, [{ value, label: appLabel }], value)[0]?.label ?? appLabel;
+  const applicantStatus = keyed(answers.applicantStatus, APPLICANT_STATUS_KEYS);
+  const childcareNeed = keyed(answers.childcareNeed, CHILDCARE_KEYS);
   return (
     <>
       {shows('applicant_status') ? (
@@ -69,22 +82,22 @@ export function SeasonAnswerRows({
           icon="person"
           label={label('applicant_status', t('onboarding:applicantStatusLabel'))}
           value={
-            profile.applicant_status == null
+            applicantStatus === null
               ? emptyLabel
               : optionLabel(
                   'applicant_status',
-                  profile.applicant_status,
-                  t(APPLICANT_STATUS_KEYS[profile.applicant_status]),
+                  applicantStatus,
+                  t(APPLICANT_STATUS_KEYS[applicantStatus]),
                 )
           }
         />
       ) : null}
       {shows('applicant_status') &&
-      profile.applicant_status === 'other' &&
-      profile.applicant_status_details ? (
+      applicantStatus === 'other' &&
+      answers.applicantStatusDetails ? (
         <Row
           label={t('onboarding:otherSituationDetailsLabel')}
-          value={profile.applicant_status_details}
+          value={answers.applicantStatusDetails}
         />
       ) : null}
       {shows('supporting_entities') ? (
@@ -92,9 +105,9 @@ export function SeasonAnswerRows({
           icon="entity"
           label={label('supporting_entities', t('onboarding:supportingEntitiesLabel'))}
           value={
-            profile.supporting_entities == null || profile.supporting_entities.length === 0
+            answers.supportingEntities == null || answers.supportingEntities.length === 0
               ? emptyLabel
-              : profile.supporting_entities.join(', ')
+              : answers.supportingEntities.join(', ')
           }
         />
       ) : null}
@@ -103,9 +116,9 @@ export function SeasonAnswerRows({
           icon="calendar"
           label={t('onboarding:seasonNumberLabel')}
           value={
-            profile.season_number == null
+            answers.seasonNumber == null
               ? emptyLabel
-              : t(`onboarding:seasonNumber${profile.season_number}`)
+              : t(`onboarding:seasonNumber${answers.seasonNumber}`)
           }
         />
       ) : null}
@@ -114,13 +127,9 @@ export function SeasonAnswerRows({
           icon="people"
           label={label('childcare_need', t('onboarding:childcareNeedLabel'))}
           value={
-            profile.childcare_need == null
+            childcareNeed === null
               ? emptyLabel
-              : optionLabel(
-                  'childcare_need',
-                  profile.childcare_need,
-                  t(CHILDCARE_KEYS[profile.childcare_need]),
-                )
+              : optionLabel('childcare_need', childcareNeed, t(CHILDCARE_KEYS[childcareNeed]))
           }
         />
       ) : null}
@@ -129,9 +138,9 @@ export function SeasonAnswerRows({
           icon="support"
           label={label('specific_needs', t('onboarding:specificNeedsLabel'))}
           value={
-            profile.specific_needs == null || profile.specific_needs === ''
+            answers.specificNeeds == null || answers.specificNeeds === ''
               ? emptyLabel
-              : formatSupportNeeds(profile.specific_needs, t)
+              : formatSupportNeeds(answers.specificNeeds, t)
           }
         />
       ) : null}

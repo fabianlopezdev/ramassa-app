@@ -29,6 +29,7 @@ function approved(text: string): TranslationReview {
     translations: {
       es: `[es] ${text}`,
       en: `[en] ${text}`,
+      fr: `[fr] ${text}`,
       ar: `[ar] ${text}`,
       fa: `[fa] ${text}`,
     },
@@ -42,7 +43,14 @@ function approved(text: string): TranslationReview {
 const stored = {
   id: '22222222-2222-4222-8222-222222222222',
   category_id: CATEGORY,
-  title: { ca: 'Entrenament', es: 'Entrenamiento', en: 'Training', ar: 'تدريب', fa: 'تمرین' },
+  title: {
+    ca: 'Entrenament',
+    es: 'Entrenamiento',
+    en: 'Training',
+    fr: 'Entraînement',
+    ar: 'تدريب',
+    fa: 'تمرین',
+  },
   description: null,
   location: 'Pista',
   location_url: null,

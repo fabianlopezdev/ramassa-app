@@ -7,9 +7,10 @@ import {
   type SeasonAnswers,
   type SeasonQuestion,
 } from '@/components/profile/season-answer-fields';
+import { followUpShows } from '@/lib/follow-up-screens';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { onboardingDraftStore } from '@/lib/onboarding';
-import { useBuiltinWording, useWizardStep } from '@/lib/onboarding-intake-context';
+import { useBuiltinWording, useWizardIntake, useWizardStep } from '@/lib/onboarding-intake-context';
 import {
   mergeSeasonDraft,
   referringEntityForAdditionalSupport,
@@ -18,7 +19,11 @@ import {
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { WIZARD_SCREEN_QUESTIONS, type SeasonWizardScreen } from '@ramassa/shared/intake';
+import {
+  opensDetailScreen,
+  WIZARD_SCREEN_QUESTIONS,
+  type SeasonWizardScreen,
+} from '@ramassa/shared/intake';
 import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 import { seasonAnswerFields } from '@ramassa/shared/schemas';
 
@@ -28,6 +33,7 @@ export function SeasonWizardStep({ screen }: { readonly screen: SeasonWizardScre
   const step = useWizardStep(screen);
   const router = useRouter();
   const wording = useBuiltinWording();
+  const { catalog } = useWizardIntake();
   const [draft] = useState(() => onboardingDraftStore.loadDraft());
   const [answers, setAnswers] = useState<SeasonAnswers>(() => {
     const saved = seasonAnswerFields.safeParse(draft?.season ?? {});
@@ -79,7 +85,12 @@ export function SeasonWizardStep({ screen }: { readonly screen: SeasonWizardScre
           playHaptic('warning');
           return;
         }
-        if (screen === 'season' && answers.applicantStatus === 'other') {
+        if (
+          screen === 'season' &&
+          opensDetailScreen('applicant-status-details', answers.applicantStatus) &&
+          // A follow-up that asks nothing is skipped (RAPP-720).
+          followUpShows(catalog, 'applicant-status-details')
+        ) {
           persist('applicant-status-details');
           const route =
             `/onboarding/applicant-status-details${step.isEditing ? '?edit=1' : ''}` as Href;

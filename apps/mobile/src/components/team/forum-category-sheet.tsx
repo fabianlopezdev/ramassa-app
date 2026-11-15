@@ -88,6 +88,7 @@ function CategoryForm({
           ca: copy.ca,
           es: copy.es ?? '',
           en: copy.en ?? '',
+          fr: copy.fr ?? '',
           ar: copy.ar ?? '',
           fa: copy.fa ?? '',
         },

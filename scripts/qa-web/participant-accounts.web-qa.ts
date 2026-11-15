@@ -16,19 +16,38 @@
  */
 
 import { expect, test, type Page } from '@playwright/test';
+import { choose, expectAsking, questionRow } from './invite-review';
 import {
+  appAnswerSql,
   countInDatabase,
   ENTITY_EMAIL,
   PLAYER_ORIGIN,
   queryDatabase,
   queryDatabaseAsAddress,
+  questionStatesSql,
   signIn,
   signInPlayer,
   STAFF_EMAIL,
+  writeReferralAnswerSql,
+  type AppAnswerFixture,
 } from './session';
 
 const RUN_TAG = `qa${Date.now().toString(36)}`;
 const PENDING_REFERRAL_ID = '5eed0000-0000-4000-8010-000000000001';
+/** The seeded pending referral's answers by field (ADR-031), a choice by its option key. */
+const SEED_REFERRAL_ANSWERS: readonly (readonly [string, Exclude<AppAnswerFixture, null>])[] = [
+  ['date_of_birth', '1996-02-20'],
+  ['nationality', 'Marroc'],
+  ['document_type', 'none'],
+  ['city', 'Vic'],
+  ['phone', '+34930005401'],
+  ['applicant_status', 'migrant'],
+  ['supporting_entities', ['Càritas Vic']],
+  ['reference_contact_name', 'Sílvia Bosch'],
+  ['childcare_need', 'yes'],
+  ['specific_needs', ['other']],
+  ['specific_needs_details', 'Prefereix entrenar a la tarda.'],
+];
 
 test.afterAll(() => {
   // One transaction. Invited addresses carry the run tag, so the accounts the
@@ -47,17 +66,24 @@ test.afterAll(() => {
        set referred_profile_id = null, assigned_staff_id = null, status = 'pending'
      where id = '${PENDING_REFERRAL_ID}'
        and referred_profile_id in (select id from qa_run_accounts);
-    -- Accepting it moved the seeded answers to her profile (RAPP-303): put them back.
+    -- Accepting it moved the seeded answers to her profile (RAPP-303): put them
+    -- back, by field (ADR-031), only when they were moved.
+    create temporary table qa_run_referral_used on commit drop as
+      select id from public.entity_referrals
+       where id = '${PENDING_REFERRAL_ID}' and intake_answers is null;
+    ${SEED_REFERRAL_ANSWERS.map(([key, value]) =>
+      writeReferralAnswerSql(`(select id from qa_run_referral_used)`, key, value),
+    ).join('\n')}
+    insert into public.referral_custom_answers (referral_id, question_id, org_id, value_encrypted)
+    select id, '5eed0000-0000-4000-8045-000000000001', '5eed0000-0000-4000-8000-000000000000',
+           public.encrypt_field('"maybe"')
+      from qa_run_referral_used
+    on conflict do nothing;
     update public.entity_referrals
        set referred_phone = public.encrypt_field('+34930005401'),
            referred_email = public.encrypt_field('amina.referral@example.test'),
-           intake_answers = public.encrypt_field(jsonb_build_object(
-             'date_of_birth', '1996-02-20', 'nationality', 'Marroc', 'document_type', 'none',
-             'city', 'Vic', 'applicant_status', 'migrant',
-             'supporting_entities', jsonb_build_array('Càritas Vic'),
-             'reference_contact_name', 'Sílvia Bosch', 'season_number', 2,
-             'childcare_need', 'yes', 'specific_needs', 'Prefereix entrenar a la tarda.')::text)
-     where id = '${PENDING_REFERRAL_ID}' and intake_answers is null;
+           intake_answers = public.encrypt_field(jsonb_build_object('season_number', 2)::text)
+     where id in (select id from qa_run_referral_used);
     delete from public.profiles where id in (select id from qa_run_accounts);
     delete from auth.identities where user_id in (select id from qa_run_accounts);
     delete from auth.users where id in (select id from qa_run_accounts);
@@ -169,27 +195,33 @@ test.describe('inviting a participant', () => {
       page.getByText(/encara no ha entrat|not joined yet|aún no ha entrado/i).first(),
     ).toBeVisible({ timeout: 15_000 });
 
-    await page
-      .getByRole('button', { name: /edita la fitxa|edit the record|edita la ficha/i })
-      .click();
-    await expect(page.getByTestId('participant-prefill-hint')).toBeVisible();
-    // Nothing anybody answered shows a value: no "M", no "no dependants".
-    await expect(page.locator('#participant-clothingSize')).toHaveValue('');
-    await expect(page.locator('#participant-hasDependents')).toHaveValue('');
+    // Her page on the Fitxa layout (RAPP-653): nothing anybody answered shows
+    // a value (no "M", no "no dependants"), and a field is edited on its row.
+    const notFilled = /sense omplir|not filled in|sin rellenar/i;
+    await expect(page.getByTestId('fitxa-field-clothing_size-value')).toHaveText(notFilled);
+    await expect(page.getByTestId('fitxa-field-dependents-value')).toHaveText(notFilled);
 
-    await page.locator('#participant-clothingSize').selectOption('L');
-    await page.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
+    await page.getByTestId('fitxa-field-clothing_size-edit').click();
+    const editor = page.getByTestId('fitxa-field-clothing_size-editor');
+    await expect(editor.locator('select')).toHaveValue('');
+    await editor.locator('select').selectOption({ label: 'L' });
+    await editor.getByRole('button', { name: /^(desa|save|guardar)$/i }).click();
+    await expect(page.getByTestId('fitxa-field-clothing_size-value')).toHaveText('L');
 
     // Only the field she changed became a staff answer; the names came with the invitation.
     await expect
       .poll(
         () =>
           queryDatabase(
-            `select string_agg(a.question || ':' || a.source, ',' order by a.question) from public.profile_answers a join auth.users u on u.id = a.profile_id where u.email = '${email}'`,
+            // Her names are on her account (ADR-031): only her answers by field.
+            `select string_agg(f.system_key || ':' || a.source, ',' order by f.system_key)
+               from public.custom_answers a
+               join public.profile_fields f on f.id = a.question_id
+               join auth.users u on u.id = a.profile_id where u.email = '${email}'`,
           ),
         { timeout: 15_000 },
       )
-      .toBe('clothing_size:staff,first_name:staff,last_name:staff');
+      .toBe('clothing_size:staff');
   });
 
   /**
@@ -211,24 +243,41 @@ test.describe('inviting a participant', () => {
       })
       .click();
 
-    const states = page.getByTestId('participant-question-states');
-    await expect(states).toBeVisible({ timeout: 15_000 });
-    await expect(states.locator('#question-state-shoe_size option[value="skip"]')).toBeDisabled();
+    // The choice sits on each field's row of her page (RAPP-653) and saves at once.
+    const choices = page.getByTestId('participant-choices');
+    await expect(choices).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId('fitxa-field-shoe_size-choice').click();
+    await expect(page.getByTestId('fitxa-field-shoe_size-choice-skip')).toHaveAttribute(
+      'data-disabled',
+      '',
+    );
+    await page.keyboard.press('Escape');
 
-    await states
+    await choices
       .getByRole('button', { name: /que ho revisi tot|reviews everything|que lo revise todo/i })
       .click();
-    await states.locator('#question-state-phone').selectOption('skip');
-    await states
-      .getByRole('button', { name: /desa les preguntes|save questions|guardar las preguntas/i })
-      .click();
+    await expect(page.getByTestId('fitxa-field-phone-choice')).toHaveAttribute(
+      'data-state-choice',
+      'ask',
+      { timeout: 15_000 },
+    );
+    await page.getByTestId('fitxa-field-phone-choice').click();
+    await page.getByTestId('fitxa-field-phone-choice-skip').click();
+    await expect(page.getByTestId('fitxa-field-phone-choice')).toHaveAttribute(
+      'data-state-choice',
+      'skip',
+      { timeout: 15_000 },
+    );
 
     await expect
       .poll(
         () =>
           queryDatabase(
+            // An app question's state lives on its first field (ADR-031).
             `select count(*) filter (where s.state = 'ask') || ':' || count(*) filter (where s.state = 'skip')
-               from public.intake_question_states s join auth.users u on u.id = s.profile_id
+               from public.custom_question_states s
+               join public.profile_fields f on f.id = s.question_id and f.kind = 'builtin'
+               join auth.users u on u.id = s.profile_id
               where u.email = '${email}'`,
           ),
         { timeout: 15_000 },
@@ -262,42 +311,25 @@ test.describe('inviting a participant', () => {
     // Nothing exists yet: the step only shows the plan.
     expect(countInDatabase(`select count(*) from auth.users where email = '${email}'`)).toBe(0);
     // Staff gave her name and entity: Auto skips them. Nobody answered the rest.
-    await expect(review.getByTestId('invite-question-first_name')).toHaveAttribute(
-      'data-asked',
-      'false',
-    );
-    await expect(review.getByTestId('invite-question-reference_entity')).toHaveAttribute(
-      'data-asked',
-      'false',
-    );
-    await expect(review.getByTestId('invite-question-date_of_birth')).toHaveAttribute(
-      'data-asked',
-      'true',
-    );
+    await expect(review).toBeVisible();
+    await expectAsking(page, 'first_name', 'not-asked');
+    await expectAsking(page, 'reference_entity', 'not-asked');
+    await expectAsking(page, 'date_of_birth', 'asked');
     // Don't ask is not offered on a required question nobody answered.
-    await expect(review.locator('#invite-question-shoe_size option[value="skip"]')).toBeDisabled();
+    await expect(
+      (await questionRow(page, 'shoe_size')).getByTestId('invite-question-shoe_size-skip'),
+    ).toBeDisabled();
 
-    await review.locator('#invite-question-first_name').selectOption('ask');
-    await review.locator('#invite-question-phone').selectOption('skip');
-    await review.locator('#invite-question-reference_entity').selectOption('skip');
-    await expect(review.getByTestId('invite-question-first_name')).toHaveAttribute(
-      'data-asked',
-      'true',
-    );
+    await choose(page, 'first_name', 'ask');
+    await choose(page, 'phone', 'skip');
+    await choose(page, 'reference_entity', 'skip');
+    await expectAsking(page, 'first_name', 'asked');
     // Her name screen shows both names, as on her phone (RAPP-618).
-    await expect(review.getByTestId('invite-question-last_name')).toHaveAttribute(
-      'data-asked',
-      'true',
-    );
+    await expectAsking(page, 'last_name', 'asked');
     // Her contact shows only once she has an entity.
-    await expect(review.getByTestId('invite-question-reference_contact_name')).toHaveAttribute(
-      'data-asking',
-      'when-it-applies',
-    );
-    await expect(review.getByTestId('invite-question-phone')).toHaveAttribute(
-      'data-asked',
-      'false',
-    );
+    await expectAsking(page, 'reference_contact_name', 'when-it-applies');
+    await expectAsking(page, 'phone', 'not-asked');
+    await page.keyboard.press('Escape');
 
     // Back to her details keeps what staff typed.
     await page
@@ -311,16 +343,15 @@ test.describe('inviting a participant', () => {
         name: /què se li preguntarà|what she will be asked|qué se le preguntará/i,
       })
       .click();
-    await review.locator('#invite-question-first_name').selectOption('ask');
-    await review.locator('#invite-question-phone').selectOption('skip');
+    await choose(page, 'first_name', 'ask');
+    await choose(page, 'phone', 'skip');
+    await page.keyboard.press('Escape');
     await createInvitation(page);
     await expect(page.getByRole('heading', { name: INVITED })).toBeVisible({ timeout: 15_000 });
 
     expect(
       queryDatabase(
-        `select string_agg(s.question || ':' || s.state, ',' order by s.question)
-           from public.intake_question_states s join auth.users u on u.id = s.profile_id
-          where u.email = '${email}'`,
+        `select ${questionStatesSql(`(select id from auth.users where email = '${email}')`)}`,
       ),
     ).toBe('first_name:ask,phone:skip');
     // Audited like a change on her page (RAPP-301).
@@ -341,19 +372,13 @@ test.describe('inviting a participant', () => {
     await page.goto(`/participants/new?referral=${PENDING_REFERRAL_ID}`);
     await expect(page.getByTestId('referral-prefill')).toBeVisible({ timeout: 15_000 });
     await fillDetails(page, `referred.preview.${RUN_TAG}@example.test`);
-    const review = page.getByTestId('invite-questions-review');
+    await expect(page.getByTestId('invite-questions-review')).toBeVisible();
     // The entity gave her date of birth, her phone and her applicant status:
     // she is not asked them again. Nobody gave her address.
     for (const question of ['date_of_birth', 'phone', 'applicant_status']) {
-      await expect(review.getByTestId(`invite-question-${question}`)).toHaveAttribute(
-        'data-asked',
-        'false',
-      );
+      await expectAsking(page, question, 'not-asked');
     }
-    await expect(review.getByTestId('invite-question-address')).toHaveAttribute(
-      'data-asked',
-      'true',
-    );
+    await expectAsking(page, 'address', 'asked');
     // Nothing is created until staff confirm.
     expect(
       countInDatabase(
@@ -369,6 +394,7 @@ test.describe('inviting a participant', () => {
     await expect(page.getByTestId('referral-answers')).toBeVisible();
 
     const email = `referred.${RUN_TAG}@example.test`;
+    const HER_ID = `(select id from auth.users where email = '${email}')`;
     await invite(page, email);
     await expect(page.getByRole('heading', { name: INVITED })).toBeVisible({ timeout: 15_000 });
     await expect(
@@ -382,15 +408,16 @@ test.describe('inviting a participant', () => {
     // referral keeps no copy of them (RAPP-303).
     expect(
       queryDatabase(
-        `select p.childcare_need || '|' || p.season_number || '|' || p.city || '|'
-                || public.decrypt_field(p.applicant_status)
-           from public.profiles p join auth.users u on u.id = p.id where u.email = '${email}'`,
+        `select ${appAnswerSql(HER_ID, 'childcare_need')} || '|' || p.season_number || '|'
+                || ${appAnswerSql(HER_ID, 'city')} || '|' || ${appAnswerSql(HER_ID, 'applicant_status')}
+           from public.profiles p where p.id = ${HER_ID}`,
       ),
     ).toBe('yes|2|Vic|migrant');
     expect(
       queryDatabase(
-        `select a.source from public.profile_answers a join auth.users u on u.id = a.profile_id
-          where u.email = '${email}' and a.question = 'season_number'`,
+        `select a.source from public.custom_answers a
+           join public.profile_fields f on f.id = a.question_id and f.system_key = 'city'
+          where a.profile_id = ${HER_ID}`,
       ),
     ).toBe('entity');
     expect(

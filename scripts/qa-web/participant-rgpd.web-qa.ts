@@ -27,11 +27,13 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
   accessTokenFor,
+  appAnswerSql,
   countInDatabase,
   queryDatabase,
   signIn,
   STAFF_EMAIL,
   uploadObjectAs,
+  writeAppAnswerSql,
 } from './session';
 
 const ADMIN_EMAIL = 'laia.ferrer@example.test';
@@ -232,13 +234,18 @@ test.describe('anonymizing', () => {
     ).toBe('null');
   });
 
-  test('anonymizing drops the person and keeps what a report counts', async ({ page }) => {
+  test('anonymizing drops the person and keeps only her birth year', async ({ page }) => {
     const participant = await createParticipantWithData(page, 'Anonymize');
+    const her = `'${participant.id}'`;
+    // Her answers by field (ADR-031).
     queryDatabase(`
-      update public.profiles
-         set nationality = 'Síria', city = 'Vic', date_of_birth = '1994-06-15',
-             phone = public.encrypt_field('600111222'), media_consent_at = now()
-       where id = '${participant.id}';
+      begin;
+      ${writeAppAnswerSql(her, 'nationality', 'Síria')}
+      ${writeAppAnswerSql(her, 'city', 'Vic')}
+      ${writeAppAnswerSql(her, 'date_of_birth', '1994-06-15')}
+      ${writeAppAnswerSql(her, 'phone', '+34600111222')}
+      update public.profiles set media_consent_at = now() where id = ${her};
+      commit;
     `);
 
     await page.goto(`/participants/${participant.id}`);
@@ -262,13 +269,13 @@ test.describe('anonymizing', () => {
     const row = queryDatabase(`
       select
         coalesce(nullif(first_name, ''), 'EMPTY') || '|' ||
-        coalesce(nationality, 'NULL') || '|' ||
-        coalesce(city, 'NULL') || '|' ||
-        coalesce(date_of_birth::text, 'NULL') || '|' ||
-        coalesce(phone::text, 'NULL') || '|' ||
+        coalesce(${appAnswerSql(her, 'nationality')}, 'NULL') || '|' ||
+        coalesce(${appAnswerSql(her, 'city')}, 'NULL') || '|' ||
+        coalesce(${appAnswerSql(her, 'date_of_birth')}, 'NULL') || '|' ||
+        coalesce(${appAnswerSql(her, 'phone')}, 'NULL') || '|' ||
         coalesce(media_consent_at::text, 'NULL') || '|' ||
         is_active::text
-      from public.profiles where id = '${participant.id}'
+      from public.profiles where id = ${her}
     `);
     const [firstName, nationality, city, dateOfBirth, phone, mediaConsent, isActive] =
       row.split('|');
@@ -277,11 +284,10 @@ test.describe('anonymizing', () => {
     expect(phone).toBe('NULL');
     expect(mediaConsent).toBe('NULL');
     expect(isActive).toBe('false');
-    // The half that makes it anonymization rather than deletion.
-    expect(nationality).toBe('Síria');
-    expect(city).toBe('Vic');
-    // Coarsened, not kept: an exact birth date beside a nationality and a town
-    // identifies one woman.
+    // Erasure removes every answer (D11): her nationality and her town go too.
+    expect(nationality).toBe('NULL');
+    expect(city).toBe('NULL');
+    // Her birth year stays, so the age bands still count her; the exact date goes.
     expect(dateOfBirth).toBe('1994-01-01');
 
     // The team's prose about her goes; no column-level anonymization reaches it.
@@ -294,7 +300,7 @@ test.describe('anonymizing', () => {
     // She still counts, which is the whole justification for keeping the row.
     expect(
       countInDatabase(
-        `select count(*) from public.profiles where nationality = 'Síria' and id = '${participant.id}'`,
+        `select count(*) from public.profiles where anonymized_at is not null and id = ${her}`,
       ),
     ).toBe(1);
   });

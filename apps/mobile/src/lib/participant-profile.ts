@@ -1,47 +1,52 @@
 /**
  * Which profile fields a team member sees on a participant's card (RAPP-281).
  *
- * The levels are the database's (RAPP-240): Basic fields for everyone with
- * `participants.view`, Personal fields with `participants.view_personal`, and
- * the four encrypted Sensitive fields with `participants.view_sensitive`. The
- * database already returns null for a field above the reader's level. The card
- * still needs the level, because a null she may see means "not provided" and a
- * null she may not see must not show at all.
+ * Each field's level is the layout's (D9, RAPP-663): Normal for everyone with
+ * `participants.view`, Personal with `participants.view_personal`, Sensitive
+ * with `participants.view_sensitive`. Staff choose it on Dades de les
+ * jugadores; the phone reads it from her organization's fields. Her app
+ * language, her season count and her consents are her account's, read by
+ * anyone who may see her. The database already leaves out an answer above the
+ * reader's level. The card still needs the level, because a missing answer she
+ * may see means "not provided" and one she may not see must not show at all.
  */
-
-type ParticipantFieldLevel = 'basic' | 'personal' | 'sensitive';
+import type { SystemFieldKey } from '@ramassa/shared/intake';
+import type { QuestionPrivacy, SystemFieldIndex } from '@ramassa/shared/intake-builder';
 
 export interface ParticipantFieldAccess {
   readonly personal: boolean;
   readonly sensitive: boolean;
 }
 
-/** The profile fields in the order the card shows them, the web admin's order. */
+/**
+ * The card's rows in the order it shows them, the web admin's order: each an
+ * app field by its system key, or one of her account's settings.
+ */
 const PARTICIPANT_PROFILE_FIELDS = [
-  { key: 'dateOfBirth', level: 'personal' },
-  { key: 'placeOfBirth', level: 'personal' },
-  { key: 'nationality', level: 'personal' },
-  { key: 'language', level: 'basic' },
-  { key: 'documentType', level: 'personal' },
-  { key: 'documentNumber', level: 'sensitive' },
-  { key: 'phone', level: 'sensitive' },
-  { key: 'address', level: 'sensitive' },
-  { key: 'city', level: 'personal' },
-  { key: 'postalCode', level: 'sensitive' },
-  { key: 'entity', level: 'basic' },
-  { key: 'referenceContact', level: 'personal' },
-  { key: 'dependents', level: 'personal' },
-  { key: 'clothingSize', level: 'basic' },
-  { key: 'shoeSize', level: 'basic' },
-  // The season registration answers (RAPP-303), at the levels the database applies.
-  { key: 'applicantStatus', level: 'sensitive' },
-  { key: 'supportingEntities', level: 'personal' },
-  { key: 'seasonNumber', level: 'basic' },
-  { key: 'childcareNeed', level: 'personal' },
-  { key: 'specificNeeds', level: 'sensitive' },
-  { key: 'mediaConsent', level: 'basic' },
-  { key: 'terms', level: 'basic' },
-] as const satisfies readonly { readonly key: string; readonly level: ParticipantFieldLevel }[];
+  { key: 'dateOfBirth', field: 'date_of_birth' },
+  { key: 'placeOfBirth', field: 'place_of_birth' },
+  { key: 'nationality', field: 'nationality' },
+  { key: 'language', field: null },
+  { key: 'documentType', field: 'document_type' },
+  { key: 'documentNumber', field: 'document_number' },
+  { key: 'phone', field: 'phone' },
+  { key: 'address', field: 'address' },
+  { key: 'city', field: 'city' },
+  { key: 'postalCode', field: 'postal_code' },
+  { key: 'entity', field: 'reference_entity' },
+  { key: 'referenceContact', field: 'reference_contact_name' },
+  { key: 'dependents', field: 'has_dependents' },
+  { key: 'clothingSize', field: 'clothing_size' },
+  { key: 'shoeSize', field: 'shoe_size' },
+  // The season registration answers (RAPP-303).
+  { key: 'applicantStatus', field: 'applicant_status' },
+  { key: 'supportingEntities', field: 'supporting_entities' },
+  { key: 'seasonNumber', field: null },
+  { key: 'childcareNeed', field: 'childcare_need' },
+  { key: 'specificNeeds', field: 'specific_needs' },
+  { key: 'mediaConsent', field: null },
+  { key: 'terms', field: null },
+] as const satisfies readonly { readonly key: string; readonly field: SystemFieldKey | null }[];
 
 export type ParticipantProfileField = (typeof PARTICIPANT_PROFILE_FIELDS)[number]['key'];
 
@@ -52,13 +57,25 @@ export function participantFieldAccess(permissions: ReadonlySet<string>): Partic
   };
 }
 
+function reads(access: ParticipantFieldAccess, privacy: QuestionPrivacy): boolean {
+  return (
+    privacy === 'normal' ||
+    (privacy === 'personal' && access.personal) ||
+    (privacy === 'sensitive' && access.sensitive)
+  );
+}
+
+/**
+ * The card's rows this reader sees, each at its field's level in her
+ * organization's layout. A field the layout no longer has shows no row.
+ */
 export function visibleProfileFields(
   access: ParticipantFieldAccess,
+  fields: SystemFieldIndex,
 ): readonly ParticipantProfileField[] {
-  return PARTICIPANT_PROFILE_FIELDS.filter(
-    (field) =>
-      field.level === 'basic' ||
-      (field.level === 'personal' && access.personal) ||
-      (field.level === 'sensitive' && access.sensitive),
-  ).map((field) => field.key);
+  return PARTICIPANT_PROFILE_FIELDS.filter((row) => {
+    if (row.field === null) return true;
+    const field = fields.get(row.field);
+    return field !== undefined && reads(access, field.privacy);
+  }).map((row) => row.key);
 }

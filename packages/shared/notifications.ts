@@ -2,6 +2,12 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
 import { isSupportedLanguage, type SupportedLanguage } from './i18n';
+import { withShownNames } from './participants/shown-names';
+import {
+  languageCodeSchema,
+  publishedTranslationsSchema,
+  storedTranslationsSchema,
+} from './schemas/language';
 import type { Database, Json } from './types/database';
 
 export const NOTIFICATION_AUDIENCE_KINDS = [
@@ -21,19 +27,26 @@ export type NotificationAudienceKind = (typeof NOTIFICATION_AUDIENCE_KINDS)[numb
 export type NotificationTemplateCategory = (typeof NOTIFICATION_TEMPLATE_CATEGORIES)[number];
 
 const requiredCopy = z.string().trim().min(1).max(1000);
-export const notificationContentSchema = z.object({
-  ca: requiredCopy,
-  es: requiredCopy,
-  en: requiredCopy,
-  ar: requiredCopy,
-  fa: requiredCopy,
-});
+/** Copy as staff send or save it: every supported language, French too. */
+export const notificationContentSchema = publishedTranslationsSchema(requiredCopy);
+/** Copy as stored: a template saved before French has none (RAPP-781). */
+const storedNotificationContentSchema = storedTranslationsSchema(requiredCopy);
+const titleLengthRule = (copy: Readonly<Record<string, string | undefined>>) =>
+  Object.values(copy).every((value) => value === undefined || value.length <= 120);
+const titleLengthMessage = 'notification titles cannot exceed 120 characters';
 export const notificationTitleSchema = notificationContentSchema.refine(
-  (copy) => Object.values(copy).every((value) => value.length <= 120),
-  'notification titles cannot exceed 120 characters',
+  titleLengthRule,
+  titleLengthMessage,
+);
+const storedNotificationTitleSchema = storedNotificationContentSchema.refine(
+  titleLengthRule,
+  titleLengthMessage,
 );
 
-export type NotificationContent = z.infer<typeof notificationContentSchema>;
+/** Copy as read back: French may be missing on copy saved before it. */
+export type NotificationContent = z.infer<typeof storedNotificationContentSchema>;
+/** Copy as sent: every supported language. */
+export type PublishedNotificationContent = z.infer<typeof notificationContentSchema>;
 
 export const notificationAudienceSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('all') }),
@@ -59,8 +72,8 @@ const templateRowSchema = z.object({
   id: z.uuid(),
   name: z.string(),
   category: z.enum(NOTIFICATION_TEMPLATE_CATEGORIES),
-  title: notificationTitleSchema,
-  body: notificationContentSchema,
+  title: storedNotificationTitleSchema,
+  body: storedNotificationContentSchema,
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -77,7 +90,7 @@ const groupMemberRowSchema = z.object({
 const audienceMemberRowSchema = z.object({
   participant_id: z.uuid(),
   full_name: z.string(),
-  language: z.enum(['ca', 'es', 'en', 'ar', 'fa']),
+  language: languageCodeSchema,
   device_count: z.coerce.number().int().positive(),
 });
 const historyRowSchema = z.object({
@@ -179,7 +192,7 @@ export function notificationAudienceArguments(audience: NotificationAudience): {
 }
 
 export function resolveNotificationCopy(copy: NotificationContent, language: string): string {
-  return copy[isSupportedLanguage(language) ? language : 'ca'];
+  return (isSupportedLanguage(language) ? copy[language] : undefined) ?? copy.ca;
 }
 
 function localizedLabel(value: Json): string {
@@ -208,7 +221,7 @@ export function filterNotificationGroupParticipants(
 }
 
 export async function fetchNotificationAudienceOptions(
-  client: QueryClient,
+  client: Pick<Client, 'from' | 'rpc'>,
   signal?: AbortSignal,
 ): Promise<NotificationAudienceOptions> {
   let categoryQuery = client
@@ -223,7 +236,7 @@ export async function fetchNotificationAudienceOptions(
     .limit(100);
   let participantQuery = client
     .from('profiles')
-    .select('id, first_name, last_name, preferred_language, reference_entity')
+    .select('id, first_name, last_name, preferred_language')
     .eq('role', 'player')
     .eq('is_active', true)
     .order('last_name')
@@ -233,26 +246,32 @@ export async function fetchNotificationAudienceOptions(
     eventQuery = eventQuery.abortSignal(signal);
     participantQuery = participantQuery.abortSignal(signal);
   }
-  const [categoryResult, eventResult, participantResult] = await Promise.all([
+  // Her entity is a field answer read at its level (RAPP-662, D9).
+  let entityQuery = client.rpc('notification_audience_entities');
+  if (signal !== undefined) entityQuery = entityQuery.abortSignal(signal);
+  const [categoryResult, eventResult, participantResult, entityResult] = await Promise.all([
     categoryQuery,
     eventQuery,
     participantQuery,
+    entityQuery,
   ]);
   if (categoryResult.error) databaseFailure(categoryResult.error.message);
   if (eventResult.error) databaseFailure(eventResult.error.message);
   if (participantResult.error) databaseFailure(participantResult.error.message);
+  if (entityResult.error) databaseFailure(entityResult.error.message);
 
-  const participants = z
+  const listed = z
     .array(
       z.object({
         id: z.uuid(),
         first_name: z.string(),
         last_name: z.string(),
         preferred_language: z.string(),
-        reference_entity: z.string().nullable(),
       }),
     )
     .parse(participantResult.data ?? []);
+  // Her names at the level the reader may read (RAPP-693).
+  const participants = await withShownNames(client, listed, signal);
   return {
     serviceCategories: (categoryResult.data ?? []).map((category) => ({
       id: category.id,
@@ -262,13 +281,9 @@ export async function fetchNotificationAudienceOptions(
       id: event.id,
       title: localizedLabel(event.title),
     })),
-    entities: [
-      ...new Set(
-        participants.flatMap((participant) =>
-          participant.reference_entity === null ? [] : [participant.reference_entity],
-        ),
-      ),
-    ].sort((left, right) => left.localeCompare(right)),
+    entities: [...new Set(z.array(z.string()).parse(entityResult.data ?? []))].sort((left, right) =>
+      left.localeCompare(right),
+    ),
     participants: participants.map((participant) => ({
       id: participant.id,
       fullName: `${participant.first_name} ${participant.last_name}`.trim(),

@@ -21,6 +21,46 @@ select plan(20);
 create temp table run (label text primary key, id uuid);
 grant all on run to authenticated;
 
+-- An app answer given by option key, as the app's screens send it by option id.
+create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
+  select case
+    when f.question_type in ('single_choice', 'search_choice') and jsonb_typeof(v) = 'string' then
+      coalesce((select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v #>> '{}'), v)
+    when f.question_type = 'multiple_choice' and jsonb_typeof(v) = 'array' then
+      coalesce((select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+                 where o.question_id = f.id and o.key in (select jsonb_array_elements_text(v))
+                having count(*) = jsonb_array_length(v)), v)
+    else v
+  end;
+$$;
+-- Her answers travel by field (RAPP-661). Helpers: the app's keys of a payload
+-- keyed by their fields (a choice by its option), a field's id, and her stored
+-- answer to an app field (decrypted).
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, pg_temp.by_option_key(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+create function pg_temp.field(p_key text) returns text language sql security definer as $$
+  select id::text from public.profile_fields
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and system_key = p_key;
+$$;
+create function pg_temp.stored(p_profile uuid, p_key text) returns jsonb language sql security definer as $$
+  select private.system_field_answer(p_profile, p_key);
+$$;
+-- Her answer to an app field in a reader's `answers` (RAPP-662): a choice by its
+-- option's key, anything else as text.
+create function pg_temp.column_of(p_answers jsonb, p_key text) returns text language sql security definer as $$
+  select coalesce(
+    (select o.key from public.custom_question_options o
+      where o.question_id = f.id and o.id::text = p_answers ->> f.id::text),
+    p_answers ->> f.id::text)
+    from public.profile_fields f
+   where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = p_key;
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
+
 -- 4. The counted season number, before anything changes ---------------------------------------------
 
 set local role authenticated;
@@ -42,12 +82,13 @@ select is(
 
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal1"}';
 select lives_ok(
-  $$ select public.update_my_season_answers('{"childcare_need": "yes", "applicant_status": "refugee", "specific_needs": "Pauses."}'::jsonb) $$,
+  $$ select public.update_my_season_answers(jsonb_build_object('answers', pg_temp.answers(
+       '{"childcare_need": "yes", "applicant_status": "refugee", "specific_needs": ["other"], "specific_needs_details": "Pauses."}'))) $$,
   'she answers the season questions for 2026/27'
 );
 select throws_ok(
-  $$ select public.update_my_season_answers('{"childcare_need": "often"}'::jsonb) $$,
-  '22023', null::text, 'an answer outside its choices is refused'
+  $$ select public.update_my_season_answers(jsonb_build_object('answers', pg_temp.answers('{"childcare_need": "often"}'))) $$,
+  '23514', null::text, 'an answer outside its choices is refused'
 );
 
 -- 1. A new season ---------------------------------------------------------------------------------------
@@ -87,7 +128,7 @@ select is(
   'true|true', 'publishing the new season makes a returning player re-register'
 );
 select lives_ok(
-  $$ select public.update_my_season_answers('{"childcare_need": "no"}'::jsonb) $$,
+  $$ select public.update_my_season_answers(jsonb_build_object('answers', pg_temp.answers('{"childcare_need": "no"}'))) $$,
   'she updates her season answers for 2027/28'
 );
 select lives_ok(
@@ -104,9 +145,10 @@ select is(
 
 reset role;
 select is(
-  (select string_agg(s.name || ':' || coalesce(a.childcare_need, '-'), ',' order by s.starts_on)
-     from public.season_answers a join public.seasons s on s.id = a.season_id
-    where a.profile_id = '5eed0000-0000-4000-8000-000000000011'),
+  -- A seasonal answer is a row of its season (RAPP-661).
+  (select string_agg(s.name || ':' || (a.value #>> '{}'), ',' order by s.starts_on)
+     from public.custom_answers a join public.seasons s on s.id = a.season_id
+    where a.profile_id = '5eed0000-0000-4000-8000-000000000011' and a.question_id::text = pg_temp.field('childcare_need')),
   '2026/27:yes,2027/28:no', 'each season keeps its own answers'
 );
 
@@ -117,7 +159,7 @@ delete from public.team_member_permissions
  where profile_id = '5eed0000-0000-4000-8000-000000000003' and permission_code = 'participants.view_sensitive';
 set local role authenticated;
 select is(
-  (select coalesce(applicant_status, 'hidden') || '|' || childcare_need
+  (select coalesce(pg_temp.column_of(answers, 'applicant_status'), 'hidden') || '|' || pg_temp.column_of(answers, 'childcare_need')
      from public.participant_season_answers('5eed0000-0000-4000-8000-000000000011') where season_name = '2026/27'),
   'hidden|yes', 'without participants.view_sensitive the sensitive season answers stay hidden'
 );

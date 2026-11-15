@@ -5,63 +5,19 @@
  * an untouched default must never travel.
  */
 import { describe, expect, test } from 'bun:test';
+import { systemFieldIndexFromCatalog } from '../intake-builder/field-answers';
 import type { IntakeQuestion } from '../onboarding/intake';
 import {
-  buildProfilePrefillPayload,
+  systemFieldFixtureId,
+  systemFieldsCatalogFixture,
+  systemOptionFixtureId,
+} from '../testing/system-fields';
+import {
   fetchParticipantAnsweredQuestions,
-  prefillFromRow,
+  prefillFormOf,
+  prefillUpdateOf,
   profilePrefillSchema,
-  type PrefillRow,
 } from './participant-prefill';
-
-const row: PrefillRow = {
-  first_name: 'Mariam',
-  last_name: 'Keita',
-  date_of_birth: '1999-03-14',
-  place_of_birth: null,
-  nationality: 'Mali',
-  preferred_language: 'ca',
-  document_type: null,
-  document_number: null,
-  phone: null,
-  address: null,
-  city: null,
-  postal_code: null,
-  reference_entity: 'Creu Roja Osona',
-  reference_contact_name: null,
-  has_dependents: false,
-  num_dependents: 0,
-  clothing_size: 'M',
-  shoe_size: null,
-};
-
-const answered = (...questions: IntakeQuestion[]) => new Set<IntakeQuestion>(questions);
-
-describe('prefillFromRow', () => {
-  test('shows what somebody answered and leaves the rest empty, defaults included', () => {
-    const values = prefillFromRow(
-      row,
-      answered('first_name', 'last_name', 'date_of_birth', 'nationality', 'clothing_size'),
-    );
-    expect(values).toMatchObject({
-      firstName: 'Mariam',
-      lastName: 'Keita',
-      dateOfBirth: '1999-03-14',
-      nationality: 'Mali',
-      clothingSize: 'M',
-    });
-    expect(values.preferredLanguage).toBeUndefined();
-    expect(values.hasDependents).toBeUndefined();
-    expect(values.shoeSize).toBeUndefined();
-  });
-
-  test('the names always show, because the invitation set them', () => {
-    expect(prefillFromRow(row, answered())).toMatchObject({
-      firstName: 'Mariam',
-      lastName: 'Keita',
-    });
-  });
-});
 
 describe('profilePrefillSchema', () => {
   test('only the names are required', () => {
@@ -93,80 +49,83 @@ describe('profilePrefillSchema', () => {
   });
 });
 
-describe('buildProfilePrefillPayload', () => {
-  const values = {
-    firstName: 'Mariam',
-    lastName: 'Keita',
-    nationality: 'Guinea',
-    preferredLanguage: 'ca' as const,
-    hasDependents: true,
-    numDependents: 2,
-    documentType: 'none' as const,
-    clothingSize: 'L' as const,
-  };
-
-  test('sends only the fields staff changed', () => {
-    expect(buildProfilePrefillPayload(values, new Set(['nationality', 'clothingSize']))).toEqual({
-      nationality: 'Guinea',
-      clothing_size: 'L',
-    });
-  });
-
-  test('two-field questions travel whole', () => {
-    expect(buildProfilePrefillPayload(values, new Set(['numDependents']))).toEqual({
-      has_dependents: true,
-      num_dependents: 2,
-    });
-    expect(buildProfilePrefillPayload(values, new Set(['documentType']))).toEqual({
-      document_type: 'none',
-      document_number: null,
-    });
-  });
-
-  test('an emptied document type takes its number with it (RAPP-302)', () => {
-    expect(
-      buildProfilePrefillPayload(
-        { ...values, documentType: undefined, documentNumber: 'X1234567L' },
-        new Set(['documentType']),
-      ),
-    ).toEqual({ document_type: null, document_number: null });
-  });
-
-  test('a field emptied by staff is sent empty, so the database clears it', () => {
-    expect(
-      buildProfilePrefillPayload({ ...values, nationality: undefined }, new Set(['nationality'])),
-    ).toEqual({ nationality: null });
-  });
-});
-
 describe('fetchParticipantAnsweredQuestions', () => {
-  test('reads her answered questions as a set', async () => {
+  test('reads her answered questions as a set, from her answers', async () => {
     const calls: unknown[] = [];
     const client = {
-      from: (table: string) => ({
-        select: (columns: string) => ({
-          eq: (column: string, value: string) => {
-            calls.push([table, columns, column, value]);
-            return Promise.resolve({ data: [{ question: 'nationality' }], error: null });
-          },
-        }),
-      }),
+      rpc: (name: string, args: unknown) => {
+        calls.push([name, args]);
+        return Promise.resolve({ data: ['nationality'], error: null });
+      },
     };
     const result = await fetchParticipantAnsweredQuestions(client as never, 'p1');
     expect(result).toEqual(new Set(['nationality']));
-    expect(calls).toEqual([['profile_answers', 'question', 'profile_id', 'p1']]);
+    expect(calls).toEqual([['participant_answered_questions', { p_profile_id: 'p1' }]]);
   });
 
   test('a failed read is a typed DB-1 error', async () => {
     const client = {
-      from: () => ({
-        select: () => ({
-          eq: () => Promise.resolve({ data: null, error: { message: 'boom' } }),
-        }),
-      }),
+      rpc: () => Promise.resolve({ data: null, error: { message: 'boom' } }),
     };
     await expect(fetchParticipantAnsweredQuestions(client as never, 'p1')).rejects.toMatchObject({
       code: 'DB-1',
     });
+  });
+});
+
+describe('by field (RAPP-663)', () => {
+  const fields = systemFieldIndexFromCatalog(systemFieldsCatalogFixture());
+  const record = {
+    id: '5eed0000-0000-4000-8000-000000000001',
+    first_name: 'Mariam',
+    last_name: 'Keita',
+    preferred_language: 'ca',
+    avatar_url: null,
+    media_consent: false,
+    terms_accepted_at: null,
+    season_number: 1,
+    answers: {
+      [systemFieldFixtureId('date_of_birth')]: '1999-03-14',
+      [systemFieldFixtureId('reference_entity')]: 'Creu Roja Osona',
+    },
+    fields,
+  };
+
+  test('only what somebody answered shows; a setting only when it was answered', () => {
+    const form = prefillFormOf(record, new Set<IntakeQuestion>(['first_name', 'season_number']));
+    expect(form).toEqual({
+      firstName: 'Mariam',
+      lastName: 'Keita',
+      dateOfBirth: '1999-03-14',
+      referenceEntity: 'Creu Roja Osona',
+      preferredLanguage: undefined,
+      seasonNumber: 1,
+      supportingEntities: [],
+    });
+  });
+
+  test('only the changed fields travel, with their partners, as answers by field', () => {
+    const values = profilePrefillSchema.parse({
+      firstName: 'Mariam',
+      lastName: 'Keita',
+      documentType: 'passport',
+      documentNumber: 'p123',
+      hasDependents: false,
+      numDependents: 2,
+      city: 'Vic',
+    });
+    expect(
+      prefillUpdateOf(fields, values, new Set(['documentType', 'hasDependents', 'lastName'])),
+    ).toEqual({
+      last_name: 'Keita',
+      answers: {
+        [systemFieldFixtureId('document_type')]: systemOptionFixtureId('document_type', 'passport'),
+        [systemFieldFixtureId('document_number')]: 'P123',
+        [systemFieldFixtureId('has_dependents')]: systemOptionFixtureId('has_dependents', 'no'),
+        // No count without dependants.
+        [systemFieldFixtureId('num_dependents')]: null,
+      },
+    });
+    expect(prefillUpdateOf(fields, values, new Set())).toEqual({ answers: {} });
   });
 });

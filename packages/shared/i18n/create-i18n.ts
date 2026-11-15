@@ -146,6 +146,27 @@ import faPush from './locales/fa/push.json';
 import faReferrals from './locales/fa/referrals.json';
 import faSettings from './locales/fa/settings.json';
 import faSurveys from './locales/fa/surveys.json';
+import frAttendance from './locales/fr/attendance.json';
+import frAuth from './locales/fr/auth.json';
+import frCommon from './locales/fr/common.json';
+import frEquipment from './locales/fr/equipment.json';
+import frErrors from './locales/fr/errors.json';
+import frEvents from './locales/fr/events.json';
+import frFeedback from './locales/fr/feedback.json';
+import frForum from './locales/fr/forum.json';
+import frGallery from './locales/fr/gallery.json';
+import frHome from './locales/fr/home.json';
+import frKnowledge from './locales/fr/knowledge.json';
+import frMentoring from './locales/fr/mentoring.json';
+import frMessaging from './locales/fr/messaging.json';
+import frNav from './locales/fr/nav.json';
+import frOnboarding from './locales/fr/onboarding.json';
+import frParticipants from './locales/fr/participants.json';
+import frPlayerServices from './locales/fr/player-services.json';
+import frProfile from './locales/fr/profile.json';
+import frPush from './locales/fr/push.json';
+import frSettings from './locales/fr/settings.json';
+import frSurveys from './locales/fr/surveys.json';
 
 const resources = {
   ca: {
@@ -237,6 +258,33 @@ const resources = {
     referrals: enReferrals,
     surveys: enSurveys,
     settings: enSettings,
+  },
+  // French (RAPP-781) covers the player screens. Of the staff namespaces it
+  // holds only the texts a player receives (the season reminder, the sample
+  // answers of the form previews): staff screens stay in Catalan, Spanish or
+  // English, and every key French lacks falls back to Catalan.
+  fr: {
+    common: frCommon,
+    home: frHome,
+    auth: frAuth,
+    errors: frErrors,
+    nav: frNav,
+    onboarding: frOnboarding,
+    equipment: frEquipment,
+    profile: frProfile,
+    push: frPush,
+    events: frEvents,
+    forum: frForum,
+    gallery: frGallery,
+    knowledge: frKnowledge,
+    messaging: frMessaging,
+    mentoring: frMentoring,
+    feedback: frFeedback,
+    attendance: frAttendance,
+    playerServices: frPlayerServices,
+    surveys: frSurveys,
+    participants: frParticipants,
+    settings: frSettings,
   },
   ar: {
     common: arCommon,

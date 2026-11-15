@@ -12,5 +12,6 @@
   "referralUpdateTitle": "Nova actualització d’una derivació",
   "referralUpdateBody": "Obre la fitxa de la participant per revisar-la.",
   "mentoringUpdateTitle": "Actualització de la teva cita privada",
-  "mentoringUpdateBody": "Obre Ramassà per veure el dia i l’hora."
+  "mentoringUpdateBody": "Obre Ramassà per veure el dia i l’hora.",
+  "customFormFallbackBody": "Toca per respondre'l."
 }

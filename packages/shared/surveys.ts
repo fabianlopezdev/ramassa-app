@@ -8,17 +8,18 @@ import {
   type NotificationAudience,
   type NotificationAudienceKind,
 } from './notifications';
+import { publishedTranslationsSchema, storedTranslationsSchema } from './schemas/language';
 import type { Database, Json } from './types/database';
 
-export const surveyLocalizedTextSchema = z.object({
-  ca: z.string().trim().min(1).max(1000),
-  es: z.string().trim().min(1).max(1000),
-  en: z.string().trim().min(1).max(1000),
-  ar: z.string().trim().min(1).max(1000),
-  fa: z.string().trim().min(1).max(1000),
-});
+const surveyCopySchema = z.string().trim().min(1).max(1000);
 
-export type SurveyLocalizedText = z.infer<typeof surveyLocalizedTextSchema>;
+/** Survey copy as staff publish it: every supported language, French too. */
+export const surveyLocalizedTextSchema = publishedTranslationsSchema(surveyCopySchema);
+
+/** Survey copy as stored: a survey published before French has none (RAPP-781). */
+const storedSurveyLocalizedTextSchema = storedTranslationsSchema(surveyCopySchema);
+
+export type SurveyLocalizedText = z.infer<typeof storedSurveyLocalizedTextSchema>;
 export type SurveyQuestionType = 'rating' | 'multiple_choice' | 'yes_no' | 'free_text';
 export type SurveyAnswer = number | string | boolean;
 
@@ -40,50 +41,54 @@ export interface SurveyResponse {
   readonly id: string;
   readonly playerId: string;
   readonly playerName: string;
-  readonly language: 'ca' | 'es' | 'en' | 'ar' | 'fa';
+  readonly language: SupportedLanguage;
   readonly answers: Readonly<Record<string, SurveyAnswer>>;
   readonly status: 'in_progress' | 'completed';
   readonly completedAt: string | null;
 }
 
-const choiceSchema = z.object({
-  id: z
-    .string()
-    .trim()
-    .min(1)
-    .max(80)
-    .regex(/^[a-z0-9_-]+$/),
-  label: surveyLocalizedTextSchema,
-});
-const choiceListSchema = z
-  .array(choiceSchema)
-  .min(2)
-  .max(12)
-  .refine((choices) => new Set(choices.map((choice) => choice.id)).size === choices.length, {
-    message: 'choice ids must be unique',
+const choiceIdSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(80)
+  .regex(/^[a-z0-9_-]+$/);
+
+function questionSchemaFor(text: z.ZodType<SurveyLocalizedText>) {
+  const choiceListSchema = z
+    .array(z.object({ id: choiceIdSchema, label: text }))
+    .min(2)
+    .max(12)
+    .refine((choices) => new Set(choices.map((choice) => choice.id)).size === choices.length, {
+      message: 'choice ids must be unique',
+    });
+  const questionBaseSchema = z.object({
+    id: z.uuid(),
+    prompt: text,
+    required: z.boolean(),
+    sortOrder: z.number().int().nonnegative(),
   });
+  return z.discriminatedUnion('type', [
+    questionBaseSchema.extend({ type: z.literal('rating'), options: z.null() }),
+    questionBaseSchema.extend({
+      type: z.literal('multiple_choice'),
+      options: choiceListSchema,
+    }),
+    questionBaseSchema.extend({ type: z.literal('yes_no'), options: z.null() }),
+    questionBaseSchema.extend({ type: z.literal('free_text'), options: z.null() }),
+  ]);
+}
 
-const questionBaseSchema = z.object({
-  id: z.uuid(),
-  prompt: surveyLocalizedTextSchema,
-  required: z.boolean(),
-  sortOrder: z.number().int().nonnegative(),
-});
+/** A question as staff publish it: every text in every supported language. */
+export const surveyQuestionSchema = questionSchemaFor(surveyLocalizedTextSchema);
 
-export const surveyQuestionSchema = z.discriminatedUnion('type', [
-  questionBaseSchema.extend({ type: z.literal('rating'), options: z.null() }),
-  questionBaseSchema.extend({
-    type: z.literal('multiple_choice'),
-    options: choiceListSchema,
-  }),
-  questionBaseSchema.extend({ type: z.literal('yes_no'), options: z.null() }),
-  questionBaseSchema.extend({ type: z.literal('free_text'), options: z.null() }),
-]);
+/** A question as stored, readable when it was written before French. */
+const storedSurveyQuestionSchema = questionSchemaFor(storedSurveyLocalizedTextSchema);
 
 export const surveyDefinitionSchema = z
   .object({
     title: surveyLocalizedTextSchema.refine(
-      (copy) => Object.values(copy).every((value) => value.length <= 160),
+      (copy) => Object.values(copy).every((value) => value === undefined || value.length <= 160),
       'survey titles cannot exceed 160 characters',
     ),
     eventId: z.uuid().nullable(),
@@ -362,23 +367,23 @@ const answersSchema = z.record(z.string(), z.union([z.number(), z.string(), z.bo
 const audienceKindSchema = z.enum(['all', 'interest', 'signup', 'entity', 'custom_group']);
 const staffSurveyRowSchema = z.object({
   id: z.uuid(),
-  title: surveyLocalizedTextSchema,
+  title: storedSurveyLocalizedTextSchema,
   event_id: z.uuid().nullable(),
   published_at: z.string(),
   closes_at: z.string().nullable(),
   audience_kind: audienceKindSchema,
   audience_config: z.record(z.string(), z.unknown()),
-  questions: z.array(surveyQuestionSchema),
+  questions: z.array(storedSurveyQuestionSchema),
   response_count: z.coerce.number().int().nonnegative(),
   completed_count: z.coerce.number().int().nonnegative(),
 });
 const playerSurveyRowSchema = z.object({
   id: z.uuid(),
-  title: surveyLocalizedTextSchema,
+  title: storedSurveyLocalizedTextSchema,
   event_id: z.uuid().nullable(),
   published_at: z.string(),
   closes_at: z.string().nullable(),
-  questions: z.array(surveyQuestionSchema),
+  questions: z.array(storedSurveyQuestionSchema),
   response_status: z.enum(['in_progress', 'completed']).nullable(),
   completed_at: z.string().nullable(),
 });
@@ -428,7 +433,7 @@ function audienceFromDatabase(
 }
 
 export function resolveSurveyCopy(copy: SurveyLocalizedText, language: string): string {
-  return copy[isSupportedLanguage(language) ? language : 'ca'];
+  return (isSupportedLanguage(language) ? copy[language] : undefined) ?? copy.ca;
 }
 
 export async function fetchStaffSurveys(

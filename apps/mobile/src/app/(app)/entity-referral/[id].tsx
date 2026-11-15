@@ -24,8 +24,9 @@ import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
 import type { SupportedLanguage } from '@ramassa/shared/i18n';
 import { countryLabelForCanonical } from '@ramassa/shared/i18n/countries';
 import { municipalityLabelForCanonical } from '@ramassa/shared/i18n/municipalities';
+import { appFormValues } from '@ramassa/shared/intake-builder';
 import { REFERRAL_UPDATE_TYPES } from '@ramassa/shared/referrals';
-import type { ReferralAnswers } from '@ramassa/shared/referrals';
+import type { ReferralRecord } from '@ramassa/shared/referrals';
 import { formatSupportNeeds } from '@ramassa/shared/schemas';
 
 type UpdateType = (typeof REFERRAL_UPDATE_TYPES)[number];
@@ -58,51 +59,70 @@ function Detail({ label, value }: { readonly label: string; readonly value: stri
   );
 }
 
-/** The season answers as label and value rows, skipping what was not given. */
+/** A key the rows have a label for, or null. */
+function keyed<Key extends string>(
+  value: string | undefined,
+  keys: Readonly<Record<Key, string>>,
+): Key | null {
+  return value !== undefined && Object.hasOwn(keys, value) ? (value as Key) : null;
+}
+
+/**
+ * The entity's answers as label and value rows, skipping what was not given.
+ * Each is read by field, through the organization's fields (RAPP-663).
+ */
 function referralAnswerRows(
-  answers: ReferralAnswers,
+  referral: ReferralRecord,
   t: (key: string) => string,
   locale: string,
 ): readonly { readonly label: string; readonly value: string }[] {
+  const answers = appFormValues(referral.fields, referral.answers);
   const rows: { label: string; value: string }[] = [];
-  const add = (labelKey: string, value: string | null) => {
-    if (value !== null && value !== '') rows.push({ label: t(labelKey), value });
+  const add = (labelKey: string, value: string | null | undefined) => {
+    if (value !== null && value !== undefined && value !== '') {
+      rows.push({ label: t(labelKey), value });
+    }
   };
   const language = locale as SupportedLanguage;
+  const documentType = keyed(answers.documentType, DOCUMENT_TYPE_KEYS);
+  const applicantStatus = keyed(answers.applicantStatus, APPLICANT_STATUS_KEYS);
+  const childcareNeed = keyed(answers.childcareNeed, CHILDCARE_KEYS);
   add('onboarding:dateOfBirthLabel', answers.dateOfBirth);
   add(
     'onboarding:nationalityLabel',
-    answers.nationality === null
+    answers.nationality === undefined
       ? null
       : (countryLabelForCanonical(answers.nationality, language) ?? answers.nationality),
   );
   add(
     'onboarding:documentTypeLabel',
-    answers.documentType === null ? null : t(DOCUMENT_TYPE_KEYS[answers.documentType]),
+    documentType === null ? null : t(DOCUMENT_TYPE_KEYS[documentType]),
   );
   add('onboarding:documentNumberLabel', answers.documentNumber);
   add(
     'onboarding:cityLabel',
-    answers.city === null
+    answers.city === undefined
       ? null
       : (municipalityLabelForCanonical(answers.city, language) ?? answers.city),
   );
   add(
     'onboarding:applicantStatusLabel',
-    answers.applicantStatus === null ? null : t(APPLICANT_STATUS_KEYS[answers.applicantStatus]),
+    applicantStatus === null ? null : t(APPLICANT_STATUS_KEYS[applicantStatus]),
   );
   add(
     'onboarding:supportingEntitiesLabel',
-    answers.supportingEntities.length === 0 ? null : answers.supportingEntities.join(', '),
+    (answers.supportingEntities ?? []).length === 0
+      ? null
+      : (answers.supportingEntities ?? []).join(', '),
   );
   add('onboarding:referenceContactNameLabel', answers.referenceContactName);
   add(
     'onboarding:seasonNumberLabel',
-    answers.seasonNumber === null ? null : t(`onboarding:seasonNumber${answers.seasonNumber}`),
+    referral.seasonNumber === null ? null : t(`onboarding:seasonNumber${referral.seasonNumber}`),
   );
   add(
     'onboarding:childcareNeedLabel',
-    answers.childcareNeed === null ? null : t(CHILDCARE_KEYS[answers.childcareNeed]),
+    childcareNeed === null ? null : t(CHILDCARE_KEYS[childcareNeed]),
   );
   add('onboarding:specificNeedsLabel', formatSupportNeeds(answers.specificNeeds, t));
   return rows;
@@ -150,6 +170,14 @@ export default function EntityReferralScreen() {
   );
   const data = referral.data;
   const canShare = content.trim().length > 0 && !addUpdate.isPending;
+  // What the entity sent, read by field (RAPP-663). Her phone is one of her
+  // answers since RAPP-661; an older referral kept it on the referral itself.
+  const answerRows =
+    data === undefined ? [] : referralAnswerRows(data, t, i18n.resolvedLanguage ?? 'ca');
+  const phone =
+    data === undefined
+      ? null
+      : (data.referredPhone ?? appFormValues(data.fields, data.answers).phone ?? null);
 
   return (
     <SafeAreaView
@@ -191,9 +219,7 @@ export default function EntityReferralScreen() {
               </View>
 
               <Section title={t('contactTitle')}>
-                {data.referredPhone === null ? null : (
-                  <Detail label={t('phone')} value={data.referredPhone} />
-                )}
+                {phone === null ? null : <Detail label={t('phone')} value={phone} />}
                 {data.referredEmail === null ? null : (
                   <Detail label={t('email')} value={data.referredEmail} />
                 )}
@@ -206,9 +232,9 @@ export default function EntityReferralScreen() {
               </Section>
 
               {/* What the entity sent, while the referral is pending (RAPP-303). */}
-              {data.answers === null ? null : (
+              {answerRows.length === 0 ? null : (
                 <Section title={t('onboarding:seasonSectionTitle')}>
-                  {referralAnswerRows(data.answers, t, i18n.resolvedLanguage ?? 'ca').map((row) => (
+                  {answerRows.map((row) => (
                     <Detail key={row.label} label={row.label} value={row.value} />
                   ))}
                 </Section>

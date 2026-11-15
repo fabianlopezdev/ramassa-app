@@ -101,7 +101,7 @@ test('the seeded results are attributed, and a new survey needs every language a
   // Not before every language is approved.
   await page.getByTestId('survey-save').click();
   await expect(page.getByTestId('survey-notice')).toHaveText(
-    'Review and approve all five languages before publishing.',
+    'Review and approve every language before publishing.',
   );
 
   await page.getByTestId('survey-generate').click();

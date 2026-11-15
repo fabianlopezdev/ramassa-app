@@ -1,0 +1,248 @@
+/**
+ * One section of the Fitxa on her page (RAPP-653, RAPP-664): its fields in the
+ * Fitxa's order, each with her answer, who gave it and when, the per-player
+ * choice and Edit. Every field reads her answers by field and saves through
+ * her record (`update_participant_profile`), the app's fields and the team's
+ * alike, with one editor. Her names are answers like any field (RAPP-693).
+ *
+ * Privacy stays the database's: an answer above the reader's level never
+ * reaches the page, and its row says which level it needs (from the field's
+ * level in the layout).
+ */
+
+import { EditorSection } from '@/components/layout/editor-section';
+import { answerSourceText } from '@/components/participants/answer-source';
+import {
+  CustomAnswerValueView,
+  useAnswerWords,
+} from '@/components/participants/custom-answer-value';
+import {
+  FieldAnswerEditor,
+  type FieldAnswerChanges,
+} from '@/components/participants/field-answer-editor';
+import { ProfileAnswerRow, type RowChoice } from '@/components/participants/profile-answer-row';
+import { Button } from '@/components/ui/button';
+import {
+  fieldsEditedWith,
+  isNameField,
+  missingLevel,
+  type FieldAnswers,
+} from '@/lib/participant-fitxa';
+import { HeartPulse, MapPin, Pencil, Phone, Shirt, UserRound, UsersRound } from 'lucide-react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { IntakeQuestionState } from '@ramassa/shared/intake';
+import {
+  answerText,
+  isStaffWritable,
+  questionOfField,
+  textIn,
+  type PlanQuestion,
+  type ProfileField,
+  type ProfileLayout,
+  type ProfileSection as Section,
+} from '@ramassa/shared/intake-builder';
+import type { CustomAnswerValue, DocumentNumberRule } from '@ramassa/shared/intake-builder';
+import type { ParticipantUpdate } from '@ramassa/shared/participants';
+import type { PermissionCode } from '@ramassa/shared/permissions';
+import type { LanguageCode } from '@ramassa/shared/schemas';
+
+const PROFILE_SECTION_ICONS: Readonly<Record<string, typeof UserRound>> = {
+  identity: UserRound,
+  contact: Phone,
+  equipment: Shirt,
+  health: HeartPulse,
+  logistics: MapPin,
+  family: UsersRound,
+};
+
+/** What every row of her page reads and writes through. */
+export interface FitxaContext {
+  readonly layout: ProfileLayout;
+  /** Her answers, by field. */
+  readonly answers: ReadonlyMap<string, FieldAnswers>;
+  readonly sees: (code: PermissionCode) => boolean;
+  /** participants.view_personal: the team completes and corrects her answers. */
+  readonly canEdit: boolean;
+  /** Her plan's question per field while choices are shown; null when they are not. */
+  readonly choices: ReadonlyMap<string, PlanQuestion> | null;
+  readonly isChoiceBusy: boolean;
+  readonly onChoice: (question: PlanQuestion, state: IntakeQuestionState) => void;
+  readonly editingId: string | null;
+  readonly onEditingChange: (id: string | null) => void;
+  /** Throws when the database refuses, so the editor stays open and says why. */
+  readonly onSave: (update: ParticipantUpdate) => Promise<void>;
+  readonly onOpenFile?: (objectKey: string) => Promise<void>;
+}
+
+export function ProfileSection({
+  section,
+  fields,
+  context,
+}: {
+  readonly section: Section;
+  readonly fields: readonly ProfileField[];
+  readonly context: FitxaContext;
+}) {
+  const { t, i18n } = useTranslation('participants');
+  const [showEditors, setShowEditors] = useState(false);
+  const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
+  const Icon = PROFILE_SECTION_ICONS[section.key] ?? UserRound;
+  const canEditSection =
+    context.canEdit &&
+    fields.some(
+      (field) =>
+        !field.isArchived && isStaffWritable(field) && missingLevel(field, context.sees) === null,
+    );
+  const isEditingSection = showEditors || fields.some((field) => field.id === context.editingId);
+  return (
+    <EditorSection
+      title={textIn(section.title, language)}
+      leading={<Icon aria-hidden className="size-5 text-primary" />}
+      actions={
+        canEditSection ? (
+          <Button
+            variant={isEditingSection ? 'secondary' : 'outline'}
+            size="icon-sm"
+            aria-label={t('fitxa.editNamed', { field: textIn(section.title, language) })}
+            aria-expanded={isEditingSection}
+            onClick={() => {
+              setShowEditors(!isEditingSection);
+              if (isEditingSection) context.onEditingChange(null);
+            }}
+            data-testid={`fitxa-section-${section.key}-edit`}
+          >
+            <Pencil aria-hidden className="size-3.5" />
+          </Button>
+        ) : undefined
+      }
+      isFlush
+      className="[&>header]:mx-5 [&>header]:px-0"
+      testId={`fitxa-section-${section.key}`}
+    >
+      <ul className="flex flex-col divide-y px-5 py-2">
+        {fields.map((field) => (
+          <FitxaFieldRow
+            key={field.id}
+            field={field}
+            context={context}
+            showEditAction={isEditingSection}
+          />
+        ))}
+      </ul>
+    </EditorSection>
+  );
+}
+
+/**
+ * Her document number's check while staff edit her record (RAPP-782): her
+ * document type as edited in the same form, else as stored.
+ */
+function documentRuleOf(
+  context: FitxaContext,
+  edited: Readonly<Record<string, CustomAnswerValue | null>>,
+): DocumentNumberRule | undefined {
+  const number = context.layout.fields.find((each) => each.systemKey === 'document_number');
+  const type = context.layout.fields.find((each) => each.systemKey === 'document_type');
+  if (number === undefined) return undefined;
+  const chosen =
+    type === undefined
+      ? undefined
+      : type.id in edited
+        ? edited[type.id]
+        : context.answers.get(type.id)?.current.value;
+  const typeKey = type?.options.find((option) => option.id === chosen)?.key ?? undefined;
+  return { fieldId: number.id, typeKey };
+}
+
+function FitxaFieldRow({
+  field,
+  context,
+  showEditAction,
+}: {
+  readonly field: ProfileField;
+  readonly context: FitxaContext;
+  readonly showEditAction: boolean;
+}) {
+  const { t, i18n } = useTranslation(['participants', 'onboarding', 'profile', 'common']);
+  const locale = i18n.resolvedLanguage ?? 'ca';
+  const language = locale as LanguageCode;
+  const words = useAnswerWords();
+  const lockedLevel = missingLevel(field, context.sees);
+  const question = context.choices?.get(field.id) ?? null;
+  const choice: RowChoice | null =
+    question === null
+      ? null
+      : {
+          question,
+          isBusy: context.isChoiceBusy,
+          onChange: (state) => context.onChoice(question, state),
+        };
+  const isEditing = context.editingId === field.id;
+  const close = () => context.onEditingChange(null);
+  const asked = questionOfField(context.layout, field);
+  const answers = context.answers.get(field.id);
+  const current = answers?.current;
+  const seasonOf = (seasonName: string | null) => (seasonName === null ? '' : ` · ${seasonName}`);
+  // The fields that go with this one, edited in the same form; only those she may read.
+  const partners = fieldsEditedWith(context.layout, field)
+    .filter((partner) => missingLevel(partner.field, context.sees) === null)
+    .map((partner) => ({
+      ...partner,
+      question: questionOfField(context.layout, partner.field),
+      value: context.answers.get(partner.field.id)?.current.value,
+    }));
+
+  async function save(changes: FieldAnswerChanges) {
+    await context.onSave({ answers: changes });
+    close();
+  }
+
+  return (
+    <ProfileAnswerRow
+      name={textIn(field.label, language)}
+      showEditAction={showEditAction}
+      inset
+      lockedLevel={lockedLevel}
+      choice={choice}
+      hasChoiceColumn={context.choices !== null}
+      isEditing={isEditing}
+      onToggleEdit={() => context.onEditingChange(isEditing ? null : field.id)}
+      testId={`fitxa-field-${field.builtinKey ?? field.systemKey ?? field.id}`}
+      value={
+        current === undefined ? null : (
+          <CustomAnswerValueView
+            question={asked}
+            value={current.value}
+            language={language}
+            onOpenFile={context.onOpenFile}
+          />
+        )
+      }
+      source={
+        current === undefined
+          ? null
+          : `${answerSourceText(current, t, locale)}${seasonOf(current.seasonName)}`
+      }
+      older={(answers?.older ?? []).map(
+        (row) => `${row.seasonName ?? ''}: ${answerText(asked, row.value, language, words)}`,
+      )}
+      // A file is hers to give; an archived field keeps what she said.
+      canEdit={
+        context.canEdit && lockedLevel === null && !field.isArchived && isStaffWritable(field)
+      }
+      editor={
+        <FieldAnswerEditor
+          question={asked}
+          value={current?.value}
+          partners={partners}
+          isRequired={isNameField(field)}
+          documentNumberRule={(edited) => documentRuleOf(context, edited)}
+          language={language}
+          onSave={save}
+          onCancel={close}
+        />
+      }
+    />
+  );
+}

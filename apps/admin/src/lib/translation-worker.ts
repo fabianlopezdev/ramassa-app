@@ -3,6 +3,7 @@
  * with the phone (`@ramassa/shared/translation/client`, RAPP-341); this file
  * adds the admin's address, session and Sentry-reporting `safeAsync`.
  */
+import { runCatalanTranslation } from '@/lib/catalan-translation';
 import { safeAsync } from '@/lib/observability';
 import { adminClientEnv, supabase } from '@/lib/supabase';
 import { AppError } from '@ramassa/shared/errors';
@@ -36,4 +37,13 @@ export async function requestTranslation(
 
 export function requestCatalanTranslation(text: string) {
   return requestTranslation(text, 'ca', CATALAN_TRANSLATION_TARGETS);
+}
+
+/**
+ * Catalan texts into the languages each needs (RAPP-750, RAPP-783), for the
+ * editors' translate buttons. See `runCatalanTranslation` for how a failed
+ * language is told apart from the others.
+ */
+export function translateFromCatalan(plan: ReadonlyMap<string, readonly SupportedLanguage[]>) {
+  return runCatalanTranslation(plan, (text, targets) => requestTranslation(text, 'ca', targets));
 }

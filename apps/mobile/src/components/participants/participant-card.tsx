@@ -38,10 +38,11 @@ import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE, isSupportedLanguage, LANGUAGE_NATIVE_NAMES } from '@ramassa/shared/i18n';
 import {
   dependentsShown,
+  hasJoined,
   type DependentsShown,
-  type ParticipantDetailRow,
+  type ParticipantRecord,
 } from '@ramassa/shared/participants';
-import { formatSupportNeeds } from '@ramassa/shared/schemas';
+import { formatSupportNeeds, profileFormOf } from '@ramassa/shared/schemas';
 
 function CardRow({ label, value }: { readonly label: string; readonly value: string }) {
   const languageFontClass = useLanguageFontClass();
@@ -179,7 +180,7 @@ export function ParticipantCard({
   const name = `${data.first_name} ${data.last_name}`;
   // Not joined yet: staff created her profile and she has not accepted the terms (RAPP-300).
   // She can be edited, but not deactivated, handed material or moderated: she is not a player yet.
-  const hasJoined = data.terms_accepted_at !== null;
+  const joined = hasJoined(data);
   const dependentsText = (shownDependents: DependentsShown) =>
     shownDependents.kind === 'count'
       ? String(shownDependents.count)
@@ -188,26 +189,29 @@ export function ParticipantCard({
         : tProfile('notProvided');
   const shown = (value: string | null) =>
     value === null || value.length === 0 ? tProfile('notProvided') : value;
+  // Her answers read by field, through her organization's fields (RAPP-663).
+  const her = profileFormOf(data);
+  const shownKey = (value: string | undefined) => (value === undefined ? null : value);
   const row = (
     field: ParticipantProfileField,
-    participant: ParticipantDetailRow,
+    participant: ParticipantRecord,
   ): { readonly label: string; readonly value: string } => {
     switch (field) {
       case 'dateOfBirth':
         return {
           label: tOnboarding('dateOfBirthLabel'),
           value:
-            participant.date_of_birth === null
+            her.dateOfBirth === ''
               ? tProfile('notProvided')
-              : formats.day.format(new Date(`${participant.date_of_birth}T00:00:00Z`)),
+              : formats.day.format(new Date(`${her.dateOfBirth}T00:00:00Z`)),
         };
       case 'placeOfBirth':
         return {
           label: tOnboarding('placeOfBirthLabel'),
-          value: shown(participant.place_of_birth),
+          value: shown(her.placeOfBirth),
         };
       case 'nationality':
-        return { label: tOnboarding('nationalityLabel'), value: shown(participant.nationality) };
+        return { label: tOnboarding('nationalityLabel'), value: shown(her.nationality) };
       case 'language':
         return {
           label: tProfile('languageLabel'),
@@ -216,7 +220,7 @@ export function ParticipantCard({
             : tProfile('notProvided'),
         };
       case 'documentType': {
-        const type = participant.document_type;
+        const type = shownKey(her.documentType);
         return {
           label: tOnboarding('documentTypeLabel'),
           value:
@@ -228,47 +232,48 @@ export function ParticipantCard({
       case 'documentNumber':
         return {
           label: tOnboarding('documentNumberLabel'),
-          value: shown(participant.document_number),
+          value: shown(shownKey(her.documentNumber)),
         };
       case 'phone':
-        return { label: tProfile('fieldPhone'), value: shown(participant.phone) };
+        return { label: tProfile('fieldPhone'), value: shown(shownKey(her.phone)) };
       case 'address':
-        return { label: tProfile('fieldAddress'), value: shown(participant.address) };
+        return { label: tProfile('fieldAddress'), value: shown(shownKey(her.address)) };
       case 'city':
-        return { label: tProfile('fieldCity'), value: shown(participant.city) };
+        return { label: tProfile('fieldCity'), value: shown(shownKey(her.city)) };
       case 'postalCode':
-        return { label: tProfile('fieldPostalCode'), value: shown(participant.postal_code) };
+        return { label: tProfile('fieldPostalCode'), value: shown(shownKey(her.postalCode)) };
       case 'entity':
-        return { label: t('columnEntity'), value: shown(participant.reference_entity) };
+        return { label: t('columnEntity'), value: shown(her.referenceEntity) };
       case 'referenceContact':
         return {
           label: tOnboarding('referenceContactNameLabel'),
-          value: shown(participant.reference_contact_name),
+          value: shown(shownKey(her.referenceContactName)),
         };
       case 'dependents':
         return {
           label: t('columnDependents'),
           // Unknown is not "no" (RAPP-611).
-          value: dependentsText(
-            dependentsShown(participant.has_dependents, participant.num_dependents),
-          ),
+          value: dependentsText(dependentsShown(her.hasDependents, her.numDependents)),
         };
       case 'clothingSize':
-        return { label: tOnboarding('clothingSizeLabel'), value: shown(participant.clothing_size) };
+        return { label: tOnboarding('clothingSizeLabel'), value: shown(her.clothingSize) };
       case 'shoeSize':
-        return { label: tOnboarding('shoeSizeLabel'), value: shown(participant.shoe_size) };
+        return { label: tOnboarding('shoeSizeLabel'), value: shown(her.shoeSize) };
       case 'applicantStatus':
         return {
           label: tOnboarding('applicantStatusLabel'),
           value:
-            participant.applicant_status == null
-              ? tProfile('notProvided')
-              : tOnboarding(APPLICANT_STATUS_KEYS[participant.applicant_status]),
+            her.applicantStatus !== undefined &&
+            Object.hasOwn(APPLICANT_STATUS_KEYS, her.applicantStatus)
+              ? tOnboarding(
+                  APPLICANT_STATUS_KEYS[her.applicantStatus as keyof typeof APPLICANT_STATUS_KEYS],
+                )
+              : tProfile('notProvided'),
         };
       case 'supportingEntities':
         return {
           label: tOnboarding('supportingEntitiesLabel'),
-          value: shown(participant.supporting_entities?.join(', ') ?? null),
+          value: shown(her.supportingEntities.join(', ')),
         };
       case 'seasonNumber':
         return {
@@ -282,14 +287,14 @@ export function ParticipantCard({
         return {
           label: tOnboarding('childcareNeedLabel'),
           value:
-            participant.childcare_need == null
-              ? tProfile('notProvided')
-              : tOnboarding(CHILDCARE_KEYS[participant.childcare_need]),
+            her.childcareNeed !== undefined && Object.hasOwn(CHILDCARE_KEYS, her.childcareNeed)
+              ? tOnboarding(CHILDCARE_KEYS[her.childcareNeed as keyof typeof CHILDCARE_KEYS])
+              : tProfile('notProvided'),
         };
       case 'specificNeeds':
         return {
           label: tOnboarding('specificNeedsLabel'),
-          value: shown(formatSupportNeeds(participant.specific_needs, tOnboarding)),
+          value: shown(formatSupportNeeds(her.specificNeeds, tOnboarding)),
         };
       case 'mediaConsent':
         // The staff wording. Her own profile says "I appear in community photos".
@@ -361,7 +366,7 @@ export function ParticipantCard({
               data.is_active ? 'text-neutral-800' : 'text-neutral-600'
             } ${languageFontClass}`}
           >
-            {!hasJoined ? t('rowInvited') : data.is_active ? t('rowActive') : t('rowInactive')}
+            {!joined ? t('rowInvited') : data.is_active ? t('rowActive') : t('rowInactive')}
           </Text>
           {data.is_forum_banned ? (
             <Text className={`text-start text-sm font-semibold text-error ${languageFontClass}`}>
@@ -374,7 +379,7 @@ export function ParticipantCard({
         </Text>
       </View>
 
-      {canHandOver && hasJoined ? (
+      {canHandOver && joined ? (
         <CardAction
           testID="participant-hand-over"
           label={t('material.handOver')}
@@ -382,7 +387,7 @@ export function ParticipantCard({
           isPrimary
         />
       ) : null}
-      {canEdit || (hasJoined && (canChangeStatus || canModerateForum)) ? (
+      {canEdit || (joined && (canChangeStatus || canModerateForum)) ? (
         <View className="flex-row flex-wrap gap-sm">
           {canEdit ? (
             <CardAction
@@ -391,7 +396,7 @@ export function ParticipantCard({
               onPress={() => push(`/participant-edit/${participantId}` as Href)}
             />
           ) : null}
-          {canChangeStatus && hasJoined ? (
+          {canChangeStatus && joined ? (
             <CardAction
               testID="participant-status"
               label={data.is_active ? t('statusActionDeactivate') : t('statusActionActivate')}
@@ -399,7 +404,7 @@ export function ParticipantCard({
               isBusy={setActive.isPending}
             />
           ) : null}
-          {canModerateForum && hasJoined ? (
+          {canModerateForum && joined ? (
             <CardAction
               testID="participant-forum"
               label={
@@ -447,7 +452,7 @@ export function ParticipantCard({
         style={continuousCorners}
         className="gap-xs rounded-md border border-neutral-200 bg-white p-md"
       >
-        {visibleProfileFields(access).map((field) => {
+        {visibleProfileFields(access, data.fields).map((field) => {
           const { label, value } = row(field, data);
           return <CardRow key={field} label={label} value={value} />;
         })}

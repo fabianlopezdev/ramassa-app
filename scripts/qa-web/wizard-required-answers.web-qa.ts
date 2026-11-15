@@ -9,7 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { TEST_PLAYER_EMAIL } from '@ramassa/shared/testing';
-import { PLAYER_ORIGIN, queryDatabase, signInPlayer } from './session';
+import { PLAYER_ORIGIN, queryDatabase, signInPlayer, writeAppAnswerSql } from './session';
 
 const ORG = '5eed0000-0000-4000-8000-000000000000';
 const HER = `(select id from auth.users where email = '${TEST_PLAYER_EMAIL}')`;
@@ -28,9 +28,8 @@ function resetHer(): void {
   queryDatabase(`
     begin;
     update public.intake_flow_orders set step_order = ${SEED_ORDER} where org_id = '${ORG}';
-    update public.profiles set date_of_birth = null, place_of_birth = null, nationality = null,
-           document_type = null where id = ${HER};
-    delete from public.profile_answers where profile_id = ${HER};
+    -- Her answers by field (ADR-031): nothing answered.
+    delete from public.custom_answers where profile_id = ${HER};
     commit;
   `);
 }
@@ -40,13 +39,10 @@ test.beforeAll(() => {
   // Staff gave her name, background and document (RAPP-300).
   queryDatabase(`
     begin;
-    update public.profiles set date_of_birth = '1999-03-04', place_of_birth = 'Bamako',
-           nationality = 'Mali', document_type = 'none' where id = ${HER};
-    insert into public.profile_answers (profile_id, org_id, question, source)
-    select ${HER}, '${ORG}', question, 'staff'
-      from unnest(array['first_name', 'last_name', 'date_of_birth', 'place_of_birth',
-                        'nationality', 'document']) question
-    on conflict (profile_id, question) do nothing;
+    ${writeAppAnswerSql(HER, 'date_of_birth', '1999-03-04')}
+    ${writeAppAnswerSql(HER, 'place_of_birth', 'Bamako')}
+    ${writeAppAnswerSql(HER, 'nationality', 'Mali')}
+    ${writeAppAnswerSql(HER, 'document_type', 'none')}
     commit;
   `);
 });

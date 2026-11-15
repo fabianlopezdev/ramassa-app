@@ -49,6 +49,20 @@ mock.module('@/components/layout/form-screen', () => ({
     bottomAction: ReactNode;
   }) => createElement('main', null, navigation, heading, children, bottomAction),
 }));
+// The screen's placed fields have their own suite (custom-question-field.case).
+mock.module('@/components/onboarding/placed-fields', () => ({
+  usePlacedFields: () => ({
+    hasQuestions: false,
+    fields: null,
+    hasErrors: false,
+    isDrawing: false,
+    checkAndSave: () => true,
+    save: () => {},
+  }),
+}));
+mock.module('@/components/onboarding/wizard-validation-summary', () => ({
+  WizardValidationSummary: () => null,
+}));
 const { WizardFrame } = await import('./wizard-frame');
 const { ScreenWordingProvider } = await import('@/lib/screen-wording');
 const { EMPTY_INTAKE_CATALOG } = await import('@ramassa/shared/intake-builder');

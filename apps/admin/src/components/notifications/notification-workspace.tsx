@@ -1,5 +1,6 @@
 import { MultilingualEditor } from '@/components/content/multilingual-editor';
 import { TranslationReviewPanel } from '@/components/content/translation-review-panel';
+import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
@@ -27,17 +28,22 @@ import type {
   CreateTranslationReviewOptions,
   TranslationReview,
 } from '@ramassa/shared/translation';
+import { CATALAN_TRANSLATION_TARGETS } from '@ramassa/shared/translation/client';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 import { AudiencePicker } from './audience-picker';
 
-const TARGET_LANGUAGES = ['es', 'en', 'ar', 'fa'] as const;
+const TARGET_LANGUAGES = CATALAN_TRANSLATION_TARGETS;
 
 function reviewOptions(copy: NotificationTemplate['title']): CreateTranslationReviewOptions {
   return {
     sourceLanguage: 'ca',
     sourceText: copy.ca,
+    // A template saved before French has no French yet (RAPP-781).
     translations: Object.fromEntries(
-      TARGET_LANGUAGES.map((language) => [language, copy[language]]),
+      TARGET_LANGUAGES.flatMap((language) => {
+        const text = copy[language];
+        return text === undefined ? [] : [[language, text]];
+      }),
     ),
   };
 }
@@ -264,9 +270,9 @@ export function NotificationWorkspace({
   );
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-10 px-4 py-8 sm:px-6">
+    <Page className="gap-10">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-neutral-950">{t('title')}</h1>
+        <h1 className="text-3xl font-bold">{t('title')}</h1>
         <p className="text-neutral-600">{t('intro')}</p>
       </header>
 
@@ -359,7 +365,7 @@ export function NotificationWorkspace({
             data-testid="notification-confirmation"
             data-recipient-count={audience.length}
             data-device-count={deviceCount}
-            className="rounded-lg bg-neutral-50 p-4 text-sm text-neutral-800"
+            className="rounded-lg bg-canvas p-4 text-sm text-neutral-800"
             aria-live="polite"
           >
             {isPreviewing
@@ -506,7 +512,7 @@ export function NotificationWorkspace({
               <li
                 key={group.id}
                 data-testid={`notification-group-${group.id}`}
-                className="flex items-center justify-between gap-3 rounded-lg bg-neutral-50 p-3"
+                className="flex items-center justify-between gap-3 rounded-lg bg-canvas p-3"
               >
                 <span>
                   <strong>{group.name}</strong>
@@ -569,6 +575,6 @@ export function NotificationWorkspace({
           ))}
         </ol>
       </section>
-    </div>
+    </Page>
   );
 }

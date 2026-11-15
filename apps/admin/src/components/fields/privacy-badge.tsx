@@ -1,0 +1,39 @@
+/**
+ * A field's privacy level as a badge (RAPP-650): who on the team reads its
+ * answers, in one word (Normal, Personal, Sensitive), coloured by how closely
+ * it is guarded. The level itself is enforced by the database.
+ */
+
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
+import type { QuestionPrivacy } from '@ramassa/shared/intake-builder';
+
+/** The colours of a level, shared with the privacy cards (RAPP-669). */
+export const PRIVACY_LEVEL_CLASSES: Readonly<Record<QuestionPrivacy, string>> = {
+  normal: 'bg-muted text-foreground',
+  personal: 'bg-primary/10 text-primary',
+  sensitive: 'bg-destructive/10 text-destructive',
+};
+
+/** A level's colour on a light surface, such as the icon on its card (RAPP-670). */
+export const PRIVACY_LEVEL_TEXT: Readonly<Record<QuestionPrivacy, string>> = {
+  normal: 'text-foreground',
+  personal: 'text-primary',
+  sensitive: 'text-destructive',
+};
+
+export function PrivacyBadge({
+  level,
+  className,
+}: {
+  readonly level: QuestionPrivacy;
+  readonly className?: string;
+}) {
+  const { t } = useTranslation('settings');
+  return (
+    <Badge variant="muted" className={cn(PRIVACY_LEVEL_CLASSES[level], className)}>
+      {t(`questions.privacyLevels.${level}`)}
+    </Badge>
+  );
+}

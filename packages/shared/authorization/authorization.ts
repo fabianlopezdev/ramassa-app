@@ -8,20 +8,35 @@
  * questions the version asks and draws her signature, or signs with the ticks
  * alone when she cannot draw, and the record says so.
  *
- * A version holds everything she reads and answers: the text, the consents
- * (staff add, remove, reword, reorder and mark required), the health question
- * and the emergency contact (asked or not, required or not, their privacy
- * level and wording), and the wording of the form itself. A wording field
- * left out shows the app's own text in her language. The database checks the
- * same rules (`private.authorization_content_valid`).
+ * A version holds everything she reads: the text, the consents (staff add,
+ * remove, reword, reorder and mark required) and the wording of the form
+ * itself. A wording field left out shows the app's own text in her language.
+ * The database checks the same rules (`private.authorization_content_valid`).
+ *
+ * Her health and her emergency contact are fields since RAPP-698, placed on
+ * the Health screen (`authorizationQuestions`): she answers them by field.
+ * A version published before keeps its `questions`, which nothing reads now.
+ *
+ * Since RAPP-773 the authorization is a legal form of the form engine
+ * (`season_authorization`): staff build its screens, a version freezes the
+ * form, and she walks it with the shared form walker. This module is its
+ * adapter: her status names the form and the snapshot she walks, and
+ * `buildSignPayload` turns what she gave on the walk into the payload the
+ * database checks against the version. `authorizationContentSchema` reads
+ * the old content only, which every version keeps for older builds.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { signatureStrokesSchema, type SignatureStrokes } from '../equipment/handover';
 import { AppError, databaseErrorCode } from '../errors';
+import { staffTextIn } from '../i18n/localized-content';
+import { answerPayload, type IntakeCatalog } from '../intake-builder/builder';
+import type { CustomFormScreen } from '../intake-builder/custom-form-model';
+import { customFormScreenBlocks } from '../intake-builder/custom-forms';
+import { signatureBlocks, UNABLE_TO_DRAW } from '../intake-builder/form-blocks';
+import { formWalkPayload, type FormWalkDraft } from '../intake-builder/form-walk';
 import { withCancellation, type CancellableRequest } from '../lib/cancellation';
 import type { LanguageCode } from '../schemas/language';
-import { trimPersonName } from '../schemas/person-name';
 import type { Database, Json } from '../types/database';
 
 type Client = SupabaseClient<Database>;
@@ -35,18 +50,24 @@ export const IMAGE_RIGHTS_CONSENT = 'image_rights';
 /** The explicit consent her health answer needs (GDPR art. 9). */
 export const HEALTH_DATA_CONSENT = 'health_data';
 
-/** Text in any of the five languages; at least one is given. */
-export const authorizationTextSchema = z
-  .object({
-    ca: z.string().optional(),
-    es: z.string().optional(),
-    en: z.string().optional(),
-    ar: z.string().optional(),
-    fa: z.string().optional(),
-  })
-  .refine((text) => Object.values(text).some((value) => (value ?? '').trim() !== ''));
+const languageTextsSchema = z.object({
+  ca: z.string().optional(),
+  es: z.string().optional(),
+  en: z.string().optional(),
+  fr: z.string().optional(),
+  ar: z.string().optional(),
+  fa: z.string().optional(),
+});
+
+/** Text in any of the supported languages; at least one is given. */
+export const authorizationTextSchema = languageTextsSchema.refine((text) =>
+  Object.values(text).some((value) => (value ?? '').trim() !== ''),
+);
 
 export type AuthorizationText = z.infer<typeof authorizationTextSchema>;
+
+/** The two screens old content may reorder (RAPP-696), in their default order. */
+const AUTHORIZATION_MOVABLE_SCREENS = ['document', 'health'] as const;
 
 /** A wording override: as above, at most 2000 characters per language. */
 const overrideTextSchema = authorizationTextSchema.refine((text) =>
@@ -84,8 +105,25 @@ export const AUTHORIZATION_TEXT_FIELDS = {
 } as const;
 
 export type AuthorizationTextField = (typeof AUTHORIZATION_TEXT_FIELDS.texts)[number];
-export type HealthTextField = (typeof AUTHORIZATION_TEXT_FIELDS.health)[number];
-export type EmergencyTextField = (typeof AUTHORIZATION_TEXT_FIELDS.emergency_contact)[number];
+
+/**
+ * The wording her form can do without (RAPP-710): staff may clear it, and that
+ * language then shows none. Every other field is required. The database lists
+ * the same fields in `private.authorization_text_optional`.
+ */
+export const OPTIONAL_AUTHORIZATION_TEXT_FIELDS: readonly string[] = [
+  'intro',
+  'signature_hint',
+  'cannot_draw_hint',
+  'reregistration_intro',
+  'reregistration_season_intro',
+];
+
+function isOptionalAuthorizationTextField(field: string): boolean {
+  return OPTIONAL_AUTHORIZATION_TEXT_FIELDS.includes(field);
+}
+type HealthTextField = (typeof AUTHORIZATION_TEXT_FIELDS.health)[number];
+type EmergencyTextField = (typeof AUTHORIZATION_TEXT_FIELDS.emergency_contact)[number];
 
 /**
  * The app's own text for each field, as `onboarding` translation keys: what
@@ -133,16 +171,23 @@ export const AUTHORIZATION_BUNDLED_TEXT_KEYS = {
   readonly emergency_contact: Record<EmergencyTextField, string>;
 };
 
-/** The app's title for a required emergency contact, without "(optional)". */
-export const EMERGENCY_TITLE_REQUIRED_KEY = 'authorizationEmergencyTitleRequired';
+/** An optional text staff may clear (RAPP-710): blank in every language is allowed. */
+const optionalOverrideTextSchema = languageTextsSchema.refine((text) =>
+  Object.values(text).every((value) => (value ?? '').length <= 2000),
+);
 
 const textsOf = <Field extends string>(fields: readonly Field[]) =>
   z
     .object(
-      Object.fromEntries(fields.map((field) => [field, overrideTextSchema.optional()])) as Record<
-        Field,
-        z.ZodOptional<typeof overrideTextSchema>
-      >,
+      Object.fromEntries(
+        fields.map((field) => [
+          field,
+          (isOptionalAuthorizationTextField(field)
+            ? optionalOverrideTextSchema
+            : overrideTextSchema
+          ).optional(),
+        ]),
+      ) as Record<Field, z.ZodOptional<typeof overrideTextSchema>>,
     )
     .strict();
 
@@ -170,8 +215,6 @@ const emergencyQuestionSchema = z.object({
   texts: textsOf(AUTHORIZATION_TEXT_FIELDS.emergency_contact),
 });
 
-export type EmergencyContactPrivacy = z.infer<typeof emergencyQuestionSchema>['privacy'];
-
 export const authorizationContentSchema = z
   .object({
     title: authorizationTextSchema,
@@ -186,15 +229,24 @@ export const authorizationContentSchema = z
       .min(1)
       .max(20),
     consents: z.record(consentKeySchema, consentSchema),
-    questions: z.object({
-      health: healthQuestionSchema,
-      emergency_contact: emergencyQuestionSchema,
-    }),
+    /** Before RAPP-698 only: the Health screen asks fields now. */
+    questions: z
+      .object({
+        health: healthQuestionSchema,
+        emergency_contact: emergencyQuestionSchema,
+      })
+      .optional(),
     texts: textsOf(AUTHORIZATION_TEXT_FIELDS.texts),
     attachments: z
       .array(z.object({ label: authorizationTextSchema, url: z.url().startsWith('https://') }))
       .max(10)
       .default([]),
+    /** The movable screens' order (RAPP-696); absent is the document, then health. */
+    screen_order: z
+      .array(z.enum(AUTHORIZATION_MOVABLE_SCREENS))
+      .length(2)
+      .refine((order) => new Set(order).size === order.length, 'each screen once')
+      .optional(),
   })
   .superRefine((content, context) => {
     const entries = Object.entries(content.consents);
@@ -212,7 +264,8 @@ export const authorizationContentSchema = z
       });
     }
     for (const part of ['health', 'emergency_contact'] as const) {
-      const question = content.questions[part];
+      const question = content.questions?.[part];
+      if (question === undefined) continue;
       if (!question.asked && question.required) {
         context.addIssue({
           code: 'custom',
@@ -221,9 +274,10 @@ export const authorizationContentSchema = z
         });
       }
     }
-    const health = content.questions.health;
+    const health = content.questions?.health;
     const healthConsent = content.consents[HEALTH_DATA_CONSENT];
     if (
+      health !== undefined &&
       health.asked &&
       (healthConsent === undefined || (health.required && !healthConsent.required))
     ) {
@@ -246,29 +300,19 @@ export function orderedConsents(
     .sort((left, right) => left.position - right.position || left.key.localeCompare(right.key));
 }
 
-/** The health and emergency phase shows while the version asks either question. */
-export function isMiddlePhaseShown(content: AuthorizationContent): boolean {
-  return content.questions.health.asked || content.questions.emergency_contact.asked;
-}
-
-/** A key for a consent staff add, used by no consent of the version. */
-export function newConsentKey(content: AuthorizationContent): AuthorizationConsentKey {
-  let number = Object.keys(content.consents).length + 1;
-  while (`consent_${number}` in content.consents) number += 1;
-  return `consent_${number}`;
-}
-
 /**
- * Staff wording of a field in her language, or undefined: the caller shows
- * the app's own text in her language then, so a screen is never blank.
+ * Staff wording of a field in her language, '' for an optional text staff
+ * cleared, or undefined: the caller shows the app's own text in her language
+ * then, so a required text is never blank (RAPP-710, `staffTextIn`).
  */
 export function authorizationWording(
   texts: Readonly<Partial<Record<string, AuthorizationText | undefined>>> | undefined,
   field: string,
   language: LanguageCode,
 ): string | undefined {
-  const text = texts?.[field]?.[language]?.trim();
-  return text === undefined || text === '' ? undefined : text;
+  return (
+    staffTextIn(texts?.[field], language, isOptionalAuthorizationTextField(field)) ?? undefined
+  );
 }
 
 const statusRowSchema = z.object({
@@ -282,6 +326,8 @@ const statusRowSchema = z.object({
   // Returning: she signed an earlier season (RAPP-306). Older servers omit it.
   is_returning: z.boolean().optional().default(false),
   is_draft: z.boolean().optional().default(false),
+  // The form she walks (RAPP-773); a server before it sends none.
+  form_id: z.uuid().nullable().optional().default(null),
 });
 
 export interface AuthorizationStatus {
@@ -296,6 +342,11 @@ export interface AuthorizationStatus {
   readonly isReturning: boolean;
   /** A test player is shown the organization's draft (RAPP-619). */
   readonly isDraft: boolean;
+  /**
+   * The authorization form (RAPP-773): her catalog holds it as this version
+   * froze it. Null from a server before it, which this build cannot sign.
+   */
+  readonly formId: string | null;
 }
 
 /**
@@ -322,6 +373,7 @@ export async function fetchMyAuthorizationStatus(
     content: row.content,
     isReturning: row.is_returning,
     isDraft: row.is_draft,
+    formId: row.form_id,
   };
 }
 
@@ -330,110 +382,47 @@ export function needsAuthorization(status: AuthorizationStatus | null): boolean 
   return status?.required === true;
 }
 
-/** What she gives when she signs, before the version's own rules. */
-const signingShape = z.object({
-  // Partial: an optional consent she never touched is simply absent.
-  consents: z.partialRecord(consentKeySchema, z.boolean()),
-  healthInfo: z.string().trim().max(4000),
-  emergencyContact: z
-    .object({
-      // A name of only invisible characters is no name (RAPP-624).
-      name: z.string().overwrite(trimPersonName).max(200),
-      relation: z.string().trim().max(100),
-      phone: z.string().trim().max(50),
-    })
-    .optional(),
-  strokes: signatureStrokesSchema.nullable(),
-  unableToDraw: z.boolean(),
-});
-
-export type AuthorizationSigning = z.infer<typeof signingShape>;
-
 /**
- * Her signing, checked against the version she signs: its required consents,
- * its questions, and the health data consent her health answer needs. The
- * database checks the same (`private.validate_signing_payload`).
+ * What she sends when she signs (RAPP-773): what she gave on the screens of
+ * the authorization she saw (her answers by field, her ticks by consent key,
+ * every signature by block, the language she read) and the device. Her
+ * signature of the form's own block also goes as `signature` and
+ * `unable_to_draw`, the way an older server reads it. Null while that
+ * signature is missing: the walk asks her for it first.
  */
-export function authorizationSigningSchemaFor(content: AuthorizationContent) {
-  const { health, emergency_contact: contact } = content.questions;
-  return signingShape.superRefine((signing, context) => {
-    for (const consent of orderedConsents(content)) {
-      if (consent.required && signing.consents[consent.key] !== true) {
-        context.addIssue({ code: 'custom', path: ['consents', consent.key], message: 'required' });
-      }
-    }
-    for (const key of Object.keys(signing.consents)) {
-      if (!(key in content.consents)) {
-        context.addIssue({
-          code: 'custom',
-          path: ['consents', key],
-          message: 'not in the version',
-        });
-      }
-    }
-    if (health.asked) {
-      if (health.required && signing.healthInfo === '') {
-        context.addIssue({ code: 'custom', path: ['healthInfo'], message: 'required' });
-      }
-      if (
-        signing.healthInfo !== '' &&
-        HEALTH_DATA_CONSENT in content.consents &&
-        signing.consents[HEALTH_DATA_CONSENT] !== true
-      ) {
-        context.addIssue({
-          code: 'custom',
-          path: ['consents', HEALTH_DATA_CONSENT],
-          message: 'the health answer needs its consent',
-        });
-      }
-    }
-    if (
-      contact.asked &&
-      contact.required &&
-      ((signing.emergencyContact?.name ?? '') === '' ||
-        (signing.emergencyContact?.phone ?? '') === '')
-    ) {
-      context.addIssue({ code: 'custom', path: ['emergencyContact'], message: 'name and phone' });
-    }
-    const hasDrawing = signing.strokes !== null && signing.strokes.length > 0;
-    if (hasDrawing === signing.unableToDraw) {
-      context.addIssue({ code: 'custom', path: ['strokes'], message: 'draw or say you cannot' });
-    }
-  });
-}
-
-/** The payload: every consent of the version, ticked or not, and only those. */
-export function buildSignPayload(
-  signing: AuthorizationSigning,
-  context: { readonly language: LanguageCode; readonly device: string | null },
-  content: AuthorizationContent,
-): Json {
+export function buildSignPayload(input: {
+  readonly catalog: IntakeCatalog;
+  readonly screens: readonly Pick<CustomFormScreen, 'id'>[];
+  readonly draft: FormWalkDraft;
+  readonly language: LanguageCode;
+  readonly device: string | null;
+}): Json | null {
+  const payload = formWalkPayload(input.catalog, input.screens, input.draft, input.language);
+  const own = signatureBlocks(
+    input.screens.flatMap((screen) => customFormScreenBlocks(input.catalog, screen.id)),
+  ).find((block) => block.system === 'authorization_signature');
+  const given = own === undefined ? null : (input.draft.signatures[own.id] ?? null);
+  if (given === null) return null;
   return {
-    consents: Object.fromEntries(
-      orderedConsents(content).map(({ key }) => [key, signing.consents[key] === true]),
-    ),
-    health_info:
-      content.questions.health.asked && signing.healthInfo !== '' ? signing.healthInfo : null,
-    emergency_contact: content.questions.emergency_contact.asked
-      ? (signing.emergencyContact ?? null)
-      : null,
-    signature: signing.unableToDraw ? null : ((signing.strokes as Json | null) ?? null),
-    unable_to_draw: signing.unableToDraw,
-    language: context.language,
-    device: context.device,
+    consents: payload.consents ?? {},
+    answers: answerPayload(payload.answers),
+    signatures: payload.signatures,
+    signature: given === UNABLE_TO_DRAW ? null : (given as Json),
+    unable_to_draw: given === UNABLE_TO_DRAW,
+    language: payload.language,
+    device: input.device,
   };
 }
 
+/** Her signature of the version she was shown. */
 export async function signAuthorization(
   client: Client,
   versionId: string,
-  content: AuthorizationContent,
-  signing: AuthorizationSigning,
-  context: { readonly language: LanguageCode; readonly device: string | null },
+  payload: Json,
 ): Promise<void> {
   const { error } = await client.rpc('sign_authorization', {
     p_version_id: versionId,
-    p_payload: buildSignPayload(signing, context, content),
+    p_payload: payload,
   });
   if (error) throw new AppError(databaseErrorCode(error.message), { message: error.message });
 }
@@ -443,7 +432,15 @@ export interface MyConsent {
   readonly granted: boolean;
   /** The consent's words when she decided, in `language`; null outside the authorization. */
   readonly wording: string | null;
+  /** The consent's name in Dades legals (RAPP-699); null from an older server. */
+  readonly name: Readonly<Partial<Record<LanguageCode, string>>> | null;
+  /** The form she decided it on (RAPP-699): null on her profile or by staff. */
+  readonly form: 'authorization' | 'onboarding' | null;
 }
+
+// An object over the languages, so a language this build does not know yet is
+// dropped instead of failing the whole list (RAPP-781).
+const localizedNameSchema = languageTextsSchema;
 
 /** Her consents as they stand; a consent never given is absent. */
 export async function fetchMyConsents(
@@ -457,11 +454,16 @@ export async function fetchMyConsents(
         consent_key: z.string(),
         granted: z.boolean(),
         wording: z.string().nullable().optional().default(null),
+        name: localizedNameSchema.nullable().optional().default(null),
+        form: z.enum(['authorization', 'onboarding']).nullable().optional().default(null),
       }),
     )
     .parse(data ?? []);
   return Object.fromEntries(
-    rows.map((row) => [row.consent_key, { granted: row.granted, wording: row.wording }]),
+    rows.map((row) => [
+      row.consent_key,
+      { granted: row.granted, wording: row.wording, name: row.name, form: row.form },
+    ]),
   );
 }
 
@@ -494,10 +496,14 @@ const versionRowSchema = z.object({
   published_at: z.string().nullable(),
   is_current: z.boolean(),
   updated_at: z.string().optional(),
+  is_correction: z.boolean().default(false),
+  signature_count: z.number().int().default(0),
 });
 
 export interface AuthorizationVersion {
   readonly id: string;
+  /** The season it was published for (RAPP-694). Null for the draft. */
+  readonly seasonId: string | null;
   /** Null for the draft. */
   readonly seasonName: string | null;
   /** Null for the draft. */
@@ -507,6 +513,10 @@ export interface AuthorizationVersion {
   readonly publishedAt: string | null;
   readonly isCurrent: boolean;
   readonly updatedAt: string | null;
+  /** Published as a correction (RAPP-696): signatures on the version before it still count. */
+  readonly isCorrection: boolean;
+  /** Real players' signatures on this version (RAPP-696). */
+  readonly signatureCount: number;
 }
 
 /** The draft first, then the published versions, newest first. */
@@ -520,25 +530,16 @@ export async function fetchAuthorizationVersions(
     .parse(data ?? [])
     .map((row) => ({
       id: row.id,
+      seasonId: row.season_id,
       seasonName: row.season_name,
       versionNumber: row.version_number,
       content: row.content,
       publishedAt: row.published_at,
       isCurrent: row.is_current,
       updatedAt: row.updated_at ?? null,
+      isCorrection: row.is_correction,
+      signatureCount: row.signature_count,
     }));
-}
-
-/** Saves the one draft (onboarding designers). */
-export async function saveAuthorizationDraft(
-  client: Client,
-  content: AuthorizationContent,
-): Promise<string> {
-  const { data, error } = await client.rpc('save_authorization_draft', {
-    p_content: content as unknown as Json,
-  });
-  if (error) throw new AppError(databaseErrorCode(error.message), { message: error.message });
-  return z.string().parse(data);
 }
 
 export async function discardAuthorizationDraft(client: Client): Promise<void> {
@@ -547,11 +548,28 @@ export async function discardAuthorizationDraft(client: Client): Promise<void> {
 }
 
 /**
- * Publishes the draft for the current season (settings.organization). Every
- * player signs it on her next app open. Returns its number.
+ * How a saved change reaches whoever already answered a form (RAPP-696): a
+ * correction leaves them covered, a new version asks everyone again.
  */
-export async function publishAuthorizationDraft(client: Client): Promise<number> {
-  const { data, error } = await client.rpc('publish_authorization_draft');
+export type SaveKind = 'correction' | 'new';
+
+/**
+ * Publishes the draft (settings.organization) for a season: the current one
+ * when none is given, or a future one (RAPP-694). A new version makes every
+ * player sign a current season's version on her next app open; a correction
+ * (RAPP-696) keeps whoever signed the version before it covered. A future
+ * season's version waits until that season is marked current. Returns its
+ * number in its season.
+ */
+export async function publishAuthorizationDraft(
+  client: Client,
+  seasonId: string | null = null,
+  kind: SaveKind = 'new',
+): Promise<number> {
+  const { data, error } = await client.rpc('publish_authorization_draft', {
+    ...(seasonId === null ? {} : { p_season_id: seasonId }),
+    p_is_correction: kind === 'correction',
+  });
   if (error) throw new AppError(databaseErrorCode(error.message), { message: error.message });
   return z.number().int().parse(data);
 }
@@ -619,17 +637,65 @@ export async function fetchParticipantAuthorizations(
 
 export interface ParticipantConsent {
   readonly key: AuthorizationConsentKey;
+  /** Dades legals (RAPP-699): the consent and its name; null from an older server. */
+  readonly consentId: string | null;
+  readonly name: Readonly<Partial<Record<LanguageCode, string>>> | null;
   readonly granted: boolean;
   readonly decidedAt: string;
   readonly method: string;
+  /** The form she decided it on: null on her profile or by staff. */
+  readonly form: 'authorization' | 'onboarding' | null;
   /** The words she was shown, in `language`; null for a change outside the authorization. */
   readonly wording: string | null;
   readonly language: string | null;
   readonly required: boolean | null;
   readonly seasonName: string | null;
   readonly versionNumber: number | null;
+  /** The staff member present or recording it. */
+  readonly recordedByName: string | null;
+  /** Why staff recorded a withdrawal. */
+  readonly reason: string | null;
 }
 
+const participantConsentRowSchema = z.object({
+  consent_key: z.string(),
+  consent_id: z.uuid().nullable().optional().default(null),
+  name: localizedNameSchema.nullable().optional().default(null),
+  granted: z.boolean(),
+  decided_at: z.string(),
+  method: z.string(),
+  form: z.enum(['authorization', 'onboarding']).nullable().optional().default(null),
+  wording: z.string().nullable().optional().default(null),
+  language: z.string().nullable().optional().default(null),
+  required: z.boolean().nullable().optional().default(null),
+  season_name: z.string().nullable().optional().default(null),
+  version_number: z.number().int().nullable().optional().default(null),
+  recorded_by_name: z.string().nullable().optional().default(null),
+  reason: z.string().nullable().optional().default(null),
+});
+
+function participantConsentFrom(
+  row: z.infer<typeof participantConsentRowSchema>,
+): ParticipantConsent {
+  return {
+    key: row.consent_key,
+    consentId: row.consent_id,
+    name: row.name,
+    granted: row.granted,
+    decidedAt: row.decided_at,
+    method: row.method,
+    form: row.form,
+    wording: row.wording,
+    language: row.language,
+    required: row.required,
+    seasonName: row.season_name,
+    versionNumber: row.version_number,
+    recordedByName: row.recorded_by_name,
+    reason: row.reason,
+  };
+}
+
+/** Her consents as they stand: the latest decision of each. */
 export async function fetchParticipantConsents(
   client: Client,
   profileId: string,
@@ -637,29 +703,53 @@ export async function fetchParticipantConsents(
   const { data, error } = await client.rpc('participant_consents', { p_profile_id: profileId });
   if (error) throw new AppError('DB-1', { message: error.message });
   return z
-    .array(
-      z.object({
-        consent_key: z.string(),
-        granted: z.boolean(),
-        decided_at: z.string(),
-        method: z.string(),
-        wording: z.string().nullable().optional().default(null),
-        language: z.string().nullable().optional().default(null),
-        required: z.boolean().nullable().optional().default(null),
-        season_name: z.string().nullable().optional().default(null),
-        version_number: z.number().int().nullable().optional().default(null),
-      }),
-    )
+    .array(participantConsentRowSchema)
     .parse(data ?? [])
-    .map((row) => ({
-      key: row.consent_key,
-      granted: row.granted,
-      decidedAt: row.decided_at,
-      method: row.method,
-      wording: row.wording,
-      language: row.language,
-      required: row.required,
-      seasonName: row.season_name,
-      versionNumber: row.version_number,
-    }));
+    .map(participantConsentFrom);
+}
+
+/** Every decision of hers (RAPP-699), the newest first. */
+export async function fetchParticipantConsentHistory(
+  client: Client,
+  profileId: string,
+): Promise<readonly ParticipantConsent[]> {
+  const { data, error } = await client.rpc('participant_consent_history', {
+    p_profile_id: profileId,
+  });
+  if (error) throw new AppError('DB-1', { message: error.message });
+  return z
+    .array(participantConsentRowSchema)
+    .parse(data ?? [])
+    .map(participantConsentFrom);
+}
+
+/** How staff record her decision on her page. */
+export type StaffConsentMethod = 'paper' | 'staff';
+
+/**
+ * Staff record her decision (RAPP-699): given or withdrawn on paper, or a
+ * withdrawal she asked for, with its reason. Withdrawing the health data
+ * consent deletes her health answer.
+ */
+export async function recordParticipantConsent(
+  client: Client,
+  input: {
+    readonly profileId: string;
+    readonly consentId: string;
+    readonly granted: boolean;
+    readonly method: StaffConsentMethod;
+    readonly reason: string | null;
+    /** A paper decision's date (YYYY-MM-DD); today when null. */
+    readonly decidedOn: string | null;
+  },
+): Promise<void> {
+  const { error } = await client.rpc('record_participant_consent', {
+    p_profile_id: input.profileId,
+    p_consent_id: input.consentId,
+    p_granted: input.granted,
+    p_method: input.method,
+    p_reason: input.reason as string,
+    p_decided_on: input.decidedOn as string,
+  });
+  if (error) throw new AppError(databaseErrorCode(error.message), { message: error.message });
 }

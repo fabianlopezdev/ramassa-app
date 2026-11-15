@@ -1,119 +1,48 @@
 /**
- * Seeding the wizard from what staff or an entity already answered (RAPP-300).
- * Only ANSWERED questions are seeded: a column default (no dependants,
- * Catalan) or a value nobody chose must stay empty, so she is asked.
+ * What the wizard sends (RAPP-300, RAPP-663): only new or changed answers, by
+ * field, so a staff or entity answer she only confirmed keeps its source.
  */
 import { describe, expect, test } from 'bun:test';
-import type { IntakeQuestion } from '@ramassa/shared/intake';
 import type { CustomQuestion, IntakeScreen } from '@ramassa/shared/intake-builder';
-import type { ProfileRow } from '@ramassa/shared/schemas';
 import {
+  appAnswersToSave,
   customAnswersToSave,
-  customWizardPlan,
   draftForScenario,
   mergedCustomAnswers,
-  seedDraftFromProfile,
-  storedPayloadFromProfile,
   withSelectedLanguage,
   wizardDraftStep,
   wizardStepRoute,
 } from './onboarding-intake';
 
-const profile: ProfileRow = {
-  id: '5eed0000-0000-4000-8000-000000000098',
-  first_name: 'Mariam',
-  last_name: 'Keita',
-  date_of_birth: '1999-03-04',
-  place_of_birth: null,
-  nationality: 'Mali',
-  preferred_language: 'ca',
-  document_type: null,
-  document_number: null,
-  phone: '+34600111222',
-  address: null,
-  city: null,
-  postal_code: null,
-  reference_entity: 'Creu Roja Osona',
-  reference_contact_name: null,
-  has_dependents: false,
-  num_dependents: 0,
-  clothing_size: 'M',
-  shoe_size: null,
-  avatar_url: null,
-  media_consent: false,
-  terms_accepted_at: null,
-};
+describe('appAnswersToSave', () => {
+  const stored = { date: '1999-03-04', city: 'Vic', sizes: ['M'] };
 
-const answered = (...questions: IntakeQuestion[]) => new Set<IntakeQuestion>(questions);
-
-describe('seedDraftFromProfile', () => {
-  test('answered questions arrive in the shape each screen edits', () => {
-    const draft = seedDraftFromProfile(
-      profile,
-      answered('first_name', 'last_name', 'date_of_birth', 'nationality', 'phone', 'clothing_size'),
-    );
-    expect(draft.identity).toEqual({
-      firstName: 'Mariam',
-      lastName: 'Keita',
-      day: '4',
-      month: '3',
-      year: '1999',
-      nationality: 'Mali',
-    });
-    expect(draft.logistics).toEqual({ phone: '+34600111222', clothingSize: 'M' });
+  test('an answer she only confirmed is not sent; a changed one is', () => {
+    expect(
+      appAnswersToSave({ date: '1999-03-04', city: 'Girona', sizes: ['M'], phone: null }, stored),
+    ).toEqual({ city: 'Girona' });
   });
 
-  test('a default that nobody answered is not seeded, so she is asked', () => {
-    const draft = seedDraftFromProfile(profile, answered('first_name', 'last_name'));
-    expect(draft.identity).not.toHaveProperty('preferredLanguage');
-    expect(draft.logistics).not.toHaveProperty('hasDependents');
-    expect(draft.documentation).toEqual({});
-  });
-
-  test('an answered entity brings its contact person, and dependants keep their count as text', () => {
-    const draft = seedDraftFromProfile(
-      { ...profile, reference_contact_name: 'Laia', has_dependents: true, num_dependents: 2 },
-      answered('reference_entity', 'reference_contact_name', 'dependents'),
-    );
-    expect(draft.logistics).toEqual({
-      referenceEntity: 'Creu Roja Osona',
-      referenceContactName: 'Laia',
-      hasDependents: true,
-      numDependents: '2',
+  test('an answer she emptied is sent as null, which removes it', () => {
+    expect(appAnswersToSave({ city: null, sizes: [] }, stored)).toEqual({
+      city: null,
+      sizes: null,
     });
   });
 
-  test('an answered document seeds its type and number', () => {
-    const draft = seedDraftFromProfile(
-      { ...profile, document_type: 'nie', document_number: 'X1234567L' },
-      answered('document'),
-    );
-    expect(draft.documentation).toEqual({ documentType: 'nie', documentNumber: 'X1234567L' });
-  });
-});
-
-describe('storedPayloadFromProfile', () => {
-  test('uses the complete_onboarding keys, so the wizard can tell what she changed', () => {
-    expect(storedPayloadFromProfile(profile)).toMatchObject({
-      first_name: 'Mariam',
-      date_of_birth: '1999-03-04',
-      has_dependents: false,
-      num_dependents: 0,
-      clothing_size: 'M',
-      media_consent: false,
-    });
+  test('her "None" to the entity travels even with nothing stored', () => {
+    expect(appAnswersToSave({ entity: null }, {}, new Set(['entity']))).toEqual({ entity: null });
+    expect(appAnswersToSave({ entity: null }, {})).toEqual({});
   });
 });
 
 describe('staff screens in the wizard (RAPP-307)', () => {
   const choice: CustomQuestion = {
     id: 'q-choice',
-    screenId: 's-transport',
     type: 'single_choice',
     label: { ca: 'Com vens?' },
     help: null,
     privacy: 'normal',
-    placements: ['wizard'],
     isArchived: false,
     settings: {},
     options: [
@@ -142,34 +71,29 @@ describe('staff screens in the wizard (RAPP-307)', () => {
     expect(String(wizardStepRoute('custom:s-transport'))).toBe('/onboarding/custom/s-transport');
   });
 
-  test('the plan marks a staff screen answered only when every question has an answer', () => {
-    expect(customWizardPlan([screen], { 'q-choice': 'o-bus' })).toEqual([
-      { id: 's-transport', afterScreen: 'logistics', isAnswered: false },
-    ]);
-    expect(customWizardPlan([screen], { 'q-choice': 'o-bus', 'q-note': 'Res' })).toEqual([
-      { id: 's-transport', afterScreen: 'logistics', isAnswered: true },
-    ]);
-  });
-
   test('only new or changed answers are sent, so a confirmed staff answer keeps its source', () => {
     const stored = { 'q-choice': 'o-bus', 'q-note': 'Res' };
     expect(
-      customAnswersToSave([screen], { 'q-choice': 'o-bus', 'q-note': ' Res ' }, stored),
+      customAnswersToSave(screen.questions, { 'q-choice': 'o-bus', 'q-note': ' Res ' }, stored),
     ).toEqual({});
-    expect(customAnswersToSave([screen], { 'q-note': 'Vinc amb la meva filla' }, stored)).toEqual({
+    expect(
+      customAnswersToSave(screen.questions, { 'q-note': 'Vinc amb la meva filla' }, stored),
+    ).toEqual({
       'q-note': 'Vinc amb la meva filla',
     });
   });
 
   test('an answer she emptied is sent as null, which removes it', () => {
-    expect(customAnswersToSave([screen], { 'q-note': '  ' }, { 'q-note': 'Res' })).toEqual({
+    expect(customAnswersToSave(screen.questions, { 'q-note': '  ' }, { 'q-note': 'Res' })).toEqual({
       'q-note': null,
     });
-    expect(customAnswersToSave([screen], { 'q-note': '' }, {})).toEqual({});
+    expect(customAnswersToSave(screen.questions, { 'q-note': '' }, {})).toEqual({});
   });
 
   test('a kept archived option and an unknown question are not sent', () => {
-    expect(customAnswersToSave([screen], { 'q-choice': 'o-old', 'q-gone': 'x' }, {})).toEqual({});
+    expect(
+      customAnswersToSave(screen.questions, { 'q-choice': 'o-old', 'q-gone': 'x' }, {}),
+    ).toEqual({});
   });
 
   test('the answers she sees are the stored ones with her draft on top', () => {
@@ -183,16 +107,17 @@ describe('staff screens in the wizard (RAPP-307)', () => {
 describe('onboarding language and navigation', () => {
   test('keeps the selected app language even when background is skipped, without losing draft answers', () => {
     const draft = {
+      version: 2 as const,
       currentStep: 'summary' as const,
-      identity: { firstName: 'Laia', preferredLanguage: 'ca' },
-      logistics: { phone: '123' },
+      account: { firstName: 'Laia', preferredLanguage: 'ca' },
+      answers: { phone: '123' },
     };
     expect(withSelectedLanguage(draft, 'ar')).toEqual({
       ...draft,
-      identity: { firstName: 'Laia', preferredLanguage: 'ar' },
+      account: { firstName: 'Laia', preferredLanguage: 'ar' },
     });
-    expect(draft.identity.preferredLanguage).toBe('ca');
-    expect(withSelectedLanguage({ currentStep: 'identity' }, 'es').identity).toEqual({
+    expect(draft.account.preferredLanguage).toBe('ca');
+    expect(withSelectedLanguage({ version: 2, currentStep: 'identity' }, 'es').account).toEqual({
       preferredLanguage: 'es',
     });
   });
@@ -212,11 +137,17 @@ test('the terms introduction has its own resumable route and back transition', (
 });
 
 describe('a test player whose situation staff changed (RAPP-619)', () => {
-  const draft = { currentStep: 'logistics' as const, scenarioStamp: '2026-10-22T10:00:00Z' };
+  const draft: { currentStep: 'logistics'; scenarioStamp?: string } = {
+    currentStep: 'logistics',
+    scenarioStamp: '2026-10-22T10:00:00Z',
+  };
+  const unstamped: { currentStep: 'logistics'; scenarioStamp?: string } = {
+    currentStep: 'logistics',
+  };
 
   test('her draft from before the change is dropped', () => {
     expect(draftForScenario(draft, '2026-10-22T11:00:00Z')).toBeNull();
-    expect(draftForScenario({ currentStep: 'logistics' }, '2026-10-22T11:00:00Z')).toBeNull();
+    expect(draftForScenario(unstamped, '2026-10-22T11:00:00Z')).toBeNull();
   });
 
   test('her draft from after it is kept', () => {
@@ -224,9 +155,7 @@ describe('a test player whose situation staff changed (RAPP-619)', () => {
   });
 
   test('a real woman has no stamp, so her draft always wins (RAPP-300)', () => {
-    expect(draftForScenario({ currentStep: 'logistics' }, null)).toEqual({
-      currentStep: 'logistics',
-    });
+    expect(draftForScenario(unstamped, null)).toEqual({ currentStep: 'logistics' });
     expect(draftForScenario(null, null)).toBeNull();
   });
 });

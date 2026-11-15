@@ -5,37 +5,53 @@
 import { act, fireEvent, render } from '@testing-library/react';
 import { afterAll, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
-import type { CustomAnswerValue, IntakeScreen } from '@ramassa/shared/intake-builder';
+import type { CustomAnswerValue, IntakeCatalog } from '@ramassa/shared/intake-builder';
 
 const QUESTION = '5eed0000-0000-4000-8045-0000000000aa';
-const phoneScreen: IntakeScreen = {
-  id: 'season-screen',
-  title: { ca: 'Aquesta temporada' },
-  intro: null,
-  afterScreen: 'season',
-  isArchived: false,
-  questions: [
-    {
-      id: QUESTION,
-      screenId: 'season-screen',
-      type: 'phone',
-      label: { ca: 'Telèfon de la persona de contacte' },
-      help: null,
-      privacy: 'personal',
-      placements: ['season'],
-      isArchived: false,
-      settings: {},
-      options: [],
-    },
-  ],
-};
-const catalog = {
-  screens: [phoneScreen],
+// A Ramassà field placed on the season form (RAPP-655).
+const catalog: IntakeCatalog = {
+  screens: [],
   overrides: [],
   presets: [],
   screenSettings: [],
   flowOrder: [],
   terms: null,
+  layout: {
+    sections: [],
+    fields: [
+      {
+        id: QUESTION,
+        sectionId: 'support',
+        kind: 'custom',
+        builtinKey: null,
+        type: 'phone',
+        label: { ca: 'Telèfon de la persona de contacte' },
+        help: null,
+        privacy: 'personal',
+        defaultRequired: false,
+        settings: {},
+        sortOrder: 0,
+        isArchived: false,
+        createdAt: '2026-10-23T10:00:00Z',
+        createdBy: null,
+        createdByName: null,
+        hasAnswers: null,
+        options: [],
+      },
+    ],
+    placements: [
+      {
+        id: 'season-placement',
+        fieldId: QUESTION,
+        surface: 'season',
+        screenKey: null,
+        sortOrder: 0,
+        required: false,
+        labelOverride: null,
+        helpOverride: null,
+      },
+    ],
+  },
 };
 
 const mutate = mock<(variables: unknown, options: unknown) => void>(() => {});
@@ -54,19 +70,16 @@ mock.module('@tanstack/react-query', () => ({
     data:
       queryKey[0] === 'reregistration-profile'
         ? {
+            // Her record by field (RAPP-663): nothing answered yet.
+            id: 'her',
             first_name: 'Amina',
             last_name: 'Diallo',
-            date_of_birth: null,
-            nationality: null,
-            phone: null,
-            address: null,
-            city: null,
-            clothing_size: null,
-            shoe_size: null,
-            applicant_status: null,
-            supporting_entities: null,
-            childcare_need: null,
-            specific_needs: null,
+            preferred_language: 'ca',
+            avatar_url: null,
+            media_consent: false,
+            terms_accepted_at: null,
+            answers: {},
+            fields: new Map(),
           }
         : { catalog, answers: {} },
   }),
@@ -77,8 +90,12 @@ mock.module('@tanstack/react-query', () => ({
   QueryClient: class {},
 }));
 mock.module('@/lib/supabase', () => ({ supabase: {} }));
+mock.module('@/lib/observability', () => ({ logger: { warn: () => {}, error: () => {} } }));
 mock.module('@ramassa/shared/auth', () => ({ useAuth: () => ({ user: { id: 'her' } }) }));
-mock.module('expo-router', () => ({ useRouter: () => ({ push: () => {} }) }));
+mock.module('expo-router', () => ({
+  useNavigation: () => ({ getState: () => undefined }),
+  useRouter: () => ({ push: () => {} }),
+}));
 mock.module('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { resolvedLanguage: 'ca' } }),
 }));
@@ -106,7 +123,7 @@ mock.module('@/components/profile/season-answer-fields', () => ({
 }));
 let answer: (value: CustomAnswerValue) => void = () => {};
 mock.module('@/components/onboarding/custom-question-field', () => ({
-  CustomQuestionSections: ({
+  CustomQuestionList: ({
     errors = {},
     onChange,
   }: {

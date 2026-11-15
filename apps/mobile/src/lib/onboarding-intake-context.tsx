@@ -6,17 +6,19 @@ import { onboardingDraftStore } from '@/lib/onboarding';
  * answered. Loaded once by the onboarding layout, which seeds the draft from it
  * before any screen mounts, and read by every screen through `useWizardStep`.
  */
-import { wizardDraftStep, wizardStepRoute } from '@/lib/onboarding-intake';
+import { isWizardStackRoute, wizardDraftStep, wizardStepRoute } from '@/lib/onboarding-intake';
 import { lastSupportNeedStep } from '@/lib/support-needs-draft';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { createContext, use, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
   DEFAULT_REQUIRED_QUESTIONS,
   DEFAULT_WIZARD_FLOW,
+  documentDetailScreen,
   isRequiredQuestion,
   nextWizardScreen,
+  opensDetailScreen,
   previousWizardScreen,
   questionFieldLabel,
   wizardScreenPosition,
@@ -24,6 +26,7 @@ import {
   type CustomWizardScreen,
   type IntakeQuestion,
   type RequiredQuestions,
+  type WizardAnswers,
   type WizardFlow,
   type WizardStepKey,
 } from '@ramassa/shared/intake';
@@ -32,17 +35,24 @@ import {
   builtinLabel,
   builtinOptions,
   EMPTY_INTAKE_CATALOG,
+  followUpAsksSomething,
   requiredBuiltinQuestions,
   type CustomAnswers,
   type IntakeCatalog,
   type IntakeScreen,
+  type SignatureFormBlock,
+  type SystemFieldIndex,
 } from '@ramassa/shared/intake-builder';
-import type { OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
-import type { LocalizedText, ProfileRow } from '@ramassa/shared/schemas';
+import type { OnboardingDraft, OnboardingDraftStep } from '@ramassa/shared/onboarding-drafts';
 
 export interface WizardIntake {
-  /** Her stored profile, or null when she has none yet (a self-started intake). */
-  readonly profile: ProfileRow | null;
+  /** Her names when staff or an entity gave them; none for a self-started intake. */
+  readonly names: { readonly firstName?: string; readonly lastName?: string };
+  /**
+   * Her organization's app fields by system key (RAPP-663): the app's own
+   * screens read and write her answers by these field ids.
+   */
+  readonly fields: SystemFieldIndex;
   readonly answered: AnsweredQuestions;
   /**
    * The questions her wizard does not ask (RAPP-301): answered ones on Auto,
@@ -50,13 +60,11 @@ export interface WizardIntake {
    * this; seeding and the final payload keep reading `answered`.
    */
   readonly notAsked: AnsweredQuestions;
-  /** Staff's note under the document step (RAPP-302), or null when none is written. */
-  readonly documentExplanation: LocalizedText | null;
   /**
-   * The staff question builder (RAPP-307): the catalog, her stored answers to
-   * the staff questions, the staff screens she is asked with only their wizard
-   * and season questions, and those screens as the planner takes them. An
-   * empty catalog when it could not load: the wizard then runs without them.
+   * The Fitxa fields placed on her onboarding (RAPP-307, RAPP-655): the
+   * catalog, her stored answers to every field (the app's included), her
+   * Ramassà screens and the groups of fields on app screens in flow order
+   * (`herOnboarding`), and those screens as the planner takes them.
    */
   readonly catalog: IntakeCatalog;
   readonly customAnswers: CustomAnswers;
@@ -79,13 +87,19 @@ export interface WizardIntake {
    * draft from before it is dropped. Null or absent for everyone else.
    */
   readonly scenarioStamp?: string | null;
+  /**
+   * The Onboarding blocks she already signed, on the walk-in tablet (RAPP-691),
+   * whose text has not changed since. They are out of `catalog.blocks`, so no
+   * screen asks them again; the summary lists them as signed.
+   */
+  readonly signedBlocks?: readonly SignatureFormBlock[];
 }
 
 const EMPTY_INTAKE: WizardIntake = {
-  profile: null,
+  names: {},
+  fields: new Map(),
   answered: new Set(),
   notAsked: new Set(),
-  documentExplanation: null,
   catalog: EMPTY_INTAKE_CATALOG,
   customAnswers: {},
   customScreens: [],
@@ -129,59 +143,175 @@ export interface WizardStep {
   /** Null on the first screen she sees: there is nowhere to go back to. */
   readonly previousDraftStep: OnboardingDraftStep | null;
   readonly goBack: (() => void) | null;
+  /** Whether the screen under this one is that step's: Back then pops to it (RAPP-707). */
+  readonly isBelow: (step: WizardStepKey | OnboardingDraftStep) => boolean;
+}
+
+/**
+ * Her answers by field id (RAPP-715): the stored ones with her draft over
+ * them. They decide which screens that depend on an answer she sees, so the
+ * wizard reads them when she moves: a changed answer changes what comes next.
+ */
+export function herWizardAnswers(intake: Pick<WizardIntake, 'customAnswers'>): WizardAnswers {
+  return { ...intake.customAnswers, ...onboardingDraftStore.loadStoredDraft()?.answers };
 }
 
 export function useWizardStep(screen: WizardStepKey): WizardStep {
+  const intake = useWizardIntake();
   const {
     notAsked,
     customPlan,
     hidden,
     flow = DEFAULT_WIZARD_FLOW,
     required = DEFAULT_REQUIRED_QUESTIONS,
-  } = useWizardIntake();
+  } = intake;
   const router = useRouter();
+  const navigation = useNavigation();
   const { edit } = useLocalSearchParams<{ edit?: string }>();
   const isEditing = edit === '1';
 
   return useMemo<WizardStep>(() => {
-    const next: WizardStepKey = isEditing
-      ? 'summary'
-      : nextWizardScreen(screen, notAsked, customPlan, flow);
-    const previous: WizardStepKey | null = isEditing
-      ? 'summary'
-      : previousWizardScreen(screen, notAsked, customPlan, flow);
-    const previousStep =
-      previous === 'documentation' &&
-      hasDocumentDetails(onboardingDraftStore.loadDraft()?.documentation?.documentType)
-        ? 'documentation-details'
-        : previous === 'specific-needs'
-          ? lastSupportNeedStep(onboardingDraftStore.loadDraft()?.season?.specificNeeds)
-          : previous === 'season' &&
-              onboardingDraftStore.loadDraft()?.season?.applicantStatus === 'other'
-            ? 'applicant-status-details'
-            : previous;
+    const nextFor = (answers: WizardAnswers): WizardStepKey =>
+      isEditing ? 'summary' : nextWizardScreen(screen, notAsked, customPlan, flow, answers);
+    const previousFor = (answers: WizardAnswers): WizardStepKey | null =>
+      isEditing ? 'summary' : previousWizardScreen(screen, notAsked, customPlan, flow, answers);
+    const landingFor = (previous: WizardStepKey | null) =>
+      previous === null || isEditing
+        ? previous
+        : landingStep(previous, onboardingDraftStore.loadDraft(), intake.catalog);
+    const answers = herWizardAnswers(intake);
+    const next = nextFor(answers);
+    const previous = previousFor(answers);
+    const previousStep = landingFor(previous);
+    /**
+     * The step the draft names, as her answers saved on this screen decide:
+     * a screen persists before it moves, so a follow-up her new answer opens
+     * or closes is put right here.
+     */
+    const settle = (step: WizardStepKey | OnboardingDraftStep) => {
+      const latest = onboardingDraftStore.loadDraft();
+      const draftStep = wizardDraftStep(step);
+      if (latest !== null && latest.currentStep !== draftStep) {
+        onboardingDraftStore.saveDraft({ ...latest, currentStep: draftStep });
+      }
+    };
     // Editing from the summary goes back to that same summary, which re-reads
     // the draft on focus. Without history (a cold start mid-edit), replace.
+    const isBelow = (target: WizardStepKey | OnboardingDraftStep) => {
+      const state = navigation.getState();
+      const below = state === undefined ? undefined : state.routes[state.index - 1];
+      return below !== undefined && isWizardStackRoute(below, target);
+    };
     const backToSummary = () =>
       router.canGoBack() ? router.back() : router.replace(wizardStepRoute('summary', 'back'));
     return {
       isEditing,
-      position: wizardScreenPosition(screen, notAsked, customPlan, flow),
+      position: wizardScreenPosition(screen, notAsked, customPlan, flow, answers),
       shouldAsk: (question) => !hidden.has(question) && (isEditing || !notAsked.has(question)),
       isRequired: (question) => isRequiredQuestion(question, required),
       required,
       nextDraftStep: wizardDraftStep(next),
-      goNext: isEditing ? backToSummary : () => router.push(wizardStepRoute(next)),
+      goNext: isEditing
+        ? backToSummary
+        : () => {
+            const target = nextFor(herWizardAnswers(intake));
+            settle(target);
+            router.push(wizardStepRoute(target));
+          },
       previousDraftStep: previousStep === null ? null : wizardDraftStep(previousStep),
-      // replace, not back(): after a resume the redirect REPLACED the route, so
-      // the stack may hold nothing under this screen. The draft is the source of truth.
+      // Back pops to the screen under this one when it is the previous step
+      // (a resume pushes them, RAPP-707); otherwise it replaces this screen
+      // with that step. The draft is the source of truth either way.
       goBack: isEditing
         ? backToSummary
         : previous === null
           ? null
-          : () => router.replace(wizardStepRoute(previousStep ?? previous, 'back')),
+          : () => {
+              const fresh = previousFor(herWizardAnswers(intake));
+              const target = landingFor(fresh) ?? fresh ?? previous;
+              settle(target);
+              if (isBelow(target)) router.back();
+              else router.replace(wizardStepRoute(target, 'back'));
+            },
+      isBelow,
     };
-  }, [notAsked, customPlan, flow, hidden, required, isEditing, router, screen]);
+  }, [intake, notAsked, customPlan, flow, hidden, required, isEditing, router, navigation, screen]);
+}
+
+/**
+ * The step Back lands on for a previous screen: its detail screen when her
+ * draft opened one (the document details, the "other" status, the last
+ * support need) and it asks something (RAPP-720), else the screen itself.
+ */
+function landingStep(
+  previous: WizardStepKey,
+  draft: OnboardingDraft | null,
+  catalog: IntakeCatalog,
+): WizardStepKey | OnboardingDraftStep {
+  const documentScreen = documentDetailScreen(draft?.documentation?.documentType);
+  if (
+    previous === 'documentation' &&
+    hasDocumentDetails(draft?.documentation?.documentType) &&
+    documentScreen !== null &&
+    followUpAsksSomething(catalog, documentScreen)
+  )
+    return 'documentation-details';
+  if (previous === 'specific-needs')
+    return followUpAsksSomething(catalog, 'specific-needs-details')
+      ? lastSupportNeedStep(draft?.season?.specificNeeds)
+      : 'specific-needs';
+  if (
+    previous === 'season' &&
+    opensDetailScreen('applicant-status-details', draft?.season?.applicantStatus) &&
+    followUpAsksSomething(catalog, 'applicant-status-details')
+  )
+    return 'applicant-status-details';
+  return previous;
+}
+
+/** The screen a detail screen goes back to, or null for a screen of the flow. */
+function detailParent(step: OnboardingDraftStep): WizardStepKey | null {
+  if (step === 'documentation-details') return 'documentation';
+  if (step === 'applicant-status-details') return 'season';
+  if (step.startsWith('needs-detail:')) return 'specific-needs';
+  return null;
+}
+
+/**
+ * The steps Back walks through from `step`, the first one first (RAPP-707).
+ * A resumed wizard puts them under the step she resumes at, so Back and the
+ * platform's back gesture reach every earlier screen she was asked, with her
+ * answers. Screens the planner skips stay skipped.
+ */
+export function wizardBackTrail(
+  step: OnboardingDraftStep,
+  intake: WizardIntake,
+  draft: OnboardingDraft | null,
+): OnboardingDraftStep[] {
+  const flow = intake.flow ?? DEFAULT_WIZARD_FLOW;
+  const trail: OnboardingDraftStep[] = [];
+  let current: OnboardingDraftStep = step;
+  // Bounded: a flow has far fewer steps, and a bad plan must never loop.
+  while (trail.length < 64) {
+    const parent = detailParent(current);
+    const previous =
+      parent ??
+      previousWizardScreen(
+        current as WizardStepKey,
+        intake.notAsked,
+        intake.customPlan,
+        flow,
+        herWizardAnswers(intake),
+      );
+    if (previous === null) break;
+    const landing = wizardDraftStep(
+      parent === null ? landingStep(previous, draft, intake.catalog) : previous,
+    );
+    if (trail.includes(landing) || landing === step) break;
+    trail.unshift(landing);
+    current = landing;
+  }
+  return trail;
 }
 
 export interface BuiltinWording {

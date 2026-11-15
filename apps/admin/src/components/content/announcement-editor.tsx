@@ -1,3 +1,4 @@
+import { pageClassName } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { mediaWorkerUrl } from '@/lib/media-worker';
 import { safeAsync } from '@/lib/observability';
@@ -25,6 +26,7 @@ import {
   type CreateTranslationReviewOptions,
   type TranslationReview,
 } from '@ramassa/shared/translation';
+import { CATALAN_TRANSLATION_TARGETS } from '@ramassa/shared/translation/client';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 import { uploadFile } from '@ramassa/shared/upload-client';
 import { ImageUploadField, type ImageUploadState } from './image-upload-field';
@@ -32,7 +34,7 @@ import { MultilingualEditor } from './multilingual-editor';
 import { ScheduledPublishFields, type PublishMode } from './scheduled-publish-fields';
 import { TranslationReviewPanel } from './translation-review-panel';
 
-const TARGET_LANGUAGES = ['es', 'en', 'ar', 'fa'] as const;
+const TARGET_LANGUAGES = CATALAN_TRANSLATION_TARGETS;
 
 export interface AnnouncementEditorProps {
   readonly announcement?: AnnouncementListRow;
@@ -242,7 +244,7 @@ export function AnnouncementEditor({ announcement, onSaved }: AnnouncementEditor
     title.trim().length > 0 && body.trim().length > 0 && (!hasImage || imageAlt.trim().length > 0);
 
   return (
-    <form className="flex flex-col gap-6 p-6" onSubmit={submit} data-testid="announcement-editor">
+    <form className={pageClassName()} onSubmit={submit} data-testid="announcement-editor">
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold">
           {announcement === undefined ? t('announcements:newAction') : t('announcements:editTitle')}

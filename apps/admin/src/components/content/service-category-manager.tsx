@@ -1,3 +1,4 @@
+import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -212,7 +213,7 @@ export function ServiceCategoryManager({
   }
 
   return (
-    <section className="grid gap-8 p-6 lg:grid-cols-[minmax(0,1fr)_minmax(24rem,0.9fr)]">
+    <Page className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(24rem,0.9fr)]">
       <div className="flex flex-col gap-4">
         <header>
           <h1 className="text-2xl font-semibold">{t('services:categoriesTitle')}</h1>
@@ -385,6 +386,6 @@ export function ServiceCategoryManager({
           )}
         </div>
       </form>
-    </section>
+    </Page>
   );
 }

@@ -1,15 +1,26 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { HEX_COLOR_MESSAGE, HEX_COLOR_PATTERN, validateBrandContrast } from './brand-theme';
 import { AppError, databaseErrorCode } from './errors';
 import { SUPPORTED_LANGUAGES } from './i18n/languages';
 import { personNameSchema } from './schemas/person-name';
-import { tokens } from './tokens';
 import type { Database } from './types/database';
+
+// The brand color helpers live in a zod-free module the mobile Tailwind config can load.
+export {
+  brandThemeVariables,
+  contrastRatio,
+  validateBrandContrast,
+  type BrandColors,
+  type BrandContrastResult,
+  type BrandThemeVariables,
+  type ContrastFailure,
+} from './brand-theme';
 
 const hexColorSchema = z
   .string()
   .trim()
-  .regex(/^#[0-9A-F]{6}$/i, 'Use a six-digit hex color such as #0077B6')
+  .regex(HEX_COLOR_PATTERN, HEX_COLOR_MESSAGE)
   .transform((value) => value.toUpperCase());
 
 const nullableContactSchema = z
@@ -52,116 +63,6 @@ export const organizationSettingsSchema = z
 
 export type OrganizationSettingsInput = z.input<typeof organizationSettingsSchema>;
 export type OrganizationSettings = z.output<typeof organizationSettingsSchema>;
-
-export interface BrandColors {
-  readonly primaryColor: string;
-  readonly secondaryColor: string;
-}
-
-export interface ContrastFailure {
-  readonly token: 'primary' | 'secondary';
-  readonly foreground: string;
-  readonly ratio: number;
-  readonly minimum: 4.5;
-}
-
-export interface BrandContrastResult {
-  readonly ok: boolean;
-  readonly primaryRatio: number;
-  readonly secondaryRatio: number;
-  readonly failures: readonly ContrastFailure[];
-}
-
-function colorChannels(color: string): readonly [number, number, number] {
-  const parsed = hexColorSchema.parse(color).slice(1);
-  return [
-    Number.parseInt(parsed.slice(0, 2), 16),
-    Number.parseInt(parsed.slice(2, 4), 16),
-    Number.parseInt(parsed.slice(4, 6), 16),
-  ];
-}
-
-function linearChannel(channel: number): number {
-  const srgb = channel / 255;
-  return srgb <= 0.04045 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
-}
-
-function relativeLuminance(color: string): number {
-  const [red, green, blue] = colorChannels(color).map(linearChannel);
-  return 0.2126 * red! + 0.7152 * green! + 0.0722 * blue!;
-}
-
-/** WCAG 2.2 relative-luminance contrast ratio, in the inclusive range 1 to 21. */
-export function contrastRatio(first: string, second: string): number {
-  const firstLuminance = relativeLuminance(first);
-  const secondLuminance = relativeLuminance(second);
-  const lighter = Math.max(firstLuminance, secondLuminance);
-  const darker = Math.min(firstLuminance, secondLuminance);
-  return (lighter + 0.05) / (darker + 0.05);
-}
-
-/**
- * Primary controls carry white text; secondary controls carry the darkest neutral.
- * Those foregrounds are fixed across both apps, so both editable backgrounds must
- * meet the normal-text AA threshold before the setting can be saved.
- */
-export function validateBrandContrast(colors: BrandColors): BrandContrastResult {
-  const primaryRatio = contrastRatio(colors.primaryColor, tokens.colors.white);
-  const secondaryRatio = contrastRatio(colors.secondaryColor, tokens.colors.neutral[900]);
-  const failures: ContrastFailure[] = [];
-  if (primaryRatio < 4.5) {
-    failures.push({
-      token: 'primary',
-      foreground: tokens.colors.white,
-      ratio: primaryRatio,
-      minimum: 4.5,
-    });
-  }
-  if (secondaryRatio < 4.5) {
-    failures.push({
-      token: 'secondary',
-      foreground: tokens.colors.neutral[900],
-      ratio: secondaryRatio,
-      minimum: 4.5,
-    });
-  }
-  return { ok: failures.length === 0, primaryRatio, secondaryRatio, failures };
-}
-
-function mixHex(color: string, target: '#000000' | '#FFFFFF', amount: number): string {
-  const source = colorChannels(color);
-  const destination = colorChannels(target);
-  const channels = source.map((channel, index) =>
-    Math.round(channel + (destination[index]! - channel) * amount),
-  );
-  return `#${channels.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`.toUpperCase();
-}
-
-export type BrandThemeVariables = Readonly<Record<`--ramassa-${string}`, string>>;
-
-/** Runtime variables consumed by admin CSS and NativeWind's inherited theme. */
-export function brandThemeVariables(colors: BrandColors): BrandThemeVariables {
-  const primary = hexColorSchema.parse(colors.primaryColor);
-  const secondary = hexColorSchema.parse(colors.secondaryColor);
-  const primaryLight = mixHex(primary, '#FFFFFF', 0.3);
-  const primaryDark = mixHex(primary, '#000000', 0.25);
-  const secondaryLight = mixHex(secondary, '#FFFFFF', 0.3);
-  const secondaryDark = mixHex(secondary, '#000000', 0.15);
-  return {
-    '--ramassa-color-primary': primary,
-    '--ramassa-color-primary-light': primaryLight,
-    '--ramassa-color-primary-dark': primaryDark,
-    '--ramassa-color-secondary': secondary,
-    '--ramassa-color-secondary-light': secondaryLight,
-    '--ramassa-color-secondary-dark': secondaryDark,
-    '--ramassa-primary-rgb': colorChannels(primary).join(' '),
-    '--ramassa-primary-light-rgb': colorChannels(primaryLight).join(' '),
-    '--ramassa-primary-dark-rgb': colorChannels(primaryDark).join(' '),
-    '--ramassa-secondary-rgb': colorChannels(secondary).join(' '),
-    '--ramassa-secondary-light-rgb': colorChannels(secondaryLight).join(' '),
-    '--ramassa-secondary-dark-rgb': colorChannels(secondaryDark).join(' '),
-  };
-}
 
 const organizationRowSchema = z.object({
   id: z.uuid(),

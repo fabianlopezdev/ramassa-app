@@ -27,6 +27,9 @@ interface CountryEntry {
 }
 
 const COUNTRIES = countriesData as readonly CountryEntry[];
+const CANONICAL_COUNTRY_NAMES: ReadonlySet<string> = new Set(
+  COUNTRIES.map((entry) => entry.names.ca),
+);
 const COMBINING_MARKS = /[\u0300-\u036f]/g;
 
 /**
@@ -82,6 +85,11 @@ export function searchCountries(
   return options.filter((option) =>
     NORMALIZED_SEARCH_TEXT_BY_CODE.get(option.code)?.includes(needle),
   );
+}
+
+/** Whether a stored value is one of the canonical names (the Catalan one). */
+export function isCanonicalCountry(value: string): boolean {
+  return CANONICAL_COUNTRY_NAMES.has(value);
 }
 
 /** The localized label for an already-stored canonical value, for re-display. */

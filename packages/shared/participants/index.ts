@@ -8,23 +8,25 @@ export {
 export {
   activityDetailKey,
   filterParticipantActivity,
+  hasJoined,
   noteAuthorName,
   PARTICIPANT_ACTIVITY_KINDS,
   PARTICIPANT_NOTE_COLUMNS,
   type ParticipantActivityEntry,
   type ParticipantActivityFilter,
   type ParticipantActivityKind,
-  type ParticipantDetailRow,
   type ParticipantNoteRow,
 } from './participant-detail';
 export {
   addParticipantNote,
   fetchParticipantActivity,
-  fetchParticipantDetail,
   fetchParticipantNotes,
+  fetchParticipantRecord,
   setParticipantActive,
-  updateParticipantProfile,
+  updateParticipantRecord,
   type AddParticipantNoteParams,
+  type ParticipantRecord,
+  type ParticipantUpdate,
 } from './participant-detail-actions';
 export {
   PARTICIPANT_PAGE_SIZE,
@@ -36,14 +38,15 @@ export {
   type ParticipantSortColumn,
 } from './participant-query';
 export {
-  buildProfilePrefillPayload,
   fetchParticipantAnsweredQuestions,
-  prefillFromRow,
+  prefillFormOf,
+  prefillUpdateOf,
   profilePrefillSchema,
-  type PrefillRow,
   type ProfilePrefill,
   type ProfilePrefillField,
   type ProfilePrefillInput,
-  type ProfilePrefillPayload,
+  type ParticipantPrefillUpdate,
 } from './participant-prefill';
 export * from './test-scenario';
+export * from './profile-banner';
+export { ANSWER_SOURCES, type AnswerOrigin, type AnswerSource } from './answer-sources';

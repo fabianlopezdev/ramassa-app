@@ -2,6 +2,7 @@ import {
   AuthenticatedMediaImage,
   loadAuthenticatedMediaObjectUrl,
 } from '@/components/content/authenticated-media-image';
+import { Page, PageHeader } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -37,19 +38,11 @@ interface OrganizationSettingsPanelProps {
   readonly organization: OrganizationRow;
   /** Which tabs and fields the caller may use (RAPP-231); the database enforces them again. */
   readonly permissions: ReadonlySet<PermissionCode>;
-  /** The Team tab (RAPP-231): people, presets and toggles. */
-  readonly team: ReactNode;
   /** "Take photo with phone" for a document (RAPP-254). */
   readonly photoHandoff: ReactNode;
   /** The note under the wizard's document step (RAPP-302), for settings.organization. */
-  readonly documentExplanation?: ReactNode;
-  /** The participation authorization versions and editor (RAPP-304). */
-  readonly authorization?: ReactNode;
-  /** The question builder (RAPP-307). */
-  readonly questions?: ReactNode;
   readonly documents: readonly InternalDocument[];
   readonly documentQuery: string;
-  readonly entityManagement: ReactNode;
   readonly accessToken: string | undefined;
   readonly initialTab?: SettingsTab;
   readonly onTabChange?: (tab: SettingsTab) => void;
@@ -67,22 +60,27 @@ interface OrganizationSettingsPanelProps {
 
 type PendingAction = 'organization' | 'document' | 'download';
 
-export type SettingsTab =
-  'organization' | 'authorization' | 'questions' | 'staff' | 'documents' | 'entities';
+export const SETTINGS_TABS = ['organization', 'documents'] as const;
 
-/** The tabs a person may open, in display order (RAPP-231). */
+export type SettingsTab = (typeof SETTINGS_TABS)[number];
+
+export function isSettingsTab(value: string | undefined): value is SettingsTab {
+  return SETTINGS_TABS.some((tab) => tab === value);
+}
+
+/**
+ * The tabs a person may open, in display order (RAPP-231). The Fitxa, the
+ * referral form, the team and the entities have their own menu items and
+ * pages since RAPP-654, so each is reachable from one place. Her screens and
+ * the fields they ask are on the Onboarding board and the Fitxa (RAPP-656);
+ * the season authorization and the app terms are forms of their own (RAPP-696).
+ */
 function visibleSettingsTabs(permissions: ReadonlySet<PermissionCode>): readonly SettingsTab[] {
   const tabs: SettingsTab[] = [];
   if (permissions.has('settings.organization') || permissions.has('settings.branding')) {
     tabs.push('organization');
   }
-  // The season's participation authorization (RAPP-304).
-  if (permissions.has('settings.organization')) tabs.push('authorization');
-  // The registration questions staff add and reword (RAPP-307).
-  if (permissions.has('settings.organization')) tabs.push('questions');
-  if (permissions.has('team.manage')) tabs.push('staff');
   if (permissions.has('settings.documents')) tabs.push('documents');
-  if (permissions.has('entities.manage')) tabs.push('entities');
   return tabs;
 }
 
@@ -97,7 +95,7 @@ function Field({ label, children }: { readonly label: string; readonly children:
 
 function SectionHeader({ title, intro }: { readonly title: string; readonly intro: string }) {
   return (
-    <header className="max-w-3xl space-y-2">
+    <header className="space-y-2">
       <h2 className="text-xl font-semibold text-foreground">{title}</h2>
       <p className="text-sm leading-6 text-muted-foreground">{intro}</p>
     </header>
@@ -111,14 +109,9 @@ function fileContentType(file: File): UploadContentType {
 export function OrganizationSettingsPanel({
   organization,
   permissions,
-  team,
   photoHandoff,
-  documentExplanation,
-  authorization,
-  questions,
   documents,
   documentQuery,
-  entityManagement,
   accessToken,
   initialTab = 'organization',
   onTabChange,
@@ -277,11 +270,8 @@ export function OrganizationSettingsPanel({
   }
 
   return (
-    <section className="space-y-6 p-4 sm:p-6" data-testid="organization-settings">
-      <header className="max-w-3xl space-y-2">
-        <h1 className="text-2xl font-semibold text-foreground">{t('title')}</h1>
-        <p className="text-sm leading-6 text-muted-foreground">{t('intro')}</p>
-      </header>
+    <Page data-testid="organization-settings">
+      <PageHeader title={t('title')} description={t('intro')} />
 
       <div className="pointer-events-none fixed inset-x-4 top-4 z-50 sm:start-auto sm:end-6 sm:w-96">
         {(['success', 'error'] as const).map((kind) => (
@@ -322,25 +312,15 @@ export function OrganizationSettingsPanel({
           {tabs.includes('organization') ? (
             <TabsTrigger value="organization">{t('tabOrganization')}</TabsTrigger>
           ) : null}
-          {tabs.includes('authorization') ? (
-            <TabsTrigger value="authorization">{t('tabAuthorization')}</TabsTrigger>
-          ) : null}
-          {tabs.includes('questions') ? (
-            <TabsTrigger value="questions">{t('tabQuestions')}</TabsTrigger>
-          ) : null}
-          {tabs.includes('staff') ? <TabsTrigger value="staff">{t('tabTeam')}</TabsTrigger> : null}
           {tabs.includes('documents') ? (
             <TabsTrigger value="documents">{t('tabDocuments')}</TabsTrigger>
-          ) : null}
-          {tabs.includes('entities') ? (
-            <TabsTrigger value="entities">{t('tabEntities')}</TabsTrigger>
           ) : null}
         </TabsList>
 
         <TabsContent value="organization" className="space-y-6">
           <SectionHeader title={t('tabOrganization')} intro={t('intro')} />
           <form
-            className="grid max-w-3xl gap-5 rounded-xl border bg-card p-5"
+            className="grid gap-5 rounded-xl border bg-card p-5"
             onSubmit={submitOrganization}
             onChange={() => setMessage(null)}
             data-testid="organization-settings-form"
@@ -468,17 +448,12 @@ export function OrganizationSettingsPanel({
               {pending === 'organization' ? t('working') : t('save')}
             </Button>
           </form>
-          {documentExplanation}
-        </TabsContent>
-
-        <TabsContent value="staff" className="space-y-6">
-          {team}
         </TabsContent>
 
         <TabsContent value="documents" className="space-y-6">
           <SectionHeader title={t('documentsTitle')} intro={t('documentsIntro')} />
           <form
-            className="flex max-w-2xl gap-2"
+            className="flex gap-2"
             onSubmit={(event) => {
               event.preventDefault();
               void onSearchDocuments(query);
@@ -494,7 +469,7 @@ export function OrganizationSettingsPanel({
             </Button>
           </form>
           <form
-            className="grid max-w-2xl gap-3 rounded-xl border bg-card p-4"
+            className="grid gap-3 rounded-xl border bg-card p-4"
             onSubmit={submitDocument}
             data-testid="document-upload-form"
           >
@@ -555,17 +530,7 @@ export function OrganizationSettingsPanel({
             </div>
           )}
         </TabsContent>
-
-        <TabsContent value="authorization" className="space-y-6">
-          <SectionHeader title={t('tabAuthorization')} intro={t('authorizationIntro')} />
-          {authorization}
-        </TabsContent>
-        <TabsContent value="questions" className="space-y-6">
-          <SectionHeader title={t('tabQuestions')} intro={t('questionsIntro')} />
-          {questions}
-        </TabsContent>
-        <TabsContent value="entities">{entityManagement}</TabsContent>
       </Tabs>
-    </section>
+    </Page>
   );
 }

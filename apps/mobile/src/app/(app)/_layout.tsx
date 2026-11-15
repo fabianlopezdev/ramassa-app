@@ -1,3 +1,4 @@
+import { AnnouncementFeedError } from '@/components/announcements/feed-states';
 import { AttendanceSyncWorker } from '@/components/attendance/attendance-sync-worker';
 import { useAppLock } from '@/components/auth/app-lock';
 import { SecondFactorScreen } from '@/components/auth/second-factor-screen';
@@ -7,17 +8,24 @@ import { HandoverSyncWorker } from '@/components/equipment/handover-sync-worker'
 import { PushPermissionRationale } from '@/components/push-permission-rationale';
 import { areaHome, awaitsSecondFactor, teamScreens } from '@/lib/account-area';
 import { useAuthorizationStatus } from '@/lib/authorization';
+import { useMyCustomForms } from '@/lib/custom-forms';
+import { isWaitingForNetwork, retryAfterNetworkCheck } from '@/lib/network-status';
+import { useFinishOnboardingChain, useMyOnboardingChain } from '@/lib/onboarding-chain';
 import { OnboardingEntranceProvider } from '@/lib/onboarding-entrance';
 import { canPromptForPush } from '@/lib/push-prompt-eligibility';
 import { useSigningSession } from '@/lib/tablet-signing';
 import { useAccountAccess } from '@/lib/use-account-access';
+import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePushRegistration } from '@/lib/use-push-registration';
 import { Redirect, usePathname, type Href } from 'expo-router';
 import { Stack } from 'expo-router/stack';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, useWindowDimensions, View } from 'react-native';
 import { assuranceLevelOf, useAuth } from '@ramassa/shared/auth';
 import { needsAuthorization } from '@ramassa/shared/authorization';
+import { getErrorMessageKey, isAppError } from '@ramassa/shared/errors';
+import { nextChainedForm } from '@ramassa/shared/intake-builder';
 import { tokens } from '@ramassa/shared/tokens';
 
 // Zone boundary (RAPP-12): a crash inside the signed-in area shows the
@@ -39,7 +47,8 @@ export default function AppLayout() {
 }
 
 function AppNavigator() {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation(['common', 'onboarding']);
+  const languageFontClass = useLanguageFontClass();
   const { user, session, role, needsSecondFactor, permissionsAreCurrent, needsTermsAcceptance } =
     useAuth();
   const userId = user?.id ?? null;
@@ -56,15 +65,64 @@ function AppNavigator() {
   const { width } = useWindowDimensions();
   const home = areaHome(area, permissions, width);
   // The season authorization gate (RAPP-304): a player who has not signed the
-  // current version sees only the authorization screen. A failed lookup lets
-  // her in, as the onboarding gate does (RAPP-21): a network flake must never
-  // lock out a player who already signed.
+  // current version sees only the authorization screen. A failed lookup asks
+  // her to try again and never lets her past it, as the legal forms (RAPP-773).
   const authorization = useAuthorizationStatus(area === 'player');
+  const isAuthorizationUnreadable = area === 'player' && authorization.isError;
   // A new app terms version (RAPP-613) comes first: she accepts it on the terms
   // screen alone, then the season authorization if it is due.
   const mustAcceptTerms = area === 'player' && needsTermsAcceptance;
+  // A form the team created that keeps her from the app (RAPP-700): required to
+  // use it, or required since its date. It opens after the gates below. A
+  // failed lookup lets her in, unless it was a legal form this build cannot
+  // read: then she tries again and is never let past it (RAPP-772).
+  const forms = useMyCustomForms(area === 'player');
+  const isLegalFormUnreadable =
+    area === 'player' &&
+    forms.isError &&
+    isAppError(forms.error) &&
+    forms.error.code === 'VALIDATION-1';
+  // The forms chained after Onboarding (RAPP-703): while the chain is ahead of
+  // a new player, its next form that applies to her opens first, in the order
+  // the team set. The gates stay the same; only their order changes. Older
+  // builds never read the chain.
+  const chain = useMyOnboardingChain(area === 'player');
+  const finishChain = useFinishOnboardingChain();
+  const isChainAhead =
+    area === 'player' &&
+    !mustAcceptTerms &&
+    (chain.data?.length ?? 0) > 0 &&
+    !authorization.isPending &&
+    !authorization.isError &&
+    !forms.isPending &&
+    !forms.isError;
+  const chainStep = isChainAhead
+    ? nextChainedForm(chain.data ?? [], {
+        mustSignAuthorization: needsAuthorization(authorization.data ?? null),
+        pending: forms.data ?? [],
+      })
+    : null;
+  const isChainDone = isChainAhead && chainStep === null;
+  const hasFinishedChain = useRef(false);
+  useEffect(() => {
+    if (!isChainDone || hasFinishedChain.current) return;
+    hasFinishedChain.current = true;
+    void finishChain();
+  }, [finishChain, isChainDone]);
   const mustSign =
-    area === 'player' && !mustAcceptTerms && needsAuthorization(authorization.data ?? null);
+    area === 'player' &&
+    !mustAcceptTerms &&
+    (chainStep === null
+      ? needsAuthorization(authorization.data ?? null)
+      : chainStep.kind === 'authorization');
+  const chainFormPath = chainStep?.kind === 'custom' ? `/form/${chainStep.responseId}` : null;
+  const blockingForm =
+    area === 'player' && !mustAcceptTerms && !mustSign
+      ? (forms.data?.find((form) => form.isBlocking) ?? null)
+      : null;
+  const blockingFormPath =
+    chainFormPath ?? (blockingForm === null ? null : `/form/${blockingForm.responseId}`);
+  const mustAnswerForm = blockingFormPath !== null;
   // Signing mode on a staff tablet (RAPP-305): while a player signs, every
   // other screen is off, so no link, notification or gesture opens one.
   const { session: signingSession } = useSigningSession();
@@ -84,6 +142,7 @@ function AppNavigator() {
       isCovered ||
       mustAcceptTerms ||
       mustSign ||
+      mustAnswerForm ||
       isSigning ||
       requiresSecondFactor ||
       (area === 'player' && authorization.isPending) ||
@@ -114,7 +173,25 @@ function AppNavigator() {
   if (isSigning && pathname !== '/signing-mode') {
     return <Redirect href={'/signing-mode' as Href} />;
   }
-  if (area === 'player' && authorization.isPending) {
+  // The gates wait for the network the same way her Onboarding does: offline
+  // she sees why and can try again, instead of a spinner that never ends, and
+  // she is still never let past them (RAPP-775).
+  if (area === 'player' && isWaitingForNetwork([authorization, forms, chain])) {
+    return (
+      <AnnouncementFeedError
+        message={t(getErrorMessageKey('NETWORK-1'))}
+        retryLabel={t('onboarding:retryAction')}
+        code="NETWORK-1"
+        languageFontClass={languageFontClass}
+        onRetry={() =>
+          void retryAfterNetworkCheck(() =>
+            Promise.all([authorization.refetch(), forms.refetch(), chain.refetch()]),
+          )
+        }
+      />
+    );
+  }
+  if (area === 'player' && (authorization.isPending || forms.isPending || chain.isPending)) {
     return (
       <View
         className="flex-1 items-center justify-center bg-neutral-50"
@@ -127,17 +204,49 @@ function AppNavigator() {
       </View>
     );
   }
+  if (isAuthorizationUnreadable) {
+    return (
+      <AnnouncementFeedError
+        message={t('onboarding:authorizationLoadFailed')}
+        retryLabel={t('onboarding:retryAction')}
+        code={isAppError(authorization.error) ? authorization.error.code : 'DB-1'}
+        languageFontClass={languageFontClass}
+        isLoading={authorization.isFetching}
+        onRetry={() => void retryAfterNetworkCheck(authorization.refetch)}
+      />
+    );
+  }
+  if (isLegalFormUnreadable) {
+    return (
+      <AnnouncementFeedError
+        message={t('onboarding:legalFormLoadFailed')}
+        retryLabel={t('onboarding:retryAction')}
+        code="VALIDATION-1"
+        languageFontClass={languageFontClass}
+        isLoading={forms.isFetching}
+        onRetry={() => void retryAfterNetworkCheck(forms.refetch)}
+      />
+    );
+  }
   if (mustAcceptTerms && pathname !== '/terms-update') {
     return <Redirect href={'/terms-update' as Href} />;
   }
   if (mustSign && pathname !== '/authorization' && pathname !== '/profile-edit') {
     return <Redirect href={'/authorization' as Href} />;
   }
+  if (blockingFormPath !== null && pathname !== blockingFormPath) {
+    return <Redirect href={blockingFormPath as Href} />;
+  }
   if (
     !mustAcceptTerms &&
     !mustSign &&
+    !mustAnswerForm &&
     home !== null &&
-    (pathname === '/' || pathname === '/authorization' || pathname === '/terms-update')
+    (pathname === '/' ||
+      pathname === '/authorization' ||
+      pathname === '/terms-update' ||
+      // Her first Onboarding just finished.
+      (area === 'player' && pathname.startsWith('/onboarding')))
   ) {
     return <Redirect href={home as Href} />;
   }
@@ -173,7 +282,14 @@ function AppNavigator() {
             {/* Her signature is a drag, which iOS would read as swipe back. */}
             <Stack.Screen name="authorization" options={noSwipeBackOptions} />
           </Stack.Protected>
+          {/* A form the team created (RAPP-700): from Home, its notification, or
+            alone while it keeps her from the app. */}
           <Stack.Protected guard={area === 'player' && !mustSign && !mustAcceptTerms}>
+            <Stack.Screen name="form/[responseId]" options={noSwipeBackOptions} />
+          </Stack.Protected>
+          <Stack.Protected
+            guard={area === 'player' && !mustSign && !mustAcceptTerms && !mustAnswerForm}
+          >
             <Stack.Screen name="(tabs)" />
             {/* Pushed OVER the tabs, not inside them: the edit form and the
               erasure request are full-screen tasks, and the floating tab bar
@@ -357,6 +473,7 @@ function AppNavigator() {
           <Stack.Protected guard={area === 'unresolved'}>
             <Stack.Screen name="account-unresolved" />
           </Stack.Protected>
+          {/* Her first Onboarding: only a player who has not joined yet (RAPP-705). */}
           <Stack.Protected guard={area === 'onboarding'}>
             <Stack.Screen name="onboarding" />
           </Stack.Protected>

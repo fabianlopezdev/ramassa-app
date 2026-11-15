@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { PLAYER_ORIGIN, queryDatabase, signInPlayer } from './session';
+import { appAnswerSql, PLAYER_ORIGIN, queryDatabase, signInPlayer } from './session';
 
 const copy = JSON.parse(
   readFileSync('packages/shared/i18n/locales/ca/onboarding.json', 'utf8'),
@@ -147,14 +147,11 @@ test('full Catalan onboarding saves branches, review edits, separate signatures 
   expect(
     queryDatabase(`select count(*) from public.authorization_signatures where profile_id='${id}'`),
   ).toBe('1');
-  expect(queryDatabase(`select document_type from public.profiles where id='${id}'`)).toBe(
-    'passport',
+  // Her answers by field (ADR-031): a choice read by its option key.
+  expect(queryDatabase(`select ${appAnswerSql(`'${id}'`, 'document_type')}`)).toBe('passport');
+  expect(queryDatabase(`select ${appAnswerSql(`'${id}'`, 'applicant_status_details')}`)).toBe(
+    'Synthetic situation details',
   );
-  expect(
-    queryDatabase(
-      `select public.decrypt_field(applicant_status_details) from public.profiles where id='${id}'`,
-    ),
-  ).toBe('Synthetic situation details');
   await page.goto(`${PLAYER_ORIGIN}/profile`);
 });
 

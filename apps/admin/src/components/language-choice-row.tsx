@@ -1,8 +1,8 @@
 /**
  * The login's language choice (RAPP-626): Catalan, Spanish and English side by
  * side, one tap to switch. A radio group, so arrow keys move along the row
- * (https://www.w3.org/WAI/ARIA/apg/patterns/radio/). Inside the app the sidebar
- * keeps the compact LanguagePicker.
+ * (https://www.w3.org/WAI/ARIA/apg/patterns/radio/). Inside the app her
+ * account page has the same choice as radio cards (RAPP-634).
  */
 import { useRef, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -73,7 +73,7 @@ export function LanguageChoiceButtons({
             onKeyDown={(event) => onKeyDown(event, index)}
             className={
               checked
-                ? 'min-h-11 rounded-full bg-primary/10 px-4 text-sm font-semibold text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none'
+                ? 'min-h-11 rounded-full bg-muted px-4 text-sm font-semibold text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none'
                 : 'min-h-11 rounded-full px-4 text-sm text-muted-foreground hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none'
             }
           >

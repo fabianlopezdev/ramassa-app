@@ -18,12 +18,12 @@ const PARTICIPANT_EXPORT = {
 } as const;
 
 describe('data export contract', () => {
-  test('parses a typed export and rejects a default export that leaks a sensitive column', () => {
+  test('parses a typed export and rejects a row with a column it does not declare', () => {
     expect(dataExportResponseSchema.parse(PARTICIPANT_EXPORT).rows[0]?.first_name).toBe('أمينة');
     expect(() =>
       dataExportResponseSchema.parse({
         ...PARTICIPANT_EXPORT,
-        columns: [...PARTICIPANT_EXPORT.columns, 'document_number'],
+        rows: [{ ...PARTICIPANT_EXPORT.rows[0], document_number: 'X1234567L' }],
       }),
     ).toThrow();
   });

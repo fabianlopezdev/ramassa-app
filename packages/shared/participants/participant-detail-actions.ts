@@ -16,56 +16,97 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { z } from 'zod';
 import { AppError } from '../errors';
-import type { UpdateOwnProfilePayload } from '../schemas/profile';
-import type { Database } from '../types/database';
+import { answerPayload } from '../intake-builder/builder';
+import { fetchSystemFieldIndex, type SystemFieldIndex } from '../intake-builder/field-answers';
+import {
+  profileRecordSchema,
+  type ProfileRecordWithFields,
+  type ProfileUpdate,
+} from '../schemas/profile';
+import type { Database, Json } from '../types/database';
 import {
   PARTICIPANT_NOTE_COLUMNS,
   type ParticipantActivityEntry,
-  type ParticipantDetailRow,
   type ParticipantNoteRow,
 } from './participant-detail';
-import type { ProfilePrefillPayload } from './participant-prefill';
 
 type Client = SupabaseClient<Database>;
 
+/** Her record as staff read it (RAPP-662): her account, the team's columns, her answers by field. */
+const participantRecordSchema = profileRecordSchema.extend({
+  is_active: z.boolean(),
+  is_forum_banned: z.boolean(),
+  anonymized_at: z.string().nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  is_test_account: z.boolean(),
+  role: z.string(),
+});
+
 /**
- * One participant with her encrypted fields decrypted, or null when there is no
- * such participant this caller may read. Reading her WRITES an audit row: that
- * is the point of routing through the RPC rather than selecting the columns.
+ * A participant as the staff phone reads her (RAPP-663): her record, with her
+ * organization's app fields, so each answer is read by field and shown at its
+ * field's level.
  */
-export async function fetchParticipantDetail(
+export interface ParticipantRecord
+  extends z.infer<typeof participantRecordSchema>, ProfileRecordWithFields {}
+
+/**
+ * One participant with her answers by field, each one the caller may read, or
+ * null when there is no such participant this caller may read. Reading her
+ * WRITES an audit row: there is no unaudited path to her document number,
+ * phone or address. A caller that already reads her organization's fields
+ * (the catalog) passes them, so they are not read twice.
+ */
+export async function fetchParticipantRecord(
   client: Client,
   participantId: string,
-): Promise<ParticipantDetailRow | null> {
+  fields?: SystemFieldIndex | Promise<SystemFieldIndex>,
+): Promise<ParticipantRecord | null> {
   const { data, error } = await client.rpc('get_participant_profile', {
     participant_id: participantId,
   });
   if (error) {
     throw new AppError('DB-1', { message: error.message });
   }
-  const rows = (data ?? []) as ParticipantDetailRow[];
-  return rows[0] ?? null;
+  const row: unknown = (data ?? [])[0];
+  if (row === undefined) return null;
+  const parsed = participantRecordSchema.safeParse(row);
+  if (!parsed.success) {
+    // The field names only: her record is personal data.
+    throw new AppError('DB-1', {
+      message: 'get_participant_profile returned a row this app does not understand',
+      context: { invalidFields: parsed.error.issues.map((issue) => issue.path.join('.')) },
+    });
+  }
+  return { ...parsed.data, fields: await (fields ?? fetchSystemFieldIndex(client)) };
 }
 
 /**
- * Writes an edited participant through the re-encrypting staff RPC.
- *
- * The payload type is the player-side one ON PURPOSE. Both RPCs read the same
- * snake_case keys because the admin form composes them with
- * `buildUpdateOwnProfilePayload`, the same mapper the player app uses; a
- * staff-only copy of that mapper is precisely the second source of truth this
- * issue exists to avoid.
+ * What staff send for her record: her names and settings when they changed
+ * them, and her answers by field. A Sensitive answer stays as stored for a
+ * caller who may not read it.
  */
-export async function updateParticipantProfile(
+export interface ParticipantUpdate {
+  readonly first_name?: string;
+  readonly last_name?: string;
+  readonly preferred_language?: string | null;
+  readonly media_consent?: boolean;
+  readonly season_number?: number | null;
+  readonly answers: ProfileUpdate['answers'];
+}
+
+/** Writes her record by field through the re-encrypting staff RPC (RAPP-663). */
+export async function updateParticipantRecord(
   client: Client,
   participantId: string,
-  // A full record, or only the changed fields of a woman who has not joined yet (RAPP-300).
-  payload: UpdateOwnProfilePayload | ProfilePrefillPayload,
+  update: ParticipantUpdate,
 ): Promise<void> {
   const { error } = await client.rpc('update_participant_profile', {
     participant_id: participantId,
-    payload,
+    payload: { ...update, answers: answerPayload(update.answers) } as Json,
   });
   if (error) {
     throw new AppError('DB-1', { message: error.message });

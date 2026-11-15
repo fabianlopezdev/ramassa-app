@@ -1,4 +1,5 @@
 import { ImpactDashboard } from '@/components/analytics/impact-dashboard';
+import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { impactDashboardSearchSchema } from '@/lib/impact-dashboard-search';
 import { safeAsync } from '@/lib/observability';
@@ -64,8 +65,8 @@ function DashboardPage() {
   // A section, not a main: the staff layout's SidebarInset is already the
   // page's single `main` landmark (RAPP-16).
   return (
-    <section className="flex flex-col items-start gap-6 p-6">
-      <h1 className="text-lg font-semibold text-foreground">{t('admin:dashboardTitle')}</h1>
+    <Page className="items-start">
+      <h1 className="text-2xl font-bold">{t('admin:dashboardTitle')}</h1>
       <ImpactDashboard
         report={impactReport}
         onFiltersChange={(filters) =>
@@ -82,6 +83,6 @@ function DashboardPage() {
         }
       />
       {import.meta.env.DEV ? <DevForcedErrorTriggers /> : null}
-    </section>
+    </Page>
   );
 }

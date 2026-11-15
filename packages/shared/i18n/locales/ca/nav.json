@@ -9,7 +9,10 @@
   "staff": {
     "dashboard": "Tauler",
     "participants": "Participants",
-    "onboarding": "Inscripció",
+    "onboarding": "Onboarding",
+    "legal": "Condicions legals",
+    "authorization": "Autorització de la temporada",
+    "appTerms": "Condicions de l'app",
     "content": "Continguts",
     "attendance": "Assistència",
     "messages": "Missatges",
@@ -19,8 +22,23 @@
     "feedback": "Suggeriments",
     "notifications": "Notificacions",
     "surveys": "Enquestes",
-    "data": "Dades i auditoria",
-    "settings": "Configuració"
+    "data": "Exportacions i auditoria",
+    "settings": "Configuració",
+    "referrals": "Derivacions",
+    "referralForm": "Formulari de les entitats",
+    "entities": "Entitats col·laboradores",
+    "profileLayout": "Dades de les jugadores",
+    "legalData": "Dades legals",
+    "team": "Equip",
+    "seasons": "Temporades",
+    "groups": {
+      "forms": "Formularis",
+      "data": "Dades",
+      "app": "App de les jugadores",
+      "entities": "Entitats",
+      "organisation": "Organització"
+    },
+    "customForms": "Altres formularis"
   },
   "entity": {
     "dashboard": "Impacte",
@@ -34,7 +52,8 @@
     "entityPortal": "Navegació del portal",
     "toggleSidebar": "Mostra o amaga el menú lateral",
     "sidebarLabel": "Menú lateral",
-    "sidebarDescription": "Menú de navegació lateral"
+    "sidebarDescription": "Menú de navegació lateral",
+    "toggleFold": "Mostra o amaga {{name}}"
   },
   "team": {
     "today": "Avui",

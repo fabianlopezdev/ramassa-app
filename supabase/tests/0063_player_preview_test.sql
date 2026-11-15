@@ -71,9 +71,9 @@ select is(
   1, 'a second start reuses the one preview account'
 );
 select ok(
-  (select phone is null and address is null and date_of_birth is null and document_number is null
-          and nationality is null and document_type = 'none' and terms_accepted_at is not null
-     from public.profiles where id = current_setting('test.preview_id')::uuid),
+  (select p.terms_accepted_at is not null
+          and not exists (select 1 from public.custom_answers a where a.profile_id = p.id)
+     from public.profiles p where p.id = current_setting('test.preview_id')::uuid),
   'the preview account holds no personal data and needs no onboarding'
 );
 select ok(

@@ -5,6 +5,7 @@ export const localizedTextSchema = z.object({
   ca: z.string().min(1),
   es: z.string().optional(),
   en: z.string().optional(),
+  fr: z.string().optional(),
   ar: z.string().optional(),
   fa: z.string().optional(),
 });

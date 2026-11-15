@@ -62,6 +62,11 @@ const adminRouteGroups = {
     '/notifications',
     '/settings',
     '/surveys',
+    // Their own pages since the menu grouped by audience (RAPP-654).
+    '/profile-layout',
+    '/team',
+    '/entities',
+    '/entities/referral-form',
   ],
 } as const;
 const entityRoutes = [

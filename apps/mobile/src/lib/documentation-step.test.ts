@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import {
   documentationForChoice,
-  documentDetailsSchema,
+  documentDetailsSchemaFor,
   hasDocumentDetails,
 } from './documentation-step';
 import { wizardStepRoute } from './onboarding-intake';
@@ -19,17 +19,17 @@ test('skip, no document and a different type discard previous document data', ()
 });
 test('Other needs both a name and number when the player chooses to provide a document', () => {
   expect(
-    documentDetailsSchema.safeParse({
+    documentDetailsSchemaFor().safeParse({
       documentType: 'other',
       documentName: 'Residence permit',
       documentNumber: 'P123',
     }).success,
   ).toBe(true);
   expect(
-    documentDetailsSchema.safeParse({ documentType: 'other', documentName: ' ' }).success,
+    documentDetailsSchemaFor().safeParse({ documentType: 'other', documentName: ' ' }).success,
   ).toBe(false);
   for (const documentNumber of [undefined, '', '   ']) {
-    const result = documentDetailsSchema.safeParse({
+    const result = documentDetailsSchemaFor().safeParse({
       documentType: 'other',
       documentName: 'Permit',
       documentNumber,
@@ -38,9 +38,9 @@ test('Other needs both a name and number when the player chooses to provide a do
     if (!result.success)
       expect(result.error.issues.some((issue) => issue.path[0] === 'documentNumber')).toBe(true);
   }
-  expect(documentDetailsSchema.safeParse({ documentType: 'passport' }).success).toBe(false);
+  expect(documentDetailsSchemaFor().safeParse({ documentType: 'passport' }).success).toBe(false);
   expect(
-    documentDetailsSchema.safeParse({ documentType: 'nie', documentNumber: '123' }).success,
+    documentDetailsSchemaFor().safeParse({ documentType: 'nie', documentNumber: '123' }).success,
   ).toBe(false);
 });
 test('an interrupted details screen resumes directly and suppresses back entrance', () => {

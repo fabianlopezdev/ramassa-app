@@ -24,7 +24,7 @@ function EditKnowledgePage() {
   const router = useRouter();
   return (
     <section>
-      <div className="m-4 mb-0 flex flex-wrap items-center justify-between gap-2">
+      <div className="mx-4 mt-4 flex flex-wrap sm:mx-6 sm:mt-6 items-center justify-between gap-2">
         <Button asChild variant="link">
           <Link to="/content/knowledge">{t('backToList')}</Link>
         </Button>

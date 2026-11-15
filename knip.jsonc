@@ -37,6 +37,8 @@
       "metro": false,
     },
     "apps/admin": {
+      // Isolated suites, loaded in their own process by tests/setup/run-isolated-test.ts.
+      "entry": ["src/**/*.case.{ts,tsx}"],
       // CSS is included so knip reads the Tailwind 4 `@import`s in src/styles/app.css.
       "project": ["src/**/*.{ts,tsx,css}"],
       // shadcn/ui primitives are vendored with their upstream API, so a later

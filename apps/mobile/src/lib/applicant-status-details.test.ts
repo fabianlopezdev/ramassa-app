@@ -1,9 +1,14 @@
 import { expect, test } from 'bun:test';
+import { systemFieldIndexFromCatalog } from '@ramassa/shared/intake-builder';
 import { createMmkvOnboardingDraftStore } from '@ramassa/shared/onboarding-drafts';
 import { seasonAnswerFields } from '@ramassa/shared/schemas';
+import { systemFieldsCatalogFixture } from '@ramassa/shared/testing';
 import { wizardStepRoute } from './onboarding-intake';
 import { mergeSeasonDraft } from './season-draft';
+import { wizardDraftStoreOn } from './wizard-draft';
 
+// Her draft is kept by field (RAPP-663): every save goes through her fields.
+const fields = systemFieldIndexFromCatalog(systemFieldsCatalogFixture());
 test('Other details validate and survive their own resumable sub-screen', () => {
   const parsed = seasonAnswerFields.parse({
     applicantStatus: 'other',
@@ -14,13 +19,16 @@ test('Other details validate and survive their own resumable sub-screen', () => 
     false,
   );
   let raw: string | undefined;
-  const store = createMmkvOnboardingDraftStore({
-    getString: () => raw,
-    set: (_key, value) => {
-      raw = String(value);
-    },
-    remove: () => true,
-  });
+  const store = wizardDraftStoreOn(
+    createMmkvOnboardingDraftStore({
+      getString: () => raw,
+      set: (_key, value) => {
+        raw = String(value);
+      },
+      remove: () => true,
+    }),
+    fields,
+  );
   store.saveDraft({ currentStep: 'applicant-status-details', season: parsed });
   expect(store.loadDraft()?.currentStep).toBe('applicant-status-details');
   expect(wizardStepRoute('applicant-status-details', 'back')).toBe(

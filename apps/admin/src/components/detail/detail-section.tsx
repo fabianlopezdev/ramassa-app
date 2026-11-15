@@ -6,10 +6,8 @@
  * block of label/value pairs", and four hand-rolled versions would be four
  * different answers to what an empty field looks like.
  *
- * A field renders through a `<dl>` rather than a grid of divs so the pairing is
- * in the markup a screen reader walks, not only in the pixels. Alignment is
- * logical (`text-start`), so Arabic and Farsi read correctly with no per-language
- * styling.
+ * Alignment is logical (`text-start`), so Arabic and Farsi read correctly with
+ * no per-language styling.
  */
 
 import type { ReactNode } from 'react';
@@ -37,34 +35,5 @@ export function DetailSection({ title, description, action, children }: DetailSe
       </header>
       {children}
     </section>
-  );
-}
-
-export interface DetailFieldListProps {
-  readonly children: ReactNode;
-}
-
-export function DetailFieldList({ children }: DetailFieldListProps) {
-  return <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">{children}</dl>;
-}
-
-export interface DetailFieldProps {
-  readonly label: string;
-  /**
-   * Already resolved to something a person can read. A field with no value
-   * passes the translated "not provided" string rather than an empty node, so
-   * a blank never reads as "the screen failed to load this".
-   */
-  readonly value: ReactNode;
-}
-
-export function DetailField({ label, value }: DetailFieldProps) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <dt className="text-start text-xs font-medium tracking-wide text-muted-foreground uppercase">
-        {label}
-      </dt>
-      <dd className="text-start text-sm text-foreground">{value}</dd>
-    </div>
   );
 }

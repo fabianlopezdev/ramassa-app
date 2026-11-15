@@ -1,0 +1,418 @@
+/**
+ * Her onboarding and her season form read from the placements (RAPP-655):
+ * the fields of each screen in their order, the wording per language with its
+ * fallback, required per surface, and staff's choice per player.
+ */
+import { describe, expect, test } from 'bun:test';
+import { customStepKey, nextWizardScreen, wizardFlowOrder } from '../onboarding/intake';
+import { layoutSystemFields } from './app-controls';
+import type { CustomQuestion, IntakeCatalog, IntakeScreen } from './builder';
+import { EMPTY_INTAKE_CATALOG, textIn, wizardFlow } from './builder';
+import {
+  APP_SCREEN_ANCHORS,
+  appScreenFields,
+  appScreenGroupId,
+  herOnboarding,
+  onboardingScreenQuestions,
+  seasonFormQuestions,
+} from './her-onboarding';
+import { NO_CHOICES, playerPlan } from './player-plan';
+import type { FieldPlacement, ProfileField, ProfileLayout } from './profile-layout';
+
+const SECTION = '5eed0000-0000-4000-8096-000000000001';
+const TRANSPORT_SCREEN = '5eed0000-0000-4000-8096-000000000002';
+
+function field(overrides: Partial<ProfileField> & Pick<ProfileField, 'id'>): ProfileField {
+  return {
+    sectionId: SECTION,
+    kind: 'custom',
+    builtinKey: null,
+    type: 'short_text',
+    label: { ca: 'Camp' },
+    help: null,
+    privacy: 'normal',
+    defaultRequired: false,
+    settings: {},
+    sortOrder: 0,
+    isArchived: false,
+    createdAt: '2026-10-23T10:00:00Z',
+    createdBy: null,
+    createdByName: null,
+    hasAnswers: false,
+    options: [],
+    ...overrides,
+  };
+}
+
+let placementCount = 0;
+function placed(
+  fieldId: string,
+  surface: FieldPlacement['surface'],
+  screenKey: string | null,
+  sortOrder: number,
+  overrides: Partial<FieldPlacement> = {},
+): FieldPlacement {
+  placementCount += 1;
+  return {
+    id: `5eed0000-0000-4000-8097-${String(placementCount).padStart(12, '0')}`,
+    fieldId,
+    surface,
+    screenKey,
+    sortOrder,
+    required: false,
+    labelOverride: null,
+    helpOverride: null,
+    ...overrides,
+  };
+}
+
+const BUS = field({
+  id: '5eed0000-0000-4000-8098-000000000001',
+  label: { ca: 'Vens amb bus?', ar: 'هل تأتين بالحافلة؟' },
+});
+const STOP = field({ id: '5eed0000-0000-4000-8098-000000000002', label: { ca: 'Parada' } });
+const GLOVES = field({
+  id: '5eed0000-0000-4000-8098-000000000003',
+  label: { ca: 'Talla de guants', ar: 'مقاس القفازات' },
+});
+const BARRIER = field({
+  id: '5eed0000-0000-4000-8098-000000000004',
+  label: { ca: 'Què et dificulta venir?' },
+});
+const GONE = field({ id: '5eed0000-0000-4000-8098-000000000005', isArchived: true });
+const CLOTHING = field({
+  id: '5eed0000-0000-4000-8098-000000000006',
+  kind: 'builtin',
+  builtinKey: 'clothing_size',
+});
+
+const ownScreen: IntakeScreen = {
+  id: TRANSPORT_SCREEN,
+  title: { ca: 'Com arribes' },
+  intro: null,
+  afterScreen: 'logistics',
+  isArchived: false,
+  questions: [],
+};
+
+function catalogWith(placements: readonly FieldPlacement[], extra: Partial<IntakeCatalog> = {}) {
+  const layout: ProfileLayout = {
+    sections: [],
+    fields: [BUS, STOP, GLOVES, BARRIER, GONE, CLOTHING],
+    placements,
+  };
+  return {
+    screens: [ownScreen],
+    overrides: [],
+    presets: [],
+    layout,
+    ...extra,
+  } satisfies IntakeCatalog;
+}
+
+const LAYOUT_PLACEMENTS = [
+  placed(STOP.id, 'onboarding', TRANSPORT_SCREEN, 1),
+  placed(BUS.id, 'onboarding', TRANSPORT_SCREEN, 0, {
+    required: true,
+    labelOverride: { ca: 'Com vens als entrenaments?' },
+  }),
+  placed(GONE.id, 'onboarding', TRANSPORT_SCREEN, 2),
+  placed(GLOVES.id, 'onboarding', 'equipment', 0, {
+    labelOverride: { ca: 'Quina talla de guants portes?' },
+  }),
+  placed(CLOTHING.id, 'onboarding', 'equipment', 0),
+  placed(BARRIER.id, 'season', null, 1),
+  placed(BUS.id, 'season', null, 0, { labelOverride: { ca: 'Aquesta temporada, vens amb bus?' } }),
+];
+
+const ids = (questions: readonly CustomQuestion[]) => questions.map((question) => question.id);
+
+describe('herOnboarding', () => {
+  test('a Ramassà screen asks its live fields in placement order, required as placed', () => {
+    const { screens } = herOnboarding(catalogWith(LAYOUT_PLACEMENTS));
+    const transport = screens.find((screen) => screen.id === TRANSPORT_SCREEN);
+    expect(ids(transport?.questions ?? [])).toEqual([BUS.id, STOP.id]);
+    expect(transport?.questions[0]?.isRequired).toBe(true);
+    expect(transport?.questions[1]?.isRequired).toBe(false);
+  });
+
+  test('a Catalan wording leaves Arabic on the field name and Spanish on its Catalan name', () => {
+    const { screens } = herOnboarding(catalogWith(LAYOUT_PLACEMENTS));
+    const bus = screens.find((screen) => screen.id === TRANSPORT_SCREEN)?.questions[0];
+    expect(textIn(bus?.label, 'ca')).toBe('Com vens als entrenaments?');
+    expect(textIn(bus?.label, 'ar')).toBe('هل تأتين بالحافلة؟');
+    expect(textIn(bus?.label, 'es')).toBe('Vens amb bus?');
+  });
+
+  test('a field placed on an app screen is a group on that screen', () => {
+    const { screens, plan } = herOnboarding(catalogWith(LAYOUT_PLACEMENTS));
+    const equipment = appScreenFields(screens, 'equipment');
+    expect(equipment?.id).toBe(appScreenGroupId('equipment'));
+    // The app's own field stays on its own control: only Ramassà fields are placed.
+    expect(ids(equipment?.questions ?? [])).toEqual([GLOVES.id]);
+    expect(textIn(equipment?.questions[0]?.label, 'ca')).toBe('Quina talla de guants portes?');
+    expect(textIn(equipment?.questions[0]?.label, 'ar')).toBe('مقاس القفازات');
+    expect(plan.find((screen) => screen.builtinScreen === 'equipment')?.isAnswered).toBe(false);
+    expect(appScreenFields(screens, 'identity')).toBeUndefined();
+  });
+
+  test('her screens follow the flow staff arranged', () => {
+    const flowFirst = herOnboarding(
+      catalogWith(LAYOUT_PLACEMENTS, { flowOrder: [`custom:${TRANSPORT_SCREEN}`, 'equipment'] }),
+    );
+    expect(flowFirst.screens.map((screen) => screen.id)).toEqual([
+      TRANSPORT_SCREEN,
+      appScreenGroupId('equipment'),
+    ]);
+    const appOrder = herOnboarding(catalogWith(LAYOUT_PLACEMENTS));
+    // The app's own order puts equipment after logistics, then the staff screens after it.
+    expect(appOrder.screens.map((screen) => screen.id)).toEqual([
+      appScreenGroupId('equipment'),
+      TRANSPORT_SCREEN,
+    ]);
+    expect(appOrder.plan.map((screen) => screen.id)).toEqual([
+      appScreenGroupId('equipment'),
+      TRANSPORT_SCREEN,
+    ]);
+  });
+
+  test("on Auto an answered screen is skipped, on Ask it shows, Don't ask removes the field", () => {
+    const catalog = catalogWith(LAYOUT_PLACEMENTS);
+    const answers = { [BUS.id]: 'yes', [STOP.id]: 'Sants' };
+    const auto = herOnboarding(catalog, answers);
+    expect(auto.plan.find((screen) => screen.id === TRANSPORT_SCREEN)?.isAnswered).toBe(true);
+    const ask = herOnboarding(catalog, answers, new Map([[STOP.id, true]]));
+    expect(ask.plan.find((screen) => screen.id === TRANSPORT_SCREEN)?.isAnswered).toBe(false);
+    const skip = herOnboarding(catalog, {}, new Map([[GLOVES.id, false]]));
+    expect(appScreenFields(skip.screens, 'equipment')).toBeUndefined();
+  });
+
+  test('an archived Ramassà screen and its fields are not asked', () => {
+    const { screens } = herOnboarding(
+      catalogWith(LAYOUT_PLACEMENTS, { screens: [{ ...ownScreen, isArchived: true }] }),
+    );
+    expect(screens.map((screen) => screen.id)).toEqual([appScreenGroupId('equipment')]);
+  });
+
+  test('the staff phone preview reads the same fields and words', () => {
+    const catalog = catalogWith(LAYOUT_PLACEMENTS);
+    const { screens } = herOnboarding(catalog);
+    expect(onboardingScreenQuestions(catalog, 'equipment')).toEqual(
+      appScreenFields(screens, 'equipment')?.questions ?? [],
+    );
+  });
+
+  test('a catalog that could not load asks no Ramassà field', () => {
+    const empty: IntakeCatalog = { screens: [], overrides: [], presets: [] };
+    expect(herOnboarding(empty)).toEqual({ screens: [], plan: [] });
+    expect(onboardingScreenQuestions(empty, 'equipment')).toEqual([]);
+  });
+});
+
+describe('seasonFormQuestions', () => {
+  test('the season form asks its own placements, in order, with its own wording', () => {
+    const questions = seasonFormQuestions(catalogWith(LAYOUT_PLACEMENTS));
+    expect(ids(questions)).toEqual([BUS.id, BARRIER.id]);
+    expect(textIn(questions[0]?.label, 'ca')).toBe('Aquesta temporada, vens amb bus?');
+  });
+
+  test('a catalog that could not load asks nothing again', () => {
+    expect(seasonFormQuestions({ screens: [], overrides: [], presets: [] })).toEqual([]);
+  });
+});
+
+describe('a screen with a signature block always shows (RAPP-690)', () => {
+  const block = (id: string, screenKey: string) => ({
+    id,
+    surface: 'onboarding' as const,
+    screenKey,
+    kind: 'signature' as const,
+    body: { ca: 'Accepto les normes' },
+    sortOrder: 0,
+  });
+  const catalog = {
+    ...EMPTY_INTAKE_CATALOG,
+    screens: [
+      {
+        id: 'normes',
+        title: { ca: 'Normes' },
+        intro: null,
+        afterScreen: 'logistics' as const,
+        isArchived: false,
+      },
+    ],
+    blocks: [block('b1', 'normes'), block('b2', 'equipment')],
+  };
+
+  test('a Ramassà screen and an app screen with only a block are planned, unanswered', () => {
+    const planned = herOnboarding(catalog);
+    // In the flow order: the app screen's group, then the Ramassà screen after logistics.
+    expect(planned.plan.map((screen) => [screen.id, screen.isAnswered])).toEqual([
+      ['app:equipment', false],
+      ['normes', false],
+    ]);
+    expect(planned.screens.map((screen) => screen.questions)).toEqual([[], []]);
+  });
+
+  test('the staff preview of her plan shows them, never skippable', () => {
+    const shown = playerPlan(catalog, new Set(), NO_CHOICES).screens.filter(
+      (screen) => screen.hasSignature,
+    );
+    expect(shown.map((screen) => [screen.step.key, screen.mustAsk, screen.isSkipped])).toEqual([
+      ['equipment', true, false],
+      ['custom:normes', true, false],
+    ]);
+  });
+
+  test('an app screen is anchored on its step of the app order', () => {
+    expect(APP_SCREEN_ANCHORS.equipment).toBe('logistics');
+  });
+
+  test('without blocks a screen with no field is no screen', () => {
+    expect(herOnboarding({ ...catalog, blocks: [] }).plan).toEqual([]);
+  });
+});
+
+describe('any field on any screen (RAPP-782)', () => {
+  const DOC_TYPE = field({
+    id: '5eed0000-0000-4000-8098-000000000011',
+    kind: 'builtin',
+    systemKey: 'document_type',
+    type: 'single_choice',
+    options: [
+      {
+        id: '5eed0000-0000-4000-8099-000000000001',
+        key: 'nie',
+        label: { ca: 'NIE' },
+        isArchived: false,
+      },
+    ] as ProfileField['options'],
+  });
+  const DOC_NUMBER = field({
+    id: '5eed0000-0000-4000-8098-000000000012',
+    kind: 'builtin',
+    systemKey: 'document_number',
+  });
+  const NOM = field({
+    id: '5eed0000-0000-4000-8098-000000000013',
+    kind: 'builtin',
+    systemKey: 'first_name',
+  });
+  const catalog = (placements: readonly FieldPlacement[]): IntakeCatalog => {
+    const layout: ProfileLayout = {
+      sections: [],
+      fields: [BUS, DOC_TYPE, DOC_NUMBER, NOM],
+      placements,
+    };
+    return { ...catalogWith([]), layout, systemFields: layoutSystemFields(layout) };
+  };
+
+  test('a follow-up whose question moved is a step of its own, right after the question', () => {
+    const { plan, screens } = herOnboarding(
+      catalog([
+        placed(DOC_TYPE.id, 'onboarding', TRANSPORT_SCREEN, 0),
+        placed(DOC_NUMBER.id, 'onboarding', 'documentation-nie', 0, { required: true }),
+        placed(BUS.id, 'onboarding', TRANSPORT_SCREEN, 1),
+      ]),
+    );
+    const nie = plan.find((each) => each.id === 'app:documentation-nie');
+    expect(nie?.builtinScreen).toBeNull();
+    expect(nie?.parent).toBe(`custom:${TRANSPORT_SCREEN}`);
+    expect(nie?.opensWhen).toEqual([
+      { fieldId: DOC_TYPE.id, values: ['5eed0000-0000-4000-8099-000000000001'] },
+    ]);
+    // Off its control, the follow-up asks its number with the generic renderer.
+    expect(
+      ids(screens.find((each) => each.id === 'app:documentation-nie')?.questions ?? []),
+    ).toEqual([DOC_NUMBER.id]);
+  });
+
+  test('her phone walks to the moved follow-up right after the question, on her answer', () => {
+    const moved = catalog([
+      placed(DOC_TYPE.id, 'onboarding', TRANSPORT_SCREEN, 0),
+      placed(DOC_NUMBER.id, 'onboarding', 'documentation-nie', 0, { required: true }),
+    ]);
+    const { plan } = herOnboarding(moved);
+    const flow = wizardFlow(moved);
+    const from = customStepKey(TRANSPORT_SCREEN);
+    const nie = { [DOC_TYPE.id]: '5eed0000-0000-4000-8099-000000000001' };
+    expect(nextWizardScreen(from, new Set(), plan, flow, nie)).toBe('custom:app:documentation-nie');
+    expect(nextWizardScreen(from, new Set(), plan, flow, {})).not.toBe(
+      'custom:app:documentation-nie',
+    );
+    const order = wizardFlowOrder(plan, flow);
+    expect(order.indexOf('custom:app:documentation-nie')).toBe(order.indexOf(from) + 1);
+  });
+
+  test('moved Necessitats específiques opens its one details screen right after, on any need', () => {
+    const NEEDS = field({
+      id: '5eed0000-0000-4000-8098-000000000021',
+      kind: 'builtin',
+      systemKey: 'specific_needs',
+      type: 'multiple_choice',
+      options: [
+        {
+          id: '5eed0000-0000-4000-8099-000000000021',
+          key: 'health',
+          label: { ca: 'Salut' },
+          isArchived: false,
+        },
+        {
+          id: '5eed0000-0000-4000-8099-000000000022',
+          key: 'none',
+          label: { ca: 'Cap' },
+          isArchived: false,
+        },
+      ] as ProfileField['options'],
+    });
+    const DETAILS = field({
+      id: '5eed0000-0000-4000-8098-000000000022',
+      kind: 'builtin',
+      systemKey: 'specific_needs_details',
+      type: 'long_text',
+    });
+    const layout: ProfileLayout = {
+      sections: [],
+      fields: [NEEDS, DETAILS],
+      placements: [
+        placed(NEEDS.id, 'onboarding', TRANSPORT_SCREEN, 0),
+        placed(DETAILS.id, 'onboarding', 'specific-needs-details', 0),
+      ],
+    };
+    const moved: IntakeCatalog = {
+      ...catalogWith([]),
+      layout,
+      systemFields: layoutSystemFields(layout),
+    };
+    const { plan } = herOnboarding(moved);
+    const from = customStepKey(TRANSPORT_SCREEN);
+    const flow = wizardFlow(moved);
+    const health = { [NEEDS.id]: ['5eed0000-0000-4000-8099-000000000021'] };
+    const none = { [NEEDS.id]: ['5eed0000-0000-4000-8099-000000000022'] };
+    expect(nextWizardScreen(from, new Set(), plan, flow, health)).toBe(
+      'custom:app:specific-needs-details',
+    );
+    expect(nextWizardScreen(from, new Set(), plan, flow, none)).not.toBe(
+      'custom:app:specific-needs-details',
+    );
+    expect(plan.filter((each) => each.id === 'app:specific-needs-details')).toHaveLength(1);
+  });
+
+  test("a follow-up's field moved to another screen is asked there to everyone", () => {
+    const placements = [
+      placed(DOC_TYPE.id, 'onboarding', 'documentation', 0),
+      placed(DOC_NUMBER.id, 'onboarding', 'logistics', 0),
+    ];
+    expect(ids(onboardingScreenQuestions(catalog(placements), 'logistics'))).toEqual([
+      DOC_NUMBER.id,
+    ]);
+  });
+
+  test('a screen holding her name is never skipped as answered', () => {
+    const { plan } = herOnboarding(
+      catalog([placed(NOM.id, 'onboarding', TRANSPORT_SCREEN, 0, { required: true })]),
+      { [NOM.id]: 'Aisha' },
+    );
+    expect(plan.find((each) => each.id === TRANSPORT_SCREEN)?.isAnswered).toBe(false);
+  });
+});

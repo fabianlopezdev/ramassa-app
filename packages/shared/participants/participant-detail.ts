@@ -1,36 +1,17 @@
 /**
- * The staff participant detail: the shapes the screen reads, and the pure
- * readings it makes of them (RAPP-24).
- *
- * The row shape EXTENDS the player-side `ProfileRow` rather than restating it,
- * which is what lets the admin edit form reuse `profileFromRow` and
- * `buildUpdateOwnProfilePayload` untouched. That reuse is the point of the
- * issue: the same woman's NIE has to be judged by the same rule whether she
- * typed it during onboarding, corrected it in her own profile, or had a staff
- * member fix it for her. Three declarations would be three slowly diverging
- * meanings of "valid", and the one that drifts is always the one nobody re-read.
+ * The staff participant detail: the pure readings the screen makes of her
+ * record and her timeline (RAPP-24). Her record itself is `ParticipantRecord`
+ * (`participant-detail-actions.ts`): her account and her answers by field.
  */
-
-import type { ProfileRow } from '../schemas/profile';
 
 /**
- * A participant as staff see her: everything her own profile screen shows, plus
- * the fields that are the team's business and not hers to set.
+ * Whether she joined, read the way `update_participant_profile` reads it: only
+ * an invited woman is completed in parts. A joined player may never have
+ * accepted the terms (records from before them), so `terms_accepted_at` cannot
+ * say it (RAPP-653).
  */
-export interface ParticipantDetailRow extends ProfileRow {
-  readonly is_active: boolean;
-  readonly is_forum_banned: boolean;
-  /**
-   * When the person was removed from this row while the row was kept for
-   * reporting (RAPP-26). Null for an ordinary record. The screen reads this
-   * rather than inferring it from a blank name, so "anonymized" is a state the
-   * UI can name instead of a shape it has to guess.
-   */
-  readonly anonymized_at: string | null;
-  readonly created_at: string;
-  readonly updated_at: string;
-  /** A made-up player for designing the onboarding (RAPP-615). */
-  readonly is_test_account: boolean;
+export function hasJoined(participant: { readonly role: string }): boolean {
+  return participant.role !== 'invited';
 }
 
 /**

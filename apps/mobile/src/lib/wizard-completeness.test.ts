@@ -5,7 +5,7 @@
  */
 import { describe, expect, test } from 'bun:test';
 import type { WizardFlow } from '@ramassa/shared/intake';
-import type { IntakeScreen } from '@ramassa/shared/intake-builder';
+import type { IntakeCatalog, IntakeScreen } from '@ramassa/shared/intake-builder';
 import type { OnboardingDraft } from '@ramassa/shared/onboarding-drafts';
 import {
   firstIncompleteScreen,
@@ -138,12 +138,10 @@ describe('the required list staff chose (RAPP-611)', () => {
       questions: [
         {
           id: 'q1',
-          screenId: 'transport',
           type: 'short_text',
           label: { ca: 'Com arribes?' },
           help: null,
           privacy: 'normal',
-          placements: ['wizard'],
           isArchived: false,
           isRequired: true,
           settings: {},
@@ -159,5 +157,182 @@ describe('the required list staff chose (RAPP-611)', () => {
     expect(firstIncompleteStep(complete, context)).toBe('custom:transport');
     expect(firstIncompleteStep({ ...complete, custom: { q1: 'Bus' } }, context)).toBeNull();
     expect(firstIncompleteStep(complete, { ...context, storedCustom: { q1: 'Tren' } })).toBeNull();
+  });
+});
+
+describe('signature blocks (RAPP-690)', () => {
+  const block = (id: string, screenKey: string) => ({
+    id,
+    surface: 'onboarding' as const,
+    screenKey,
+    kind: 'signature' as const,
+    body: { ca: 'Autoritzo el transport' },
+    sortOrder: 0,
+  });
+  const strokes: [number, number][][] = [
+    [
+      [10, 20],
+      [30, 40],
+    ],
+  ];
+
+  test('an app screen with a block she has not signed is where she goes', () => {
+    const context = { custom: [], flow: appOrder, blocks: [block('b1', 'logistics')] };
+    expect(firstIncompleteStep(complete, context)).toBe('logistics');
+    expect(firstIncompleteStep({ ...complete, signatures: { b1: null } }, context)).toBe(
+      'logistics',
+    );
+    expect(firstIncompleteStep({ ...complete, signatures: { b1: strokes } }, context)).toBeNull();
+  });
+
+  test('so is a Ramassà screen with only a block', () => {
+    const screen: IntakeScreen = {
+      id: 'normes',
+      title: { ca: 'Normes' },
+      intro: null,
+      afterScreen: 'logistics',
+      isArchived: false,
+      questions: [],
+    };
+    const context = {
+      custom: [{ id: 'normes', afterScreen: 'logistics' as const, isAnswered: false }],
+      flow: appOrder,
+      customScreens: [screen],
+      blocks: [block('b2', 'normes')],
+    };
+    expect(firstIncompleteStep(complete, context)).toBe('custom:normes');
+    expect(firstIncompleteStep({ ...complete, signatures: { b2: strokes } }, context)).toBeNull();
+  });
+});
+
+describe('consents placed on her screens (RAPP-699)', () => {
+  const consentCatalog = {
+    consents: [
+      {
+        id: 'c1',
+        key: 'sortides',
+        systemKey: null,
+        name: { ca: 'Sortides' },
+        body: { ca: 'Vinc a les sortides.' },
+        isArchived: false,
+      },
+      {
+        id: 'c2',
+        key: 'newsletter',
+        systemKey: 'newsletter',
+        name: { ca: 'Butlletí' },
+        body: { ca: 'Vull el butlletí.' },
+        isArchived: false,
+      },
+    ],
+    consentPlacements: [
+      {
+        id: 'p1',
+        consentId: 'c1',
+        surface: 'onboarding' as const,
+        screenKey: 'logistics',
+        sortOrder: 3,
+        required: true,
+      },
+      {
+        id: 'p2',
+        consentId: 'c2',
+        surface: 'onboarding' as const,
+        screenKey: 'logistics',
+        sortOrder: 4,
+        required: false,
+      },
+    ],
+  };
+
+  test('a required consent she has not ticked is where she goes; an optional one never is', () => {
+    const context = { custom: [], flow: appOrder, consentCatalog };
+    expect(firstIncompleteStep(complete, context)).toBe('logistics');
+    expect(
+      firstIncompleteStep(
+        { ...complete, consents: { sortides: false, newsletter: true } },
+        context,
+      ),
+    ).toBe('logistics');
+    expect(firstIncompleteStep({ ...complete, consents: { sortides: true } }, context)).toBeNull();
+  });
+});
+
+describe('her document number wherever staff place it (RAPP-782)', () => {
+  const TYPE = '5eed0000-0000-4000-8099-0000000000a1';
+  const NUMBER = '5eed0000-0000-4000-8099-0000000000a2';
+  const NIE = '5eed0000-0000-4000-8099-0000000000a3';
+  const catalog = {
+    screens: [],
+    overrides: [],
+    presets: [],
+    // Número de document sits on logistics: the document follow-ups ask it no more.
+    layout: {
+      sections: [],
+      fields: [
+        {
+          id: NUMBER,
+          kind: 'builtin',
+          systemKey: 'document_number',
+          isArchived: false,
+          options: [],
+        },
+      ],
+      placements: [
+        {
+          id: 'p-number',
+          fieldId: NUMBER,
+          surface: 'onboarding',
+          screenKey: 'logistics',
+          sortOrder: 0,
+          required: true,
+          labelOverride: null,
+          helpOverride: null,
+        },
+      ],
+    },
+    systemFields: new Map([
+      [
+        'document_type',
+        {
+          id: TYPE,
+          type: 'single_choice',
+          privacy: 'personal',
+          options: [{ id: NIE, key: 'nie', label: { ca: 'NIE' }, isArchived: false }],
+        },
+      ],
+      ['document_number', { id: NUMBER, type: 'short_text', privacy: 'sensitive', options: [] }],
+    ]),
+  } as unknown as IntakeCatalog;
+  // Número de document moved to logistics, asked there with the generic renderer.
+  const onLogistics: IntakeScreen = {
+    id: 'app:logistics',
+    title: {},
+    intro: null,
+    afterScreen: 'logistics',
+    isArchived: false,
+    builtinScreen: 'logistics',
+    questions: [{ id: NUMBER, type: 'short_text', label: { ca: 'Número' }, options: [] } as never],
+  };
+  const context = (custom: Record<string, string>) => ({
+    custom: [],
+    flow: appOrder,
+    customScreens: [onLogistics],
+    catalog,
+    storedCustom: custom,
+  });
+  const nieDraft = { ...complete, documentation: { documentType: 'nie' } };
+
+  test('a NIE that does not fit sends her back to the screen asking the number', () => {
+    expect(firstIncompleteStep(nieDraft, context({ [NUMBER]: 'X123' }))).toBe('logistics');
+    expect(firstIncompleteStep(nieDraft, context({ [NUMBER]: 'x1234567l' }))).toBeNull();
+  });
+
+  test('her type answered by field counts too; a passport has no form to check', () => {
+    expect(firstIncompleteStep(complete, context({ [TYPE]: NIE, [NUMBER]: 'X123' }))).toBe(
+      'logistics',
+    );
+    const passport = { ...complete, documentation: { documentType: 'passport' } };
+    expect(firstIncompleteStep(passport, context({ [NUMBER]: 'X123' }))).toBeNull();
   });
 });

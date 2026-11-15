@@ -69,7 +69,7 @@ select is(
 );
 select is(
   (select wording || '|' || language || '|' || required::text || '|' || (version_id = '5eed0000-0000-4000-8041-000000000001')::text
-     from public.authorization_consent_events
+     from public.consent_events
     where profile_id = '5eed0000-0000-4000-8000-000000000011' and consent_key = 'newsletter'),
   (select (content -> 'consents' -> 'newsletter' -> 'label' ->> 'ar') || '|ar|false|true' from run where label = 'v1'),
   'an earlier consent record carries the words its signature showed, in her language'
@@ -136,6 +136,21 @@ from run where label = 'v1';
 
 -- 3. Drafts -------------------------------------------------------------------------------------------------
 
+-- Staff shape the catalogue and the authorization's consents screen like a
+-- version's consents (RAPP-699): the draft takes its consents from there.
+create function pg_temp.catalogue_as(p_content jsonb) returns void language plpgsql security definer as $fn$
+begin
+  delete from public.consent_placements
+   where org_id = '5eed0000-0000-4000-8000-000000000000' and surface = 'authorization';
+  perform private.consents_from_authorization('5eed0000-0000-4000-8000-000000000000', p_content);
+  update public.consents c
+     set body = (p_content -> 'consents' -> c.key -> 'label')
+                || jsonb_build_object('ca', private.localized_text_in(p_content -> 'consents' -> c.key -> 'label', 'ca'))
+   where c.org_id = '5eed0000-0000-4000-8000-000000000000' and p_content -> 'consents' ? c.key;
+end;
+$fn$;
+select pg_temp.catalogue_as((select content from run where label = 'v2-content'));
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
@@ -145,9 +160,10 @@ select throws_ok(
 
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000097", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select throws_ok(
-  $$ select public.save_authorization_draft(jsonb_set((select content from run where label = 'v2-content'),
-       '{consents,image_rights,required}', 'true')) $$,
-  '23514', null::text, 'a draft is checked like a version'
+  $$ select public.save_consent_placement(
+       (select p.id from public.consent_placements p join public.consents c on c.id = p.consent_id
+         where c.key = 'image_rights' and p.surface = 'authorization'), true) $$,
+  '23514', null::text, 'image rights are never required on the consents screen'
 );
 select lives_ok(
   $$ select public.save_authorization_draft((select content from run where label = 'v2-content')) $$,
@@ -204,6 +220,17 @@ select ok(
 
 -- 4. Signing version 2 ----------------------------------------------------------------------------------------
 
+-- Since RAPP-698 the Health screen's fields are placements: health optional,
+-- the emergency contact's name and phone required, as version 2 wanted.
+reset role;
+update public.field_placements pl
+   set required = f.system_key in ('emergency_contact_name', 'emergency_contact_phone')
+  from public.profile_fields f
+ where f.id = pl.field_id and pl.surface = 'authorization'
+   and f.org_id = '5eed0000-0000-4000-8000-000000000000';
+insert into run (label, id)
+select key, (private.authorization_field('5eed0000-0000-4000-8000-000000000000', key)).id
+  from unnest(private.authorization_field_keys()) key;
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000022", "role": "authenticated", "aal": "aal1"}';
 select throws_ok(
@@ -219,7 +246,7 @@ select throws_ok(
                                       'team_photos', true),
        'emergency_contact', jsonb_build_object('name', 'Olena'),
        'unable_to_draw', true, 'language', 'ar')) $$,
-  '23514', null::text, 'a required emergency contact needs a name and a phone'
+  '23502', null::text, 'a required emergency contact needs a name and a phone'
 );
 select throws_ok(
   $$ select public.sign_authorization((select id from run where label = 'v2'), jsonb_build_object(
@@ -249,7 +276,7 @@ select lives_ok(
 reset role;
 select is(
   (select array_agg(consent_key || ':' || granted || ':' || required order by consent_key)
-     from public.authorization_consent_events
+     from public.consent_events
     where profile_id = '5eed0000-0000-4000-8000-000000000022' and signature_id is not null),
   array['code_of_conduct:true:true', 'data_processing:true:true', 'health_data:false:false',
         'image_rights:false:false', 'messaging_groups:false:false', 'participation:true:true',
@@ -258,21 +285,25 @@ select is(
 );
 select is(
   (select wording || '|' || language || '|' || (version_id = (select id from run where label = 'v2'))::text
-     from public.authorization_consent_events
+     from public.consent_events
     where profile_id = '5eed0000-0000-4000-8000-000000000022' and consent_key = 'team_photos'),
   'أوافق على صور الفريق|ar|true',
   'and the words she was shown, in her language'
 );
 select is(
-  (select wording from public.authorization_consent_events
+  (select wording from public.consent_events
     where profile_id = '5eed0000-0000-4000-8000-000000000022' and consent_key = 'participation'),
   (select content -> 'consents' -> 'participation' -> 'label' ->> 'ar' from run where label = 'v1'),
   'a consent kept from version 1 keeps its words'
 );
 select ok(
-  (select health_info is null and emergency_contact_name = 'Olena' from public.profiles
-    where id = '5eed0000-0000-4000-8000-000000000022'),
-  'no health answer is stored when she gives none; the contact is'
+  not exists (select 1 from public.custom_answers
+               where profile_id = '5eed0000-0000-4000-8000-000000000022'
+                 and question_id = (select id from run where label = 'health_info'))
+  and (select public.decrypt_field(value_encrypted) from public.custom_answers
+        where profile_id = '5eed0000-0000-4000-8000-000000000022'
+          and question_id = (select id from run where label = 'emergency_contact_name')) = '"Olena"',
+  'no health answer is stored when she gives none; the contact is, as an answer'
 );
 
 -- 5. Old records ---------------------------------------------------------------------------------------------
@@ -294,7 +325,7 @@ select lives_ok($$ select public.set_optional_consent('messaging_groups', false,
   'an optional consent of the current version changes from her profile');
 reset role;
 select is(
-  (select wording || '|' || language || '|' || method from public.authorization_consent_events
+  (select wording || '|' || language || '|' || method from public.consent_events
     where profile_id = '5eed0000-0000-4000-8000-000000000011' and consent_key = 'messaging_groups'
     order by decided_at desc, id desc limit 1),
   (select (content -> 'consents' -> 'messaging_groups' -> 'label' ->> 'es') || '|es|profile' from run where label = 'v1'),
@@ -313,17 +344,18 @@ select is(
 -- 6. Privacy levels ---------------------------------------------------------------------------------------------
 
 select is(
-  (select coalesce(emergency_contact_name, 'hidden') || '|' || coalesce(health_info, 'hidden')
+  (select coalesce(answers ->> (select id::text from run where label = 'emergency_contact_name'), 'hidden')
      from public.get_participant_profile('5eed0000-0000-4000-8000-000000000022')),
-  'Olena|hidden', 'staff with sensitive access read the sensitive contact, never her health'
+  'Olena', 'staff with sensitive access read the Sensible contact'
 );
 reset role;
 delete from public.team_member_permissions
  where profile_id = '5eed0000-0000-4000-8000-000000000002' and permission_code = 'participants.view_sensitive';
 set local role authenticated;
 select is(
-  (select coalesce(emergency_contact_name, 'hidden') from public.get_participant_profile('5eed0000-0000-4000-8000-000000000022')),
-  'hidden', 'without sensitive access the contact staff marked sensitive is hidden'
+  (select coalesce(answers ->> (select id::text from run where label = 'emergency_contact_name'), 'hidden')
+     from public.get_participant_profile('5eed0000-0000-4000-8000-000000000022')),
+  'hidden', 'without sensitive access the Sensible contact is hidden'
 );
 
 -- 7. Tablet, walk-ins, scenario, export ----------------------------------------------------------------------------
@@ -346,7 +378,8 @@ select lives_ok(
        '5eed0000-0000-4000-8041-000000000001', jsonb_build_object(
          'consents', jsonb_build_object('participation', true, 'data_processing', true,
                                         'code_of_conduct', true, 'health_data', true),
-         'health_info', 'No', 'unable_to_draw', true, 'language', 'ca'), now() - interval '1 day') $$,
+         'health_info', 'No', 'emergency_contact', jsonb_build_object('name', 'Ana', 'phone', '+34600111222'),
+         'unable_to_draw', true, 'language', 'ca'), now() - interval '1 day') $$,
   'a signing waiting offline on version 1 of this season still syncs, checked against version 1'
 );
 select throws_ok(
@@ -364,7 +397,7 @@ select lives_ok(
 );
 reset role;
 select is(
-  (select array_agg(consent_key || ':' || granted order by consent_key) from public.authorization_consent_events
+  (select array_agg(consent_key || ':' || granted order by consent_key) from public.consent_events
     where profile_id = '5eed0000-0000-4000-8000-000000000096'
       and version_id = (select id from run where label = 'v2') and wording is not null),
   array['code_of_conduct:true', 'data_processing:true', 'health_data:false', 'image_rights:false',
@@ -390,7 +423,7 @@ reset role;
 select ok(
   not has_function_privilege('anon', 'public.save_authorization_draft(jsonb)', 'execute')
   and not has_function_privilege('anon', 'public.discard_authorization_draft()', 'execute')
-  and not has_function_privilege('anon', 'public.publish_authorization_draft()', 'execute')
+  and not has_function_privilege('anon', 'public.publish_authorization_draft(uuid, boolean)', 'execute')
   and not has_function_privilege('anon', 'public.set_optional_consent(text, boolean, text)', 'execute')
   and not has_function_privilege('public', 'public.save_authorization_draft(jsonb)', 'execute'),
   'the new functions need an account'

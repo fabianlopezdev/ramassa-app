@@ -133,6 +133,20 @@ mock.module('@/components/motion/fade-slide-in', () => ({
     composite: boolean;
   }) => createElement('div', { 'data-step': index, 'data-composite': composite }, children),
 }));
+// The screen's placed fields have their own suite (custom-question-field.case).
+mock.module('@/components/onboarding/placed-fields', () => ({
+  usePlacedFields: () => ({
+    hasQuestions: false,
+    fields: null,
+    hasErrors: false,
+    isDrawing: false,
+    checkAndSave: () => true,
+    save: () => {},
+  }),
+}));
+mock.module('@/components/onboarding/wizard-validation-summary', () => ({
+  WizardValidationSummary: () => null,
+}));
 const { AuthScreen } = await import('./auth-screen');
 const { FormScreen } = await import('../layout/form-screen');
 const { WizardFrame } = await import('../onboarding/wizard-frame');

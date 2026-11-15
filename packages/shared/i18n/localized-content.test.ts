@@ -10,7 +10,7 @@ describe('localized content fallback', () => {
   });
 
   test('falls back to Catalan, then the remaining supported languages', () => {
-    expect(getContentLanguageFallbacks('ar')).toEqual(['ar', 'ca', 'es', 'en', 'fa']);
+    expect(getContentLanguageFallbacks('ar')).toEqual(['ar', 'ca', 'es', 'en', 'fr', 'fa']);
     expect(resolveLocalizedText({ ca: 'Entrenament' }, 'ar')).toEqual({
       language: 'ca',
       text: 'Entrenament',

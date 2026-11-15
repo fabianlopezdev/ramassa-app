@@ -27,7 +27,7 @@ import {
   CHILDCARE_NEEDS,
   formatSupportNeeds,
   SEASON_NUMBERS,
-  SPECIFIC_NEEDS_MAX_LENGTH,
+  SUPPORT_NEED_DETAIL_MAX_LENGTH,
   type ApplicantStatus,
   type ChildcareNeed,
   type SeasonNumber,
@@ -294,7 +294,8 @@ export function SeasonAnswerFields({
             value={formatSupportNeeds(value.specificNeeds, t)}
             onChangeText={(specificNeeds) => onChange({ specificNeeds })}
             multiline
-            maxLength={SPECIFIC_NEEDS_MAX_LENGTH}
+            // One details text of up to the field's 4000 characters (RAPP-663).
+            maxLength={SUPPORT_NEED_DETAIL_MAX_LENGTH}
           />
           <Text className={`text-start text-form text-neutral-700 ${fontClass}`}>
             {t('onboarding:specificNeedsHint')}

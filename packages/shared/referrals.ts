@@ -1,6 +1,18 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
+import {
+  appAnswersFromForm,
+  appFormToSend,
+  type AppFormKey,
+} from './intake-builder/app-field-form';
+import { isEmptyAnswer } from './intake-builder/builder';
+import {
+  fetchSystemFieldIndex,
+  fieldAnswersReadSchema,
+  type SystemFieldIndex,
+} from './intake-builder/field-answers';
+import { internationalPhone, type CustomAnswerValue } from './intake-builder/question-types';
 import { DOCUMENT_TYPES, NIE_PATTERN } from './schemas/onboarding';
 import { personNameSchema, trimPersonName } from './schemas/person-name';
 import {
@@ -114,30 +126,148 @@ export const createReferralSchema = z
     }
   });
 
+/** The form names of the referral's choices and the app fields they answer. */
+const REFERRAL_CHOICE_FIELDS = {
+  documentType: 'document_type',
+  applicantStatus: 'applicant_status',
+  childcareNeed: 'childcare_need',
+} as const;
+
+/**
+ * The referral form's schema for her organization's fields (RAPP-665): each
+ * choice must be a live option of its field, named on Dades de les jugadores,
+ * as the database checks it. A field the organization does not have, or one
+ * without options (a yes/no/maybe), keeps the app's own list.
+ */
+export function createReferralSchemaFor(fields: SystemFieldIndex) {
+  return createReferralSchema.superRefine((referral, context) => {
+    for (const [name, systemKey] of Object.entries(REFERRAL_CHOICE_FIELDS) as [
+      keyof typeof REFERRAL_CHOICE_FIELDS,
+      (typeof REFERRAL_CHOICE_FIELDS)[keyof typeof REFERRAL_CHOICE_FIELDS],
+    ][]) {
+      const chosen = referral[name];
+      const field = fields.get(systemKey);
+      if (chosen === null || field === undefined || field.options.length === 0) continue;
+      const live = field.options.some((option) => option.key === chosen && !option.isArchived);
+      if (!live) context.addIssue({ code: 'custom', path: [name], message: 'not an option' });
+    }
+  });
+}
+
 export type CreateReferralInput = z.input<typeof createReferralSchema>;
 export type CreateReferral = z.output<typeof createReferralSchema>;
 
-export function buildReferralPayload(referral: CreateReferral): Json {
-  const hasNumber = referral.documentType !== null && referral.documentType !== 'none';
+/** Answers to the Ramassà fields of the form (RAPP-652), by field id; empty ones left out. */
+export type ReferralFieldAnswers = Readonly<Record<string, CustomAnswerValue | null>>;
+
+// By field (RAPP-663) ---------------------------------------------------------------------------
+
+/** The app's fields the referral form can ask, by the form's names. */
+const REFERRAL_FORM_KEYS = [
+  'phone',
+  'dateOfBirth',
+  'nationality',
+  'documentType',
+  'documentNumber',
+  'city',
+  'applicantStatus',
+  'supportingEntities',
+  'referenceContactName',
+  'childcareNeed',
+  'specificNeeds',
+] as const satisfies readonly AppFormKey[];
+
+/**
+ * The referral's answers to the app's fields, by field (RAPP-663): a phone in
+ * its international form (a Spanish number typed without +34 gets it), a
+ * document number only with a type that takes one. A referral starts empty,
+ * so an empty answer is left out.
+ */
+export function referralAppAnswers(
+  fields: SystemFieldIndex,
+  referral: CreateReferral,
+): Record<string, CustomAnswerValue> {
+  const form = {
+    ...referral,
+    phone: referral.phone === null ? null : internationalPhone(referral.phone),
+    documentType: referral.documentType ?? undefined,
+    documentNumber: referral.documentNumber ?? undefined,
+  };
+  return Object.fromEntries(
+    Object.entries(appAnswersFromForm(fields, appFormToSend(form, REFERRAL_FORM_KEYS))).flatMap(
+      ([id, value]) => (value === null || isEmptyAnswer(value) ? [] : [[id, value]]),
+    ),
+  );
+}
+
+/**
+ * The referral as `create_entity_referral` takes it: her names, every answer
+ * by field (the app's and Ramassà's), the referral's own data, and the entity
+ * person's signature of each signature block of the form (RAPP-690).
+ */
+export function referralRequest(
+  referral: CreateReferral,
+  answers: ReferralFieldAnswers,
+  signatures: Json = {},
+): Json {
   return {
-    firstName: referral.firstName,
-    lastName: referral.lastName,
-    phone: referral.phone,
+    first_name: referral.firstName,
+    last_name: referral.lastName,
     email: referral.email,
     documentationStatus: referral.documentationStatus,
     notes: referral.notes,
-    dateOfBirth: referral.dateOfBirth,
-    nationality: referral.nationality,
-    documentType: referral.documentType,
-    documentNumber: hasNumber ? referral.documentNumber : null,
-    city: referral.city,
-    applicantStatus: referral.applicantStatus,
-    supportingEntities: referral.supportingEntities,
-    referenceContactName: referral.referenceContactName,
     seasonNumber: referral.seasonNumber,
-    childcareNeed: referral.childcareNeed,
-    specificNeeds: referral.specificNeeds,
     consentConfirmed: referral.consentConfirmed,
+    answers: Object.fromEntries(
+      Object.entries(answers).filter(([, value]) => !isEmptyAnswer(value)),
+    ) as Json,
+    signatures,
+  };
+}
+
+/** Sends a referral with every answer by field; the database checks the required ones. */
+export async function sendReferral(
+  client: Pick<Client, 'rpc'>,
+  referral: CreateReferral,
+  answers: ReferralFieldAnswers,
+  signatures: Json = {},
+): Promise<string> {
+  const { data, error } = await client.rpc('create_entity_referral', {
+    p_payload: referralRequest(referral, answers, signatures),
+  });
+  if (error) databaseFailure(error.message);
+  return z.uuid().parse(data);
+}
+
+/** One referral with the entity's answers by field, and the fields to read them by. */
+export interface ReferralRecord extends Referral {
+  /** The entity's answers by field id, each one the reader may read (RAPP-662). */
+  readonly answers: Readonly<Record<string, unknown>>;
+  readonly seasonNumber: number | null;
+  readonly fields: SystemFieldIndex;
+}
+
+/**
+ * One referral with the entity's answers by field (RAPP-663, RAPP-664). A
+ * caller that already reads her organization's fields (the catalog) passes
+ * them, so they are not read twice.
+ */
+export async function fetchReferralRecord(
+  client: Pick<Client, 'rpc'>,
+  referralId: string,
+  fields?: SystemFieldIndex | Promise<SystemFieldIndex>,
+): Promise<ReferralRecord> {
+  const { data, error } = await client.rpc('get_entity_referral', {
+    p_referral_id: z.uuid().parse(referralId),
+  });
+  if (error) databaseFailure(error.message);
+  const row = z.array(referralRpcRowSchema).min(1).max(1).parse(data)[0];
+  if (row === undefined) databaseFailure('Referral was not returned');
+  return {
+    ...referralFromRow(row),
+    answers: row.answers ?? {},
+    seasonNumber: row.season_number ?? null,
+    fields: await (fields ?? fetchSystemFieldIndex(client)),
   };
 }
 
@@ -164,45 +294,12 @@ const referralRpcRowSchema = z.object({
   entity_name: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
-  // Only the single-referral read returns these (RAPP-303).
-  intake_answers: z.unknown().optional(),
+  // Only the single-referral read returns these (RAPP-303): the entity's
+  // answers by field (RAPP-662) and her season count.
+  answers: fieldAnswersReadSchema.optional(),
+  season_number: z.number().int().nullable().optional(),
   consent_confirmed_at: z.string().nullable().optional(),
 });
-
-/**
- * The season registration answers the entity gave, as the database returns
- * them (profile keys). Staff without participants.view_sensitive receive them
- * without the applicant status, the specific needs and the document number.
- */
-const referralAnswersSchema = z
-  .object({
-    date_of_birth: z.string().optional(),
-    nationality: z.string().optional(),
-    document_type: z.enum(DOCUMENT_TYPES).optional(),
-    document_number: z.string().optional(),
-    city: z.string().optional(),
-    applicant_status: z.enum(APPLICANT_STATUSES).optional(),
-    supporting_entities: z.array(z.string()).optional(),
-    reference_contact_name: z.string().optional(),
-    season_number: z.number().int().optional(),
-    childcare_need: z.enum(CHILDCARE_NEEDS).optional(),
-    specific_needs: z.string().optional(),
-  })
-  .transform((answers) => ({
-    dateOfBirth: answers.date_of_birth ?? null,
-    nationality: answers.nationality ?? null,
-    documentType: answers.document_type ?? null,
-    documentNumber: answers.document_number ?? null,
-    city: answers.city ?? null,
-    applicantStatus: answers.applicant_status ?? null,
-    supportingEntities: answers.supporting_entities ?? [],
-    referenceContactName: answers.reference_contact_name ?? null,
-    seasonNumber: answers.season_number ?? null,
-    childcareNeed: answers.childcare_need ?? null,
-    specificNeeds: answers.specific_needs ?? null,
-  }));
-
-export type ReferralAnswers = z.output<typeof referralAnswersSchema>;
 
 export interface Referral {
   readonly id: string;
@@ -219,8 +316,6 @@ export interface Referral {
   readonly entityName: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
-  /** The season registration answers, until acceptance moves them to her profile. */
-  readonly answers: ReferralAnswers | null;
   readonly consentConfirmedAt: string | null;
 }
 
@@ -263,10 +358,6 @@ function referralFromRow(row: z.infer<typeof referralRpcRowSchema>): Referral {
     entityName: row.entity_name,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    answers:
-      row.intake_answers === undefined || row.intake_answers === null
-        ? null
-        : referralAnswersSchema.parse(row.intake_answers),
     consentConfirmedAt: row.consent_confirmed_at ?? null,
   };
 }
@@ -285,7 +376,7 @@ export async function fetchEntityReferrals(
   return z
     .array(referralRpcRowSchema)
     .parse(data ?? [])
-    .map(referralFromRow);
+    .map((row) => referralFromRow(row));
 }
 
 export async function fetchStaffReferrals(
@@ -300,20 +391,7 @@ export async function fetchStaffReferrals(
   return z
     .array(referralRpcRowSchema)
     .parse(data ?? [])
-    .map(referralFromRow);
-}
-
-export async function fetchReferral(
-  client: Pick<Client, 'rpc'>,
-  referralId: string,
-): Promise<Referral> {
-  const { data, error } = await client.rpc('get_entity_referral', {
-    p_referral_id: z.uuid().parse(referralId),
-  });
-  if (error) databaseFailure(error.message);
-  const row = z.array(referralRpcRowSchema).min(1).max(1).parse(data)[0];
-  if (row === undefined) databaseFailure('Referral was not returned');
-  return referralFromRow(row);
+    .map((row) => referralFromRow(row));
 }
 
 /**
@@ -326,17 +404,6 @@ export async function fetchSupportingEntityNames(
   const { data, error } = await client.rpc('list_supporting_entity_names');
   if (error) databaseFailure(error.message);
   return z.array(z.string()).parse(data ?? []);
-}
-
-export async function createReferral(
-  client: Pick<Client, 'rpc'>,
-  input: CreateReferral,
-): Promise<string> {
-  const { data, error } = await client.rpc('create_entity_referral', {
-    p_payload: buildReferralPayload(input),
-  });
-  if (error) databaseFailure(error.message);
-  return z.uuid().parse(data);
 }
 
 export async function completeReferral(

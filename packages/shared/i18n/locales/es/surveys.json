@@ -25,7 +25,7 @@
   "saving": "Guardando...",
   "saved": "Encuesta guardada y distribuida a su audiencia.",
   "error": "No hemos podido guardar la encuesta. Revisa los campos e inténtalo de nuevo.",
-  "translationRequired": "Revisa y aprueba los cinco idiomas antes de publicar.",
+  "translationRequired": "Revisa y aprueba todos los idiomas antes de publicar.",
   "results": "Resultados",
   "responsesCount": "{{count}} respuestas",
   "completedCount": "{{count}} completadas",

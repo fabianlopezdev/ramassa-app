@@ -37,8 +37,8 @@ select throws_ok(
   '42501', 'PROFILES/DIRECT_INSERT', 'nor insert a profile directly'
 );
 select lives_ok(
-  $$ update public.profiles set clothing_size = 'L' where id = '5eed0000-0000-4000-8000-000000000011' $$,
-  'an ordinary field can still be written directly'
+  $$ update public.profiles set preferred_language = 'es' where id = '5eed0000-0000-4000-8000-000000000011' $$,
+  'an ordinary account setting can still be written directly'
 );
 select lives_ok(
   $$ select public.set_participant_active('5eed0000-0000-4000-8000-000000000011', false) $$,

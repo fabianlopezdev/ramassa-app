@@ -8,7 +8,7 @@ import {
 import { errorResponse, jsonResponse } from './http';
 import type { CallerIdentity } from './supabase-identity';
 
-/** The permissions whose screens write player-facing text in five languages. */
+/** The permissions whose screens write player-facing text in every supported language. */
 const TRANSLATION_PERMISSIONS = [
   'announcements.edit',
   'events.edit',
@@ -16,6 +16,10 @@ const TRANSLATION_PERMISSIONS = [
   'services.edit',
   'notifications.send',
   'surveys.manage',
+  // The form editors' translate button (RAPP-750): Onboarding, the legal forms,
+  // the team forms and the referral form.
+  'settings.organization',
+  'onboarding.design',
 ] as const;
 
 export interface TranslationRequestDependencies {

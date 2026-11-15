@@ -15,6 +15,8 @@ import {
   createAccountOnboardingDraftStore,
   createInMemoryOnboardingDraftStore,
   createMmkvOnboardingDraftStore,
+  isStoredOnboardingDraft,
+  type OnboardingDraft,
 } from './onboarding-drafts';
 
 function makeFakeMmkv() {
@@ -35,7 +37,7 @@ describe('onboarding draft store', () => {
       identity: { firstName: 'أمينة', lastName: 'الحسن' },
       documentation: { documentType: 'nie' },
     });
-    const draft = store.loadDraft();
+    const draft = store.loadDraft() as OnboardingDraft | null;
     expect(draft?.currentStep).toBe('documentation');
     expect(draft?.identity?.firstName).toBe('أمينة');
     expect(draft?.documentation?.documentType).toBe('nie');
@@ -66,6 +68,31 @@ describe('onboarding draft store', () => {
       currentStep: 'custom:5eed0000-0000-4000-8000-000000000001',
       custom: { a: 'yes', b: ['x', 'y'] },
     });
+  });
+
+  test('a version 2 draft keeps her answers by field id (RAPP-663)', () => {
+    const mmkv = makeFakeMmkv();
+    const draft = {
+      version: 2 as const,
+      currentStep: 'logistics' as const,
+      account: { firstName: 'أمينة', preferredLanguage: 'ar' },
+      answers: { '5eed0000-0000-4000-8000-000000000001': ['x', 'y'] },
+      screen: { 'logistics.referenceEntity': null },
+    };
+    createMmkvOnboardingDraftStore(mmkv).saveDraft(draft);
+    const loaded = createMmkvOnboardingDraftStore(mmkv).loadDraft();
+    expect(loaded).toEqual(draft);
+    expect(loaded !== null && isStoredOnboardingDraft(loaded)).toBe(true);
+  });
+
+  test('a version 1 draft still reads, as version 1, so her phone can convert it', () => {
+    const mmkv = makeFakeMmkv();
+    createMmkvOnboardingDraftStore(mmkv).saveDraft({
+      currentStep: 'documentation',
+      identity: { firstName: 'Laia' },
+    });
+    const loaded = createMmkvOnboardingDraftStore(mmkv).loadDraft();
+    expect(loaded !== null && isStoredOnboardingDraft(loaded)).toBe(false);
   });
 
   test('no draft reads as null, not as an empty object', () => {
@@ -104,7 +131,7 @@ describe('onboarding draft store', () => {
     const store = createInMemoryOnboardingDraftStore();
     store.saveDraft({ currentStep: 'identity', identity: { firstName: 'زهرا' } });
     store.saveDraft({ currentStep: 'logistics', logistics: { city: 'Vic' } });
-    const draft = store.loadDraft();
+    const draft = store.loadDraft() as OnboardingDraft | null;
     expect(draft?.identity).toBeUndefined();
     expect(draft?.logistics?.city).toBe('Vic');
   });

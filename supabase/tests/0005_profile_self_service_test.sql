@@ -22,13 +22,45 @@
 -- second org would trip `default_organization_id()`'s single-tenant guard.
 
 begin;
-select plan(20);
+select plan(21);
 
 -- The unsigned path is closed to clients (RAPP-624); this file checks its merge
 -- rules as the participant, so it grants it inside this rolled-back transaction.
 grant execute on function public.complete_onboarding(jsonb) to authenticated;
 
 -- Setup ------------------------------------------------------------------------
+
+-- An app answer given by option key, as the app's screens send it by option id.
+create function pg_temp.by_option_key(f public.profile_fields, v jsonb) returns jsonb language sql stable security definer as $$
+  select case
+    when f.question_type in ('single_choice', 'search_choice') and jsonb_typeof(v) = 'string' then
+      coalesce((select to_jsonb(o.id::text) from public.custom_question_options o
+                 where o.question_id = f.id and o.key = v #>> '{}'), v)
+    when f.question_type = 'multiple_choice' and jsonb_typeof(v) = 'array' then
+      coalesce((select jsonb_agg(o.id::text order by o.sort_order) from public.custom_question_options o
+                 where o.question_id = f.id and o.key in (select jsonb_array_elements_text(v))
+                having count(*) = jsonb_array_length(v)), v)
+    else v
+  end;
+$$;
+-- Her answers travel by field (RAPP-661): the app's keys of this payload, keyed
+-- by their fields, a choice by its option.
+create function pg_temp.answers(p jsonb) returns jsonb language sql security definer as $$
+  select coalesce(jsonb_object_agg(f.id::text, pg_temp.by_option_key(f, e.value)), '{}'::jsonb)
+    from jsonb_each(p) e
+    join public.profile_fields f on f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = e.key;
+$$;
+-- Her answer to an app field in a reader's `answers` (RAPP-662): a choice by its
+-- option's key, anything else as text.
+create function pg_temp.column_of(p_answers jsonb, p_key text) returns text language sql security definer as $$
+  select coalesce(
+    (select o.key from public.custom_question_options o
+      where o.question_id = f.id and o.id::text = p_answers ->> f.id::text),
+    p_answers ->> f.id::text)
+    from public.profile_fields f
+   where f.org_id = '5eed0000-0000-4000-8000-000000000000' and f.system_key = p_key;
+$$;
+grant execute on all functions in schema pg_temp to authenticated;
 
 select vault.create_secret('test-encryption-key', 'app_encryption_key', 'pgTAP test key')
 where not exists (select 1 from vault.secrets where name = 'app_encryption_key');
@@ -45,16 +77,17 @@ set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000d1", 
 
 select public.complete_onboarding(
   jsonb_build_object(
-    'first_name', 'Amina', 'last_name', 'Al-Hassan',
-    'date_of_birth', '1995-03-14', 'place_of_birth', 'حلب',
-    'nationality', 'Síria', 'preferred_language', 'ar',
-    'document_type', 'nie', 'document_number', 'X1234567L',
-    'phone', '+34600111222', 'address', 'Carrer Major 1', 'city', 'Vic',
-    'postal_code', '08500', 'has_dependents', false, 'num_dependents', 0,
-    'clothing_size', 'M', 'shoe_size', '38',
-    'reference_entity', null,
+    'first_name', 'Amina', 'last_name', 'Al-Hassan', 'preferred_language', 'ar',
     'media_consent', false,
-    'terms_version', '2026-07-01', 'locale_shown', 'ar'
+    'terms_version', '2026-07-01', 'locale_shown', 'ar',
+    'answers', pg_temp.answers(jsonb_build_object(
+      'date_of_birth', '1995-03-14', 'place_of_birth', 'حلب',
+      'nationality', 'Síria',
+      'document_type', 'nie', 'document_number', 'X1234567L',
+      'phone', '+34600111222', 'address', 'Carrer Major 1', 'city', 'Vic',
+      'postal_code', '08500', 'has_dependents', 'no',
+      'clothing_size', 'M', 'shoe_size', '38',
+      'reference_entity', null))
   )
 );
 
@@ -69,12 +102,12 @@ select has_function('public', 'update_own_profile', array['jsonb'], 'the re-encr
 -- Reading own profile ----------------------------------------------------------
 
 select is(
-  (select document_number from public.get_own_profile()), 'X1234567L',
+  (select pg_temp.column_of(answers, 'document_number') from public.get_own_profile()), 'X1234567L',
   'the owner reads her own document number in clear'
 );
 
 select is(
-  (select phone from public.get_own_profile()), '+34600111222',
+  (select pg_temp.column_of(answers, 'phone') from public.get_own_profile()), '+34600111222',
   'the owner reads her own phone in clear'
 );
 
@@ -100,20 +133,22 @@ set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000d1", 
 select lives_ok(
   $$ select public.update_own_profile(
        jsonb_build_object(
-         'first_name', 'Amina', 'last_name', 'Al-Hassan',
-         'date_of_birth', '1995-03-14', 'place_of_birth', 'حلب',
-         'nationality', 'Síria', 'preferred_language', 'ca',
-         'document_type', 'nie', 'document_number', 'Y7654321X',
-         'phone', '+34600999888', 'address', 'Carrer Nou 9', 'city', 'Manlleu',
-         'postal_code', '08560', 'has_dependents', true, 'num_dependents', 2,
-         'clothing_size', 'L', 'shoe_size', '39', 'media_consent', true
+         'first_name', 'Amina', 'last_name', 'Al-Hassan', 'preferred_language', 'ca',
+         'media_consent', true,
+         'answers', pg_temp.answers(jsonb_build_object(
+           'date_of_birth', '1995-03-14', 'place_of_birth', 'حلب',
+           'nationality', 'Síria',
+           'document_type', 'nie', 'document_number', 'Y7654321X',
+           'phone', '+34600999888', 'address', 'Carrer Nou 9', 'city', 'Manlleu',
+           'postal_code', '08560', 'has_dependents', 'yes', 'num_dependents', 2,
+           'clothing_size', 'L', 'shoe_size', '39'))
        )
      ) $$,
   'the owner can edit her own profile'
 );
 
 select is(
-  (select document_number from public.get_own_profile()), 'Y7654321X',
+  (select pg_temp.column_of(answers, 'document_number') from public.get_own_profile()), 'Y7654321X',
   'the edited document number round-trips through encryption'
 );
 
@@ -122,20 +157,21 @@ select is(
 -- database owner: this checks storage, and since RAPP-240 the encrypted and
 -- Personal columns are not readable directly by any signed-in user.
 reset role;
+-- Her answers are stored by field since RAPP-661.
 select is_empty(
-  $$ select id from public.profiles
-     where id = '00000000-0000-0000-0000-0000000000d1'
-       and (
-         document_number::text like '%Y7654321X%'
-         or phone::text like '%+34600999888%'
-         or address::text like '%Carrer Nou 9%'
-       ) $$,
+  $$ select a.question_id from public.custom_answers a
+       join public.profile_fields f on f.id = a.question_id
+     where a.profile_id = '00000000-0000-0000-0000-0000000000d1'
+       and f.system_key in ('document_number', 'phone', 'address')
+       and (a.value is not null
+            or encode(a.value_encrypted, 'escape') like any (array['%Y7654321X%', '%+34600999888%', '%Carrer Nou 9%'])) $$,
   'the edited sensitive fields are ciphertext at rest, never plaintext'
 );
 
 select is(
-  (select city from public.profiles where id = '00000000-0000-0000-0000-0000000000d1'),
-  'Manlleu',
+  (select a.value from public.custom_answers a join public.profile_fields f on f.id = a.question_id
+    where a.profile_id = '00000000-0000-0000-0000-0000000000d1' and f.system_key = 'city'),
+  '"Manlleu"'::jsonb,
   'city stays cleartext: it feeds aggregate reporting, and is not identifying on its own'
 );
 
@@ -150,17 +186,17 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "00000000-0000-0000-0000-0000000000d1", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 
 -- Escalation. The payload carries role and org because a naive client would send
--- the whole profile back; the RPC must ignore them rather than trust them.
-select public.update_own_profile(
-  jsonb_build_object(
-    'first_name', 'Amina', 'last_name', 'Al-Hassan',
-    'date_of_birth', '1995-03-14', 'place_of_birth', 'حلب',
-    'nationality', 'Síria', 'preferred_language', 'ca',
-    'document_type', 'none', 'role', 'admin',
-    'org_id', '00000000-0000-0000-0000-000000000999',
-    'terms_accepted_at', null,
-    'has_dependents', false, 'num_dependents', 0
-  )
+-- the whole profile back; the RPC refuses them (RAPP-661: an unknown key is
+-- refused) rather than trust them.
+select throws_ok(
+  $$ select public.update_own_profile(
+       jsonb_build_object(
+         'first_name', 'Amina', 'last_name', 'Al-Hassan', 'preferred_language', 'ca',
+         'role', 'admin', 'org_id', '00000000-0000-0000-0000-000000000999',
+         'terms_accepted_at', null)
+     ) $$,
+  '22023', null,
+  'an edit that carries her role, organization or terms acceptance is refused'
 );
 
 select is(

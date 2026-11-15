@@ -9,6 +9,7 @@ import {
 } from '@ramassa/shared/messaging';
 import { PARTICIPANT_FIXTURES } from '@ramassa/shared/testing';
 import {
+  appAnswerSql,
   countInDatabase,
   queryDatabase,
   SEED_PASSWORD,
@@ -224,7 +225,7 @@ test('assignment, reply, push receipt and participant timeline complete one staf
   await signIn(page, STAFF_EMAIL);
   await page.goto(`/messages/${conversation.id}`);
   await expect(page.getByTestId('conversation-context')).toContainText(
-    queryDatabase(`select city from public.profiles where id = ${sqlLiteral(conversation.userId)}`),
+    queryDatabase(`select ${appAnswerSql(sqlLiteral(conversation.userId), 'city')}`),
   );
 
   await page.getByTestId('conversation-assignment').selectOption({ label: 'Unassigned' });

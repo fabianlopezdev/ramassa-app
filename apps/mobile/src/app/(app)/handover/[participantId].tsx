@@ -14,7 +14,12 @@ import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverItemTypes, useHandoverOutbox, type HandoverOutcome } from '@/lib/handover';
-import { handoverSignature, statementLanguageFor, suggestedSize } from '@/lib/handover-form';
+import {
+  handoverSignature,
+  herSizes,
+  statementLanguageFor,
+  suggestedSize,
+} from '@/lib/handover-form';
 import { useItemLabel } from '@/lib/item-label';
 import { fontClassForLanguage } from '@/lib/language-font-class';
 import { useParticipantCard } from '@/lib/participant-lookup';
@@ -194,10 +199,13 @@ export default function HandoverScreen() {
       setSize(
         chosen === undefined
           ? null
-          : suggestedSize(chosen.key, chosen.sizes, {
-              clothingSize: her?.clothing_size ?? null,
-              shoeSize: her?.shoe_size ?? null,
-            }),
+          : suggestedSize(
+              chosen.key,
+              chosen.sizes,
+              her === null
+                ? { clothingSize: null, shoeSize: null }
+                : herSizes(her.fields, her.answers),
+            ),
       );
     },
     [her, types],

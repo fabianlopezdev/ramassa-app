@@ -32,11 +32,9 @@ function renderPanel(
   const props: React.ComponentProps<typeof OrganizationSettingsPanel> = {
     organization,
     permissions: ALL_SETTINGS,
-    team: <p>Team access</p>,
     photoHandoff: null,
     documents: [],
     documentQuery: '',
-    entityManagement: <p>Entity settings</p>,
     accessToken: undefined,
     onSaveOrganization: mock(async () => undefined),
     onRegisterDocument: mock(async () => undefined),
@@ -103,13 +101,25 @@ test('document search delegates the typed query', async () => {
 test('a tab shows only to a holder of its permission (RAPP-231)', () => {
   const { view } = renderPanel({
     permissions: new Set(['settings.documents']),
-    initialTab: 'staff',
+    initialTab: 'organization',
   });
-  expect(view.queryByRole('tab', { name: /tabTeam|Team/ })).toBeNull();
   expect(view.queryByRole('tab', { name: /tabOrganization|Organization/ })).toBeNull();
   expect(
     view.getByRole('tab', { name: /tabDocuments|Documents/ }).getAttribute('aria-selected'),
   ).toBe('true');
+});
+
+test('the pages with their own menu item are no longer Settings tabs (RAPP-654, RAPP-656)', () => {
+  const { view } = renderPanel();
+  for (const name of [
+    /tabQuestions|^Questions$/,
+    /tabTeam|^Team$/,
+    /tabEntities|^Entities$/,
+    /tabProfileLayout|Player data/,
+    /tabReferralForm|Referral form/,
+  ]) {
+    expect(view.queryByRole('tab', { name })).toBeNull();
+  }
 });
 
 test('branding alone changes the colours but not the organization details', () => {

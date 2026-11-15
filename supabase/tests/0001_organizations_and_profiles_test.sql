@@ -38,42 +38,45 @@ insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a4', 'entityA@test.local'),
   ('00000000-0000-0000-0000-0000000000b1', 'playerB1@test.local');
 
--- Profiles. playerA1 carries encrypted PII to exercise the crypto helpers.
+-- Profiles. playerA1 carries encrypted personal data to exercise the crypto
+-- helpers: her emergency contact phone and her health answer stay encrypted
+-- columns of her account (her field answers are tested in 0091).
 insert into public.profiles (
   id, org_id, role, collaborating_entity_id,
-  first_name, last_name, phone, document_number
+  first_name, last_name
 ) values
   ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000a001', 'player',
-    null, 'Amina', 'One', public.encrypt_field('600111222'), public.encrypt_field('X1234567L')),
+    null, 'Amina', 'One'),
   ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-00000000a001', 'player',
-    null, 'Bea', 'Two', null, null),
+    null, 'Bea', 'Two'),
   ('00000000-0000-0000-0000-0000000000a3', '00000000-0000-0000-0000-00000000a001', 'staff',
-    null, 'Carla', 'Staff', null, null),
+    null, 'Carla', 'Staff'),
   ('00000000-0000-0000-0000-0000000000a4', '00000000-0000-0000-0000-00000000a001', 'entity',
-    '00000000-0000-0000-0000-00000000a004', 'Dolors', 'Entity', null, null),
+    '00000000-0000-0000-0000-00000000a004', 'Dolors', 'Entity'),
   ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-00000000b001', 'player',
-    null, 'Eva', 'OtherOrg', null, null);
+    null, 'Eva', 'OtherOrg');
 
--- Encryption assertions (read raw column as superuser; crypto is independent of RLS)
+-- Encryption assertions: the field cipher every Sensible answer is kept with
+-- (her health and her emergency contact are answers since RAPP-698).
 select is(
-  pg_typeof(phone)::text, 'bytea',
-  'phone is stored as bytea (encrypted), not text'
-) from public.profiles where id = '00000000-0000-0000-0000-0000000000a1';
+  pg_typeof(public.encrypt_field('600111222'))::text, 'bytea',
+  'a Sensible value is stored as bytea (encrypted)'
+);
 
 select isnt(
-  encode(phone, 'escape'), '600111222',
-  'raw phone column contents are ciphertext, not the plaintext'
-) from public.profiles where id = '00000000-0000-0000-0000-0000000000a1';
+  encode(public.encrypt_field('600111222'), 'escape'), '600111222',
+  'the stored bytes hold ciphertext, never the plaintext'
+);
 
 select is(
-  public.decrypt_field(phone), '600111222',
-  'phone round-trips back to plaintext through decrypt_field'
-) from public.profiles where id = '00000000-0000-0000-0000-0000000000a1';
+  public.decrypt_field(public.encrypt_field('600111222')), '600111222',
+  'a phone round-trips back to plaintext through decrypt_field'
+);
 
 select is(
-  public.decrypt_field(document_number), 'X1234567L',
-  'document_number round-trips back to plaintext through decrypt_field'
-) from public.profiles where id = '00000000-0000-0000-0000-0000000000a1';
+  public.decrypt_field(public.encrypt_field('X1234567L')), 'X1234567L',
+  'a health answer round-trips back to plaintext through decrypt_field'
+);
 
 -- Impersonation helper macro is inline: set the authenticated role + JWT sub.
 

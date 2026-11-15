@@ -1,0 +1,18 @@
+{
+  "boots": "Chaussures de foot",
+  "shin_pads": "Protège-tibias",
+  "socks": "Chaussettes",
+  "shorts": "Short",
+  "jersey": "Maillot",
+  "tracksuit": "Survêtement",
+  "coat": "Manteau",
+  "gloves": "Gants",
+  "water_bottle": "Bouteille d’eau",
+  "rucksack": "Sac à dos",
+  "ball": "Ballon",
+  "other": "Autres",
+  "statementGiven": "J’ai reçu de Ramassà : {{item}}. C’est un cadeau pour moi.",
+  "statementLent": "J’ai reçu de Ramassà en prêt : {{item}}. Je le rendrai quand l’équipe me le demandera.",
+  "statementItemSize": "{{item}}, taille {{size}}",
+  "signHere": "Signe ici avec le doigt"
+}

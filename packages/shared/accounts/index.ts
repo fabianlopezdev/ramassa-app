@@ -1,5 +1,5 @@
 export {
-  createParticipantInvite,
+  inviteParticipant,
   fetchInvites,
   INVITE_ALREADY_HAS_ACCOUNT,
   fetchMyPendingInvite,

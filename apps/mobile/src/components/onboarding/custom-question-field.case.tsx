@@ -55,22 +55,6 @@ mock.module('@/components/forms/raised-action-button', () => ({
     testID: string;
   }) => createElement('button', { onClick: onPress, 'data-testid': testID }, label),
 }));
-mock.module('@/components/authorization/consent-row', () => ({
-  ConsentRow: ({
-    label,
-    checked,
-    onToggle,
-  }: {
-    label: string;
-    checked: boolean;
-    onToggle: () => void;
-  }) =>
-    createElement(
-      'button',
-      { role: 'checkbox', 'aria-checked': checked, onClick: onToggle },
-      label,
-    ),
-}));
 mock.module('@/components/equipment/signature-pad', () => ({
   SignaturePad: ({ onChange, prompt }: { onChange: (strokes: unknown) => void; prompt: string }) =>
     createElement(
@@ -86,6 +70,26 @@ mock.module('@/components/equipment/signature-pad', () => ({
           ]),
       },
       prompt,
+    ),
+}));
+// A signature block draws the shared signature section (RAPP-771), whose
+// "No puc signar" row animates through NativeWind on the phone.
+mock.module('@/components/authorization/consent-row', () => ({
+  ConsentRow: ({
+    label,
+    onToggle,
+    checked,
+    testID,
+  }: {
+    label: string;
+    onToggle: () => void;
+    checked: boolean;
+    testID: string;
+  }) =>
+    createElement(
+      'button',
+      { onClick: onToggle, role: 'checkbox', 'aria-checked': checked, 'data-testid': testID },
+      label,
     ),
 }));
 mock.module('@/components/onboarding/option-search-picker', () => ({
@@ -110,6 +114,29 @@ mock.module('@/components/onboarding/option-search-picker', () => ({
       ),
     ),
 }));
+// The app's own pickers, as buttons that choose one canonical name.
+const pickerOf =
+  (name: string, canonical: string) =>
+  ({
+    label,
+    value,
+    onChange,
+  }: {
+    label: string;
+    value: string;
+    onChange: (canonical: string) => void;
+  }) =>
+    createElement(
+      'button',
+      { 'data-testid': name, 'data-value': value, onClick: () => onChange(canonical) },
+      label,
+    );
+mock.module('@/components/onboarding/country-picker', () => ({
+  CountryPicker: pickerOf('country-picker', 'Síria'),
+}));
+mock.module('@/components/onboarding/municipality-picker', () => ({
+  MunicipalityPicker: pickerOf('municipality-picker', 'Vic'),
+}));
 mock.module('@/components/profile/supporting-entities-field', () => ({
   SupportingEntitiesField: ({
     maxItems,
@@ -126,13 +153,14 @@ mock.module('@/components/profile/supporting-entities-field', () => ({
       inputLabel,
     ),
 }));
+const translate = (key: string) => ca[key.replace('onboarding:', '') as keyof typeof ca] ?? key;
 mock.module('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => ca[key.replace('onboarding:', '') as keyof typeof ca] ?? key,
-  }),
+  // The signature section reads her language's texts through getFixedT (RAPP-773).
+  useTranslation: () => ({ t: translate, i18n: { getFixedT: () => translate } }),
 }));
 mock.module('@ramassa/shared/i18n', () => ({ useLanguage: () => ({ language: 'ca' }) }));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
+mock.module('@/lib/language-font-class', () => ({ fontClassForLanguage: () => '' }));
 mock.module('@/components/onboarding/option-chip', () => ({
   OptionChip: ({
     label,
@@ -201,15 +229,14 @@ mock.module('@/components/forms/form-text-area', () => ({
       onChange: (event: { target: { value: string } }) => onChangeText(event.target.value),
     }),
 }));
-const { CustomQuestionField, CustomQuestionSections } = await import('./custom-question-field');
+const { CustomQuestionField, CustomQuestionList } = await import('./custom-question-field');
+const { SignatureBlockField } = await import('./signature-block-field');
 const base: CustomQuestion = {
   id: 'question',
-  screenId: 'screen',
   type: 'yes_no_maybe',
   label: { ca: 'Transport?' },
   help: null,
   privacy: 'normal',
-  placements: ['wizard'],
   isArchived: false,
   settings: {},
   options: [],
@@ -281,17 +308,8 @@ test('conditional participation begins unanswered, reveals details for Yes, and 
   };
   function Section() {
     const [answers, setAnswers] = useState<Record<string, CustomAnswerValue>>({});
-    return createElement(CustomQuestionSections, {
-      screens: [
-        {
-          id: 'screen',
-          title: { ca: 'Participació' },
-          intro: null,
-          afterScreen: 'logistics',
-          isArchived: false,
-          questions: [gate, detail],
-        },
-      ],
+    return createElement(CustomQuestionList, {
+      questions: [gate, detail],
       answers,
       onChange: (id, value) => setAnswers((current) => ({ ...current, [id]: value })),
     });
@@ -330,6 +348,17 @@ test('a date is asked as day, month and year, as her date of birth', () => {
   act(() => typing.get(ca.monthLabel)!('2'));
   act(() => typing.get(ca.yearLabel)!('2001'));
   expect(lastValue).toBe('2001-02-05');
+});
+
+test('a country and a municipality use the pickers of her own screens, by canonical name', () => {
+  const country = render(typed('country'));
+  fireEvent.click(country.getByTestId('country-picker'));
+  expect(lastValue).toBe('Síria');
+  expect(country.getByTestId('country-picker').getAttribute('data-value')).toBe('Síria');
+  const municipality = render(typed('municipality'));
+  expect(municipality.getByTestId('municipality-picker').textContent).toBe('Transport?');
+  fireEvent.click(municipality.getByTestId('municipality-picker'));
+  expect(lastValue).toBe('Vic');
 });
 
 test('a phone and an email open their own keyboards', () => {
@@ -374,15 +403,6 @@ test('a list she adds to uses the supporting organizations list with its own lim
   expect(lastValue).toEqual(['Creu Roja']);
 });
 
-test('one consent is a consent row with the text staff wrote', () => {
-  const view = render(typed('consent', { text: { ca: 'Accepto que em portin amb cotxe' } }));
-  const tick = view.getByRole('checkbox', { name: 'Accepto que em portin amb cotxe' });
-  fireEvent.click(tick);
-  expect(lastValue).toBe(true);
-  fireEvent.click(view.getByRole('checkbox'));
-  expect(lastValue).toBe(false);
-});
-
 test('a file offers a photo, and a PDF when documents are accepted; the upload becomes her answer', async () => {
   uploadsOn = true;
   const photoOnly = render(typed('file_upload', { accept: 'photo' }));
@@ -404,16 +424,42 @@ test('without the upload service a file question says so and offers nothing to p
   uploadsOn = true;
 });
 
-test('a signature uses the authorization pad and keeps her strokes', () => {
-  const view = render(typed('signature'));
+test('a signature block shows its text in her language over the pad and keeps her strokes (RAPP-690)', () => {
+  let strokes: unknown = 'none';
+  function Block() {
+    const [value, setValue] = useState<[number, number][][] | 'unable_to_draw' | null>(null);
+    return createElement(SignatureBlockField, {
+      block: {
+        id: 'b1',
+        surface: 'onboarding',
+        screenKey: 'logistics',
+        kind: 'signature',
+        body: { ca: 'Autoritzo el transport', es: 'Autorizo el transporte' },
+        sortOrder: 0,
+      },
+      strokes: value,
+      onChange: (next: [number, number][][] | 'unable_to_draw' | null) => {
+        strokes = next;
+        setValue(next);
+      },
+      errorMessage: ca.customErrorSignature,
+    });
+  }
+  const view = render(createElement(Block));
+  expect(view.getByText('Autoritzo el transport')).toBeTruthy();
+  expect(view.getByText(ca.customErrorSignature)).toBeTruthy();
   fireEvent.click(view.getByTestId('signature-pad'));
-  expect(lastValue).toEqual([
+  expect(strokes).toEqual([
     [
       [10, 20],
       [30, 40],
     ],
   ]);
-  expect(view.getByRole('button', { name: ca.authorizationClearSignature })).toBeTruthy();
+  fireEvent.click(view.getByRole('button', { name: ca.authorizationClearSignature }));
+  expect(strokes).toBeNull();
+  // "No puc signar" on every signature block (RAPP-771).
+  fireEvent.click(view.getByTestId('signature-block-b1-cannot-draw'));
+  expect(strokes).toBe('unable_to_draw');
 });
 
 test('an answer that does not fit shows its message under the control', () => {

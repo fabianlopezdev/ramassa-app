@@ -29,7 +29,7 @@ test('an admin signs a staff member out everywhere, and her open tab ends', asyn
   await expect(staffPage.getByRole('navigation').first()).toBeVisible();
 
   await signIn(page, ADMIN_EMAIL);
-  await page.goto('/settings?tab=staff');
+  await page.goto('/team');
   await page.getByRole('button', { name: `Sign out everywhere ${STAFF_EMAIL}` }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Confirm' }).click();
   await expect(page.getByRole('status').filter({ hasText: /\S/ })).toContainText(

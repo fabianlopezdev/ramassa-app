@@ -236,7 +236,7 @@
   "fieldDone": "Done",
   "fieldNeedsWork": "Missing data or translations",
   "fieldLabelGenerate": "Generate the name translations",
-  "categoryInvalidPhone": "Check the category: the name in five languages, a short slug, and every field complete.",
+  "categoryInvalidPhone": "Check the category: the name in every language, a short slug, and every field complete.",
   "iconHouse": "House",
   "iconLanguages": "Languages",
   "iconBriefcaseBusiness": "Work",

@@ -23,7 +23,7 @@ import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Modal, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getErrorMessageKey, isAppError, toAppError } from '@ramassa/shared/errors';
-import type { ParticipantDetailRow } from '@ramassa/shared/participants';
+import type { ParticipantRecord } from '@ramassa/shared/participants';
 
 type Gesture = 'anonymize' | 'erase';
 
@@ -35,7 +35,10 @@ function DestructiveSheet({
   onDone,
 }: {
   readonly gesture: Gesture | null;
-  readonly participant: ParticipantDetailRow;
+  readonly participant: Pick<
+    ParticipantRecord,
+    'id' | 'first_name' | 'last_name' | 'anonymized_at'
+  >;
   readonly requestReason: string | null | undefined;
   readonly onClose: () => void;
   readonly onDone: (gesture: Gesture) => void;
@@ -195,7 +198,10 @@ export function ParticipantRgpd({
   participant,
   onErased,
 }: {
-  readonly participant: ParticipantDetailRow;
+  readonly participant: Pick<
+    ParticipantRecord,
+    'id' | 'first_name' | 'last_name' | 'anonymized_at'
+  >;
   /** Called after her record is erased, so the screen can leave it. */
   readonly onErased: () => void;
 }) {

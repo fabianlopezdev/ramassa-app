@@ -15,6 +15,7 @@ const completeTitle = {
   ca: 'Guia del dret d’asil',
   es: 'Guía del derecho de asilo',
   en: 'Asylum rights guide',
+  fr: 'Guide du droit d’asile',
   ar: 'دليل حق اللجوء',
   fa: 'راهنمای حق پناهندگی',
 } as const;
@@ -50,6 +51,16 @@ const translatedBlocks: Readonly<Record<keyof typeof completeTitle, readonly Kno
       imageAlt: 'Documents prepared on a table',
     },
   ],
+  fr: [
+    { type: 'paragraph', text: 'Ce qu’il faut apporter au premier rendez-vous.' },
+    {
+      type: 'step',
+      title: 'Prépare tes documents',
+      text: 'Rassemble ton passeport et le récépissé.',
+      imageUrl: 'ramassa/knowledge/documents.webp',
+      imageAlt: 'Documents prêts sur une table',
+    },
+  ],
   ar: [
     { type: 'paragraph', text: 'ما يجب إحضاره إلى الموعد الأول.' },
     {
@@ -73,7 +84,7 @@ const translatedBlocks: Readonly<Record<keyof typeof completeTitle, readonly Kno
 };
 
 describe('knowledge article validation', () => {
-  test('publishes aligned structured blocks in all five languages', () => {
+  test('publishes aligned structured blocks in every language', () => {
     const result = knowledgeArticleInputSchema.safeParse({
       categoryId: '5eed0000-0000-4000-8004-000000000001',
       title: completeTitle,

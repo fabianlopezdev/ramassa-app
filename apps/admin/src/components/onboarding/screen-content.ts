@@ -1,0 +1,766 @@
+/**
+ * What one onboarding screen shows on her phone, in one language (RAPP-641):
+ * its title, intro and help line, its questions as controls of their type,
+ * and its buttons. The board draws a miniature from it and the screen editor
+ * a phone; both read the same wording rules her app uses: staff text in
+ * exactly that language, else the app's own text.
+ *
+ * Neither is the app pixel for pixel. "Preview as player" shows the real one.
+ */
+
+import type { PreviewDraft } from '@/components/settings/question-type-fields';
+import { LANGUAGE_NATIVE_NAMES, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
+import { staffTextIn, teamTextIn } from '@ramassa/shared/i18n/localized-content';
+import {
+  BUNDLED_SCREEN_TEXT_KEYS,
+  INTAKE_QUESTION_LABEL_KEYS,
+  isFollowUpScreen,
+  isOptionalScreenTextField,
+  isRequiredQuestion,
+  offersSkipAnswer,
+  resolveAppTerms,
+  screenTextFields,
+  WIZARD_SCREEN_QUESTIONS,
+  type EditableWizardScreen,
+  type IntakeQuestion,
+  type ScreenCondition,
+  type ScreenTextField,
+} from '@ramassa/shared/intake';
+import {
+  builtinField,
+  builtinHelp,
+  builtinLabel,
+  consentsOn,
+  consentText,
+  customFormScreenQuestions,
+  fieldById,
+  formBlocksOn,
+  formScreenTextsIn,
+  hiddenBuiltinQuestions,
+  isCustomQuestionRequired,
+  liveOptions,
+  onboardingScreenQuestions,
+  placedOwnFields,
+  placedQuestion,
+  placementOn,
+  placementWordingIn,
+  requiredBuiltinQuestions,
+  resolveFormBlock,
+  screenSettingsFor,
+  textIn,
+  type BuilderText,
+  type CustomQuestion,
+  type CustomQuestionType,
+  type FormAttachment,
+  type FormBlock,
+  type FormBlockContent,
+  type FormScreenTexts,
+  type IntakeCatalog,
+  type ResolvedFormBlock,
+} from '@ramassa/shared/intake-builder';
+import type { LanguageCode } from '@ramassa/shared/schemas';
+import type { BoardStep } from './board-steps';
+
+export type Translate = (key: string, options?: Record<string, unknown>) => string;
+
+export interface PhoneQuestion {
+  readonly id: string;
+  readonly label: string;
+  readonly help: string;
+  readonly isRequired: boolean;
+  readonly draft: PreviewDraft;
+  /** A signature block (RAPP-690): its text, then an empty box to sign in. */
+  readonly isSignature?: boolean;
+  /**
+   * A legal form's own wording around its signature (RAPP-773, RAPP-777):
+   * the texts staff wrote; one left out shows the app's own.
+   */
+  readonly signatureTexts?: {
+    readonly title?: string;
+    readonly prompt?: string;
+    readonly cannotDraw?: string;
+  };
+  /** A consent of Dades legals placed on the screen (RAPP-699): her tick and its text. */
+  readonly isConsent?: boolean;
+  /** A text or points block (RAPP-770): drawn as the terms draw theirs, with no control. */
+  readonly block?: Exclude<ResolvedFormBlock, { readonly kind: 'signature' }>;
+  /** A heading drawn above it: the emergency contact's title (RAPP-695). */
+  readonly heading?: string;
+}
+
+/** A tick she makes, with the mark a required one carries (RAPP-695). */
+interface PhoneCheckbox {
+  readonly label: string;
+  readonly requiredMark: string | null;
+}
+
+export interface PhoneContent {
+  readonly title: string;
+  readonly intro: string;
+  readonly help: string;
+  readonly questions: readonly PhoneQuestion[];
+  /** Lines of text the screen shows instead of questions: the terms' points, a note. */
+  readonly lines: readonly string[];
+  readonly checkbox: string | null;
+  readonly signature: boolean;
+  readonly continueLabel: string;
+  readonly declineLabel: string | null;
+  /*
+   * What the legal screens add (RAPP-695): the authorization's document
+   * sections, drawn closed as her phone first shows them, and its season
+   * documents; the terms text and the terms' points; her details on
+   * re-registration; several ticks; the signature with its own wording; and an
+   * outlined second button.
+   */
+  readonly sections?: readonly string[];
+  readonly links?: { readonly title: string; readonly labels: readonly string[] };
+  readonly body?: string;
+  readonly blocks?: readonly { readonly title: string; readonly body: string }[];
+  readonly details?: readonly {
+    readonly title: string;
+    readonly rows: readonly { readonly label: string; readonly value: string }[];
+  }[];
+  readonly checkboxes?: readonly PhoneCheckbox[];
+  readonly signatureTexts?: {
+    readonly title: string;
+    readonly prompt: string;
+    readonly cannotDraw: string;
+  };
+  readonly secondaryLabel?: string;
+}
+
+/** The control her phone shows for each built-in question, close enough to spot it. */
+const BUILTIN_TYPES: Readonly<Record<IntakeQuestion, CustomQuestionType>> = {
+  first_name: 'short_text',
+  last_name: 'short_text',
+  date_of_birth: 'date',
+  place_of_birth: 'search_choice',
+  nationality: 'search_choice',
+  preferred_language: 'single_choice',
+  document: 'single_choice',
+  phone: 'phone',
+  address: 'short_text',
+  city: 'search_choice',
+  postal_code: 'short_text',
+  reference_entity: 'search_choice',
+  reference_contact_name: 'short_text',
+  dependents: 'yes_no',
+  clothing_size: 'search_choice',
+  shoe_size: 'search_choice',
+  avatar: 'file_upload',
+  applicant_status: 'single_choice',
+  supporting_entities: 'item_list',
+  season_number: 'number',
+  childcare_need: 'single_choice',
+  specific_needs: 'search_choice',
+};
+
+/**
+ * How the app's own screens lay out a choice (RAPP-712): one card per row for
+ * her document type, her languages, her status and her support needs; three
+ * columns for her sizes. Any other choice is the two-column grid of a staff
+ * question.
+ */
+const BUILTIN_LOOKS: Partial<Record<IntakeQuestion, PreviewDraft['look']>> = {
+  preferred_language: 'cards',
+  document: 'cards',
+  applicant_status: 'cards',
+  specific_needs: 'cards',
+  clothing_size: 'grid',
+  shoe_size: 'grid',
+};
+
+/** The control her phone shows for a built-in question; the type icon of its row. */
+export function builtinQuestionType(question: IntakeQuestion): CustomQuestionType {
+  return BUILTIN_TYPES[question];
+}
+
+/** One language as localized text, so the shared control reads it as typed. */
+function only(language: LanguageCode, text: string): BuilderText {
+  return { [language]: text } as BuilderText;
+}
+
+/**
+ * The options of a built-in question on her phone: the live options of its
+ * field, by their labels in her language (RAPP-664); her app language lists
+ * the app's languages.
+ */
+function builtinOptionLabels(
+  catalog: IntakeCatalog,
+  question: IntakeQuestion,
+  language: LanguageCode,
+): readonly string[] {
+  if (question === 'preferred_language') {
+    return SUPPORTED_LANGUAGES.map((code) => LANGUAGE_NATIVE_NAMES[code]);
+  }
+  const field = catalog.layout === undefined ? undefined : builtinField(catalog.layout, question);
+  return (field?.options ?? [])
+    .filter((option) => !option.isArchived)
+    .map((option) => textIn(option.label, language));
+}
+
+/** A built-in question's label and help as typed in its open form (RAPP-777). */
+export interface TypedBuiltinWording {
+  readonly label: BuilderText;
+  readonly help: BuilderText;
+}
+
+/** A built-in question on her phone. `typed` is its wording typed in an open form, if any. */
+export function builtinPhoneQuestion(
+  catalog: IntakeCatalog,
+  question: IntakeQuestion,
+  language: LanguageCode,
+  t: Translate,
+  typed?: TypedBuiltinWording,
+): PhoneQuestion {
+  const inLanguage: Translate = (key, options) => t(key, { ...options, lng: language });
+  const appLabel = inLanguage(INTAKE_QUESTION_LABEL_KEYS[question] ?? question);
+  // As typed in an open form, else as saved, by the rule her phone reads (RAPP-719).
+  const shownLabel =
+    typed === undefined
+      ? (builtinLabel(catalog, question, language) ?? appLabel)
+      : (staffTextIn(typed.label, language, false) ?? appLabel);
+  const shownHelp =
+    typed === undefined
+      ? (builtinHelp(catalog, question, language) ?? '')
+      : (staffTextIn(typed.help, language, true) ?? '');
+  const field = catalog.layout === undefined ? undefined : builtinField(catalog.layout, question);
+  const look = BUILTIN_LOOKS[question];
+  const required = requiredBuiltinQuestions(catalog);
+  // Her phone's last answer on an optional document step: "Not now, skip this step".
+  const skip = offersSkipAnswer(question, required)
+    ? [inLanguage('onboarding:documentSkipAction')]
+    : [];
+  return {
+    id: question,
+    label: shownLabel,
+    help: shownHelp,
+    isRequired: isRequiredQuestion(question, required),
+    draft: {
+      // Her field's own type, as its row shows it: a country picker, a yes or no.
+      type: field?.type ?? BUILTIN_TYPES[question],
+      label: only(language, shownLabel),
+      help: {},
+      settings: {},
+      options: [...builtinOptionLabels(catalog, question, language), ...skip].map((text) =>
+        only(language, text),
+      ),
+      ...(look === undefined ? {} : { look }),
+    },
+  };
+}
+
+/** A staff question on her phone. */
+export function customPhoneQuestion(
+  question: CustomQuestion,
+  language: LanguageCode,
+): PhoneQuestion {
+  return {
+    id: question.id,
+    label: textIn(question.label, language),
+    help: textIn(question.help, language),
+    isRequired: isCustomQuestionRequired(question),
+    draft: {
+      type: question.type,
+      label: question.label,
+      help: question.help ?? {},
+      settings: question.settings,
+      options: liveOptions(question).map((option) => option.label),
+    },
+  };
+}
+
+/**
+ * A wording typed in an open placement row, in place of the saved one. For a
+ * block (RAPP-690, RAPP-770) `fieldId` is the block's id and `block` its
+ * content as typed.
+ */
+export interface TypedWording {
+  readonly fieldId: string;
+  readonly label: BuilderText;
+  readonly help: BuilderText;
+  readonly block?: FormBlockContent;
+}
+
+/**
+ * The fields her phone asks on one screen (an app screen's key or a Ramassà
+ * screen's id) after its own questions, in their order, worded as their
+ * placements say: the same shared reader her app plans with (RAPP-655).
+ * `typed` is the wording of one open placement row, shown as typed.
+ */
+export function placedPhoneQuestions(
+  catalog: IntakeCatalog,
+  screenKey: string,
+  language: LanguageCode,
+  typed: TypedWording | null = null,
+  /** A form the team created (RAPP-700) asks the fields of its screen the same way. */
+  surface: 'onboarding' | 'custom_form' = 'onboarding',
+): PhoneQuestion[] {
+  const layout = catalog.layout;
+  // A field's placement on this screen: a field sits once on Onboarding but on
+  // sibling follow-ups (RAPP-720), and once per form.
+  const placementOf = (fieldId: string) =>
+    layout === undefined
+      ? undefined
+      : surface === 'onboarding'
+        ? placementOn(layout, fieldId, 'onboarding', screenKey)
+        : layout.placements.find(
+            (placement) =>
+              placement.fieldId === fieldId &&
+              placement.surface === surface &&
+              placement.screenKey === screenKey,
+          );
+  const asked =
+    surface === 'onboarding'
+      ? onboardingScreenQuestions(catalog, screenKey)
+      : customFormScreenQuestions(catalog, screenKey);
+  const fields = asked.map((question) => {
+    const shown = customPhoneQuestion(question, language);
+    const field = layout === undefined ? undefined : fieldById(layout, question.id);
+    const saved = placementOf(question.id);
+    if (typed?.fieldId !== question.id || field === undefined || saved === undefined) return shown;
+    const wording = placementWordingIn(
+      { ...saved, labelOverride: typed.label, helpOverride: typed.help },
+      field,
+      language,
+    );
+    return {
+      ...shown,
+      label: wording.label,
+      help: wording.help,
+      draft: {
+        ...shown.draft,
+        label: only(language, wording.label),
+        help: only(language, wording.help),
+      },
+    };
+  });
+  // Her blocks and consents among the fields, in the order they share (RAPP-690,
+  // RAPP-770); the consents as her ticks (RAPP-777).
+  const order = (id: string) => placementOf(id)?.sortOrder ?? Number.POSITIVE_INFINITY;
+  const shown: PhoneQuestion[] = [];
+  const others = [
+    ...formBlocksOn(catalog.blocks, surface, screenKey).map((block) => ({
+      sortOrder: block.sortOrder,
+      question: () => blockPhoneQuestion(block, language, typed),
+    })),
+    ...consentsOn(catalog, surface, screenKey).map((consent) => ({
+      sortOrder: consent.sortOrder,
+      question: (): PhoneQuestion => ({
+        id: consent.placementId,
+        label: consentText(consent.body, language).text,
+        help: '',
+        isRequired: consent.required,
+        draft: NO_CONTROL,
+        isConsent: true,
+      }),
+    })),
+  ].sort((a, b) => a.sortOrder - b.sortOrder);
+  for (const question of fields) {
+    while (others.length > 0 && (others[0]?.sortOrder ?? 0) < order(question.id)) {
+      shown.push((others.shift() as (typeof others)[number]).question());
+    }
+    shown.push(question);
+  }
+  return [...shown, ...others.map((other) => other.question())];
+}
+
+/** The blocks of one Onboarding screen on her phone, in their order (RAPP-690, RAPP-770). */
+export function blockPhoneQuestions(
+  catalog: IntakeCatalog,
+  screenKey: string,
+  language: LanguageCode,
+): PhoneQuestion[] {
+  return formBlocksOn(catalog.blocks, 'onboarding', screenKey).map((block) =>
+    blockPhoneQuestion(block, language, null),
+  );
+}
+
+const NO_CONTROL: PreviewDraft = {
+  type: 'short_text',
+  label: {},
+  help: {},
+  settings: {},
+  options: [],
+};
+
+/**
+ * A block on her phone, as typed in its open row or as saved: a signature's
+ * text and the box, or a text or points drawn as the terms draw theirs.
+ */
+function blockPhoneQuestion(
+  block: FormBlock,
+  language: LanguageCode,
+  typed: TypedWording | null,
+): PhoneQuestion {
+  const typedBlock = typed?.fieldId === block.id ? typed.block : undefined;
+  const shown = resolveFormBlock(
+    typedBlock !== undefined && typedBlock.kind === block.kind ? typedBlock : block,
+    language,
+  );
+  const base = { id: block.id, help: '', draft: NO_CONTROL };
+  if (shown.kind !== 'signature') return { ...base, label: '', isRequired: false, block: shown };
+  // Its texts as her phone reads them: a help staff cleared shows none.
+  const own = (field: 'signature_title' | 'signature_prompt' | 'cannot_draw_label') =>
+    block.kind === 'signature'
+      ? (staffTextIn(block.texts?.[field], language, false) ?? undefined)
+      : undefined;
+  return {
+    ...base,
+    label: shown.body,
+    isRequired: true,
+    isSignature: true,
+    signatureTexts: {
+      title: own('signature_title'),
+      prompt: own('signature_prompt'),
+      cannotDraw: own('cannot_draw_label'),
+    },
+  };
+}
+
+/** The built-in questions a screen asks, without the ones staff hid. */
+function builtinScreenQuestions(
+  catalog: IntakeCatalog,
+  screen: keyof typeof WIZARD_SCREEN_QUESTIONS,
+): readonly IntakeQuestion[] {
+  const hidden = hiddenBuiltinQuestions(catalog);
+  return WIZARD_SCREEN_QUESTIONS[screen].filter((question) => !hidden.has(question));
+}
+
+export type ScreenTexts = Readonly<Partial<Record<ScreenTextField, BuilderText>>>;
+
+/** The app's own text of a built-in screen's field in one language, '' when it has none. */
+export function bundledScreenText(
+  screen: EditableWizardScreen,
+  field: ScreenTextField,
+  language: LanguageCode,
+  t: Translate,
+): string {
+  const key = BUNDLED_SCREEN_TEXT_KEYS[screen][field];
+  return key === undefined ? '' : t(`onboarding:${key}`, { lng: language });
+}
+
+/**
+ * A built-in screen's wording in one language, by the rule her phone reads
+ * (RAPP-710, `staffTextIn`): staff text, nothing for an optional text staff
+ * cleared, else the app's.
+ */
+function builtinWording(
+  screen: EditableWizardScreen,
+  texts: ScreenTexts,
+  language: LanguageCode,
+  t: Translate,
+): Readonly<Record<ScreenTextField, string>> {
+  const fields = screenTextFields(screen);
+  const shown = (field: ScreenTextField): string => {
+    if (!fields.includes(field)) return '';
+    return (
+      staffTextIn(texts[field], language, isOptionalScreenTextField(field)) ??
+      bundledScreenText(screen, field, language, t)
+    );
+  };
+  return {
+    title: shown('title'),
+    intro: shown('intro'),
+    help: shown('help'),
+    continue_label: shown('continue_label'),
+    decline_label: shown('decline_label'),
+  };
+}
+
+/**
+ * A follow-up screen on her phone (RAPP-713, RAPP-720): its wording, the
+ * fields it holds as its placements say (its own ones first, as her phone
+ * draws them, then every other field and signature), and Continue. The
+ * editor, the family row and the board's branch card draw it the same way.
+ * `texts` is wording typed in the editor, and `typed` a field's wording typed
+ * in an open row, in place of the saved ones.
+ */
+export function detailScreenContent(
+  catalog: IntakeCatalog,
+  screen: EditableWizardScreen,
+  language: LanguageCode,
+  t: Translate,
+  texts?: ScreenTexts,
+  typed: TypedWording | null = null,
+): PhoneContent {
+  const wording = builtinWording(
+    screen,
+    texts ?? screenSettingsFor(catalog, screen)?.texts ?? {},
+    language,
+    t,
+  );
+  const layout = catalog.layout;
+  const isFollowUp = isFollowUpScreen(screen);
+  const own =
+    layout === undefined || !isFollowUp
+      ? []
+      : placedOwnFields(catalog, screen).map(({ field, placement }) => {
+          const asTyped =
+            typed?.fieldId === field.id
+              ? { ...placement, labelOverride: typed.label, helpOverride: typed.help }
+              : placement;
+          return customPhoneQuestion(placedQuestion(layout, field, asTyped), language);
+        });
+  return {
+    title: wording.title,
+    intro: wording.intro,
+    help: wording.help,
+    questions: [
+      ...own,
+      ...(isFollowUp ? placedPhoneQuestions(catalog, screen, language, typed) : []),
+    ],
+    // The document follow-ups end with the app's note on how her document is kept.
+    lines: screen.startsWith('documentation-')
+      ? [t('onboarding:documentReassurance', { lng: language })]
+      : [],
+    checkbox: null,
+    signature: false,
+    continueLabel: wording.continue_label,
+    declineLabel: null,
+  };
+}
+
+/**
+ * The answers of a choice question a screen can depend on (RAPP-715), as the
+ * condition stores them: its live options by id, or yes / no / maybe. An
+ * option no longer offered stays when the condition still names it.
+ */
+export function conditionAnswers(
+  catalog: IntakeCatalog,
+  fieldId: string,
+  language: LanguageCode,
+  t: Translate,
+  keep: readonly string[] = [],
+): readonly { readonly value: string; readonly label: string }[] {
+  const field = catalog.layout === undefined ? undefined : fieldById(catalog.layout, fieldId);
+  if (field === undefined) return [];
+  if (field.type === 'yes_no' || field.type === 'yes_no_maybe') {
+    const values = field.type === 'yes_no' ? ['yes', 'no'] : ['yes', 'no', 'maybe'];
+    return values.map((value) => ({ value, label: t(`settings:questions.answers.${value}`) }));
+  }
+  return field.options
+    .filter((option) => !option.isArchived || keep.includes(option.id))
+    .map((option) => ({ value: option.id, label: textIn(option.label, language) }));
+}
+
+/**
+ * The line on a follow-up's card and in its editor (RAPP-713, RAPP-715), in
+ * the dashboard's language, from the rule her phone reads: "Si «Tipus de
+ * document» és Passaport", or a follow-up that opens on any answer she ticks. One line for
+ * the app's follow-ups and the team's.
+ */
+export function conditionLine(
+  catalog: IntakeCatalog,
+  condition: ScreenCondition | null,
+  language: LanguageCode,
+  t: Translate,
+  repeatsPerAnswer = false,
+): string {
+  if (condition === null) return '';
+  const field =
+    catalog.layout === undefined ? undefined : fieldById(catalog.layout, condition.fieldId);
+  if (repeatsPerAnswer) {
+    return t(
+      field?.systemKey === 'specific_needs'
+        ? 'settings:onboardingBoard.branchEachNeed'
+        : 'settings:onboardingBoard.branchEachAnswer',
+    );
+  }
+  const offered = conditionAnswers(catalog, condition.fieldId, language, t, condition.values);
+  const labels = condition.values.map(
+    (value) => offered.find((answer) => answer.value === value)?.label ?? value,
+  );
+  return t(
+    field?.type === 'multiple_choice'
+      ? 'settings:onboardingBoard.branchWhenTicked'
+      : 'settings:onboardingBoard.branchWhen',
+    {
+      question: field === undefined ? '' : textIn(field.label, language),
+      answers: new Intl.ListFormat(language, { type: 'disjunction' }).format(labels),
+    },
+  );
+}
+
+export interface ContentOverrides {
+  /** Wording typed in the editor, in place of the saved wording. */
+  readonly texts?: ScreenTexts;
+  /** A staff screen's title and intro as typed. */
+  readonly title?: BuilderText;
+  readonly intro?: BuilderText;
+  /** The questions as the editor shows them, in place of the saved ones. */
+  readonly questions?: readonly PhoneQuestion[];
+  /** The current season's name, for the authorization title. */
+  readonly seasonName?: string;
+}
+
+/**
+ * A screen staff made on her phone: its title, intro and questions, and
+ * Continue. An Onboarding screen of Ramassà and a screen of a form the team
+ * created (RAPP-700) both draw this way.
+ */
+export function staffScreenContent(
+  title: BuilderText | null,
+  intro: BuilderText | null,
+  questions: readonly PhoneQuestion[],
+  language: LanguageCode,
+  t: Translate,
+  texts: FormScreenTexts = {},
+  /** Its buttons where staff wrote none, and its second one (RAPP-772, RAPP-773). */
+  buttons: ScreenButtons = CONTINUE_ONLY,
+  /** The season documents of the authorization's document screen (RAPP-773). */
+  attachments: readonly FormAttachment[] = [],
+): PhoneContent {
+  // One rule with her phone (RAPP-710): a language never written follows the
+  // Catalan; the main button reads the app's own label where staff wrote none.
+  const own = formScreenTextsIn(texts, language);
+  return {
+    title: teamTextIn(title, language, false),
+    intro: teamTextIn(intro, language, true),
+    help: own.help,
+    questions,
+    lines: attachments.map((attachment) => teamTextIn(attachment.label, language, false)),
+    checkbox: null,
+    signature: false,
+    continueLabel: own.continueLabel ?? t(buttons.continueKey, { lng: language }),
+    declineLabel:
+      buttons.declineKey === null
+        ? null
+        : (staffTextIn(texts.decline_label, language, false) ??
+          t(buttons.declineKey, { lng: language })),
+  };
+}
+
+/**
+ * A form screen's buttons where staff wrote none: the app's own main button
+ * and, on a screen that has one, its second button with the field that names
+ * it in the editor.
+ */
+export interface ScreenButtons {
+  readonly continueKey: string;
+  readonly declineKey: string | null;
+  readonly declineFieldKey: string | null;
+}
+
+/** A screen with Continue only. */
+export const CONTINUE_ONLY: ScreenButtons = {
+  continueKey: 'onboarding:continueAction',
+  declineKey: null,
+  declineFieldKey: null,
+};
+
+/**
+ * The buttons of a form's screen: the app terms' screen she signs finishes
+ * with "Ara no" beside it (RAPP-772); the authorization's re-registration
+ * screen asks whether her details are correct, with the button to correct
+ * them, and its screen she signs signs (RAPP-773).
+ */
+export function formScreenButtons(screen: { readonly systemScreen?: string }): ScreenButtons {
+  switch (screen.systemScreen) {
+    case 'terms_sign':
+      return {
+        continueKey: 'onboarding:finishAction',
+        declineKey: 'onboarding:termsDeclineAction',
+        declineFieldKey: 'builtinScreens.field.decline_label',
+      };
+    case 'reregistration':
+      return {
+        continueKey: 'onboarding:reregistrationCorrect',
+        declineKey: 'onboarding:reregistrationEdit',
+        declineFieldKey: 'customForms.reregistrationEditLabel',
+      };
+    case 'authorization_sign':
+      return { ...CONTINUE_ONLY, continueKey: 'onboarding:authorizationSignAndEnterAction' };
+    default:
+      return CONTINUE_ONLY;
+  }
+}
+
+export function stepContent(
+  catalog: IntakeCatalog,
+  step: BoardStep,
+  language: LanguageCode,
+  t: Translate,
+  overrides: ContentOverrides = {},
+): PhoneContent {
+  const phone = (key: string, options: Record<string, unknown> = {}) =>
+    t(`onboarding:${key}`, { ...options, lng: language });
+  const empty = {
+    help: '',
+    questions: [],
+    lines: [],
+    checkbox: null,
+    signature: false,
+    declineLabel: null,
+  } as const;
+
+  if (step.kind === 'custom') {
+    const screen = step.screen;
+    return staffScreenContent(
+      overrides.title ?? screen.title,
+      overrides.intro ?? screen.intro,
+      overrides.questions ?? placedPhoneQuestions(catalog, screen.id, language),
+      language,
+      t,
+    );
+  }
+
+  if (step.key === 'authorization') {
+    return {
+      ...empty,
+      title: phone('seasonAuthorizationFlow', { season: overrides.seasonName ?? '' }).trim(),
+      intro: '',
+      lines: [phone('authorizationConsentsTitle')],
+      checkbox: phone('authorizationRequiredMark'),
+      signature: true,
+      continueLabel: phone('authorizationSignAction'),
+    };
+  }
+
+  const texts = overrides.texts ?? screenSettingsFor(catalog, step.key)?.texts ?? {};
+  const wording = builtinWording(step.key, texts, language, t);
+  const base = {
+    ...empty,
+    title: wording.title,
+    intro: wording.intro,
+    help: wording.help,
+    continueLabel: wording.continue_label,
+    declineLabel: wording.decline_label === '' ? null : wording.decline_label,
+  };
+
+  if (step.key === 'terms-intro' || step.key === 'terms') {
+    // Their title and intro are the app terms' own (RAPP-613).
+    const content = catalog.terms?.content ?? null;
+    const terms = content === null ? null : resolveAppTerms(content, language);
+    return step.key === 'terms'
+      ? {
+          ...base,
+          title: terms?.title ?? '',
+          intro: terms?.mediaHint ?? '',
+          lines: terms === null ? [] : [terms.body.split('\n')[0] ?? ''],
+          checkbox: terms?.acceptLabel ?? null,
+        }
+      : {
+          ...base,
+          title: terms?.introTitle ?? '',
+          intro: terms?.intro ?? '',
+          lines: terms?.points.map((point) => point.title) ?? [],
+        };
+  }
+
+  if (step.key === 'summary') {
+    return { ...base, lines: [phone('summarySectionName')] };
+  }
+
+  return {
+    ...base,
+    questions: overrides.questions ?? [
+      ...builtinScreenQuestions(catalog, step.key).map((question) =>
+        builtinPhoneQuestion(catalog, question, language, t),
+      ),
+      // Then the fields staff placed on it (RAPP-642, RAPP-651).
+      ...placedPhoneQuestions(catalog, step.key, language),
+    ],
+    lines: [],
+  };
+}

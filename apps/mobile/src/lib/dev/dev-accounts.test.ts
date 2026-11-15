@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n';
+import { STORED_TRANSLATION_LANGUAGES } from '@ramassa/shared/schemas';
 import {
   PARTICIPANT_FIXTURES,
   SEED_ACCOUNT_PASSWORD,
@@ -62,9 +62,10 @@ describe('development credentials', () => {
 });
 
 describe('script coverage: the point of the switcher is proving fonts and mirroring', () => {
-  test('the shortlist offers one player per supported language', () => {
+  // The seed has no French player (RAPP-781): a language nobody speaks is skipped.
+  test('the shortlist offers one player per language the seed speaks', () => {
     expect(DEV_PLAYER_ACCOUNTS.map((account) => account.language)).toEqual([
-      ...SUPPORTED_LANGUAGES,
+      ...STORED_TRANSLATION_LANGUAGES,
     ]);
   });
 

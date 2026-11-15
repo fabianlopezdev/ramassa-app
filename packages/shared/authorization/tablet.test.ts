@@ -92,8 +92,27 @@ describe('sendTabletSigning', () => {
         p_version_id: signing.versionId,
         p_payload: signing.payload,
         p_signed_at: signing.signedAt,
+        // No Onboarding block signed on this tablet (RAPP-691).
+        p_block_signatures: {},
       },
     ]);
+  });
+
+  test('a walk-in sends her Onboarding consent ticks only when it has some (RAPP-699)', async () => {
+    const { client, calls } = clientReturning({ data: signingId, error: null });
+    await sendTabletSigning(client, {
+      ...signing,
+      signer: { kind: 'walk_in', firstName: 'Rim', lastName: 'Haddad' },
+      consents: { transport: true },
+    });
+    const argsOf = (call: unknown) => (call as [string, Record<string, unknown>])[1];
+    expect(argsOf(calls[0]).p_consents).toEqual({ transport: true });
+    await sendTabletSigning(client, {
+      ...signing,
+      signer: { kind: 'walk_in', firstName: 'Rim', lastName: 'Haddad' },
+      consents: {},
+    });
+    expect('p_consents' in argsOf(calls[1])).toBe(false);
   });
 
   test('a refusal is a final error, so the outbox keeps the signing marked', async () => {
