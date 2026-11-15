@@ -276,7 +276,6 @@
       "personal": "يتطلب إذن البيانات الشخصية",
       "sensitive": "يتطلب إذن البيانات الحساسة"
     },
-    "edit": "تعديل",
     "editNamed": "تعديل {{field}}",
     "choiceNamed": "{{field}}: {{choice}}",
     "accountTitle": "الحساب",

@@ -640,7 +640,6 @@
       "personal": "Cal el permís de dades personals",
       "sensitive": "Cal el permís de dades sensibles"
     },
-    "edit": "Edita",
     "editNamed": "Edita {{field}}",
     "choiceNamed": "{{field}}: {{choice}}",
     "accountTitle": "Compte",

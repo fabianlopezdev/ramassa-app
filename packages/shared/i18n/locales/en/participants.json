@@ -640,7 +640,6 @@
       "personal": "Needs the personal data permission",
       "sensitive": "Needs the sensitive data permission"
     },
-    "edit": "Edit",
     "editNamed": "Edit {{field}}",
     "choiceNamed": "{{field}}: {{choice}}",
     "accountTitle": "Account",

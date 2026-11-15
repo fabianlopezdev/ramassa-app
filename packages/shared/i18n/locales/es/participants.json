@@ -640,7 +640,6 @@
       "personal": "Requiere el permiso de datos personales",
       "sensitive": "Requiere el permiso de datos sensibles"
     },
-    "edit": "Editar",
     "editNamed": "Editar {{field}}",
     "choiceNamed": "{{field}}: {{choice}}",
     "accountTitle": "Cuenta",

@@ -276,7 +276,6 @@
       "personal": "به مجوز داده‌های شخصی نیاز دارد",
       "sensitive": "به مجوز داده‌های حساس نیاز دارد"
     },
-    "edit": "ویرایش",
     "editNamed": "ویرایش {{field}}",
     "choiceNamed": "{{field}}: {{choice}}",
     "accountTitle": "حساب",
