@@ -172,6 +172,8 @@ describe('where each field is asked', () => {
       intro: null,
       afterScreen: 'logistics',
       isArchived: false,
+      isHidden: false,
+      texts: {},
     });
   });
 
@@ -378,7 +380,11 @@ describe('built-in screens staff edit and arrange (RAPP-612)', () => {
 
   test('a catalog with neither gives the app its own order and wording', () => {
     expect(catalog.screenSettings).toEqual([]);
-    expect(wizardFlow(catalog)).toEqual({ order: [], hiddenScreens: new Set() });
+    expect(wizardFlow(catalog)).toEqual({
+      order: [],
+      hiddenScreens: new Set(),
+      deletedScreens: new Set(),
+    });
   });
 
   test('the stored order keeps built-in and staff steps, and drops what is not a step', () => {
@@ -408,7 +414,7 @@ describe('built-in screens staff edit and arrange (RAPP-612)', () => {
     expect(builtinScreenText(arranged, 'identity', 'title', 'ca')).toBeNull();
   });
 
-  test('saving a screen sends only the fields it may have, with empty languages dropped', async () => {
+  test('saving a screen sends only the fields it may have; a cleared optional text keeps its blank language (RAPP-710)', async () => {
     const { client, calls } = clientReturning({ data: null, error: null });
     await saveBuiltinScreen(client, {
       screen: 'terms',
@@ -418,7 +424,7 @@ describe('built-in screens staff edit and arrange (RAPP-612)', () => {
     expect(calls).toEqual([
       [
         'save_builtin_screen',
-        { p_screen: 'terms', p_texts: { help: { ca: 'Ajuda' } }, p_is_hidden: false },
+        { p_screen: 'terms', p_texts: { help: { ca: 'Ajuda', es: '' } }, p_is_hidden: false },
       ],
     ]);
   });

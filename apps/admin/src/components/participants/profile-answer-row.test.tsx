@@ -3,9 +3,14 @@
  * placeholder with the level the reader lacks (never the value), Edit only
  * where the team may write, and the editor under the row.
  */
-import { fireEvent, render } from '@testing-library/react';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { fireEvent, render as renderRow } from '@testing-library/react';
 import { expect, mock, test } from 'bun:test';
+import type { ReactElement } from 'react';
 import { ProfileAnswerRow, type ProfileAnswerRowProps } from './profile-answer-row';
+
+// The source shows in a tooltip, and the app root provides the tooltips.
+const render = (row: ReactElement) => renderRow(row, { wrapper: TooltipProvider });
 
 function props(overrides: Partial<ProfileAnswerRowProps> = {}): ProfileAnswerRowProps {
   return {

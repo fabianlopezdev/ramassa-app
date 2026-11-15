@@ -29,17 +29,18 @@ function choiceButton(row: HTMLElement, state: 'auto' | 'ask' | 'skip'): HTMLBut
   return button;
 }
 
-test('an answered question is not asked on Auto, an unanswered one is', () => {
+test('on Auto an answered question is not asked and an unanswered one is; her names always are (RAPP-708)', () => {
   const view = render(
     <InviteQuestionsReview
-      answered={answered}
+      answered={new Set<IntakeQuestion>([...answered, 'city'])}
       states={{}}
       onChange={() => undefined}
       catalog={EMPTY_INTAKE_CATALOG}
     />,
   );
-  expect(questionRow(view, 'first_name').dataset.asking).toBe('not-asked');
+  expect(questionRow(view, 'city').dataset.asking).toBe('not-asked');
   expect(questionRow(view, 'date_of_birth').dataset.asking).toBe('asked');
+  expect(questionRow(view, 'first_name').dataset.asking).toBe('asked');
 });
 
 test('Ask on an answered question makes it asked; the change goes to the caller', () => {
