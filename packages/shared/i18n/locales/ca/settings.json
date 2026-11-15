@@ -951,7 +951,7 @@
       "ar": "Tradueix a l'àrab",
       "fa": "Tradueix al persa"
     },
-    "toAll": "Tradueix a totes les altres llengues",
+    "toAll": "Tradueix a totes les altres llengües",
     "writtenTitle": "Vols substituir el text que ja hi ha?",
     "writtenBody": "Ja hi ha text en {{languages}}.",
     "replace": "Substitueix-lo",

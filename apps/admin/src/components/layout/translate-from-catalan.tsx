@@ -1,7 +1,7 @@
 /**
  * "Tradueix al castellà" next to the editing language (RAPP-750): one button
  * per editor that rewrites every text of the screen in the chosen language
- * from its Catalan. On the Catalan tab, "Tradueix a totes les altres llengues"
+ * from its Catalan. On the Catalan tab, "Tradueix a totes les altres llengües"
  * does it for every other language at once (RAPP-783): empty languages are
  * filled, and a language that already has words is replaced or kept, as staff
  * choose. Nothing is saved: each section keeps the drafts as typed text until
