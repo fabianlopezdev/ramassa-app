@@ -210,13 +210,13 @@ set local request.jwt.claims = '{"sub": "47000000-0000-4000-8000-000000000003", 
 select lives_ok(
   $$ select public.update_organization_settings(
        'AE Ramassà', 'laia.ferrer@example.test', '+34600000000', null, '#005F92', '#FFD166',
-       array['ca', 'es', 'en', 'ar', 'fa'], 'ca') $$,
+       array['ca', 'es', 'en', 'fr', 'ar', 'fa'], 'ca') $$,
   'settings.branding changes the colours'
 );
 select throws_ok(
   $$ select public.update_organization_settings(
        'Renamed', 'laia.ferrer@example.test', '+34600000000', null, '#005F92', '#FFD166',
-       array['ca', 'es', 'en', 'ar', 'fa'], 'ca') $$,
+       array['ca', 'es', 'en', 'fr', 'ar', 'fa'], 'ca') $$,
   '42501', null::text, 'but not the organization name'
 );
 

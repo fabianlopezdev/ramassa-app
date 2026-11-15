@@ -29,8 +29,8 @@ select is(
 );
 
 select is(
-  (select array_length(available_languages, 1) from public.organizations where slug = 'ramassa'), 5,
-  'the seeded organization offers all five grant languages'
+  (select array_length(available_languages, 1) from public.organizations where slug = 'ramassa'), 6,
+  'the seeded organization offers the five grant languages and French'
 );
 
 -- Roster -------------------------------------------------------------------------
