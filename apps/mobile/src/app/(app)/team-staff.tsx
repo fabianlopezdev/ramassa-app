@@ -11,13 +11,13 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ApplyPresetSheet, MemberAccessSheet, PresetSheet } from '@/components/team/access-sheets';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useStaffActions, useTeamStaff } from '@/lib/team-staff';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Platform, ScrollView, Text, View } from 'react-native';
@@ -118,9 +118,7 @@ function confirmThen(
 export default function TeamStaffScreen() {
   const { t } = useTranslation('settings');
   const { t: tAuth } = useTranslation('auth');
-  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
-  const { back } = useRouter();
   const { user } = useAuth();
   const { members, access } = useTeamStaff();
   const {
@@ -227,35 +225,15 @@ export default function TeamStaffScreen() {
     !isBusy;
 
   return (
-    <SafeAreaView
-      testID="team-staff"
-      className="flex-1 bg-neutral-50"
-      edges={['top', 'left', 'right']}
-    >
+    <SafeAreaView testID="team-staff" className="flex-1 bg-neutral-50" edges={['left', 'right']}>
+      <NativeScreenHeader title={t('team.title')} />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerClassName="pb-3xl"
         keyboardShouldPersistTaps="handled"
       >
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="team-staff-back"
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
           <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('team.title')}
-            </Text>
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
               {t('team.intro')}
             </Text>

@@ -5,7 +5,9 @@ import { getContentLanguageFallbacks } from './i18n/localized-content';
 import { languageCodeSchema, type LanguageCode } from './schemas/language';
 import {
   MAX_STORY_IMAGES,
+  participantStoryResendSchema,
   participantStorySubmissionSchema,
+  type ParticipantStoryResend,
   type ParticipantStorySubmission,
 } from './story-submission';
 import type { Database } from './types/database';
@@ -463,6 +465,9 @@ export interface ParticipantStoryStatusRow {
   readonly story_status: StoryStatus;
   /** The team's note to her, readable by its author (X5). */
   readonly reviewer_note: string | null;
+  /** The language she wrote it in; her edits stay in it (RAPP-814). */
+  readonly submission_language: LanguageCode | null;
+  readonly body: LocalizedKnowledgeBody;
   readonly created_at: string;
   readonly updated_at: string;
 }
@@ -474,7 +479,9 @@ export async function fetchOwnParticipantStoryStatuses(
 ): Promise<readonly ParticipantStoryStatusRow[]> {
   let query = client
     .from('knowledge_articles')
-    .select('id, title, story_status, reviewer_note, created_at, updated_at')
+    .select(
+      'id, title, story_status, reviewer_note, submission_language, body, created_at, updated_at',
+    )
     .eq('content_type', 'participant_story')
     .eq('author_id', authorId)
     .order('created_at', { ascending: false })
@@ -511,6 +518,38 @@ export async function submitParticipantStory(
     .single();
   if (error) throw new AppError('DB-1', { message: error.message });
   return data as unknown as KnowledgeArticleListRow;
+}
+
+/**
+ * The title and text she starts from when the team sent her story back for
+ * changes: her own words, in the language she wrote them. Null for any other
+ * story, which she cannot edit.
+ */
+export function participantStoryEditableDraft(
+  story: Pick<ParticipantStoryStatusRow, 'story_status' | 'submission_language' | 'title' | 'body'>,
+): { readonly title: string; readonly story: string } | null {
+  if (story.story_status !== 'changes_requested' || story.submission_language === null) {
+    return null;
+  }
+  const language = story.submission_language;
+  const blocks = story.body[language] ?? [];
+  const text = blocks
+    .flatMap((block) => (block.type === 'paragraph' ? [block.text] : [block.title, block.text]))
+    .join('\n\n');
+  return { title: story.title[language] ?? '', story: text };
+}
+
+export async function resendParticipantStory(
+  client: Client,
+  rawInput: ParticipantStoryResend,
+): Promise<void> {
+  const input = participantStoryResendSchema.parse(rawInput);
+  const { error } = await client.rpc('resend_participant_story', {
+    p_story_id: input.storyId,
+    p_title: input.title,
+    p_story: input.story,
+  });
+  if (error) throw new AppError('DB-1', { message: error.message });
 }
 
 function toDatabaseValues(input: KnowledgeArticleInput, includeAuthorId = true) {

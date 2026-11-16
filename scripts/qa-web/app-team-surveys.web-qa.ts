@@ -83,7 +83,8 @@ test('the seeded results are attributed, and a new survey needs every language a
   await expect(page.getByTestId(`survey-result-${FREE_TEXT}-${writer[0]}`)).toContainText(
     'Molt útil',
   );
-  await page.getByTestId('team-survey-results-back').click();
+  // The native header's back button (RAPP-815), labelled by the navigator.
+  await page.getByLabel(/back$/i).first().click();
 
   await page.getByTestId('team-surveys-new').click();
   await page.getByTestId('survey-title-source').fill(title);

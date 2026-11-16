@@ -50,8 +50,6 @@
   "unknownStaff": "Professionnelle inconnue",
   "staffMobileIntro": "Lis les discussions des joueuses et des associations et réponds-y.",
   "conversationRowLabel": "Ouvre la discussion avec {{name}}. {{role}}. Dernier message : {{preview}}.",
-  "backShort": "Retour",
-  "backToConversations": "Reviens aux discussions",
   "deliveryRejected": "Non envoyé. Ce message a été refusé.",
   "deliveryRejectedPermission": "Non envoyé. Tu ne peux plus envoyer de messages ici.",
   "discard": "Retire-le",

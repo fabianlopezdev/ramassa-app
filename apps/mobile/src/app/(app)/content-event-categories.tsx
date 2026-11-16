@@ -13,12 +13,12 @@ import { EventCategoryBadge } from '@/components/content/event-category-badge';
 import { EventCategorySheet } from '@/components/content/event-category-sheet';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useContentEventCategories, useEventCategoryActions } from '@/lib/content-events';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Platform, ScrollView, Text, View } from 'react-native';
@@ -63,11 +63,9 @@ function RowAction({
 
 export default function EventCategoriesScreen() {
   const { t } = useTranslation('events');
-  const { t: tCommon } = useTranslation('common');
   const { t: tProfile } = useTranslation('profile');
   const { t: tErrors } = useTranslation('errors');
   const fontClass = useLanguageFontClass();
-  const { back } = useRouter();
   const categories = useContentEventCategories();
   const { reorder, remove } = useEventCategoryActions();
   const [sheet, setSheet] = useState<{ readonly category: EventCategoryRow | null } | null>(null);
@@ -95,25 +93,10 @@ export default function EventCategoriesScreen() {
   const failure = remove.error ?? reorder.error;
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right']}>
+      <NativeScreenHeader title={t('categoriesTitle')} />
       <PageWidth className="flex-1">
         <ScrollView contentContainerClassName="gap-md p-lg" testID="event-categories">
-          <PressableScale
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}
-          >
-            {t('categoriesTitle')}
-          </Text>
           <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
             {t('categoriesHelpPhone')}
           </Text>

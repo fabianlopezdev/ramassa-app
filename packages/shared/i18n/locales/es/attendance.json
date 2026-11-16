@@ -22,7 +22,6 @@
   "syncRetrying": "Se volverá a sincronizar",
   "syncSynced": "Sincronizado",
   "tapAction": "Cambiar a {{name}} de {{current}} a {{next}}",
-  "back": "Volver a las sesiones de hoy",
   "overviewTitle": "Resumen de asistencia",
   "overviewSummary": "{{count}} sesiones",
   "searchLabel": "Buscar actividades o lugares",

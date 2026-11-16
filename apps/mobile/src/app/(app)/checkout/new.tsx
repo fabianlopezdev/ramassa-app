@@ -8,6 +8,7 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { clampQuantity } from '@/lib/arrival-form';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -80,7 +81,6 @@ function StepButton({
 export default function NewCheckoutScreen() {
   const { t, i18n } = useTranslation('participants');
   const itemLabel = useItemLabel();
-  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
   const { back } = useRouter();
   const isOnline = isNetworkStateOnline(useNetworkState());
@@ -135,7 +135,8 @@ export default function NewCheckoutScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right', 'bottom']}>
+      <NativeScreenHeader title={t('checkout.title')} />
       <ScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -143,24 +144,7 @@ export default function NewCheckoutScreen() {
         contentContainerClassName="pb-3xl"
       >
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="checkout-back"
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
           <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('checkout.title')}
-            </Text>
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
               {t('checkout.intro')}
             </Text>

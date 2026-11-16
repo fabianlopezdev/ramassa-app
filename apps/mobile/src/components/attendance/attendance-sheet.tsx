@@ -8,7 +8,6 @@ import {
   attendanceStatusKey,
   attendanceSyncKey,
 } from '@/components/attendance/attendance-row';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { useAttendanceMarker, useAttendanceSheet } from '@/lib/attendance';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { canOpenParticipantCard, participantCardHref } from '@/lib/participant-segments';
@@ -32,16 +31,10 @@ const keyExtractor = (participant: AttendanceParticipant) => participant.id;
 
 /**
  * A session's attendance sheet (RAPP-245 made it a pane): a screen of its own
- * on a phone, and the right half of Today on a tablet, where it has no way
- * back because the list stays beside it.
+ * on a phone, where the native header goes back (RAPP-815), and the right half
+ * of Today on a tablet, where the list stays beside it.
  */
-export function AttendanceSheet({
-  occurrenceId: id,
-  onBack,
-}: {
-  readonly occurrenceId: string;
-  readonly onBack?: () => void;
-}) {
+export function AttendanceSheet({ occurrenceId: id }: { readonly occurrenceId: string }) {
   const { t } = useTranslation('attendance');
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
@@ -126,19 +119,6 @@ export function AttendanceSheet({
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'left', 'right']}>
       <View className="gap-md border-b border-neutral-200 bg-neutral-50 px-lg pb-md pt-lg">
-        {onBack === undefined ? null : (
-          <PressableScale
-            accessibilityLabel={t('back')}
-            onPress={onBack}
-            className="min-h-min self-start justify-center"
-          >
-            <Text
-              className={`text-start text-sm font-semibold text-primary-dark ${languageFontClass}`}
-            >
-              {t('back')}
-            </Text>
-          </PressableScale>
-        )}
         <View className="gap-xs">
           <Text
             accessibilityRole="header"

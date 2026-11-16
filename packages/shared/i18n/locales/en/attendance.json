@@ -22,7 +22,6 @@
   "syncRetrying": "Sync will retry",
   "syncSynced": "Synced",
   "tapAction": "Change {{name}} from {{current}} to {{next}}",
-  "back": "Back to today’s sessions",
   "overviewTitle": "Attendance overview",
   "overviewSummary": "{{count}} sessions",
   "searchLabel": "Search activities or locations",

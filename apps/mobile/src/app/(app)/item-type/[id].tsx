@@ -9,6 +9,7 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { readValue } from '@/lib/arrival-form';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -57,7 +58,6 @@ export default function ItemTypeScreen() {
   const { id = 'new' } = useLocalSearchParams<{ id: string }>();
   const { back } = useRouter();
   const { t } = useTranslation('participants');
-  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
   const itemLabel = useItemLabel();
   const itemTypes = useHandoverItemTypes();
@@ -122,7 +122,14 @@ export default function ItemTypeScreen() {
   })();
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right', 'bottom']}>
+      <NativeScreenHeader
+        title={
+          isNew || current === null
+            ? t('items.newTitle')
+            : t('items.editTitle', { item: itemLabel(current.key) })
+        }
+      />
       <ScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -130,26 +137,6 @@ export default function ItemTypeScreen() {
         contentContainerClassName="pb-3xl"
       >
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="item-back"
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-          >
-            {isNew || current === null
-              ? t('items.newTitle')
-              : t('items.editTitle', { item: itemLabel(current.key) })}
-          </Text>
-
           {isBuiltin ? (
             <Text className={`text-start text-md text-neutral-700 ${fontClass}`}>
               {t('items.builtin')}

@@ -15,6 +15,7 @@ import {
 } from '@/components/announcements/feed-states';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { SegmentedControl } from '@/components/layout/segmented-control';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { DeletionRequestsPanel } from '@/components/participants/deletion-requests-panel';
@@ -24,7 +25,6 @@ import {
   SORT_LABEL_KEYS,
 } from '@/components/participants/participant-filter-sheet';
 import { ParticipantInvitesPanel } from '@/components/participants/participant-invites-panel';
-import { TeamBackToHome } from '@/components/team/team-back-to-home';
 import { useTeamLayout } from '@/components/team/team-layout-context';
 import { continuousCorners } from '@/lib/continuous-corners';
 import {
@@ -237,7 +237,11 @@ export default function ParticipantListScreen() {
     [inviteRows],
   );
   const waitingDeletions = useOpenDeletionRequests(canHandleRgpd).data?.length ?? 0;
-  const isSplit = useTeamLayout() === 'sidebar';
+  const layout = useTeamLayout();
+  const isSplit = layout === 'sidebar';
+  // In the large-button layout each area is a screen pushed from the home, so
+  // the native header goes back to it (RAPP-815); tabs and the sidebar need none.
+  const homeHeader = layout === 'home' ? <NativeScreenHeader /> : null;
   const [search, setSearch] = useState<ParticipantListSearch>(DEFAULT_SEARCH);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -326,7 +330,6 @@ export default function ParticipantListScreen() {
 
   const header = (
     <View className="gap-md px-lg pb-md pt-lg">
-      <TeamBackToHome />
       <Text
         accessibilityRole="header"
         className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
@@ -526,6 +529,7 @@ export default function ParticipantListScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
+      {homeHeader}
       {isSplit ? (
         <View className="flex-1 flex-row">
           <View

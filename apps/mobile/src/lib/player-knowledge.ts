@@ -7,6 +7,7 @@ import {
   fetchKnowledgeCategories,
   fetchOwnParticipantStoryStatuses,
   fetchPlayerKnowledgeArticles,
+  resendParticipantStory,
   submitParticipantStory,
   type KnowledgeArticleListRow,
   type KnowledgeCategoryRow,
@@ -141,6 +142,8 @@ export function useSubmitPlayerStory() {
             title: story.title,
             story_status: story.story_status!,
             reviewer_note: story.reviewer_note,
+            submission_language: story.submission_language,
+            body: story.body,
             created_at: story.created_at,
             updated_at: story.updated_at,
           },
@@ -148,5 +151,33 @@ export function useSubmitPlayerStory() {
         ],
       );
     },
+  });
+}
+
+export interface ResendPlayerStoryVariables {
+  readonly storyId: string;
+  readonly title: string;
+  readonly story: string;
+}
+
+/**
+ * Her edited story, sent again after the team asked for changes (RAPP-814).
+ * Online only, like the first submission.
+ */
+export function useResendPlayerStory() {
+  const { user } = useAuth();
+  const networkState = useNetworkState();
+  const isOnline = isNetworkStateOnline(networkState);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ['resend-player-story', user?.id ?? 'signed-out'],
+    networkMode: 'always',
+    mutationFn: async (variables: ResendPlayerStoryVariables) => {
+      requireStorySubmissionOnline(isOnline);
+      if (user === null) throw new AppError('AUTH-2');
+      await resendParticipantStory(supabase, variables);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [playerKnowledgeQueryRoot] }),
   });
 }

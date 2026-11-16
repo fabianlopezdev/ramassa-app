@@ -9,6 +9,7 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import {
   addArrivalLine,
@@ -111,7 +112,6 @@ function OutlineButton({
 export default function NewArrivalScreen() {
   const { t, i18n } = useTranslation('participants');
   const itemLabel = useItemLabel();
-  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
   const { back } = useRouter();
   const accessToken = useAuth().session?.access_token;
@@ -284,7 +284,8 @@ export default function NewArrivalScreen() {
             : null;
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right', 'bottom']}>
+      <NativeScreenHeader title={t('arrival.title')} />
       <ScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -292,24 +293,6 @@ export default function NewArrivalScreen() {
         contentContainerClassName="pb-3xl"
       >
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="arrival-back"
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-          >
-            {t('arrival.title')}
-          </Text>
-
           <Section title={t('arrival.sourceLabel')}>
             <View
               accessibilityRole="radiogroup"

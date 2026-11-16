@@ -67,8 +67,8 @@ describe('recipient language selection', () => {
     };
 
     expect(resolvePushText(forumFlag, 'ca')).toEqual({
-      title: 'Nou avís al fòrum',
-      body: 'Obre la cua de moderació per revisar-lo.',
+      title: 'Nou contingut denunciat al fòrum',
+      body: 'Obre la moderació del fòrum per revisar-lo.',
       language: 'ca',
     });
     expect(buildExpoMessage('ExponentPushToken[test]', forumFlag, 'es').data).toEqual({
@@ -116,7 +116,7 @@ describe('recipient language selection', () => {
     };
 
     const resolved = buildExpoMessage('ExponentPushToken[test]', content, 'ca');
-    expect(resolved.title).toBe('Actualització de la teva cita privada');
+    expect(resolved.title).toBe('Actualització de la teva mentoria');
     expect(resolved.body).toBe('Obre Ramassà per veure el dia i l’hora.');
     expect(JSON.stringify(resolved)).not.toContain('Violència de gènere');
     expect(JSON.stringify(resolved)).not.toContain('sala tranquil·la');

@@ -12,13 +12,13 @@ import {
 } from '@/components/announcements/feed-states';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ForumCategorySheet } from '@/components/team/forum-category-sheet';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useForumCategoryActions, useForumModerationCategories } from '@/lib/team-forum';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Platform, ScrollView, Text, View } from 'react-native';
@@ -69,11 +69,9 @@ function RowAction({
 export default function ForumCategoriesScreen() {
   const { t, i18n } = useTranslation('forum');
   const { t: tEvents } = useTranslation('events');
-  const { t: tCommon } = useTranslation('common');
   const { t: tProfile } = useTranslation('profile');
   const { t: tErrors } = useTranslation('errors');
   const fontClass = useLanguageFontClass();
-  const { back } = useRouter();
   const language = (i18n.resolvedLanguage ?? DEFAULT_LANGUAGE) as SupportedLanguage;
   const categories = useForumModerationCategories();
   const { reorder, remove } = useForumCategoryActions();
@@ -105,26 +103,10 @@ export default function ForumCategoriesScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right']}>
+      <NativeScreenHeader title={t('categoryManagerTitle')} />
       <PageWidth className="flex-1">
         <ScrollView contentContainerClassName="gap-md p-lg" testID="forum-categories">
-          <PressableScale
-            testID="forum-categories-back"
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}
-          >
-            {t('categoryManagerTitle')}
-          </Text>
           <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
             {tEvents('categoriesHelpPhone')}
           </Text>
