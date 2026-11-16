@@ -16,8 +16,9 @@ const DEV_ROUTES: readonly { readonly label: string; readonly href: Href }[] = [
   { label: 'Home', href: '/(app)/(tabs)' },
   { label: 'Events', href: '/(app)/(tabs)/events' },
   { label: 'Community', href: '/(app)/(tabs)/community' },
+  { label: 'Chat', href: '/(app)/(tabs)/chat' },
   { label: 'Services', href: '/(app)/(tabs)/services' },
-  { label: 'Profile', href: '/(app)/(tabs)/profile' },
+  { label: 'Profile', href: '/(app)/profile' },
   { label: 'Login', href: '/(auth)' },
   { label: 'Sitemap', href: '/_sitemap' },
 ];

@@ -22,8 +22,9 @@
     },
     { "label": "home", "goto": "/", "waitFor": "text={{home:feedTitle}}" },
     { "label": "events", "goto": "/events", "waitFor": "text={{nav:tabs.events}}" },
+    { "label": "chat", "goto": "/chat", "waitFor": "text={{nav:tabs.chat}}" },
     { "label": "community", "goto": "/community", "waitFor": "text={{nav:tabs.community}}" },
     { "label": "services", "goto": "/services", "waitFor": "text={{nav:tabs.services}}" },
-    { "label": "profile", "goto": "/profile", "waitFor": "text={{nav:tabs.profile}}" }
+    { "label": "profile", "goto": "/profile", "waitFor": "text={{profile:title}}" }
   ]
 }

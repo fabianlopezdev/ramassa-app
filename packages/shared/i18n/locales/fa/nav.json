@@ -2,9 +2,9 @@
   "tabs": {
     "home": "خانه",
     "events": "رویدادها",
+    "chat": "گفت‌وگو",
     "community": "انجمن",
-    "services": "خدمات",
-    "profile": "پروفایل"
+    "services": "خدمات"
   },
   "staff": {
     "dashboard": "داشبورد",

@@ -2,9 +2,9 @@
   "tabs": {
     "home": "الرئيسية",
     "events": "الفعاليات",
+    "chat": "الدردشة",
     "community": "المجتمع",
-    "services": "الخدمات",
-    "profile": "الملف الشخصي"
+    "services": "الخدمات"
   },
   "staff": {
     "dashboard": "لوحة التحكم",

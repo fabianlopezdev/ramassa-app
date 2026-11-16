@@ -1,0 +1,104 @@
+/**
+ * One large row that opens a screen (RAPP-789, RAPP-794): an icon and a label,
+ * never one without the other, at least the recommended touch height. An
+ * optional status line sits under the label and an optional count sits at the
+ * end. The Xat tab and the profile menu use it, so a player meets the same
+ * shape in both places.
+ */
+import { PressableScale } from '@/components/motion/pressable-scale';
+import { continuousCorners } from '@/lib/continuous-corners';
+import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+import { memo } from 'react';
+import { I18nManager, Text, View } from 'react-native';
+import { tokens } from '@ramassa/shared/tokens';
+
+const forwardChevron: SymbolViewProps['name'] = {
+  ios: 'chevron.forward',
+  android: 'chevron_right',
+  web: 'chevron_right',
+};
+const backwardChevron: SymbolViewProps['name'] = {
+  ios: 'chevron.backward',
+  android: 'chevron_left',
+  web: 'chevron_left',
+};
+
+export interface NavRowProps {
+  readonly label: string;
+  readonly icon: SymbolViewProps['name'];
+  readonly onPress: () => void;
+  readonly testID: string;
+  /** A short state under the label, such as the status of her request. */
+  readonly detail?: string | null;
+  /** A count at the end, such as unread messages. Hidden when null. */
+  readonly badge?: string | null;
+  /** The badge read out in words, such as "3 unread messages". */
+  readonly badgeAccessibilityLabel?: string | null;
+  readonly tone?: 'default' | 'danger';
+}
+
+export const NavRow = memo(function NavRow({
+  label,
+  icon,
+  onPress,
+  testID,
+  detail = null,
+  badge = null,
+  badgeAccessibilityLabel = null,
+  tone = 'default',
+}: NavRowProps) {
+  const languageFontClass = useLanguageFontClass();
+  const accessibilityLabel = [label, detail, badge === null ? null : badgeAccessibilityLabel]
+    .filter((part): part is string => typeof part === 'string' && part !== '')
+    .join(', ');
+  const iconColor = tone === 'danger' ? tokens.colors.error : tokens.colors.primary.dark;
+  return (
+    <PressableScale
+      testID={testID}
+      accessibilityLabel={accessibilityLabel}
+      onPress={onPress}
+      haptic="tapLight"
+      style={continuousCorners}
+      className="min-h-recommended flex-row items-center gap-md rounded-lg border border-neutral-200 bg-white px-md py-sm"
+    >
+      <SymbolView
+        accessible={false}
+        name={icon}
+        size={tokens.fontSize['2xl']}
+        tintColor={iconColor}
+      />
+      <View className="flex-1 gap-xs">
+        <Text
+          className={`text-start text-form font-bold ${
+            tone === 'danger' ? 'text-error' : 'text-neutral-900'
+          } ${languageFontClass}`}
+        >
+          {label}
+        </Text>
+        {detail === null || detail === '' ? null : (
+          <Text
+            numberOfLines={2}
+            className={`text-start text-md text-neutral-700 ${languageFontClass}`}
+          >
+            {detail}
+          </Text>
+        )}
+      </View>
+      {badge === null ? null : (
+        <View className="min-w-min items-center rounded-full bg-error px-sm py-xs">
+          <Text className="text-md font-bold tabular-nums text-white">{badge}</Text>
+        </View>
+      )}
+      {/* An action row (sign out) opens no screen, so it shows no arrow. */}
+      {tone === 'danger' ? null : (
+        <SymbolView
+          accessible={false}
+          name={I18nManager.isRTL ? backwardChevron : forwardChevron}
+          size={tokens.fontSize.lg}
+          tintColor={tokens.colors.neutral[500]}
+        />
+      )}
+    </PressableScale>
+  );
+});

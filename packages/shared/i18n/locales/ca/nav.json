@@ -2,9 +2,9 @@
   "tabs": {
     "home": "Inici",
     "events": "Calendari",
+    "chat": "Xat",
     "community": "Comunitat",
-    "services": "Serveis",
-    "profile": "Perfil"
+    "services": "Serveis"
   },
   "staff": {
     "dashboard": "Tauler",
