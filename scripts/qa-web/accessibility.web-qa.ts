@@ -85,6 +85,11 @@ const playerRoutes = [
   '/community',
   '/services',
   '/profile',
+  '/profile-data',
+  '/profile-attendance',
+  '/profile-language',
+  '/profile-privacy',
+  '/chat',
   '/attendance',
   '/feedback',
   '/gallery',
@@ -423,7 +428,7 @@ test.describe('WCAG 2.2 AA regression gate', () => {
   test('Arabic player web routes retain RTL semantics and pass axe', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await signInPlayer(page);
-    await page.goto(`${playerOrigin}/profile`);
+    await page.goto(`${playerOrigin}/profile-language`);
     await page.getByTestId('profile-language-ar').click();
 
     for (const route of [...playerRoutes, ...dynamicPlayerRoutes()]) {

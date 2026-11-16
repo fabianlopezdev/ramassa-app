@@ -44,8 +44,6 @@
   "loadFailed": "تعذر تحميل الطلبات.",
   "retry": "حاولي مرة أخرى",
   "communityAction": "الإرشاد",
-  "calendarPrivateTitle": "الإرشاد",
-  "calendarPrivateBody": "هذا الموعد مرئي لك وللفريق فقط.",
   "calendarOpen": "فتح الإرشاد الخاص",
   "adminTitle": "الإرشاد",
   "adminIntro": "جدولة الطلبات الخاصة وإغلاق الجلسات المكتملة.",

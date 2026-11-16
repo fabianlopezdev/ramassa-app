@@ -19,6 +19,7 @@ import {
 } from '@/components/layout/segmented-control';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
@@ -206,6 +207,7 @@ export default function CommunityScreen() {
   const header = (
     <View className="gap-lg pb-lg">
       <PageWidth className="gap-md">
+        <ProfilePhotoButton />
         <Text
           accessibilityRole="header"
           className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}

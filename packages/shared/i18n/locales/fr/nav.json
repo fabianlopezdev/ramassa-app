@@ -2,9 +2,9 @@
   "tabs": {
     "home": "Accueil",
     "events": "Activités",
+    "chat": "Discussion",
     "community": "Communauté",
-    "services": "Aide",
-    "profile": "Profil"
+    "services": "Aide"
   },
   "staff": {
     "dashboard": "Tableau de bord",

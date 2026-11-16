@@ -50,6 +50,6 @@ test('searches and persists one canonical municipality from profile edit', async
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect.poll(storedMunicipality, { timeout: 30_000 }).toBe('Girona');
 
-  await page.goto(`${playerOrigin}/profile`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${playerOrigin}/profile-data`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByText('Girona', { exact: true })).toBeVisible({ timeout: 30_000 });
 });

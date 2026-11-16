@@ -23,7 +23,7 @@
     {
       "label": "list",
       "click": "text={{nav:tabs.events}} >> visible=true",
-      "waitFor": "text={{events:playerTitle}} >> visible=true"
+      "waitFor": "text={{nav:tabs.events}} >> visible=true"
     },
     {
       "label": "calendar",
@@ -48,7 +48,7 @@
     {
       "label": "events-return",
       "click": "[aria-label=\"{{events:playerBack}}\"]",
-      "waitFor": "text={{events:playerTitle}} >> visible=true"
+      "waitFor": "text={{nav:tabs.events}} >> visible=true"
     },
     {
       "label": "list-return",

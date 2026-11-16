@@ -162,7 +162,7 @@ describe('Phase 6 accessibility and i18n contract', () => {
 
   test('labeled busy profile states expose a progressbar role on web', async () => {
     const paths = [
-      'app/(app)/(tabs)/profile.tsx',
+      'app/(app)/profile-data.tsx',
       'app/(app)/profile-edit.tsx',
       'components/profile/attendance-history-section.tsx',
     ] as const;

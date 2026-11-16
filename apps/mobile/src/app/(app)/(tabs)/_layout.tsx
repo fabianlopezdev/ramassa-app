@@ -1,5 +1,6 @@
 import { useUnreadMessages } from '@/lib/messaging';
 import { nativeTabsHostProps } from '@/lib/native-tabs-direction';
+import { playerNavIcons } from '@/lib/player-nav-icons';
 import { unreadBadgeProps } from '@/lib/unread-badge';
 import { NativeTabs } from 'expo-router/native-tabs';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +9,10 @@ import { tokens } from '@ramassa/shared/tokens';
 
 /**
  * The player navigation shell (RAPP-16): five bottom tabs, the SPEC's whole
- * primary IA (max 2 nav levels).
+ * primary IA (max 2 nav levels). Since RAPP-789 they are Inici, Activitats,
+ * Xat, Comunitat and Ajuda: Xat holds everything private with the team and
+ * carries the unread badge, and her profile opens from her photo at the top of
+ * each tab (RAPP-794), because Android allows five tabs and no more.
  *
  * NativeTabs (not JS tabs) on purpose: the native tab bar gives platform-correct
  * screen-reader labels and >=48dp targets for free, which is exactly what the
@@ -56,20 +60,23 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Icon sf="calendar" md="calendar_month" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.events')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="community" testID="player-tab-community">
-        <NativeTabs.Trigger.Icon sf="bubble.left.and.bubble.right.fill" md="chat" />
-        <NativeTabs.Trigger.Label>{t('nav:tabs.community')}</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger name="chat" testID="player-tab-chat">
+        <NativeTabs.Trigger.Icon
+          sf={playerNavIcons.teamChat.ios}
+          md={playerNavIcons.teamChat.android}
+        />
+        <NativeTabs.Trigger.Label>{t('nav:tabs.chat')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Badge hidden={unreadBadge.hidden}>
           {unreadBadge.children}
         </NativeTabs.Trigger.Badge>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="community" testID="player-tab-community">
+        <NativeTabs.Trigger.Icon sf="bubble.left.and.bubble.right.fill" md="chat" />
+        <NativeTabs.Trigger.Label>{t('nav:tabs.community')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="services">
         <NativeTabs.Trigger.Icon sf="square.grid.2x2.fill" md="category" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.services')}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="profile" testID="player-tab-profile">
-        <NativeTabs.Trigger.Icon sf="person.crop.circle.fill" md="person" />
-        <NativeTabs.Trigger.Label>{t('nav:tabs.profile')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );

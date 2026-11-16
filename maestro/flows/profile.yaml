@@ -27,7 +27,6 @@ env:
   SIGN_OUT: '{{profile:signOutAction}}'
   LOGIN_TITLE: '{{auth:loginTitle}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
-  TAB_PROFILE: '{{nav:tabs.profile}}'
   OWN_LANGUAGE: '{{onboarding:languageNativeName}}'
 ---
 # The profile hub and everything reachable from it: what the organization holds
@@ -198,7 +197,8 @@ env:
 - repeat:
     times: 8
     while:
-      notVisible: '^${TAB_PROFILE}$'
+      notVisible:
+        id: player-profile-button
     commands:
       - tapOn:
           text: '^${PUSH_DECLINE}$'
@@ -216,7 +216,8 @@ env:
 - repeat:
     times: 6
     while:
-      notVisible: '^${TAB_PROFILE}$'
+      notVisible:
+        id: player-profile-button
     commands:
       - tapOn:
           text: '^${BACK}$'
@@ -230,17 +231,29 @@ env:
       - waitForAnimationToEnd:
           timeout: 3000
 - extendedWaitUntil:
-    visible: '^${TAB_PROFILE}$'
+    visible:
+      id: player-profile-button
     timeout: 30000
-- tapOn: '^${TAB_PROFILE}$'
+# Her photo at the top of the tab opens the profile menu (RAPP-794).
+- tapOn:
+    id: player-profile-button
 - extendedWaitUntil:
-    visible: '.*${PROFILE_TITLE}.*'
+    visible:
+      id: profile-open-data
     timeout: 120000
 - waitForAnimationToEnd:
     timeout: 3000
 
-# 1. The hub: what Ramassà holds about her, decrypted and in her language.
+# 1. The hub: a short menu, one row per screen.
 - takeScreenshot: ${SHOTS}/01-profile${SUFFIX}
+
+# What Ramassà holds about her, decrypted and in her language.
+- tapOn:
+    id: profile-open-data
+- extendedWaitUntil:
+    visible:
+      id: profile-data
+    timeout: 30000
 
 # 2. The editor, built from the wizard's own controls.
 - repeat:
@@ -266,7 +279,7 @@ env:
     timeout: 3000
 - takeScreenshot: ${SHOTS}/02-edit${SUFFIX}
 
-# Back WITHOUT saving: the cancel branch returns to the hub unchanged.
+# Back WITHOUT saving: the cancel branch returns to her data, then the menu.
 # Returning to the hub, written to survive both platforms and its own worst
 # case. Android gets the system back, because under RTL the in-screen control
 # sits at the top right, exactly where the development client draws its
@@ -275,14 +288,13 @@ env:
 # in-screen control is the only way. The loop also closes the tools menu if it
 # did open, so one intercepted tap does not end the run.
 #
-# Anchored on the TAB, not the screen title: the profile is one long scroll and
-# returning keeps the position it was left at, so the title is usually
-# off-screen. The tab bar does not scroll and is hidden on the pushed screens,
-# which makes it the one honest "we are back" signal.
+# Anchored on a menu row: the menu is short and never scrolls, so its rows
+# are the one honest "we are back" signal.
 - repeat:
     times: 6
     while:
-      notVisible: '^${TAB_PROFILE}$'
+      notVisible:
+        id: profile-open-privacy
     commands:
       - tapOn:
           text: '.*Close.*'
@@ -298,10 +310,15 @@ env:
       - waitForAnimationToEnd:
           timeout: 2500
 - extendedWaitUntil:
-    visible: '^${TAB_PROFILE}$'
+    visible:
+      id: profile-open-privacy
     timeout: 30000
 - waitForAnimationToEnd:
     timeout: 2000
+
+# Consents and the erasure request live under "Privacitat i permisos".
+- tapOn:
+    id: profile-open-privacy
 
 # 3. The RGPD erasure request: asking is not doing, and the screen says so.
 - repeat:
@@ -366,14 +383,13 @@ env:
 # in-screen control is the only way. The loop also closes the tools menu if it
 # did open, so one intercepted tap does not end the run.
 #
-# Anchored on the TAB, not the screen title: the profile is one long scroll and
-# returning keeps the position it was left at, so the title is usually
-# off-screen. The tab bar does not scroll and is hidden on the pushed screens,
-# which makes it the one honest "we are back" signal.
+# Anchored on a menu row: the menu is short and never scrolls, so its rows
+# are the one honest "we are back" signal.
 - repeat:
     times: 6
     while:
-      notVisible: '^${TAB_PROFILE}$'
+      notVisible:
+        id: profile-open-privacy
     commands:
       - tapOn:
           text: '.*Close.*'
@@ -389,10 +405,14 @@ env:
       - waitForAnimationToEnd:
           timeout: 2500
 - extendedWaitUntil:
-    visible: '^${TAB_PROFILE}$'
+    visible:
+      id: profile-open-privacy
     timeout: 30000
 - waitForAnimationToEnd:
     timeout: 2000
+
+- tapOn:
+    id: profile-open-language
 
 # 5. The language switch as it sits on the profile. What SWITCHING does (the
 # reading direction, the restart it needs) belongs to the i18n flow: doing it
@@ -410,6 +430,22 @@ env:
       - waitForAnimationToEnd:
           timeout: 900
 - takeScreenshot: ${SHOTS}/05-language${SUFFIX}
+- repeat:
+    times: 6
+    while:
+      notVisible:
+        id: profile-open-privacy
+    commands:
+      - runFlow:
+          when:
+            platform: Android
+          commands:
+            - back
+      - tapOn:
+          text: '^${BACK}$'
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2500
 
 # 6. Signing out is terminal: it ends at the door she came in through.
 - repeat:

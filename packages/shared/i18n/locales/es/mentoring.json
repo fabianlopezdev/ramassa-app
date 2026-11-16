@@ -44,8 +44,6 @@
   "loadFailed": "No hemos podido cargar las solicitudes.",
   "retry": "Volver a intentarlo",
   "communityAction": "Mentoría",
-  "calendarPrivateTitle": "Mentoría",
-  "calendarPrivateBody": "Esta cita solo es visible para ti y el equipo.",
   "calendarOpen": "Abrir mentoría privada",
   "adminTitle": "Mentoría",
   "adminIntro": "Programa las solicitudes privadas y cierra las sesiones completadas.",

@@ -1,11 +1,9 @@
 {
   "title": "ملفي الشخصي",
-  "intro": "هذه هي البيانات التي تحتفظ بها رماسا عنكِ.",
   "sectionIdentity": "من أنتِ",
   "sectionDocumentation": "الوثائق",
   "sectionContact": "التواصل والتجهيزات",
   "sectionConsents": "الأذونات",
-  "sectionApp": "التطبيق",
   "sectionData": "بياناتكِ",
   "editAction": "تعديل بياناتي",
   "saveAction": "حفظ",
@@ -14,8 +12,6 @@
   "notProvided": "غير مُعبَّأ",
   "loading": "جارٍ تحميل بياناتكِ.",
   "termsAcceptedOn": "وافقتِ على الشروط بتاريخ {{date}}.",
-  "mediaConsentGranted": "أظهر في صور وقصص المجتمع.",
-  "mediaConsentDenied": "لا أظهر في الصور أو القصص.",
   "languageLabel": "لغة التطبيق",
   "languageRestartTitle": "يلزم إعادة التشغيل",
   "languageRestartBody": "يجب إعادة تشغيل التطبيق لتغيير اتجاه القراءة.",
@@ -57,5 +53,13 @@
     "cameraDenied": "اسمحي بالوصول إلى الكاميرا من إعدادات الهاتف.",
     "settings": "فتح الإعدادات",
     "failed": "تعذّر حفظ التغيير. حاولي مجددًا."
+  },
+  "appLockIntro": "عند تفعيل قفل التطبيق، يطلب Ramassà بصمة الوجه أو بصمة الإصبع أو رمز الهاتف عندما تعودين إلى التطبيق. هكذا تبقى بياناتك محمية إذا أخذ أحد هاتفك.",
+  "menu": {
+    "data": "بياناتي",
+    "attendance": "حضوري",
+    "language": "اللغة",
+    "appLock": "قفل التطبيق",
+    "privacy": "الخصوصية والأذونات"
   }
 }

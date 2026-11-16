@@ -39,8 +39,13 @@
     },
     {
       "label": "profile",
-      "waitFor": "text={{profile:intro}} >> visible=true",
-      "click": "text={{nav:tabs.profile}}"
+      "waitFor": "[data-testid=\"profile-open-data\"]",
+      "click": "[data-testid=\"player-profile-button\"]"
+    },
+    {
+      "label": "my-data",
+      "click": "[data-testid=\"profile-open-data\"]",
+      "waitFor": "[data-testid=\"profile-open-edit\"]"
     },
     {
       "label": "edit",
@@ -61,11 +66,17 @@
     {
       "label": "back-to-profile",
       "click": "[aria-label=\"{{onboarding:backAction}}\"]:visible",
-      "waitFor": "text={{profile:intro}} >> visible=true"
+      "waitFor": "[data-testid=\"profile-open-edit\"]"
     },
     {
       "label": "language",
+      "goto": "/profile-language",
       "waitFor": "text={{profile:languageLabel}} >> visible=true"
+    },
+    {
+      "label": "privacy",
+      "goto": "/profile-privacy",
+      "waitFor": "[aria-label=\"{{profile:deleteTitle}}\"]:visible"
     },
     {
       "label": "delete-request",
@@ -85,7 +96,12 @@
     {
       "label": "back-from-delete",
       "click": "[aria-label=\"{{onboarding:backAction}}\"]:visible",
-      "waitFor": "text={{profile:intro}} >> visible=true"
+      "waitFor": "[aria-label=\"{{profile:deleteTitle}}\"]:visible"
+    },
+    {
+      "label": "menu",
+      "goto": "/profile",
+      "waitFor": "[data-testid=\"profile-sign-out\"]"
     },
     {
       "label": "signed-out",

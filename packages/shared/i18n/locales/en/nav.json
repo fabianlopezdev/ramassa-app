@@ -2,9 +2,9 @@
   "tabs": {
     "home": "Home",
     "events": "Activities",
+    "chat": "Chat",
     "community": "Community",
-    "services": "Help",
-    "profile": "Profile"
+    "services": "Help"
   },
   "staff": {
     "dashboard": "Dashboard",

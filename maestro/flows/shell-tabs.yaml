@@ -16,9 +16,9 @@ env:
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   TAB_HOME: '{{nav:tabs.home}}'
   TAB_EVENTS: '{{nav:tabs.events}}'
+  TAB_CHAT: '{{nav:tabs.chat}}'
   TAB_COMMUNITY: '{{nav:tabs.community}}'
   TAB_SERVICES: '{{nav:tabs.services}}'
-  TAB_PROFILE: '{{nav:tabs.profile}}'
 ---
 # The five player tabs in their pre-content state. A hub, not a sequence: the
 # canvas graph fans out from home to each tab.
@@ -244,6 +244,12 @@ env:
 - takeScreenshot: ${SHOTS}/02-events${SUFFIX}
 
 - tapOn:
+    text: '^${TAB_CHAT}$'
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: ${SHOTS}/02-chat${SUFFIX}
+
+- tapOn:
     text: '^${TAB_COMMUNITY}$'
 - waitForAnimationToEnd:
     timeout: 3000
@@ -256,12 +262,17 @@ env:
 - takeScreenshot: ${SHOTS}/04-services${SUFFIX}
 
 - tapOn:
-    text: '^${TAB_PROFILE}$'
+    id: player-profile-button
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: ${SHOTS}/05-profile${SUFFIX}
 
 # Back to the starting tab, so a re-run that reuses the install starts where
-# this one did.
+# this one did. The profile is pushed over the tabs, so leave it first.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
 - tapOn:
     text: '^${TAB_HOME}$'

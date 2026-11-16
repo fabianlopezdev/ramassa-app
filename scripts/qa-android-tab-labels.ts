@@ -27,13 +27,7 @@ export interface OcrWord {
 
 const MINIMUM_OCR_CONFIDENCE = 20;
 const MINIMUM_LABEL_SIMILARITY = 0.55;
-export const PLAYER_TAB_LABEL_KEYS = [
-  'home',
-  'events',
-  'community',
-  'services',
-  'profile',
-] as const;
+export const PLAYER_TAB_LABEL_KEYS = ['home', 'events', 'chat', 'community', 'services'] as const;
 
 export function parseTesseractTsv(tsv: string): readonly OcrWord[] {
   return tsv

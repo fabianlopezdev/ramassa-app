@@ -10,14 +10,12 @@ env:
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   DEV_MENU_LABEL: Developer menu
   HOME_FEED_TITLE: '{{home:feedTitle}}'
-  EVENTS_TITLE: '{{events:playerTitle}}'
   COMMUNITY_TITLE: '{{forum:title}}'
-  PROFILE_TITLE: '{{profile:title}}'
   TAB_HOME: '{{nav:tabs.home}}'
   TAB_EVENTS: '{{nav:tabs.events}}'
+  TAB_CHAT: '{{nav:tabs.chat}}'
   TAB_COMMUNITY: '{{nav:tabs.community}}'
   TAB_SERVICES: '{{nav:tabs.services}}'
-  TAB_PROFILE: '{{nav:tabs.profile}}'
 ---
 - runFlow: _open-app.yaml
 - runFlow: _sign-in.yaml
@@ -27,15 +25,22 @@ env:
 # qa-smoke captures the real Android framebuffer and OCRs the five label slots.
 # Hierarchy visibility is not accepted as evidence that Material painted text.
 
-# Each tab opens and renders its own header. Community and Profile have unique
-# headings. Events and Services repeat their tab label, so `index: 1` proves a second
-# match (the screen heading) exists; without the index, the tab-bar label would
-# satisfy the assertion before the tap happened.
+# Each tab opens and renders its own header. Community has a unique heading.
+# Activitats, Xat and Services repeat their tab label as the screen title, so
+# `index: 1` proves a second match (the screen heading) exists; without the
+# index, the tab-bar label would satisfy the assertion before the tap happened.
 - tapOn:
     text: '^${TAB_EVENTS}$'
 - extendedWaitUntil:
     visible:
-      text: '^${EVENTS_TITLE}$'
+      text: '^${TAB_EVENTS}$'
+      index: 1
+    timeout: 15000
+- tapOn:
+    id: player-tab-chat
+- extendedWaitUntil:
+    visible:
+      text: '^${TAB_CHAT}$'
       index: 1
     timeout: 15000
 - runFlow:
@@ -61,12 +66,10 @@ env:
       index: 1
     timeout: 15000
 - tapOn:
-    text: '^${TAB_PROFILE}$'
-- extendedWaitUntil:
-    visible: '.*${PROFILE_TITLE}.*'
-    timeout: 15000
-- tapOn:
     text: '^${TAB_HOME}$'
 - extendedWaitUntil:
     visible: '.*${HOME_FEED_TITLE}.*'
     timeout: 15000
+# The profile left the tab bar: it opens from her photo at the top of every tab.
+- assertVisible:
+    id: player-profile-button

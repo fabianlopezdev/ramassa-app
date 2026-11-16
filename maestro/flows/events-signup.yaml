@@ -9,7 +9,7 @@ env:
   HOME_TITLE: '{{home:feedTitle}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   EVENTS_TAB: '{{nav:tabs.events}}'
-  EVENTS_TITLE: '{{events:playerTitle}}'
+  EVENTS_TITLE: '{{nav:tabs.events}}'
   LIST_VIEW_ACTION: '{{events:playerListViewAction}}'
   CALENDAR_VIEW_ACTION: '{{events:playerCalendarViewAction}}'
   CALENDAR_LABEL: '{{events:playerCalendarLabel}}'

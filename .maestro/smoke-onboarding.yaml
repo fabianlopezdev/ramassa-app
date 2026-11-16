@@ -42,7 +42,6 @@ env:
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   HOME_FEED_TITLE: '{{home:feedTitle}}'
   TAB_HOME: '{{nav:tabs.home}}'
-  TAB_PROFILE: '{{nav:tabs.profile}}'
   # Sizes are DATA, not copy: the chips render the literal catalogue values in
   # every language, so these are the only selectors here that are not resolved
   # from a locale file. Same two values the browser spec clicks.
@@ -692,7 +691,7 @@ env:
 - assertVisible:
     text: '^${TAB_HOME}$'
 - assertVisible:
-    text: '^${TAB_PROFILE}$'
+    id: player-profile-button
 # And the wizard is GONE, not merely covered. Checked last and only after the
 # waits above have already proved something PRESENT: an absence assertion is
 # true the instant nothing matches, including while a screen is still painting,

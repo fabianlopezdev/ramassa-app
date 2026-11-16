@@ -195,8 +195,8 @@ describe('locale-aware selectors', () => {
 
   test('tokens are replaced everywhere in a spec, not only at the top level', async () => {
     const ca = await loadTranslator('ca');
-    expect(interpolate({ steps: [{ waitFor: 'text={{nav:tabs.profile}}' }] }, ca)).toEqual({
-      steps: [{ waitFor: 'text=Perfil' }],
+    expect(interpolate({ steps: [{ waitFor: 'text={{nav:tabs.chat}}' }] }, ca)).toEqual({
+      steps: [{ waitFor: 'text=Xat' }],
     });
   });
 });

@@ -44,8 +44,6 @@
   "loadFailed": "No hem pogut carregar les sol·licituds.",
   "retry": "Torna-ho a provar",
   "communityAction": "Mentoria",
-  "calendarPrivateTitle": "Mentoria",
-  "calendarPrivateBody": "Aquesta cita només és visible per a tu i l’equip.",
   "calendarOpen": "Obrir mentoria privada",
   "adminTitle": "Mentoria",
   "adminIntro": "Programa les sol·licituds privades i tanca les sessions completades.",

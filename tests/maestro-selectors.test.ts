@@ -359,7 +359,7 @@ describe('Maestro selector contracts', () => {
 
     const auth = await Bun.file(path.join(repoRoot, '.maestro/smoke-auth.yaml')).text();
     expect(auth).toMatch(
-      /notVisible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?text: '\^\$\{TAB_PROFILE\}\$'[\s\S]*?visible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?notVisible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?swipe:[\s\S]*?visible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?start: 50%, 60%[\s\S]*?end: 50%, 52%[\s\S]*?text: '\^\$\{SIGN_OUT\}\$'/,
+      /notVisible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?id: player-profile-button[\s\S]*?visible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?notVisible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?swipe:[\s\S]*?visible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?start: 50%, 60%[\s\S]*?end: 50%, 52%[\s\S]*?text: '\^\$\{SIGN_OUT\}\$'/,
     );
 
     const profile = await Bun.file(path.join(repoRoot, '.maestro/smoke-profile.yaml')).text();

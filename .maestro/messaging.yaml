@@ -5,8 +5,7 @@ env:
   BACK: Enrere
   PUSH_DECLINE: Ara no
   TAB_HOME: Inici
-  TAB_COMMUNITY: Comunitat
-  TAB_PROFILE: Perfil
+  TAB_CHAT: Xat
   CHAT_TITLE: Xat amb l’equip
   COMPOSER: Escriu un missatge
   OFFLINE: Sense connexió. Els missatges quedaran en cua.
@@ -116,15 +115,15 @@ env:
     when:
       platform: Android
     commands:
-      - tapOn: '^${TAB_COMMUNITY}$'
+      - tapOn: '^${TAB_CHAT}$'
 - runFlow:
     when:
       platform: iOS
     commands:
       - tapOn:
-          id: player-tab-community
+          id: player-tab-chat
 - tapOn:
-    id: forum-open-team-chat
+    id: chat-open-team-chat
 - extendedWaitUntil:
     visible:
       id: message-composer
@@ -199,7 +198,7 @@ env:
       - repeat:
           times: 12
           while:
-            notVisible: '^${TAB_COMMUNITY}$'
+            notVisible: '^${TAB_CHAT}$'
           commands:
             - tapOn:
                 text: '.*Close.*'
@@ -209,9 +208,9 @@ env:
                 optional: true
             - waitForAnimationToEnd:
                 timeout: 3000
-      - tapOn: '^${TAB_COMMUNITY}$'
+      - tapOn: '^${TAB_CHAT}$'
       - tapOn:
-          id: forum-open-team-chat
+          id: chat-open-team-chat
       - extendedWaitUntil:
           visible:
             id: message-composer
@@ -228,17 +227,11 @@ env:
 
 - tapOn:
     id: team-chat-back
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - tapOn: '^${TAB_PROFILE}$'
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - tapOn:
-          id: player-tab-profile
+- tapOn:
+    id: player-profile-button
+# The language control has its own screen in the profile menu (RAPP-794).
+- tapOn:
+    id: profile-open-language
 - repeat:
     times: 12
     while:
@@ -337,15 +330,15 @@ env:
     when:
       platform: Android
     commands:
-      - tapOn: '^المجتمع$'
+      - tapOn: '^الدردشة$'
 - runFlow:
     when:
       platform: iOS
     commands:
       - tapOn:
-          id: player-tab-community
+          id: player-tab-chat
 - tapOn:
-    id: forum-open-team-chat
+    id: chat-open-team-chat
 - extendedWaitUntil:
     visible:
       id: message-composer

@@ -17,6 +17,7 @@ import { HomeNextActivity } from '@/components/home/home-next-activity';
 import { HomeSectionHeader } from '@/components/home/home-section-header';
 import { HomeToDo } from '@/components/home/home-to-do';
 import { PageWidth } from '@/components/layout/content-width';
+import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
 import { useMyCustomForms } from '@/lib/custom-forms';
 import { pickNextPlayerActivity } from '@/lib/home-next-activity';
@@ -203,6 +204,7 @@ export default function HomeScreen() {
       onLoad={onListLoad}
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
+          <ProfilePhotoButton />
           {/* Per fer, then her next activity, then the announcements (RAPP-790). */}
           <HomeToDo items={toDoItems} languageFontClass={languageFontClass} />
           <HomeNextActivity occurrence={nextActivity} languageFontClass={languageFontClass} />

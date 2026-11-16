@@ -84,14 +84,14 @@ describe('durable messaging device flow', () => {
     );
   });
 
-  test('opens private team chat from the community board before messaging', async () => {
+  test('opens private team chat from the Xat tab before messaging', async () => {
     const flow = await Bun.file(flowPath).text();
-    const communityIndex = flow.indexOf('id: player-tab-community');
-    const chatIndex = flow.indexOf('id: forum-open-team-chat', communityIndex);
+    const chatTabIndex = flow.indexOf('id: player-tab-chat');
+    const chatIndex = flow.indexOf('id: chat-open-team-chat', chatTabIndex);
     const composerIndex = flow.indexOf('id: message-composer', chatIndex);
 
-    expect(communityIndex).toBeGreaterThanOrEqual(0);
-    expect(chatIndex).toBeGreaterThan(communityIndex);
+    expect(chatTabIndex).toBeGreaterThanOrEqual(0);
+    expect(chatIndex).toBeGreaterThan(chatTabIndex);
     expect(composerIndex).toBeGreaterThan(chatIndex);
   });
 
@@ -103,7 +103,7 @@ describe('durable messaging device flow', () => {
     const iosDismissIndex = onlineBranch.indexOf(
       'platform: iOS\n    commands:\n      - swipe:\n          start: 50%, 35%\n          end: 50%, 55%',
     );
-    const profileIndex = flow.indexOf('id: player-tab-profile', deliveredIndex);
+    const profileIndex = flow.indexOf('id: player-profile-button', deliveredIndex);
 
     expect(iosDismissIndex).toBeGreaterThanOrEqual(0);
     expect(profileIndex).toBeGreaterThan(offlineBranchIndex);
@@ -113,7 +113,7 @@ describe('durable messaging device flow', () => {
     const flow = await Bun.file(flowPath).text();
     const reconnectIndex = flow.indexOf('id: message-sync-retrying');
     const backIndex = flow.indexOf('id: team-chat-back', reconnectIndex);
-    const profileIndex = flow.indexOf('id: player-tab-profile', backIndex);
+    const profileIndex = flow.indexOf('id: player-profile-button', backIndex);
 
     expect(reconnectIndex).toBeGreaterThanOrEqual(0);
     expect(backIndex).toBeGreaterThan(reconnectIndex);
