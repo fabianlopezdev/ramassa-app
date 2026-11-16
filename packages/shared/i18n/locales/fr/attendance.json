@@ -60,5 +60,6 @@
   "syncRejectedPermission": "Non enregistré. Tu ne peux plus faire l’appel ici.",
   "syncRetryAction": "Réessaie",
   "syncDiscardAction": "Retire-la",
-  "selectSession": "Choisis une séance pour faire l’appel."
+  "selectSession": "Choisis une séance pour faire l’appel.",
+  "openParticipantCard": "Ouvre la fiche de {{name}}"
 }

@@ -56,5 +56,6 @@
   "deliveryRejectedPermission": "ارسال نشد. دیگر نمی‌توانید اینجا پیام بفرستید.",
   "discard": "حذف",
   "selectConversation": "یک گفتگو را انتخاب کنید.",
-  "noUnread": "پیام خوانده‌نشده‌ای نیست"
+  "noUnread": "پیام خوانده‌نشده‌ای نیست",
+  "openParticipantCard": "باز کردن کارت {{name}}"
 }

@@ -12,9 +12,12 @@ import {
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useAttendanceMarker, useAttendanceSheet } from '@/lib/attendance';
 import { isNetworkStateOnline } from '@/lib/network-status';
+import { canOpenParticipantCard, participantCardHref } from '@/lib/participant-segments';
+import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
+import { useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -49,6 +52,10 @@ export function AttendanceSheet({
   const { mark, pendingMarks, syncStateFor, rejectionFor, retryMark, discardMark } =
     useAttendanceMarker(id);
   const participants = data?.participants ?? EMPTY_PARTICIPANTS;
+  const { push } = useRouter();
+  const { permissions } = useAccountAccess();
+  const mayOpenCard = canOpenParticipantCard(permissions);
+  const openCard = useCallback((playerId: string) => push(participantCardHref(playerId)), [push]);
   const title =
     data === undefined
       ? ''
@@ -84,11 +91,23 @@ export function AttendanceSheet({
           discardLabel={t('syncDiscardAction')}
           onRetry={retryMark}
           onDiscard={discardMark}
+          onOpenCard={mayOpenCard ? openCard : undefined}
+          openCardLabel={t('openParticipantCard', { name })}
           onMark={mark}
         />
       );
     },
-    [discardMark, languageFontClass, mark, rejectionFor, retryMark, syncStateFor, t],
+    [
+      discardMark,
+      languageFontClass,
+      mark,
+      mayOpenCard,
+      openCard,
+      rejectionFor,
+      retryMark,
+      syncStateFor,
+      t,
+    ],
   );
   const handleRetry = useCallback(() => void refetch(), [refetch]);
 
