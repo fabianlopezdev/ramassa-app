@@ -4,9 +4,10 @@
  * the source language (Catalan, or a story's own language), video and
  * external links, and the publication. "Generate translations" drafts the
  * title and every block in the four other languages; publishing needs the
- * title drafts and every translated body approved. A story is only edited
- * here: its review, the note to her and its first publication sit on its
- * detail (RAPP-801).
+ * title drafts and every translated body approved. A story in review can be
+ * published or scheduled here as well; starting the review, the note to her,
+ * publishing now, requesting changes and declining sit on its detail
+ * (RAPP-801).
  *
  * The form is kept on the device while she writes (`knowledge-draft.ts`); a
  * chosen step photo is not kept, as it is uploaded only at save. Without
@@ -134,8 +135,6 @@ function KnowledgeForm({
   const source = knowledgeSourceLanguage(article);
   const targets = knowledgeTargetLanguages(source);
   const isStory = article?.content_type === 'participant_story';
-  // A story goes out from its detail (RAPP-801); here it is only edited.
-  const isUnpublishedStory = isStory && article?.story_status !== 'published';
   const [restored] = useState(() => readKnowledgeDraft(privateStorage, userId, articleId));
   const [form, setForm] = useState<KnowledgeDraft>(
     () => restored ?? startingKnowledgeDraft(article, categories[0]?.id ?? ''),
@@ -247,10 +246,9 @@ function KnowledgeForm({
 
   const save = async () => {
     setError(null);
-    const saved: KnowledgeDraft = isUnpublishedStory ? { ...form, mode: 'draft' } : form;
     if (
-      isKnowledgePublishing(saved, article, canPublish) &&
-      !areKnowledgeTranslationsApproved(saved, titleReview.review, source)
+      isKnowledgePublishing(form, article, canPublish) &&
+      !areKnowledgeTranslationsApproved(form, titleReview.review, source)
     ) {
       setError('TRANSLATION-4');
       playHaptic('warning');
@@ -261,7 +259,7 @@ function KnowledgeForm({
     const placeholders = Object.fromEntries([...pendingSet].map((index) => [index, PENDING_IMAGE]));
     const checked = safeAsync(
       async () =>
-        toKnowledgeInput(saved, titleReview.review, { ...context, stepImageUrls: placeholders }),
+        toKnowledgeInput(form, titleReview.review, { ...context, stepImageUrls: placeholders }),
       { code: 'VALIDATION-1', context: { operation: 'check-knowledge' } },
     );
     const preview = await checked;
@@ -283,7 +281,7 @@ function KnowledgeForm({
               [Number(index), await uploadContentImage('knowledge-base', photo)] as const,
           ),
         );
-        const input = toKnowledgeInput(saved, titleReview.review, {
+        const input = toKnowledgeInput(form, titleReview.review, {
           ...context,
           stepImageUrls: Object.fromEntries(uploaded),
         });
@@ -317,7 +315,7 @@ function KnowledgeForm({
     <WizardFrame
       title={article === undefined ? t('newAction') : t('editTitle')}
       continueLabel={
-        !canPublish || form.mode === 'draft' || isUnpublishedStory
+        !canPublish || form.mode === 'draft'
           ? article === undefined
             ? t('saveDraft')
             : t('update')
@@ -453,49 +451,47 @@ function KnowledgeForm({
         autoCorrect={false}
       />
 
-      {isUnpublishedStory ? null : (
-        <View className="gap-sm">
-          <SectionLabel>{t('modeLabel')}</SectionLabel>
-          {canPublish ? (
-            <>
-              <View className="flex-row flex-wrap gap-sm">
-                {PUBLISH_MODES.map((mode) => (
-                  <ChoiceOption
-                    key={mode}
-                    testID={`knowledge-mode-${mode}`}
-                    value={mode}
-                    label={t(MODE_KEYS[mode])}
-                    selected={mode === form.mode}
-                    onSelect={(value) => set({ mode: value })}
-                    languageFontClass={fontClass}
-                  />
-                ))}
-              </View>
-              {form.mode === 'scheduled' ? (
-                <DateTimeField
-                  testID="knowledge-published-at"
-                  label={t('publishedAt')}
-                  value={form.publishedAt}
-                  onChange={(publishedAt) => set({ publishedAt })}
+      <View className="gap-sm">
+        <SectionLabel>{t('modeLabel')}</SectionLabel>
+        {canPublish ? (
+          <>
+            <View className="flex-row flex-wrap gap-sm">
+              {PUBLISH_MODES.map((mode) => (
+                <ChoiceOption
+                  key={mode}
+                  testID={`knowledge-mode-${mode}`}
+                  value={mode}
+                  label={t(MODE_KEYS[mode])}
+                  selected={mode === form.mode}
+                  onSelect={(value) => set({ mode: value })}
+                  languageFontClass={fontClass}
                 />
-              ) : null}
-              {form.mode === 'draft' ? null : (
-                <DateTimeField
-                  testID="knowledge-expires-at"
-                  label={t('expiresAt')}
-                  value={form.expiresAt}
-                  onChange={(expiresAt) => set({ expiresAt })}
-                  emptyLabel={tAnnouncements('noExpiry')}
-                />
-              )}
-            </>
-          ) : (
-            <Text className={`text-start text-sm text-neutral-700 ${fontClass}`}>
-              {`${t(MODE_KEYS[initialKnowledgeMode(article)])}. ${tAnnouncements('publishLocked')}`}
-            </Text>
-          )}
-        </View>
-      )}
+              ))}
+            </View>
+            {form.mode === 'scheduled' ? (
+              <DateTimeField
+                testID="knowledge-published-at"
+                label={t('publishedAt')}
+                value={form.publishedAt}
+                onChange={(publishedAt) => set({ publishedAt })}
+              />
+            ) : null}
+            {form.mode === 'draft' ? null : (
+              <DateTimeField
+                testID="knowledge-expires-at"
+                label={t('expiresAt')}
+                value={form.expiresAt}
+                onChange={(expiresAt) => set({ expiresAt })}
+                emptyLabel={tAnnouncements('noExpiry')}
+              />
+            )}
+          </>
+        ) : (
+          <Text className={`text-start text-sm text-neutral-700 ${fontClass}`}>
+            {`${t(MODE_KEYS[initialKnowledgeMode(article)])}. ${tAnnouncements('publishLocked')}`}
+          </Text>
+        )}
+      </View>
 
       <PressableScale
         testID="knowledge-preview"
