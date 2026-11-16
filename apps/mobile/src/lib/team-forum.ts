@@ -9,7 +9,7 @@
  * The forum categories are managed here too (RAPP-386).
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@ramassa/shared/auth';
+import { fetchProfileRole, useAuth } from '@ramassa/shared/auth';
 import { AppError } from '@ramassa/shared/errors';
 import {
   contactForumAuthor,
@@ -53,14 +53,21 @@ export function useForumModerationCategories() {
 }
 
 /**
- * Whether a report's author may post in the forum (RAPP-802). Under the
- * participant reads, so the card's posting switch refreshes it too.
+ * A report's author for the posting switch (RAPP-802): whether she is a player,
+ * the only role whose forum posting can be switched, and whether her posting is
+ * off. Under the participant reads, so the card's switch refreshes it too.
  */
 export function useAuthorForumPosting(authorId: string) {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['participants', user?.id ?? SIGNED_OUT, 'forum-posting', authorId],
-    queryFn: ({ signal }) => fetchOwnForumPostingStatus(supabase, authorId, { signal }),
+    queryFn: async ({ signal }) => {
+      const [role, isBanned] = await Promise.all([
+        fetchProfileRole(supabase, authorId),
+        fetchOwnForumPostingStatus(supabase, authorId, { signal }),
+      ]);
+      return { isPlayer: role === 'player', isBanned };
+    },
     enabled: user !== null && authorId.length > 0,
   });
 }

@@ -239,14 +239,15 @@ export function ModerationReportCard({
   );
 }
 
-/** Her forum posting, switched off or on from the report. */
+/** Her forum posting, switched off or on from the report, for a player author only. */
 function AuthorPostingAction({ row }: { readonly row: ForumModerationQueueRow }) {
   const { t } = useTranslation('participants');
   const fontClass = useLanguageFontClass();
   const status = useAuthorForumPosting(row.author_id);
   const { setForumPosting } = useParticipantWrites(row.author_id);
-  if (status.data === undefined) return null;
-  const isBanned = status.data;
+  // Only a player's forum posting can be switched; the database refuses anyone else.
+  if (status.data === undefined || !status.data.isPlayer) return null;
+  const { isBanned } = status.data;
   return (
     <>
       <ActionButton
