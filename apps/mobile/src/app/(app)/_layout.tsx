@@ -313,6 +313,7 @@ function AppNavigator() {
             <Stack.Screen name="gallery/[id]" />
             <Stack.Screen name="team-chat" />
             <Stack.Screen name="mentoring/index" />
+            <Stack.Screen name="mentoring/[id]" />
             <Stack.Screen name="feedback/index" />
             <Stack.Screen name="survey/[id]" />
           </Stack.Protected>

@@ -64,5 +64,9 @@
   "adminScheduleAction": "Schedule and notify",
   "adminRescheduleAction": "Update and notify",
   "adminCompleteAction": "Mark as completed",
-  "adminSaving": "Saving..."
+  "adminSaving": "Saving...",
+  "requestTitle": "Mentoring request",
+  "requestNote": "Your note",
+  "preferredDay": "Preference: {{date}}",
+  "requestNotFound": "We could not find this request."
 }

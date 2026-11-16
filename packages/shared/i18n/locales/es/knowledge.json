@@ -150,5 +150,6 @@
   "blockEmpty": "Bloque vacío",
   "invalidForm": "Revisa el recurso: cada bloque necesita su texto, y cada imagen de un paso, su descripción.",
   "blockCancel": "Cancelar",
-  "blockStep": "Paso"
+  "blockStep": "Paso",
+  "storyTeamNote": "Mensaje del equipo"
 }

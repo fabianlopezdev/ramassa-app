@@ -2,6 +2,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { StoryImagePreview } from '@/components/knowledge/story-image-preview';
 import { FormWidth } from '@/components/layout/content-width';
+import { OpenableCard } from '@/components/layout/openable-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { SuccessPop } from '@/components/motion/success-pop';
@@ -18,14 +19,14 @@ import { useStorySubmissionScrollReset } from '@/lib/story-submission-scroll';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import * as ImagePicker from 'expo-image-picker';
 import { useNetworkState } from 'expo-network';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
-import { useLanguage } from '@ramassa/shared/i18n';
+import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import type { StoryStatus } from '@ramassa/shared/knowledge';
 import { MAX_STORY_IMAGES, participantStoryDraftSchema } from '@ramassa/shared/story-submission';
 import { tokens } from '@ramassa/shared/tokens';
@@ -58,7 +59,7 @@ function statusTranslationKey(status: StoryStatus) {
 
 export default function StorySubmissionScreen() {
   const { t, i18n } = useTranslation(['knowledge', 'common']);
-  const { back } = useRouter();
+  const { back, push } = useRouter();
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const networkState = useNetworkState();
@@ -410,25 +411,55 @@ export default function StorySubmissionScreen() {
               {t('knowledge:myStoriesEmpty')}
             </Text>
           ) : (
-            (statusesQuery.data ?? []).map((status) => (
-              <View
-                key={status.id}
-                testID={`story-status-${status.story_status}`}
-                className="gap-xs rounded-md border border-neutral-200 bg-neutral-50 p-md"
-                style={continuousCorners}
-              >
-                <Text
-                  className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}
+            (statusesQuery.data ?? []).map((status) => {
+              const storyTitle = resolveLocalizedText(status.title, language)?.text ?? '';
+              const statusLabel = t(statusTranslationKey(status.story_status));
+              const note = status.reviewer_note?.trim() ?? '';
+              return (
+                <OpenableCard
+                  key={status.id}
+                  testID={`story-status-${status.story_status}`}
+                  accessibilityLabel={[storyTitle, statusLabel, note].filter(Boolean).join('. ')}
+                  onOpen={() => push(`/knowledge/${status.id}` as Href)}
+                  className="rounded-md border border-neutral-200 bg-neutral-50 p-md"
                 >
-                  {t(statusTranslationKey(status.story_status))}
-                </Text>
-                <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-                  {t('knowledge:storySubmittedDate', {
-                    date: dateFormatter.format(new Date(status.created_at)),
-                  })}
-                </Text>
-              </View>
-            ))
+                  <Text
+                    className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}
+                  >
+                    {storyTitle}
+                  </Text>
+                  <Text
+                    className={`text-start text-sm font-medium text-primary ${languageFontClass}`}
+                  >
+                    {statusLabel}
+                  </Text>
+                  <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+                    {t('knowledge:storySubmittedDate', {
+                      date: dateFormatter.format(new Date(status.created_at)),
+                    })}
+                  </Text>
+                  {note.length === 0 ? null : (
+                    <View
+                      testID={`story-team-note-${status.id}`}
+                      className="gap-xs rounded-md bg-white p-sm"
+                      style={continuousCorners}
+                    >
+                      <Text
+                        className={`text-start text-sm font-bold text-neutral-800 ${languageFontClass}`}
+                      >
+                        {t('knowledge:storyTeamNote')}
+                      </Text>
+                      <Text
+                        selectable
+                        className={`text-start text-md text-neutral-800 ${languageFontClass}`}
+                      >
+                        {note}
+                      </Text>
+                    </View>
+                  )}
+                </OpenableCard>
+              );
+            })
           )}
         </View>
       </FormWidth>

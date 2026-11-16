@@ -150,5 +150,6 @@
   "blockEmpty": "كتلة فارغة",
   "invalidForm": "راجع المورد: كل كتلة تحتاج إلى نصها، وكل صورة خطوة تحتاج إلى وصفها.",
   "blockCancel": "إلغاء",
-  "blockStep": "خطوة"
+  "blockStep": "خطوة",
+  "storyTeamNote": "رسالة من الفريق"
 }

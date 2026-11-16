@@ -150,5 +150,6 @@
   "blockEmpty": "Bloc vide",
   "invalidForm": "Vérifie la ressource : chaque bloc a besoin de son texte, et chaque image d’étape, de sa description.",
   "blockCancel": "Annule",
-  "blockStep": "Étape"
+  "blockStep": "Étape",
+  "storyTeamNote": "Message de l’équipe"
 }

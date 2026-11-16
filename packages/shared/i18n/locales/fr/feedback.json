@@ -36,5 +36,6 @@
   "markInProgress": "Marque comme en cours",
   "markResolved": "Résous",
   "respondChat": "Réponds dans la discussion",
-  "inboxEmpty": "Aucune suggestion ne correspond à ces filtres."
+  "inboxEmpty": "Aucune suggestion ne correspond à ces filtres.",
+  "answerInChat": "La réponse arrive dans la discussion"
 }

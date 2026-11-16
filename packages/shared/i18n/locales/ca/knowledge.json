@@ -150,5 +150,6 @@
   "blockEmpty": "Bloc buit",
   "invalidForm": "Revisa el recurs: cada bloc necessita el seu text, i cada imatge d'un pas, la seva descripció.",
   "blockCancel": "Cancel·la",
-  "blockStep": "Pas"
+  "blockStep": "Pas",
+  "storyTeamNote": "Missatge de l’equip"
 }

@@ -64,5 +64,9 @@
   "adminScheduleAction": "Programar i avisar",
   "adminRescheduleAction": "Actualitzar i avisar",
   "adminCompleteAction": "Marcar com a completada",
-  "adminSaving": "Desant..."
+  "adminSaving": "Desant...",
+  "requestTitle": "Sol·licitud de mentoria",
+  "requestNote": "La teva nota",
+  "preferredDay": "Preferència: {{date}}",
+  "requestNotFound": "No hem trobat aquesta sol·licitud."
 }
