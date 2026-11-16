@@ -139,7 +139,7 @@
     },
     "test_players_manage": {
       "label": "Jugadoras de prueba",
-      "description": "Crear, ver, editar y borrar jugadoras de prueba para probar la inscripción. Este permiso solo no muestra ninguna jugadora real."
+      "description": "Crear, ver, editar y eliminar jugadoras de prueba para probar la inscripción. Este permiso solo no muestra ninguna jugadora real."
     },
     "equipment_handover": {
       "label": "Entregar material",
@@ -723,7 +723,7 @@
       "impact.age_bands": "Informe de impacto: franjas de edad",
       "impact.nationalities": "Informe de impacto: nacionalidades",
       "participants.nationality": "Lista de participantes: nacionalidad",
-      "participants.city": "Lista de participantes y conversaciones: municipio",
+      "participants.city": "Lista de participantes y chats: municipio",
       "participants.entity": "Lista de participantes: entidad",
       "participants.has_dependents": "Lista de participantes: filtro de personas a cargo",
       "participants.dependents_count": "Lista de participantes: número de personas a cargo",

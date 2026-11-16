@@ -163,7 +163,7 @@
     },
     "attendance_reports": {
       "label": "Attendance reports",
-      "description": "See attendance per event and per participant."
+      "description": "See attendance per activity and per participant."
     },
     "announcements_edit": {
       "label": "Edit announcements",
@@ -174,12 +174,12 @@
       "description": "Publish, schedule, unpublish and delete announcements."
     },
     "events_edit": {
-      "label": "Edit events",
-      "description": "Create and change events, trainings, recurring sessions and event categories."
+      "label": "Edit activities",
+      "description": "Create and change activities, trainings, recurring sessions and activity categories."
     },
     "events_publish": {
-      "label": "Publish events",
-      "description": "Publish, schedule, unpublish and delete events."
+      "label": "Publish activities",
+      "description": "Publish, schedule, unpublish and delete activities."
     },
     "knowledge_edit": {
       "label": "Edit knowledge base",
@@ -258,8 +258,8 @@
       "description": "Export attendance records."
     },
     "export_events": {
-      "label": "Export events",
-      "description": "Export events and sign-ups."
+      "label": "Export activities",
+      "description": "Export activities and sign-ups."
     },
     "audit_view": {
       "label": "Audit log",
@@ -723,7 +723,7 @@
       "impact.age_bands": "Impact report: age bands",
       "impact.nationalities": "Impact report: nationalities",
       "participants.nationality": "Participants list: nationality",
-      "participants.city": "Participants list and conversations: municipality",
+      "participants.city": "Participants list and chats: municipality",
       "participants.entity": "Participants list: organisation",
       "participants.has_dependents": "Participants list: dependants filter",
       "participants.dependents_count": "Participants list: number of dependants",
