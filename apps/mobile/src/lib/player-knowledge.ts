@@ -18,16 +18,13 @@ import { uploadFile } from '@ramassa/shared/upload-client';
 import type { CompressedNativeStoryImage } from './native-image-compression-core';
 import { isNetworkStateOnline } from './network-status';
 import { logger } from './observability';
+import { playerKnowledgeArticlesQueryKey, playerKnowledgeQueryRoot } from './player-knowledge-key';
 import { cachedListItemInitialDataOptions } from './query-persistence';
 import { requireStorySubmissionOnline } from './story-submission-policy';
 import { mobileClientEnv, supabase } from './supabase';
 
-const playerKnowledgeQueryRoot = 'player-knowledge';
-
 const playerKnowledgeCategoriesQueryKey = (userId: string) =>
   [playerKnowledgeQueryRoot, 'categories', userId] as const;
-const playerKnowledgeArticlesQueryKey = (userId: string) =>
-  [playerKnowledgeQueryRoot, 'articles', userId] as const;
 const playerOwnStoryStatusesQueryKey = (userId: string) =>
   [playerKnowledgeQueryRoot, 'own-stories', userId] as const;
 

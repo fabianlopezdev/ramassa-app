@@ -1,13 +1,12 @@
 import type { KnowledgeArticleListRow } from '@ramassa/shared/knowledge';
+import { playerKnowledgeArticlesQueryKey } from './player-knowledge-key';
 
 /**
  * The Històries segment reads the same published-only selection as the guides
  * list, under the same cache entry, so both screens share one request and one
- * offline copy. Keep this key equal to the guides list key in
- * `player-knowledge.ts`; a mismatch only costs a second request.
+ * offline copy.
  */
-export const communityStoriesQueryKey = (userId: string) =>
-  ['player-knowledge', 'articles', userId] as const;
+export const communityStoriesQueryKey = playerKnowledgeArticlesQueryKey;
 
 export function selectParticipantStories(
   articles: readonly KnowledgeArticleListRow[],
