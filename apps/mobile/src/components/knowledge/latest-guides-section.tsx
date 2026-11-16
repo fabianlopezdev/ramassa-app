@@ -32,6 +32,9 @@ export function LatestGuidesSection() {
   const openGuide = useCallback((id: string) => push(`/knowledge/${id}` as Href), [push]);
   const openAllGuides = useCallback(() => push('/knowledge' as Href), [push]);
 
+  // Pending, failed without a cache, or empty: no section, so no door to an empty list.
+  if (latestGuides.length === 0) return null;
+
   return (
     <View testID="ajuda-guides-section" className="gap-sm">
       <Text

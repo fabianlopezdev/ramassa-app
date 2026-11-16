@@ -12,6 +12,7 @@ import { isNetworkStateOnline } from '@/lib/network-status';
 import {
   countPlayerGuidesByCategory,
   filterPlayerGuides,
+  selectGuideCategories,
   selectPlayerGuides,
   type PlayerGuideFilter,
 } from '@/lib/player-guides';
@@ -52,6 +53,10 @@ export default function PlayerKnowledgeScreen() {
   const guides = useMemo(() => selectPlayerGuides(articlesQuery.data), [articlesQuery.data]);
   const visibleGuides = useMemo(() => filterPlayerGuides(guides, filter), [guides, filter]);
   const counts = useMemo(() => countPlayerGuidesByCategory(guides), [guides]);
+  const guideCategories = useMemo(
+    () => selectGuideCategories(categoriesQuery.data, counts),
+    [categoriesQuery.data, counts],
+  );
 
   const openArticle = useCallback((id: string) => push(`/knowledge/${id}` as Href), [push]);
   const refresh = useCallback(() => {
@@ -145,7 +150,7 @@ export default function PlayerKnowledgeScreen() {
             />
           ) : null}
           <KnowledgeCategoryGrid
-            categories={categoriesQuery.data ?? []}
+            categories={guideCategories}
             selected={filter}
             counts={counts}
             onSelect={setFilter}

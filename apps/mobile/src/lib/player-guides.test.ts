@@ -1,9 +1,14 @@
 import { describe, expect, test } from 'bun:test';
-import type { KnowledgeArticleListRow, KnowledgeContentType } from '@ramassa/shared/knowledge';
+import type {
+  KnowledgeArticleListRow,
+  KnowledgeCategoryRow,
+  KnowledgeContentType,
+} from '@ramassa/shared/knowledge';
 import {
   countPlayerGuidesByCategory,
   filterPlayerGuides,
   LATEST_PLAYER_GUIDES_LIMIT,
+  selectGuideCategories,
   selectLatestPlayerGuides,
   selectPlayerGuides,
 } from './player-guides';
@@ -89,5 +94,24 @@ describe('player guides', () => {
       'category-a': 2,
       'category-b': 2,
     });
+  });
+
+  test('keeps only the categories that hold at least one guide, in their order', () => {
+    const categories = ['category-a', 'stories-only', 'category-b'].map(
+      (id) =>
+        ({
+          id,
+          name: { ca: id },
+          slug: id,
+          icon: null,
+          sort_order: 0,
+        }) as unknown as KnowledgeCategoryRow,
+    );
+    const counts = countPlayerGuidesByCategory(selectPlayerGuides(feed));
+    expect(selectGuideCategories(categories, counts).map((row) => row.id)).toEqual([
+      'category-a',
+      'category-b',
+    ]);
+    expect(selectGuideCategories(undefined, counts)).toEqual([]);
   });
 });

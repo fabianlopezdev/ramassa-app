@@ -1,4 +1,4 @@
-import type { KnowledgeArticleListRow } from '@ramassa/shared/knowledge';
+import type { KnowledgeArticleListRow, KnowledgeCategoryRow } from '@ramassa/shared/knowledge';
 
 /** How many guides the Ajuda tab shows above "Totes les guies". */
 export const LATEST_PLAYER_GUIDES_LIMIT = 3;
@@ -7,6 +7,7 @@ export const LATEST_PLAYER_GUIDES_LIMIT = 3;
 export type PlayerGuideFilter = 'all' | (string & {});
 
 const NO_GUIDES: readonly KnowledgeArticleListRow[] = [];
+const NO_CATEGORIES: readonly KnowledgeCategoryRow[] = [];
 
 /**
  * Guides are every published knowledge item except participant stories,
@@ -39,4 +40,13 @@ export function countPlayerGuidesByCategory(
   const counts: Record<string, number> = { all: guides.length };
   for (const guide of guides) counts[guide.category_id] = (counts[guide.category_id] ?? 0) + 1;
   return counts;
+}
+
+/** A category with no guide would filter to an empty list, so it is left out. */
+export function selectGuideCategories(
+  categories: readonly KnowledgeCategoryRow[] | undefined,
+  counts: Readonly<Record<string, number>>,
+): readonly KnowledgeCategoryRow[] {
+  if (categories === undefined) return NO_CATEGORIES;
+  return categories.filter((category) => (counts[category.id] ?? 0) > 0);
 }
