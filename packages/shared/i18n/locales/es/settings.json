@@ -211,7 +211,7 @@
     },
     "messages_inbox": {
       "label": "Buzón del equipo",
-      "description": "Leer y responder las conversaciones entre el equipo y las jugadoras o las entidades."
+      "description": "Leer y responder los chats entre el equipo y las jugadoras o las entidades."
     },
     "mentoring_manage": {
       "label": "Mentoría",

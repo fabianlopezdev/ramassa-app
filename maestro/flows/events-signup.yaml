@@ -167,8 +167,12 @@ env:
 - waitForAnimationToEnd:
     timeout: 3000
 - tapOn: '^${EVENTS_TAB}$'
+# The screen heading repeats the tab label, so `index: 1` proves the heading
+# rendered as a second match after the tap.
 - extendedWaitUntil:
-    visible: '.*${EVENTS_TITLE}.*'
+    visible:
+      text: '^${EVENTS_TITLE}$'
+      index: 1
     timeout: 120000
 - waitForAnimationToEnd:
     timeout: 3000

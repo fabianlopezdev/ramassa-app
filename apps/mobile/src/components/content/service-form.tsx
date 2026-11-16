@@ -622,14 +622,14 @@ export function ServiceForm({
       <PressableScale
         testID="service-preview"
         accessibilityRole="button"
-        accessibilityLabel={tCommon('previewAsPlayer')}
+        accessibilityLabel={tCommon('previewAction')}
         onPress={() => setIsPreviewOpen(true)}
         isDisabled={form.title.trim().length === 0}
         haptic="tapLight"
         className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
       >
         <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-          {tCommon('previewAsPlayer')}
+          {tCommon('previewAction')}
         </Text>
       </PressableScale>
       <DraftPreviewSheet

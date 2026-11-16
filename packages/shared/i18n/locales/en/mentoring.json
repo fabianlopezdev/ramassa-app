@@ -1,5 +1,5 @@
 {
-  "title": "Private mentoring",
+  "title": "Mentoring",
   "intro": "Request a one-to-one conversation with the team and suggest a suitable time.",
   "privacyTitle": "It is private",
   "privacyBody": "Only the Ramassà team can see the topic and note. Other participants and organizations cannot access them.",
@@ -43,8 +43,8 @@
   "noRequests": "You have not requested mentoring yet.",
   "loadFailed": "We could not load the requests.",
   "retry": "Try again",
-  "communityAction": "Request private mentoring",
-  "calendarPrivateTitle": "Private appointment with the team",
+  "communityAction": "Mentoring",
+  "calendarPrivateTitle": "Mentoring",
   "calendarPrivateBody": "This appointment is visible only to you and the team.",
   "calendarOpen": "Open private mentoring",
   "adminTitle": "Mentoring",

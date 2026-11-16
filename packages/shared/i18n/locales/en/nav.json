@@ -1,7 +1,7 @@
 {
   "tabs": {
     "home": "Home",
-    "events": "Events",
+    "events": "Activities",
     "community": "Community",
     "services": "Services",
     "profile": "Profile"
@@ -44,8 +44,8 @@
     "dashboard": "Impact",
     "referrals": "Referrals",
     "services": "Services",
-    "events": "Events",
-    "messages": "Messages"
+    "events": "Activities",
+    "messages": "Chat"
   },
   "a11y": {
     "staffSidebar": "Staff navigation",
@@ -57,7 +57,7 @@
   },
   "team": {
     "today": "Today",
-    "messages": "Messages",
+    "messages": "Chats",
     "more": "More",
     "homeTitle": "What do you want to do?",
     "navigation": "Team navigation",

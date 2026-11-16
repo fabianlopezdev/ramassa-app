@@ -1,7 +1,7 @@
 {
   "tabs": {
     "home": "خانه",
-    "events": "رویدادها",
+    "events": "برنامه‌ها",
     "community": "انجمن",
     "services": "خدمات",
     "profile": "پروفایل"
@@ -44,8 +44,8 @@
     "dashboard": "تأثیر",
     "referrals": "ارجاع‌ها",
     "services": "خدمات",
-    "events": "رویدادها",
-    "messages": "پیام‌ها"
+    "events": "برنامه‌ها",
+    "messages": "گفت‌وگو"
   },
   "a11y": {
     "staffSidebar": "ناوبری کارکنان",
@@ -57,7 +57,7 @@
   },
   "team": {
     "today": "امروز",
-    "messages": "پیام‌ها",
+    "messages": "گفت‌وگوها",
     "more": "بیشتر",
     "homeTitle": "می‌خواهید چه کار کنید؟",
     "navigation": "ناوبری تیم",

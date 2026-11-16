@@ -50,7 +50,7 @@
   "filterNationality": "Nacionalidad",
   "filterStatus": "Estado",
   "filterDependents": "Personas a cargo",
-  "optionAll": "Todas",
+  "optionAll": "Todo",
   "statusActive": "Activas",
   "statusInactive": "Inactivas",
   "dependentsWith": "Con",
@@ -215,7 +215,7 @@
     "savedBelowZero": "El stock de este artículo ahora está bajo cero. Hoy pide un recuento.",
     "another": "Entregar otro artículo",
     "done": "Hecho",
-    "materialTitle": "Material",
+    "materialTitle": "Material de la jugadora",
     "materialEmpty": "Todavía no se ha entregado material.",
     "given": "Dado el {{date}}",
     "lent": "Prestado el {{date}}",
@@ -258,7 +258,7 @@
     }
   },
   "stock": {
-    "title": "Stock",
+    "title": "Material",
     "intro": "Lo que tiene el equipo en el almacén, a partir de cada llegada, entrega y devolución.",
     "recordArrival": "Registrar material recibido",
     "levelsTitle": "En stock",

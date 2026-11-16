@@ -16,9 +16,9 @@
   "participants": "Participants",
   "trackingTitle": "Referred participant tracking",
   "trackingEmpty": "No linked referred participants yet.",
-  "eventsTitle": "Upcoming events",
-  "eventsIntro": "Published events are read-only for entity collaborators.",
-  "eventsEmpty": "There are no published upcoming events.",
+  "eventsTitle": "Upcoming activities",
+  "eventsIntro": "Published activities are read-only for entity collaborators.",
+  "eventsEmpty": "There are no published upcoming activities.",
   "recurring": "Recurring",
   "status": {
     "pending": "Pending",

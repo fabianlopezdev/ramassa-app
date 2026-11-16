@@ -3,7 +3,7 @@
   "feedTitle": "Avisos",
   "feedIntro": "Novetats del club, entrenaments i activitats per a tu.",
   "filterLabel": "Filtra els avisos per categoria",
-  "filterAll": "Tots",
+  "filterAll": "Tot",
   "category": {
     "info": "Informació",
     "training": "Entrenaments",

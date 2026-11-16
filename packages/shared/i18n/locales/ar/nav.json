@@ -1,7 +1,7 @@
 {
   "tabs": {
     "home": "الرئيسية",
-    "events": "الفعاليات",
+    "events": "الأنشطة",
     "community": "المجتمع",
     "services": "الخدمات",
     "profile": "الملف الشخصي"
@@ -44,8 +44,8 @@
     "dashboard": "الأثر",
     "referrals": "الإحالات",
     "services": "الخدمات",
-    "events": "الفعاليات",
-    "messages": "الرسائل"
+    "events": "الأنشطة",
+    "messages": "الدردشة"
   },
   "a11y": {
     "staffSidebar": "تنقل الفريق",
@@ -57,7 +57,7 @@
   },
   "team": {
     "today": "اليوم",
-    "messages": "الرسائل",
+    "messages": "الدردشات",
     "more": "المزيد",
     "homeTitle": "ماذا تريدين أن تفعلي؟",
     "navigation": "تنقل الفريق",

@@ -211,7 +211,7 @@
     },
     "messages_inbox": {
       "label": "Team inbox",
-      "description": "Read and answer the conversations between the team and players or entities."
+      "description": "Read and answer the chats between the team and players or entities."
     },
     "mentoring_manage": {
       "label": "Mentoring",

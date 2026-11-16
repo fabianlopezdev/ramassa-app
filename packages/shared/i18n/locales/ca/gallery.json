@@ -38,7 +38,7 @@
   "deleteTitle": "Vols eliminar aquest contingut?",
   "deleteBody": "La foto o el vídeo i la seva miniatura s'eliminaran definitivament.",
   "cancel": "Cancel·la",
-  "flag": "Informa d'un problema",
+  "flag": "Avisa l'equip",
   "back": "Enrere",
   "moderationTitle": "Moderació de la galeria",
   "moderationIntro": "Amaga o torna a mostrar qualsevol foto o vídeo, encara que ningú n'hagi informat.",
@@ -50,7 +50,7 @@
   "statePending": "Amagat fins que es revisi",
   "moderationHide": "Amaga",
   "moderationShow": "Torna-ho a mostrar",
-  "moderationReports": "Avisos: {{count}}",
+  "moderationReports": "Denúncies: {{count}}",
   "moderationVideo": "Vídeo",
   "moderationFailed": "No s'ha pogut completar l'acció."
 }
