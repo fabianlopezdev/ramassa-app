@@ -357,7 +357,7 @@
   "checkout": {
     "action": "Prestar a un membre de l'equip",
     "title": "Prestar material",
-    "intro": "Per a un viatge o un esdeveniment. El material d'una sessió normal no es registra.",
+    "intro": "Per a un viatge o una activitat. El material d'una sessió normal no es registra.",
     "staffLabel": "Qui se l'emporta",
     "returnLabel": "Tornarà",
     "returnIn": {

@@ -82,7 +82,7 @@
       "mentoring": "Mentoring requests",
       "erasure": "Deletion requests",
       "messages": "Unread chats",
-      "stockAlerts": "Stock below zero"
+      "stockAlerts": "Material below zero"
     }
   }
 }
