@@ -14,6 +14,7 @@ import {
   OfflineBanner,
 } from '@/components/announcements/feed-states';
 import { HomeNextActivity } from '@/components/home/home-next-activity';
+import { HomeSectionHeader } from '@/components/home/home-section-header';
 import { HomeToDo } from '@/components/home/home-to-do';
 import { PageWidth } from '@/components/layout/content-width';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
@@ -30,7 +31,7 @@ import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   filterAndOrderPlayerAnnouncements,
@@ -205,17 +206,7 @@ export default function HomeScreen() {
           {/* Per fer, then her next activity, then the announcements (RAPP-790). */}
           <HomeToDo items={toDoItems} languageFontClass={languageFontClass} />
           <HomeNextActivity occurrence={nextActivity} languageFontClass={languageFontClass} />
-          <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
-            >
-              {t('feedTitle')}
-            </Text>
-            <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-              {t('feedIntro')}
-            </Text>
-          </View>
+          <HomeSectionHeader title={t('feedTitle')} languageFontClass={languageFontClass} />
           {isOffline ? (
             <OfflineBanner label={t('offlineBanner')} languageFontClass={languageFontClass} />
           ) : null}

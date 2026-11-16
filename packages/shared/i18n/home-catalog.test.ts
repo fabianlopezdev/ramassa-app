@@ -7,7 +7,6 @@ const i18n = createI18n({ languageStorage: createInMemoryLanguageStorage() });
 
 const HOME_FEED_KEYS = [
   'feedTitle',
-  'feedIntro',
   'filterLabel',
   'filterAll',
   'category.info',
