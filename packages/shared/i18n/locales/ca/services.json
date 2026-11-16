@@ -235,6 +235,7 @@
   "fieldMinimum": "Valor mínim (opcional)",
   "fieldDone": "Fet",
   "fieldNeedsWork": "Falten dades o traduccions",
+  "fieldStillOpen": "Tanca el camp obert amb Fet o Cancel·la.",
   "fieldLabelGenerate": "Genera les traduccions del nom",
   "categoryInvalidPhone": "Revisa la categoria: el nom en tots els idiomes, una clau curta, i cada camp complet.",
   "iconHouse": "Casa",

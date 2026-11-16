@@ -390,9 +390,6 @@
     "todayMine": "{{item}}: {{quantity}} with you, due {{date}}"
   },
   "items": {
-    "title": "Items",
-    "intro": "The material the team hands out, counts and receives.",
-    "action": "Items",
     "add": "Add an item",
     "newTitle": "New item",
     "editTitle": "Edit {{item}}",
@@ -426,7 +423,6 @@
     "saveFailed": "The item was not saved. Try again.",
     "sizeInStock": "Size {{size}} still has stock. Count it to zero or keep it.",
     "codeTaken": "Another item already uses these code letters.",
-    "summary": "{{kind}} · {{sizes}}",
     "inactive": "Switched off"
   },
   "list": {

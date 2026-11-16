@@ -235,6 +235,7 @@
   "fieldMinimum": "Minimum value (optional)",
   "fieldDone": "Done",
   "fieldNeedsWork": "Missing data or translations",
+  "fieldStillOpen": "Close the open field with Done or Cancel.",
   "fieldLabelGenerate": "Generate the name translations",
   "categoryInvalidPhone": "Check the category: the name in every language, a short slug, and every field complete.",
   "iconHouse": "House",

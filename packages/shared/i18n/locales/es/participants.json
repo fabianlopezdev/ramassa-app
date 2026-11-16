@@ -390,9 +390,6 @@
     "todayMine": "{{item}}: {{quantity}} contigo, tenía que volver el {{date}}"
   },
   "items": {
-    "title": "Artículos",
-    "intro": "El material que el equipo entrega, cuenta y recibe.",
-    "action": "Artículos",
     "add": "Añadir un artículo",
     "newTitle": "Artículo nuevo",
     "editTitle": "Editar {{item}}",
@@ -426,7 +423,6 @@
     "saveFailed": "El artículo no se ha guardado. Vuelve a intentarlo.",
     "sizeInStock": "La talla {{size}} aún tiene stock. Cuéntala a cero o mantenla.",
     "codeTaken": "Otro artículo ya usa estas letras.",
-    "summary": "{{kind}} · {{sizes}}",
     "inactive": "Desactivado"
   },
   "list": {
