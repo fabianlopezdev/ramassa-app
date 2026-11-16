@@ -22,5 +22,12 @@
     "deadline": "Jusqu’au {{date}}",
     "answer": "Réponds",
     "dismiss": "Pas maintenant"
+  },
+  "toDo": {
+    "title": "À faire",
+    "count": "{{current}} sur {{total}}"
+  },
+  "nextActivity": {
+    "title": "Prochaine activité"
   }
 }

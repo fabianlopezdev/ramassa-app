@@ -1,27 +1,26 @@
 /**
- * Her first pending form on Home (RAPP-700), the first card she sees, in the
- * survey prompt's pattern: what it is, its name, its date when it has one,
+ * A pending form on Inici (RAPP-700), shown inside the Per fer block
+ * (RAPP-790), in the survey prompt's pattern: what it is, its name, its date when it has one,
  * and Respon. An optional form also has "Ara no", which takes it off her Home;
  * a legal one never does (RAPP-771).
  */
 
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
-import { useDismissCustomForm, useMyCustomForms } from '@/lib/custom-forms';
+import { useDismissCustomForm } from '@/lib/custom-forms';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { DEFAULT_LANGUAGE, useLanguage } from '@ramassa/shared/i18n';
-import { textIn } from '@ramassa/shared/intake-builder';
+import { textIn, type PendingCustomForm } from '@ramassa/shared/intake-builder';
 
-export function PendingFormPrompt() {
+export function PendingFormPrompt({ form }: { readonly form: PendingCustomForm }) {
   const { t, i18n } = useTranslation('home');
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
-  const { data } = useMyCustomForms(true);
   const dismiss = useDismissCustomForm();
   const [isBusy, setIsBusy] = useState(false);
   const dateFormatter = useMemo(
@@ -32,8 +31,6 @@ export function PendingFormPrompt() {
       }),
     [i18n.resolvedLanguage],
   );
-  const form = data?.[0];
-  if (form === undefined) return null;
   const name = textIn(form.name, language);
   return (
     <View

@@ -22,5 +22,12 @@
     "deadline": "By {{date}}",
     "answer": "Answer",
     "dismiss": "Not now"
+  },
+  "toDo": {
+    "title": "To do",
+    "count": "{{current}} of {{total}}"
+  },
+  "nextActivity": {
+    "title": "Next activity"
   }
 }

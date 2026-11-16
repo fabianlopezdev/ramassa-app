@@ -21,6 +21,9 @@ const HOME_FEED_KEYS = [
   'loadFailed',
   'retryAction',
   'loading',
+  'toDo.title',
+  'toDo.count',
+  'nextActivity.title',
 ] as const;
 
 describe('player home feed catalog', () => {

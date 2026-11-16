@@ -22,5 +22,12 @@
     "deadline": "تا {{date}}",
     "answer": "پاسخ بده",
     "dismiss": "الان نه"
+  },
+  "toDo": {
+    "title": "کارهای مانده",
+    "count": "{{current}} از {{total}}"
+  },
+  "nextActivity": {
+    "title": "برنامه بعدی"
   }
 }
