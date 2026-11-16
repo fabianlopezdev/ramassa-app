@@ -1,7 +1,7 @@
 {
   "tabs": {
     "home": "Inici",
-    "events": "Calendari",
+    "events": "Activitats",
     "community": "Comunitat",
     "services": "Serveis",
     "profile": "Perfil"
@@ -44,8 +44,8 @@
     "dashboard": "Impacte",
     "referrals": "Derivacions",
     "services": "Serveis",
-    "events": "Esdeveniments",
-    "messages": "Missatges"
+    "events": "Activitats",
+    "messages": "Xat"
   },
   "a11y": {
     "staffSidebar": "Navegació de l'equip",
@@ -57,7 +57,7 @@
   },
   "team": {
     "today": "Avui",
-    "messages": "Missatges",
+    "messages": "Xats",
     "more": "Més",
     "homeTitle": "Què vols fer?",
     "navigation": "Navegació de l'equip",

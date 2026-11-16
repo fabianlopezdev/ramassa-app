@@ -99,7 +99,7 @@ test.describe.serial('app areas by account type', () => {
     await completeSecondFactor(page, STAFF_EMAIL);
     await expect(page.getByTestId('team-sidebar-messages')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId('team-sidebar-today')).toHaveCount(0);
-    await expect(page.getByRole('heading', { name: 'Conversations' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Chats' })).toBeVisible();
   });
 
   // Quick participant lookup (RAPP-247): the card shows only what the

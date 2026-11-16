@@ -27,14 +27,16 @@ env:
 # qa-smoke captures the real Android framebuffer and OCRs the five label slots.
 # Hierarchy visibility is not accepted as evidence that Material painted text.
 
-# Each tab opens and renders its own header. Events, Messages, and Profile have
-# unique headings. Services repeats its tab label, so `index: 1` proves a second
+# Each tab opens and renders its own header. Community and Profile have unique
+# headings. Events and Services repeat their tab label, so `index: 1` proves a second
 # match (the screen heading) exists; without the index, the tab-bar label would
 # satisfy the assertion before the tap happened.
 - tapOn:
     text: '^${TAB_EVENTS}$'
 - extendedWaitUntil:
-    visible: '.*${EVENTS_TITLE}.*'
+    visible:
+      text: '^${EVENTS_TITLE}$'
+      index: 1
     timeout: 15000
 - runFlow:
     when:

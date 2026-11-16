@@ -1,7 +1,7 @@
 {
   "app": "Ramassà",
   "slug": "knowledge-base",
-  "title": "Base de coneixement",
+  "title": "Guies",
   "surface": "mobile",
   "description": "Les jugadores exploren guies i històries publicades per tema, obren contingut estructurat i conserven una còpia local per consultar-la sense connexió.",
   "steps": [

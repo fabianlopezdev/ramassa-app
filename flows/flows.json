@@ -51,9 +51,9 @@
       "slug": "events-signup",
       "phase": "3",
       "surface": "mobile",
-      "title": "Calendari i inscripcions"
+      "title": "Activitats i inscripcions"
     },
-    { "slug": "knowledge-base", "phase": "3", "surface": "mobile", "title": "Base de coneixement" },
+    { "slug": "knowledge-base", "phase": "3", "surface": "mobile", "title": "Guies" },
     {
       "slug": "story-submission",
       "phase": "3",
@@ -108,7 +108,7 @@
       "title": "Proposta de servei d'una entitat"
     },
 
-    { "slug": "messaging", "phase": "5b", "surface": "mobile", "title": "Missatges amb l'equip" },
+    { "slug": "messaging", "phase": "5b", "surface": "mobile", "title": "Xat amb l’equip" },
     {
       "slug": "admin-conversations",
       "phase": "5b",

@@ -449,7 +449,7 @@ test.describe('WCAG 2.2 AA regression gate', () => {
     await signInPlayer(page);
     await page.goto(playerOrigin);
     const homeTab = page.getByRole('tab', { name: 'Home', exact: true });
-    const eventsTab = page.getByRole('tab', { name: 'Events', exact: true });
+    const eventsTab = page.getByRole('tab', { name: 'Activities', exact: true });
     await tabTo(page, homeTab);
     await page.keyboard.press('ArrowRight');
     await expect(eventsTab).toBeFocused();

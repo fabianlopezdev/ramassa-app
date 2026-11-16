@@ -26,6 +26,7 @@
   "loading": "Chargement...",
   "interfaceLanguageLabel": "Langue",
   "previewAsPlayer": "Voir en tant que joueuse",
+  "previewAction": "Aperçu",
   "previewBarTitle": "Vue joueuse. Aucun changement n’est enregistré.",
   "previewExit": "Quitte la vue",
   "previewLanguage": "Langue de la vue",

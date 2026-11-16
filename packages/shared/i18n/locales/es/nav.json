@@ -1,7 +1,7 @@
 {
   "tabs": {
     "home": "Inicio",
-    "events": "Calendario",
+    "events": "Actividades",
     "community": "Comunidad",
     "services": "Servicios",
     "profile": "Perfil"
@@ -44,8 +44,8 @@
     "dashboard": "Impacto",
     "referrals": "Derivaciones",
     "services": "Servicios",
-    "events": "Eventos",
-    "messages": "Mensajes"
+    "events": "Actividades",
+    "messages": "Chat"
   },
   "a11y": {
     "staffSidebar": "Navegación del equipo",
@@ -57,7 +57,7 @@
   },
   "team": {
     "today": "Hoy",
-    "messages": "Mensajes",
+    "messages": "Chats",
     "more": "Más",
     "homeTitle": "¿Qué quieres hacer?",
     "navigation": "Navegación del equipo",
