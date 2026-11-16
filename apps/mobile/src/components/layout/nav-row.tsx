@@ -13,15 +13,12 @@ import { memo } from 'react';
 import { I18nManager, Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
+// SF Symbols mirror `chevron.forward` with the layout on iOS, so only the
+// Material names pick a side, as `AuthBackButton` does.
 const forwardChevron: SymbolViewProps['name'] = {
   ios: 'chevron.forward',
-  android: 'chevron_right',
-  web: 'chevron_right',
-};
-const backwardChevron: SymbolViewProps['name'] = {
-  ios: 'chevron.backward',
-  android: 'chevron_left',
-  web: 'chevron_left',
+  android: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',
+  web: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',
 };
 
 export interface NavRowProps {
@@ -94,7 +91,7 @@ export const NavRow = memo(function NavRow({
       {tone === 'danger' ? null : (
         <SymbolView
           accessible={false}
-          name={I18nManager.isRTL ? backwardChevron : forwardChevron}
+          name={forwardChevron}
           size={tokens.fontSize.lg}
           tintColor={tokens.colors.neutral[500]}
         />
