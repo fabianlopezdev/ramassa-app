@@ -1,20 +1,14 @@
-import { useAppLock } from '@/components/auth/app-lock';
+import { AppSheet } from '@/components/layout/app-sheet';
+import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
-import { playHaptic } from '@/lib/haptics/haptics';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 export type CommunityShareChoice = 'post' | 'media' | 'story';
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: tokens.colors.white },
-});
-const enabledAccessibilityState = { disabled: false } as const;
-const disabledAccessibilityState = { disabled: true } as const;
 
 const choiceSymbols: Readonly<Record<CommunityShareChoice, SymbolViewProps['name']>> = {
   post: { ios: 'text.bubble.fill', android: 'forum', web: 'forum' },
@@ -41,20 +35,17 @@ const ShareChoiceRow = memo(function ShareChoiceRow({
   readonly languageFontClass: string;
   readonly onChoose: (choice: CommunityShareChoice) => void;
 }) {
-  const choose = useCallback(() => {
-    playHaptic('tapLight');
-    onChoose(choice);
-  }, [choice, onChoose]);
+  const choose = useCallback(() => onChoose(choice), [choice, onChoose]);
   return (
-    <Pressable
+    <PressableScale
       testID={`community-share-${choice}`}
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={isDisabled ? disabledAccessibilityState : enabledAccessibilityState}
-      disabled={isDisabled}
+      isDisabled={isDisabled}
       onPress={choose}
+      haptic="tapLight"
       style={continuousCorners}
-      className={`min-h-recommended flex-row items-center gap-md rounded-lg border border-neutral-200 bg-neutral-50 p-md active:opacity-90 ${isDisabled ? 'opacity-50' : ''}`}
+      className={`min-h-recommended flex-row items-center gap-md rounded-lg border border-neutral-200 bg-neutral-50 p-md ${isDisabled ? 'opacity-50' : ''}`}
     >
       <SymbolView
         accessible={false}
@@ -65,14 +56,13 @@ const ShareChoiceRow = memo(function ShareChoiceRow({
       <Text className={`flex-1 text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}>
         {label}
       </Text>
-    </Pressable>
+    </PressableScale>
   );
 });
 
 /**
  * The one "Comparteix" entry of Comunitat (RAPP-792): three large choices,
- * icon plus label. Native pressables, because a native Modal owns a separate
- * Android root outside the app's gesture root (see the forum flag dialog).
+ * icon plus label, in the shared sheet frame.
  */
 export function CommunityShareSheet({
   visible,
@@ -86,14 +76,8 @@ export function CommunityShareSheet({
   readonly onChoose: (choice: CommunityShareChoice) => void;
   readonly onClose: () => void;
 }) {
-  const { t } = useTranslation(['forum', 'common']);
+  const { t } = useTranslation('forum');
   const languageFontClass = useLanguageFontClass();
-  // A native Modal sits above the app lock's cover, so it hides while locked.
-  const { isCovered } = useAppLock();
-  const pressClose = useCallback(() => {
-    playHaptic('tapLight');
-    onClose();
-  }, [onClose]);
   const renderChoice = useCallback(
     (choice: CommunityShareChoice) => (
       <ShareChoiceRow
@@ -109,39 +93,14 @@ export function CommunityShareSheet({
   );
 
   return (
-    <Modal
-      visible={visible && !isCovered}
-      animationType="slide"
-      presentationStyle="formSheet"
-      onRequestClose={onClose}
+    <AppSheet
+      testID="community-share-sheet"
+      closeTestID="community-share-close"
+      title={t('share')}
+      visible={visible}
+      onClose={onClose}
     >
-      <SafeAreaView style={styles.screen}>
-        <ScrollView
-          testID="community-share-sheet"
-          contentContainerClassName="gap-lg p-lg"
-          contentInsetAdjustmentBehavior="automatic"
-        >
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
-          >
-            {t('forum:share')}
-          </Text>
-          <View className="gap-sm">{CHOICES.map(renderChoice)}</View>
-          <Pressable
-            testID="community-share-close"
-            accessibilityRole="button"
-            accessibilityLabel={t('common:close')}
-            onPress={pressClose}
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg active:opacity-90"
-          >
-            <Text className={`text-md font-bold text-neutral-700 ${languageFontClass}`}>
-              {t('common:close')}
-            </Text>
-          </Pressable>
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
+      <View className="gap-sm">{CHOICES.map(renderChoice)}</View>
+    </AppSheet>
   );
 }

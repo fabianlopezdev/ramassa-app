@@ -4,8 +4,8 @@
  * the tablet sidebar alike. The sheet holds her language (the staff side's
  * three), the way to the app lock where the lock exists, and sign-out.
  */
-import { EntitySheet } from '@/components/entity/entity-sheet';
 import { GlassIconSurface } from '@/components/forms/glass-icon-surface';
+import { AppSheet } from '@/components/layout/app-sheet';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { LanguageSwitcher } from '@/components/profile/language-switcher';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -54,7 +54,7 @@ export function EntityAccountButton() {
           />
         </GlassIconSurface>
       </PressableScale>
-      <EntitySheet testID="entity-account-sheet" title={title} visible={isOpen} onClose={close}>
+      <AppSheet testID="entity-account-sheet" title={title} visible={isOpen} onClose={close}>
         <LanguageSwitcher languages={STAFF_LANGUAGES} />
         {/* The lock does not exist on the web. */}
         {Platform.OS === 'web' ? null : (
@@ -91,7 +91,7 @@ export function EntityAccountButton() {
             {tProfile('signOutAction')}
           </Text>
         </PressableScale>
-      </EntitySheet>
+      </AppSheet>
     </>
   );
 }
