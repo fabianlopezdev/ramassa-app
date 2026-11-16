@@ -17,13 +17,24 @@ import { continuousCorners } from '@/lib/continuous-corners';
 import { useEntityDashboard } from '@/lib/entity-portal';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { I18nManager, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
+import { tokens } from '@ramassa/shared/tokens';
 
 const TABLET_WIDTH = 768;
+
+// The forward chevron of the app's other rows that open a detail
+// (attendance-occurrence-row). SF Symbols mirror by themselves; the Material
+// name is picked by direction.
+const forwardSymbol = {
+  ios: 'chevron.forward',
+  android: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',
+  web: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',
+} as const;
 
 const percent = (value: number | null) => (value === null ? '' : `${value.toFixed(2)}%`);
 
@@ -202,26 +213,34 @@ export default function EntityHomeScreen() {
                       onPress={() => push(`/entity-referral/${row.referralId}` as Href)}
                       haptic="selection"
                       style={continuousCorners}
-                      className="gap-xs rounded-md py-sm"
+                      className="min-h-recommended flex-row items-center gap-md rounded-md py-sm"
                     >
-                      <View className="flex-row flex-wrap items-center justify-between gap-sm">
-                        <Text
-                          className={`flex-1 text-start text-md font-bold text-neutral-900 ${fontClass}`}
-                        >
-                          {name}
-                        </Text>
-                        <Text className={`text-sm font-semibold text-neutral-700 ${fontClass}`}>
-                          {tReferrals(`status.${row.status}`)}
-                        </Text>
+                      <View className="flex-1 gap-xs">
+                        <View className="flex-row flex-wrap items-center justify-between gap-sm">
+                          <Text
+                            className={`flex-1 text-start text-md font-bold text-neutral-900 ${fontClass}`}
+                          >
+                            {name}
+                          </Text>
+                          <Text className={`text-sm font-semibold text-neutral-700 ${fontClass}`}>
+                            {tReferrals(`status.${row.status}`)}
+                          </Text>
+                        </View>
+                        <BarRow
+                          label={[
+                            `${tEntity('present')}: ${row.attendancePresentCount}`,
+                            `${tEntity('absent')}: ${row.attendanceAbsentCount}`,
+                            `${tEntity('excused')}: ${row.attendanceExcusedCount}`,
+                          ].join(' · ')}
+                          value={percent(row.attendanceRate)}
+                          share={row.attendanceRate / 100}
+                        />
                       </View>
-                      <BarRow
-                        label={[
-                          `${tEntity('present')}: ${row.attendancePresentCount}`,
-                          `${tEntity('absent')}: ${row.attendanceAbsentCount}`,
-                          `${tEntity('excused')}: ${row.attendanceExcusedCount}`,
-                        ].join(' · ')}
-                        value={percent(row.attendanceRate)}
-                        share={row.attendanceRate / 100}
+                      <SymbolView
+                        accessible={false}
+                        name={forwardSymbol}
+                        size={tokens.fontSize.lg}
+                        tintColor={tokens.colors.neutral[500]}
                       />
                     </PressableScale>
                   );
