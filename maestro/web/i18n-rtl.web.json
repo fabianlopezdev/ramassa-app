@@ -28,7 +28,7 @@
     {
       "label": "profile",
       "goto": "/profile",
-      "waitFor": "text={{nav:tabs.profile}}"
+      "waitFor": "text={{profile:title}}"
     }
   ]
 }

@@ -17,6 +17,7 @@ import { PendingFormPrompt } from '@/components/forms/pending-form-prompt';
 import { KnowledgeQuickActions } from '@/components/knowledge/knowledge-quick-actions';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
 import { SurveyPrompt } from '@/components/surveys/survey-prompt';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -185,6 +186,7 @@ export default function HomeScreen() {
       onLoad={onListLoad}
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
+          <ProfilePhotoButton />
           {/* Her pending form comes first (RAPP-700). */}
           <PendingFormPrompt />
           <View className="gap-xs">

@@ -7,6 +7,7 @@ import {
 import { PageWidth } from '@/components/layout/content-width';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
 import { ServiceCard } from '@/components/services/service-card';
 import { ServiceCategoryGrid } from '@/components/services/service-category-grid';
 import { ServiceFilterPanel } from '@/components/services/service-filter-panel';
@@ -192,6 +193,7 @@ export default function ServicesScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         <PageWidth className="gap-lg">
+          <ProfilePhotoButton />
           <View className="gap-xs">
             <Text
               accessibilityRole="header"

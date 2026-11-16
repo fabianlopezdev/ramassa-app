@@ -9,6 +9,7 @@ import { ForumPostCard } from '@/components/forum/forum-post-card';
 import { PageWidth } from '@/components/layout/content-width';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
@@ -138,6 +139,7 @@ export default function CommunityScreen() {
       ListHeaderComponent={
         <View className="gap-lg pb-lg">
           <PageWidth className="gap-md">
+            <ProfilePhotoButton />
             <View className="gap-xs">
               <Text
                 accessibilityRole="header"

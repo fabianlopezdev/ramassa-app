@@ -1,11 +1,9 @@
 {
   "title": "Mi perfil",
-  "intro": "Estos son los datos que Ramassà guarda sobre ti.",
   "sectionIdentity": "Quién eres",
   "sectionDocumentation": "Documentación",
   "sectionContact": "Contacto y equipamiento",
   "sectionConsents": "Permisos",
-  "sectionApp": "La aplicación",
   "sectionData": "Tus datos",
   "editAction": "Editar mis datos",
   "saveAction": "Guardar",
@@ -14,8 +12,6 @@
   "notProvided": "Sin rellenar",
   "loading": "Cargando tus datos.",
   "termsAcceptedOn": "Aceptaste los términos el {{date}}.",
-  "mediaConsentGranted": "Salgo en fotos e historias de la comunidad.",
-  "mediaConsentDenied": "No salgo en fotos ni historias.",
   "languageLabel": "Idioma de la aplicación",
   "languageRestartTitle": "Hay que reiniciar",
   "languageRestartBody": "La aplicación debe reiniciarse para cambiar el sentido de lectura.",
@@ -57,5 +53,13 @@
     "cameraDenied": "Permite el acceso a la cámara desde los ajustes del teléfono.",
     "settings": "Abrir ajustes",
     "failed": "No se ha podido guardar el cambio. Inténtalo de nuevo."
+  },
+  "appLockIntro": "Con el bloqueo activado, Ramassà te pide Face ID, la huella o el código del teléfono cuando vuelves a la app. Así tus datos están protegidos si alguien coge tu teléfono.",
+  "menu": {
+    "data": "Mis datos",
+    "attendance": "Mi asistencia",
+    "language": "Idioma",
+    "appLock": "Bloqueo de la app",
+    "privacy": "Privacidad y permisos"
   }
 }

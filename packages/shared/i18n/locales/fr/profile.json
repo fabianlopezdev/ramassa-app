@@ -1,11 +1,9 @@
 {
   "title": "Mon profil",
-  "intro": "Voici les données que Ramassà garde sur toi.",
   "sectionIdentity": "Qui tu es",
   "sectionDocumentation": "Documents",
   "sectionContact": "Contact et équipement",
   "sectionConsents": "Permissions",
-  "sectionApp": "L’application",
   "sectionData": "Tes données",
   "editAction": "Modifie mes données",
   "saveAction": "Enregistre",
@@ -14,8 +12,6 @@
   "notProvided": "Non rempli",
   "loading": "Chargement de tes données.",
   "termsAcceptedOn": "Tu as accepté les conditions le {{date}}.",
-  "mediaConsentGranted": "J’apparais sur les photos et dans les histoires de la communauté.",
-  "mediaConsentDenied": "Je n’apparais pas sur les photos ni dans les histoires.",
   "languageLabel": "Langue de l’application",
   "languageRestartTitle": "Il faut redémarrer",
   "languageRestartBody": "L’application doit redémarrer pour changer le sens de lecture.",
@@ -57,5 +53,13 @@
     "cameraDenied": "Autorise l’accès à l’appareil photo dans les réglages du téléphone.",
     "settings": "Ouvre les réglages",
     "failed": "Le changement n’a pas pu être enregistré. Réessaie."
+  },
+  "appLockIntro": "Quand le verrouillage est activé, Ramassà te demande Face ID, l’empreinte ou le code du téléphone quand tu reviens dans l’app. Ainsi, tes données sont protégées si quelqu’un prend ton téléphone.",
+  "menu": {
+    "data": "Mes données",
+    "attendance": "Ma présence",
+    "language": "Langue",
+    "appLock": "Verrouillage de l’app",
+    "privacy": "Confidentialité et autorisations"
   }
 }

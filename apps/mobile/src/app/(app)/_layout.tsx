@@ -295,10 +295,16 @@ function AppNavigator() {
               erasure request are full-screen tasks, and the floating tab bar
               would sit on top of their primary action.
 
-              Flat route names, NOT a `profile/` directory: the tab itself is
-              already `/profile`, and a directory of the same name makes two
-              routes claim one path. The push then resolves to the tab and the
-              screen silently never opens. */}
+              Flat route names, NOT a `profile/` directory: the menu itself is
+              `/profile`, and a directory of the same name makes two routes
+              claim one path. The push then resolves to the menu and the
+              screen silently never opens. Her profile opens from her photo
+              on every tab, as a menu of screens (RAPP-794). */}
+            <Stack.Screen name="profile" />
+            <Stack.Screen name="profile-data" />
+            <Stack.Screen name="profile-attendance" />
+            <Stack.Screen name="profile-language" />
+            <Stack.Screen name="profile-privacy" />
             <Stack.Screen name="profile-delete-data" />
             <Stack.Screen name="announcement/[id]" />
             <Stack.Screen name="event/[id]" />

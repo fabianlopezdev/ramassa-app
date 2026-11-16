@@ -1,11 +1,9 @@
 {
   "title": "El meu perfil",
-  "intro": "Aquestes són les dades que Ramassà guarda sobre tu.",
   "sectionIdentity": "Qui ets",
   "sectionDocumentation": "Documentació",
   "sectionContact": "Contacte i equipament",
   "sectionConsents": "Permisos",
-  "sectionApp": "L'aplicació",
   "sectionData": "Les teves dades",
   "editAction": "Edita les meves dades",
   "saveAction": "Desa",
@@ -14,8 +12,6 @@
   "notProvided": "Sense omplir",
   "loading": "Carregant les teves dades.",
   "termsAcceptedOn": "Vas acceptar els termes el {{date}}.",
-  "mediaConsentGranted": "Surto a fotos i històries de la comunitat.",
-  "mediaConsentDenied": "No surto a fotos ni històries.",
   "languageLabel": "Idioma de l'aplicació",
   "languageRestartTitle": "Cal reiniciar",
   "languageRestartBody": "L'aplicació ha de reiniciar-se per canviar el sentit de lectura.",
@@ -57,5 +53,13 @@
     "cameraDenied": "Permet l’accés a la càmera des de la configuració del telèfon.",
     "settings": "Obre la configuració",
     "failed": "No s’ha pogut desar el canvi. Torna-ho a provar."
+  },
+  "appLockIntro": "Amb el bloqueig activat, Ramassà et demana Face ID, l'empremta o el codi del telèfon quan tornes a l'app. Així les teves dades estan protegides si algú agafa el teu telèfon.",
+  "menu": {
+    "data": "Les meves dades",
+    "attendance": "La meva assistència",
+    "language": "Idioma",
+    "appLock": "Bloqueig de l'app",
+    "privacy": "Privacitat i permisos"
   }
 }

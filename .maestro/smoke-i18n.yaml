@@ -25,7 +25,6 @@ env:
   TAB_HOME_CA: '{{nav:tabs.home}}'
   TAB_HOME_AR: الرئيسية
   TAB_EVENTS_AR: الفعاليات
-  TAB_PROFILE_CA: '{{nav:tabs.profile}}'
   # The profile screen's own heading, used to confirm the tab actually changed
   # before scrolling down it. Not the tab label: that is on screen whichever tab
   # is showing, so it cannot tell one from another.
@@ -72,7 +71,7 @@ env:
       notVisible: '.*${PROFILE_TITLE}.*'
     commands:
       - tapOn:
-          text: '^${TAB_PROFILE_CA}$'
+          id: player-profile-button
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
@@ -215,7 +214,7 @@ env:
     text: '^${TAB_HOME_CA}$'
 
 # The direction readout lives in the dev menu, which is now reached through the
-# Arabic profile tab. Scrolled to the entry for the same reason as the Catalan
+# Arabic profile menu. Scrolled to the entry for the same reason as the Catalan
 # pass above: the profile screen has real content now, so its dev-menu entry is
 # below the fold and off-screen nodes are not matchable on Android.
 - repeat:
@@ -223,20 +222,11 @@ env:
     while:
       notVisible: '.*${PROFILE_TITLE_AR}.*'
     commands:
-      - runFlow:
-          when:
-            platform: Android
-          commands:
-            # Native Material tabs do not expose Expo's testID. RTL places the
-            # profile tab in the leftmost fifth of the bottom navigation bar.
-            - tapOn:
-                point: 10%, 93%
-      - runFlow:
-          when:
-            platform: iOS
-          commands:
-            - tapOn:
-                id: player-tab-profile
+      # Her photo at the top of the tab opens the profile (RAPP-794); it is
+      # an app view, so its testID reaches both platforms.
+      - tapOn:
+          id: player-profile-button
+          optional: true
       - waitForAnimationToEnd:
           timeout: 3000
 - extendedWaitUntil:

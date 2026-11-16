@@ -1,11 +1,9 @@
 {
   "title": "My profile",
-  "intro": "This is the information Ramassà keeps about you.",
   "sectionIdentity": "Who you are",
   "sectionDocumentation": "Documents",
   "sectionContact": "Contact and equipment",
   "sectionConsents": "Permissions",
-  "sectionApp": "The app",
   "sectionData": "Your data",
   "editAction": "Edit my information",
   "saveAction": "Save",
@@ -14,8 +12,6 @@
   "notProvided": "Not filled in",
   "loading": "Loading your information.",
   "termsAcceptedOn": "You accepted the terms on {{date}}.",
-  "mediaConsentGranted": "I appear in community photos and stories.",
-  "mediaConsentDenied": "I do not appear in photos or stories.",
   "languageLabel": "App language",
   "languageRestartTitle": "Restart needed",
   "languageRestartBody": "The app has to restart to change the reading direction.",
@@ -57,5 +53,13 @@
     "cameraDenied": "Allow camera access in your phone settings.",
     "settings": "Open settings",
     "failed": "Your change could not be saved. Please try again."
+  },
+  "appLockIntro": "When the app lock is on, Ramassà asks for Face ID, your fingerprint or your phone's code when you come back to the app. This keeps your data safe if someone picks up your phone.",
+  "menu": {
+    "data": "My details",
+    "attendance": "My attendance",
+    "language": "Language",
+    "appLock": "App lock",
+    "privacy": "Privacy and permissions"
   }
 }

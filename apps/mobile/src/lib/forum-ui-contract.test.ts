@@ -71,8 +71,7 @@ test('the cumulative native flow proves the lifecycle in Catalan and Arabic', as
   expect(source).toContain('file: _set-language.yaml\n    env:\n      LOCALE: ar');
   expect(source).not.toContain('file: _open-app.yaml\n    env:\n      LOCALE: ar');
   expect(setLanguage).not.toContain('env:\n  LOCALE: ca');
-  expect(source).toContain("tapOn: '^${CATALAN_PROFILE}$'");
-  expect(source).toContain('id: player-tab-profile');
+  expect(source).toContain('id: player-profile-button');
   expect(source).toContain('notVisible:\n        id: dev-menu-entry');
   expect(source).toContain('ARABIC_TITLE: المجتمع');
   expect(source).toContain("visible: '^${PUSH_DECLINE}$'");
