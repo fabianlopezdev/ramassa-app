@@ -22,7 +22,6 @@
   "syncRetrying": "ستُعاد محاولة المزامنة",
   "syncSynced": "تمت المزامنة",
   "tapAction": "تغيير {{name}} من {{current}} إلى {{next}}",
-  "back": "العودة إلى جلسات اليوم",
   "overviewTitle": "نظرة عامة على الحضور",
   "overviewSummary": "{{count}} جلسات",
   "searchLabel": "البحث في الأنشطة أو المواقع",

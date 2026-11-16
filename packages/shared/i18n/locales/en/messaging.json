@@ -50,8 +50,6 @@
   "unknownStaff": "Unknown staff member",
   "staffMobileIntro": "Read and reply to player and entity chats.",
   "conversationRowLabel": "Open chat with {{name}}. {{role}}. Latest message: {{preview}}.",
-  "backShort": "Back",
-  "backToConversations": "Back to chats",
   "deliveryRejected": "Not sent. This message was refused.",
   "deliveryRejectedPermission": "Not sent. You can no longer send messages here.",
   "discard": "Remove",

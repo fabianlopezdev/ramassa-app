@@ -50,8 +50,6 @@
   "unknownStaff": "Profesional desconocida",
   "staffMobileIntro": "Lee y responde los chats de jugadoras y entidades.",
   "conversationRowLabel": "Abrir chat con {{name}}. {{role}}. Último mensaje: {{preview}}.",
-  "backShort": "Atrás",
-  "backToConversations": "Volver a los chats",
   "deliveryRejected": "No se ha enviado. Este mensaje se ha rechazado.",
   "deliveryRejectedPermission": "No se ha enviado. Ya no puedes enviar mensajes aquí.",
   "discard": "Quitarlo",

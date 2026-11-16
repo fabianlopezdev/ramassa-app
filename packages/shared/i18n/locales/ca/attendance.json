@@ -22,7 +22,6 @@
   "syncRetrying": "Es tornarà a sincronitzar",
   "syncSynced": "Sincronitzat",
   "tapAction": "Canvia {{name}} de {{current}} a {{next}}",
-  "back": "Torna a les sessions d’avui",
   "overviewTitle": "Resum d’assistència",
   "overviewSummary": "{{count}} sessions",
   "searchLabel": "Cerca activitats o llocs",

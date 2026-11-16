@@ -50,8 +50,6 @@
   "unknownStaff": "موظفة غير معروفة",
   "staffMobileIntro": "اقرئي دردشات اللاعبات والجهات وردّي عليها.",
   "conversationRowLabel": "افتحي الدردشة مع {{name}}. {{role}}. أحدث رسالة: {{preview}}.",
-  "backShort": "رجوع",
-  "backToConversations": "الرجوع إلى الدردشات",
   "deliveryRejected": "لم تُرسل. رُفضت هذه الرسالة.",
   "deliveryRejectedPermission": "لم تُرسل. لم يعد بإمكانكِ إرسال رسائل هنا.",
   "discard": "إزالة",

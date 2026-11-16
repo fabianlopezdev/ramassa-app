@@ -50,8 +50,6 @@
   "unknownStaff": "Professional desconeguda",
   "staffMobileIntro": "Llegeix i respon els xats de jugadores i entitats.",
   "conversationRowLabel": "Obre el xat amb {{name}}. {{role}}. Últim missatge: {{preview}}.",
-  "backShort": "Enrere",
-  "backToConversations": "Torna als xats",
   "deliveryRejected": "No s'ha enviat. Aquest missatge s'ha rebutjat.",
   "deliveryRejectedPermission": "No s'ha enviat. Ja no pots enviar missatges aquí.",
   "discard": "Treu-lo",

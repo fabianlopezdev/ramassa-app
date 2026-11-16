@@ -22,7 +22,6 @@
   "syncRetrying": "همگام‌سازی دوباره تلاش می‌شود",
   "syncSynced": "همگام شد",
   "tapAction": "تغییر {{name}} از {{current}} به {{next}}",
-  "back": "بازگشت به جلسه‌های امروز",
   "overviewTitle": "نمای کلی حضور",
   "overviewSummary": "{{count}} جلسه",
   "searchLabel": "جست‌وجوی برنامه یا مکان",
