@@ -33,9 +33,10 @@ describe('Phase 6 accessibility and i18n contract', () => {
 
   test('gallery controls and meaningful media expose translated accessible names', async () => {
     const gallery = await readMobileSource('app/(app)/gallery/index.tsx');
+    const galleryGrid = await readMobileSource('components/gallery/gallery-grid.tsx');
     const galleryItem = await readMobileSource('app/(app)/gallery/[id].tsx');
 
-    expect(gallery).toContain(
+    expect(galleryGrid).toContain(
       "accessibilityLabel={t('openItem', { name: item.uploader_first_name })}",
     );
     expect(gallery).toContain('accessibilityRole="header"');
@@ -68,7 +69,7 @@ describe('Phase 6 accessibility and i18n contract', () => {
     const composer = await readMobileSource('app/(app)/forum/create.tsx');
     const forumDetail = await readMobileSource('app/(app)/forum/[id].tsx');
     const forumPostCard = await readMobileSource('components/forum/forum-post-card.tsx');
-    const gallery = await readMobileSource('app/(app)/gallery/index.tsx');
+    const gallery = await readMobileSource('components/gallery/gallery-grid.tsx');
     const galleryTile = await readMobileSource('components/gallery/gallery-tile.tsx');
     const galleryItem = await readMobileSource('app/(app)/gallery/[id].tsx');
     const upload = await readMobileSource('app/(app)/gallery/upload.tsx');
@@ -161,7 +162,7 @@ describe('Phase 6 accessibility and i18n contract', () => {
 
   test('labeled busy profile states expose a progressbar role on web', async () => {
     const paths = [
-      'app/(app)/(tabs)/profile.tsx',
+      'app/(app)/profile-data.tsx',
       'app/(app)/profile-edit.tsx',
       'components/profile/attendance-history-section.tsx',
     ] as const;

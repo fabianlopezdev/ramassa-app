@@ -6,6 +6,7 @@
  */
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-load-failure';
+import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -49,15 +50,7 @@ export default function EntityReferralsScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <PageWidth className="gap-lg p-lg">
-          <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('title')}
-            </Text>
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>{t('intro')}</Text>
-          </View>
+          <EntityScreenHeader title={t('title')} intro={t('intro')} />
           <PressableScale
             testID="entity-referral-new"
             accessibilityRole="button"

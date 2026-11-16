@@ -1,10 +1,7 @@
 {
   "title": "Community",
-  "intro": "Ask, share, and help other players.",
   "categoriesLabel": "Forum categories",
   "allCategories": "All",
-  "newPost": "Write a post",
-  "teamChat": "Private chat with the team",
   "offline": "No connection. You are seeing posts saved on this phone.",
   "offlineWrite": "Connect to the internet to post, reply, edit, or delete.",
   "loading": "Loading the community",
@@ -78,11 +75,14 @@
   "flagConfirmation": "Thank you. The team will review it.",
   "postingDisabled": "You cannot post or reply in the forum right now. You can keep reading and contact the team if you need help.",
   "moderationTitle": "Forum moderation",
+  "moderationScreenTitle": "Moderation",
+  "moderationSegmentForum": "Forum",
+  "moderationReportedTitle": "Reported content",
   "moderationCount": "Pending: {{count}}",
   "moderationActionFailed": "The action could not be completed.",
   "moderationDeleteConfirm": "Delete this content?",
-  "moderationEmptyTitle": "No pending reports",
-  "moderationEmptyBody": "New reports will appear here.",
+  "moderationEmptyTitle": "No reported content",
+  "moderationEmptyBody": "Reported content will appear here.",
   "moderationUnknownCategory": "Unknown category",
   "moderationFlags": "Reports: {{count}}",
   "moderationTarget": {
@@ -113,5 +113,13 @@
   "categorySave": "Save category",
   "gallery": "Gallery",
   "categorySlugHelp": "Lowercase letters, numbers and hyphens. It is made from the Catalan name.",
-  "categorySlugInvalid": "The identifier can only have lowercase letters, numbers and hyphens."
+  "categorySlugInvalid": "The identifier can only have lowercase letters, numbers and hyphens.",
+  "share": "Share",
+  "sharePost": "A post",
+  "shareMedia": "A photo or video",
+  "shareStory": "My story",
+  "segmentsLabel": "Community sections",
+  "segmentForum": "Forum",
+  "segmentGallery": "Gallery",
+  "segmentStories": "Stories"
 }

@@ -398,3 +398,34 @@ export function toKnowledgeInput(
     expiresAt: canPublish ? (publishing ? form.expiresAt : null) : (stored?.expires_at ?? null),
   };
 }
+
+/**
+ * Publishing a story in review from its detail (RAPP-801): now, with the
+ * versions already stored and the reviewer's note. Null when it is not a story
+ * in review or a language is still missing, because publishing needs every
+ * version approved, which happens in the editor.
+ */
+export function storyPublicationInput(
+  article: KnowledgeArticleListRow,
+  reviewerNote: string,
+  now = new Date(),
+): KnowledgeArticleInput | null {
+  if (article.content_type !== 'participant_story' || article.story_status !== 'in_review') {
+    return null;
+  }
+  const source = knowledgeSourceLanguage(article);
+  const isComplete = knowledgeTargetLanguages(source).every(
+    (language) =>
+      (article.title[language] ?? '').trim().length > 0 && article.body[language] !== undefined,
+  );
+  if (!isComplete) return null;
+  const form: KnowledgeDraft = {
+    ...startingKnowledgeDraft(article, article.category_id, now),
+    mode: 'now',
+    reviewerNote,
+  };
+  return {
+    ...toKnowledgeInput(form, undefined, { stored: article, canPublish: true, now }),
+    title: { ...article.title },
+  };
+}

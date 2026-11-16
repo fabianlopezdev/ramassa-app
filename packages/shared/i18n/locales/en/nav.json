@@ -1,10 +1,10 @@
 {
   "tabs": {
     "home": "Home",
-    "events": "Events",
+    "events": "Activities",
+    "chat": "Chat",
     "community": "Community",
-    "services": "Services",
-    "profile": "Profile"
+    "services": "Help"
   },
   "staff": {
     "dashboard": "Dashboard",
@@ -44,8 +44,8 @@
     "dashboard": "Impact",
     "referrals": "Referrals",
     "services": "Services",
-    "events": "Events",
-    "messages": "Messages"
+    "events": "Activities",
+    "messages": "Chat"
   },
   "a11y": {
     "staffSidebar": "Staff navigation",
@@ -57,13 +57,32 @@
   },
   "team": {
     "today": "Today",
-    "messages": "Messages",
+    "messages": "Chats",
     "more": "More",
     "homeTitle": "What do you want to do?",
     "navigation": "Team navigation",
     "backToHome": "Back to the start",
-    "todayIntro": "What needs doing now.",
     "participants": "Participants",
-    "content": "Content"
+    "content": "Content",
+    "moreGroups": {
+      "field": "On the pitch",
+      "players": "Players",
+      "communication": "Communication",
+      "data": "Data",
+      "organization": "Organization",
+      "app": "The app"
+    },
+    "organizationData": "Organization details",
+    "pending": "Pending",
+    "pendingRow": {
+      "serviceReviews": "Services to review",
+      "stories": "Stories to review",
+      "reports": "Reported content",
+      "feedback": "New suggestions",
+      "mentoring": "Mentoring requests",
+      "erasure": "Deletion requests",
+      "messages": "Unread chats",
+      "stockAlerts": "Stock below zero"
+    }
   }
 }

@@ -2,7 +2,6 @@
   "title": "الملاحظات",
   "intro": "اقترحي نشاطاً أو شاركي فكرة أو أخبري الفريق عن مشكلة.",
   "homeAction": "إرسال ملاحظة",
-  "profileAction": "ملاحظاتي",
   "newSubmission": "ملاحظة جديدة",
   "typeLabel": "ما موضوعها؟",
   "typeActivityProposal": "اقتراح نشاط",
@@ -36,5 +35,6 @@
   "markInProgress": "بدء المعالجة",
   "markResolved": "حل",
   "respondChat": "الرد في الدردشة",
-  "inboxEmpty": "لا توجد ملاحظات بهذه المرشحات."
+  "inboxEmpty": "لا توجد ملاحظات بهذه المرشحات.",
+  "answerInChat": "يصل الرد إلى الدردشة"
 }

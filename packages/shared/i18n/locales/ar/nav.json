@@ -1,10 +1,10 @@
 {
   "tabs": {
     "home": "الرئيسية",
-    "events": "الفعاليات",
+    "events": "الأنشطة",
+    "chat": "الدردشة",
     "community": "المجتمع",
-    "services": "الخدمات",
-    "profile": "الملف الشخصي"
+    "services": "المساعدة"
   },
   "staff": {
     "dashboard": "لوحة التحكم",
@@ -44,8 +44,8 @@
     "dashboard": "الأثر",
     "referrals": "الإحالات",
     "services": "الخدمات",
-    "events": "الفعاليات",
-    "messages": "الرسائل"
+    "events": "الأنشطة",
+    "messages": "الدردشة"
   },
   "a11y": {
     "staffSidebar": "تنقل الفريق",
@@ -57,13 +57,32 @@
   },
   "team": {
     "today": "اليوم",
-    "messages": "الرسائل",
+    "messages": "الدردشات",
     "more": "المزيد",
     "homeTitle": "ماذا تريدين أن تفعلي؟",
     "navigation": "تنقل الفريق",
     "backToHome": "العودة إلى البداية",
-    "todayIntro": "ما يجب فعله الآن.",
     "participants": "المشاركات",
-    "content": "المحتوى"
+    "content": "المحتوى",
+    "moreGroups": {
+      "field": "في الملعب",
+      "players": "اللاعبات",
+      "communication": "التواصل",
+      "data": "البيانات",
+      "organization": "المؤسسة",
+      "app": "التطبيق"
+    },
+    "organizationData": "بيانات المؤسسة",
+    "pending": "قيد الانتظار",
+    "pendingRow": {
+      "serviceReviews": "خدمات للمراجعة",
+      "stories": "قصص للمراجعة",
+      "reports": "محتوى مُبلَّغ عنه",
+      "feedback": "اقتراحات جديدة",
+      "mentoring": "طلبات الإرشاد",
+      "erasure": "طلبات الحذف",
+      "messages": "محادثات غير مقروءة",
+      "stockAlerts": "معدات تحت الصفر"
+    }
   }
 }

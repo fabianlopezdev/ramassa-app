@@ -38,7 +38,7 @@
   "deleteTitle": "¿Quieres eliminar este contenido?",
   "deleteBody": "La foto o el vídeo y su miniatura se eliminarán definitivamente.",
   "cancel": "Cancelar",
-  "flag": "Informar de un problema",
+  "flag": "Avisar al equipo",
   "back": "Atrás",
   "moderationTitle": "Moderación de la galería",
   "moderationIntro": "Oculta o vuelve a mostrar cualquier foto o vídeo, aunque nadie haya informado de ello.",
@@ -50,7 +50,7 @@
   "statePending": "Oculto hasta que se revise",
   "moderationHide": "Ocultar",
   "moderationShow": "Volver a mostrar",
-  "moderationReports": "Avisos: {{count}}",
+  "moderationReports": "Denuncias: {{count}}",
   "moderationVideo": "Vídeo",
   "moderationFailed": "No se ha podido completar la acción."
 }

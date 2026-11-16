@@ -12,7 +12,6 @@ env:
   PINNED_CA: '{{home:pinned}}'
   FILTER_URGENT_CA: '{{home:category.urgent}}'
   FILTER_SOCIAL_CA: '{{home:category.social}}'
-  TAB_PROFILE_CA: '{{nav:tabs.profile}}'
   PROFILE_CA_TITLE: '{{profile:title}}'
   LANGUAGE_AR: 'العربية'
   RESTART_AR: 'أعِد التشغيل الآن'
@@ -72,13 +71,16 @@ env:
       notVisible: '.*${PROFILE_CA_TITLE}.*'
     commands:
       - tapOn:
-          text: '^${TAB_PROFILE_CA}$'
+          id: player-profile-button
           optional: true
       - waitForAnimationToEnd:
           timeout: 2500
 - extendedWaitUntil:
     visible: '.*${PROFILE_CA_TITLE}.*'
     timeout: 30000
+# The language control has its own screen in the profile menu (RAPP-794).
+- tapOn:
+    id: profile-open-language
 - repeat:
     times: 20
     while:

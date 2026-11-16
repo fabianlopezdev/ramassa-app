@@ -123,7 +123,7 @@ test.describe.serial('admin organization settings', () => {
 
     // Signed-in branding is read fresh from the organization, so colours are checked there.
     await signInPlayer(page);
-    await page.getByRole('tab', { name: 'Profile' }).click();
+    await page.getByTestId('player-profile-button').click();
     await expect(page.getByTestId('generalitat-credit')).toBeVisible({ timeout: 30_000 });
     await expect
       .poll(

@@ -2,6 +2,7 @@ appId: com.ramassa.app
 name: phase8-feedback
 env:
   LOCALE: ca
+  TAB_CHAT: '{{nav:tabs.chat}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
 ---
 - runFlow: _open-app.yaml
@@ -9,12 +10,23 @@ env:
 - tapOn:
     text: '^${PUSH_DECLINE}$'
     optional: true
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: '^${TAB_CHAT}$'
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: player-tab-chat
 - extendedWaitUntil:
     visible:
-      id: home-open-feedback
+      id: player-chat-tab
     timeout: 60000
 - tapOn:
-    id: home-open-feedback
+    id: chat-open-feedback
 - extendedWaitUntil:
     visible:
       id: feedback-screen

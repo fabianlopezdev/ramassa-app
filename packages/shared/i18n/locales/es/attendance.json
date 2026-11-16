@@ -1,5 +1,5 @@
 {
-  "title": "Asistencia",
+  "title": "Hoy",
   "intro": "Elige una sesión y marca la asistencia en el campo.",
   "today": "Sesiones de hoy",
   "noEventsTitle": "Hoy no hay sesiones",
@@ -60,5 +60,6 @@
   "syncRejectedPermission": "No se ha guardado. Ya no puedes pasar lista aquí.",
   "syncRetryAction": "Volver a intentarlo",
   "syncDiscardAction": "Quitarla",
-  "selectSession": "Elige una sesión para pasar lista."
+  "selectSession": "Elige una sesión para pasar lista.",
+  "openParticipantCard": "Abrir la ficha de {{name}}"
 }

@@ -184,8 +184,8 @@ describe('locale-aware selectors', () => {
   test('a flow reads its screen names out of the app catalogs, per locale', async () => {
     const ca = await loadTranslator('ca');
     const ar = await loadTranslator('ar');
-    expect(interpolate('{{nav:tabs.events}}', ca)).toBe('Calendari');
-    expect(interpolate('{{nav:tabs.events}}', ar)).toBe('الفعاليات');
+    expect(interpolate('{{nav:tabs.events}}', ca)).toBe('Activitats');
+    expect(interpolate('{{nav:tabs.events}}', ar)).toBe('الأنشطة');
   });
 
   test('a missing key fails loudly rather than driving the UI by an empty string', async () => {
@@ -195,8 +195,8 @@ describe('locale-aware selectors', () => {
 
   test('tokens are replaced everywhere in a spec, not only at the top level', async () => {
     const ca = await loadTranslator('ca');
-    expect(interpolate({ steps: [{ waitFor: 'text={{nav:tabs.profile}}' }] }, ca)).toEqual({
-      steps: [{ waitFor: 'text=Perfil' }],
+    expect(interpolate({ steps: [{ waitFor: 'text={{nav:tabs.chat}}' }] }, ca)).toEqual({
+      steps: [{ waitFor: 'text=Xat' }],
     });
   });
 });

@@ -25,7 +25,7 @@ async function signInPlayer(
   player: (typeof PARTICIPANT_FIXTURES)[number],
 ): Promise<void> {
   await signInPlayerWithEmailCode(page, player.email);
-  await expect(page.getByTestId('open-knowledge-base')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('home-screen')).toBeVisible({ timeout: 30_000 });
 }
 
 test.afterAll(() => {
@@ -48,7 +48,7 @@ test('Catalan and Arabic players complete every control and staff sees attribute
 }) => {
   test.setTimeout(180_000);
   await signInPlayer(page, arabicPlayer);
-  await page.goto(`${playerOrigin}/profile`);
+  await page.goto(`${playerOrigin}/profile-language`);
   await page.getByTestId('profile-language-ar').click();
   await page.goto(playerOrigin);
   await expect(page.getByText('رأيك في التدريب', { exact: true })).toBeVisible({
@@ -83,7 +83,7 @@ test('Catalan and Arabic players complete every control and staff sees attribute
   const catalanContext = await browser.newContext();
   const catalanPage = await catalanContext.newPage();
   await signInPlayer(catalanPage, catalanPlayer);
-  await catalanPage.goto(`${playerOrigin}/profile`);
+  await catalanPage.goto(`${playerOrigin}/profile-language`);
   await catalanPage.getByTestId('profile-language-ca').click();
   await catalanPage.goto(playerOrigin);
   await expect(

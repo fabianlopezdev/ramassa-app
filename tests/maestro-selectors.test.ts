@@ -359,7 +359,7 @@ describe('Maestro selector contracts', () => {
 
     const auth = await Bun.file(path.join(repoRoot, '.maestro/smoke-auth.yaml')).text();
     expect(auth).toMatch(
-      /notVisible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?text: '\^\$\{TAB_PROFILE\}\$'[\s\S]*?visible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?notVisible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?swipe:[\s\S]*?visible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?start: 50%, 60%[\s\S]*?end: 50%, 52%[\s\S]*?text: '\^\$\{SIGN_OUT\}\$'/,
+      /notVisible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?id: player-profile-button[\s\S]*?visible: '\.\*\$\{PROFILE_TITLE\}\.\*'[\s\S]*?notVisible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?swipe:[\s\S]*?visible: '\^\$\{SIGN_OUT\}\$'[\s\S]*?start: 50%, 60%[\s\S]*?end: 50%, 52%[\s\S]*?text: '\^\$\{SIGN_OUT\}\$'/,
     );
 
     const profile = await Bun.file(path.join(repoRoot, '.maestro/smoke-profile.yaml')).text();
@@ -413,7 +413,7 @@ describe('Maestro selector contracts', () => {
     );
 
     const knowledge = await Bun.file(path.join(repoRoot, '.maestro/knowledge-story.yaml')).text();
-    expect(knowledge).toMatch(/open-knowledge-base[\s\S]*?knowledge-detail-screen/);
+    expect(knowledge).toMatch(/ajuda-all-guides[\s\S]*?knowledge-detail-screen/);
     expect(knowledge).toMatch(
       /story-title-input[\s\S]*?story-body-input[\s\S]*?story-publication-consent[\s\S]*?story-submit-button/,
     );
@@ -449,7 +449,7 @@ describe('Maestro selector contracts', () => {
       path.join(repoRoot, 'maestro/flows/knowledge-base.yaml'),
     ).text();
     const waitsForShortcut = knowledge.match(
-      /notVisible:\n\s+id: 'open-knowledge-base'[\s\S]{0,180}?text: '\^\$\{PUSH_DECLINE\}\$'/g,
+      /notVisible: '\^\$\{TAB_HELP\}\$'[\s\S]{0,180}?text: '\^\$\{PUSH_DECLINE\}\$'/g,
     );
     expect(waitsForShortcut).toHaveLength(2);
   });
@@ -469,8 +469,8 @@ describe('Maestro selector contracts', () => {
   test('every Phase 3 player capture clears delayed notification rationale before navigation', async () => {
     const contracts = [
       ['events-signup.yaml', "- tapOn: '^${EVENTS_TAB}$'"],
-      ['knowledge-base.yaml', "- tapOn:\n    id: 'open-knowledge-base'"],
-      ['story-submission.yaml', "- tapOn:\n    id: 'open-story-submission'"],
+      ['knowledge-base.yaml', "- tapOn: '^${TAB_HELP}$'"],
+      ['story-submission.yaml', "- tapOn:\n    id: 'community-share'"],
     ] as const;
     for (const [file, navigationTarget] of contracts) {
       const source = await Bun.file(path.join(repoRoot, 'maestro/flows', file)).text();

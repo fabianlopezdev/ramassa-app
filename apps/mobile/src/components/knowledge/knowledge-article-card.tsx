@@ -25,10 +25,13 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
   article,
   accessToken,
   onOpen,
+  compact = false,
 }: {
   readonly article: KnowledgeArticleListRow;
   readonly accessToken: string | undefined;
   readonly onOpen: (id: string) => void;
+  /** Without the cover image, for short lists above other content. */
+  readonly compact?: boolean;
 }) {
   const { t } = useTranslation('knowledge');
   const { language } = useLanguage();
@@ -37,12 +40,14 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
   const category = resolveLocalizedText(article.category.name, language);
   const imageSource = useMemo(
     () =>
-      resolveMediaImageSource({
-        objectKeyOrUrl: article.image_url,
-        mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
-        accessToken,
-      }),
-    [accessToken, article.image_url],
+      compact
+        ? null
+        : resolveMediaImageSource({
+            objectKeyOrUrl: article.image_url,
+            mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
+            accessToken,
+          }),
+    [accessToken, article.image_url, compact],
   );
   if (title === undefined || category === undefined) return null;
 

@@ -56,7 +56,7 @@ export default tseslint.config(
     // `tests/dev-menu-production-gate.test.ts` enforces the shape.
     files: [
       'apps/*/src/app/dev-menu.tsx',
-      'apps/*/src/app/(app)/(tabs)/profile.tsx',
+      'apps/*/src/app/(app)/profile.tsx',
       'apps/*/src/app/(auth)/login.tsx',
       'apps/*/src/lib/observability.ts',
     ],

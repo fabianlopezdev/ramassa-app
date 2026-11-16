@@ -30,7 +30,7 @@ function futureLocalDateTimeValue(daysFromNow: number): string {
 
 async function signInPlayer(page: Page, email: string): Promise<void> {
   await signInPlayerWithEmailCode(page, email);
-  await expect(page.getByTestId('open-knowledge-base')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('home-screen')).toBeVisible({ timeout: 30_000 });
 }
 
 test.afterAll(() => {
@@ -60,8 +60,8 @@ test('private mentoring completes the player, staff, notification, calendar, and
   test.setTimeout(180_000);
 
   await signInPlayer(page, requestingPlayer.email);
-  await page.goto(`${playerOrigin}/community`, { waitUntil: 'domcontentloaded' });
-  await page.getByTestId('forum-open-mentoring').click();
+  await page.goto(`${playerOrigin}/chat`, { waitUntil: 'domcontentloaded' });
+  await page.getByTestId('chat-open-mentoring').click();
   await expect(page.getByTestId('mentoring-screen')).toBeVisible({ timeout: 30_000 });
   await page.getByTestId('mentoring-topic-digital_skills').click();
   await page.getByTestId('mentoring-detail').fill(privateDetail);

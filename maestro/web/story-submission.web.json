@@ -18,11 +18,17 @@
         { "selector": "[aria-label=\"{{auth:passwordLabel}}\"]", "value": "{{player:password}}" }
       ],
       "click": "[aria-label=\"{{auth:passwordAction}}\"]",
-      "waitFor": "[data-testid=\"open-story-submission\"]"
+      "waitFor": "[data-testid=\"home-screen\"]"
+    },
+    {
+      "label": "community",
+      "goto": "/community",
+      "click": "[data-testid=\"community-share\"]",
+      "waitFor": "[data-testid=\"community-share-story\"]"
     },
     {
       "label": "form",
-      "click": "[data-testid=\"open-story-submission\"]",
+      "click": "[data-testid=\"community-share-story\"]",
       "waitFor": "[data-testid=\"story-submission-screen\"]"
     },
     {
@@ -35,11 +41,16 @@
         }
       ],
       "click": "[aria-label=\"{{common:back}}\"]",
-      "waitFor": "[data-testid=\"open-story-submission\"]"
+      "waitFor": "[data-testid=\"community-share\"]"
+    },
+    {
+      "label": "reopen-sheet",
+      "click": "[data-testid=\"community-share\"]",
+      "waitFor": "[data-testid=\"community-share-story\"]"
     },
     {
       "label": "reopen",
-      "click": "[data-testid=\"open-story-submission\"]",
+      "click": "[data-testid=\"community-share-story\"]",
       "waitFor": "[data-testid=\"story-submission-screen\"]"
     },
     {

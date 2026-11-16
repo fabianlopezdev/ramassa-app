@@ -1,7 +1,7 @@
 {
   "app": "Ramassà",
   "slug": "events-signup",
-  "title": "Calendari i inscripcions",
+  "title": "Activitats i inscripcions",
   "surface": "mobile",
   "description": "Les jugadores exploren activitats futures en una llista o un calendari, obren els detalls i confirmen o cancel·len la seva assistència amb una sola acció. El flux també mostra la còpia desada sense connexió i la mateixa experiència en àrab de dreta a esquerra.",
   "steps": [
@@ -14,7 +14,7 @@
     },
     {
       "id": "calendar",
-      "label": "Calendari amb dies marcats",
+      "label": "Mes amb dies marcats",
       "ios": "events-signup/ios/02-calendar.png",
       "android": "events-signup/android/02-calendar.png",
       "web": "events-signup/web/04-calendar.png"
@@ -42,7 +42,7 @@
     },
     {
       "id": "offline",
-      "label": "Calendari desat sense connexió",
+      "label": "Activitats desades sense connexió",
       "android": "events-signup/android/07-offline.png"
     },
     {
@@ -150,7 +150,7 @@
     }
   ],
   "edges": [
-    { "from": "list", "to": "calendar", "label": "Calendari" },
+    { "from": "list", "to": "calendar", "label": "Mes" },
     { "from": "list", "to": "detail", "label": "Obre una activitat" },
     { "from": "detail", "to": "confirmed", "label": "Confirma", "kind": "positive" },
     { "from": "confirmed", "to": "cancelled", "label": "Cancel·la", "kind": "dismiss" },
@@ -176,7 +176,7 @@
     "La capacitat es comprova al servidor en el moment de confirmar. Si dues jugadores intenten agafar l'última plaça, només una pot completar l'acció.",
     "Sense connexió es conserven les activitats desades, però una inscripció no es posa en cua perquè la capacitat pot canviar abans de recuperar la xarxa.",
     "Les dates i les hores es mostren en Europe/Madrid i el calendari comença en dilluns en les cinc llengües de l'app.",
-    "La vista inicial captura el filtre Totes. Els tres filtres de categoria disponibles també tenen una captura pròpia amb l'estat seleccionat verificat.",
+    "La vista inicial captura el filtre Tot. Els tres filtres de categoria disponibles també tenen una captura pròpia amb l'estat seleccionat verificat.",
     "La captura mostra la pantalla on arriba la ruta validada d'una notificació. El lliurament i el toc reals es van comprovar per separat al sistema Android. La safata del sistema no es captura de manera determinista amb Maestro.",
     "El corredor Android es va aturar en un selector anterior del menú de desenvolupament i el web perd la ruta protegida durant la hidratació de la sessió. En aquests dos eixos, el node reutilitza la captura autenticada de la mateixa pantalla de detall."
   ]

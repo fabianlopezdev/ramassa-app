@@ -2,7 +2,6 @@
   "title": "Feedback",
   "intro": "Propose an activity, share an idea, or tell the team about a problem.",
   "homeAction": "Send feedback",
-  "profileAction": "My feedback",
   "newSubmission": "New feedback",
   "typeLabel": "What is this about?",
   "typeActivityProposal": "Propose an activity",
@@ -36,5 +35,6 @@
   "markInProgress": "Mark in progress",
   "markResolved": "Resolve",
   "respondChat": "Respond in chat",
-  "inboxEmpty": "No feedback matches these filters."
+  "inboxEmpty": "No feedback matches these filters.",
+  "answerInChat": "The answer arrives in the chat"
 }

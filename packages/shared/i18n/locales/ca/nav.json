@@ -1,10 +1,10 @@
 {
   "tabs": {
     "home": "Inici",
-    "events": "Calendari",
+    "events": "Activitats",
+    "chat": "Xat",
     "community": "Comunitat",
-    "services": "Serveis",
-    "profile": "Perfil"
+    "services": "Ajuda"
   },
   "staff": {
     "dashboard": "Tauler",
@@ -44,8 +44,8 @@
     "dashboard": "Impacte",
     "referrals": "Derivacions",
     "services": "Serveis",
-    "events": "Esdeveniments",
-    "messages": "Missatges"
+    "events": "Activitats",
+    "messages": "Xat"
   },
   "a11y": {
     "staffSidebar": "Navegació de l'equip",
@@ -57,13 +57,32 @@
   },
   "team": {
     "today": "Avui",
-    "messages": "Missatges",
+    "messages": "Xats",
     "more": "Més",
     "homeTitle": "Què vols fer?",
     "navigation": "Navegació de l'equip",
     "backToHome": "Torna a l'inici",
-    "todayIntro": "El que cal fer ara.",
     "participants": "Participants",
-    "content": "Contingut"
+    "content": "Contingut",
+    "moreGroups": {
+      "field": "Al camp",
+      "players": "Jugadores",
+      "communication": "Comunicació",
+      "data": "Dades",
+      "organization": "Organització",
+      "app": "L'app"
+    },
+    "organizationData": "Dades de l'organització",
+    "pending": "Pendent",
+    "pendingRow": {
+      "serviceReviews": "Serveis per revisar",
+      "stories": "Històries per revisar",
+      "reports": "Contingut denunciat",
+      "feedback": "Suggeriments nous",
+      "mentoring": "Peticions de mentoria",
+      "erasure": "Peticions d'esborrat",
+      "messages": "Xats sense llegir",
+      "stockAlerts": "Material sota zero"
+    }
   }
 }

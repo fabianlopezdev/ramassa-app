@@ -2,7 +2,6 @@
   "title": "Suggeriments",
   "intro": "Proposa una activitat, comparteix una idea o explica un problema a l'equip.",
   "homeAction": "Envia un suggeriment",
-  "profileAction": "Els meus suggeriments",
   "newSubmission": "Nou suggeriment",
   "typeLabel": "De què es tracta?",
   "typeActivityProposal": "Proposa una activitat",
@@ -30,11 +29,12 @@
   "inboxIntro": "Revisa els suggeriments i continua la conversa al xat.",
   "filterType": "Tipus",
   "filterStatus": "Estat",
-  "filterAll": "Tots",
+  "filterAll": "Tot",
   "monthlyTitle": "Suggeriments mensuals",
   "markRead": "Marca com a llegit",
   "markInProgress": "Marca en curs",
   "markResolved": "Resol",
   "respondChat": "Respon al xat",
-  "inboxEmpty": "No hi ha suggeriments amb aquests filtres."
+  "inboxEmpty": "No hi ha suggeriments amb aquests filtres.",
+  "answerInChat": "La resposta arriba al xat"
 }

@@ -5,7 +5,6 @@ env:
   CATALAN_TITLE: '{{forum:title}}'
   CATALAN_TOMBSTONE: '{{forum:deletedTombstone}}'
   CATALAN_FLAG_CONFIRMATION: '{{forum:flagConfirmation}}'
-  CATALAN_PROFILE: '{{nav:tabs.profile}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   ARABIC_TITLE: المجتمع
   ARABIC_TOMBSTONE: تم حذف هذا المنشور.
@@ -87,7 +86,9 @@ env:
       id: forum-board
     timeout: 30000
 - tapOn:
-    id: forum-new-post
+    id: community-share
+- tapOn:
+    id: community-share-post
 - extendedWaitUntil:
     visible:
       id: forum-create-screen
@@ -190,17 +191,8 @@ env:
     visible:
       id: forum-board
     timeout: 30000
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - tapOn: '^${CATALAN_PROFILE}$'
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - tapOn:
-          id: player-tab-profile
+- tapOn:
+    id: player-profile-button
 - repeat:
     times: 20
     while:
@@ -246,7 +238,9 @@ env:
     timeout: 60000
 - assertVisible: '^${ARABIC_TITLE}$'
 - tapOn:
-    id: forum-new-post
+    id: community-share
+- tapOn:
+    id: community-share-post
 - extendedWaitUntil:
     visible:
       id: forum-create-screen

@@ -4,11 +4,22 @@ import {
   AnnouncementFeedSkeleton,
   OfflineBanner,
 } from '@/components/announcements/feed-states';
+import {
+  CommunityShareSheet,
+  type CommunityShareChoice,
+} from '@/components/community/community-share-sheet';
 import { ForumCategoryTabs } from '@/components/forum/forum-category-tabs';
 import { ForumPostCard } from '@/components/forum/forum-post-card';
+import { GalleryGrid } from '@/components/gallery/gallery-grid';
+import { CommunityStoryList } from '@/components/knowledge/community-story-list';
 import { PageWidth } from '@/components/layout/content-width';
+import {
+  SegmentedControl,
+  type SegmentedControlOption,
+} from '@/components/layout/segmented-control';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
@@ -17,7 +28,8 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -37,9 +49,35 @@ const styles = StyleSheet.create({
   content: { paddingBottom: tokens.spacing['3xl'], paddingHorizontal: tokens.spacing.lg },
 });
 const postKeyExtractor = (post: ForumPostRow) => post.id;
+const shareSymbol: SymbolViewProps['name'] = {
+  ios: 'plus.circle.fill',
+  android: 'add_circle',
+  web: 'add_circle',
+};
+const forumSymbol: SymbolViewProps['name'] = {
+  ios: 'bubble.left.and.bubble.right.fill',
+  android: 'forum',
+  web: 'forum',
+};
+const gallerySymbol: SymbolViewProps['name'] = {
+  ios: 'photo.on.rectangle.angled',
+  android: 'photo_library',
+  web: 'photo_library',
+};
+const storiesSymbol: SymbolViewProps['name'] = {
+  ios: 'book.fill',
+  android: 'auto_stories',
+  web: 'auto_stories',
+};
+type CommunitySegment = 'forum' | 'gallery' | 'stories';
+const shareRoutes: Readonly<Record<CommunityShareChoice, Href>> = {
+  post: '/forum/create' as Href,
+  media: '/gallery/upload' as Href,
+  story: '/story/submit' as Href,
+};
 
 export default function CommunityScreen() {
-  const { t } = useTranslation(['forum', 'errors', 'mentoring']);
+  const { t } = useTranslation(['forum', 'errors']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const { session } = useAuth();
@@ -51,6 +89,8 @@ export default function CommunityScreen() {
   const refetchCategories = categoriesQuery.refetch;
   const refetchPosts = postsQuery.refetch;
   const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [segment, setSegment] = useState<CommunitySegment>('forum');
+  const [isShareSheetOpen, setIsShareSheetOpen] = useState(false);
   const posts = useMemo(
     () => filterForumPostsByCategory(postsQuery.data ?? EMPTY_POSTS, categoryId),
     [categoryId, postsQuery.data],
@@ -77,10 +117,38 @@ export default function CommunityScreen() {
     (id: string) => push({ pathname: '/forum/[id]', params: { id } } as unknown as Href),
     [push],
   );
-  const createPost = useCallback(() => push('/forum/create' as Href), [push]);
-  const openTeamChat = useCallback(() => push('/team-chat' as Href), [push]);
-  const openMentoring = useCallback(() => push('/mentoring' as Href), [push]);
-  const openGallery = useCallback(() => push('/gallery' as Href), [push]);
+  const openShareSheet = useCallback(() => setIsShareSheetOpen(true), []);
+  const closeShareSheet = useCallback(() => setIsShareSheetOpen(false), []);
+  const chooseShare = useCallback(
+    (choice: CommunityShareChoice) => {
+      setIsShareSheetOpen(false);
+      push(shareRoutes[choice]);
+    },
+    [push],
+  );
+  const segmentOptions = useMemo<readonly SegmentedControlOption<CommunitySegment>[]>(
+    () => [
+      {
+        key: 'forum',
+        label: t('forum:segmentForum'),
+        symbol: forumSymbol,
+        testID: 'community-segment-forum',
+      },
+      {
+        key: 'gallery',
+        label: t('forum:segmentGallery'),
+        symbol: gallerySymbol,
+        testID: 'community-segment-gallery',
+      },
+      {
+        key: 'stories',
+        label: t('forum:segmentStories'),
+        symbol: storiesSymbol,
+        testID: 'community-segment-stories',
+      },
+    ],
+    [t],
+  );
   const openLinkLabel = useCallback((url: string) => t('forum:openLink', { url }), [t]);
   const refresh = useCallback(() => {
     void Promise.all([refetchCategories(), refetchPosts()]);
@@ -108,12 +176,12 @@ export default function CommunityScreen() {
     [languageFontClass, openLinkLabel, openPost, session?.access_token, personCards, t],
   );
 
-  if ((categoriesQuery.isPending || postsQuery.isPending) && postsQuery.data === undefined) {
-    return <AnnouncementFeedSkeleton accessibilityLabel={t('forum:loading')} />;
-  }
   const loadError = categoriesQuery.error ?? postsQuery.error;
-  if (loadError !== null && postsQuery.data === undefined) {
-    return (
+  let forumEmptyState: ReactElement;
+  if ((categoriesQuery.isPending || postsQuery.isPending) && postsQuery.data === undefined) {
+    forumEmptyState = <AnnouncementFeedSkeleton accessibilityLabel={t('forum:loading')} />;
+  } else if (loadError !== null && postsQuery.data === undefined) {
+    forumEmptyState = (
       <AnnouncementFeedError
         message={t('forum:loadFailed')}
         retryLabel={t('forum:retry')}
@@ -122,106 +190,104 @@ export default function CommunityScreen() {
         onRetry={refresh}
       />
     );
+  } else {
+    forumEmptyState = (
+      <PageWidth>
+        <AnnouncementEmptyState
+          title={t('forum:emptyTitle')}
+          body={t('forum:emptyBody')}
+          languageFontClass={languageFontClass}
+        />
+      </PageWidth>
+    );
+  }
+
+  // One header for every segment; forum category chips show only in the
+  // Fòrum segment, so the screen never stacks two filter rows (plan P4).
+  const header = (
+    <View className="gap-lg pb-lg">
+      <PageWidth className="gap-md">
+        <ProfilePhotoButton />
+        <Text
+          accessibilityRole="header"
+          className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
+        >
+          {t('forum:title')}
+        </Text>
+        {isOffline ? (
+          <OfflineBanner label={t('forum:offline')} languageFontClass={languageFontClass} />
+        ) : null}
+        <PressableScale
+          testID="community-share"
+          accessibilityLabel={t('forum:share')}
+          onPress={openShareSheet}
+          haptic="tapLight"
+          style={continuousCorners}
+          className="min-h-recommended flex-row items-center justify-center gap-sm rounded-md bg-primary px-lg"
+        >
+          <SymbolView
+            accessible={false}
+            name={shareSymbol}
+            size={tokens.fontSize.xl}
+            tintColor={tokens.colors.white}
+          />
+          <Text className={`text-md font-bold text-white ${languageFontClass}`}>
+            {t('forum:share')}
+          </Text>
+        </PressableScale>
+        <SegmentedControl
+          testID="community-segments"
+          options={segmentOptions}
+          selected={segment}
+          onSelect={setSegment}
+          accessibilityLabel={t('forum:segmentsLabel')}
+          languageFontClass={languageFontClass}
+        />
+      </PageWidth>
+      {segment === 'forum' ? (
+        <ForumCategoryTabs
+          categories={categoriesQuery.data ?? EMPTY_CATEGORIES}
+          selectedId={categoryId}
+          allLabel={t('forum:allCategories')}
+          accessibilityLabel={t('forum:categoriesLabel')}
+          onSelect={setCategoryId}
+        />
+      ) : null}
+    </View>
+  );
+
+  let segmentList: ReactElement;
+  if (segment === 'gallery') {
+    segmentList = <GalleryGrid header={header} contentContainerStyle={contentStyle} />;
+  } else if (segment === 'stories') {
+    segmentList = <CommunityStoryList header={header} contentContainerStyle={contentStyle} />;
+  } else {
+    segmentList = (
+      <FlashList
+        testID="forum-board"
+        data={posts}
+        renderItem={renderPost}
+        keyExtractor={postKeyExtractor}
+        style={styles.screen}
+        contentContainerStyle={contentStyle}
+        contentInsetAdjustmentBehavior="automatic"
+        refreshing={postsQuery.isRefetching && !isOffline}
+        onRefresh={refresh}
+        ListHeaderComponent={header}
+        ListEmptyComponent={forumEmptyState}
+      />
+    );
   }
 
   return (
-    <FlashList
-      testID="forum-board"
-      data={posts}
-      renderItem={renderPost}
-      keyExtractor={postKeyExtractor}
-      style={styles.screen}
-      contentContainerStyle={contentStyle}
-      contentInsetAdjustmentBehavior="automatic"
-      refreshing={postsQuery.isRefetching && !isOffline}
-      onRefresh={refresh}
-      ListHeaderComponent={
-        <View className="gap-lg pb-lg">
-          <PageWidth className="gap-md">
-            <View className="gap-xs">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('forum:title')}
-              </Text>
-              <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-                {t('forum:intro')}
-              </Text>
-            </View>
-            {isOffline ? (
-              <OfflineBanner label={t('forum:offline')} languageFontClass={languageFontClass} />
-            ) : null}
-            <View className="flex-row flex-wrap gap-sm">
-              <PressableScale
-                testID="forum-new-post"
-                accessibilityLabel={t('forum:newPost')}
-                onPress={createPost}
-                haptic="tapLight"
-                isDisabled={isOffline}
-                style={continuousCorners}
-                className="min-h-recommended grow items-center justify-center rounded-md bg-primary px-lg"
-              >
-                <Text className={`text-md font-bold text-white ${languageFontClass}`}>
-                  {t('forum:newPost')}
-                </Text>
-              </PressableScale>
-              <PressableScale
-                testID="forum-open-team-chat"
-                accessibilityLabel={t('forum:teamChat')}
-                onPress={openTeamChat}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended grow items-center justify-center rounded-md border border-primary px-lg"
-              >
-                <Text className={`text-center text-md font-bold text-primary ${languageFontClass}`}>
-                  {t('forum:teamChat')}
-                </Text>
-              </PressableScale>
-              <PressableScale
-                testID="forum-open-gallery"
-                accessibilityLabel={t('forum:gallery')}
-                onPress={openGallery}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended grow items-center justify-center rounded-md border border-primary px-lg"
-              >
-                <Text className={`text-center text-md font-bold text-primary ${languageFontClass}`}>
-                  {t('forum:gallery')}
-                </Text>
-              </PressableScale>
-              <PressableScale
-                testID="forum-open-mentoring"
-                accessibilityLabel={t('mentoring:communityAction')}
-                onPress={openMentoring}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended grow items-center justify-center rounded-md border border-primary px-lg"
-              >
-                <Text className={`text-center text-md font-bold text-primary ${languageFontClass}`}>
-                  {t('mentoring:communityAction')}
-                </Text>
-              </PressableScale>
-            </View>
-          </PageWidth>
-          <ForumCategoryTabs
-            categories={categoriesQuery.data ?? EMPTY_CATEGORIES}
-            selectedId={categoryId}
-            allLabel={t('forum:allCategories')}
-            accessibilityLabel={t('forum:categoriesLabel')}
-            onSelect={setCategoryId}
-          />
-        </View>
-      }
-      ListEmptyComponent={
-        <PageWidth>
-          <AnnouncementEmptyState
-            title={t('forum:emptyTitle')}
-            body={t('forum:emptyBody')}
-            languageFontClass={languageFontClass}
-          />
-        </PageWidth>
-      }
-    />
+    <>
+      {segmentList}
+      <CommunityShareSheet
+        visible={isShareSheetOpen}
+        isPostDisabled={isOffline}
+        onChoose={chooseShare}
+        onClose={closeShareSheet}
+      />
+    </>
   );
 }

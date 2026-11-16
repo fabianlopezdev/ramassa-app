@@ -1,5 +1,5 @@
 {
-  "title": "Mentorat privé",
+  "title": "Mentorat",
   "intro": "Demande un entretien individuel avec l’équipe et propose un moment qui te convient.",
   "privacyTitle": "C’est privé",
   "privacyBody": "Seule l’équipe de Ramassà peut voir le sujet et la note. Les autres participantes et les associations n’y ont pas accès.",
@@ -43,11 +43,9 @@
   "noRequests": "Tu n’as pas encore demandé de mentorat.",
   "loadFailed": "Nous n’avons pas pu charger les demandes.",
   "retry": "Réessaie",
-  "communityAction": "Demander un mentorat privé",
-  "calendarPrivateTitle": "Rendez-vous privé avec l’équipe",
-  "calendarPrivateBody": "Ce rendez-vous est visible seulement par toi et l’équipe.",
+  "communityAction": "Mentorat",
   "calendarOpen": "Ouvrir le mentorat privé",
-  "adminTitle": "Mentorats",
+  "adminTitle": "Mentorat",
   "adminIntro": "Programme les demandes privées et clôture les séances terminées.",
   "adminQueueCount_one": "{{count}} demande",
   "adminQueueCount_other": "{{count}} demandes",
@@ -64,5 +62,9 @@
   "adminScheduleAction": "Programmer et prévenir",
   "adminRescheduleAction": "Mettre à jour et prévenir",
   "adminCompleteAction": "Marquer comme terminée",
-  "adminSaving": "Enregistrement..."
+  "adminSaving": "Enregistrement...",
+  "requestTitle": "Demande de mentorat",
+  "requestNote": "Ta note",
+  "preferredDay": "Préférence : {{date}}",
+  "requestNotFound": "Nous n’avons pas trouvé cette demande."
 }

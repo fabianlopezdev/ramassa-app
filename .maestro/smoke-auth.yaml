@@ -15,7 +15,6 @@ env:
   PROFILE_TITLE: '{{profile:title}}'
   SIGN_OUT: '{{auth:signOutAction}}'
   TAB_HOME: '{{nav:tabs.home}}'
-  TAB_PROFILE: '{{nav:tabs.profile}}'
 ---
 - runFlow: _open-app.yaml
 # Cold start with no session stays signed out. `_open-app.yaml` chose the
@@ -38,7 +37,7 @@ env:
       notVisible: '.*${PROFILE_TITLE}.*'
     commands:
       - tapOn:
-          text: '^${TAB_PROFILE}$'
+          id: player-profile-button
       - waitForAnimationToEnd:
           timeout: 3000
 - extendedWaitUntil:

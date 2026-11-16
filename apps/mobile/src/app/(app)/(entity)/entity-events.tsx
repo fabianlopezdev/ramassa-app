@@ -2,13 +2,18 @@
  * The partner entity's Events tab on the phone (RAPP-412), as the web portal's
  * events page: the published upcoming events, read only, with the title and
  * description in her language, the date and time where the event happens,
- * the place and a recurring mark.
+ * the place and a recurring mark. A card opens the event read only
+ * (RAPP-805), from the row this list already loaded.
  */
+import { EntityEventSheet } from '@/components/entity/entity-event-sheet';
 import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-load-failure';
+import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { PageWidth } from '@/components/layout/content-width';
+import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useEntityUpcomingEvents } from '@/lib/entity-portal';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,6 +29,8 @@ export default function EntityEventsScreen() {
   const events = useEntityUpcomingEvents();
   const language = (i18n.resolvedLanguage ?? DEFAULT_LANGUAGE) as SupportedLanguage;
   const rows = events.data ?? [];
+  const [openEventId, setOpenEventId] = useState<string | null>(null);
+  const openEvent = rows.find((event) => event.id === openEventId) ?? null;
 
   return (
     <SafeAreaView
@@ -33,17 +40,7 @@ export default function EntityEventsScreen() {
     >
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
         <PageWidth className="gap-lg p-lg">
-          <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('eventsTitle')}
-            </Text>
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-              {t('eventsIntro')}
-            </Text>
-          </View>
+          <EntityScreenHeader title={t('eventsTitle')} intro={t('eventsIntro')} />
           {hasLoadFailed(events) ? (
             <EntityLoadFailure query={events} />
           ) : events.data !== undefined && rows.length === 0 ? (
@@ -64,9 +61,13 @@ export default function EntityEventsScreen() {
                   timeZone: event.timeZone,
                 }).format(new Date(event.startsAt));
                 return (
-                  <View
+                  <PressableScale
                     key={event.id}
                     testID={`entity-event-${event.id}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${title}, ${when}`}
+                    onPress={() => setOpenEventId(event.id)}
+                    haptic="selection"
                     style={continuousCorners}
                     className="gap-xs rounded-md border border-neutral-200 bg-white p-md"
                   >
@@ -85,17 +86,21 @@ export default function EntityEventsScreen() {
                       </Text>
                     ) : null}
                     {description.length > 0 ? (
-                      <Text className={`text-start text-md text-neutral-700 ${fontClass}`}>
+                      <Text
+                        numberOfLines={3}
+                        className={`text-start text-md text-neutral-700 ${fontClass}`}
+                      >
                         {description}
                       </Text>
                     ) : null}
-                  </View>
+                  </PressableScale>
                 );
               })}
             </View>
           )}
         </PageWidth>
       </ScrollView>
+      <EntityEventSheet event={openEvent} onClose={() => setOpenEventId(null)} />
     </SafeAreaView>
   );
 }

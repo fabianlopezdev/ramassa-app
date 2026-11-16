@@ -1,10 +1,10 @@
 {
   "tabs": {
     "home": "Inicio",
-    "events": "Calendario",
+    "events": "Actividades",
+    "chat": "Chat",
     "community": "Comunidad",
-    "services": "Servicios",
-    "profile": "Perfil"
+    "services": "Ayuda"
   },
   "staff": {
     "dashboard": "Panel",
@@ -44,8 +44,8 @@
     "dashboard": "Impacto",
     "referrals": "Derivaciones",
     "services": "Servicios",
-    "events": "Eventos",
-    "messages": "Mensajes"
+    "events": "Actividades",
+    "messages": "Chat"
   },
   "a11y": {
     "staffSidebar": "Navegación del equipo",
@@ -57,13 +57,32 @@
   },
   "team": {
     "today": "Hoy",
-    "messages": "Mensajes",
+    "messages": "Chats",
     "more": "Más",
     "homeTitle": "¿Qué quieres hacer?",
     "navigation": "Navegación del equipo",
     "backToHome": "Volver al inicio",
-    "todayIntro": "Lo que hay que hacer ahora.",
     "participants": "Participantes",
-    "content": "Contenido"
+    "content": "Contenido",
+    "moreGroups": {
+      "field": "En el campo",
+      "players": "Jugadoras",
+      "communication": "Comunicación",
+      "data": "Datos",
+      "organization": "Organización",
+      "app": "La app"
+    },
+    "organizationData": "Datos de la organización",
+    "pending": "Pendiente",
+    "pendingRow": {
+      "serviceReviews": "Servicios por revisar",
+      "stories": "Historias por revisar",
+      "reports": "Contenido denunciado",
+      "feedback": "Sugerencias nuevas",
+      "mentoring": "Peticiones de mentoría",
+      "erasure": "Peticiones de borrado",
+      "messages": "Chats sin leer",
+      "stockAlerts": "Material bajo cero"
+    }
   }
 }

@@ -1,5 +1,5 @@
 {
-  "title": "Mentoria privada",
+  "title": "Mentoria",
   "intro": "Demana una conversa individual amb l’equip i proposa quan et va bé.",
   "privacyTitle": "És privat",
   "privacyBody": "Només l’equip de Ramassà pot veure el tema i la nota. Altres participants i entitats no hi tenen accés.",
@@ -43,11 +43,9 @@
   "noRequests": "Encara no has demanat cap mentoria.",
   "loadFailed": "No hem pogut carregar les sol·licituds.",
   "retry": "Torna-ho a provar",
-  "communityAction": "Demanar mentoria privada",
-  "calendarPrivateTitle": "Cita privada amb l’equip",
-  "calendarPrivateBody": "Aquesta cita només és visible per a tu i l’equip.",
+  "communityAction": "Mentoria",
   "calendarOpen": "Obrir mentoria privada",
-  "adminTitle": "Mentories",
+  "adminTitle": "Mentoria",
   "adminIntro": "Programa les sol·licituds privades i tanca les sessions completades.",
   "adminQueueCount_one": "{{count}} sol·licitud",
   "adminQueueCount_other": "{{count}} sol·licituds",
@@ -64,5 +62,9 @@
   "adminScheduleAction": "Programar i avisar",
   "adminRescheduleAction": "Actualitzar i avisar",
   "adminCompleteAction": "Marcar com a completada",
-  "adminSaving": "Desant..."
+  "adminSaving": "Desant...",
+  "requestTitle": "Sol·licitud de mentoria",
+  "requestNote": "La teva nota",
+  "preferredDay": "Preferència: {{date}}",
+  "requestNotFound": "No hem trobat aquesta sol·licitud."
 }

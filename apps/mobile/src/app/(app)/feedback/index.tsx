@@ -2,6 +2,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
 import { FormWidth } from '@/components/layout/content-width';
+import { OpenableCard } from '@/components/layout/openable-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { SuccessPop } from '@/components/motion/success-pop';
@@ -15,6 +16,7 @@ import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useNetworkState } from 'expo-network';
+import { useRouter, type Href } from 'expo-router';
 import { Stack } from 'expo-router/stack';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -63,6 +65,7 @@ interface FeedbackHistoryCardProps {
   readonly typeLabel: string;
   readonly statusAndDate: string;
   readonly languageFontClass: string;
+  readonly onOpenChat: () => void;
 }
 
 function FeedbackHistoryCard({
@@ -71,31 +74,31 @@ function FeedbackHistoryCard({
   typeLabel,
   statusAndDate,
   languageFontClass,
+  onOpenChat,
 }: FeedbackHistoryCardProps) {
   return (
     <FormWidth className="pb-md">
-      <View
+      <OpenableCard
         testID={`feedback-history-${id}`}
-        className="gap-xs rounded-lg border border-neutral-200 bg-white p-lg"
-        style={continuousCorners}
+        accessibilityLabel={[typeLabel, content, statusAndDate].join('. ')}
+        onOpen={onOpenChat}
+        className="rounded-lg border border-neutral-200 bg-white p-lg"
       >
         <Text className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}>
           {typeLabel}
         </Text>
         <Text
-          selectable
           style={styles.mixedDirectionText}
           className={`text-start text-md text-neutral-700 ${languageFontClass}`}
         >
           {content}
         </Text>
         <Text
-          selectable
           className={`text-start text-sm font-medium tabular-nums text-primary ${languageFontClass}`}
         >
           {statusAndDate}
         </Text>
-      </View>
+      </OpenableCard>
     </FormWidth>
   );
 }
@@ -104,6 +107,9 @@ export default function FeedbackScreen() {
   const { t, i18n } = useTranslation(['feedback', 'common', 'errors']);
   const languageFontClass = useLanguageFontClass();
   const { session } = useAuth();
+  const { push } = useRouter();
+  // The team answers in her chat with the team (X5).
+  const openChat = useCallback(() => push('/team-chat' as Href), [push]);
   const networkState = useNetworkState();
   const isOnline = isNetworkStateOnline(networkState);
   const feedbackQuery = usePlayerFeedback();
@@ -206,9 +212,10 @@ export default function FeedbackScreen() {
           new Date(item.createdAt),
         )}`}
         languageFontClass={languageFontClass}
+        onOpenChat={openChat}
       />
     ),
-    [dateFormatter, languageFontClass, t],
+    [dateFormatter, languageFontClass, openChat, t],
   );
   const submitAnother = useCallback(() => {
     setIsComplete(false);
@@ -378,6 +385,14 @@ export default function FeedbackScreen() {
               >
                 {t('feedback:historyTitle')}
               </Text>
+              {(feedbackQuery.data?.length ?? 0) > 0 ? (
+                <Text
+                  testID="feedback-answer-in-chat"
+                  className={`text-start text-md text-neutral-600 ${languageFontClass}`}
+                >
+                  {t('feedback:answerInChat')}
+                </Text>
+              ) : null}
               {feedbackQuery.isPending ? (
                 <View
                   accessible

@@ -2,14 +2,17 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
 import { FormWidth } from '@/components/layout/content-width';
+import { OpenableCard } from '@/components/layout/openable-card';
 import { MentoringPreferencePickers } from '@/components/mentoring/mentoring-preference-pickers';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { SuccessPop } from '@/components/motion/success-pop';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { MENTORING_STATUS_KEYS, MENTORING_TOPIC_KEYS } from '@/lib/mentoring-labels';
 import { useCreateMentoringRequest, usePlayerMentoringRequests } from '@/lib/player-mentoring';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
+import { useRouter, type Href } from 'expo-router';
 import { Stack } from 'expo-router/stack';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +25,6 @@ import {
   MENTORING_TOPICS,
   mentoringRequestSchema,
   type MentoringRequest,
-  type MentoringStatus,
   type MentoringTopic,
 } from '@ramassa/shared/mentoring';
 import { tokens } from '@ramassa/shared/tokens';
@@ -37,22 +39,8 @@ const styles = StyleSheet.create({
   mixedDirectionText: { writingDirection: 'auto' },
 });
 
-const topicKey: Readonly<Record<MentoringTopic, string>> = {
-  personal_development: 'topicPersonalDevelopment',
-  labor_orientation: 'topicLaborOrientation',
-  asylum_rights: 'topicAsylumRights',
-  gender_violence: 'topicGenderViolence',
-  empowerment: 'topicEmpowerment',
-  digital_skills: 'topicDigitalSkills',
-  other: 'topicOther',
-};
-
-const statusKey: Readonly<Record<MentoringStatus, string>> = {
-  requested: 'statusRequested',
-  scheduled: 'statusScheduled',
-  completed: 'statusCompleted',
-  cancelled: 'statusCancelled',
-};
+const topicKey = MENTORING_TOPIC_KEYS;
+const statusKey = MENTORING_STATUS_KEYS;
 const mentoringKeyExtractor = (request: MentoringRequest) => request.id;
 
 export default function MentoringScreen() {
@@ -359,27 +347,32 @@ function RequestStatusCard({
   readonly languageFontClass: string;
 }) {
   const { t } = useTranslation('mentoring');
+  const { push } = useRouter();
+  const status = t(statusKey[request.status]);
+  const topicLabel = t(topicKey[request.topic]);
+  const requestedOn = t('requestedOn', { date: dateFormatter.format(new Date(request.createdAt)) });
+  const openDetail = useCallback(
+    () => push(`/mentoring/${request.id}` as Href),
+    [push, request.id],
+  );
   return (
-    <View
+    <OpenableCard
       testID={`mentoring-request-${request.id}`}
-      className="gap-xs rounded-lg border border-neutral-200 bg-white p-lg"
-      style={continuousCorners}
+      accessibilityLabel={[status, topicLabel, requestedOn].join('. ')}
+      onOpen={openDetail}
+      className="rounded-lg border border-neutral-200 bg-white p-lg"
     >
       <Text className={`text-start text-md font-bold text-primary ${languageFontClass}`}>
-        {t(statusKey[request.status])}
+        {status}
       </Text>
       <Text className={`text-start text-md font-semibold text-neutral-900 ${languageFontClass}`}>
-        {t(topicKey[request.topic])}
+        {topicLabel}
       </Text>
-      <Text
-        selectable
-        className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}
-      >
-        {t('requestedOn', { date: dateFormatter.format(new Date(request.createdAt)) })}
+      <Text className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}>
+        {requestedOn}
       </Text>
       {request.scheduledAt === null ? null : (
         <Text
-          selectable
           className={`text-start text-sm font-medium tabular-nums text-neutral-800 ${languageFontClass}`}
         >
           {dateTimeFormatter.format(new Date(request.scheduledAt))}
@@ -387,13 +380,12 @@ function RequestStatusCard({
       )}
       {request.assignedStaffName === null ? null : (
         <Text
-          selectable
           style={styles.mixedDirectionText}
           className={`text-start text-sm text-neutral-600 ${languageFontClass}`}
         >
           {t('assignedTo', { name: request.assignedStaffName })}
         </Text>
       )}
-    </View>
+    </OpenableCard>
   );
 }

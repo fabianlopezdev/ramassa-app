@@ -1,29 +1,50 @@
 /**
- * More (RAPP-245): what is not an area of its own. Settings (language and app
- * lock) and sign-out, Stock for whoever receives, counts or edits material
- * (RAPP-250), forum and gallery moderation (RAPP-380, RAPP-381), mentoring
- * (RAPP-382), the feedback inbox (RAPP-383), notifications (RAPP-385), the
- * impact dashboard (RAPP-400), data exports and the audit log (RAPP-401), the
- * team (RAPP-404), the organization's settings (RAPP-403), internal documents
- * (RAPP-406), collaborating entities (RAPP-407), surveys (RAPP-384), and the
- * player preview (RAPP-371); later slices add the rest.
- *
+ * More (RAPP-245, RAPP-796): what is not an area of its own, in six headed
+ * groups with field work first and sign-out last. The groups and which entries
+ * she may open come from `moreGroups` in `lib/team-shell`, the same rule the
+ * large-button home uses for its More button (RAPP-797); a group with no entry
+ * for her is left out. The same screen opens from the tabs, the large-button
+ * home and the tablet sidebar.
  */
 import { PageWidth } from '@/components/layout/content-width';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { PreviewStartFailed, useStartPreview } from '@/components/preview/preview-as-player';
+import { ProfileSection } from '@/components/profile/profile-section';
 import { TeamBackToHome } from '@/components/team/team-back-to-home';
-import { teamScreens } from '@/lib/account-area';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { TeamListRow } from '@/components/team/team-list-row';
 import { useGuardedLogout } from '@/lib/sign-out-guard';
 import { usePendingSigningCount } from '@/lib/tablet-signing';
-import { teamAreas } from '@/lib/team-shell';
+import { moreGroups, type MoreEntry, type MoreGroup } from '@/lib/team-shell';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+/** Entries that open a screen, with the testID each has had since it arrived. */
+const ROUTES: Readonly<
+  Partial<Record<MoreEntry, { readonly testID: string; readonly href: Href }>>
+> = {
+  collectSignatures: {
+    testID: 'team-more-collect-signatures',
+    href: '/collect-signatures' as Href,
+  },
+  stock: { testID: 'team-more-stock', href: '/stock' as Href },
+  mentoring: { testID: 'team-more-mentoring', href: '/team-mentoring' as Href },
+  feedback: { testID: 'team-more-feedback', href: '/team-feedback' as Href },
+  // One entry for forum and gallery reports (decision D4).
+  moderation: { testID: 'team-more-forum', href: '/forum-moderation' as Href },
+  notifications: { testID: 'team-more-notifications', href: '/team-notifications' as Href },
+  surveys: { testID: 'team-more-surveys', href: '/team-surveys' as Href },
+  impact: { testID: 'team-more-impact', href: '/team-impact' as Href },
+  data: { testID: 'team-more-data', href: '/team-data' as Href },
+  documents: { testID: 'team-more-documents', href: '/team-documents' as Href },
+  staff: { testID: 'team-more-staff', href: '/team-staff' as Href },
+  entities: { testID: 'team-more-entities', href: '/team-entities' as Href },
+  organization: { testID: 'team-more-organization', href: '/team-organization' as Href },
+  settings: { testID: 'team-more-settings', href: '/app-lock' as Href },
+};
 
 export default function TeamMoreScreen() {
   const signOut = useGuardedLogout();
@@ -33,21 +54,91 @@ export default function TeamMoreScreen() {
   const { t: tProfile } = useTranslation('profile');
   const { t: tParticipants } = useTranslation('participants');
   const { t: tCommon } = useTranslation('common');
-  const preview = useStartPreview();
-  const { permissions } = useAccountAccess();
-  const hasStock = teamAreas(permissions).includes('stock');
-  const team = teamScreens(permissions);
-  const { t: tForum } = useTranslation('forum');
   const { t: tMentoring } = useTranslation('mentoring');
-  const { t: tGallery } = useTranslation('gallery');
   const { t: tFeedback } = useTranslation('feedback');
+  const { t: tForum } = useTranslation('forum');
   const { t: tNotifications } = useTranslation('notifications');
   const { t: tSurveys } = useTranslation('surveys');
   const { t: tEntities } = useTranslation('entity-management');
   const { t: tSettings } = useTranslation('settings');
   const { t: tAdmin } = useTranslation('admin');
+  const preview = useStartPreview();
+  const { permissions } = useAccountAccess();
+  const groups = useMemo(() => moreGroups(permissions), [permissions]);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
+
+  const groupTitles: Readonly<Record<MoreGroup, string>> = {
+    field: t('team.moreGroups.field'),
+    players: t('team.moreGroups.players'),
+    communication: t('team.moreGroups.communication'),
+    data: t('team.moreGroups.data'),
+    organization: t('team.moreGroups.organization'),
+    app: t('team.moreGroups.app'),
+  };
+  const labels: Readonly<Record<MoreEntry, string>> = {
+    collectSignatures: tParticipants('signing.title'),
+    stock: tParticipants('stock.title'),
+    mentoring: tMentoring('adminTitle'),
+    feedback: tFeedback('inboxTitle'),
+    moderation: tForum('moderationScreenTitle'),
+    notifications: tNotifications('title'),
+    surveys: tSurveys('title'),
+    impact: tAdmin('impactReportTitle'),
+    data: t('staff.data'),
+    documents: tSettings('documentsTitle'),
+    staff: tSettings('team.title'),
+    entities: tEntities('managementTitle'),
+    organization: t('team.organizationData'),
+    preview: tCommon('previewAsPlayer'),
+    settings: tAuth('teamSettingsTitle'),
+    signOut: tProfile('signOutAction'),
+  };
+
+  const renderEntry = (entry: MoreEntry) => {
+    if (entry === 'preview') {
+      // Every team member, with no permission needed (ADR-026, RAPP-371).
+      return (
+        <TeamListRow
+          key={entry}
+          testID="team-more-preview"
+          label={labels.preview}
+          onPress={() => void preview.start(null)}
+          isBusy={preview.isStarting}
+        />
+      );
+    }
+    if (entry === 'signOut') {
+      return (
+        <TeamListRow
+          key={entry}
+          testID="team-more-sign-out"
+          label={labels.signOut}
+          tone="action"
+          onPress={signOut}
+        />
+      );
+    }
+    const route = ROUTES[entry];
+    if (route === undefined) return null;
+    // Signing the authorization on this tablet (RAPP-305), with the count of
+    // signings still waiting to sync.
+    const waiting =
+      entry === 'collectSignatures' && pendingSignings > 0
+        ? tParticipants('signing.pending', { count: pendingSignings })
+        : undefined;
+    return (
+      <TeamListRow
+        key={entry}
+        testID={route.testID}
+        label={labels[entry]}
+        accessibilityHint={waiting}
+        value={waiting === undefined ? undefined : String(pendingSignings)}
+        isValueHighlighted={waiting !== undefined}
+        onPress={() => push(route.href)}
+      />
+    );
+  };
 
   return (
     <SafeAreaView
@@ -59,7 +150,7 @@ export default function TeamMoreScreen() {
         {/* The inset keeps the last entry, sign-out, clear of the floating tab bar. */}
         <ScrollView
           contentInsetAdjustmentBehavior="automatic"
-          contentContainerClassName="gap-md p-lg pb-3xl"
+          contentContainerClassName="gap-lg p-lg pb-3xl"
         >
           <TeamBackToHome />
           <Text
@@ -68,271 +159,12 @@ export default function TeamMoreScreen() {
           >
             {t('team.more')}
           </Text>
-          {/* Signing the authorization on this tablet (RAPP-305), with the count
-              of signings still waiting to sync. */}
-          {permissions.has('consents.collect') ? (
-            <PressableScale
-              testID="team-more-collect-signatures"
-              accessibilityRole="button"
-              accessibilityLabel={tParticipants('signing.title')}
-              accessibilityHint={
-                pendingSignings > 0
-                  ? tParticipants('signing.pending', { count: pendingSignings })
-                  : undefined
-              }
-              onPress={() => push('/collect-signatures' as Href)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended justify-center gap-xs rounded-md border border-neutral-200 bg-white px-md py-sm"
-            >
-              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-                {tParticipants('signing.title')}
-              </Text>
-              {pendingSignings > 0 ? (
-                <Text className={`text-start text-sm text-primary-dark ${languageFontClass}`}>
-                  {tParticipants('signing.pending', { count: pendingSignings })}
-                </Text>
-              ) : null}
-            </PressableScale>
-          ) : null}
-          {hasStock ? (
-            <PressableScale
-              testID="team-more-stock"
-              accessibilityRole="button"
-              accessibilityLabel={tParticipants('stock.title')}
-              onPress={() => push('/stock' as Href)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
-            >
-              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-                {tParticipants('stock.title')}
-              </Text>
-            </PressableScale>
-          ) : null}
-          {team.forumModeration ? (
-            <PressableScale
-              testID="team-more-forum"
-              accessibilityRole="button"
-              accessibilityLabel={tForum('moderationTitle')}
-              onPress={() => push('/forum-moderation' as Href)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
-            >
-              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-                {tForum('moderationTitle')}
-              </Text>
-            </PressableScale>
-          ) : null}
-          {team.galleryModeration ? (
-            <PressableScale
-              testID="team-more-gallery"
-              accessibilityRole="button"
-              accessibilityLabel={tGallery('moderationTitle')}
-              onPress={() => push('/team-gallery' as Href)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
-            >
-              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-                {tGallery('moderationTitle')}
-              </Text>
-            </PressableScale>
-          ) : null}
-          {team.feedback ? (
-            <PressableScale
-              testID="team-more-feedback"
-              accessibilityRole="button"
-              accessibilityLabel={tFeedback('inboxTitle')}
-              onPress={() => push('/team-feedback' as Href)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
-            >
-              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-                {tFeedback('inboxTitle')}
-              </Text>
-            </PressableScale>
-          ) : null}
-          {team.impact ? (
-            <PressableScale
-              testID="team-more-impact"
-              accessibilityRole="button"
-              accessibilityLabel={tAdmin('impactReportTitle')}
-              onPress={() => push('/team-impact' as Href)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
-            >
-              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-                {tAdmin('impactReportTitle')}
-              </Text>
-            </PressableScale>
-          ) : null}
-          {team.staff ? (
-            <PressableScale
-              testID="team-more-staff"
-              accessibilityRole="button"
-              accessibilityLabel={tSettings('team.title')}
-              onPress={() => push('/team-staff' as Href)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
-            >
-              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-                {tSettings('team.title')}
-              </Text>
-            </PressableScale>
-          ) : null}
-          {team.dataExports || team.auditLog ? (
-            <PressableScale
-              testID="team-more-data"
-              accessibilityRole="button"
-              accessibilityLabel={t('staff.data')}
-              onPress={() => push('/team-data' as Href)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
-            >
-              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-                {t('staff.data')}
-              </Text>
-            </PressableScale>
-          ) : null}
-          {team.organization ? (
-            <PressableScale
-              testID="team-more-organization"
-              accessibilityRole="button"
-              accessibilityLabel={tSettings('tabOrganization')}
-              onPress={() => push('/team-organization' as Href)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
-            >
-              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-                {tSettings('tabOrganization')}
-              </Text>
-            </PressableScale>
-          ) : null}
-          {team.documents ? (
-            <PressableScale
-              testID="team-more-documents"
-              accessibilityRole="button"
-              accessibilityLabel={tSettings('documentsTitle')}
-              onPress={() => push('/team-documents' as Href)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
-            >
-              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-                {tSettings('documentsTitle')}
-              </Text>
-            </PressableScale>
-          ) : null}
-          {team.entities ? (
-            <PressableScale
-              testID="team-more-entities"
-              accessibilityRole="button"
-              accessibilityLabel={tEntities('managementTitle')}
-              onPress={() => push('/team-entities' as Href)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
-            >
-              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-                {tEntities('managementTitle')}
-              </Text>
-            </PressableScale>
-          ) : null}
-          {team.surveys ? (
-            <PressableScale
-              testID="team-more-surveys"
-              accessibilityRole="button"
-              accessibilityLabel={tSurveys('title')}
-              onPress={() => push('/team-surveys' as Href)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
-            >
-              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-                {tSurveys('title')}
-              </Text>
-            </PressableScale>
-          ) : null}
-          {team.notifications ? (
-            <PressableScale
-              testID="team-more-notifications"
-              accessibilityRole="button"
-              accessibilityLabel={tNotifications('title')}
-              onPress={() => push('/team-notifications' as Href)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
-            >
-              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-                {tNotifications('title')}
-              </Text>
-            </PressableScale>
-          ) : null}
-          {team.mentoring ? (
-            <PressableScale
-              testID="team-more-mentoring"
-              accessibilityRole="button"
-              accessibilityLabel={tMentoring('adminTitle')}
-              onPress={() => push('/team-mentoring' as Href)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
-            >
-              <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-                {tMentoring('adminTitle')}
-              </Text>
-            </PressableScale>
-          ) : null}
-          {/* Every team member, with no permission needed (ADR-026, RAPP-371). */}
-          <PressableScale
-            testID="team-more-preview"
-            accessibilityRole="button"
-            accessibilityLabel={tCommon('previewAsPlayer')}
-            onPress={() => void preview.start(null)}
-            isBusy={preview.isStarting}
-            haptic="selection"
-            style={continuousCorners}
-            className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
-          >
-            <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-              {tCommon('previewAsPlayer')}
-            </Text>
-          </PressableScale>
+          {groups.map(({ group, entries }) => (
+            <ProfileSection key={group} title={groupTitles[group]}>
+              {entries.map(renderEntry)}
+            </ProfileSection>
+          ))}
           <PreviewStartFailed isShown={preview.hasFailed} />
-          <PressableScale
-            testID="team-more-settings"
-            accessibilityRole="button"
-            accessibilityLabel={tAuth('teamSettingsTitle')}
-            onPress={() => push('/app-lock' as Href)}
-            haptic="selection"
-            style={continuousCorners}
-            className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
-          >
-            <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-              {tAuth('teamSettingsTitle')}
-            </Text>
-          </PressableScale>
-          <PressableScale
-            testID="team-more-sign-out"
-            accessibilityRole="button"
-            accessibilityLabel={tProfile('signOutAction')}
-            onPress={signOut}
-            haptic="tapLight"
-            className="min-h-recommended justify-center px-md"
-          >
-            <Text
-              className={`text-start text-md font-semibold text-primary-dark ${languageFontClass}`}
-            >
-              {tProfile('signOutAction')}
-            </Text>
-          </PressableScale>
         </ScrollView>
       </PageWidth>
     </SafeAreaView>

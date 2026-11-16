@@ -1,5 +1,5 @@
 {
-  "title": "إرشاد خاص",
+  "title": "الإرشاد",
   "intro": "اطلبي محادثة فردية مع الفريق واقترحي الوقت المناسب لك.",
   "privacyTitle": "هذا خاص",
   "privacyBody": "فقط فريق Ramassà يمكنه رؤية الموضوع والملاحظة. لا يمكن للمشاركات أو الجهات الأخرى الوصول إليهما.",
@@ -43,9 +43,7 @@
   "noRequests": "لم تطلبي إرشادًا بعد.",
   "loadFailed": "تعذر تحميل الطلبات.",
   "retry": "حاولي مرة أخرى",
-  "communityAction": "طلب إرشاد خاص",
-  "calendarPrivateTitle": "موعد خاص مع الفريق",
-  "calendarPrivateBody": "هذا الموعد مرئي لك وللفريق فقط.",
+  "communityAction": "الإرشاد",
   "calendarOpen": "فتح الإرشاد الخاص",
   "adminTitle": "الإرشاد",
   "adminIntro": "جدولة الطلبات الخاصة وإغلاق الجلسات المكتملة.",
@@ -64,5 +62,9 @@
   "adminScheduleAction": "الجدولة والإشعار",
   "adminRescheduleAction": "التحديث والإشعار",
   "adminCompleteAction": "تحديد كمكتمل",
-  "adminSaving": "جارٍ الحفظ..."
+  "adminSaving": "جارٍ الحفظ...",
+  "requestTitle": "طلب إرشاد",
+  "requestNote": "ملاحظتك",
+  "preferredDay": "التفضيل: {{date}}",
+  "requestNotFound": "لم نجد هذا الطلب."
 }

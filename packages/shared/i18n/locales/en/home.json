@@ -1,7 +1,6 @@
 {
   "title": "Welcome",
   "feedTitle": "Announcements",
-  "feedIntro": "Club news, training updates, and activities for you.",
   "filterLabel": "Filter announcements by category",
   "filterAll": "All",
   "category": {
@@ -22,5 +21,12 @@
     "deadline": "By {{date}}",
     "answer": "Answer",
     "dismiss": "Not now"
+  },
+  "toDo": {
+    "title": "To do",
+    "count": "{{current}} of {{total}}"
+  },
+  "nextActivity": {
+    "title": "Next activity"
   }
 }

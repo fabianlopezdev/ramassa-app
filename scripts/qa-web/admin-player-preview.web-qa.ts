@@ -62,7 +62,7 @@ test('the sidebar opens the whole player app', async ({ page }) => {
   await signIn(page, STAFF_EMAIL);
   await page.goto('/content/announcements');
   const tab = await openPreview(page, 'admin-preview-app');
-  await expect(tab.getByTestId('home-open-feedback')).toBeVisible({ timeout: 30_000 });
+  await expect(tab.getByTestId('home-screen')).toBeVisible({ timeout: 30_000 });
   await tab.close();
 });
 

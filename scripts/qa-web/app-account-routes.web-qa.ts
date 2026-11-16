@@ -54,6 +54,8 @@ test.describe.serial('app areas by account type', () => {
     await completeSecondFactor(page, ENTITY_EMAIL);
     await expect(page.getByTestId('entity-home')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('tab', { name: 'Home', exact: true })).toHaveCount(0);
+    // Settings and sign-out open from the header button (RAPP-803).
+    await page.getByTestId('entity-account-button').first().click();
     await expect(page.getByTestId('entity-sign-out')).toBeVisible();
   });
 
@@ -93,13 +95,25 @@ test.describe.serial('app areas by account type', () => {
     await expect(page.getByTestId('team-home-messages')).toHaveCount(0);
   });
 
-  test('the inbox alone opens on the conversations', async ({ page }) => {
+  // Avui is everyone's start (RAPP-795): the unread chats wait in its list.
+  test('the inbox alone opens on Today, with the unread chats', async ({ page }) => {
     giveStaffOnly(['messages.inbox']);
     await signInPlayer(page, STAFF_EMAIL);
     await completeSecondFactor(page, STAFF_EMAIL);
-    await expect(page.getByTestId('team-sidebar-messages')).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByTestId('team-sidebar-today')).toHaveCount(0);
-    await expect(page.getByRole('heading', { name: 'Conversations' })).toBeVisible();
+    await expect(page.getByTestId('team-sidebar-today')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('team-sidebar-messages')).toBeVisible();
+    await expect(page.getByTestId('today-messages')).toBeVisible();
+  });
+
+  // More is reachable from every layout (RAPP-797): a More tool alone opens
+  // the large-button home on a phone, with its More button.
+  test('a More tool alone opens the home with More on a phone', async ({ page }) => {
+    giveStaffOnly(['team.manage']);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signInPlayer(page, STAFF_EMAIL);
+    await completeSecondFactor(page, STAFF_EMAIL);
+    await page.getByTestId('team-home-more').click({ timeout: 30_000 });
+    await expect(page.getByTestId('team-more-staff')).toBeVisible({ timeout: 30_000 });
   });
 
   // Quick participant lookup (RAPP-247): the card shows only what the
@@ -156,7 +170,7 @@ test.describe.serial('app areas by account type', () => {
   });
 
   test('a team member with no app screen is pointed to the web dashboard', async ({ page }) => {
-    giveStaffOnly(['settings.branding']);
+    giveStaffOnly(['onboarding.design']);
     await signInPlayer(page, STAFF_EMAIL);
     await completeSecondFactor(page, STAFF_EMAIL);
     await expect(page.getByTestId('team-home-notice')).toBeVisible({ timeout: 30_000 });

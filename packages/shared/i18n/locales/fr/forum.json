@@ -1,10 +1,7 @@
 {
   "title": "Communauté",
-  "intro": "Pose des questions, partage et aide d’autres joueuses.",
   "categoriesLabel": "Catégories du forum",
   "allCategories": "Tout",
-  "newPost": "Écris une publication",
-  "teamChat": "Discussion privée avec l’équipe",
   "offline": "Pas de connexion. Tu vois les publications enregistrées sur le téléphone.",
   "offlineWrite": "Connecte-toi à internet pour publier, répondre, modifier ou supprimer.",
   "loading": "Chargement de la communauté",
@@ -78,11 +75,14 @@
   "flagConfirmation": "Merci. L’équipe va vérifier.",
   "postingDisabled": "Pour le moment, tu ne peux pas publier ni répondre sur le forum. Tu peux continuer à le lire et contacter l’équipe si tu as besoin d’aide.",
   "moderationTitle": "Modération du forum",
+  "moderationScreenTitle": "Modération",
+  "moderationSegmentForum": "Forum",
+  "moderationReportedTitle": "Contenu signalé",
   "moderationCount": "En attente : {{count}}",
   "moderationActionFailed": "Impossible de terminer l’action.",
   "moderationDeleteConfirm": "Veux-tu supprimer ce contenu ?",
-  "moderationEmptyTitle": "Aucun signalement en attente",
-  "moderationEmptyBody": "Les nouveaux signalements apparaîtront ici.",
+  "moderationEmptyTitle": "Aucun contenu signalé",
+  "moderationEmptyBody": "Le contenu signalé apparaîtra ici.",
   "moderationUnknownCategory": "Catégorie inconnue",
   "moderationFlags": "Signalements : {{count}}",
   "moderationTarget": {
@@ -113,5 +113,13 @@
   "categorySave": "Enregistre la catégorie",
   "gallery": "Galerie",
   "categorySlugHelp": "Lettres minuscules, chiffres et tirets. Il est créé à partir du nom en catalan.",
-  "categorySlugInvalid": "L’identifiant peut contenir seulement des lettres minuscules, des chiffres et des tirets."
+  "categorySlugInvalid": "L’identifiant peut contenir seulement des lettres minuscules, des chiffres et des tirets.",
+  "share": "Partage",
+  "sharePost": "Une publication",
+  "shareMedia": "Une photo ou une vidéo",
+  "shareStory": "Mon histoire",
+  "segmentsLabel": "Sections de la communauté",
+  "segmentForum": "Forum",
+  "segmentGallery": "Galerie",
+  "segmentStories": "Histoires"
 }

@@ -1,5 +1,5 @@
 {
-  "title": "Présences",
+  "title": "Aujourd’hui",
   "intro": "Choisis une séance et note les présences sur le terrain.",
   "today": "Séances d’aujourd’hui",
   "noEventsTitle": "Pas de séance aujourd’hui",
@@ -60,5 +60,6 @@
   "syncRejectedPermission": "Non enregistré. Tu ne peux plus faire l’appel ici.",
   "syncRetryAction": "Réessaie",
   "syncDiscardAction": "Retire-la",
-  "selectSession": "Choisis une séance pour faire l’appel."
+  "selectSession": "Choisis une séance pour faire l’appel.",
+  "openParticipantCard": "Ouvre la fiche de {{name}}"
 }

@@ -2,15 +2,28 @@
  * Her activity timeline on the participant card (RAPP-283), with the web
  * admin's filters: everything, or one source at a time. The first entries
  * show at once and the rest on request, so a long history does not push her
- * material far down the card.
+ * material far down the card. An entry opens the item it describes when the
+ * reader may open it (X5); any other entry does not look tappable.
  */
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { OpenableCard } from '@/components/layout/openable-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { logger } from '@/lib/observability';
+import {
+  activityTarget,
+  activityTargetRoute,
+  resolveActivityTargetId,
+  type ActivityTarget,
+} from '@/lib/participant-activity-targets';
 import { useParticipantActivity } from '@/lib/participant-lookup';
+import { supabase } from '@/lib/supabase';
+import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useMemo, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { toAppError } from '@ramassa/shared/errors';
 import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
 import {
@@ -61,6 +74,22 @@ export function ParticipantActivity({ participantId }: { readonly participantId:
     [activity.data, filter],
   );
   const shown = isExpanded ? entries : entries.slice(0, FIRST_ENTRIES);
+  const { permissions } = useAccountAccess();
+  const { push } = useRouter();
+  const openTarget = useCallback(
+    async (target: ActivityTarget, entryId: string) => {
+      try {
+        const route = activityTargetRoute(
+          target,
+          await resolveActivityTargetId(supabase, target, entryId, participantId),
+        );
+        if (route !== null) push(route);
+      } catch (error) {
+        logger.warn('participant_activity.target_lookup_failed', { error: toAppError(error) });
+      }
+    },
+    [participantId, push],
+  );
 
   return (
     <View className="gap-sm" testID="participant-activity">
@@ -115,13 +144,14 @@ export function ParticipantActivity({ participantId }: { readonly participantId:
             const meta = `${t(ACTIVITY_LABEL_KEYS[entry.kind])} · ${format.format(
               new Date(entry.occurred_at),
             )}`;
+            const target = activityTarget(entry.kind, permissions);
             return (
-              <View
+              <OpenableCard
                 key={`${entry.kind}-${entry.id}`}
                 testID={`participant-activity-${entry.kind}`}
-                accessible
                 accessibilityLabel={[entry.title, detail, meta].filter(Boolean).join('. ')}
-                className="gap-xs border-s-2 border-neutral-300 ps-md"
+                onOpen={target === null ? undefined : () => void openTarget(target, entry.id)}
+                className="border-s-2 border-neutral-300 ps-md"
               >
                 <Text className={`text-start text-md font-semibold text-neutral-900 ${fontClass}`}>
                   {entry.title}
@@ -132,7 +162,7 @@ export function ParticipantActivity({ participantId }: { readonly participantId:
                   </Text>
                 )}
                 <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>{meta}</Text>
-              </View>
+              </OpenableCard>
             );
           })}
           {entries.length > shown.length ? (

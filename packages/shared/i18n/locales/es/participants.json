@@ -50,7 +50,7 @@
   "filterNationality": "Nacionalidad",
   "filterStatus": "Estado",
   "filterDependents": "Personas a cargo",
-  "optionAll": "Todas",
+  "optionAll": "Todo",
   "statusActive": "Activas",
   "statusInactive": "Inactivas",
   "dependentsWith": "Con",
@@ -215,7 +215,7 @@
     "savedBelowZero": "El stock de este artículo ahora está bajo cero. Hoy pide un recuento.",
     "another": "Entregar otro artículo",
     "done": "Hecho",
-    "materialTitle": "Material",
+    "materialTitle": "Material de la jugadora",
     "materialEmpty": "Todavía no se ha entregado material.",
     "given": "Dado el {{date}}",
     "lent": "Prestado el {{date}}",
@@ -242,8 +242,6 @@
     "cancel": "Cancelar",
     "returnFailed": "La devolución no se ha guardado. Comprueba la conexión y vuelve a intentarlo.",
     "loadFailed": "No se ha podido cargar su material.",
-    "stockTitle": "Material",
-    "stockFine": "No hay stock que revisar.",
     "stockAlert": "{{item}}: bajo cero. Cuéntalo.",
     "saveFailed": "La entrega no se ha guardado. Vuelve a intentarlo.",
     "detail": {
@@ -258,7 +256,7 @@
     }
   },
   "stock": {
-    "title": "Stock",
+    "title": "Material",
     "intro": "Lo que tiene el equipo en el almacén, a partir de cada llegada, entrega y devolución.",
     "recordArrival": "Registrar material recibido",
     "levelsTitle": "En stock",
@@ -390,9 +388,6 @@
     "todayMine": "{{item}}: {{quantity}} contigo, tenía que volver el {{date}}"
   },
   "items": {
-    "title": "Artículos",
-    "intro": "El material que el equipo entrega, cuenta y recibe.",
-    "action": "Artículos",
     "add": "Añadir un artículo",
     "newTitle": "Artículo nuevo",
     "editTitle": "Editar {{item}}",
@@ -426,7 +421,6 @@
     "saveFailed": "El artículo no se ha guardado. Vuelve a intentarlo.",
     "sizeInStock": "La talla {{size}} aún tiene stock. Cuéntala a cero o mantenla.",
     "codeTaken": "Otro artículo ya usa estas letras.",
-    "summary": "{{kind}} · {{sizes}}",
     "inactive": "Desactivado"
   },
   "list": {
@@ -690,5 +684,11 @@
       "done": "Respondido",
       "dismissed": "Descartado"
     }
+  },
+  "segments": {
+    "label": "Secciones de Participantes",
+    "players": "Jugadoras",
+    "waiting": "{{label}}, {{count}} pendientes",
+    "waiting_one": "{{label}}, 1 pendiente"
   }
 }

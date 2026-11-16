@@ -13,22 +13,26 @@ import {
   AnnouncementFeedSkeleton,
   OfflineBanner,
 } from '@/components/announcements/feed-states';
-import { PendingFormPrompt } from '@/components/forms/pending-form-prompt';
-import { KnowledgeQuickActions } from '@/components/knowledge/knowledge-quick-actions';
+import { HomeNextActivity } from '@/components/home/home-next-activity';
+import { HomeSectionHeader } from '@/components/home/home-section-header';
+import { HomeToDo } from '@/components/home/home-to-do';
 import { PageWidth } from '@/components/layout/content-width';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { SurveyPrompt } from '@/components/surveys/survey-prompt';
+import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { useMyCustomForms } from '@/lib/custom-forms';
+import { pickNextPlayerActivity } from '@/lib/home-next-activity';
+import { buildHomeToDoQueue } from '@/lib/home-to-do';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { logger } from '@/lib/observability';
+import { usePlayerEvents } from '@/lib/player-events';
+import { usePlayerSurveys } from '@/lib/player-surveys';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   filterAndOrderPlayerAnnouncements,
@@ -55,7 +59,7 @@ const getItemType = (item: AnnouncementListRow) =>
   item.image_url === null ? 'text-announcement' : 'image-announcement';
 
 export default function HomeScreen() {
-  const { t, i18n } = useTranslation(['home', 'common', 'feedback']);
+  const { t, i18n } = useTranslation(['home', 'common']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -64,6 +68,18 @@ export default function HomeScreen() {
   const isOffline = !isNetworkStateOnline(networkState);
   const [category, setCategory] = useState<PlayerAnnouncementCategoryFilter>('all');
   const { data, isPending, isError, error, isRefetching, refetch } = usePlayerAnnouncements();
+  const formsQuery = useMyCustomForms(true);
+  const surveysQuery = usePlayerSurveys();
+  const eventsQuery = usePlayerEvents();
+  const refetchForms = formsQuery.refetch;
+  const refetchSurveys = surveysQuery.refetch;
+  const refetchEvents = eventsQuery.refetch;
+
+  const toDoItems = useMemo(
+    () => buildHomeToDoQueue(formsQuery.data, surveysQuery.data),
+    [formsQuery.data, surveysQuery.data],
+  );
+  const nextActivity = useMemo(() => pickNextPlayerActivity(eventsQuery.data), [eventsQuery.data]);
 
   const announcements = useMemo(
     () => filterAndOrderPlayerAnnouncements(data ?? EMPTY_ANNOUNCEMENTS, category),
@@ -78,7 +94,6 @@ export default function HomeScreen() {
     [i18n.resolvedLanguage],
   );
   const openAnnouncement = useCallback((id: string) => push(`/announcement/${id}` as Href), [push]);
-  const openFeedback = useCallback(() => push('/feedback' as Href), [push]);
 
   const renderAnnouncement = useCallback(
     ({ item }: ListRenderItemInfo<AnnouncementListRow>) => {
@@ -128,7 +143,10 @@ export default function HomeScreen() {
 
   const onRefresh = useCallback(() => {
     void refetch();
-  }, [refetch]);
+    void refetchForms();
+    void refetchSurveys();
+    void refetchEvents();
+  }, [refetch, refetchEvents, refetchForms, refetchSurveys]);
 
   const onListLoad = useCallback(
     ({ elapsedTimeInMs }: { readonly elapsedTimeInMs: number }) => {
@@ -172,6 +190,7 @@ export default function HomeScreen() {
 
   return (
     <FlashList
+      testID="home-screen"
       data={announcements}
       renderItem={renderAnnouncement}
       keyExtractor={keyExtractor}
@@ -185,33 +204,11 @@ export default function HomeScreen() {
       onLoad={onListLoad}
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
-          {/* Her pending form comes first (RAPP-700). */}
-          <PendingFormPrompt />
-          <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
-            >
-              {t('feedTitle')}
-            </Text>
-            <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-              {t('feedIntro')}
-            </Text>
-          </View>
-          <KnowledgeQuickActions />
-          <SurveyPrompt />
-          <PressableScale
-            testID="home-open-feedback"
-            accessibilityLabel={t('feedback:homeAction')}
-            onPress={openFeedback}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-          >
-            <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
-              {t('feedback:homeAction')}
-            </Text>
-          </PressableScale>
+          <ProfilePhotoButton />
+          {/* Per fer, then her next activity, then the announcements (RAPP-790). */}
+          <HomeToDo items={toDoItems} languageFontClass={languageFontClass} />
+          <HomeNextActivity occurrence={nextActivity} languageFontClass={languageFontClass} />
+          <HomeSectionHeader title={t('feedTitle')} languageFontClass={languageFontClass} />
           {isOffline ? (
             <OfflineBanner label={t('offlineBanner')} languageFontClass={languageFontClass} />
           ) : null}

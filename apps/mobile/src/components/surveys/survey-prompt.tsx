@@ -9,12 +9,6 @@ import { Text, View } from 'react-native';
 import { useLanguage } from '@ramassa/shared/i18n';
 import { resolveSurveyCopy, type PlayerSurvey } from '@ramassa/shared/surveys';
 
-export function SurveyPrompt() {
-  const { data } = usePlayerSurveys();
-  const survey = useMemo(() => data?.find((item) => item.responseStatus !== 'completed'), [data]);
-  return <SurveyPromptCard survey={survey} />;
-}
-
 export function EventSurveyPrompt({ eventId }: { readonly eventId: string }) {
   const { data } = usePlayerSurveys();
   const survey = useMemo(
@@ -24,7 +18,7 @@ export function EventSurveyPrompt({ eventId }: { readonly eventId: string }) {
   return <SurveyPromptCard survey={survey} />;
 }
 
-function SurveyPromptCard({ survey }: { readonly survey: PlayerSurvey | undefined }) {
+export function SurveyPromptCard({ survey }: { readonly survey: PlayerSurvey | undefined }) {
   const { t } = useTranslation('surveys');
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();

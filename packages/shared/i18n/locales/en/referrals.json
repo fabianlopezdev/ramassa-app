@@ -27,8 +27,8 @@
   "searchEmpty": "No referrals match this search.",
   "status": {
     "pending": "Awaiting onboarding",
-    "active": "Active participant",
-    "inactive": "Inactive participant"
+    "active": "Active",
+    "inactive": "Inactive"
   },
   "open": "Open referral",
   "back": "Back to referrals",

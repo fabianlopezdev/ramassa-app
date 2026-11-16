@@ -2,7 +2,7 @@ appId: com.ramassa.app
 name: phase8-mentoring
 env:
   LOCALE: ca
-  COMMUNITY: '{{nav:tabs.community}}'
+  TAB_CHAT: '{{nav:tabs.chat}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
 ---
 - runFlow: _open-app.yaml
@@ -14,29 +14,19 @@ env:
     when:
       platform: Android
     commands:
-      - tapOn: '^${COMMUNITY}$'
+      - tapOn: '^${TAB_CHAT}$'
 - runFlow:
     when:
       platform: iOS
     commands:
       - tapOn:
-          id: player-tab-community
+          id: player-tab-chat
 - extendedWaitUntil:
     visible:
-      id: forum-board
+      id: player-chat-tab
     timeout: 60000
-- repeat:
-    times: 12
-    while:
-      notVisible:
-        id: forum-open-mentoring
-    commands:
-      - swipe:
-          start: 50%, 70%
-          end: 50%, 45%
-          duration: 700
 - tapOn:
-    id: forum-open-mentoring
+    id: chat-open-mentoring
 - extendedWaitUntil:
     visible:
       id: mentoring-screen

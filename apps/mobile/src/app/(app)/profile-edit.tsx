@@ -227,6 +227,9 @@ export default function ProfileEditScreen() {
         hasDependents={hasDependents}
         audience="self"
         testIDPrefix="profile-edit"
+        // The photo and video consent changes only under "Privacitat i
+        // permisos" (RAPP-794).
+        showMediaConsent={false}
         offTheirControl={generic.offTheirControl}
         offControlFields={
           generic.questions.length === 0 ? null : (

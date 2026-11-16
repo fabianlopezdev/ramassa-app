@@ -25,7 +25,7 @@ function sqlLiteral(value: string): string {
 
 async function signInPlayer(page: Page): Promise<void> {
   await signInPlayerWithEmailCode(page, player.email);
-  await expect(page.getByTestId('open-knowledge-base')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('home-screen')).toBeVisible({ timeout: 30_000 });
 }
 
 test.afterAll(() => {
@@ -41,7 +41,8 @@ test('player feedback reaches the staff inbox, transitions, filters, and existin
 }) => {
   test.setTimeout(180_000);
   await signInPlayer(page);
-  await page.getByTestId('home-open-feedback').click();
+  await page.goto(`${playerOrigin}/chat`, { waitUntil: 'domcontentloaded' });
+  await page.getByTestId('chat-open-feedback').click();
   await expect(page.getByTestId('feedback-screen')).toBeVisible({ timeout: 30_000 });
 
   for (const type of types) {
@@ -62,8 +63,8 @@ test('player feedback reaches the staff inbox, transitions, filters, and existin
     if (type !== 'general') await page.getByRole('button', { name: 'Send another' }).click();
   }
 
-  await page.goto(`${playerOrigin}/profile`, { waitUntil: 'domcontentloaded' });
-  await page.getByTestId('profile-open-feedback').click();
+  await page.goto(`${playerOrigin}/chat`, { waitUntil: 'domcontentloaded' });
+  await page.getByTestId('chat-open-feedback').click();
   await expect(page.getByTestId('feedback-screen')).toBeVisible({ timeout: 30_000 });
 
   const otherToken = await accessTokenFor(otherPlayer.email, SEED_ACCOUNT_PASSWORD);

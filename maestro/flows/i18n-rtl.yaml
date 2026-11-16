@@ -20,9 +20,7 @@ env:
   PROFILE_TITLE: '{{profile:title}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   TAB_HOME: '{{nav:tabs.home}}'
-  TAB_PROFILE: '{{nav:tabs.profile}}'
   TAB_HOME_AR: الرئيسية
-  TAB_PROFILE_AR: الملف الشخصي
   PROFILE_TITLE_AR: ملفي الشخصي
   # Hardcoded like the Arabic tab labels: selectors resolve from the Catalan
   # catalog, and the notifications prompt reappears after every relaunch,
@@ -235,7 +233,7 @@ env:
       notVisible: '.*${PROFILE_TITLE}.*'
     commands:
       - tapOn:
-          text: '^${TAB_PROFILE}$'
+          id: player-profile-button
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
@@ -393,7 +391,7 @@ env:
       notVisible: '.*${PROFILE_TITLE_AR}.*'
     commands:
       - tapOn:
-          text: '^${TAB_PROFILE_AR}$'
+          id: player-profile-button
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000

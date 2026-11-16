@@ -458,7 +458,11 @@ export async function fetchOwnParticipantStories(
 
 export interface ParticipantStoryStatusRow {
   readonly id: string;
+  /** Her title, in the language she wrote it (X5). */
+  readonly title: KnowledgeLocalizedText;
   readonly story_status: StoryStatus;
+  /** The team's note to her, readable by its author (X5). */
+  readonly reviewer_note: string | null;
   readonly created_at: string;
   readonly updated_at: string;
 }
@@ -470,7 +474,7 @@ export async function fetchOwnParticipantStoryStatuses(
 ): Promise<readonly ParticipantStoryStatusRow[]> {
   let query = client
     .from('knowledge_articles')
-    .select('id, story_status, created_at, updated_at')
+    .select('id, title, story_status, reviewer_note, created_at, updated_at')
     .eq('content_type', 'participant_story')
     .eq('author_id', authorId)
     .order('created_at', { ascending: false })

@@ -2,7 +2,6 @@
   "title": "Suggestions",
   "intro": "Propose une activité, partage une idée ou explique un problème à l’équipe.",
   "homeAction": "Envoie une suggestion",
-  "profileAction": "Mes suggestions",
   "newSubmission": "Nouvelle suggestion",
   "typeLabel": "De quoi s’agit-il ?",
   "typeActivityProposal": "Propose une activité",
@@ -30,11 +29,12 @@
   "inboxIntro": "Lis les suggestions et continue la conversation dans la discussion.",
   "filterType": "Type",
   "filterStatus": "Statut",
-  "filterAll": "Toutes",
+  "filterAll": "Tout",
   "monthlyTitle": "Suggestions mensuelles",
   "markRead": "Marque comme lue",
   "markInProgress": "Marque comme en cours",
   "markResolved": "Résous",
   "respondChat": "Réponds dans la discussion",
-  "inboxEmpty": "Aucune suggestion ne correspond à ces filtres."
+  "inboxEmpty": "Aucune suggestion ne correspond à ces filtres.",
+  "answerInChat": "La réponse arrive dans la discussion"
 }

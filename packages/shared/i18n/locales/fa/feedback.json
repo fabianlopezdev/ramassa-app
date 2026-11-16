@@ -2,7 +2,6 @@
   "title": "بازخورد",
   "intro": "یک فعالیت پیشنهاد دهید، ایده‌ای به اشتراک بگذارید یا مشکلی را به تیم بگویید.",
   "homeAction": "ارسال بازخورد",
-  "profileAction": "بازخوردهای من",
   "newSubmission": "بازخورد جدید",
   "typeLabel": "موضوع چیست؟",
   "typeActivityProposal": "پیشنهاد فعالیت",
@@ -36,5 +35,6 @@
   "markInProgress": "شروع پیگیری",
   "markResolved": "حل",
   "respondChat": "پاسخ در چت",
-  "inboxEmpty": "بازخوردی با این فیلترها وجود ندارد."
+  "inboxEmpty": "بازخوردی با این فیلترها وجود ندارد.",
+  "answerInChat": "پاسخ در گفت‌وگو می‌رسد"
 }

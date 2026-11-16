@@ -8,15 +8,9 @@ import { AttendanceSheet } from '@/components/attendance/attendance-sheet';
 import { PageWidth } from '@/components/layout/content-width';
 import { TeamBackToHome } from '@/components/team/team-back-to-home';
 import { useTeamLayout } from '@/components/team/team-layout-context';
-import { TodayCheckoutsCard } from '@/components/team/today-checkouts-card';
-import { TodayForumCard } from '@/components/team/today-forum-card';
-import { TodayMaterialCard } from '@/components/team/today-material-card';
-import { TodayMentoringCard } from '@/components/team/today-mentoring-card';
-import { TodayMessagesCard } from '@/components/team/today-messages-card';
-import { TodayReviewsCard } from '@/components/team/today-reviews-card';
+import { TodayPendingList } from '@/components/team/today-pending-list';
 import { useAttendanceOccurrences } from '@/lib/attendance';
 import { teamAreas } from '@/lib/team-shell';
-import { todaySections } from '@/lib/today';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
@@ -60,11 +54,11 @@ export default function AttendanceOccurrencesScreen() {
   const { t: tNav } = useTranslation('nav');
   const layout = useTeamLayout();
   const isSplit = layout === 'sidebar';
-  // In the large-button layout this is the Attendance button's screen; in tabs
-  // and the sidebar it is Today, with a section per area (RAPP-246).
-  const isToday = layout !== 'home';
+  // Avui in every layout (RAPP-795): today's sessions first for whoever takes
+  // attendance, then the "Pendent" list. Without an attendance permission the
+  // sessions block is left out.
   const { permissions } = useAccountAccess();
-  const sections = todaySections(teamAreas(permissions), permissions);
+  const hasSessions = teamAreas(permissions).includes('attendance');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const open = useCallback(
     (id: string) => (isSplit ? setSelectedId(id) : push(`/attendance/${id}`)),
@@ -89,8 +83,10 @@ export default function AttendanceOccurrencesScreen() {
     [language, languageFontClass, open, t, timeFormatter],
   );
 
-  if (isPending) return <AnnouncementFeedSkeleton accessibilityLabel={t('loading')} />;
-  if (isError) {
+  if (hasSessions && isPending) {
+    return <AnnouncementFeedSkeleton accessibilityLabel={t('loading')} />;
+  }
+  if (hasSessions && isError) {
     return (
       <AnnouncementFeedError
         message={t('loadFailed')}
@@ -101,10 +97,10 @@ export default function AttendanceOccurrencesScreen() {
       />
     );
   }
-  const rows = data ?? EMPTY_OCCURRENCES;
-  // The cards scroll WITH the sessions, as the list's header. Fixed above the
-  // list, they filled a phone screen once enough of them applied, and the
-  // sessions of the day sat under the tab bar where no one could reach them.
+  const rows = hasSessions ? (data ?? EMPTY_OCCURRENCES) : EMPTY_OCCURRENCES;
+  // Everything scrolls as one list: the sessions are its rows and the
+  // "Pendent" list its footer. Cards fixed above the list once filled a phone
+  // screen and hid the sessions under the tab bar (RAPP-481).
   const header = (
     <View className="gap-xs pb-md pt-lg">
       <TeamBackToHome />
@@ -112,41 +108,21 @@ export default function AttendanceOccurrencesScreen() {
         accessibilityRole="header"
         className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
       >
-        {isToday ? tNav('team.today') : t('title')}
+        {tNav('team.today')}
       </Text>
-      <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-        {isToday ? tNav('team.todayIntro') : t('intro')}
-      </Text>
-      {/* The card adds its own spacing, and nothing when nothing is late. */}
-      {isToday ? <TodayCheckoutsCard /> : null}
-      {isToday && sections.includes('material') ? (
-        <View className="pt-md">
-          <TodayMaterialCard />
-        </View>
+      {hasSessions ? (
+        <Text
+          accessibilityRole="header"
+          className={`pt-md text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
+        >
+          {t('today')}
+        </Text>
       ) : null}
-      {isToday && sections.includes('reviews') ? (
-        <View className="pt-md">
-          <TodayReviewsCard />
-        </View>
-      ) : null}
-      {isToday && sections.includes('forum') ? (
-        <View className="pt-md">
-          <TodayForumCard />
-        </View>
-      ) : null}
-      {isToday && sections.includes('mentoring') ? (
-        <View className="pt-md">
-          <TodayMentoringCard />
-        </View>
-      ) : null}
-      {isToday && sections.includes('messages') ? (
-        <View className="pt-md">
-          <TodayMessagesCard />
-        </View>
-      ) : null}
-      <Text className={`pt-md text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}>
-        {t('today')}
-      </Text>
+    </View>
+  );
+  const footer = (
+    <View className="pt-lg">
+      <TodayPendingList />
     </View>
   );
   const list = (
@@ -161,19 +137,22 @@ export default function AttendanceOccurrencesScreen() {
         contentInsetAdjustmentBehavior="automatic"
         ItemSeparatorComponent={OccurrenceSeparator}
         ListHeaderComponent={header}
+        ListFooterComponent={footer}
         ListEmptyComponent={
-          <AnnouncementEmptyState
-            title={t('noEventsTitle')}
-            body={t('noEventsBody')}
-            languageFontClass={languageFontClass}
-          />
+          hasSessions ? (
+            <AnnouncementEmptyState
+              title={t('noEventsTitle')}
+              body={t('noEventsBody')}
+              languageFontClass={languageFontClass}
+            />
+          ) : null
         }
       />
     </PageWidth>
   );
   return (
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
-      {isSplit ? (
+      {isSplit && hasSessions ? (
         // A tablet keeps the list beside the open item (RAPP-245).
         <View className="flex-1 flex-row">
           <View style={listPaneStyle}>{list}</View>

@@ -33,6 +33,7 @@ const switchTrackColor = { false: tokens.colors.neutral[300], true: tokens.color
 export default function AppLockScreen() {
   const { t } = useTranslation('auth');
   const { t: tParticipants } = useTranslation('participants');
+  const { t: tProfile } = useTranslation('profile');
   const pendingSignings = usePendingSigningCount();
   const router = useRouter();
   const languageFontClass = useLanguageFontClass();
@@ -77,7 +78,9 @@ export default function AppLockScreen() {
               {t('appLockTitle')}
             </Text>
             <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
-              {t('appLockIntro')}
+              {/* The staff wording speaks of other people's data, which a
+                  player does not hold: she gets her own (RAPP-794). */}
+              {isStaffSide ? t('appLockIntro') : tProfile('appLockIntro')}
             </Text>
           </View>
 

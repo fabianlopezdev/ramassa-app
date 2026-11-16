@@ -1,9 +1,7 @@
+import { SegmentedControl } from '@/components/layout/segmented-control';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import {
-  composeContinuousViewStyle,
-  composeViewStyles,
-  continuousCorners,
-} from '@/lib/continuous-corners';
+import { composeViewStyles } from '@/lib/continuous-corners';
+import type { SymbolViewProps } from 'expo-symbols';
 import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { EventCategoryColor, PlayerEventCategoryFilter } from '@ramassa/shared/events';
@@ -28,23 +26,23 @@ const styles = StyleSheet.create({
     borderColor: tokens.colors.neutral[300],
     backgroundColor: tokens.colors.white,
   },
-  viewOption: {
-    minHeight: tokens.tapTarget.recommended,
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: tokens.radius.sm,
-    paddingHorizontal: tokens.spacing.md,
-  },
-  viewOptionSelected: { backgroundColor: tokens.colors.white },
 });
 const selectedFilterOptionStyle = composeViewStyles(
   styles.filterOption,
   styles.filterOptionSelected,
 );
 const idleFilterOptionStyle = composeViewStyles(styles.filterOption, styles.filterOptionIdle);
-const viewOptionStyle = composeContinuousViewStyle(styles.viewOption);
-const selectedViewOptionStyle = composeViewStyles(viewOptionStyle, styles.viewOptionSelected);
+
+const listViewSymbol: SymbolViewProps['name'] = {
+  ios: 'list.bullet',
+  android: 'view_list',
+  web: 'view_list',
+};
+const monthViewSymbol: SymbolViewProps['name'] = {
+  ios: 'calendar',
+  android: 'calendar_month',
+  web: 'calendar_month',
+};
 
 export interface PlayerEventFilterOption {
   readonly id: string;
@@ -132,45 +130,6 @@ export function EventCategoryFilters({
   );
 }
 
-function EventViewOption({
-  value,
-  label,
-  accessibilityLabel,
-  selected,
-  languageFontClass,
-  onSelect,
-}: {
-  readonly value: 'list' | 'calendar';
-  readonly label: string;
-  readonly accessibilityLabel: string;
-  readonly selected: boolean;
-  readonly languageFontClass: string;
-  readonly onSelect: (view: 'list' | 'calendar') => void;
-}) {
-  const handlePress = useCallback(() => onSelect(value), [onSelect, value]);
-  return (
-    <PressableScale
-      accessibilityRole="radio"
-      accessibilityLabel={accessibilityLabel}
-      onPress={handlePress}
-      haptic="selection"
-      isSelected={selected}
-      style={selected ? selectedViewOptionStyle : viewOptionStyle}
-      className={`min-h-recommended flex-1 items-center justify-center rounded-sm px-md ${
-        selected ? 'bg-white' : ''
-      }`}
-    >
-      <Text
-        className={`text-md font-semibold ${
-          selected ? 'text-primary-dark' : 'text-neutral-600'
-        } ${languageFontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
-  );
-}
-
 export function EventViewToggle({
   selected,
   listLabel,
@@ -190,29 +149,31 @@ export function EventViewToggle({
   readonly languageFontClass: string;
   readonly onSelect: (view: 'list' | 'calendar') => void;
 }) {
+  const options = useMemo(
+    () =>
+      [
+        {
+          key: 'list',
+          label: listLabel,
+          accessibilityLabel: listAccessibilityLabel,
+          symbol: listViewSymbol,
+        },
+        {
+          key: 'calendar',
+          label: calendarLabel,
+          accessibilityLabel: calendarAccessibilityLabel,
+          symbol: monthViewSymbol,
+        },
+      ] as const,
+    [calendarAccessibilityLabel, calendarLabel, listAccessibilityLabel, listLabel],
+  );
   return (
-    <View
-      accessibilityRole="radiogroup"
+    <SegmentedControl
+      options={options}
+      selected={selected}
+      onSelect={onSelect}
       accessibilityLabel={accessibilityLabel}
-      className="flex-row rounded-md bg-neutral-100 p-xs"
-      style={continuousCorners}
-    >
-      <EventViewOption
-        value="list"
-        label={listLabel}
-        accessibilityLabel={listAccessibilityLabel}
-        selected={selected === 'list'}
-        languageFontClass={languageFontClass}
-        onSelect={onSelect}
-      />
-      <EventViewOption
-        value="calendar"
-        label={calendarLabel}
-        accessibilityLabel={calendarAccessibilityLabel}
-        selected={selected === 'calendar'}
-        languageFontClass={languageFontClass}
-        onSelect={onSelect}
-      />
-    </View>
+      languageFontClass={languageFontClass}
+    />
   );
 }

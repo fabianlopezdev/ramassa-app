@@ -1,9 +1,8 @@
 {
   "title": "Benvinguda",
   "feedTitle": "Avisos",
-  "feedIntro": "Novetats del club, entrenaments i activitats per a tu.",
   "filterLabel": "Filtra els avisos per categoria",
-  "filterAll": "Tots",
+  "filterAll": "Tot",
   "category": {
     "info": "Informació",
     "training": "Entrenaments",
@@ -22,5 +21,12 @@
     "deadline": "Fins al {{date}}",
     "answer": "Respon",
     "dismiss": "Ara no"
+  },
+  "toDo": {
+    "title": "Per fer",
+    "count": "{{current}} de {{total}}"
+  },
+  "nextActivity": {
+    "title": "Pròxima activitat"
   }
 }

@@ -50,7 +50,7 @@
   "filterNationality": "Nacionalitat",
   "filterStatus": "Estat",
   "filterDependents": "Persones a càrrec",
-  "optionAll": "Totes",
+  "optionAll": "Tot",
   "statusActive": "Actives",
   "statusInactive": "Inactives",
   "dependentsWith": "Amb",
@@ -215,7 +215,7 @@
     "savedBelowZero": "L'estoc d'aquest article ara és sota zero. Avui demana un recompte.",
     "another": "Lliurar un altre article",
     "done": "Fet",
-    "materialTitle": "Material",
+    "materialTitle": "Material de la jugadora",
     "materialEmpty": "Encara no s'ha lliurat cap material.",
     "given": "Donat el {{date}}",
     "lent": "Prestat el {{date}}",
@@ -242,8 +242,6 @@
     "cancel": "Cancel·lar",
     "returnFailed": "La devolució no s'ha desat. Comprova la connexió i torna-ho a provar.",
     "loadFailed": "No s'ha pogut carregar el seu material.",
-    "stockTitle": "Material",
-    "stockFine": "No hi ha estoc per revisar.",
     "stockAlert": "{{item}}: sota zero. Compta'l.",
     "saveFailed": "El lliurament no s'ha desat. Torna-ho a provar.",
     "detail": {
@@ -258,7 +256,7 @@
     }
   },
   "stock": {
-    "title": "Estoc",
+    "title": "Material",
     "intro": "El que té l'equip al magatzem, a partir de cada arribada, lliurament i devolució.",
     "recordArrival": "Registrar material rebut",
     "levelsTitle": "En estoc",
@@ -357,8 +355,8 @@
     "monthlyItem": "{{item}}: compta el que hi ha al prestatge."
   },
   "checkout": {
-    "action": "Deixar a un membre de l'equip",
-    "title": "Deixar material",
+    "action": "Prestar a un membre de l'equip",
+    "title": "Prestar material",
     "intro": "Per a un viatge o un esdeveniment. El material d'una sessió normal no es registra.",
     "staffLabel": "Qui se l'emporta",
     "returnLabel": "Tornarà",
@@ -370,13 +368,13 @@
     },
     "returnOn": "Tornarà el {{date}}",
     "noteLabel": "Nota",
-    "save": "Deixar",
+    "save": "Prestar",
     "saving": "Desant",
     "saveFailed": "El préstec no s'ha desat. Torna-ho a provar.",
-    "needsConnection": "Deixar material necessita connexió.",
+    "needsConnection": "Prestar material necessita connexió.",
     "chooseAll": "Tria l'article, la talla i qui se l'emporta.",
-    "listTitle": "Deixat",
-    "listEmpty": "No hi ha res deixat.",
+    "listTitle": "Prestat",
+    "listEmpty": "No hi ha res prestat.",
     "row": "{{item}}: {{quantity}} amb {{name}}",
     "overdue": "Amb retard: havia de tornar el {{date}}",
     "checkIn": "Recollir",
@@ -385,14 +383,11 @@
     "missing": "Falten: {{count}}. Queden fora de l'estoc com a perduts.",
     "saveCheckIn": "Desar la devolució",
     "checkInFailed": "La devolució no s'ha desat. Torna-ho a provar.",
-    "todayTitle": "Deixat i amb retard",
+    "todayTitle": "Prestat i amb retard",
     "todayRow": "{{item}}: {{quantity}} amb {{name}}, havia de tornar el {{date}}",
     "todayMine": "{{item}}: {{quantity}} amb tu, havia de tornar el {{date}}"
   },
   "items": {
-    "title": "Articles",
-    "intro": "El material que l'equip lliura, compta i rep.",
-    "action": "Articles",
     "add": "Afegir un article",
     "newTitle": "Article nou",
     "editTitle": "Editar {{item}}",
@@ -426,7 +421,6 @@
     "saveFailed": "L'article no s'ha desat. Torna-ho a provar.",
     "sizeInStock": "La talla {{size}} encara té estoc. Compta-la a zero o mantén-la.",
     "codeTaken": "Un altre article ja fa servir aquestes lletres.",
-    "summary": "{{kind}} · {{sizes}}",
     "inactive": "Desactivat"
   },
   "list": {
@@ -690,5 +684,11 @@
       "done": "Respost",
       "dismissed": "Descartat"
     }
+  },
+  "segments": {
+    "label": "Seccions de Participants",
+    "players": "Jugadores",
+    "waiting": "{{label}}, {{count}} pendents",
+    "waiting_one": "{{label}}, 1 pendent"
   }
 }

@@ -4,15 +4,21 @@ import {
   AnnouncementFeedSkeleton,
   OfflineBanner,
 } from '@/components/announcements/feed-states';
-import { EventCard, eventCategoryColor } from '@/components/events/event-card';
+import {
+  EventCard,
+  eventCategoryColor,
+  playerEventCapacityLabel,
+  playerEventSignupLabel,
+} from '@/components/events/event-card';
 import {
   EventCategoryFilters,
   EventViewToggle,
   type PlayerEventFilterOption,
 } from '@/components/events/event-filters';
 import { PageWidth } from '@/components/layout/content-width';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { composeContinuousViewStyle, continuousCorners } from '@/lib/continuous-corners';
+import { NavRow } from '@/components/layout/nav-row';
+import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
+import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import {
   addPrivateMentoringMarkedDates,
   buildCalendarLocale,
@@ -24,11 +30,11 @@ import { isNetworkStateOnline } from '@/lib/network-status';
 import { logger } from '@/lib/observability';
 import { usePlayerEvents } from '@/lib/player-events';
 import { usePlayerMentoringRequests } from '@/lib/player-mentoring';
+import { playerNavIcons } from '@/lib/player-nav-icons';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
-import type { TFunction } from 'i18next';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -39,7 +45,6 @@ import { toAppError } from '@ramassa/shared/errors';
 import {
   filterPlayerEventOccurrences,
   MADRID_TIME_ZONE,
-  type EventSignupState,
   type PlayerEventCategoryFilter,
   type PlayerEventOccurrence,
 } from '@ramassa/shared/events';
@@ -80,21 +85,8 @@ const getItemType = (item: PlayerEventOccurrence) =>
     ? 'signed-up-event'
     : 'event';
 
-function signupLabel(state: EventSignupState | undefined, t: TFunction) {
-  if (state === 'confirmed') return t('playerConfirmed');
-  if (state === 'interested') return t('playerInterested');
-  return null;
-}
-
-function capacityLabel(row: PlayerEventOccurrence, t: TFunction) {
-  const maximum = row.event.max_participants;
-  if (maximum === null) return t('playerUnlimited');
-  const remaining = Math.max(0, maximum - row.event.active_signup_count);
-  return remaining === 0 ? t('playerFull') : t('playerPlaces', { remaining, total: maximum });
-}
-
 export default function EventsScreen() {
-  const { t, i18n } = useTranslation(['events', 'common', 'mentoring']);
+  const { t, i18n } = useTranslation(['events', 'common', 'mentoring', 'nav']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -200,7 +192,7 @@ export default function EventsScreen() {
         ),
         mentoringEntries,
         (date) =>
-          `${t('mentoring:calendarPrivateTitle')}. ${dateFormatter.format(
+          `${t('mentoring:title')}. ${dateFormatter.format(
             new Date(`${date}${UTC_MIDDAY_SUFFIX}`),
           )}`,
       ) as MarkedDates,
@@ -224,8 +216,8 @@ export default function EventsScreen() {
       if (title === undefined || categoryName === undefined) return null;
       const date = dateFormatter.format(new Date(item.occurrence_starts_at));
       const time = timeFormatter.format(new Date(item.occurrence_starts_at));
-      const capacity = capacityLabel(item, t);
-      const signup = signupLabel(item.signup?.state, t);
+      const capacity = playerEventCapacityLabel(item, t);
+      const signup = playerEventSignupLabel(item.signup?.state, t);
       return (
         <PageWidth className="pb-md">
           <EventCard
@@ -326,12 +318,13 @@ export default function EventsScreen() {
       onLoad={onListLoad}
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
+          <ProfilePhotoButton />
           <View className="gap-xs">
             <Text
               accessibilityRole="header"
               className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
             >
-              {t('playerTitle')}
+              {t('nav:tabs.events')}
             </Text>
             <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
               {t('playerIntro')}
@@ -358,41 +351,21 @@ export default function EventsScreen() {
             languageFontClass={languageFontClass}
             onSelect={setView}
           />
+          {/* Her mentoring appointments, a shortcut to Mentoria with the same
+              name and icon as its row in Xat (RAPP-793). */}
           {visibleMentoringEntries.length === 0 ? null : (
             <View className="gap-sm">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('mentoring:calendarPrivateTitle')}
-              </Text>
               {visibleMentoringEntries.map((entry) => (
-                <PressableScale
+                <NavRow
                   key={entry.id}
                   testID={`private-mentoring-calendar-${entry.id}`}
-                  accessibilityLabel={`${t('mentoring:calendarPrivateTitle')}. ${dateFormatter.format(
+                  icon={playerNavIcons.mentoring}
+                  label={t('mentoring:title')}
+                  detail={`${dateFormatter.format(new Date(entry.scheduledAt))} · ${timeFormatter.format(
                     new Date(entry.scheduledAt),
-                  )}. ${timeFormatter.format(new Date(entry.scheduledAt))}`}
+                  )}`}
                   onPress={openMentoring}
-                  haptic="tapLight"
-                  style={continuousCorners}
-                  className="min-h-recommended gap-xs rounded-lg border border-secondary bg-secondary-light p-md"
-                >
-                  <Text
-                    className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}
-                  >
-                    {t('mentoring:calendarPrivateTitle')}
-                  </Text>
-                  <Text
-                    className={`text-start text-md tabular-nums text-neutral-800 ${languageFontClass}`}
-                  >
-                    {dateFormatter.format(new Date(entry.scheduledAt))} ·{' '}
-                    {timeFormatter.format(new Date(entry.scheduledAt))}
-                  </Text>
-                  <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-                    {t('mentoring:calendarPrivateBody')}
-                  </Text>
-                </PressableScale>
+                />
               ))}
             </View>
           )}

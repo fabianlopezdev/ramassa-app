@@ -17,6 +17,7 @@ import {
   removeBlock,
   removePendingImage,
   startingKnowledgeDraft,
+  storyPublicationInput,
   toKnowledgeInput,
   withSourceBlocks,
   withTranslatedBlocks,
@@ -276,5 +277,71 @@ describe('draftKnowledgeBody (RAPP-373)', () => {
         },
       ],
     });
+  });
+});
+
+describe('storyPublicationInput (RAPP-801)', () => {
+  const reviewed = {
+    id: '22222222-2222-4222-8222-222222222222',
+    category_id: CATEGORY,
+    title: Object.fromEntries(
+      (['ca', ...TARGETS] as const).map((language) => [language, `${language} títol`]),
+    ),
+    body: Object.fromEntries(
+      (['ca', ...TARGETS] as const).map((language) => [
+        language,
+        [{ type: 'paragraph', text: `${language} text` }],
+      ]),
+    ),
+    image_url: null,
+    video_url: null,
+    external_url: null,
+    content_type: 'participant_story',
+    story_status: 'in_review',
+    submission_language: 'ca',
+    story_image_urls: ['stories/a.webp'],
+    publication_consent: true,
+    publication_consent_at: '2026-10-01T08:00:00+00:00',
+    publication_consent_version: 'v1',
+    author_id: AUTHOR,
+    reviewer_note: 'Antiga',
+    is_published: false,
+    published_at: null,
+    expires_at: null,
+  } as unknown as KnowledgeArticleListRow;
+
+  test('publishes a story in review now, with every stored language and the new note', () => {
+    const input = storyPublicationInput(reviewed, ' Gràcies ', NOW);
+    expect(input).toMatchObject({
+      storyStatus: 'published',
+      isPublished: true,
+      publishedAt: NOW.toISOString(),
+      reviewerNote: 'Gràcies',
+      authorId: AUTHOR,
+      storyImageUrls: ['stories/a.webp'],
+    });
+    expect(Object.keys(input?.title ?? {}).sort()).toEqual(['ar', 'ca', 'en', 'es', 'fa', 'fr']);
+    expect(Object.keys(input?.body ?? {}).sort()).toEqual(['ar', 'ca', 'en', 'es', 'fa', 'fr']);
+    expect(knowledgeArticleInputSchema.safeParse(input).success).toBe(true);
+  });
+
+  test('a story missing a translation cannot publish from the detail', () => {
+    const title = Object.fromEntries(
+      Object.entries(reviewed.title).filter(([language]) => language !== 'fr'),
+    );
+    expect(storyPublicationInput({ ...reviewed, title }, '', NOW)).toBeNull();
+    const body = Object.fromEntries(
+      Object.entries(reviewed.body).filter(([language]) => language !== 'ar'),
+    );
+    expect(
+      storyPublicationInput({ ...reviewed, body } as unknown as KnowledgeArticleListRow, '', NOW),
+    ).toBeNull();
+  });
+
+  test('only a story in review publishes', () => {
+    expect(storyPublicationInput({ ...reviewed, story_status: 'submitted' }, '', NOW)).toBeNull();
+    expect(
+      storyPublicationInput({ ...reviewed, content_type: 'article', story_status: null }, '', NOW),
+    ).toBeNull();
   });
 });

@@ -54,7 +54,7 @@ import { generateDrafts } from '@/lib/translation-worker';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -105,13 +105,12 @@ function EventForm({
   const { t: tErrors } = useTranslation('errors');
   const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
-  const { back, push } = useRouter();
+  const { back } = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const userId = user?.id ?? '';
   const { permissions } = useAccountAccess();
   const canPublish = permissions.has('events.publish');
-  const canEditCategories = permissions.has('events.edit');
   const [restored] = useState(() => readEventDraft(privateStorage, userId, eventId));
   const [form, setForm] = useState<EventDraft>(
     () => restored ?? startingEventDraft(event, categories[0]?.id ?? ''),
@@ -257,20 +256,6 @@ function EventForm({
             </View>
           ))}
         </View>
-        {canEditCategories ? (
-          <PressableScale
-            testID="event-manage-categories"
-            accessibilityRole="button"
-            accessibilityLabel={t('manageCategories')}
-            onPress={() => push('/content-event-categories' as Href)}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {t('manageCategories')}
-            </Text>
-          </PressableScale>
-        ) : null}
       </View>
 
       <MultilingualField
@@ -465,14 +450,14 @@ function EventForm({
       <PressableScale
         testID="event-preview"
         accessibilityRole="button"
-        accessibilityLabel={tCommon('previewAsPlayer')}
+        accessibilityLabel={tCommon('previewAction')}
         onPress={() => setIsPreviewOpen(true)}
         isDisabled={form.title.trim().length === 0}
         haptic="tapLight"
         className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
       >
         <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-          {tCommon('previewAsPlayer')}
+          {tCommon('previewAction')}
         </Text>
       </PressableScale>
       <DraftPreviewSheet

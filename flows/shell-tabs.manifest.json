@@ -3,7 +3,7 @@
   "slug": "shell-tabs",
   "title": "Navegació principal",
   "surface": "mobile",
-  "description": "Les cinc pestanyes de l'app de les jugadores, abans que hi hagi contingut: Inici, Calendari, Comunitat, Serveis i Perfil. Cada pestanya porta sempre icona i text.",
+  "description": "Les cinc pestanyes de l'app de les jugadores, abans que hi hagi contingut: Inici, Activitats, Comunitat, Serveis i Perfil. Cada pestanya porta sempre icona i text.",
   "steps": [
     {
       "id": "home",
@@ -14,7 +14,7 @@
     },
     {
       "id": "events",
-      "label": "Calendari",
+      "label": "Activitats",
       "ios": "shell-tabs/ios/02-events.png",
       "android": "shell-tabs/android/02-events.png",
       "web": "shell-tabs/web/04-events.png"
@@ -77,7 +77,7 @@
     }
   ],
   "edges": [
-    { "from": "home", "to": "events", "label": "Calendari" },
+    { "from": "home", "to": "events", "label": "Activitats" },
     { "from": "home", "to": "community", "label": "Comunitat" },
     { "from": "home", "to": "services", "label": "Serveis" },
     { "from": "home", "to": "profile", "label": "Perfil" },

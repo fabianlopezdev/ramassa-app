@@ -1,0 +1,38 @@
+/**
+ * Her photo at the top of every player tab (RAPP-794): the door to "El meu
+ * perfil", now that the profile has left the tab bar. Her initial shows while
+ * the photo loads or when she has none. A row with the button at its start, so
+ * it sits on the leading side and mirrors with the layout in Arabic and Farsi.
+ */
+import { PressableScale } from '@/components/motion/pressable-scale';
+import { PersonAvatar } from '@/components/people/person-avatar';
+import { usePersonCards } from '@/lib/person-cards';
+import { useRouter, type Href } from 'expo-router';
+import { memo, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { View } from 'react-native';
+import { useAuth } from '@ramassa/shared/auth';
+
+export const ProfilePhotoButton = memo(function ProfilePhotoButton() {
+  const { t } = useTranslation('profile');
+  const { push } = useRouter();
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+  const ids = useMemo(() => [userId], [userId]);
+  const card = usePersonCards(ids).get(userId ?? '');
+  const openProfile = useCallback(() => push('/profile' as Href), [push]);
+  return (
+    <View className="flex-row">
+      <PressableScale
+        testID="player-profile-button"
+        accessibilityRole="button"
+        accessibilityLabel={t('title')}
+        onPress={openProfile}
+        haptic="tapLight"
+        className="min-h-min min-w-min items-center justify-center rounded-full"
+      >
+        <PersonAvatar name={card?.firstName} avatarKey={card?.avatarKey} size="header" />
+      </PressableScale>
+    </View>
+  );
+});

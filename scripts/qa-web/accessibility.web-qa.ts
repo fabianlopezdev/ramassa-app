@@ -85,6 +85,11 @@ const playerRoutes = [
   '/community',
   '/services',
   '/profile',
+  '/profile-data',
+  '/profile-attendance',
+  '/profile-language',
+  '/profile-privacy',
+  '/chat',
   '/attendance',
   '/feedback',
   '/gallery',
@@ -181,7 +186,7 @@ async function expectSkipLinkTargetsMain(page: Page): Promise<void> {
 
 async function signInPlayer(page: Page): Promise<void> {
   await signInPlayerWithEmailCode(page, 'daniela.ortega@example.test');
-  await expect(page.getByTestId('open-knowledge-base')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('home-screen')).toBeVisible({ timeout: 30_000 });
 }
 
 async function expectCatalanDocument(page: Page): Promise<void> {
@@ -346,7 +351,7 @@ test.describe('WCAG 2.2 AA regression gate', () => {
   }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await signInPlayer(page);
-    await expect(page.getByTestId('open-knowledge-base')).toBeVisible();
+    await expect(page.getByTestId('home-screen')).toBeVisible();
     const response = Promise.withResolvers<void>();
     await page.route('**/rest/v1/rpc/my_authorization_status', async (route) => {
       await response.promise;
@@ -423,7 +428,7 @@ test.describe('WCAG 2.2 AA regression gate', () => {
   test('Arabic player web routes retain RTL semantics and pass axe', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await signInPlayer(page);
-    await page.goto(`${playerOrigin}/profile`);
+    await page.goto(`${playerOrigin}/profile-language`);
     await page.getByTestId('profile-language-ar').click();
 
     for (const route of [...playerRoutes, ...dynamicPlayerRoutes()]) {
@@ -449,7 +454,7 @@ test.describe('WCAG 2.2 AA regression gate', () => {
     await signInPlayer(page);
     await page.goto(playerOrigin);
     const homeTab = page.getByRole('tab', { name: 'Home', exact: true });
-    const eventsTab = page.getByRole('tab', { name: 'Events', exact: true });
+    const eventsTab = page.getByRole('tab', { name: 'Activities', exact: true });
     await tabTo(page, homeTab);
     await page.keyboard.press('ArrowRight');
     await expect(eventsTab).toBeFocused();

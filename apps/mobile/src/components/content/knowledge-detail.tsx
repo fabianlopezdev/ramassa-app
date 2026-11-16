@@ -2,8 +2,8 @@
  * One knowledge resource for the team (RAPP-343): its status, type, category
  * and author, the blocks as a player reads them, a story's photos and its
  * recorded publication consent, and the reviewer's note. Edit opens the block
- * editor. A story sent for review gets Start review here, as in the web
- * admin's list. Deleting is for `knowledge.publish` holders, as the database
+ * editor. A story's whole review sits here (RAPP-801): Start review, then
+ * Publish, Request changes and Decline with the note to her. Deleting is for `knowledge.publish` holders, as the database
  * requires, and asks first. A screen of its own on a phone; the right half of
  * the list on a tablet.
  */
@@ -35,6 +35,7 @@ import { DEFAULT_LANGUAGE, LANGUAGE_NATIVE_NAMES } from '@ramassa/shared/i18n';
 import { resolveLocalizedKnowledgeBlocks } from '@ramassa/shared/knowledge';
 import { tokens } from '@ramassa/shared/tokens';
 import { KNOWLEDGE_TYPE_KEYS, knowledgeStatusKey, knowledgeTitle } from './knowledge-labels';
+import { StoryReviewActions } from './story-review-actions';
 
 const styles = StyleSheet.create({
   imageFrame: { width: '100%', height: tokens.contentWidth.form / 2 },
@@ -61,7 +62,7 @@ export function KnowledgeDetail({
   const { session } = useAuth();
   const { push } = useRouter();
   const article = useContentKnowledgeArticle(articleId);
-  const { transition, remove } = useKnowledgeActions();
+  const { remove } = useKnowledgeActions();
   const format = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, {
@@ -93,7 +94,7 @@ export function KnowledgeDetail({
 
   const title = knowledgeTitle(data);
   const blocks = resolveLocalizedKnowledgeBlocks(data.body, data.submission_language ?? 'ca');
-  const failure = transition.error ?? remove.error;
+  const failure = remove.error;
   const confirmDelete = () => {
     const done = () =>
       remove.mutate(data.id, {
@@ -164,27 +165,6 @@ export function KnowledgeDetail({
             {tAnnouncements('editAction')}
           </Text>
         </PressableScale>
-        {data.story_status === 'submitted' ? (
-          <PressableScale
-            testID="knowledge-start-review"
-            accessibilityRole="button"
-            accessibilityLabel={t('startReview')}
-            onPress={() =>
-              transition.mutate(
-                { id: data.id, from: 'submitted', to: 'in_review', reviewerNote: null },
-                { onSuccess: () => playHaptic('success') },
-              )
-            }
-            isBusy={transition.isPending}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-primary bg-white px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-              {t('startReview')}
-            </Text>
-          </PressableScale>
-        ) : null}
         {canPublish ? (
           <PressableScale
             testID="knowledge-delete"
@@ -202,6 +182,7 @@ export function KnowledgeDetail({
           </PressableScale>
         ) : null}
       </View>
+      <StoryReviewActions key={`${data.id}-${data.story_status ?? ''}`} article={data} />
       <PreviewItemAsPlayer
         target={`/knowledge/${data.id}`}
         isVisibleToPlayers={isContentVisible({
@@ -216,7 +197,7 @@ export function KnowledgeDetail({
           message={tErrors(getErrorMessageKey(toAppError(failure).code))}
         />
       )}
-      {data.reviewer_note === null ? null : (
+      {data.reviewer_note === null || data.story_status === 'in_review' ? null : (
         <View
           style={continuousCorners}
           className="gap-xs rounded-md border border-neutral-200 bg-white p-md"

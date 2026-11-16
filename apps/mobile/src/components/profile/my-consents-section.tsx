@@ -7,28 +7,44 @@
  * drive the media consent, so a photo decision made here and one made in her
  * profile edit are the same decision. The consents she decided on her
  * Onboarding screens (RAPP-699) show here too, so she can give or withdraw an
- * optional one. Shown when her organization has published an authorization or
- * she decided one of those.
+ * optional one.
+ *
+ * Since RAPP-794 this is the ONLY place she changes the photo and video
+ * consent. When no authorization row carries image rights (her organization
+ * has not published one, or it does not ask), the media consent shows as its
+ * own row and is saved on her profile, as the edit form used to save it.
  */
 
 import { ConsentRow } from '@/components/authorization/consent-row';
+import { FailureNotice } from '@/components/error-code-line';
 import { ProfileSection } from '@/components/profile/profile-section';
 import { useAuthorizationStatus, useMyConsents, useSetOptionalConsent } from '@/lib/authorization';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text } from 'react-native';
 import { IMAGE_RIGHTS_CONSENT, orderedConsents } from '@ramassa/shared/authorization';
+import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import { resolveLocalizedText } from '@ramassa/shared/i18n/localized-content';
-import type { LanguageCode } from '@ramassa/shared/schemas';
+import { useUpdateOwnProfile } from '@ramassa/shared/profile';
+import {
+  profileEditSchema,
+  profileFormOf,
+  type LanguageCode,
+  type ProfileRecordWithFields,
+} from '@ramassa/shared/schemas';
 
-export function MyConsentsSection({ mediaConsent }: { readonly mediaConsent: boolean }) {
+export function MyConsentsSection({ profile }: { readonly profile: ProfileRecordWithFields }) {
   const { t, i18n } = useTranslation('profile');
   const fontClass = useLanguageFontClass();
   const language = (i18n.resolvedLanguage as LanguageCode | undefined) ?? 'ca';
   const status = useAuthorizationStatus(true);
   const consents = useMyConsents(true);
   const change = useSetOptionalConsent();
+  const updateProfile = useUpdateOwnProfile();
+  const [mediaFailure, setMediaFailure] = useState<AppErrorCode | null>(null);
+  const mediaConsent = profile.media_consent;
 
   const content = status.data?.content;
   const asked =
@@ -55,14 +71,50 @@ export function MyConsentsSection({ mediaConsent }: { readonly mediaConsent: boo
         (consent.name === null ? undefined : resolveLocalizedText(consent.name, language)?.text) ??
         key,
     }));
-  if (content === undefined && kept.length === 0) return null;
+  const rows = [...asked, ...kept];
+  const showsMediaConsentRow = !rows.some((consent) => consent.key === IMAGE_RIGHTS_CONSENT);
+
+  // The whole record as it is, with only the media consent changed: the same
+  // write as pressing Save on an unchanged edit form.
+  function toggleMediaConsent() {
+    setMediaFailure(null);
+    const edit = profileEditSchema.safeParse({
+      ...profileFormOf(profile),
+      mediaConsent: !mediaConsent,
+    });
+    if (!edit.success) {
+      playHaptic('error');
+      setMediaFailure('VALIDATION-1');
+      return;
+    }
+    updateProfile.mutate(edit.data, {
+      onSuccess: () => playHaptic('success'),
+      onError: (error) => {
+        playHaptic('error');
+        setMediaFailure(toAppError(error).code);
+      },
+    });
+  }
 
   return (
     <ProfileSection title={t('consentsTitle')}>
       <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
         {t('consentsIntro')}
       </Text>
-      {[...asked, ...kept].map((consent) => {
+      {showsMediaConsentRow ? (
+        <ConsentRow
+          testID="profile-consent-media"
+          label={t('fieldMediaConsent')}
+          required={false}
+          requiredMark=""
+          checked={mediaConsent}
+          onToggle={toggleMediaConsent}
+        />
+      ) : null}
+      {mediaFailure === null ? null : (
+        <FailureNotice code={mediaFailure} message={t('saveFailed')} />
+      )}
+      {rows.map((consent) => {
         const granted =
           consents.data?.[consent.key]?.granted ??
           (consent.key === IMAGE_RIGHTS_CONSENT ? mediaConsent : false);

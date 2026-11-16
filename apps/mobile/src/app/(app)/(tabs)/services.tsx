@@ -4,9 +4,11 @@ import {
   AnnouncementFeedSkeleton,
   OfflineBanner,
 } from '@/components/announcements/feed-states';
+import { LatestGuidesSection } from '@/components/knowledge/latest-guides-section';
 import { PageWidth } from '@/components/layout/content-width';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
 import { ServiceCard } from '@/components/services/service-card';
 import { ServiceCategoryGrid } from '@/components/services/service-category-grid';
 import { ServiceFilterPanel } from '@/components/services/service-filter-panel';
@@ -192,35 +194,37 @@ export default function ServicesScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         <PageWidth className="gap-lg">
-          <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
-            >
-              {t('playerServices:title')}
-            </Text>
-            <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-              {t('playerServices:intro')}
-            </Text>
-          </View>
+          <ProfilePhotoButton />
+          <Text
+            accessibilityRole="header"
+            className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
+          >
+            {t('playerServices:helpTitle')}
+          </Text>
           {isOffline ? (
             <OfflineBanner
               label={t('playerServices:offline')}
               languageFontClass={languageFontClass}
             />
           ) : null}
-          <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-            >
-              {t('playerServices:chooseCategory')}
-            </Text>
-            <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-              {t('playerServices:categoryHint')}
-            </Text>
+          <LatestGuidesSection />
+          <View className="gap-sm">
+            <View className="gap-xs">
+              <Text
+                accessibilityRole="header"
+                className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
+              >
+                {t('playerServices:chooseCategory')}
+              </Text>
+              <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+                {t('playerServices:categoryHint')}
+              </Text>
+            </View>
+            <ServiceCategoryGrid
+              categories={categoriesQuery.data ?? []}
+              onSelect={selectCategory}
+            />
           </View>
-          <ServiceCategoryGrid categories={categoriesQuery.data ?? []} onSelect={selectCategory} />
         </PageWidth>
       </ScrollView>
     );

@@ -6,6 +6,7 @@
  * delete) are on its card. New service starts a submission.
  */
 import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-load-failure';
+import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { EntityServiceStatus } from '@/components/entity/entity-service-status';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -103,15 +104,7 @@ export default function EntityServicesScreen() {
     >
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
         <PageWidth className="gap-lg p-lg">
-          <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('title')}
-            </Text>
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>{t('intro')}</Text>
-          </View>
+          <EntityScreenHeader title={t('title')} intro={t('intro')} />
           <View className="self-start">
             <CardButton
               testID="entity-service-new"

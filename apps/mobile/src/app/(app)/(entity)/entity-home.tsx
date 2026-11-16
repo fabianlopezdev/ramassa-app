@@ -4,25 +4,37 @@
  * how often they were present and the attendance rate, one figure per card
  * with a small trend line; the participation per month as bars with the same
  * numbers as a table; and the tracking of each referred woman. Under three
- * people the figures stay hidden, with the privacy note instead. The app lock
- * and sign-out close the screen, as she has no More tab.
+ * people the figures stay hidden, with the privacy note instead. Each woman's
+ * row opens her referral (RAPP-805). Settings and sign-out open from the
+ * header button (RAPP-803).
  */
-import { AppLockLink } from '@/components/auth/app-lock-link';
 import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-load-failure';
+import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { BarRow, MonthBars, Sparkline } from '@/components/team/impact-charts';
-import { logout } from '@/lib/auth';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useEntityDashboard } from '@/lib/entity-portal';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useRouter, type Href } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { I18nManager, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
+import { tokens } from '@ramassa/shared/tokens';
 
 const TABLET_WIDTH = 768;
+
+// The forward chevron of the app's other rows that open a detail
+// (attendance-occurrence-row). SF Symbols mirror by themselves; the Material
+// name is picked by direction.
+const forwardSymbol = {
+  ios: 'chevron.forward',
+  android: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',
+  web: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',
+} as const;
 
 const percent = (value: number | null) => (value === null ? '' : `${value.toFixed(2)}%`);
 
@@ -56,7 +68,9 @@ function Section({
 export default function EntityHomeScreen() {
   const { t } = useTranslation('nav');
   const { t: tEntity, i18n } = useTranslation('entity-management');
-  const { t: tProfile } = useTranslation('profile');
+  // One status vocabulary with the Referrals tab (RAPP-804).
+  const { t: tReferrals } = useTranslation('referrals');
+  const { push } = useRouter();
   const fontClass = useLanguageFontClass();
   const { width } = useWindowDimensions();
   const dashboard = useEntityDashboard();
@@ -114,17 +128,7 @@ export default function EntityHomeScreen() {
     >
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
         <PageWidth className="gap-lg p-lg">
-          <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('entity.dashboard')}
-            </Text>
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-              {tEntity('dashboardIntro')}
-            </Text>
-          </View>
+          <EntityScreenHeader title={t('entity.dashboard')} intro={tEntity('dashboardIntro')} />
           {hasLoadFailed(dashboard) ? <EntityLoadFailure query={dashboard} /> : null}
 
           {impact === undefined ? null : impact.suppressed ? (
@@ -198,52 +202,52 @@ export default function EntityHomeScreen() {
                   {tEntity('trackingEmpty')}
                 </Text>
               ) : (
-                data.tracking.map((row) => (
-                  <View
-                    key={row.referralId}
-                    testID={`entity-tracking-${row.referralId}`}
-                    className="gap-xs"
-                  >
-                    <View className="flex-row flex-wrap items-center justify-between gap-sm">
-                      <Text
-                        className={`flex-1 text-start text-md font-bold text-neutral-900 ${fontClass}`}
-                      >
-                        {`${row.referredFirstName} ${row.referredLastName}`.trim()}
-                      </Text>
-                      <Text className={`text-sm font-semibold text-neutral-700 ${fontClass}`}>
-                        {tEntity(`status.${row.status}`)}
-                      </Text>
-                    </View>
-                    <BarRow
-                      label={[
-                        `${tEntity('present')}: ${row.attendancePresentCount}`,
-                        `${tEntity('absent')}: ${row.attendanceAbsentCount}`,
-                        `${tEntity('excused')}: ${row.attendanceExcusedCount}`,
-                      ].join(' · ')}
-                      value={percent(row.attendanceRate)}
-                      share={row.attendanceRate / 100}
-                    />
-                  </View>
-                ))
+                data.tracking.map((row) => {
+                  const name = `${row.referredFirstName} ${row.referredLastName}`.trim();
+                  return (
+                    <PressableScale
+                      key={row.referralId}
+                      testID={`entity-tracking-${row.referralId}`}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${tReferrals('open')}: ${name}`}
+                      onPress={() => push(`/entity-referral/${row.referralId}` as Href)}
+                      haptic="selection"
+                      style={continuousCorners}
+                      className="min-h-recommended flex-row items-center gap-md rounded-md py-sm"
+                    >
+                      <View className="flex-1 gap-xs">
+                        <View className="flex-row flex-wrap items-center justify-between gap-sm">
+                          <Text
+                            className={`flex-1 text-start text-md font-bold text-neutral-900 ${fontClass}`}
+                          >
+                            {name}
+                          </Text>
+                          <Text className={`text-sm font-semibold text-neutral-700 ${fontClass}`}>
+                            {tReferrals(`status.${row.status}`)}
+                          </Text>
+                        </View>
+                        <BarRow
+                          label={[
+                            `${tEntity('present')}: ${row.attendancePresentCount}`,
+                            `${tEntity('absent')}: ${row.attendanceAbsentCount}`,
+                            `${tEntity('excused')}: ${row.attendanceExcusedCount}`,
+                          ].join(' · ')}
+                          value={percent(row.attendanceRate)}
+                          share={row.attendanceRate / 100}
+                        />
+                      </View>
+                      <SymbolView
+                        accessible={false}
+                        name={forwardSymbol}
+                        size={tokens.fontSize.lg}
+                        tintColor={tokens.colors.neutral[500]}
+                      />
+                    </PressableScale>
+                  );
+                })
               )}
             </Section>
           )}
-
-          <View className="gap-sm">
-            <AppLockLink variant="button" />
-            <PressableScale
-              testID="entity-sign-out"
-              accessibilityRole="button"
-              accessibilityLabel={tProfile('signOutAction')}
-              onPress={() => void logout()}
-              haptic="tapLight"
-              className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg"
-            >
-              <Text className={`text-md font-semibold text-primary-dark ${fontClass}`}>
-                {tProfile('signOutAction')}
-              </Text>
-            </PressableScale>
-          </View>
         </PageWidth>
       </ScrollView>
     </SafeAreaView>

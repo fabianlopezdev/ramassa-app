@@ -21,7 +21,6 @@ name: smoke-profile
 env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
   DEV_MENU_LINK: ramassa://dev-menu
-  TAB_PROFILE: '{{nav:tabs.profile}}'
   HOME_FEED_TITLE: '{{home:feedTitle}}'
   PROFILE_TITLE: '{{profile:title}}'
   EDIT_ACTION: '{{profile:editAction}}'
@@ -178,7 +177,7 @@ env:
       notVisible: '.*${PROFILE_TITLE}.*'
     commands:
       - tapOn:
-          text: '^${TAB_PROFILE}$'
+          id: player-profile-button
           optional: true
       - tapOn:
           text: '^${PUSH_DECLINE}$'
@@ -191,6 +190,8 @@ env:
 - extendedWaitUntil:
     visible: '.*${PROFILE_TITLE}.*'
     timeout: 15000
+- tapOn:
+    id: profile-open-data
 
 # ── Into the editor ────────────────────────────────────────────────────────
 - repeat:
@@ -475,7 +476,7 @@ env:
       notVisible: '.*${PROFILE_TITLE}.*'
     commands:
       - tapOn:
-          text: '^${TAB_PROFILE}$'
+          id: player-profile-button
           optional: true
       - tapOn:
           text: '^${PUSH_DECLINE}$'
@@ -488,6 +489,8 @@ env:
 - extendedWaitUntil:
     visible: '.*${PROFILE_TITLE}.*'
     timeout: 30000
+- tapOn:
+    id: profile-open-data
 - repeat:
     times: 20
     while:
@@ -619,7 +622,7 @@ env:
       notVisible: '.*${PROFILE_TITLE}.*'
     commands:
       - tapOn:
-          text: '^${TAB_PROFILE}$'
+          id: player-profile-button
           optional: true
       - tapOn:
           text: '^${PUSH_DECLINE}$'
@@ -632,6 +635,8 @@ env:
 - extendedWaitUntil:
     visible: '.*${PROFILE_TITLE}.*'
     timeout: 30000
+- tapOn:
+    id: profile-open-privacy
 - repeat:
     times: 20
     while:
