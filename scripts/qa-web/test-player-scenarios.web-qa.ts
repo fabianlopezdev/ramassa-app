@@ -118,7 +118,7 @@ test.describe.serial('scenario switches on a test player', () => {
     await flip(page, 'test-scenario-season', 'Mark as signed', /^Signed/);
 
     const player = await openAppAsHer(browser);
-    await expect(player.getByTestId('home-open-feedback')).toBeVisible({ timeout: 60_000 });
+    await expect(player.getByTestId('home-screen')).toBeVisible({ timeout: 60_000 });
     expect(new URL(player.url()).pathname).not.toBe('/authorization');
     await player.context().close();
   });

@@ -78,9 +78,10 @@ test('a signed-in press target keeps its 56px minimum, border, radius, and backg
 }) => {
   await signInPlayer(page, player.email);
 
-  const knowledgeAction = page.getByTestId('open-knowledge-base');
-  await expect(knowledgeAction).toBeVisible({ timeout: 30_000 });
-  const target = await measurePressTarget(knowledgeAction);
+  await expect(page.getByTestId('home-screen')).toBeVisible({ timeout: 30_000 });
+  const categoryChip = page.getByRole('radio').first();
+  await expect(categoryChip).toBeVisible();
+  const target = await measurePressTarget(categoryChip);
 
   expect(target.height).toBeGreaterThanOrEqual(56);
   expect(target.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');

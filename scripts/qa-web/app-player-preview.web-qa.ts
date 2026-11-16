@@ -32,14 +32,14 @@ test('the player app from More, then back to her own session', async ({ page }) 
   await page.getByTestId('team-more-preview').click();
 
   await expect(page.getByTestId('player-preview-bar')).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByTestId('home-open-feedback')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('home-screen')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId('team-sidebar-more')).toHaveCount(0);
   expect(previewStarts()).toBe(before + 1);
 
   // A right-to-left preview language restarts the app; the preview comes back.
   await page.reload();
   await expect(page.getByTestId('player-preview-bar')).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByTestId('home-open-feedback')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('home-screen')).toBeVisible({ timeout: 30_000 });
 
   await page.getByTestId('player-preview-exit').click();
   await expect(page.getByTestId('player-preview-bar')).toHaveCount(0, { timeout: 30_000 });
