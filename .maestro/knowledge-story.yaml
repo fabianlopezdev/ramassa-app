@@ -11,7 +11,7 @@ env:
   SUBMISSION_TITLE: '{{knowledge:submissionTitle}}'
   SUCCESS_TITLE: '{{knowledge:submissionSuccessTitle}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
-  COMMUNITY_TITLE: '{{forum:title}}'
+  COMMUNITY_TITLE: '{{nav:tabs.community}}'
 ---
 - runFlow: _open-app.yaml
 - runFlow: _sign-in.yaml

@@ -8,7 +8,7 @@ import { LatestGuidesSection } from '@/components/knowledge/latest-guides-sectio
 import { PageWidth } from '@/components/layout/content-width';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
+import { PlayerTabHeader, PlayerTabStateFrame } from '@/components/profile/player-tab-header';
 import { ServiceCard } from '@/components/services/service-card';
 import { ServiceCategoryGrid } from '@/components/services/service-category-grid';
 import { ServiceFilterPanel } from '@/components/services/service-filter-panel';
@@ -62,7 +62,7 @@ function activeFilterCount(filters: PlayerServiceFilterSelection): number {
 }
 
 export default function ServicesScreen() {
-  const { t, i18n } = useTranslation(['playerServices', 'errors']);
+  const { t, i18n } = useTranslation(['playerServices', 'errors', 'nav']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -171,17 +171,23 @@ export default function ServicesScreen() {
   );
 
   if (categoriesQuery.isPending && categoriesQuery.data === undefined) {
-    return <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />;
+    return (
+      <PlayerTabStateFrame title={t('nav:tabs.services')}>
+        <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />
+      </PlayerTabStateFrame>
+    );
   }
   if (categoriesQuery.isError && categoriesQuery.data === undefined) {
     return (
-      <AnnouncementFeedError
-        message={t('playerServices:loadFailed')}
-        retryLabel={t('playerServices:retry')}
-        code={toAppError(categoriesQuery.error).code}
-        languageFontClass={languageFontClass}
-        onRetry={() => void categoriesQuery.refetch()}
-      />
+      <PlayerTabStateFrame title={t('nav:tabs.services')}>
+        <AnnouncementFeedError
+          message={t('playerServices:loadFailed')}
+          retryLabel={t('playerServices:retry')}
+          code={toAppError(categoriesQuery.error).code}
+          languageFontClass={languageFontClass}
+          onRetry={() => void categoriesQuery.refetch()}
+        />
+      </PlayerTabStateFrame>
     );
   }
 
@@ -194,13 +200,7 @@ export default function ServicesScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         <PageWidth className="gap-lg">
-          <ProfilePhotoButton />
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
-          >
-            {t('playerServices:helpTitle')}
-          </Text>
+          <PlayerTabHeader title={t('nav:tabs.services')} />
           {isOffline ? (
             <OfflineBanner
               label={t('playerServices:offline')}
@@ -231,17 +231,23 @@ export default function ServicesScreen() {
   }
 
   if (servicesQuery.isPending && servicesQuery.data === undefined) {
-    return <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />;
+    return (
+      <PlayerTabStateFrame title={t('nav:tabs.services')}>
+        <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />
+      </PlayerTabStateFrame>
+    );
   }
   if (servicesQuery.isError && servicesQuery.data === undefined) {
     return (
-      <AnnouncementFeedError
-        message={t('playerServices:loadFailed')}
-        retryLabel={t('playerServices:retry')}
-        code={toAppError(servicesQuery.error).code}
-        languageFontClass={languageFontClass}
-        onRetry={() => void servicesQuery.refetch()}
-      />
+      <PlayerTabStateFrame title={t('nav:tabs.services')}>
+        <AnnouncementFeedError
+          message={t('playerServices:loadFailed')}
+          retryLabel={t('playerServices:retry')}
+          code={toAppError(servicesQuery.error).code}
+          languageFontClass={languageFontClass}
+          onRetry={() => void servicesQuery.refetch()}
+        />
+      </PlayerTabStateFrame>
     );
   }
 
@@ -258,6 +264,7 @@ export default function ServicesScreen() {
       onRefresh={refresh}
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
+          <PlayerTabHeader title={t('nav:tabs.services')} />
           <PressableScale
             accessibilityLabel={t('playerServices:backCategories')}
             onPress={backToCategories}
@@ -271,7 +278,7 @@ export default function ServicesScreen() {
           <View className="gap-xs">
             <Text
               accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
+              className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
             >
               {selectedCategoryName.text}
             </Text>

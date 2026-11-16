@@ -1,7 +1,7 @@
 appId: com.ramassa.app
 name: gallery
 env:
-  COMMUNITY_TITLE: '{{forum:title}}'
+  COMMUNITY_TITLE: '{{nav:tabs.community}}'
   CONSENT_REMINDER: '{{gallery:consentReminder}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
 ---

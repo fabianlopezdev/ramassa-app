@@ -2,7 +2,7 @@ appId: com.ramassa.app
 name: forum
 env:
   LOCALE: ca
-  CATALAN_TITLE: '{{forum:title}}'
+  CATALAN_TITLE: '{{nav:tabs.community}}'
   CATALAN_TOMBSTONE: '{{forum:deletedTombstone}}'
   CATALAN_FLAG_CONFIRMATION: '{{forum:flagConfirmation}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'

@@ -17,7 +17,7 @@ import { HomeNextActivity } from '@/components/home/home-next-activity';
 import { HomeSectionHeader } from '@/components/home/home-section-header';
 import { HomeToDo } from '@/components/home/home-to-do';
 import { PageWidth } from '@/components/layout/content-width';
-import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
+import { PlayerTabHeader, PlayerTabStateFrame } from '@/components/profile/player-tab-header';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
 import { useMyCustomForms } from '@/lib/custom-forms';
 import { pickNextPlayerActivity } from '@/lib/home-next-activity';
@@ -59,7 +59,7 @@ const getItemType = (item: AnnouncementListRow) =>
   item.image_url === null ? 'text-announcement' : 'image-announcement';
 
 export default function HomeScreen() {
-  const { t, i18n } = useTranslation(['home', 'common']);
+  const { t, i18n } = useTranslation(['home', 'common', 'nav']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -173,18 +173,24 @@ export default function HomeScreen() {
   );
 
   if (isPending && data === undefined) {
-    return <AnnouncementFeedSkeleton accessibilityLabel={t('loading')} />;
+    return (
+      <PlayerTabStateFrame title={t('nav:tabs.home')}>
+        <AnnouncementFeedSkeleton accessibilityLabel={t('loading')} />
+      </PlayerTabStateFrame>
+    );
   }
 
   if (isError && data === undefined) {
     return (
-      <AnnouncementFeedError
-        message={t('loadFailed')}
-        retryLabel={t('retryAction')}
-        code={toAppError(error).code}
-        languageFontClass={languageFontClass}
-        onRetry={onRefresh}
-      />
+      <PlayerTabStateFrame title={t('nav:tabs.home')}>
+        <AnnouncementFeedError
+          message={t('loadFailed')}
+          retryLabel={t('retryAction')}
+          code={toAppError(error).code}
+          languageFontClass={languageFontClass}
+          onRetry={onRefresh}
+        />
+      </PlayerTabStateFrame>
     );
   }
 
@@ -204,7 +210,7 @@ export default function HomeScreen() {
       onLoad={onListLoad}
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
-          <ProfilePhotoButton />
+          <PlayerTabHeader title={t('nav:tabs.home')} />
           {/* Per fer, then her next activity, then the announcements (RAPP-790). */}
           <HomeToDo items={toDoItems} languageFontClass={languageFontClass} />
           <HomeNextActivity occurrence={nextActivity} languageFontClass={languageFontClass} />
