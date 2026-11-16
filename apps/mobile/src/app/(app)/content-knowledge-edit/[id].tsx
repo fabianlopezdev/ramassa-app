@@ -2,11 +2,12 @@
  * Writing a knowledge resource on the phone (RAPP-343), with the web admin's
  * fields and rules: category, content type, the title and the block body in
  * the source language (Catalan, or a story's own language), video and
- * external links, the reviewer's note on a story, and the publication.
- * "Generate translations" drafts the title and every block in the four other
- * languages; publishing needs the title drafts and every translated body
- * approved. A story in review can also be returned for changes or declined,
- * with the note.
+ * external links, and the publication. "Generate translations" drafts the
+ * title and every block in the four other languages; publishing needs the
+ * title drafts and every translated body approved. A story in review can be
+ * published or scheduled here as well; starting the review, the note to her,
+ * publishing now, requesting changes and declining sit on its detail
+ * (RAPP-801).
  *
  * The form is kept on the device while she writes (`knowledge-draft.ts`); a
  * chosen step photo is not kept, as it is uploaded only at save. Without
@@ -44,7 +45,6 @@ import {
   reviewTexts,
 } from '@/lib/content-translations';
 import { uploadContentImage, type PickedPhoto } from '@/lib/content-upload';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import {
   areKnowledgeTranslationsApproved,
@@ -85,20 +85,13 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
-import {
-  AppError,
-  getErrorMessageKey,
-  toAppError,
-  type AppErrorCode,
-} from '@ramassa/shared/errors';
+import { AppError, getErrorMessageKey, type AppErrorCode } from '@ramassa/shared/errors';
 import { LANGUAGE_NATIVE_NAMES } from '@ramassa/shared/i18n';
 import {
   createKnowledgeArticle,
   KNOWLEDGE_CONTENT_TYPES,
   knowledgeArticleInputSchema,
-  MAX_KNOWLEDGE_REVIEWER_NOTE_LENGTH,
   MAX_KNOWLEDGE_TITLE_LENGTH,
-  transitionParticipantStory,
   translateKnowledgeBody,
   updateKnowledgeArticle,
   type KnowledgeArticleListRow,
@@ -309,30 +302,6 @@ function KnowledgeForm({
     await finish();
   };
 
-  const completeReview = async (to: 'changes_requested' | 'rejected') => {
-    if (article?.story_status !== 'in_review') return;
-    setError(null);
-    setIsSaving(true);
-    const result = await safeAsync(
-      () =>
-        transitionParticipantStory(
-          supabase,
-          article.id,
-          'in_review',
-          to,
-          form.reviewerNote.trim() || null,
-        ),
-      { code: 'DB-1', context: { operation: `story-${to}` } },
-    );
-    setIsSaving(false);
-    if (!result.ok) {
-      setError(toAppError(result.error).code);
-      playHaptic('error');
-      return;
-    }
-    await finish();
-  };
-
   const errorMessage =
     error === null
       ? null
@@ -481,16 +450,6 @@ function KnowledgeForm({
         autoCapitalize="none"
         autoCorrect={false}
       />
-      {isStory ? (
-        <AuthTextField
-          testID="knowledge-reviewer-note"
-          label={t('reviewerNote')}
-          value={form.reviewerNote}
-          onChangeText={(reviewerNote) => set({ reviewerNote })}
-          maxLength={MAX_KNOWLEDGE_REVIEWER_NOTE_LENGTH}
-          multiline
-        />
-      ) : null}
 
       <View className="gap-sm">
         <SectionLabel>{t('modeLabel')}</SectionLabel>
@@ -533,39 +492,6 @@ function KnowledgeForm({
           </Text>
         )}
       </View>
-
-      {article?.story_status === 'in_review' ? (
-        <View className="flex-row flex-wrap gap-sm">
-          <PressableScale
-            testID="knowledge-request-changes"
-            accessibilityRole="button"
-            accessibilityLabel={t('requestChanges')}
-            onPress={() => void completeReview('changes_requested')}
-            isDisabled={isSaving}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-primary bg-white px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-              {t('requestChanges')}
-            </Text>
-          </PressableScale>
-          <PressableScale
-            testID="knowledge-decline"
-            accessibilityRole="button"
-            accessibilityLabel={t('decline')}
-            onPress={() => void completeReview('rejected')}
-            isDisabled={isSaving}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-error bg-white px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-error ${fontClass}`}>
-              {t('decline')}
-            </Text>
-          </PressableScale>
-        </View>
-      ) : null}
 
       <PressableScale
         testID="knowledge-preview"

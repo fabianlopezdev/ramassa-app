@@ -2,14 +2,15 @@
  * Adding or changing a service category on the phone (RAPP-347), for
  * `services.edit` holders: the Catalan name with its translations, the slug,
  * an icon and a colour, and the category's own fields, one card each, with
- * Move up, Move down, Edit (in a sheet) and Remove. Saving an edit first asks
+ * Move up, Move down, Edit and Remove. Edit opens the field inside its card
+ * (RAPP-800), so the editor is the deepest level. Saving an edit first asks
  * the database how many stored services the new fields would make invalid, as
  * the web admin does, and stops with that count.
  */
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { MultilingualField } from '@/components/content/multilingual-field';
-import { ServiceFieldSheet } from '@/components/content/service-field-sheet';
+import { ServiceFieldForm } from '@/components/content/service-field-form';
 import {
   SERVICE_FIELD_TYPE_KEYS,
   SERVICE_ICON_KEYS,
@@ -42,7 +43,7 @@ import { generateDrafts } from '@/lib/translation-worker';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -65,7 +66,8 @@ const COLOR_KEYS = {
   'chart-3': 'colorChart3',
 } as const satisfies Record<(typeof SERVICE_CATEGORY_COLORS)[number], string>;
 
-type FormError = AppErrorCode | 'invalid' | 'name' | { readonly incompatible: number };
+type FormError =
+  AppErrorCode | 'invalid' | 'name' | 'fieldOpen' | { readonly incompatible: number };
 
 /** The fixed choices, plus a stored value outside them, so an edit never changes it unseen. */
 function withStored<T extends string>(choices: readonly T[], stored: string): readonly string[] {
@@ -100,7 +102,6 @@ function CategoryEditor({ category }: { readonly category: AdminServiceCategory 
     category === undefined ? undefined : reviewOptions(category.name.ca, { ...category.name }),
   );
   const set = (patch: Partial<CategoryForm>) => setForm((current) => ({ ...current, ...patch }));
-  const editing = form.fields.find((field) => field.id === editingId) ?? null;
 
   const generate = async () => {
     setError(null);
@@ -112,6 +113,12 @@ function CategoryEditor({ category }: { readonly category: AdminServiceCategory 
 
   const submit = () => {
     setError(null);
+    // A field still open has changes the category does not hold yet.
+    if (editingId !== null) {
+      setError('fieldOpen');
+      playHaptic('warning');
+      return;
+    }
     if (nameReview.review === undefined || !isTranslationReviewPublishable(nameReview.review)) {
       setError('name');
       playHaptic('warning');
@@ -152,7 +159,9 @@ function CategoryEditor({ category }: { readonly category: AdminServiceCategory 
           ? tEvents('categoryTranslationRequired')
           : error === 'invalid'
             ? t('categoryInvalidPhone')
-            : tErrors(getErrorMessageKey(error));
+            : error === 'fieldOpen'
+              ? t('fieldStillOpen')
+              : tErrors(getErrorMessageKey(error));
 
   return (
     <WizardFrame
@@ -263,10 +272,32 @@ function CategoryEditor({ category }: { readonly category: AdminServiceCategory 
             index={index}
             count={form.fields.length}
             isValid={isFieldValid(field, fieldReviews[field.id])}
+            isLocked={editingId !== null && editingId !== field.id}
             onEdit={() => setEditingId(field.id)}
             onMove={(offset) => set({ fields: moveField(form.fields, index, offset) })}
             onRemove={() => set({ fields: form.fields.filter((item) => item.id !== field.id) })}
-          />
+          >
+            {editingId === field.id ? (
+              <ServiceFieldForm
+                field={field}
+                initialReview={fieldReviews[field.id]}
+                onDone={(done, review) => {
+                  set({
+                    fields: form.fields.map((item) => (item.id === done.id ? done : item)),
+                  });
+                  setFieldReviews((current) => ({ ...current, [done.id]: review }));
+                  setEditingId(null);
+                }}
+                onCancel={() => {
+                  // A new field cancelled before its first Done goes away again.
+                  if (!field.isStored && field.label.trim().length === 0) {
+                    set({ fields: form.fields.filter((item) => item.id !== field.id) });
+                  }
+                  setEditingId(null);
+                }}
+              />
+            ) : null}
+          </FieldCard>
         ))}
         <PressableScale
           testID="service-category-field-add"
@@ -277,34 +308,31 @@ function CategoryEditor({ category }: { readonly category: AdminServiceCategory 
             set({ fields: [...form.fields, field] });
             setEditingId(field.id);
           }}
+          isDisabled={editingId !== null}
           haptic="tapLight"
           className="min-h-recommended justify-center self-start"
         >
-          <Text className={`font-semibold text-primary-dark ${fontClass}`}>{t('fieldAdd')}</Text>
+          <Text
+            className={`font-semibold ${editingId === null ? 'text-primary-dark' : 'text-neutral-400'} ${fontClass}`}
+          >
+            {t('fieldAdd')}
+          </Text>
         </PressableScale>
       </View>
 
       {error === null || errorMessage === null ? null : (
         <FailureNotice
           code={
-            typeof error === 'string' && error !== 'invalid' && error !== 'name'
+            typeof error === 'string' &&
+            error !== 'invalid' &&
+            error !== 'name' &&
+            error !== 'fieldOpen'
               ? error
               : 'VALIDATION-1'
           }
           message={errorMessage}
         />
       )}
-
-      <ServiceFieldSheet
-        field={editing}
-        review={editing === null ? undefined : fieldReviews[editing.id]}
-        onDone={(field, review) => {
-          set({ fields: form.fields.map((item) => (item.id === field.id ? field : item)) });
-          setFieldReviews((current) => ({ ...current, [field.id]: review }));
-          setEditingId(null);
-        }}
-        onCancel={() => setEditingId(null)}
-      />
     </WizardFrame>
   );
 }
@@ -314,19 +342,26 @@ function FieldCard({
   index,
   count,
   isValid,
+  isLocked,
   onEdit,
   onMove,
   onRemove,
+  children,
 }: {
   readonly field: FormField;
   readonly index: number;
   readonly count: number;
   readonly isValid: boolean;
+  /** Another field is open, so this card waits. */
+  readonly isLocked: boolean;
   readonly onEdit: () => void;
   readonly onMove: (offset: -1 | 1) => void;
   readonly onRemove: () => void;
+  /** The open field's form, shown inside the card in place of its actions. */
+  readonly children?: ReactNode;
 }) {
   const { t } = useTranslation('services');
+  const isEditing = children !== undefined && children !== null;
   const fontClass = useLanguageFontClass();
   const action = (
     testID: string,
@@ -379,22 +414,32 @@ function FieldCard({
           {t('fieldNeedsWork')}
         </Text>
       )}
-      <View className="flex-row flex-wrap gap-sm">
-        {action(
-          `service-category-field-${index}-up`,
-          t('categoryMoveUp'),
-          () => onMove(-1),
-          index === 0,
-        )}
-        {action(
-          `service-category-field-${index}-down`,
-          t('categoryMoveDown'),
-          () => onMove(1),
-          index === count - 1,
-        )}
-        {action(`service-category-field-${index}-edit`, t('fieldEdit'), onEdit)}
-        {action(`service-category-field-${index}-remove`, t('fieldRemove'), onRemove, false, true)}
-      </View>
+      {isEditing ? (
+        children
+      ) : (
+        <View className="flex-row flex-wrap gap-sm">
+          {action(
+            `service-category-field-${index}-up`,
+            t('categoryMoveUp'),
+            () => onMove(-1),
+            isLocked || index === 0,
+          )}
+          {action(
+            `service-category-field-${index}-down`,
+            t('categoryMoveDown'),
+            () => onMove(1),
+            isLocked || index === count - 1,
+          )}
+          {action(`service-category-field-${index}-edit`, t('fieldEdit'), onEdit, isLocked)}
+          {action(
+            `service-category-field-${index}-remove`,
+            t('fieldRemove'),
+            onRemove,
+            isLocked,
+            true,
+          )}
+        </View>
+      )}
     </View>
   );
 }

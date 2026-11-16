@@ -113,7 +113,7 @@ test('a participant story is started and returned for changes with a note', asyn
       )
       .toBe('in_review');
 
-    await page.getByTestId('knowledge-edit').click();
+    // The whole review sits on the detail (RAPP-801).
     await page.getByTestId('knowledge-reviewer-note').fill('Afegeix com et vas sentir.');
     await page.getByTestId('knowledge-request-changes').click();
     await expect

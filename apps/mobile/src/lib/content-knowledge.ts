@@ -21,6 +21,8 @@ import {
   fetchKnowledgeCategories,
   KNOWLEDGE_PAGE_SIZE,
   transitionParticipantStory,
+  updateKnowledgeArticle,
+  type KnowledgeArticleInput,
   type KnowledgeKindFilter,
   type KnowledgeStoryStatusFilter,
   type StoryStatus,
@@ -84,5 +86,11 @@ export function useKnowledgeActions() {
     mutationFn: (id: string) => deleteKnowledgeArticle(supabase, id),
     onSuccess: refresh,
   });
-  return { transition, remove };
+  // A story published from its detail (RAPP-801), through the editor's own update.
+  const publish = useMutation({
+    mutationFn: (input: { readonly id: string; readonly values: KnowledgeArticleInput }) =>
+      updateKnowledgeArticle(supabase, input.id, input.values),
+    onSuccess: refresh,
+  });
+  return { transition, remove, publish };
 }

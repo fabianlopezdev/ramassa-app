@@ -31,6 +31,8 @@ async function openModeration(page: Page): Promise<void> {
   await page.getByTestId('team-sidebar-more').click({ timeout: 30_000 });
   await page.getByTestId('team-more-forum').click({ timeout: 30_000 });
   await expect(page.getByTestId(`forum-report-post-${POST}`)).toBeVisible({ timeout: 30_000 });
+  // The author's forum posting switch sits on the report (RAPP-802).
+  await expect(page.getByTestId(`forum-report-posting-${POST}`)).toBeVisible({ timeout: 30_000 });
 }
 
 test.beforeEach(restoreSeededReport);

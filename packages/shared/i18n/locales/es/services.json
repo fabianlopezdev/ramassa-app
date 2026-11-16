@@ -235,6 +235,7 @@
   "fieldMinimum": "Valor mínimo (opcional)",
   "fieldDone": "Hecho",
   "fieldNeedsWork": "Faltan datos o traducciones",
+  "fieldStillOpen": "Cierra el campo abierto con Hecho o Cancelar.",
   "fieldLabelGenerate": "Generar las traducciones del nombre",
   "categoryInvalidPhone": "Revisa la categoría: el nombre en todos los idiomas, una clave corta y cada campo completo.",
   "iconHouse": "Casa",

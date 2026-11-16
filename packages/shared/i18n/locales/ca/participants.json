@@ -388,9 +388,6 @@
     "todayMine": "{{item}}: {{quantity}} amb tu, havia de tornar el {{date}}"
   },
   "items": {
-    "title": "Articles",
-    "intro": "El material que l'equip lliura, compta i rep.",
-    "action": "Articles",
     "add": "Afegir un article",
     "newTitle": "Article nou",
     "editTitle": "Editar {{item}}",
@@ -424,7 +421,6 @@
     "saveFailed": "L'article no s'ha desat. Torna-ho a provar.",
     "sizeInStock": "La talla {{size}} encara té estoc. Compta-la a zero o mantén-la.",
     "codeTaken": "Un altre article ja fa servir aquestes lletres.",
-    "summary": "{{kind}} · {{sizes}}",
     "inactive": "Desactivat"
   },
   "list": {

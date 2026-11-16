@@ -1,11 +1,11 @@
 /**
- * One extra field of a service category, edited on its own in a sheet
- * (RAPP-347): the Catalan name with its translations, the key services store
+ * One extra field of a service category (RAPP-347), edited inside its card in
+ * the category editor (RAPP-800), so no further screen or sheet opens: the
+ * Catalan name with its translations, the key services store
  * the answer under, the type, whether it is required and whether players can
  * filter by it, a select's options and a number's minimum. The native side of
  * one entry in the web admin's schema JSON.
  */
-import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
@@ -16,8 +16,7 @@ import { generateDrafts } from '@/lib/translation-worker';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Modal, ScrollView, Switch, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Switch, Text, View } from 'react-native';
 import { getErrorMessageKey, type AppErrorCode } from '@ramassa/shared/errors';
 import { SERVICE_METADATA_FIELD_TYPES } from '@ramassa/shared/services';
 import { tokens } from '@ramassa/shared/tokens';
@@ -57,7 +56,7 @@ function Toggle({
   );
 }
 
-function FieldForm({
+export function ServiceFieldForm({
   field,
   initialReview,
   onDone,
@@ -91,18 +90,7 @@ function FieldForm({
   };
 
   return (
-    <ScrollView
-      contentContainerClassName="gap-md p-lg"
-      keyboardShouldPersistTaps="handled"
-      // The page sheet does not move with the keyboard, so the scroll view does.
-      automaticallyAdjustKeyboardInsets
-    >
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}
-      >
-        {field.isStored ? field.label : t('fieldNew')}
-      </Text>
+    <View testID="service-field-form" className="gap-md border-t border-neutral-200 pt-md">
       <MultilingualField
         testIDPrefix="service-field-label"
         label={t('fieldLabel')}
@@ -294,47 +282,6 @@ function FieldForm({
           </Text>
         </PressableScale>
       </View>
-    </ScrollView>
-  );
-}
-
-export function ServiceFieldSheet({
-  field,
-  review,
-  onDone,
-  onCancel,
-}: {
-  /** The field being edited, or null when the sheet is closed. */
-  readonly field: FormField | null;
-  readonly review: TranslationReview | undefined;
-  readonly onDone: (field: FormField, review: TranslationReview | undefined) => void;
-  readonly onCancel: () => void;
-}) {
-  // A native Modal sits above the app lock's cover, so it hides while locked.
-  const { isCovered } = useAppLock();
-  return (
-    <Modal
-      visible={field !== null && !isCovered}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onCancel}
-    >
-      <SafeAreaView className="flex-1 bg-white" testID="service-field-sheet">
-        <KeyboardAvoidingView
-          className="flex-1"
-          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
-        >
-          {field === null ? null : (
-            <FieldForm
-              key={field.id}
-              field={field}
-              initialReview={review}
-              onDone={onDone}
-              onCancel={onCancel}
-            />
-          )}
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </Modal>
+    </View>
   );
 }

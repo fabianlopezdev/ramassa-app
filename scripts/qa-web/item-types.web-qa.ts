@@ -25,8 +25,8 @@ test('the team keeps its item list', async ({ page }) => {
   await completeSecondFactor(page, STAFF_EMAIL);
   await page.getByTestId('team-sidebar-more').click({ timeout: 30_000 });
   await page.getByTestId('team-more-stock').click();
-  await page.getByTestId('stock-items').click({ timeout: 30_000 });
 
+  // The stock screen lists the items itself (RAPP-800).
   // A custom item shows its own name, never its key.
   await page.getByTestId('items-row-custom_bibs').click({ timeout: 30_000 });
   await expect(page.getByTestId('item-name-en')).toHaveValue('Bibs');
