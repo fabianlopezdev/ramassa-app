@@ -8,6 +8,7 @@
 import { StaffCheckouts } from '@/components/equipment/staff-checkouts';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverItemTypes } from '@/lib/handover';
@@ -156,9 +157,8 @@ function StockItemName({
 export default function StockScreen() {
   const { t, i18n } = useTranslation('participants');
   const itemLabel = useItemLabel();
-  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
-  const { back, push } = useRouter();
+  const { push } = useRouter();
   const { permissions } = useAccountAccess();
   const canReceive = permissions.has('equipment.receive');
   const canCount = permissions.has('equipment.count');
@@ -181,27 +181,11 @@ export default function StockScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right']}>
+      <NativeScreenHeader title={t('stock.title')} />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="stock-back"
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
           <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('stock.title')}
-            </Text>
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
               {t('stock.intro')}
             </Text>

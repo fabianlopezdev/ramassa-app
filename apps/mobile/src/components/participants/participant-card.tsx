@@ -111,15 +111,15 @@ const CHILDCARE_KEYS = {
 
 export function ParticipantCard({
   participantId,
-  onBack,
+  onErased,
 }: {
   readonly participantId: string;
-  readonly onBack?: () => void;
+  /** Her pushed card closes once her data is erased; a tablet pane stays. */
+  readonly onErased?: () => void;
 }) {
   const { t, i18n } = useTranslation('participants');
   const { t: tProfile } = useTranslation('profile');
   const { t: tOnboarding } = useTranslation('onboarding');
-  const { t: tCommon } = useTranslation('common');
   const { t: tErrors } = useTranslation('errors');
   const languageFontClass = useLanguageFontClass();
   const { data, isPending, isError, error, refetch, isFetching } =
@@ -340,18 +340,6 @@ export function ParticipantCard({
 
   return (
     <ScrollView contentContainerClassName="gap-md p-lg" testID="participant-card">
-      {onBack === undefined ? null : (
-        <PressableScale
-          accessibilityLabel={tCommon('back')}
-          onPress={onBack}
-          haptic="tapLight"
-          className="min-h-recommended self-start justify-center"
-        >
-          <Text className={`font-semibold text-primary-dark ${languageFontClass}`}>
-            {tCommon('back')}
-          </Text>
-        </PressableScale>
-      )}
       <View className="gap-xs">
         <Text
           accessibilityRole="header"
@@ -460,7 +448,7 @@ export function ParticipantCard({
       {canReadNotes ? <ParticipantNotes participantId={participantId} /> : null}
       <ParticipantMaterial participantId={participantId} />
       <ParticipantActivity participantId={participantId} />
-      {canHandleRgpd ? <ParticipantRgpd participant={data} onErased={() => onBack?.()} /> : null}
+      {canHandleRgpd ? <ParticipantRgpd participant={data} onErased={() => onErased?.()} /> : null}
     </ScrollView>
   );
 }

@@ -245,16 +245,13 @@ function Thread({
 
 export function ServiceReviewDetail({
   reviewKey,
-  onBack,
   onDone,
 }: {
   readonly reviewKey: string;
-  readonly onBack?: () => void;
   /** After a rejection or "mark as reviewed": the item has left the queue. */
   readonly onDone: () => void;
 }) {
   const { t } = useTranslation('services');
-  const { t: tCommon } = useTranslation('common');
   const { t: tErrors } = useTranslation('errors');
   const fontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -296,16 +293,6 @@ export function ServiceReviewDetail({
       automaticallyAdjustKeyboardInsets
       testID="service-review-detail"
     >
-      {onBack === undefined ? null : (
-        <PressableScale
-          accessibilityLabel={tCommon('back')}
-          onPress={onBack}
-          haptic="tapLight"
-          className="min-h-recommended self-start justify-center"
-        >
-          <Text className={`font-semibold text-primary-dark ${fontClass}`}>{tCommon('back')}</Text>
-        </PressableScale>
-      )}
       <View className="gap-xs">
         <Text className={`text-start text-sm font-semibold text-neutral-600 ${fontClass}`}>
           {t('reviewDetailEyebrow')}

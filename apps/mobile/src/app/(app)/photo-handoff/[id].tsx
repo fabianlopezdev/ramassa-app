@@ -7,6 +7,7 @@
  */
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { compressNativeStoryImage } from '@/lib/native-image-compression';
@@ -14,7 +15,7 @@ import { mobileClientEnv, supabase } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useQuery } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
@@ -31,9 +32,7 @@ import { uploadFile } from '@ramassa/shared/upload-client';
 
 export default function PhotoHandoffScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
-  const { back } = useRouter();
   const { t } = useTranslation('settings');
-  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
   const { user, session } = useAuth();
   const handoff = useQuery({
@@ -133,26 +132,10 @@ export default function PhotoHandoffScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right', 'bottom']}>
+      <NativeScreenHeader title={t('handoff.pageTitle')} />
       <ScrollView contentContainerClassName="pb-3xl">
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="photo-handoff-back"
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-          >
-            {t('handoff.pageTitle')}
-          </Text>
           {handoff.isPending ? <ActivityIndicator color={tokens.colors.primary.DEFAULT} /> : null}
           {state === 'missing' ? sentence(t('handoff.notFound')) : null}
           {state === 'expired' ? sentence(t('handoff.pageExpired')) : null}

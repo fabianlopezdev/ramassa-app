@@ -1,4 +1,5 @@
 import { KnowledgeDetail } from '@/components/content/knowledge-detail';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -7,8 +8,9 @@ export default function ContentKnowledgeScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
   const { back } = useRouter();
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
-      <KnowledgeDetail articleId={id} onBack={back} onDeleted={back} />
+    <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right']}>
+      <NativeScreenHeader />
+      <KnowledgeDetail articleId={id} onDeleted={back} />
     </SafeAreaView>
   );
 }

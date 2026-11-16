@@ -8,13 +8,13 @@
  */
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { documentSize } from '@/lib/document-file';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useDocumentActions, useInternalDocuments } from '@/lib/team-documents';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
@@ -26,9 +26,7 @@ const SEARCH_DELAY_MS = 300;
 
 export default function TeamDocumentsScreen() {
   const { t, i18n } = useTranslation('settings');
-  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
-  const { back } = useRouter();
   const [typed, setTyped] = useState('');
   const [query, setQuery] = useState('');
   const [notice, setNotice] = useState<{ readonly ok: boolean; readonly text: string } | null>(
@@ -62,32 +60,16 @@ export default function TeamDocumentsScreen() {
     <SafeAreaView
       testID="team-documents"
       className="flex-1 bg-neutral-50"
-      edges={['top', 'left', 'right']}
+      edges={['left', 'right']}
     >
+      <NativeScreenHeader title={t('documentsTitle')} />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerClassName="pb-3xl"
         keyboardShouldPersistTaps="handled"
       >
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="team-documents-back"
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
           <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('documentsTitle')}
-            </Text>
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
               {t('documentsIntro')}
             </Text>

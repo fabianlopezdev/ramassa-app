@@ -11,6 +11,7 @@ import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states
 import { ModerationReports } from '@/components/forum/moderation-reports';
 import { GalleryModeration } from '@/components/gallery/gallery-moderation';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { SegmentedControl } from '@/components/layout/segmented-control';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -34,9 +35,8 @@ const NO_ROWS: readonly ForumModerationQueueRow[] = [];
 
 export default function ForumModerationScreen() {
   const { t } = useTranslation('forum');
-  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
-  const { back, push } = useRouter();
+  const { push } = useRouter();
   const { segment: requested } = useLocalSearchParams<{ segment?: string }>();
   const { permissions } = useAccountAccess();
   const available = useMemo(() => moderationSegments(permissions), [permissions]);
@@ -62,21 +62,6 @@ export default function ForumModerationScreen() {
 
   const header = (
     <View className="gap-md">
-      <PressableScale
-        testID="forum-moderation-back"
-        accessibilityLabel={tCommon('back')}
-        onPress={back}
-        haptic="tapLight"
-        className="min-h-recommended self-start justify-center"
-      >
-        <Text className={`font-semibold text-primary-dark ${fontClass}`}>{tCommon('back')}</Text>
-      </PressableScale>
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-      >
-        {t('moderationScreenTitle')}
-      </Text>
       {options.length > 1 && segment !== null ? (
         <SegmentedControl
           testID="moderation-segments"
@@ -103,8 +88,9 @@ export default function ForumModerationScreen() {
       <SafeAreaView
         testID="forum-moderation"
         className="flex-1 bg-neutral-50"
-        edges={['top', 'left', 'right']}
+        edges={['left', 'right']}
       >
+        <NativeScreenHeader title={t('moderationScreenTitle')} />
         <GalleryModeration
           header={
             <View className="gap-md px-lg pt-lg">
@@ -132,8 +118,9 @@ export default function ForumModerationScreen() {
     <SafeAreaView
       testID="forum-moderation"
       className="flex-1 bg-neutral-50"
-      edges={['top', 'left', 'right']}
+      edges={['left', 'right']}
     >
+      <NativeScreenHeader title={t('moderationScreenTitle')} />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
         <PageWidth className="gap-lg p-lg">
           {header}

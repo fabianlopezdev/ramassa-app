@@ -12,6 +12,7 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { useRefreshOrganizationBranding } from '@/components/branding/organization-branding-provider';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { teamScreens } from '@/lib/account-area';
 import type { PickedPhoto } from '@/lib/content-upload';
@@ -26,7 +27,6 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
@@ -129,9 +129,7 @@ function ColorField({
 
 export default function TeamOrganizationScreen() {
   const { t } = useTranslation('settings');
-  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
-  const { back } = useRouter();
   const { user, session } = useAuth();
   const { permissions } = useAccountAccess();
   const queryClient = useQueryClient();
@@ -239,32 +237,16 @@ export default function TeamOrganizationScreen() {
     <SafeAreaView
       testID="team-organization"
       className="flex-1 bg-neutral-50"
-      edges={['top', 'left', 'right']}
+      edges={['left', 'right']}
     >
+      <NativeScreenHeader title={t('tabOrganization')} />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerClassName="pb-3xl"
         keyboardShouldPersistTaps="handled"
       >
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="team-organization-back"
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
           <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('tabOrganization')}
-            </Text>
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>{t('intro')}</Text>
           </View>
 

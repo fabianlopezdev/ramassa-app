@@ -4,9 +4,9 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { StaffMessageThread } from '@/components/messaging/message-thread';
 import { StaffConversationCard } from '@/components/messaging/staff-conversation-card';
-import { TeamBackToHome } from '@/components/team/team-back-to-home';
 import { useTeamLayout } from '@/components/team/team-layout-context';
 import { useStaffConversationList } from '@/lib/messaging';
 import { formatUnreadBadge } from '@/lib/unread-badge';
@@ -38,7 +38,11 @@ export default function StaffConversationsScreen() {
   const fontClass = useLanguageFontClass();
   const { push } = useRouter();
   const { data, isPending, isError, isFetching, error, refetch } = useStaffConversationList();
-  const isSplit = useTeamLayout() === 'sidebar';
+  const layout = useTeamLayout();
+  const isSplit = layout === 'sidebar';
+  // In the large-button layout each area is a screen pushed from the home, so
+  // the native header goes back to it (RAPP-815); tabs and the sidebar need none.
+  const homeHeader = layout === 'home' ? <NativeScreenHeader /> : null;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const open = useCallback(
     (conversationId: string) =>
@@ -76,17 +80,27 @@ export default function StaffConversationsScreen() {
     [fontClass, open, t],
   );
 
-  if (isPending) return <AnnouncementFeedSkeleton accessibilityLabel={t('loadingConversations')} />;
+  if (isPending) {
+    return (
+      <>
+        {homeHeader}
+        <AnnouncementFeedSkeleton accessibilityLabel={t('loadingConversations')} />
+      </>
+    );
+  }
   if (isError) {
     return (
-      <AnnouncementFeedError
-        message={t('loadError')}
-        retryLabel={t('retry')}
-        code={toAppError(error).code}
-        languageFontClass={fontClass}
-        onRetry={() => void refetch()}
-        isLoading={isFetching}
-      />
+      <>
+        {homeHeader}
+        <AnnouncementFeedError
+          message={t('loadError')}
+          retryLabel={t('retry')}
+          code={toAppError(error).code}
+          languageFontClass={fontClass}
+          onRetry={() => void refetch()}
+          isLoading={isFetching}
+        />
+      </>
     );
   }
   const conversations = data ?? EMPTY_CONVERSATIONS;
@@ -94,7 +108,6 @@ export default function StaffConversationsScreen() {
     <>
       <PageWidth className="flex-1">
         <View className="gap-sm px-lg pb-md pt-lg">
-          <TeamBackToHome />
           <Text
             accessibilityRole="header"
             className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
@@ -127,6 +140,7 @@ export default function StaffConversationsScreen() {
   );
   return (
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
+      {homeHeader}
       {isSplit ? (
         // A tablet keeps the list beside the open item (RAPP-245).
         <View className="flex-1 flex-row">

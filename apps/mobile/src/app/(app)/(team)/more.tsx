@@ -7,9 +7,10 @@
  * home and the tablet sidebar.
  */
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PreviewStartFailed, useStartPreview } from '@/components/preview/preview-as-player';
 import { ProfileSection } from '@/components/profile/profile-section';
-import { TeamBackToHome } from '@/components/team/team-back-to-home';
+import { useTeamLayout } from '@/components/team/team-layout-context';
 import { TeamListRow } from '@/components/team/team-list-row';
 import { useGuardedLogout } from '@/lib/sign-out-guard';
 import { usePendingSigningCount } from '@/lib/tablet-signing';
@@ -48,6 +49,9 @@ const ROUTES: Readonly<
 
 export default function TeamMoreScreen() {
   const signOut = useGuardedLogout();
+  // In the large-button layout More is a screen pushed from the home, so
+  // the native header goes back to it (RAPP-815); tabs and the sidebar need none.
+  const homeHeader = useTeamLayout() === 'home' ? <NativeScreenHeader /> : null;
   const pendingSignings = usePendingSigningCount();
   const { t } = useTranslation('nav');
   const { t: tAuth } = useTranslation('auth');
@@ -146,13 +150,13 @@ export default function TeamMoreScreen() {
       edges={['top', 'left', 'right']}
       testID="team-more"
     >
+      {homeHeader}
       <PageWidth className="flex-1">
         {/* The inset keeps the last entry, sign-out, clear of the floating tab bar. */}
         <ScrollView
           contentInsetAdjustmentBehavior="automatic"
           contentContainerClassName="gap-lg p-lg pb-3xl"
         >
-          <TeamBackToHome />
           <Text
             accessibilityRole="header"
             className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
