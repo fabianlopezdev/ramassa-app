@@ -72,7 +72,8 @@ test('a referral is sent, opened, and found by search', async ({ page }) => {
   await expect(page.getByTestId('entity-referral-updates-locked')).toBeVisible();
   await expect(page.getByTestId('entity-referral-update-submit')).toHaveCount(0);
 
-  await page.getByTestId('entity-referral-back').click();
+  // The native header's back button (RAPP-806), labelled by the navigator.
+  await page.getByLabel(/back$/i).first().click();
   await page.getByTestId('entity-referral-search').fill(`martinez ${tag}`);
   await expect(page.getByTestId(`entity-referral-${row[0]}`)).toBeVisible({ timeout: 30_000 });
   await page.getByTestId('entity-referral-search').fill('zzzz-ningu');

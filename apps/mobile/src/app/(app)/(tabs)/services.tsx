@@ -2,13 +2,12 @@ import {
   AnnouncementEmptyState,
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
-  OfflineBanner,
 } from '@/components/announcements/feed-states';
 import { LatestGuidesSection } from '@/components/knowledge/latest-guides-section';
 import { PageWidth } from '@/components/layout/content-width';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
+import { PlayerTabHeader, PlayerTabStateFrame } from '@/components/profile/player-tab-header';
 import { ServiceCard } from '@/components/services/service-card';
 import { ServiceCategoryGrid } from '@/components/services/service-category-grid';
 import { ServiceFilterPanel } from '@/components/services/service-filter-panel';
@@ -23,6 +22,7 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
+import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -42,6 +42,12 @@ const styles = StyleSheet.create({
   },
 });
 const keyExtractor = (service: PlayerServiceRow) => service.id;
+// The Ajuda tab's own icon, so the way back to the grid reads as this tab's start.
+const categoryGridSymbol: SymbolViewProps['name'] = {
+  ios: 'square.grid.2x2.fill',
+  android: 'category',
+  web: 'category',
+};
 
 function hasFilters(filters: PlayerServiceFilterSelection): boolean {
   return (
@@ -62,7 +68,7 @@ function activeFilterCount(filters: PlayerServiceFilterSelection): number {
 }
 
 export default function ServicesScreen() {
-  const { t, i18n } = useTranslation(['playerServices', 'errors']);
+  const { t, i18n } = useTranslation(['playerServices', 'errors', 'nav']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -171,17 +177,23 @@ export default function ServicesScreen() {
   );
 
   if (categoriesQuery.isPending && categoriesQuery.data === undefined) {
-    return <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />;
+    return (
+      <PlayerTabStateFrame title={t('nav:tabs.services')}>
+        <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />
+      </PlayerTabStateFrame>
+    );
   }
   if (categoriesQuery.isError && categoriesQuery.data === undefined) {
     return (
-      <AnnouncementFeedError
-        message={t('playerServices:loadFailed')}
-        retryLabel={t('playerServices:retry')}
-        code={toAppError(categoriesQuery.error).code}
-        languageFontClass={languageFontClass}
-        onRetry={() => void categoriesQuery.refetch()}
-      />
+      <PlayerTabStateFrame title={t('nav:tabs.services')}>
+        <AnnouncementFeedError
+          message={t('playerServices:loadFailed')}
+          retryLabel={t('playerServices:retry')}
+          code={toAppError(categoriesQuery.error).code}
+          languageFontClass={languageFontClass}
+          onRetry={() => void categoriesQuery.refetch()}
+        />
+      </PlayerTabStateFrame>
     );
   }
 
@@ -194,19 +206,7 @@ export default function ServicesScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         <PageWidth className="gap-lg">
-          <ProfilePhotoButton />
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
-          >
-            {t('playerServices:helpTitle')}
-          </Text>
-          {isOffline ? (
-            <OfflineBanner
-              label={t('playerServices:offline')}
-              languageFontClass={languageFontClass}
-            />
-          ) : null}
+          <PlayerTabHeader title={t('nav:tabs.services')} />
           <LatestGuidesSection />
           <View className="gap-sm">
             <View className="gap-xs">
@@ -231,17 +231,23 @@ export default function ServicesScreen() {
   }
 
   if (servicesQuery.isPending && servicesQuery.data === undefined) {
-    return <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />;
+    return (
+      <PlayerTabStateFrame title={t('nav:tabs.services')}>
+        <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />
+      </PlayerTabStateFrame>
+    );
   }
   if (servicesQuery.isError && servicesQuery.data === undefined) {
     return (
-      <AnnouncementFeedError
-        message={t('playerServices:loadFailed')}
-        retryLabel={t('playerServices:retry')}
-        code={toAppError(servicesQuery.error).code}
-        languageFontClass={languageFontClass}
-        onRetry={() => void servicesQuery.refetch()}
-      />
+      <PlayerTabStateFrame title={t('nav:tabs.services')}>
+        <AnnouncementFeedError
+          message={t('playerServices:loadFailed')}
+          retryLabel={t('playerServices:retry')}
+          code={toAppError(servicesQuery.error).code}
+          languageFontClass={languageFontClass}
+          onRetry={() => void servicesQuery.refetch()}
+        />
+      </PlayerTabStateFrame>
     );
   }
 
@@ -258,20 +264,31 @@ export default function ServicesScreen() {
       onRefresh={refresh}
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
+          <PlayerTabHeader title={t('nav:tabs.services')} />
+          {/* A state of this tab, so it stays an in-page control: it shows
+              the grid again (RAPP-806). */}
           <PressableScale
+            testID="services-show-categories"
             accessibilityLabel={t('playerServices:backCategories')}
             onPress={backToCategories}
             haptic="tapLight"
-            className="min-h-recommended self-start justify-center rounded-full border border-neutral-300 px-lg"
+            style={continuousCorners}
+            className="min-h-recommended flex-row items-center gap-sm rounded-md border border-neutral-300 bg-white px-lg"
           >
-            <Text className={`text-md font-medium text-primary ${languageFontClass}`}>
+            <SymbolView
+              accessible={false}
+              name={categoryGridSymbol}
+              size={tokens.fontSize.xl}
+              tintColor={tokens.colors.primary.dark}
+            />
+            <Text className={`text-start text-md font-bold text-primary-dark ${languageFontClass}`}>
               {t('playerServices:backCategories')}
             </Text>
           </PressableScale>
           <View className="gap-xs">
             <Text
               accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
+              className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
             >
               {selectedCategoryName.text}
             </Text>
@@ -281,12 +298,6 @@ export default function ServicesScreen() {
               {t('playerServices:resultsCount', { count: services.length })}
             </Text>
           </View>
-          {isOffline ? (
-            <OfflineBanner
-              label={t('playerServices:offline')}
-              languageFontClass={languageFontClass}
-            />
-          ) : null}
           <PressableScale
             accessibilityLabel={
               filtersVisible

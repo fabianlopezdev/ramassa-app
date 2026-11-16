@@ -15,6 +15,7 @@ interface MaestroSpec {
 }
 
 const auditedSpecs = [
+  '.maestro/_native-back.yaml',
   '.maestro/_open-app.yaml',
   '.maestro/_phase8-survey-journey.yaml',
   '.maestro/_relaunch.yaml',
@@ -382,7 +383,7 @@ describe('Maestro selector contracts', () => {
     expect(feed).toMatch(/FILTER_URGENT[\s\S]*?selected: true[\s\S]*?PINNED/);
     expect(feed).toMatch(/FILTER_SOCIAL[\s\S]*?selected: true/);
     expect(feed).toMatch(
-      /PINNED[\s\S]*?announcement-detail-screen[\s\S]*?announcement-detail-back[\s\S]*?point: 20%, 50%/,
+      /PINNED[\s\S]*?announcement-detail-screen[\s\S]*?runFlow: _native-back\.yaml/,
     );
 
     const languageSwitcher = await Bun.file(
@@ -420,7 +421,7 @@ describe('Maestro selector contracts', () => {
     expect(knowledge).toMatch(/story-submit-button[\s\S]*?story-status-submitted/);
 
     const offline = await Bun.file(path.join(repoRoot, '.maestro/offline-feed.yaml')).text();
-    expect(offline).toContain("OFFLINE_BANNER: '{{home:offlineBanner}}'");
+    expect(offline).toContain("OFFLINE_BANNER: '{{common:offline}}'");
     expect(offline).toMatch(/toggleAirplaneMode[\s\S]*?OFFLINE_BANNER/);
     expect(offline).toMatch(/OFFLINE_BANNER[\s\S]*?toggleAirplaneMode/);
   });
@@ -438,9 +439,9 @@ describe('Maestro selector contracts', () => {
     const forum = await Bun.file(path.join(repoRoot, '.maestro/forum.yaml')).text();
     expect(forum).toContain('- runFlow: _open-app.yaml');
     expect(forum).not.toContain('- clearState');
-    expect(forum).toContain('id: forum-detail-back');
+    expect(forum).toContain('- runFlow: _native-back.yaml');
     expect(forum).toMatch(
-      /notVisible:\n\s+id: forum-board[\s\S]*?id: forum-detail-back[\s\S]*?visible:\n\s+id: forum-board/,
+      /notVisible:\n\s+id: forum-board[\s\S]*?runFlow: _native-back\.yaml[\s\S]*?visible:\n\s+id: forum-board/,
     );
   });
 

@@ -15,7 +15,7 @@ env:
   FILTER_URGENT: '{{home:category.urgent}}'
   PINNED: '{{home:pinned}}'
   EMPTY_TITLE: '{{home:emptyTitle}}'
-  OFFLINE_BANNER: '{{home:offlineBanner}}'
+  OFFLINE_BANNER: '{{common:offline}}'
   BACK: '{{common:back}}'
   TAB_HOME: '{{nav:tabs.home}}'
 ---

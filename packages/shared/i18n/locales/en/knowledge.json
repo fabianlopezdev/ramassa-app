@@ -89,7 +89,6 @@
   "playerEmptyBody": "Try another topic or return when you are connected.",
   "playerLoadFailed": "The resources could not be loaded.",
   "playerRetry": "Try again",
-  "playerOffline": "You are offline. You can read resources saved on this device.",
   "contentUnavailable": "This content block is not available yet.",
   "openVideo": "Open video: {{title}}",
   "byAuthor": "By {{name}}",

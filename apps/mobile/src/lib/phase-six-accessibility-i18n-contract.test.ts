@@ -20,7 +20,9 @@ describe('Phase 6 accessibility and i18n contract', () => {
     expect(pressableScale).toContain('minHeight: tokens.tapTarget.min');
     expect(pressableScale).toContain('minWidth: tokens.tapTarget.min');
     expect(pressableScale).toContain('[styles.minimumTarget, animatedStyle, style]');
-    expect(pressableScale).toContain("accessibilityRole === 'switch'");
+    // The platform press inside a sheet keeps the same minimum target (RAPP-812).
+    expect(pressableScale).toContain('[styles.minimumTarget, style]');
+    expect(pressableScale).toContain("role === 'switch'");
   });
 
   test('onboarding date fields stack before accessibility text reaches 200 percent', async () => {
@@ -39,7 +41,8 @@ describe('Phase 6 accessibility and i18n contract', () => {
     expect(galleryGrid).toContain(
       "accessibilityLabel={t('openItem', { name: item.uploader_first_name })}",
     );
-    expect(gallery).toContain('accessibilityRole="header"');
+    // The screen title is the native header's (RAPP-806).
+    expect(gallery).toContain("<NativeScreenHeader title={t('title')} />");
     expect(galleryItem).toMatch(
       /<VideoView[\s\S]*?accessibilityLabel=\{[\s\S]*?item\.caption \?\? t\('gallery:mediaBy'/,
     );

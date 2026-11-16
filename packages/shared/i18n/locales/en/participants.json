@@ -21,7 +21,7 @@
     "invitedOn": "Invitation created on {{date}}",
     "actions": "Profile options",
     "registration": "Registration",
-    "material": "Equipment",
+    "material": "Material",
     "presets": "Registration presets"
   },
   "listActions": "Participant options",
@@ -101,7 +101,7 @@
   "activityMessage": "Chat",
   "activityForumPost": "Forum",
   "activityFeedback": "Feedback",
-  "activityEquipment": "Equipment",
+  "activityEquipment": "Material",
   "activityServiceInterest": "Service interest",
   "activityReferralUpdate": "Referral update",
   "activityEmpty": "There is nothing in this section yet.",
@@ -167,7 +167,7 @@
   "deletionRequestNoReason": "No reason given",
   "deletionRequestOpen": "Open her record",
   "workingLabel": "Working…",
-  "equipmentTitle": "Equipment handed over",
+  "equipmentTitle": "Material handed over",
   "equipmentAppendOnly": "Every handover is recorded with who did it and when. It cannot be deleted: if something is wrong, record the correct entry below it.",
   "equipmentEmpty": "Nothing has been handed to her yet.",
   "equipmentColumnItem": "Item",
@@ -357,7 +357,7 @@
   "checkout": {
     "action": "Lend to a staff member",
     "title": "Lend material",
-    "intro": "For a trip or an event. Material for a normal session is not recorded.",
+    "intro": "For a trip or an activity. Material for a normal session is not recorded.",
     "staffLabel": "Who takes it",
     "returnLabel": "Back by",
     "returnIn": {
@@ -397,9 +397,9 @@
     "kindLabel": "Kind",
     "kind": {
       "player_kit": "Player kit",
-      "team_equipment": "Team equipment"
+      "team_equipment": "Team material"
     },
-    "kindHint": "Player kit is handed to players and gets unit codes. Team equipment is counted.",
+    "kindHint": "Player kit is handed to players and gets unit codes. Team material is counted.",
     "sizesLabel": "Sizes",
     "sizesHint": "Leave empty for an item without sizes. A size that still has stock cannot be removed.",
     "noSizes": "No sizes",

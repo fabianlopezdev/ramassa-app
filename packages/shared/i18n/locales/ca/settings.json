@@ -139,7 +139,7 @@
     },
     "test_players_manage": {
       "label": "Jugadores de prova",
-      "description": "Crear, veure, editar i esborrar jugadores de prova per provar la inscripció. Aquest permís sol no mostra cap jugadora real."
+      "description": "Crear, veure, editar i eliminar jugadores de prova per provar la inscripció. Aquest permís sol no mostra cap jugadora real."
     },
     "equipment_handover": {
       "label": "Lliurar material",
@@ -723,7 +723,7 @@
       "impact.age_bands": "Informe d'impacte: franges d'edat",
       "impact.nationalities": "Informe d'impacte: nacionalitats",
       "participants.nationality": "Llista de participants: nacionalitat",
-      "participants.city": "Llista de participants i converses: municipi",
+      "participants.city": "Llista de participants i xats: municipi",
       "participants.entity": "Llista de participants: entitat",
       "participants.has_dependents": "Llista de participants: filtre de persones a càrrec",
       "participants.dependents_count": "Llista de participants: nombre de persones a càrrec",

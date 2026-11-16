@@ -20,4 +20,20 @@ describe('app lock and native modals', () => {
     expect(modalFiles).toBeGreaterThanOrEqual(5);
     expect(offenders).toEqual([]);
   });
+
+  test('the sheets added by the restructure use the one shared sheet frame (RAPP-812)', async () => {
+    const root = `${import.meta.dir}/..`;
+    for (const path of [
+      'components/community/community-share-sheet.tsx',
+      'components/entity/entity-account-menu.tsx',
+      'components/entity/entity-event-sheet.tsx',
+    ]) {
+      const source = await Bun.file(`${root}/${path}`).text();
+      expect(source, path).toContain("from '@/components/layout/app-sheet'");
+      expect(source, path).not.toMatch(/<Modal\b/);
+    }
+    const frame = await Bun.file(`${root}/components/layout/app-sheet.tsx`).text();
+    expect(frame).toContain('!isCovered');
+    expect(frame).toContain('<NativeModalScope>');
+  });
 });

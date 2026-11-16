@@ -10,7 +10,6 @@
     "urgent": "Urgent"
   },
   "pinned": "À la une",
-  "offlineBanner": "Pas de connexion. Tu vois les annonces enregistrées.",
   "emptyTitle": "Pas encore d’annonces",
   "emptyBody": "Quand l’équipe publiera une nouvelle, tu la trouveras ici.",
   "loadFailed": "Nous n’avons pas pu charger les annonces.",

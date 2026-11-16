@@ -17,7 +17,7 @@
   "messageSenderYou": "شما",
   "messageStatus": "وضعیت پیام: {{status}}",
   "retry": "دوباره تلاش کنید",
-  "offline": "آفلاین هستید. پیام‌ها در صف می‌مانند.",
+  "offline": "پیام‌ها در صف می‌مانند.",
   "unread": "{{count}} پیام خوانده‌نشده",
   "unread_one": "{{count}} پیام خوانده‌نشده",
   "unread_other": "{{count}} پیام خوانده‌نشده",

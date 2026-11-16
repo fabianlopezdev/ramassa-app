@@ -2,7 +2,6 @@ import {
   AnnouncementEmptyState,
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
-  OfflineBanner,
 } from '@/components/announcements/feed-states';
 import {
   AttendanceRow,
@@ -153,8 +152,16 @@ export function AttendanceSheet({
             {t('summary', { marked, expected: participants.length })}
           </Text>
         </View>
+        {/* The shell banner says the phone is offline (RAPP-807); this says
+            what happens to the marks. */}
         {isOffline ? (
-          <OfflineBanner label={t('offlineBanner')} languageFontClass={languageFontClass} />
+          <Text
+            testID="attendance-offline-queued"
+            accessibilityRole="alert"
+            className={`text-start text-sm text-neutral-700 ${languageFontClass}`}
+          >
+            {t('offlineQueued')}
+          </Text>
         ) : null}
       </View>
       {participants.length === 0 ? (

@@ -1,8 +1,6 @@
 {
-  "title": "Comunitat",
   "categoriesLabel": "Categories del fòrum",
   "allCategories": "Tot",
-  "offline": "Sense connexió. Estàs veient les publicacions desades al telèfon.",
   "offlineWrite": "Connecta't a internet per publicar, respondre, editar o eliminar.",
   "loading": "S'està carregant la comunitat",
   "loadFailed": "No s'ha pogut carregar la comunitat.",

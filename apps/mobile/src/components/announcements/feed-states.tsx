@@ -6,29 +6,6 @@ import type { AppErrorCode } from '@ramassa/shared/errors';
 
 const busyAccessibilityState = { busy: true } as const;
 
-export function OfflineBanner({
-  label,
-  languageFontClass,
-}: {
-  readonly label: string;
-  readonly languageFontClass: string;
-}) {
-  return (
-    <View
-      accessibilityRole="alert"
-      className="flex-row items-center gap-sm rounded-md border border-secondary-dark bg-secondary-light px-md py-sm"
-      style={continuousCorners}
-    >
-      <View accessible={false} className="h-sm w-sm rounded-full bg-warning" />
-      <Text
-        className={`flex-1 text-start text-sm font-medium text-neutral-900 ${languageFontClass}`}
-      >
-        {label}
-      </Text>
-    </View>
-  );
-}
-
 export function AnnouncementEmptyState({
   title,
   body,

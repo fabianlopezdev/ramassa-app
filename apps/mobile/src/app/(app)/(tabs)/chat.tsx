@@ -6,17 +6,16 @@
  */
 import { PageWidth } from '@/components/layout/content-width';
 import { NavRow } from '@/components/layout/nav-row';
-import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
+import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { useUnreadMessages } from '@/lib/messaging';
 import { latestOpenMentoringRequest } from '@/lib/player-chat-tab';
 import { usePlayerMentoringRequests } from '@/lib/player-mentoring';
 import { playerNavIcons } from '@/lib/player-nav-icons';
 import { formatUnreadBadge } from '@/lib/unread-badge';
-import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text } from 'react-native';
+import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MentoringStatus } from '@ramassa/shared/mentoring';
 
@@ -29,7 +28,6 @@ const MENTORING_STATUS_KEYS: Readonly<Record<MentoringStatus, string>> = {
 
 export default function ChatTabScreen() {
   const { t } = useTranslation(['nav', 'messaging', 'mentoring', 'feedback']);
-  const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const unread = useUnreadMessages().data ?? 0;
   const mentoring = usePlayerMentoringRequests();
@@ -60,13 +58,7 @@ export default function ChatTabScreen() {
       contentInsetAdjustmentBehavior="automatic"
     >
       <PageWidth className="gap-lg">
-        <ProfilePhotoButton />
-        <Text
-          accessibilityRole="header"
-          className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
-        >
-          {t('nav:tabs.chat')}
-        </Text>
+        <PlayerTabHeader title={t('nav:tabs.chat')} />
         <NavRow
           testID="chat-open-team-chat"
           icon={playerNavIcons.teamChat}

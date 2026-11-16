@@ -10,7 +10,6 @@
     "urgent": "Urgent"
   },
   "pinned": "Pinned",
-  "offlineBanner": "No connection. You are seeing saved announcements.",
   "emptyTitle": "No announcements yet",
   "emptyBody": "When the team posts an update, you will find it here.",
   "loadFailed": "We could not load the announcements.",

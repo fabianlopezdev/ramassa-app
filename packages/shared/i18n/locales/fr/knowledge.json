@@ -89,7 +89,6 @@
   "playerEmptyBody": "Essaie un autre thème ou reviens quand tu auras une connexion.",
   "playerLoadFailed": "Impossible de charger les ressources.",
   "playerRetry": "Réessaie",
-  "playerOffline": "Tu es hors connexion. Tu peux lire les ressources enregistrées sur cet appareil.",
   "contentUnavailable": "Ce bloc de contenu n’est pas encore disponible.",
   "openVideo": "Ouvre la vidéo : {{title}}",
   "byAuthor": "Par {{name}}",

@@ -1,13 +1,13 @@
 {
   "app": "Ramassà",
   "slug": "admin-events",
-  "title": "Gestió d'esdeveniments",
+  "title": "Gestió d'activitats",
   "surface": "admin",
   "description": "Com l'equip crea activitats puntuals i entrenaments setmanals, manté l'hora local de Madrid quan canvia l'horari d'estiu i gestiona categories accessibles amb icones i colors semàntics.",
   "steps": [
     {
       "id": "list",
-      "label": "Tots els esdeveniments amb categoria, calendari i inscripció",
+      "label": "Totes les activitats amb categoria, calendari i inscripció",
       "web": "admin-events/web/03-list.png"
     },
     {
@@ -51,7 +51,7 @@
   "notes": [
     "Les dates es desen com instants UTC, però l'equip sempre les introdueix i les llegeix a la zona Europe/Madrid.",
     "Una recurrència setmanal és finita. El sistema materialitza cada sessió i conserva la mateixa hora local quan entra o surt l'horari d'estiu.",
-    "Cada esdeveniment defineix si no necessita inscripció, si només recull interès o si exigeix confirmació.",
+    "Cada activitat defineix si no necessita inscripció, si només recull interès o si exigeix confirmació.",
     "Les categories admeten una llista fixa d'icones accessibles i només colors semàntics del sistema visual.",
     "Els contactes d'entitats no poden accedir a aquesta administració."
   ]

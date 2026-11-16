@@ -1,6 +1,7 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { FailureNotice } from '@/components/error-code-line';
 import { FormWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import {
@@ -10,16 +11,8 @@ import {
 } from '@/lib/player-surveys';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Stack } from 'expo-router/stack';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type ComponentProps,
-  type ReactNode,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ScrollView,
@@ -238,18 +231,18 @@ interface SurveyScreenFrameProps {
   readonly children: ReactNode;
   readonly contentContainerClassName: string;
   readonly contentInsets: StyleProp<ViewStyle>;
-  readonly screenOptions: ComponentProps<typeof Stack.Screen>['options'];
+  readonly screenTitle: string;
 }
 
 function SurveyScreenFrame({
   children,
   contentContainerClassName,
   contentInsets,
-  screenOptions,
+  screenTitle,
 }: SurveyScreenFrameProps) {
   return (
     <>
-      <Stack.Screen options={screenOptions} />
+      <NativeScreenHeader title={screenTitle} />
       <ScrollView
         className="flex-1 bg-white"
         contentContainerClassName={contentContainerClassName}
@@ -372,14 +365,7 @@ export default function SurveyScreen() {
         : undefined,
     [insets.bottom],
   );
-  const screenOptions = useMemo(
-    () => ({
-      headerShown: true,
-      headerBackButtonDisplayMode: 'minimal' as const,
-      title: survey === undefined ? t('title') : resolveSurveyCopy(survey.title, language),
-    }),
-    [language, survey, t],
-  );
+  const screenTitle = survey === undefined ? t('title') : resolveSurveyCopy(survey.title, language);
 
   const isInitialLoad =
     (isPending && surveys === undefined) ||
@@ -394,7 +380,7 @@ export default function SurveyScreen() {
   if (isInitialLoad && !hasLoadError) {
     return (
       <SurveyScreenFrame
-        screenOptions={screenOptions}
+        screenTitle={screenTitle}
         contentInsets={contentInsets}
         contentContainerClassName="grow items-center justify-center p-lg"
       >
@@ -412,7 +398,7 @@ export default function SurveyScreen() {
   if (hasLoadError || survey === undefined) {
     return (
       <SurveyScreenFrame
-        screenOptions={screenOptions}
+        screenTitle={screenTitle}
         contentInsets={contentInsets}
         contentContainerClassName="grow items-center justify-center p-lg"
       >
@@ -425,7 +411,7 @@ export default function SurveyScreen() {
   if (submitted || storedResponse?.status === 'completed') {
     return (
       <SurveyScreenFrame
-        screenOptions={screenOptions}
+        screenTitle={screenTitle}
         contentInsets={contentInsets}
         contentContainerClassName="grow items-center justify-center gap-lg p-xl"
       >
@@ -455,7 +441,7 @@ export default function SurveyScreen() {
   if (question === undefined) {
     return (
       <SurveyScreenFrame
-        screenOptions={screenOptions}
+        screenTitle={screenTitle}
         contentInsets={contentInsets}
         contentContainerClassName="grow items-center justify-center p-lg"
       >
@@ -468,7 +454,7 @@ export default function SurveyScreen() {
 
   return (
     <SurveyScreenFrame
-      screenOptions={screenOptions}
+      screenTitle={screenTitle}
       contentInsets={contentInsets}
       contentContainerClassName="grow px-lg py-lg"
     >

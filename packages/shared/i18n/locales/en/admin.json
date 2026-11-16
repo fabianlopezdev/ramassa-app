@@ -40,7 +40,7 @@
   "exportDataset": "Dataset",
   "exportParticipants": "Participants",
   "exportAttendance": "Attendance",
-  "exportEvents": "Event history",
+  "exportEvents": "Activity history",
   "exportDefaultTitle": "Default export",
   "exportDefaultDescription": "Recommended. Encrypted identity, contact, and address fields are excluded.",
   "exportFullTitle": "Full export",

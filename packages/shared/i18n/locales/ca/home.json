@@ -10,7 +10,6 @@
     "urgent": "Urgent"
   },
   "pinned": "Destacat",
-  "offlineBanner": "Sense connexió. Estàs veient els avisos desats.",
   "emptyTitle": "Encara no hi ha avisos",
   "emptyBody": "Quan l'equip publiqui una novetat, la trobaràs aquí.",
   "loadFailed": "No hem pogut carregar els avisos.",

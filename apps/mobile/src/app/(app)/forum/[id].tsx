@@ -5,6 +5,7 @@ import { ForumFlagDialog } from '@/components/forum/forum-flag-dialog';
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
 import { ForumReplyCard } from '@/components/forum/forum-reply-card';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { AuthorLine } from '@/components/people/person-avatar';
@@ -37,6 +38,7 @@ import { FORUM_POST_MAX_LENGTH, FORUM_REPLY_MAX_LENGTH } from '@ramassa/shared/s
 import { tokens } from '@ramassa/shared/tokens';
 
 const FORUM_DETAIL_IMAGE_HEIGHT = tokens.spacing['3xl'] * 4;
+const SAFE_AREA_BOTTOM_EDGES = ['bottom'] as const;
 const EMPTY_REPLIES: readonly ForumReplyRow[] = [];
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: tokens.colors.neutral[50] },
@@ -105,11 +107,10 @@ export default function ForumPostDetailScreen() {
   const contentStyle = useMemo(
     () => ({
       paddingHorizontal: tokens.spacing.lg,
-      paddingTop:
-        process.env.EXPO_OS === 'android' ? insets.top + tokens.spacing.lg : tokens.spacing.lg,
+      paddingTop: tokens.spacing.lg,
       paddingBottom: insets.bottom + tokens.spacing['3xl'],
     }),
-    [insets.bottom, insets.top],
+    [insets.bottom],
   );
   const openLinkLabel = useCallback((url: string) => t('forum:openLink', { url }), [t]);
   const flagReply = useCallback(
@@ -199,11 +200,17 @@ export default function ForumPostDetailScreen() {
   const closeFlagDialog = useCallback(() => setFlagTarget(null), []);
 
   if (postQuery.isPending && post === undefined) {
-    return <AnnouncementFeedSkeleton accessibilityLabel={t('forum:loading')} />;
+    return (
+      <>
+        <NativeScreenHeader title={t('forum:detailTitle')} />
+        <AnnouncementFeedSkeleton accessibilityLabel={t('forum:loading')} />
+      </>
+    );
   }
   if (post === undefined) {
     return (
-      <SafeAreaView style={styles.screen}>
+      <SafeAreaView edges={SAFE_AREA_BOTTOM_EDGES} style={styles.screen}>
+        <NativeScreenHeader title={t('forum:detailTitle')} />
         <View className="flex-1 items-center justify-center gap-md px-lg">
           <Text
             selectable
@@ -228,6 +235,7 @@ export default function ForumPostDetailScreen() {
 
   return (
     <>
+      <NativeScreenHeader title={t('forum:detailTitle')} />
       <FlashList
         testID="forum-detail-screen"
         data={repliesQuery.data ?? EMPTY_REPLIES}
@@ -241,24 +249,7 @@ export default function ForumPostDetailScreen() {
         onRefresh={refresh}
         ListHeaderComponent={
           <PageWidth className="gap-lg pb-lg">
-            <PressableScale
-              testID="forum-detail-back"
-              accessibilityLabel={t('common:back')}
-              onPress={back}
-              haptic="tapLight"
-              className="min-h-recommended self-start justify-center rounded-full border border-neutral-300 px-lg"
-            >
-              <Text className={`font-medium text-primary ${languageFontClass}`}>
-                {t('common:back')}
-              </Text>
-            </PressableScale>
             <View className="gap-xs">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('forum:detailTitle')}
-              </Text>
               <AuthorLine
                 name={post.author_first_name}
                 avatarKey={personCards.get(post.author_id)?.avatarKey ?? null}

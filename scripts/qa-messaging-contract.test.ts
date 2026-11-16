@@ -112,7 +112,7 @@ describe('durable messaging device flow', () => {
   test('returns from the nested team chat route before opening profile', async () => {
     const flow = await Bun.file(flowPath).text();
     const reconnectIndex = flow.indexOf('id: message-sync-retrying');
-    const backIndex = flow.indexOf('id: team-chat-back', reconnectIndex);
+    const backIndex = flow.indexOf('- runFlow: _native-back.yaml', reconnectIndex);
     const profileIndex = flow.indexOf('id: player-profile-button', backIndex);
 
     expect(reconnectIndex).toBeGreaterThanOrEqual(0);

@@ -2,6 +2,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
 import { FormWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
@@ -17,7 +18,6 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
-import { Stack } from 'expo-router/stack';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -139,14 +139,7 @@ export default function FeedbackScreen() {
     ],
     [insets.bottom],
   );
-  const screenOptions = useMemo(
-    () => ({
-      headerShown: true,
-      headerBackButtonDisplayMode: 'minimal' as const,
-      title: t('feedback:title'),
-    }),
-    [t],
-  );
+  const screenTitle = t('feedback:title');
 
   const pickImage = useCallback(async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -226,7 +219,7 @@ export default function FeedbackScreen() {
 
   return (
     <>
-      <Stack.Screen options={screenOptions} />
+      <NativeScreenHeader title={screenTitle} />
       <FlashList
         ref={feedbackListRef}
         testID="feedback-screen"

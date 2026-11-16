@@ -15,7 +15,7 @@
     "appTerms": "App terms",
     "content": "Content",
     "attendance": "Attendance",
-    "messages": "Messages",
+    "messages": "Chats",
     "forum": "Forum moderation",
     "gallery": "Gallery",
     "mentoring": "Mentoring",
@@ -82,7 +82,7 @@
       "mentoring": "Mentoring requests",
       "erasure": "Deletion requests",
       "messages": "Unread chats",
-      "stockAlerts": "Stock below zero"
+      "stockAlerts": "Material below zero"
     }
   }
 }

@@ -11,7 +11,7 @@ env:
   SUBMISSION_TITLE: '{{knowledge:submissionTitle}}'
   SUCCESS_TITLE: '{{knowledge:submissionSuccessTitle}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
-  COMMUNITY_TITLE: '{{forum:title}}'
+  COMMUNITY_TITLE: '{{nav:tabs.community}}'
 ---
 - runFlow: _open-app.yaml
 - runFlow: _sign-in.yaml
@@ -48,16 +48,12 @@ env:
     visible:
       id: knowledge-detail-screen
     timeout: 30000
-- tapOn:
-    id: knowledge-detail-back
-    point: 50%, 50%
+- runFlow: _native-back.yaml
 - extendedWaitUntil:
     visible:
       id: knowledge-base-screen
     timeout: 30000
-- tapOn:
-    id: knowledge-back
-    point: 50%, 50%
+- runFlow: _native-back.yaml
 - runFlow:
     when:
       platform: Android

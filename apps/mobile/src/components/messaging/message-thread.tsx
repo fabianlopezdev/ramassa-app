@@ -1,5 +1,6 @@
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { PERSON_AVATAR_SIZE, PersonAvatar } from '@/components/people/person-avatar';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -11,7 +12,8 @@ import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
-import { memo, useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import { HeaderHeightContext } from 'expo-router/react-navigation';
+import { memo, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -59,6 +61,8 @@ const messageBubbleWidthStyle = { maxWidth: tokens.messaging.messageBubbleMaxWid
 const avatarSlotStyle = { width: PERSON_AVATAR_SIZE.small } as const;
 const timelineKeyExtractor = (row: TimelineRow) => row.id;
 const timelineItemType = (row: TimelineRow) => row.kind;
+const OWN_HEADER_EDGES = ['top', 'left', 'right'] as const;
+const NATIVE_HEADER_EDGES = ['left', 'right'] as const;
 const timelineVisibleContentPosition = {
   autoscrollToBottomThreshold: 0.2,
   startRenderingFromBottom: true,
@@ -301,6 +305,7 @@ function MessageThreadView({
   headerAccessory,
   onTitlePress,
   titlePressLabel,
+  usesNativeHeader = false,
 }: {
   readonly title: string;
   readonly controller: MessageThreadController;
@@ -308,6 +313,11 @@ function MessageThreadView({
   /** The staff thread with a player: her name opens her card (RAPP-799). */
   readonly onTitlePress?: () => void;
   readonly titlePressLabel?: string;
+  /**
+   * The player's chat is a pushed screen: the native header carries its title
+   * and back control (RAPP-806), so the thread draws no title row of its own.
+   */
+  readonly usesNativeHeader?: boolean;
 }) {
   const { t, i18n } = useTranslation('messaging');
   const { user } = useAuth();
@@ -317,8 +327,13 @@ function MessageThreadView({
   // the view only by the rest (RAPP-415); before, a tab left a gap the height
   // of the tab bar between the composer and the keyboard.
   const bottomInset = useSafeAreaInsets().bottom;
+  // Under a native header the view starts below it, while the keyboard is
+  // measured from the top of the screen.
+  const nativeHeaderHeight = useContext(HeaderHeightContext) ?? 0;
   const keyboardOffset =
-    process.env.EXPO_OS === 'ios' ? -Math.max(bottomInset - tokens.spacing.sm, 0) : 0;
+    (usesNativeHeader ? nativeHeaderHeight : 0) +
+    (process.env.EXPO_OS === 'ios' ? -Math.max(bottomInset - tokens.spacing.sm, 0) : 0);
+  const safeAreaEdges = usesNativeHeader ? NATIVE_HEADER_EDGES : OWN_HEADER_EDGES;
   const {
     messages,
     send,
@@ -430,14 +445,14 @@ function MessageThreadView({
 
   if (isPending && isOnline) {
     return (
-      <SafeAreaView style={screenStyle} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={screenStyle} edges={safeAreaEdges}>
         <AnnouncementFeedSkeleton accessibilityLabel={t('loadingConversation')} />
       </SafeAreaView>
     );
   }
   if (isError) {
     return (
-      <SafeAreaView style={screenStyle} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={screenStyle} edges={safeAreaEdges}>
         <View className="flex-1 items-center justify-center gap-md px-lg">
           <Text
             selectable
@@ -462,41 +477,45 @@ function MessageThreadView({
   }
 
   return (
-    <SafeAreaView style={screenStyle} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={screenStyle} edges={safeAreaEdges}>
       <KeyboardAvoidingView
         style={listStyle}
         behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={keyboardOffset}
       >
         <PageWidth className="flex-1">
-          <View className="border-b border-neutral-200 bg-white px-lg py-md">
-            <View className="flex-row items-center gap-md">
-              {headerAccessory}
-              {onTitlePress === undefined ? (
-                <Text
-                  selectable
-                  accessibilityRole="header"
-                  className={`flex-1 text-xl font-semibold text-neutral-900 ${fontClass}`}
-                >
-                  {title}
-                </Text>
-              ) : (
-                <PressableScale
-                  testID="staff-message-open-card"
-                  accessibilityRole="button"
-                  accessibilityLabel={titlePressLabel ?? title}
-                  onPress={onTitlePress}
-                  haptic="tapLight"
-                  className="min-h-recommended flex-1 justify-center"
-                >
+          <View
+            className={`border-neutral-200 bg-white px-lg ${usesNativeHeader ? (isOnline ? '' : 'border-b py-sm') : 'border-b py-md'}`}
+          >
+            {usesNativeHeader ? null : (
+              <View className="flex-row items-center gap-md">
+                {headerAccessory}
+                {onTitlePress === undefined ? (
                   <Text
-                    className={`text-start text-xl font-semibold text-primary-dark ${fontClass}`}
+                    selectable
+                    accessibilityRole="header"
+                    className={`flex-1 text-xl font-semibold text-neutral-900 ${fontClass}`}
                   >
                     {title}
                   </Text>
-                </PressableScale>
-              )}
-            </View>
+                ) : (
+                  <PressableScale
+                    testID="staff-message-open-card"
+                    accessibilityRole="button"
+                    accessibilityLabel={titlePressLabel ?? title}
+                    onPress={onTitlePress}
+                    haptic="tapLight"
+                    className="min-h-recommended flex-1 justify-center"
+                  >
+                    <Text
+                      className={`text-start text-xl font-semibold text-primary-dark ${fontClass}`}
+                    >
+                      {title}
+                    </Text>
+                  </PressableScale>
+                )}
+              </View>
+            )}
             {!isOnline ? (
               <Text
                 selectable
@@ -544,19 +563,34 @@ function MessageThreadView({
   );
 }
 
+/**
+ * Her own conversation with the team. As her pushed chat screen it sits under
+ * the native header (RAPP-806); as the entity's Missatges tab it draws its own
+ * title row with the settings button.
+ */
 export function PlayerMessageThread({
   title,
   headerAccessory,
+  usesNativeHeader = false,
 }: {
   readonly title: string;
   readonly headerAccessory?: ReactNode;
+  readonly usesNativeHeader?: boolean;
 }) {
-  return (
+  const thread = (
     <MessageThreadView
       title={title}
       controller={useOwnConversation()}
       headerAccessory={headerAccessory}
+      usesNativeHeader={usesNativeHeader}
     />
+  );
+  if (!usesNativeHeader) return thread;
+  return (
+    <>
+      <NativeScreenHeader title={title} />
+      {thread}
+    </>
   );
 }
 

@@ -10,7 +10,7 @@ env:
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   DEV_MENU_LABEL: Developer menu
   HOME_FEED_TITLE: '{{home:feedTitle}}'
-  COMMUNITY_TITLE: '{{forum:title}}'
+  COMMUNITY_TITLE: '{{nav:tabs.community}}'
   TAB_HOME: '{{nav:tabs.home}}'
   TAB_EVENTS: '{{nav:tabs.events}}'
   TAB_CHAT: '{{nav:tabs.chat}}'

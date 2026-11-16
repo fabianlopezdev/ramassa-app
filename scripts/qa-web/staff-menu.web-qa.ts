@@ -36,7 +36,7 @@ test.describe.serial('the staff menu', () => {
       'Onboarding',
       'Content',
       'Attendance',
-      /^Messages/,
+      /^Chats/,
       'Forum moderation',
       'Gallery',
       'Mentoring',

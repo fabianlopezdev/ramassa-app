@@ -89,7 +89,6 @@
   "playerEmptyBody": "جرّبي موضوعاً آخر أو عودي عند توفر الاتصال.",
   "playerLoadFailed": "تعذر تحميل الموارد.",
   "playerRetry": "إعادة المحاولة",
-  "playerOffline": "أنت غير متصلة. يمكنك قراءة الموارد المحفوظة على هذا الجهاز.",
   "contentUnavailable": "كتلة المحتوى هذه غير متاحة بعد.",
   "openVideo": "فتح الفيديو: {{title}}",
   "byAuthor": "بقلم {{name}}",

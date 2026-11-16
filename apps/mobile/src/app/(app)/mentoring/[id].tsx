@@ -5,6 +5,7 @@
  */
 import { FailureNotice } from '@/components/error-code-line';
 import { FormWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { continuousCorners } from '@/lib/continuous-corners';
 import {
@@ -15,7 +16,6 @@ import {
 import { usePlayerMentoringRequests } from '@/lib/player-mentoring';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useLocalSearchParams } from 'expo-router';
-import { Stack } from 'expo-router/stack';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -43,20 +43,13 @@ export default function MentoringRequestScreen() {
     }),
     [locale],
   );
-  const screenOptions = useMemo(
-    () => ({
-      headerShown: true,
-      headerBackButtonDisplayMode: 'minimal' as const,
-      title: t('requestTitle'),
-    }),
-    [t],
-  );
+  const screenTitle = t('requestTitle');
   const preferred = request === undefined ? null : preferredSlotParts(request, locale);
   const note = request?.topicDetail?.trim() ?? '';
 
   return (
     <>
-      <Stack.Screen options={screenOptions} />
+      <NativeScreenHeader title={screenTitle} />
       <ScrollView
         testID="mentoring-request-detail"
         style={styles.screen}
