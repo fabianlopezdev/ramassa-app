@@ -417,8 +417,11 @@ function AppNavigator() {
           <Stack.Protected guard={isTeam && team.galleryModeration}>
             <Stack.Screen name="team-gallery" />
           </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.forumModeration}>
+          {/* One moderation screen (RAPP-802): either permission opens it. */}
+          <Stack.Protected guard={isTeam && (team.forumModeration || team.galleryModeration)}>
             <Stack.Screen name="forum-moderation" />
+          </Stack.Protected>
+          <Stack.Protected guard={isTeam && team.forumModeration}>
             <Stack.Screen name="forum-categories" />
           </Stack.Protected>
           <Stack.Protected guard={isTeam && team.attendance}>

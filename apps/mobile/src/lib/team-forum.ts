@@ -16,6 +16,7 @@ import {
   deleteForumCategory,
   fetchForumCategories,
   fetchForumModerationQueue,
+  fetchOwnForumPostingStatus,
   moderateForumTarget,
   moveForumCategory,
   saveForumCategory,
@@ -48,6 +49,19 @@ export function useForumModerationCategories() {
     queryKey: [...forumModerationRoot(user?.id ?? SIGNED_OUT), 'categories'],
     queryFn: () => fetchForumCategories(supabase),
     enabled: user !== null,
+  });
+}
+
+/**
+ * Whether a report's author may post in the forum (RAPP-802). Under the
+ * participant reads, so the card's posting switch refreshes it too.
+ */
+export function useAuthorForumPosting(authorId: string) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['participants', user?.id ?? SIGNED_OUT, 'forum-posting', authorId],
+    queryFn: ({ signal }) => fetchOwnForumPostingStatus(supabase, authorId, { signal }),
+    enabled: user !== null && authorId.length > 0,
   });
 }
 
