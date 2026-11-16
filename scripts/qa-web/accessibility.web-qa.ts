@@ -181,7 +181,7 @@ async function expectSkipLinkTargetsMain(page: Page): Promise<void> {
 
 async function signInPlayer(page: Page): Promise<void> {
   await signInPlayerWithEmailCode(page, 'daniela.ortega@example.test');
-  await expect(page.getByTestId('open-knowledge-base')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('home-screen')).toBeVisible({ timeout: 30_000 });
 }
 
 async function expectCatalanDocument(page: Page): Promise<void> {
@@ -346,7 +346,7 @@ test.describe('WCAG 2.2 AA regression gate', () => {
   }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await signInPlayer(page);
-    await expect(page.getByTestId('open-knowledge-base')).toBeVisible();
+    await expect(page.getByTestId('home-screen')).toBeVisible();
     const response = Promise.withResolvers<void>();
     await page.route('**/rest/v1/rpc/my_authorization_status', async (route) => {
       await response.promise;

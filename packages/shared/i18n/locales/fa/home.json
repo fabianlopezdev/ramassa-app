@@ -1,7 +1,6 @@
 {
   "title": "خوش آمدید",
   "feedTitle": "اطلاعیه‌ها",
-  "feedIntro": "خبرهای باشگاه، تمرین‌ها و فعالیت‌های مربوط به شما.",
   "filterLabel": "فیلتر اطلاعیه‌ها بر اساس دسته",
   "filterAll": "همه",
   "category": {
@@ -22,5 +21,12 @@
     "deadline": "تا {{date}}",
     "answer": "پاسخ بده",
     "dismiss": "الان نه"
+  },
+  "toDo": {
+    "title": "کارهای مانده",
+    "count": "{{current}} از {{total}}"
+  },
+  "nextActivity": {
+    "title": "برنامه بعدی"
   }
 }

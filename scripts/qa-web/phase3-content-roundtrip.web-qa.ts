@@ -47,7 +47,7 @@ function rememberAnnouncement(title: string): string {
 async function signInPlayer(page: Page): Promise<void> {
   const player = PARTICIPANT_FIXTURES[0]!;
   await signInPlayerWithEmailCode(page, player.email);
-  await expect(page.getByTestId('open-knowledge-base')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('home-screen')).toBeVisible({ timeout: 30_000 });
 }
 
 test('reviews five languages, schedules publication, and serves it to a player', async ({

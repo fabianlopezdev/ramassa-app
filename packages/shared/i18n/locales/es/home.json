@@ -1,7 +1,6 @@
 {
   "title": "Bienvenida",
   "feedTitle": "Avisos",
-  "feedIntro": "Novedades del club, entrenamientos y actividades para ti.",
   "filterLabel": "Filtra los avisos por categoría",
   "filterAll": "Todo",
   "category": {
@@ -22,5 +21,12 @@
     "deadline": "Hasta el {{date}}",
     "answer": "Responder",
     "dismiss": "Ahora no"
+  },
+  "toDo": {
+    "title": "Pendiente",
+    "count": "{{current}} de {{total}}"
+  },
+  "nextActivity": {
+    "title": "Próxima actividad"
   }
 }

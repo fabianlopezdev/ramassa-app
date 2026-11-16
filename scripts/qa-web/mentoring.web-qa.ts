@@ -30,7 +30,7 @@ function futureLocalDateTimeValue(daysFromNow: number): string {
 
 async function signInPlayer(page: Page, email: string): Promise<void> {
   await signInPlayerWithEmailCode(page, email);
-  await expect(page.getByTestId('open-knowledge-base')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('home-screen')).toBeVisible({ timeout: 30_000 });
 }
 
 test.afterAll(() => {

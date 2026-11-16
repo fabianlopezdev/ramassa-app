@@ -1,7 +1,6 @@
 {
   "title": "مرحبًا",
   "feedTitle": "الإعلانات",
-  "feedIntro": "أخبار النادي وتحديثات التدريبات والأنشطة الخاصة بك.",
   "filterLabel": "تصفية الإعلانات حسب الفئة",
   "filterAll": "الكل",
   "category": {
@@ -22,5 +21,12 @@
     "deadline": "حتى {{date}}",
     "answer": "أجيبي",
     "dismiss": "ليس الآن"
+  },
+  "toDo": {
+    "title": "بانتظارك",
+    "count": "{{current}} من {{total}}"
+  },
+  "nextActivity": {
+    "title": "النشاط القادم"
   }
 }

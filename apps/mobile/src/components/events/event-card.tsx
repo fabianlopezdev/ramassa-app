@@ -1,8 +1,13 @@
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { composeContinuousViewStyle } from '@/lib/continuous-corners';
+import type { TFunction } from 'i18next';
 import { memo, useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import type { EventCategoryColor } from '@ramassa/shared/events';
+import type {
+  EventCategoryColor,
+  EventSignupState,
+  PlayerEventOccurrence,
+} from '@ramassa/shared/events';
 import { tokens } from '@ramassa/shared/tokens';
 
 const styles = StyleSheet.create({
@@ -43,6 +48,26 @@ export function eventCategoryColor(color: EventCategoryColor): string {
 
 export function eventCategoryBackgroundStyle(color: EventCategoryColor) {
   return categoryBackgroundStyles[color];
+}
+
+/** Her sign-up chip on an activity card; `t` resolves the `events` namespace. */
+export function playerEventSignupLabel(
+  state: EventSignupState | undefined,
+  t: TFunction,
+): string | null {
+  if (state === 'confirmed') return t('events:playerConfirmed');
+  if (state === 'interested') return t('events:playerInterested');
+  return null;
+}
+
+/** The places line on an activity card; `t` resolves the `events` namespace. */
+export function playerEventCapacityLabel(row: PlayerEventOccurrence, t: TFunction): string {
+  const maximum = row.event.max_participants;
+  if (maximum === null) return t('events:playerUnlimited');
+  const remaining = Math.max(0, maximum - row.event.active_signup_count);
+  return remaining === 0
+    ? t('events:playerFull')
+    : t('events:playerPlaces', { remaining, total: maximum });
 }
 
 export function EventDetailLine({

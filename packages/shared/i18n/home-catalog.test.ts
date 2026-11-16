@@ -7,7 +7,6 @@ const i18n = createI18n({ languageStorage: createInMemoryLanguageStorage() });
 
 const HOME_FEED_KEYS = [
   'feedTitle',
-  'feedIntro',
   'filterLabel',
   'filterAll',
   'category.info',
@@ -21,6 +20,9 @@ const HOME_FEED_KEYS = [
   'loadFailed',
   'retryAction',
   'loading',
+  'toDo.title',
+  'toDo.count',
+  'nextActivity.title',
 ] as const;
 
 describe('player home feed catalog', () => {

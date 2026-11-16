@@ -143,7 +143,7 @@ test('full Catalan onboarding saves branches, review edits, separate signatures 
     await page.getByTestId(`authorization-consent-${consent}`).click();
   await page.getByTestId('authorization-cannot-draw').click();
   await action.click();
-  await expect(page.getByTestId('open-knowledge-base')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('home-screen')).toBeVisible({ timeout: 30_000 });
   expect(
     queryDatabase(`select count(*) from public.authorization_signatures where profile_id='${id}'`),
   ).toBe('1');

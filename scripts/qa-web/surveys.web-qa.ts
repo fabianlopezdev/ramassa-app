@@ -25,7 +25,7 @@ async function signInPlayer(
   player: (typeof PARTICIPANT_FIXTURES)[number],
 ): Promise<void> {
   await signInPlayerWithEmailCode(page, player.email);
-  await expect(page.getByTestId('open-knowledge-base')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('home-screen')).toBeVisible({ timeout: 30_000 });
 }
 
 test.afterAll(() => {
