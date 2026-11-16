@@ -64,6 +64,27 @@
     "backToHome": "Reviens à l’accueil",
     "todayIntro": "Ce qu’il faut faire maintenant.",
     "participants": "Participantes",
-    "content": "Contenu"
+    "content": "Contenu",
+    "moreGroups": {
+      "field": "Sur le terrain",
+      "players": "Joueuses",
+      "communication": "Communication",
+      "data": "Données",
+      "organization": "Organisation",
+      "app": "L’app"
+    },
+    "moderation": "Modération",
+    "organizationData": "Données de l’organisation",
+    "pending": "En attente",
+    "pendingRow": {
+      "serviceReviews": "Services à vérifier",
+      "stories": "Histoires à vérifier",
+      "reports": "Contenu signalé",
+      "feedback": "Nouvelles suggestions",
+      "mentoring": "Demandes de mentorat",
+      "erasure": "Demandes de suppression",
+      "messages": "Discussions non lues",
+      "stockAlerts": "Matériel sous zéro"
+    }
   }
 }

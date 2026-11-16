@@ -64,6 +64,27 @@
     "backToHome": "Back to the start",
     "todayIntro": "What needs doing now.",
     "participants": "Participants",
-    "content": "Content"
+    "content": "Content",
+    "moreGroups": {
+      "field": "On the pitch",
+      "players": "Players",
+      "communication": "Communication",
+      "data": "Data",
+      "organization": "Organization",
+      "app": "The app"
+    },
+    "moderation": "Moderation",
+    "organizationData": "Organization details",
+    "pending": "Pending",
+    "pendingRow": {
+      "serviceReviews": "Services to review",
+      "stories": "Stories to review",
+      "reports": "Reported content",
+      "feedback": "New suggestions",
+      "mentoring": "Mentoring requests",
+      "erasure": "Deletion requests",
+      "messages": "Unread chats",
+      "stockAlerts": "Stock below zero"
+    }
   }
 }

@@ -64,6 +64,27 @@
     "backToHome": "العودة إلى البداية",
     "todayIntro": "ما يجب فعله الآن.",
     "participants": "المشاركات",
-    "content": "المحتوى"
+    "content": "المحتوى",
+    "moreGroups": {
+      "field": "في الملعب",
+      "players": "اللاعبات",
+      "communication": "التواصل",
+      "data": "البيانات",
+      "organization": "المؤسسة",
+      "app": "التطبيق"
+    },
+    "moderation": "الإشراف",
+    "organizationData": "بيانات المؤسسة",
+    "pending": "قيد الانتظار",
+    "pendingRow": {
+      "serviceReviews": "خدمات للمراجعة",
+      "stories": "قصص للمراجعة",
+      "reports": "محتوى مُبلَّغ عنه",
+      "feedback": "اقتراحات جديدة",
+      "mentoring": "طلبات الإرشاد",
+      "erasure": "طلبات الحذف",
+      "messages": "محادثات غير مقروءة",
+      "stockAlerts": "معدات تحت الصفر"
+    }
   }
 }

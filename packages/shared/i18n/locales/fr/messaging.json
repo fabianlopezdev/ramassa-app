@@ -55,6 +55,5 @@
   "deliveryRejected": "Non envoyé. Ce message a été refusé.",
   "deliveryRejectedPermission": "Non envoyé. Tu ne peux plus envoyer de messages ici.",
   "discard": "Retire-le",
-  "selectConversation": "Choisis une conversation.",
-  "noUnread": "Aucun message non lu"
+  "selectConversation": "Choisis une conversation."
 }

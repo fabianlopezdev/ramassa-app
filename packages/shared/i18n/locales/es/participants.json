@@ -242,8 +242,6 @@
     "cancel": "Cancelar",
     "returnFailed": "La devolución no se ha guardado. Comprueba la conexión y vuelve a intentarlo.",
     "loadFailed": "No se ha podido cargar su material.",
-    "stockTitle": "Material",
-    "stockFine": "No hay stock que revisar.",
     "stockAlert": "{{item}}: bajo cero. Cuéntalo.",
     "saveFailed": "La entrega no se ha guardado. Vuelve a intentarlo.",
     "detail": {

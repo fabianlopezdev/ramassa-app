@@ -61,13 +61,13 @@ export default function ContentScreen() {
   const kinds = useMemo(() => contentKinds(permissions), [permissions]);
   // Today's review card opens the queue directly.
   const { kind: linkedKind, at: linkedAt } = useLocalSearchParams<{ kind?: string; at?: string }>();
-  const [chosenKind, setChosenKind] = useState<ContentKind | null>(
-    linkedKind === 'reviews' ? 'reviews' : null,
-  );
+  // Avui's rows link to service reviews and to the knowledge base's stories (RAPP-795).
+  const linked = linkedKind === 'reviews' || linkedKind === 'knowledge' ? linkedKind : null;
+  const [chosenKind, setChosenKind] = useState<ContentKind | null>(linked);
   // The tab stays mounted, so a later link from Today changes the type too.
   useEffect(() => {
-    if (linkedKind === 'reviews') setChosenKind('reviews');
-  }, [linkedKind, linkedAt]);
+    if (linked !== null) setChosenKind(linked);
+  }, [linked, linkedAt]);
   const kind = chosenKind !== null && kinds.includes(chosenKind) ? chosenKind : kinds[0];
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const detailStyle = useMemo(

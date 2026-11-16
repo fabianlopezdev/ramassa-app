@@ -64,6 +64,27 @@
     "backToHome": "بازگشت به شروع",
     "todayIntro": "کارهایی که الان باید انجام شود.",
     "participants": "شرکت‌کنندگان",
-    "content": "محتوا"
+    "content": "محتوا",
+    "moreGroups": {
+      "field": "در زمین",
+      "players": "بازیکنان",
+      "communication": "ارتباطات",
+      "data": "داده‌ها",
+      "organization": "سازمان",
+      "app": "اپ"
+    },
+    "moderation": "نظارت",
+    "organizationData": "اطلاعات سازمان",
+    "pending": "در انتظار",
+    "pendingRow": {
+      "serviceReviews": "خدمات برای بررسی",
+      "stories": "داستان‌ها برای بررسی",
+      "reports": "محتوای گزارش‌شده",
+      "feedback": "پیشنهادهای جدید",
+      "mentoring": "درخواست‌های راهنمایی",
+      "erasure": "درخواست‌های حذف",
+      "messages": "گفتگوهای خوانده‌نشده",
+      "stockAlerts": "تجهیزات زیر صفر"
+    }
   }
 }
