@@ -8,6 +8,7 @@ env:
   PLAYER_EMAIL: '{{player:email}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   BACK: '{{common:back}}'
+  TAB_COMMUNITY: '{{nav:tabs.community}}'
   SUBMISSION_TITLE: '{{knowledge:submissionTitle}}'
   SUBMIT_STORY: '{{knowledge:submitStory}}'
   SUCCESS_TITLE: '{{knowledge:submissionSuccessTitle}}'
@@ -169,7 +170,7 @@ env:
     times: 40
     while:
       notVisible:
-        id: 'open-story-submission'
+        id: 'home-screen'
     commands:
       - tapOn:
           text: '^${PUSH_DECLINE}$'
@@ -177,7 +178,7 @@ env:
       - waitForAnimationToEnd:
           timeout: 3000
 - assertVisible:
-    id: 'open-story-submission'
+    id: 'home-screen'
 - stopApp
 - openLink: ${DEV_CLIENT_URL}
 - tapOn:
@@ -209,7 +210,7 @@ env:
     times: 40
     while:
       notVisible:
-        id: 'open-story-submission'
+        id: 'home-screen'
     commands:
       - tapOn:
           text: '^${PUSH_DECLINE}$'
@@ -217,7 +218,7 @@ env:
       - waitForAnimationToEnd:
           timeout: 3000
 - assertVisible:
-    id: 'open-story-submission'
+    id: 'home-screen'
 - repeat:
     times: 4
     commands:
@@ -235,10 +236,25 @@ env:
 - openLink: ramassa:///
 - waitForAnimationToEnd:
     timeout: 3000
-- assertVisible:
-    id: 'open-story-submission'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: '^${TAB_COMMUNITY}$'
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: player-tab-community
+- extendedWaitUntil:
+    visible:
+      id: 'community-share'
+    timeout: 30000
 - tapOn:
-    id: 'open-story-submission'
+    id: 'community-share'
+- tapOn:
+    id: 'community-share-story'
 - extendedWaitUntil:
     visible: '.*${SUBMISSION_TITLE}.*'
     timeout: 30000
@@ -280,13 +296,15 @@ env:
       - back
 - extendedWaitUntil:
     visible:
-      id: 'open-story-submission'
+      id: 'community-share'
     timeout: 30000
 - waitForAnimationToEnd:
     timeout: 1500
 - takeScreenshot: ${SHOTS}/02-abandoned${SUFFIX}
 - tapOn:
-    id: 'open-story-submission'
+    id: 'community-share'
+- tapOn:
+    id: 'community-share-story'
 - extendedWaitUntil:
     visible: '.*${SUBMISSION_TITLE}.*'
     timeout: 30000

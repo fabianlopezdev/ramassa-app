@@ -470,7 +470,7 @@ describe('Maestro selector contracts', () => {
     const contracts = [
       ['events-signup.yaml', "- tapOn: '^${EVENTS_TAB}$'"],
       ['knowledge-base.yaml', "- tapOn: '^${TAB_HELP}$'"],
-      ['story-submission.yaml', "- tapOn:\n    id: 'open-story-submission'"],
+      ['story-submission.yaml', "- tapOn:\n    id: 'community-share'"],
     ] as const;
     for (const [file, navigationTarget] of contracts) {
       const source = await Bun.file(path.join(repoRoot, 'maestro/flows', file)).text();
