@@ -5,14 +5,17 @@ import {
   OfflineBanner,
 } from '@/components/announcements/feed-states';
 import { KnowledgeArticleCard } from '@/components/knowledge/knowledge-article-card';
-import {
-  KnowledgeCategoryGrid,
-  type PlayerKnowledgeFilter,
-} from '@/components/knowledge/knowledge-category-grid';
+import { KnowledgeCategoryGrid } from '@/components/knowledge/knowledge-category-grid';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { isNetworkStateOnline } from '@/lib/network-status';
+import {
+  countPlayerGuidesByCategory,
+  filterPlayerGuides,
+  selectGuideCategories,
+  selectPlayerGuides,
+  type PlayerGuideFilter,
+} from '@/lib/player-guides';
 import { usePlayerKnowledgeArticles, usePlayerKnowledgeCategories } from '@/lib/player-knowledge';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
@@ -20,14 +23,13 @@ import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import type { KnowledgeArticleListRow } from '@ramassa/shared/knowledge';
 import { tokens } from '@ramassa/shared/tokens';
 
-const EMPTY_ARTICLES: readonly KnowledgeArticleListRow[] = [];
 const styles = StyleSheet.create({
   list: { flex: 1, backgroundColor: tokens.colors.white },
   content: { paddingHorizontal: tokens.spacing.lg, paddingBottom: tokens.spacing['3xl'] },
@@ -43,30 +45,19 @@ export default function PlayerKnowledgeScreen() {
   const languageFontClass = useLanguageFontClass();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
-  const [filter, setFilter] = useState<PlayerKnowledgeFilter>('all');
+  const [filter, setFilter] = useState<PlayerGuideFilter>('all');
   const categoriesQuery = usePlayerKnowledgeCategories();
   const articlesQuery = usePlayerKnowledgeArticles();
   const { refetch: refetchCategories } = categoriesQuery;
   const { refetch: refetchArticles } = articlesQuery;
-  const articles = articlesQuery.data ?? EMPTY_ARTICLES;
+  const guides = useMemo(() => selectPlayerGuides(articlesQuery.data), [articlesQuery.data]);
+  const visibleGuides = useMemo(() => filterPlayerGuides(guides, filter), [guides, filter]);
+  const counts = useMemo(() => countPlayerGuidesByCategory(guides), [guides]);
+  const guideCategories = useMemo(
+    () => selectGuideCategories(categoriesQuery.data, counts),
+    [categoriesQuery.data, counts],
+  );
 
-  const visibleArticles = useMemo(() => {
-    if (filter === 'all') return articles;
-    if (filter === 'stories') {
-      return articles.filter((article) => article.content_type === 'participant_story');
-    }
-    return articles.filter((article) => article.category_id === filter);
-  }, [articles, filter]);
-  const counts = useMemo(() => {
-    const result: Record<string, number> = { all: articles.length, stories: 0 };
-    for (const article of articles) {
-      result[article.category_id] = (result[article.category_id] ?? 0) + 1;
-      if (article.content_type === 'participant_story') result.stories = (result.stories ?? 0) + 1;
-    }
-    return result;
-  }, [articles]);
-
-  const openStory = useCallback(() => push('/story/submit' as Href), [push]);
   const openArticle = useCallback((id: string) => push(`/knowledge/${id}` as Href), [push]);
   const refresh = useCallback(() => {
     void Promise.all([refetchCategories(), refetchArticles()]);
@@ -101,7 +92,7 @@ export default function PlayerKnowledgeScreen() {
     (categoriesQuery.isPending && categoriesQuery.data === undefined) ||
     (articlesQuery.isPending && articlesQuery.data === undefined)
   ) {
-    return <AnnouncementFeedSkeleton accessibilityLabel={t('knowledge:playerLoading')} />;
+    return <AnnouncementFeedSkeleton accessibilityLabel={t('knowledge:guidesLoading')} />;
   }
   const loadError = categoriesQuery.error ?? articlesQuery.error;
   if (
@@ -123,7 +114,7 @@ export default function PlayerKnowledgeScreen() {
   return (
     <FlashList
       testID="knowledge-base-screen"
-      data={visibleArticles}
+      data={visibleGuides}
       renderItem={renderArticle}
       keyExtractor={keyExtractor}
       getItemType={getItemType}
@@ -146,17 +137,12 @@ export default function PlayerKnowledgeScreen() {
               {t('common:back')}
             </Text>
           </PressableScale>
-          <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
-            >
-              {t('knowledge:playerTitle')}
-            </Text>
-            <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-              {t('knowledge:playerIntro')}
-            </Text>
-          </View>
+          <Text
+            accessibilityRole="header"
+            className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
+          >
+            {t('knowledge:guidesTitle')}
+          </Text>
           {isOffline ? (
             <OfflineBanner
               label={t('knowledge:playerOffline')}
@@ -164,27 +150,15 @@ export default function PlayerKnowledgeScreen() {
             />
           ) : null}
           <KnowledgeCategoryGrid
-            categories={categoriesQuery.data ?? []}
+            categories={guideCategories}
             selected={filter}
             counts={counts}
             onSelect={setFilter}
           />
-          <PressableScale
-            testID="knowledge-share-story"
-            accessibilityLabel={`${t('knowledge:quickStoryTitle')}. ${t('knowledge:quickStoryBody')}`}
-            onPress={openStory}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended justify-center rounded-md bg-primary px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-white ${languageFontClass}`}>
-              {t('knowledge:quickStoryTitle')}
-            </Text>
-          </PressableScale>
           <Text
             className={`text-start text-sm font-semibold tabular-nums text-neutral-600 ${languageFontClass}`}
           >
-            {t('knowledge:resourcesCount', { count: visibleArticles.length })}
+            {t('guidesCount', { count: visibleGuides.length })}
           </Text>
         </PageWidth>
       }

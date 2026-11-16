@@ -6,7 +6,8 @@ env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
   BACK: '{{common:back}}'
   TAB_HOME: '{{nav:tabs.home}}'
-  PLAYER_TITLE: '{{knowledge:playerTitle}}'
+  TAB_HELP: '{{nav:tabs.services}}'
+  PLAYER_TITLE: '{{knowledge:guidesTitle}}'
   SUBMISSION_TITLE: '{{knowledge:submissionTitle}}'
   SUCCESS_TITLE: '{{knowledge:submissionSuccessTitle}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
@@ -14,8 +15,13 @@ env:
 - runFlow: _open-app.yaml
 - runFlow: _sign-in.yaml
 - runFlow: _relaunch.yaml
+- tapOn: '^${TAB_HELP}$'
+- extendedWaitUntil:
+    visible:
+      id: ajuda-all-guides
+    timeout: 30000
 - tapOn:
-    id: open-knowledge-base
+    id: ajuda-all-guides
 - extendedWaitUntil:
     visible: '.*${PLAYER_TITLE}.*'
     timeout: 30000
@@ -51,6 +57,7 @@ env:
 - tapOn:
     id: knowledge-back
     point: 50%, 50%
+- tapOn: '^${TAB_HOME}$'
 - repeat:
     times: 6
     while:

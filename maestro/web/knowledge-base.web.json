@@ -18,11 +18,16 @@
         { "selector": "[aria-label=\"{{auth:passwordLabel}}\"]", "value": "{{player:password}}" }
       ],
       "click": "[aria-label=\"{{auth:passwordAction}}\"]",
-      "waitFor": "[data-testid=\"open-knowledge-base\"]"
+      "waitFor": "text={{nav:tabs.home}}"
+    },
+    {
+      "label": "help",
+      "goto": "/services",
+      "waitFor": "[data-testid=\"ajuda-all-guides\"]"
     },
     {
       "label": "browse",
-      "click": "[data-testid=\"open-knowledge-base\"]",
+      "click": "[data-testid=\"ajuda-all-guides\"]",
       "waitFor": "[data-testid=\"knowledge-base-screen\"]"
     },
     {

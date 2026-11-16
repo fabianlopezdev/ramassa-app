@@ -70,7 +70,7 @@ export default function PlayerKnowledgeDetailScreen() {
   );
 
   if (query.isPending && article === undefined) {
-    return <AnnouncementFeedSkeleton accessibilityLabel={t('knowledge:playerLoading')} />;
+    return <AnnouncementFeedSkeleton accessibilityLabel={t('knowledge:itemLoading')} />;
   }
   if (query.isError && article === undefined) {
     return (
@@ -95,13 +95,13 @@ export default function PlayerKnowledgeDetailScreen() {
       <PageWidth className="gap-lg">
         <PressableScale
           testID="knowledge-detail-back"
-          accessibilityLabel={t('knowledge:backToResources')}
+          accessibilityLabel={t('common:back')}
           onPress={back}
           haptic="tapLight"
           className="min-h-recommended self-start justify-center rounded-full border border-neutral-300 px-lg"
         >
           <Text className={`text-md font-medium text-primary ${languageFontClass}`}>
-            {t('knowledge:backToResources')}
+            {t('common:back')}
           </Text>
         </PressableScale>
         {isOffline ? (

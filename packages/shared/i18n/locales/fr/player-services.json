@@ -1,6 +1,5 @@
 {
-  "title": "Services",
-  "intro": "Trouve de l’aide et des ressources près de chez toi.",
+  "helpTitle": "Aide",
   "chooseCategory": "De quoi as-tu besoin ?",
   "categoryHint": "Touche une catégorie pour voir les services.",
   "backCategories": "Reviens aux catégories",
