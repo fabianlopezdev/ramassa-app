@@ -2,6 +2,8 @@
  * Stock (RAPP-250): what the team has, item by item and size by size, and the
  * goods received lately with their photos. Opens from More, or from a large
  * button on the simple home. Recording an arrival needs `equipment.receive`.
+ * Holders of `equipment.items` add items here and open each item's editor from
+ * its card (RAPP-800), so no separate item list sits between.
  */
 import { StaffCheckouts } from '@/components/equipment/staff-checkouts';
 import { FailureNotice } from '@/components/error-code-line';
@@ -12,6 +14,7 @@ import { useHandoverItemTypes } from '@/lib/handover';
 import { useItemLabel } from '@/lib/item-label';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { useRecentArrivals, useStockLevels } from '@/lib/stock';
+import { stockItemRows } from '@/lib/stock-items';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -22,7 +25,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
-import type { ArrivalSummary, StockLevel } from '@ramassa/shared/equipment';
+import type { ArrivalSummary } from '@ramassa/shared/equipment';
 import { toAppError } from '@ramassa/shared/errors';
 import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
@@ -127,28 +130,27 @@ function ArrivalCard({ arrival }: { readonly arrival: ArrivalSummary }) {
   );
 }
 
-function groupByItem(
-  levels: readonly StockLevel[],
-  label: (key: string) => string,
-  sizeOrder: ReadonlyMap<string, readonly string[]>,
-  locale: string,
-) {
-  const byItem = new Map<string, StockLevel[]>();
-  for (const level of levels) {
-    byItem.set(level.itemKey, [...(byItem.get(level.itemKey) ?? []), level]);
-  }
-  // Sizes in the item's own order (XS, S, M, L), never alphabetical.
-  const rank = (itemKey: string, size: string | null) => {
-    const at = size === null ? -1 : (sizeOrder.get(itemKey)?.indexOf(size) ?? -1);
-    return at === -1 ? Number.MAX_SAFE_INTEGER : at;
-  };
-  return [...byItem.entries()]
-    .map(([itemKey, sizes]) => ({
-      itemKey,
-      label: label(itemKey),
-      sizes: sizes.sort((left, right) => rank(itemKey, left.size) - rank(itemKey, right.size)),
-    }))
-    .sort((left, right) => left.label.localeCompare(right.label, locale));
+function StockItemName({
+  label,
+  isActive,
+}: {
+  readonly label: string;
+  readonly isActive: boolean;
+}) {
+  const { t } = useTranslation('participants');
+  const fontClass = useLanguageFontClass();
+  return (
+    <View className="flex-row flex-wrap items-baseline gap-sm">
+      <Text
+        className={`text-start text-md font-semibold ${isActive ? 'text-neutral-900' : 'text-neutral-600'} ${fontClass}`}
+      >
+        {label}
+      </Text>
+      {isActive ? null : (
+        <Text className={`text-sm text-neutral-600 ${fontClass}`}>{t('items.inactive')}</Text>
+      )}
+    </View>
+  );
 }
 
 export default function StockScreen() {
@@ -166,17 +168,16 @@ export default function StockScreen() {
   const arrivals = useRecentArrivals();
   const locale = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;
   const itemTypes = useHandoverItemTypes();
-  const typeIds = useMemo(
-    () => new Map((itemTypes.data ?? []).map((type) => [type.key, type.id] as const)),
-    [itemTypes.data],
-  );
-  const sizeOrder = useMemo(
-    () => new Map((itemTypes.data ?? []).map((type) => [type.key, type.sizes] as const)),
-    [itemTypes.data],
-  );
   const items = useMemo(
-    () => groupByItem(levels.data ?? [], (key) => itemLabel(key), sizeOrder, locale),
-    [levels.data, locale, sizeOrder, itemLabel],
+    () =>
+      stockItemRows({
+        types: itemTypes.data ?? [],
+        levels: levels.data ?? [],
+        label: itemLabel,
+        locale,
+        includeInactive: canEditItems,
+      }),
+    [canEditItems, itemLabel, itemTypes.data, levels.data, locale],
   );
 
   return (
@@ -239,16 +240,16 @@ export default function StockScreen() {
 
           {canEditItems ? (
             <PressableScale
-              testID="stock-items"
+              testID="items-add"
               accessibilityRole="button"
-              accessibilityLabel={t('items.action')}
-              onPress={() => push('/items' as Href)}
+              accessibilityLabel={t('items.add')}
+              onPress={() => push('/item-type/new' as Href)}
               haptic="tapLight"
               style={continuousCorners}
               className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
             >
               <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                {t('items.action')}
+                {t('items.add')}
               </Text>
             </PressableScale>
           ) : null}
@@ -264,7 +265,7 @@ export default function StockScreen() {
             {levels.isError ? (
               <FailureNotice code={toAppError(levels.error).code} message={t('stock.loadFailed')} />
             ) : null}
-            {levels.isSuccess && items.length === 0 ? (
+            {levels.isSuccess && itemTypes.isSuccess && items.length === 0 ? (
               <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
                 {t('stock.levelsEmpty')}
               </Text>
@@ -277,17 +278,30 @@ export default function StockScreen() {
                 className="gap-sm rounded-md border border-neutral-200 bg-white p-md"
               >
                 <View className="flex-row items-center justify-between gap-sm">
-                  <Text
-                    className={`flex-1 text-start text-md font-semibold text-neutral-900 ${fontClass}`}
-                  >
-                    {item.label}
-                  </Text>
-                  {canCount && typeIds.has(item.itemKey) ? (
+                  {canEditItems && item.typeId !== null ? (
+                    <PressableScale
+                      testID={`items-row-${item.itemKey}`}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        item.isActive ? item.label : `${item.label}, ${t('items.inactive')}`
+                      }
+                      onPress={() => push(`/item-type/${item.typeId}` as Href)}
+                      haptic="selection"
+                      className="min-h-recommended flex-1 justify-center"
+                    >
+                      <StockItemName label={item.label} isActive={item.isActive} />
+                    </PressableScale>
+                  ) : (
+                    <View className="flex-1">
+                      <StockItemName label={item.label} isActive={item.isActive} />
+                    </View>
+                  )}
+                  {canCount && item.typeId !== null ? (
                     <PressableScale
                       testID={`stock-count-${item.itemKey}`}
                       accessibilityRole="button"
                       accessibilityLabel={t('count.actionLabel', { item: item.label })}
-                      onPress={() => push(`/count/${typeIds.get(item.itemKey)}` as Href)}
+                      onPress={() => push(`/count/${item.typeId}` as Href)}
                       haptic="tapLight"
                       className="min-h-recommended justify-center px-sm"
                     >
