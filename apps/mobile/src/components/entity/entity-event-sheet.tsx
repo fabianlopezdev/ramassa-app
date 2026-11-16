@@ -4,8 +4,8 @@
  * its map. Read only: entities never sign up, so no sign-up action shows. Built
  * from the row the Events list already loaded.
  */
-import { EntitySheet } from '@/components/entity/entity-sheet';
 import { EventDetailLine } from '@/components/events/event-card';
+import { AppSheet } from '@/components/layout/app-sheet';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -45,7 +45,7 @@ export function EntityEventSheet({
   const locationUrl = event.locationUrl;
 
   return (
-    <EntitySheet testID="entity-events-detail" title={title} visible onClose={onClose}>
+    <AppSheet testID="entity-events-detail" title={title} visible onClose={onClose}>
       {event.isRecurring ? (
         <Text className={`text-start text-sm font-semibold text-primary-dark ${fontClass}`}>
           {tEntity('recurring')}
@@ -99,6 +99,6 @@ export function EntityEventSheet({
           </PressableScale>
         )}
       </View>
-    </EntitySheet>
+    </AppSheet>
   );
 }

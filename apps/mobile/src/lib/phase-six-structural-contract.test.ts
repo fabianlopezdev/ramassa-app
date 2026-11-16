@@ -22,7 +22,7 @@ const scrollableSources = [
   'app/(app)/gallery/upload.tsx',
   'components/gallery/gallery-grid.tsx',
   'components/knowledge/community-story-list.tsx',
-  'components/community/community-share-sheet.tsx',
+  'components/layout/app-sheet.tsx',
   'components/forum/forum-category-tabs.tsx',
   'components/forum/forum-flag-dialog.tsx',
 ] as const;
