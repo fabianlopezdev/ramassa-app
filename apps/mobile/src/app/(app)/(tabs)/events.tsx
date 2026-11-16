@@ -4,7 +4,12 @@ import {
   AnnouncementFeedSkeleton,
   OfflineBanner,
 } from '@/components/announcements/feed-states';
-import { EventCard, eventCategoryColor } from '@/components/events/event-card';
+import {
+  EventCard,
+  eventCategoryColor,
+  playerEventCapacityLabel,
+  playerEventSignupLabel,
+} from '@/components/events/event-card';
 import {
   EventCategoryFilters,
   EventViewToggle,
@@ -30,7 +35,6 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
-import type { TFunction } from 'i18next';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -41,7 +45,6 @@ import { toAppError } from '@ramassa/shared/errors';
 import {
   filterPlayerEventOccurrences,
   MADRID_TIME_ZONE,
-  type EventSignupState,
   type PlayerEventCategoryFilter,
   type PlayerEventOccurrence,
 } from '@ramassa/shared/events';
@@ -81,19 +84,6 @@ const getItemType = (item: PlayerEventOccurrence) =>
   item.signup?.state === 'confirmed' || item.signup?.state === 'interested'
     ? 'signed-up-event'
     : 'event';
-
-function signupLabel(state: EventSignupState | undefined, t: TFunction) {
-  if (state === 'confirmed') return t('playerConfirmed');
-  if (state === 'interested') return t('playerInterested');
-  return null;
-}
-
-function capacityLabel(row: PlayerEventOccurrence, t: TFunction) {
-  const maximum = row.event.max_participants;
-  if (maximum === null) return t('playerUnlimited');
-  const remaining = Math.max(0, maximum - row.event.active_signup_count);
-  return remaining === 0 ? t('playerFull') : t('playerPlaces', { remaining, total: maximum });
-}
 
 export default function EventsScreen() {
   const { t, i18n } = useTranslation(['events', 'common', 'mentoring', 'nav']);
@@ -226,8 +216,8 @@ export default function EventsScreen() {
       if (title === undefined || categoryName === undefined) return null;
       const date = dateFormatter.format(new Date(item.occurrence_starts_at));
       const time = timeFormatter.format(new Date(item.occurrence_starts_at));
-      const capacity = capacityLabel(item, t);
-      const signup = signupLabel(item.signup?.state, t);
+      const capacity = playerEventCapacityLabel(item, t);
+      const signup = playerEventSignupLabel(item.signup?.state, t);
       return (
         <PageWidth className="pb-md">
           <EventCard
