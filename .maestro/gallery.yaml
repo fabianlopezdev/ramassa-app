@@ -2,7 +2,6 @@ appId: com.ramassa.app
 name: gallery
 env:
   COMMUNITY_TITLE: '{{forum:title}}'
-  GALLERY_TITLE: '{{gallery:title}}'
   CONSENT_REMINDER: '{{gallery:consentReminder}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
 ---
@@ -30,12 +29,11 @@ env:
       id: forum-board
     timeout: 60000
 - tapOn:
-    id: forum-open-gallery
+    id: community-segment-gallery
 - extendedWaitUntil:
     visible:
       id: gallery-grid
     timeout: 30000
-- assertVisible: '^${GALLERY_TITLE}$'
 - tapOn:
     id: gallery-item-5eed0000-0000-4000-8014-000000000001
 - extendedWaitUntil:
@@ -45,7 +43,9 @@ env:
 - tapOn:
     id: gallery-detail-back
 - tapOn:
-    id: gallery-upload
+    id: community-share
+- tapOn:
+    id: community-share-media
 - extendedWaitUntil:
     visible: '^${CONSENT_REMINDER}$'
     timeout: 30000

@@ -1,10 +1,7 @@
 {
   "title": "Comunidad",
-  "intro": "Pregunta, comparte y ayuda a otras jugadoras.",
   "categoriesLabel": "Categorías del foro",
   "allCategories": "Todo",
-  "newPost": "Escribe una publicación",
-  "teamChat": "Chat con el equipo",
   "offline": "Sin conexión. Estás viendo las publicaciones guardadas en el teléfono.",
   "offlineWrite": "Conéctate a internet para publicar, responder, editar o eliminar.",
   "loading": "Cargando la comunidad",
@@ -113,5 +110,13 @@
   "categorySave": "Guardar categoría",
   "gallery": "Galería",
   "categorySlugHelp": "Letras minúsculas, números y guiones. Se crea a partir del nombre en catalán.",
-  "categorySlugInvalid": "El identificador solo puede tener letras minúsculas, números y guiones."
+  "categorySlugInvalid": "El identificador solo puede tener letras minúsculas, números y guiones.",
+  "share": "Comparte",
+  "sharePost": "Una publicación",
+  "shareMedia": "Una foto o un vídeo",
+  "shareStory": "Mi historia",
+  "segmentsLabel": "Secciones de la comunidad",
+  "segmentForum": "Foro",
+  "segmentGallery": "Galería",
+  "segmentStories": "Historias"
 }

@@ -9,7 +9,7 @@ describe('Phase 6 component architecture contract', () => {
   test('passes named zero-argument actions directly instead of wrapping them', async () => {
     const forumDetail = await readMobileSource('app/(app)/forum/[id].tsx');
     const forumComposer = await readMobileSource('app/(app)/forum/create.tsx');
-    const gallery = await readMobileSource('app/(app)/gallery/index.tsx');
+    const gallery = await readMobileSource('components/gallery/gallery-grid.tsx');
     const galleryItem = await readMobileSource('app/(app)/gallery/[id].tsx');
     const galleryUpload = await readMobileSource('app/(app)/gallery/upload.tsx');
 

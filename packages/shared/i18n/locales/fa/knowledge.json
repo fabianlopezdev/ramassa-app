@@ -148,5 +148,9 @@
   "blockEmpty": "بلوک خالی",
   "invalidForm": "منبع را بررسی کنید: هر بلوک به متن خود نیاز دارد و هر تصویر مرحله به توضیح خود.",
   "blockCancel": "لغو",
-  "blockStep": "مرحله"
+  "blockStep": "مرحله",
+  "communityStoriesLoading": "در حال بارگیری داستان‌ها",
+  "communityStoriesLoadFailed": "داستان‌ها بارگیری نشدند.",
+  "communityStoriesEmptyTitle": "هنوز داستانی نیست",
+  "communityStoriesEmptyBody": "وقتی تیم داستانی منتشر کند، آن را اینجا پیدا می‌کنید."
 }

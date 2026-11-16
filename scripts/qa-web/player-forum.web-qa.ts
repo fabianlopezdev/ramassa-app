@@ -29,7 +29,8 @@ test('player creates, replies to, edits, and tombstones a plain-text forum post'
   await signInPlayer(page);
   await page.goto(`${playerOrigin}/community`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByTestId('forum-board')).toBeVisible({ timeout: 30_000 });
-  await page.getByTestId('forum-new-post').click();
+  await page.getByTestId('community-share').click();
+  await page.getByTestId('community-share-post').click();
   await expect(page.getByTestId('forum-create-screen')).toBeVisible();
   await page.getByTestId('forum-compose-category-general').click();
 

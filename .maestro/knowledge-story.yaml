@@ -11,6 +11,7 @@ env:
   SUBMISSION_TITLE: '{{knowledge:submissionTitle}}'
   SUCCESS_TITLE: '{{knowledge:submissionSuccessTitle}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
+  COMMUNITY_TITLE: '{{forum:title}}'
 ---
 - runFlow: _open-app.yaml
 - runFlow: _sign-in.yaml
@@ -57,12 +58,22 @@ env:
 - tapOn:
     id: knowledge-back
     point: 50%, 50%
-- tapOn: '^${TAB_HOME}$'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: '^${COMMUNITY_TITLE}$'
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: player-tab-community
 - repeat:
     times: 6
     while:
       notVisible:
-        id: open-story-submission
+        id: community-share
     commands:
       - tapOn:
           text: '^${PUSH_DECLINE}$'
@@ -70,7 +81,9 @@ env:
       - waitForAnimationToEnd:
           timeout: 2500
 - tapOn:
-    id: open-story-submission
+    id: community-share
+- tapOn:
+    id: community-share-story
 - extendedWaitUntil:
     visible: '.*${SUBMISSION_TITLE}.*'
     timeout: 30000

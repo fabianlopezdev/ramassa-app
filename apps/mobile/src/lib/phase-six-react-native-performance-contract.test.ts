@@ -12,7 +12,11 @@ const phaseSixTargets = [
   'app/(app)/gallery/[id].tsx',
   'app/(app)/gallery/index.tsx',
   'app/(app)/gallery/upload.tsx',
+  'components/community/community-share-sheet.tsx',
+  'components/gallery/gallery-grid.tsx',
   'components/gallery/gallery-tile.tsx',
+  'components/knowledge/community-story-list.tsx',
+  'components/layout/segmented-control.tsx',
   'components/forum/forum-category-tabs.tsx',
   'components/forum/forum-flag-dialog.tsx',
   'components/forum/forum-plain-text.tsx',
@@ -25,13 +29,14 @@ const phaseSixTargets = [
   'lib/player-forum.ts',
   'lib/player-gallery.ts',
   'lib/query-persistence.ts',
+  'lib/community-stories.ts',
 ] as const;
 
 describe('Phase 6 React Native performance contract', () => {
   test('unbounded player feeds use FlashList with memoized lightweight rows', async () => {
     const community = await readMobileSource('app/(app)/(tabs)/community.tsx');
     const forumDetail = await readMobileSource('app/(app)/forum/[id].tsx');
-    const gallery = await readMobileSource('app/(app)/gallery/index.tsx');
+    const gallery = await readMobileSource('components/gallery/gallery-grid.tsx');
     const forumPostCard = await readMobileSource('components/forum/forum-post-card.tsx');
     const forumReplyCard = await readMobileSource('components/forum/forum-reply-card.tsx');
     const galleryTile = await readMobileSource('components/gallery/gallery-tile.tsx');
@@ -67,7 +72,7 @@ describe('Phase 6 React Native performance contract', () => {
   });
 
   test('native event callbacks do not forward incompatible event objects to data functions', async () => {
-    const gallery = await readMobileSource('app/(app)/gallery/index.tsx');
+    const gallery = await readMobileSource('components/gallery/gallery-grid.tsx');
 
     expect(gallery).not.toContain('onRefresh={query.refetch}');
     expect(gallery).toContain('const refresh = useCallback');

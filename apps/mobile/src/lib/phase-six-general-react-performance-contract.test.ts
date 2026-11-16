@@ -40,6 +40,11 @@ describe('Phase 6 general React performance contract', () => {
       readMobileSource('lib/player-forum.ts'),
       readMobileSource('lib/player-gallery.ts'),
       readMobileSource('lib/query-persistence.ts'),
+      readMobileSource('components/gallery/gallery-grid.tsx'),
+      readMobileSource('components/knowledge/community-story-list.tsx'),
+      readMobileSource('components/community/community-share-sheet.tsx'),
+      readMobileSource('components/layout/segmented-control.tsx'),
+      readMobileSource('lib/community-stories.ts'),
     ]);
     const combined = targets.join('\n');
 

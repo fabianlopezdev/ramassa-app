@@ -148,5 +148,9 @@
   "blockEmpty": "Bloque vacío",
   "invalidForm": "Revisa el recurso: cada bloque necesita su texto, y cada imagen de un paso, su descripción.",
   "blockCancel": "Cancelar",
-  "blockStep": "Paso"
+  "blockStep": "Paso",
+  "communityStoriesLoading": "Cargando las historias",
+  "communityStoriesLoadFailed": "No se han podido cargar las historias.",
+  "communityStoriesEmptyTitle": "Todavía no hay historias",
+  "communityStoriesEmptyBody": "Cuando el equipo publique una historia, la encontrarás aquí."
 }

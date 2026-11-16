@@ -148,5 +148,9 @@
   "blockEmpty": "Bloc buit",
   "invalidForm": "Revisa el recurs: cada bloc necessita el seu text, i cada imatge d'un pas, la seva descripció.",
   "blockCancel": "Cancel·la",
-  "blockStep": "Pas"
+  "blockStep": "Pas",
+  "communityStoriesLoading": "Carregant les històries",
+  "communityStoriesLoadFailed": "No s'han pogut carregar les històries.",
+  "communityStoriesEmptyTitle": "Encara no hi ha històries",
+  "communityStoriesEmptyBody": "Quan l'equip publiqui una història, la trobaràs aquí."
 }
