@@ -67,7 +67,7 @@
     },
     {
       "id": "activity-signups",
-      "label": "Activitat: inscripcions a esdeveniments",
+      "label": "Activitat: inscripcions a activitats",
       "web": "admin-participants/web/15-activity-signups.png"
     },
     {
@@ -231,7 +231,7 @@
     {
       "from": "detail",
       "to": "activity-equipment",
-      "label": "Equipament",
+      "label": "Material",
       "kind": "neutral"
     },
     {

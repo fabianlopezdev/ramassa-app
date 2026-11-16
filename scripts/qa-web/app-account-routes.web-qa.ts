@@ -77,7 +77,7 @@ test.describe.serial('app areas by account type', () => {
     await page.goto(new URL('/', page.url()).href);
     // Attendance, participants and messages are three areas: tabs (RAPP-247).
     await expect(page.getByRole('tab', { name: /Participants/ })).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByRole('tab', { name: /Messages/ })).toBeVisible();
+    await expect(page.getByRole('tab', { name: /Chats/ })).toBeVisible();
     await expect(page.getByTestId('team-home-buttons')).toHaveCount(0);
   });
 
