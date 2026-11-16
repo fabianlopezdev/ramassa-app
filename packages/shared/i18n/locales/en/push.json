@@ -1,17 +1,17 @@
 {
   "rationaleTitle": "Would you like to get alerts?",
-  "rationaleBody": "We will let you know when there is a new training session, a schedule change, or a message from the team. Nothing else.",
+  "rationaleBody": "We will let you know when there is a new activity, a schedule change, or a message from the team. Nothing else.",
   "rationaleAccept": "Yes, turn them on",
   "rationaleDecline": "Not now",
   "eventFallbackBody": "Tap to view the activity.",
-  "announcementFallbackBody": "Tap to read the notice.",
+  "announcementFallbackBody": "Tap to read the announcement.",
   "messageTitle": "New message from the team",
   "messageBody": "Open Ramassà to read it.",
-  "forumFlagTitle": "New forum report",
-  "forumFlagBody": "Open the moderation queue to review it.",
+  "forumFlagTitle": "New reported content in the forum",
+  "forumFlagBody": "Open forum moderation to review it.",
   "referralUpdateTitle": "New referral update",
   "referralUpdateBody": "Open the participant record to review it.",
-  "mentoringUpdateTitle": "Update to your private appointment",
+  "mentoringUpdateTitle": "Update to your mentoring",
   "mentoringUpdateBody": "Open Ramassà to see the date and time.",
   "customFormFallbackBody": "Tap to answer it."
 }

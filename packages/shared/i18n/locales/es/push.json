@@ -1,17 +1,17 @@
 {
-  "rationaleTitle": "¿Quieres recibir avisos?",
-  "rationaleBody": "Te avisaremos cuando haya un entrenamiento nuevo, un cambio de horario o un mensaje del equipo. Nada más.",
-  "rationaleAccept": "De acuerdo, actívalos",
+  "rationaleTitle": "¿Quieres recibir notificaciones?",
+  "rationaleBody": "Te avisaremos cuando haya una actividad nueva, un cambio de horario o un mensaje del equipo. Nada más.",
+  "rationaleAccept": "De acuerdo, actívalas",
   "rationaleDecline": "Ahora no",
   "eventFallbackBody": "Toca para ver la actividad.",
   "announcementFallbackBody": "Toca para leer el aviso.",
   "messageTitle": "Nuevo mensaje del equipo",
   "messageBody": "Abre Ramassà para leerlo.",
-  "forumFlagTitle": "Nuevo aviso en el foro",
-  "forumFlagBody": "Abre la cola de moderación para revisarlo.",
+  "forumFlagTitle": "Nuevo contenido denunciado en el foro",
+  "forumFlagBody": "Abre la moderación del foro para revisarlo.",
   "referralUpdateTitle": "Nueva actualización de una derivación",
   "referralUpdateBody": "Abre la ficha de la participante para revisarla.",
-  "mentoringUpdateTitle": "Actualización de tu cita privada",
+  "mentoringUpdateTitle": "Actualización de tu mentoría",
   "mentoringUpdateBody": "Abre Ramassà para ver el día y la hora.",
   "customFormFallbackBody": "Toca para responderlo."
 }

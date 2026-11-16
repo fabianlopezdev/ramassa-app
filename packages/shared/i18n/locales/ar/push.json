@@ -1,17 +1,17 @@
 {
   "rationaleTitle": "هل تريدين تلقي التنبيهات؟",
-  "rationaleBody": "سنخبرك عند وجود تدريب جديد أو تغيير في المواعيد أو رسالة من الفريق. لا شيء غير ذلك.",
+  "rationaleBody": "سنخبرك عند وجود نشاط جديد أو تغيير في المواعيد أو رسالة من الفريق. لا شيء غير ذلك.",
   "rationaleAccept": "نعم، فعّليها",
   "rationaleDecline": "ليس الآن",
   "eventFallbackBody": "اضغطي لعرض النشاط.",
-  "announcementFallbackBody": "اضغطي لقراءة الإشعار.",
+  "announcementFallbackBody": "اضغطي لقراءة الإعلان.",
   "messageTitle": "رسالة جديدة من الفريق",
   "messageBody": "افتحي Ramassà لقراءتها.",
-  "forumFlagTitle": "بلاغ جديد في المنتدى",
-  "forumFlagBody": "افتحي قائمة الإشراف لمراجعته.",
+  "forumFlagTitle": "محتوى جديد مُبلَّغ عنه في المنتدى",
+  "forumFlagBody": "افتحي الإشراف على المنتدى لمراجعته.",
   "referralUpdateTitle": "تحديث جديد لإحالة",
   "referralUpdateBody": "افتحي سجل المشاركة لمراجعته.",
-  "mentoringUpdateTitle": "تحديث لموعدك الخاص",
+  "mentoringUpdateTitle": "تحديث بشأن الإرشاد",
   "mentoringUpdateBody": "افتحي Ramassà لرؤية اليوم والوقت.",
   "customFormFallbackBody": "اضغطي للإجابة عليه."
 }
