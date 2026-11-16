@@ -15,6 +15,11 @@ import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import {
+  MENTORING_STATUS_KEYS,
+  MENTORING_TOPIC_KEYS,
+  preferredSlotParts,
+} from '@/lib/mentoring-labels';
+import {
   useMentoringActions,
   useMentoringStaff,
   useStaffMentoringRequests,
@@ -28,48 +33,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { toAppError } from '@ramassa/shared/errors';
 import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
-import {
-  summarizeMentoringTopics,
-  type MentoringStatus,
-  type MentoringTopic,
-  type StaffMentoringRequest,
-} from '@ramassa/shared/mentoring';
+import { summarizeMentoringTopics, type StaffMentoringRequest } from '@ramassa/shared/mentoring';
 import type { ConversationStaffMember } from '@ramassa/shared/messaging';
-
-const TOPIC_KEYS: Readonly<Record<MentoringTopic, string>> = {
-  personal_development: 'topicPersonalDevelopment',
-  labor_orientation: 'topicLaborOrientation',
-  asylum_rights: 'topicAsylumRights',
-  gender_violence: 'topicGenderViolence',
-  empowerment: 'topicEmpowerment',
-  digital_skills: 'topicDigitalSkills',
-  other: 'topicOther',
-};
-
-const STATUS_KEYS: Readonly<Record<MentoringStatus, string>> = {
-  requested: 'statusRequested',
-  scheduled: 'statusScheduled',
-  completed: 'statusCompleted',
-  cancelled: 'statusCancelled',
-};
 
 function preferredSlot(
   request: StaffMentoringRequest,
   language: string,
   noPreference: string,
 ): string {
-  if (request.preferredDate === null) return noPreference;
-  const date = new Intl.DateTimeFormat(language, {
-    dateStyle: 'medium',
-    timeZone: MADRID_TIME_ZONE,
-  }).format(new Date(`${request.preferredDate}T12:00:00Z`));
-  if (request.preferredTime === null) return date;
-  const time = new Intl.DateTimeFormat(language, {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'UTC',
-  }).format(new Date(`1970-01-01T${request.preferredTime}Z`));
-  return `${date}, ${time}`;
+  const parts = preferredSlotParts(request, language);
+  if (parts === null) return noPreference;
+  return parts.time === null ? parts.date : `${parts.date}, ${parts.time}`;
 }
 
 function RequestCard({
@@ -130,13 +104,13 @@ function RequestCard({
             testID={`mentoring-status-${request.id}`}
             className={`text-sm font-semibold text-neutral-800 ${fontClass}`}
           >
-            {t(STATUS_KEYS[request.status])}
+            {t(MENTORING_STATUS_KEYS[request.status])}
           </Text>
         </View>
       </View>
       <View style={continuousCorners} className="gap-xs rounded-md bg-neutral-50 p-md">
         <Text className={`text-start text-md font-semibold text-neutral-900 ${fontClass}`}>
-          {t(TOPIC_KEYS[request.topic])}
+          {t(MENTORING_TOPIC_KEYS[request.topic])}
         </Text>
         {request.topicDetail === null ? null : (
           <>
@@ -317,7 +291,7 @@ export default function TeamMentoringScreen() {
                     className="gap-xs rounded-md border border-neutral-200 bg-white px-md py-sm"
                   >
                     <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-                      {t(TOPIC_KEYS[item.topic])}
+                      {t(MENTORING_TOPIC_KEYS[item.topic])}
                     </Text>
                     <Text
                       className={`text-start text-xl font-bold tabular-nums text-neutral-900 ${fontClass}`}

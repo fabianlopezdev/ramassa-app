@@ -1,7 +1,7 @@
 /**
- * The player's mentoring labels, shared by her request list and a request's
- * detail (X5): the translation key of each topic and status, and her preferred
- * slot as she chose it.
+ * The mentoring labels, shared by the player's request list, a request's detail
+ * (X5) and the staff mentoring queue: the translation key of each topic and
+ * status, and the player's preferred slot as she chose it.
  */
 import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
 import type { MentoringRequest, MentoringStatus, MentoringTopic } from '@ramassa/shared/mentoring';
