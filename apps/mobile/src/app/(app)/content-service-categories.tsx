@@ -13,6 +13,7 @@ import {
 import { SERVICE_ICON_SYMBOLS } from '@/components/content/service-labels';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useContentServiceCategories, useServiceCategoryActions } from '@/lib/content-services';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -65,12 +66,11 @@ function RowAction({
 
 export default function ServiceCategoriesScreen() {
   const { t, i18n } = useTranslation('services');
-  const { t: tCommon } = useTranslation('common');
   const { t: tProfile } = useTranslation('profile');
   const { t: tErrors } = useTranslation('errors');
   const fontClass = useLanguageFontClass();
   const language = (i18n.resolvedLanguage ?? DEFAULT_LANGUAGE) as SupportedLanguage;
-  const { back, push } = useRouter();
+  const { push } = useRouter();
   const categories = useContentServiceCategories();
   const { reorder, remove } = useServiceCategoryActions();
   const rows = categories.data ?? [];
@@ -97,25 +97,10 @@ export default function ServiceCategoriesScreen() {
   const failure = remove.error ?? reorder.error;
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right']}>
+      <NativeScreenHeader title={t('categoriesTitle')} />
       <PageWidth className="flex-1">
         <ScrollView contentContainerClassName="gap-md p-lg" testID="service-categories">
-          <PressableScale
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}
-          >
-            {t('categoriesTitle')}
-          </Text>
           <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
             {t('categoriesHelpPhone')}
           </Text>

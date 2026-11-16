@@ -10,6 +10,7 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -79,8 +80,9 @@ export default function CollectSignaturesScreen() {
     <SafeAreaView
       testID="collect-signatures"
       className="flex-1 bg-neutral-50"
-      edges={['top', 'left', 'right']}
+      edges={['left', 'right']}
     >
+      <NativeScreenHeader title={t('signing.title')} />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerClassName="pb-3xl"
@@ -88,25 +90,22 @@ export default function CollectSignaturesScreen() {
         automaticallyAdjustKeyboardInsets
       >
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="collect-back"
-            accessibilityLabel={tCommon('back')}
-            // After signing mode the screen may have nothing under it (RAPP-530).
-            onPress={() => (router.canGoBack() ? router.back() : router.replace('/more' as Href))}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
-          <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
+          {/* After signing mode the screen may have nothing under it (RAPP-530),
+              so the native header has no back arrow: this leads to More. */}
+          {router.canGoBack() ? null : (
+            <PressableScale
+              testID="collect-back"
+              accessibilityLabel={tCommon('back')}
+              onPress={() => router.replace('/more' as Href)}
+              haptic="tapLight"
+              className="min-h-recommended self-start justify-center"
             >
-              {t('signing.title')}
-            </Text>
+              <Text className={`font-semibold text-primary-dark ${fontClass}`}>
+                {tCommon('back')}
+              </Text>
+            </PressableScale>
+          )}
+          <View className="gap-xs">
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
               {t('signing.intro')}
             </Text>

@@ -8,12 +8,13 @@
  * and the file goes to the share sheet.
  */
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useStaffSurveys, useSurveyExport, useSurveyResponses } from '@/lib/team-surveys';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
@@ -77,9 +78,7 @@ function Section({ title, children }: { readonly title: string; readonly childre
 export default function TeamSurveyResultsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, i18n } = useTranslation('surveys');
-  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
-  const { back } = useRouter();
   const language = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;
   const surveys = useStaffSurveys();
   const survey = surveys.data?.find((item) => item.id === id);
@@ -181,21 +180,13 @@ export default function TeamSurveyResultsScreen() {
     <SafeAreaView
       testID="team-survey-results"
       className="flex-1 bg-neutral-50"
-      edges={['top', 'left', 'right']}
+      edges={['left', 'right']}
     >
+      <NativeScreenHeader
+        title={survey === undefined ? undefined : resolveSurveyCopy(survey.title, language)}
+      />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="team-survey-results-back"
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
           {survey === undefined ? (
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
               {surveys.isError ? t('loadError') : t('loadingResponses')}
@@ -203,12 +194,6 @@ export default function TeamSurveyResultsScreen() {
           ) : (
             <>
               <View className="gap-xs">
-                <Text
-                  accessibilityRole="header"
-                  className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-                >
-                  {resolveSurveyCopy(survey.title, language)}
-                </Text>
                 <Text
                   testID="survey-results-counts"
                   className={`text-start text-md tabular-nums text-neutral-700 ${fontClass}`}

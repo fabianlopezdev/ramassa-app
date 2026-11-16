@@ -11,6 +11,7 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { MultilingualField } from '@/components/content/multilingual-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { AudiencePicker } from '@/components/team/audience-picker';
 import { NotificationGroupSheet } from '@/components/team/notification-group-sheet';
@@ -24,7 +25,6 @@ import {
 } from '@/lib/team-notifications';
 import { generateDrafts } from '@/lib/translation-worker';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useRouter } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
@@ -93,9 +93,7 @@ function Section({ title, children }: { readonly title: string; readonly childre
 
 export default function TeamNotificationsScreen() {
   const { t, i18n } = useTranslation('notifications');
-  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
-  const { back } = useRouter();
   const { templates, groups, options, history } = useNotificationWorkspace();
   const { send, saveTemplate } = useNotificationActions();
   const [templateId, setTemplateId] = useState(BLANK_TEMPLATE);
@@ -227,32 +225,16 @@ export default function TeamNotificationsScreen() {
     <SafeAreaView
       testID="team-notifications"
       className="flex-1 bg-neutral-50"
-      edges={['top', 'left', 'right']}
+      edges={['left', 'right']}
     >
+      <NativeScreenHeader title={t('title')} />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerClassName="pb-3xl"
         keyboardShouldPersistTaps="handled"
       >
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="team-notifications-back"
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
           <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('title')}
-            </Text>
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>{t('intro')}</Text>
           </View>
 

@@ -10,6 +10,7 @@
 import { DateTimeField } from '@/components/content/date-time-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { AudiencePicker } from '@/components/team/audience-picker';
 import { ReviewedField, type ReviewedText } from '@/components/team/reviewed-field';
@@ -136,7 +137,6 @@ function OutlineButton({
 
 export default function TeamSurveyNewScreen() {
   const { t } = useTranslation('surveys');
-  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
   const { back } = useRouter();
   const { groups, options } = useSurveyAudienceChoices();
@@ -264,32 +264,15 @@ export default function TeamSurveyNewScreen() {
     <SafeAreaView
       testID="team-survey-new"
       className="flex-1 bg-neutral-50"
-      edges={['top', 'left', 'right']}
+      edges={['left', 'right']}
     >
+      <NativeScreenHeader title={t('newSurvey')} />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerClassName="pb-3xl"
         keyboardShouldPersistTaps="handled"
       >
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="team-survey-new-back"
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-          >
-            {t('newSurvey')}
-          </Text>
-
           <Section title={t('newSurvey')}>
             <ReviewedField
               reviewKey={TITLE_KEY}

@@ -6,7 +6,7 @@ import {
 import { AttendanceOccurrenceRow } from '@/components/attendance/attendance-occurrence-row';
 import { AttendanceSheet } from '@/components/attendance/attendance-sheet';
 import { PageWidth } from '@/components/layout/content-width';
-import { TeamBackToHome } from '@/components/team/team-back-to-home';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { useTeamLayout } from '@/components/team/team-layout-context';
 import { TodayPendingList } from '@/components/team/today-pending-list';
 import { useAttendanceOccurrences } from '@/lib/attendance';
@@ -54,6 +54,9 @@ export default function AttendanceOccurrencesScreen() {
   const { t: tNav } = useTranslation('nav');
   const layout = useTeamLayout();
   const isSplit = layout === 'sidebar';
+  // In the large-button layout each area is a screen pushed from the home, so
+  // the native header goes back to it (RAPP-815); tabs and the sidebar need none.
+  const homeHeader = layout === 'home' ? <NativeScreenHeader /> : null;
   // Avui in every layout (RAPP-795): today's sessions first for whoever takes
   // attendance, then the "Pendent" list. Without an attendance permission the
   // sessions block is left out.
@@ -84,17 +87,25 @@ export default function AttendanceOccurrencesScreen() {
   );
 
   if (hasSessions && isPending) {
-    return <AnnouncementFeedSkeleton accessibilityLabel={t('loading')} />;
+    return (
+      <>
+        {homeHeader}
+        <AnnouncementFeedSkeleton accessibilityLabel={t('loading')} />
+      </>
+    );
   }
   if (hasSessions && isError) {
     return (
-      <AnnouncementFeedError
-        message={t('loadFailed')}
-        retryLabel={t('retry')}
-        code={toAppError(error).code}
-        languageFontClass={languageFontClass}
-        onRetry={handleRetry}
-      />
+      <>
+        {homeHeader}
+        <AnnouncementFeedError
+          message={t('loadFailed')}
+          retryLabel={t('retry')}
+          code={toAppError(error).code}
+          languageFontClass={languageFontClass}
+          onRetry={handleRetry}
+        />
+      </>
     );
   }
   const rows = hasSessions ? (data ?? EMPTY_OCCURRENCES) : EMPTY_OCCURRENCES;
@@ -103,7 +114,6 @@ export default function AttendanceOccurrencesScreen() {
   // screen and hid the sessions under the tab bar (RAPP-481).
   const header = (
     <View className="gap-xs pb-md pt-lg">
-      <TeamBackToHome />
       <Text
         accessibilityRole="header"
         className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
@@ -152,6 +162,7 @@ export default function AttendanceOccurrencesScreen() {
   );
   return (
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
+      {homeHeader}
       {isSplit && hasSessions ? (
         // A tablet keeps the list beside the open item (RAPP-245).
         <View className="flex-1 flex-row">

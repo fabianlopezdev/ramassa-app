@@ -6,6 +6,7 @@
  */
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -19,9 +20,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TeamEntitiesScreen() {
   const { t } = useTranslation('entity-management');
-  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
-  const { back, push } = useRouter();
+  const { push } = useRouter();
   const entities = useManagedEntities();
   const { create } = useEntityActions();
   const [name, setName] = useState('');
@@ -31,35 +31,15 @@ export default function TeamEntitiesScreen() {
   const canAdd = name.trim().length > 0 && !create.isPending;
 
   return (
-    <SafeAreaView
-      testID="team-entities"
-      className="flex-1 bg-neutral-50"
-      edges={['top', 'left', 'right']}
-    >
+    <SafeAreaView testID="team-entities" className="flex-1 bg-neutral-50" edges={['left', 'right']}>
+      <NativeScreenHeader title={t('managementTitle')} />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerClassName="pb-3xl"
         keyboardShouldPersistTaps="handled"
       >
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="team-entities-back"
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
           <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('managementTitle')}
-            </Text>
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
               {t('managementIntro')}
             </Text>

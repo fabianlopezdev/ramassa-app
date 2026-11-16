@@ -10,13 +10,13 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { BarRow, MonthBars, Sparkline } from '@/components/team/impact-charts';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { IMPACT_PERIODS, impactPeriodRange, type ImpactPeriod } from '@/lib/impact-period';
 import { useImpactReport } from '@/lib/team-impact';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useRouter } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, ScrollView, Text, useWindowDimensions, View } from 'react-native';
@@ -179,9 +179,7 @@ function ChartSheet({
 
 export default function TeamImpactScreen() {
   const { t, i18n } = useTranslation('admin');
-  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
-  const { back } = useRouter();
   const { width } = useWindowDimensions();
   const language = (i18n.resolvedLanguage ?? DEFAULT_LANGUAGE) as SupportedLanguage;
   const [period, setPeriod] = useState<ImpactPeriod>('year');
@@ -273,31 +271,11 @@ export default function TeamImpactScreen() {
   const suppressed = t('impactSuppressedValue');
 
   return (
-    <SafeAreaView
-      testID="team-impact"
-      className="flex-1 bg-neutral-50"
-      edges={['top', 'left', 'right']}
-    >
+    <SafeAreaView testID="team-impact" className="flex-1 bg-neutral-50" edges={['left', 'right']}>
+      <NativeScreenHeader title={t('impactReportTitle')} />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="team-impact-back"
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
           <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('impactReportTitle')}
-            </Text>
             <Text
               testID="impact-period-range"
               className={`text-start text-md tabular-nums text-neutral-600 ${fontClass}`}

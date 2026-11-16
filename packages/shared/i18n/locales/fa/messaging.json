@@ -50,8 +50,6 @@
   "unknownStaff": "کارمند ناشناس",
   "staffMobileIntro": "گفت‌وگوهای بازیکنان و نهادها را بخوانید و پاسخ دهید.",
   "conversationRowLabel": "باز کردن گفت‌وگو با {{name}}. {{role}}. آخرین پیام: {{preview}}.",
-  "backShort": "بازگشت",
-  "backToConversations": "بازگشت به گفت‌وگوها",
   "deliveryRejected": "ارسال نشد. این پیام رد شد.",
   "deliveryRejectedPermission": "ارسال نشد. دیگر نمی‌توانید اینجا پیام بفرستید.",
   "discard": "حذف",

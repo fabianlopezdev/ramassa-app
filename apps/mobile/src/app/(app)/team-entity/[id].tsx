@@ -7,12 +7,13 @@
  */
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useEntityActions, useEntityCollaborators, useManagedEntities } from '@/lib/team-entities';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Platform, ScrollView, Text, View } from 'react-native';
@@ -94,9 +95,7 @@ export default function TeamEntityScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation('entity-management');
   const { t: tAuth } = useTranslation('auth');
-  const { t: tCommon } = useTranslation('common');
   const fontClass = useLanguageFontClass();
-  const { back } = useRouter();
   const entities = useManagedEntities();
   const collaborators = useEntityCollaborators(id);
   const { setActive, invite, setCollaboratorActive, resetFactor } = useEntityActions();
@@ -129,37 +128,17 @@ export default function TeamEntityScreen() {
     !isBusy;
 
   return (
-    <SafeAreaView
-      testID="team-entity"
-      className="flex-1 bg-neutral-50"
-      edges={['top', 'left', 'right']}
-    >
+    <SafeAreaView testID="team-entity" className="flex-1 bg-neutral-50" edges={['left', 'right']}>
+      <NativeScreenHeader title={entity?.name} />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerClassName="pb-3xl"
         keyboardShouldPersistTaps="handled"
       >
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="team-entity-back"
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
           {entity === undefined ? null : (
             <>
               <View className="gap-xs">
-                <Text
-                  accessibilityRole="header"
-                  className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-                >
-                  {entity.name}
-                </Text>
                 <Text
                   testID="entity-status"
                   className={`text-start text-md font-semibold text-neutral-700 ${fontClass}`}

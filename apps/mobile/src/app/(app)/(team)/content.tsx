@@ -19,7 +19,7 @@ import { ServiceReviewDetail } from '@/components/content/service-review-detail'
 import { ServiceReviewList } from '@/components/content/service-review-list';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
-import { TeamBackToHome } from '@/components/team/team-back-to-home';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { useTeamLayout } from '@/components/team/team-layout-context';
 import { contentKinds, type ContentKind } from '@/lib/team-shell';
 import { useAccountAccess } from '@/lib/use-account-access';
@@ -55,7 +55,11 @@ export default function ContentScreen() {
   const { t: tNav } = useTranslation('nav');
   const fontClass = useLanguageFontClass();
   const { push } = useRouter();
-  const isSplit = useTeamLayout() === 'sidebar';
+  const layout = useTeamLayout();
+  const isSplit = layout === 'sidebar';
+  // In the large-button layout each area is a screen pushed from the home, so
+  // the native header goes back to it (RAPP-815); tabs and the sidebar need none.
+  const homeHeader = layout === 'home' ? <NativeScreenHeader /> : null;
   const { width } = useWindowDimensions();
   const { permissions } = useAccountAccess();
   const kinds = useMemo(() => contentKinds(permissions), [permissions]);
@@ -90,7 +94,6 @@ export default function ContentScreen() {
 
   const top = (
     <>
-      <TeamBackToHome />
       <Text
         accessibilityRole="header"
         className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
@@ -159,6 +162,7 @@ export default function ContentScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
+      {homeHeader}
       {isSplit ? (
         <View className="flex-1 flex-row">
           <View style={listPaneStyle}>{list}</View>

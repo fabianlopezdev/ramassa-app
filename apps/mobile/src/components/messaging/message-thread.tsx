@@ -314,8 +314,9 @@ function MessageThreadView({
   readonly onTitlePress?: () => void;
   readonly titlePressLabel?: string;
   /**
-   * The player's chat is a pushed screen: the native header carries its title
-   * and back control (RAPP-806), so the thread draws no title row of its own.
+   * A pushed thread: the native header carries its back control (RAPP-806,
+   * RAPP-815) and its title, so the thread draws no title row of its own,
+   * unless the title opens her card.
    */
   readonly usesNativeHeader?: boolean;
 }) {
@@ -334,6 +335,7 @@ function MessageThreadView({
     (usesNativeHeader ? nativeHeaderHeight : 0) +
     (process.env.EXPO_OS === 'ios' ? -Math.max(bottomInset - tokens.spacing.sm, 0) : 0);
   const safeAreaEdges = usesNativeHeader ? NATIVE_HEADER_EDGES : OWN_HEADER_EDGES;
+  const showsTitleRow = !usesNativeHeader || onTitlePress !== undefined;
   const {
     messages,
     send,
@@ -485,9 +487,9 @@ function MessageThreadView({
       >
         <PageWidth className="flex-1">
           <View
-            className={`border-neutral-200 bg-white px-lg ${usesNativeHeader ? (isOnline ? '' : 'border-b py-sm') : 'border-b py-md'}`}
+            className={`border-neutral-200 bg-white px-lg ${showsTitleRow ? 'border-b py-md' : isOnline ? '' : 'border-b py-sm'}`}
           >
-            {usesNativeHeader ? null : (
+            {showsTitleRow ? (
               <View className="flex-row items-center gap-md">
                 {headerAccessory}
                 {onTitlePress === undefined ? (
@@ -515,7 +517,7 @@ function MessageThreadView({
                   </PressableScale>
                 )}
               </View>
-            )}
+            ) : null}
             {!isOnline ? (
               <Text
                 selectable
@@ -601,12 +603,14 @@ export function StaffMessageThread({
 }: {
   readonly conversationId: string;
   readonly title: string;
-  /** False in the tablet split view, where the list stays beside it (RAPP-245). */
+  /**
+   * A pushed screen, which goes back through the native header (RAPP-815).
+   * False in the tablet split view, where the list stays beside it (RAPP-245).
+   */
   readonly showBack?: boolean;
 }) {
-  const { back, push } = useRouter();
+  const { push } = useRouter();
   const { t } = useTranslation('messaging');
-  const fontClass = useLanguageFontClass();
   const controller = useStaffConversation(conversationId);
   const participantTitle = staffConversationTitle(controller.peer, title);
   const { permissions } = useAccountAccess();
@@ -615,24 +619,22 @@ export function StaffMessageThread({
   const openCard = useCallback(() => {
     if (playerId !== null) push(participantCardHref(playerId));
   }, [playerId, push]);
-  const backAction = (
-    <PressableScale
-      testID="staff-message-back"
-      accessibilityLabel={t('backToConversations')}
-      onPress={back}
-      haptic="tapLight"
-      className="min-h-recommended justify-center px-sm"
-    >
-      <Text className={`font-semibold text-primary-dark ${fontClass}`}>{t('backShort')}</Text>
-    </PressableScale>
-  );
-  return (
+  const onTitlePress = playerId === null ? undefined : openCard;
+  const thread = (
     <MessageThreadView
       title={participantTitle}
       controller={controller}
-      headerAccessory={showBack ? backAction : undefined}
-      onTitlePress={playerId === null ? undefined : openCard}
+      onTitlePress={onTitlePress}
       titlePressLabel={t('openParticipantCard', { name: participantTitle })}
+      usesNativeHeader={showBack}
     />
+  );
+  if (!showBack) return thread;
+  return (
+    <>
+      {/* Her name stays in the thread while it opens her card (RAPP-799). */}
+      <NativeScreenHeader title={onTitlePress === undefined ? participantTitle : undefined} />
+      {thread}
+    </>
   );
 }

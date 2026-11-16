@@ -2,7 +2,6 @@ import { describe, expect, test } from 'bun:test';
 
 const threadPath = new URL('../components/messaging/message-thread.tsx', import.meta.url);
 const conversationListPath = new URL('../app/(app)/(team)/messages.tsx', import.meta.url);
-const teamBackToHomePath = new URL('../components/team/team-back-to-home.tsx', import.meta.url);
 const teamChatPath = new URL('../app/(app)/team-chat.tsx', import.meta.url);
 const conversationCardPath = new URL(
   '../components/messaging/staff-conversation-card.tsx',
@@ -78,7 +77,7 @@ describe('native messaging UI contract', () => {
     expect(source).toContain('accessibilityRole="header"');
   });
 
-  test('gives staff rows complete translated context and every back action a recommended touch target', async () => {
+  test('gives staff rows complete translated context and goes back through the native header', async () => {
     const [threadSource, conversationListSource] = await Promise.all([
       Bun.file(threadPath).text(),
       Bun.file(conversationListPath).text(),
@@ -87,12 +86,12 @@ describe('native messaging UI contract', () => {
     expect(conversationListSource).toContain("t('conversationRowLabel'");
     expect(conversationListSource).toContain('role: participantRole');
     expect(conversationListSource).toContain('preview: messagePreview');
-    // The way back to the start lives in the team shell since RAPP-245.
-    expect(conversationListSource).toContain('<TeamBackToHome />');
-    expect(await Bun.file(teamBackToHomePath).text()).toContain(
-      'className="min-h-recommended self-start',
-    );
-    expect(threadSource).toContain('className="min-h-recommended justify-center');
+    // The way back is the native header (RAPP-815): in the large-button
+    // layout on the list, and on a pushed thread.
+    expect(conversationListSource).toContain("layout === 'home' ? <NativeScreenHeader /> : null");
+    expect(threadSource).not.toContain('staff-message-back');
+    expect(threadSource).toContain('usesNativeHeader={showBack}');
+    expect(threadSource).toContain('className="min-h-recommended flex-1 justify-center"');
     expect(conversationListSource).not.toContain('min-h-min');
     expect(threadSource).not.toContain('min-h-min');
   });

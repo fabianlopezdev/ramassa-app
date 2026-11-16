@@ -180,15 +180,12 @@ export function ServiceFacts({
 
 export function ServiceDetail({
   serviceId,
-  onBack,
   onDeleted,
 }: {
   readonly serviceId: string;
-  readonly onBack?: () => void;
   readonly onDeleted: () => void;
 }) {
   const { t, i18n } = useTranslation('services');
-  const { t: tCommon } = useTranslation('common');
   const { t: tProfile } = useTranslation('profile');
   const { t: tErrors } = useTranslation('errors');
   const fontClass = useLanguageFontClass();
@@ -242,16 +239,6 @@ export function ServiceDetail({
 
   return (
     <ScrollView contentContainerClassName="gap-md p-lg" testID="service-detail">
-      {onBack === undefined ? null : (
-        <PressableScale
-          accessibilityLabel={tCommon('back')}
-          onPress={onBack}
-          haptic="tapLight"
-          className="min-h-recommended self-start justify-center"
-        >
-          <Text className={`font-semibold text-primary-dark ${fontClass}`}>{tCommon('back')}</Text>
-        </PressableScale>
-      )}
       <View className="gap-xs">
         <Text
           accessibilityRole="header"

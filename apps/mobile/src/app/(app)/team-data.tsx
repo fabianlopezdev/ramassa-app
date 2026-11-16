@@ -11,6 +11,7 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { DateField } from '@/components/content/date-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { teamScreens } from '@/lib/account-area';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -18,7 +19,6 @@ import { playHaptic } from '@/lib/haptics/haptics';
 import { useAuditLog, useDataExport } from '@/lib/team-data';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useRouter } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
@@ -417,42 +417,19 @@ function AuditLog() {
 }
 
 export default function TeamDataScreen() {
-  const { t: tCommon } = useTranslation('common');
   const { t: tNav } = useTranslation('nav');
-  const fontClass = useLanguageFontClass();
-  const { back } = useRouter();
   const { permissions } = useAccountAccess();
   const team = teamScreens(permissions);
 
   return (
-    <SafeAreaView
-      testID="team-data"
-      className="flex-1 bg-neutral-50"
-      edges={['top', 'left', 'right']}
-    >
+    <SafeAreaView testID="team-data" className="flex-1 bg-neutral-50" edges={['left', 'right']}>
+      <NativeScreenHeader title={tNav('staff.data')} />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerClassName="pb-3xl"
         keyboardShouldPersistTaps="handled"
       >
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="team-data-back"
-            accessibilityLabel={tCommon('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {tCommon('back')}
-            </Text>
-          </PressableScale>
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-          >
-            {tNav('staff.data')}
-          </Text>
           {team.dataExports ? <Exports permissions={permissions} /> : null}
           {team.auditLog ? <AuditLog /> : null}
         </PageWidth>
