@@ -136,7 +136,7 @@ export function CommunityShareSheet({
             style={continuousCorners}
             className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg active:opacity-90"
           >
-            <Text className={`font-bold text-neutral-700 ${languageFontClass}`}>
+            <Text className={`text-md font-bold text-neutral-700 ${languageFontClass}`}>
               {t('common:close')}
             </Text>
           </Pressable>

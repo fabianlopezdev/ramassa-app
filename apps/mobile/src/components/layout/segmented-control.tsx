@@ -4,6 +4,7 @@ import {
   composeViewStyles,
   continuousCorners,
 } from '@/lib/continuous-corners';
+import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { memo, useCallback, type JSX } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
@@ -11,7 +12,8 @@ import { tokens } from '@ramassa/shared/tokens';
 /**
  * One row of mutually exclusive views of the same screen: the events list or
  * month, the Comunitat segments, the participant segments. Every option has the
- * same width, so the row runs edge to edge with equal heights in every language.
+ * same width and the row stretches every option to the tallest one, so a label
+ * that wraps to two lines keeps the row edge to edge with equal heights.
  */
 export interface SegmentedControlOption<Key extends string> {
   readonly key: Key;
@@ -20,6 +22,8 @@ export interface SegmentedControlOption<Key extends string> {
   readonly accessibilityLabel?: string;
   /** A count shown after the label when it is above zero. */
   readonly count?: number;
+  /** Decorative icon above the label: players navigate by icon shape. */
+  readonly symbol?: SymbolViewProps['name'];
   readonly testID?: string;
 }
 
@@ -27,12 +31,12 @@ const styles = StyleSheet.create({
   option: {
     minHeight: tokens.tapTarget.recommended,
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: tokens.spacing.xs,
     borderRadius: tokens.radius.sm,
     paddingHorizontal: tokens.spacing.sm,
+    paddingVertical: tokens.spacing.xs,
   },
   optionSelected: { backgroundColor: tokens.colors.white },
   count: { fontVariant: ['tabular-nums'] },
@@ -51,6 +55,7 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
   label,
   accessibilityLabel,
   count,
+  symbol,
   testID,
   isSelected,
   languageFontClass,
@@ -67,32 +72,41 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
       haptic="selection"
       isSelected={isSelected}
       style={isSelected ? selectedOptionStyle : optionStyle}
-      className={`min-h-recommended flex-1 flex-row items-center justify-center gap-xs rounded-sm px-sm ${
+      className={`min-h-recommended flex-1 items-center justify-center gap-xs rounded-sm px-sm py-xs ${
         isSelected ? 'bg-white' : ''
       }`}
     >
-      <Text
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        className={`text-center text-md font-semibold ${
-          isSelected ? 'text-primary-dark' : 'text-neutral-600'
-        } ${languageFontClass}`}
-      >
-        {label}
-      </Text>
-      {visibleCount === null ? null : (
-        <View
+      {symbol === undefined ? null : (
+        <SymbolView
           accessible={false}
-          className="items-center justify-center rounded-full bg-primary-dark px-sm"
-        >
-          <Text
-            style={styles.count}
-            className={`text-sm font-bold text-white ${languageFontClass}`}
-          >
-            {visibleCount}
-          </Text>
-        </View>
+          name={symbol}
+          size={tokens.fontSize.xl}
+          tintColor={isSelected ? tokens.colors.primary.dark : tokens.colors.neutral[600]}
+        />
       )}
+      <View className="flex-row items-center justify-center gap-xs">
+        <Text
+          numberOfLines={2}
+          className={`shrink text-center text-md font-semibold ${
+            isSelected ? 'text-primary-dark' : 'text-neutral-600'
+          } ${languageFontClass}`}
+        >
+          {label}
+        </Text>
+        {visibleCount === null ? null : (
+          <View
+            accessible={false}
+            className="items-center justify-center rounded-full bg-primary-dark px-sm"
+          >
+            <Text
+              style={styles.count}
+              className={`text-sm font-bold text-white ${languageFontClass}`}
+            >
+              {visibleCount}
+            </Text>
+          </View>
+        )}
+      </View>
     </PressableScale>
   );
 }) as <Key extends string>(
@@ -129,6 +143,7 @@ export function SegmentedControl<Key extends string>({
           label={option.label}
           accessibilityLabel={option.accessibilityLabel}
           count={option.count}
+          symbol={option.symbol}
           testID={option.testID}
           isSelected={selected === option.key}
           languageFontClass={languageFontClass}

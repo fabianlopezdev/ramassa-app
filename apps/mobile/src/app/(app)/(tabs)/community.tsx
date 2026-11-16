@@ -49,9 +49,24 @@ const styles = StyleSheet.create({
 });
 const postKeyExtractor = (post: ForumPostRow) => post.id;
 const shareSymbol: SymbolViewProps['name'] = {
-  ios: 'square.and.arrow.up',
+  ios: 'plus.circle.fill',
   android: 'add_circle',
   web: 'add_circle',
+};
+const forumSymbol: SymbolViewProps['name'] = {
+  ios: 'bubble.left.and.bubble.right.fill',
+  android: 'forum',
+  web: 'forum',
+};
+const gallerySymbol: SymbolViewProps['name'] = {
+  ios: 'photo.on.rectangle.angled',
+  android: 'photo_library',
+  web: 'photo_library',
+};
+const storiesSymbol: SymbolViewProps['name'] = {
+  ios: 'book.fill',
+  android: 'auto_stories',
+  web: 'auto_stories',
 };
 type CommunitySegment = 'forum' | 'gallery' | 'stories';
 const shareRoutes: Readonly<Record<CommunityShareChoice, Href>> = {
@@ -112,9 +127,24 @@ export default function CommunityScreen() {
   );
   const segmentOptions = useMemo<readonly SegmentedControlOption<CommunitySegment>[]>(
     () => [
-      { key: 'forum', label: t('forum:segmentForum'), testID: 'community-segment-forum' },
-      { key: 'gallery', label: t('forum:segmentGallery'), testID: 'community-segment-gallery' },
-      { key: 'stories', label: t('forum:segmentStories'), testID: 'community-segment-stories' },
+      {
+        key: 'forum',
+        label: t('forum:segmentForum'),
+        symbol: forumSymbol,
+        testID: 'community-segment-forum',
+      },
+      {
+        key: 'gallery',
+        label: t('forum:segmentGallery'),
+        symbol: gallerySymbol,
+        testID: 'community-segment-gallery',
+      },
+      {
+        key: 'stories',
+        label: t('forum:segmentStories'),
+        symbol: storiesSymbol,
+        testID: 'community-segment-stories',
+      },
     ],
     [t],
   );

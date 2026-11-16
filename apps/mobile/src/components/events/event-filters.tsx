@@ -1,6 +1,7 @@
 import { SegmentedControl } from '@/components/layout/segmented-control';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { composeViewStyles } from '@/lib/continuous-corners';
+import type { SymbolViewProps } from 'expo-symbols';
 import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { EventCategoryColor, PlayerEventCategoryFilter } from '@ramassa/shared/events';
@@ -31,6 +32,17 @@ const selectedFilterOptionStyle = composeViewStyles(
   styles.filterOptionSelected,
 );
 const idleFilterOptionStyle = composeViewStyles(styles.filterOption, styles.filterOptionIdle);
+
+const listViewSymbol: SymbolViewProps['name'] = {
+  ios: 'list.bullet',
+  android: 'view_list',
+  web: 'view_list',
+};
+const monthViewSymbol: SymbolViewProps['name'] = {
+  ios: 'calendar',
+  android: 'calendar_month',
+  web: 'calendar_month',
+};
 
 export interface PlayerEventFilterOption {
   readonly id: string;
@@ -140,8 +152,18 @@ export function EventViewToggle({
   const options = useMemo(
     () =>
       [
-        { key: 'list', label: listLabel, accessibilityLabel: listAccessibilityLabel },
-        { key: 'calendar', label: calendarLabel, accessibilityLabel: calendarAccessibilityLabel },
+        {
+          key: 'list',
+          label: listLabel,
+          accessibilityLabel: listAccessibilityLabel,
+          symbol: listViewSymbol,
+        },
+        {
+          key: 'calendar',
+          label: calendarLabel,
+          accessibilityLabel: calendarAccessibilityLabel,
+          symbol: monthViewSymbol,
+        },
       ] as const,
     [calendarAccessibilityLabel, calendarLabel, listAccessibilityLabel, listLabel],
   );
