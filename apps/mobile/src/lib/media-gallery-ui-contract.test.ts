@@ -52,7 +52,7 @@ test('upload shows the selected media with clear replace, remove, and permission
 
 test('item view exposes privacy editing, deletion, flagging, and video playback', () => {
   expect(item).toContain('VideoView');
-  expect(item).toContain('gallery-detail-back');
+  expect(item).toContain('<NativeScreenHeader');
   expect(item).toContain('gallery-privacy-picker');
   expect(item).toContain('gallery-delete');
   expect(item).toContain('gallery-flag');

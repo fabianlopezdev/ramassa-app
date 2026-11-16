@@ -89,7 +89,6 @@
   "playerEmptyBody": "Prueba otro tema o vuelve cuando tengas conexión.",
   "playerLoadFailed": "No se pudieron cargar los recursos.",
   "playerRetry": "Volver a intentar",
-  "playerOffline": "Estás sin conexión. Puedes leer los recursos guardados en este dispositivo.",
   "contentUnavailable": "Este bloque de contenido aún no está disponible.",
   "openVideo": "Abrir el vídeo: {{title}}",
   "byAuthor": "Por {{name}}",

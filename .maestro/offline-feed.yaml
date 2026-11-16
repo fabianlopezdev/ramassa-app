@@ -7,7 +7,7 @@ env:
   BACK: '{{common:back}}'
   TAB_HOME: '{{nav:tabs.home}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
-  OFFLINE_BANNER: '{{home:offlineBanner}}'
+  OFFLINE_BANNER: '{{common:offline}}'
   PINNED: '{{home:pinned}}'
   HOME_TITLE: '{{home:feedTitle}}'
 ---

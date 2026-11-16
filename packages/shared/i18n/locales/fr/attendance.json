@@ -11,7 +11,7 @@
   "loading": "Chargement des présences",
   "loadFailed": "Nous n’avons pas pu charger les présences. Vérifie la connexion et réessaie.",
   "retry": "Réessaie",
-  "offlineBanner": "Pas de connexion. Les présences sont enregistrées sur cet appareil. Elles se synchronisent toutes seules quand tu te reconnectes.",
+  "offlineQueued": "Les présences sont enregistrées sur cet appareil. Elles se synchronisent toutes seules quand tu te reconnectes.",
   "summary": "{{marked}} sur {{expected}} notées",
   "signedUp": "Inscription confirmée",
   "statusUnmarked": "Non notée",

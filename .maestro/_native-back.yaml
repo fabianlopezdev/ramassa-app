@@ -1,0 +1,21 @@
+appId: com.ramassa.app
+name: _native-back
+# Every pushed screen goes back through the native header (RAPP-806). Android's
+# header button is described as "Navigate up"; UIKit names the navigation bar's
+# back button BackButton. Optional, so a loop that unwinds to the tab shell can
+# call it on a screen that has no header.
+---
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          text: '^Navigate up$'
+          optional: true
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: BackButton
+          optional: true

@@ -8,7 +8,7 @@ env:
   TAB_CHAT: Xat
   CHAT_TITLE: Xat amb l’equip
   COMPOSER: Escriu un missatge
-  OFFLINE: Sense connexió. Els missatges quedaran en cua.
+  OFFLINE: Els missatges quedaran en cua.
 ---
 # Signed in through the shared fragments, like every other flow. The phone app
 # no longer has a password form: players sign in with an emailed code, which a
@@ -225,8 +225,7 @@ env:
       - assertNotVisible:
           id: message-sync-retrying
 
-- tapOn:
-    id: team-chat-back
+- runFlow: _native-back.yaml
 - tapOn:
     id: player-profile-button
 # The language control has its own screen in the profile menu (RAPP-794).

@@ -9,7 +9,7 @@ env:
   LOGIN_TITLE: '{{auth:emailLoginTitle}}'
   ATTENDANCE_TITLE: '{{attendance:title}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
-  OFFLINE_BANNER: '{{attendance:offlineBanner}}'
+  OFFLINE_BANNER: '{{attendance:offlineQueued}}'
 ---
 - runFlow:
     file: _open-app.yaml

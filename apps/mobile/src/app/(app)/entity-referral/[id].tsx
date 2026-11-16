@@ -9,12 +9,13 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useEntityReferral, useReferralActions } from '@/lib/entity-referrals';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
@@ -153,7 +154,6 @@ export default function EntityReferralScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, i18n } = useTranslation(['referrals', 'onboarding']);
   const fontClass = useLanguageFontClass();
-  const { back } = useRouter();
   const { referral, updates } = useEntityReferral(id);
   const { addUpdate } = useReferralActions();
   const [updateType, setUpdateType] = useState<UpdateType>('documentation');
@@ -183,8 +183,9 @@ export default function EntityReferralScreen() {
     <SafeAreaView
       testID="entity-referral"
       className="flex-1 bg-neutral-50"
-      edges={['top', 'left', 'right']}
+      edges={['left', 'right']}
     >
+      <NativeScreenHeader />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerClassName="pb-3xl"
@@ -192,15 +193,6 @@ export default function EntityReferralScreen() {
         automaticallyAdjustKeyboardInsets
       >
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="entity-referral-back"
-            accessibilityLabel={t('back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>{t('back')}</Text>
-          </PressableScale>
           {data === undefined ? null : (
             <>
               <View className="gap-xs">

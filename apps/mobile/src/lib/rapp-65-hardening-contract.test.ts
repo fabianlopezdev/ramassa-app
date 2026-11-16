@@ -7,25 +7,29 @@ const readMobileSource = (path: string) => readFile(`${mobileRoot}${path}`, 'utf
 
 describe('RAPP-65 player hardening contract', () => {
   test('gallery list has distinct shared loading, empty, offline, and taxonomy error states', async () => {
-    // The grid owns its states; each screen that renders it owns the offline banner.
+    // The grid owns its states; the shell owns the one offline banner (RAPP-807).
     const gallery = await readMobileSource('components/gallery/gallery-grid.tsx');
     const galleryRoute = await readMobileSource('app/(app)/gallery/index.tsx');
     const community = await readMobileSource('app/(app)/(tabs)/community.tsx');
+    const shell = await readMobileSource('app/(app)/_layout.tsx');
 
     expect(gallery).toContain('AnnouncementFeedSkeleton');
     expect(gallery).toContain('AnnouncementEmptyState');
     expect(gallery).toContain('AnnouncementFeedError');
-    expect(galleryRoute).toContain('OfflineBanner');
-    expect(community).toContain('OfflineBanner');
+    expect(galleryRoute).not.toContain('OfflineBanner');
+    expect(community).not.toContain('OfflineBanner');
+    expect(shell).toContain('<ShellOfflineFrame>');
+    expect(gallery).toContain("isOnline ? 'emptyTitle' : 'offlineEmptyTitle'");
     expect(gallery).toContain('toAppError(query.error).code');
     expect(gallery).not.toContain("t(query.isPending ? 'loading' : 'empty')");
   });
 
-  test('gallery detail uses the shared skeleton and shows cached content with an offline banner', async () => {
+  test('gallery detail uses the shared skeleton and shows cached content under the shell offline banner', async () => {
     const detail = await readMobileSource('app/(app)/gallery/[id].tsx');
 
     expect(detail).toContain('AnnouncementFeedSkeleton');
-    expect(detail).toContain('OfflineBanner');
+    expect(detail).not.toContain('OfflineBanner');
+    expect(detail).toContain("t('gallery:offlineEmptyTitle')");
     expect(detail).not.toContain('query.isPending && item === undefined ? (');
   });
 

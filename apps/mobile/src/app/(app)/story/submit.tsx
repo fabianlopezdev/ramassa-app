@@ -2,6 +2,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { StoryImagePreview } from '@/components/knowledge/story-image-preview';
 import { FormWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
@@ -59,7 +60,7 @@ function statusTranslationKey(status: StoryStatus) {
 
 export default function StorySubmissionScreen() {
   const { t, i18n } = useTranslation(['knowledge', 'common']);
-  const { back, push } = useRouter();
+  const { push } = useRouter();
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const networkState = useNetworkState();
@@ -194,275 +195,261 @@ export default function StorySubmissionScreen() {
     () =>
       process.env.EXPO_OS === 'android'
         ? {
-            paddingTop: insets.top + tokens.spacing.lg,
+            paddingTop: tokens.spacing.lg,
             paddingBottom: insets.bottom + tokens.spacing.lg,
           }
         : undefined,
-    [insets.bottom, insets.top],
+    [insets.bottom],
   );
 
   return (
-    <ScrollView
-      ref={scrollViewRef}
-      testID="story-submission-screen"
-      className="flex-1 bg-white"
-      contentContainerClassName="grow px-lg py-lg"
-      contentContainerStyle={androidEdgeInsets}
-      contentInsetAdjustmentBehavior="automatic"
-      keyboardShouldPersistTaps="handled"
-    >
-      <FormWidth className="gap-lg">
-        <PressableScale
-          accessibilityLabel={t('common:back')}
-          onPress={back}
-          haptic="tapLight"
-          className="min-h-recommended self-start justify-center rounded-full border border-neutral-300 px-lg"
-        >
-          <Text className={`text-md font-medium text-primary ${languageFontClass}`}>
-            {t('common:back')}
-          </Text>
-        </PressableScale>
-
-        {isComplete ? (
-          <SuccessPop>
-            <View
-              accessibilityRole="alert"
-              testID="story-submission-confirmation"
-              className="gap-md rounded-lg border border-success bg-neutral-50 p-lg"
-              style={continuousCorners}
-            >
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('knowledge:submissionSuccessTitle')}
-              </Text>
-              <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
-                {t('knowledge:submissionSuccessBody')}
-              </Text>
-              <PressableScale
-                accessibilityLabel={t('knowledge:submitAnother')}
-                onPress={submitAnother}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-              >
-                <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
-                  {t('knowledge:submitAnother')}
-                </Text>
-              </PressableScale>
-            </View>
-          </SuccessPop>
-        ) : (
-          <View className="gap-lg">
-            <View className="gap-xs">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('knowledge:submissionTitle')}
-              </Text>
-              <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-                {t('knowledge:submissionIntro')}
-              </Text>
-            </View>
-            <AuthTextField
-              testID="story-title-input"
-              label={t('knowledge:submissionFieldTitle')}
-              placeholder={t('knowledge:submissionTitleHint')}
-              value={title}
-              maxLength={STORY_TITLE_MAX_LENGTH}
-              returnKeyType="next"
-              onChangeText={setTitle}
-            />
-            <AuthTextField
-              testID="story-body-input"
-              label={t('knowledge:submissionFieldStory')}
-              placeholder={t('knowledge:submissionStoryHint')}
-              value={story}
-              maxLength={STORY_TEXT_MAX_LENGTH}
-              multiline
-              numberOfLines={STORY_TEXT_VISIBLE_LINES}
-              textAlignVertical="top"
-              style={styles.storyInput}
-              onChangeText={setStory}
-            />
-            <View className="gap-sm">
-              <PressableScale
-                testID="story-add-photos"
-                accessibilityLabel={t('knowledge:addPhotos')}
-                onPress={addPhotos}
-                haptic="tapLight"
-                isDisabled={images.length >= MAX_STORY_IMAGES || isProcessingPhoto}
-                isBusy={isProcessingPhoto}
-                style={continuousCorners}
-                className="min-h-recommended flex-row items-center justify-center gap-sm rounded-md border border-primary px-lg"
-              >
-                {isProcessingPhoto ? (
-                  <ActivityIndicator accessible={false} color={tokens.colors.primary.DEFAULT} />
-                ) : (
-                  <SymbolView
-                    accessible={false}
-                    name={addPhotoSymbol}
-                    size={tokens.fontSize.xl}
-                    tintColor={tokens.colors.primary.DEFAULT}
-                  />
-                )}
-                <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
-                  {isProcessingPhoto ? t('knowledge:processingPhoto') : t('knowledge:addPhotos')}
-                </Text>
-              </PressableScale>
-              <Text
-                className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}
-              >
-                {t('knowledge:photoCount', { count: images.length, maximum: MAX_STORY_IMAGES })}
-              </Text>
-              <View className="flex-row flex-wrap gap-sm">
-                {images.map((image, index) => (
-                  <StoryImagePreview
-                    key={image.uri}
-                    image={image}
-                    number={index + 1}
-                    title={title}
-                    onRemove={removePhoto}
-                  />
-                ))}
-              </View>
-            </View>
-            <PressableScale
-              testID="story-publication-consent"
-              accessibilityRole="checkbox"
-              accessibilityLabel={t('knowledge:publicationConsent')}
-              onPress={toggleConsent}
-              haptic="selection"
-              isSelected={hasConsent}
-              style={continuousCorners}
-              className={`min-h-recommended flex-row items-start gap-md rounded-md border p-md ${
-                hasConsent ? 'border-primary bg-primary/10' : 'border-neutral-300 bg-white'
-              }`}
-            >
+    <>
+      <NativeScreenHeader title={t('knowledge:submissionTitle')} />
+      <ScrollView
+        ref={scrollViewRef}
+        testID="story-submission-screen"
+        className="flex-1 bg-white"
+        contentContainerClassName="grow px-lg py-lg"
+        contentContainerStyle={androidEdgeInsets}
+        contentInsetAdjustmentBehavior="automatic"
+        keyboardShouldPersistTaps="handled"
+      >
+        <FormWidth className="gap-lg">
+          {isComplete ? (
+            <SuccessPop>
               <View
-                className="h-lg w-lg items-center justify-center rounded-sm border border-primary"
+                accessibilityRole="alert"
+                testID="story-submission-confirmation"
+                className="gap-md rounded-lg border border-success bg-neutral-50 p-lg"
                 style={continuousCorners}
               >
-                {hasConsent ? (
-                  <SymbolView
-                    accessible={false}
-                    name={checkSymbol}
-                    size={tokens.fontSize.md}
-                    tintColor={tokens.colors.primary.dark}
-                  />
-                ) : null}
-              </View>
-              <View className="flex-1 gap-xs">
                 <Text
-                  className={`text-start text-md font-medium text-neutral-900 ${languageFontClass}`}
+                  accessibilityRole="header"
+                  className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
                 >
-                  {t('knowledge:publicationConsent')}
+                  {t('knowledge:submissionSuccessTitle')}
                 </Text>
-                <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-                  {t('knowledge:publicationConsentHelp')}
+                <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
+                  {t('knowledge:submissionSuccessBody')}
                 </Text>
-              </View>
-            </PressableScale>
-            {!isOnline ? (
-              <Text
-                selectable
-                accessibilityRole="alert"
-                className={`text-start text-sm text-error ${languageFontClass}`}
-              >
-                {t('knowledge:offlineSubmission')}
-              </Text>
-            ) : null}
-            <ShakeOnError errorCode={errorCode}>
-              <View className="gap-sm">
-                {validationMessage === null && mutationErrorCode === null ? null : (
-                  <Text
-                    selectable
-                    accessibilityRole="alert"
-                    className={`text-start text-sm text-error ${languageFontClass}`}
-                  >
-                    {validationMessage ?? t('knowledge:submissionFailed')}
+                <PressableScale
+                  accessibilityLabel={t('knowledge:submitAnother')}
+                  onPress={submitAnother}
+                  haptic="tapLight"
+                  style={continuousCorners}
+                  className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
+                >
+                  <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
+                    {t('knowledge:submitAnother')}
                   </Text>
-                )}
-                <AuthSubmitButton
-                  testID="story-submit-button"
-                  label={
-                    isSubmitPending ? t('knowledge:submittingStory') : t('knowledge:submitStory')
-                  }
-                  onPress={submitForm}
-                  isLoading={isSubmitPending}
-                  disabled={!isOnline || isProcessingPhoto || defaultCategoryId === undefined}
-                />
+                </PressableScale>
               </View>
-            </ShakeOnError>
-          </View>
-        )}
-
-        <View className="gap-sm pt-lg">
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-          >
-            {t('knowledge:myStories')}
-          </Text>
-          {(statusesQuery.data ?? []).length === 0 ? (
-            <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-              {t('knowledge:myStoriesEmpty')}
-            </Text>
+            </SuccessPop>
           ) : (
-            (statusesQuery.data ?? []).map((status) => {
-              const storyTitle = resolveLocalizedText(status.title, language)?.text ?? '';
-              const statusLabel = t(statusTranslationKey(status.story_status));
-              const note = status.reviewer_note?.trim() ?? '';
-              return (
-                <OpenableCard
-                  key={status.id}
-                  testID={`story-status-${status.story_status}`}
-                  accessibilityLabel={[storyTitle, statusLabel, note].filter(Boolean).join('. ')}
-                  onOpen={() => push(`/knowledge/${status.id}` as Href)}
-                  className="rounded-md border border-neutral-200 bg-neutral-50 p-md"
+            <View className="gap-lg">
+              <View className="gap-xs">
+                <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
+                  {t('knowledge:submissionIntro')}
+                </Text>
+              </View>
+              <AuthTextField
+                testID="story-title-input"
+                label={t('knowledge:submissionFieldTitle')}
+                placeholder={t('knowledge:submissionTitleHint')}
+                value={title}
+                maxLength={STORY_TITLE_MAX_LENGTH}
+                returnKeyType="next"
+                onChangeText={setTitle}
+              />
+              <AuthTextField
+                testID="story-body-input"
+                label={t('knowledge:submissionFieldStory')}
+                placeholder={t('knowledge:submissionStoryHint')}
+                value={story}
+                maxLength={STORY_TEXT_MAX_LENGTH}
+                multiline
+                numberOfLines={STORY_TEXT_VISIBLE_LINES}
+                textAlignVertical="top"
+                style={styles.storyInput}
+                onChangeText={setStory}
+              />
+              <View className="gap-sm">
+                <PressableScale
+                  testID="story-add-photos"
+                  accessibilityLabel={t('knowledge:addPhotos')}
+                  onPress={addPhotos}
+                  haptic="tapLight"
+                  isDisabled={images.length >= MAX_STORY_IMAGES || isProcessingPhoto}
+                  isBusy={isProcessingPhoto}
+                  style={continuousCorners}
+                  className="min-h-recommended flex-row items-center justify-center gap-sm rounded-md border border-primary px-lg"
                 >
-                  <Text
-                    className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}
-                  >
-                    {storyTitle}
+                  {isProcessingPhoto ? (
+                    <ActivityIndicator accessible={false} color={tokens.colors.primary.DEFAULT} />
+                  ) : (
+                    <SymbolView
+                      accessible={false}
+                      name={addPhotoSymbol}
+                      size={tokens.fontSize.xl}
+                      tintColor={tokens.colors.primary.DEFAULT}
+                    />
+                  )}
+                  <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
+                    {isProcessingPhoto ? t('knowledge:processingPhoto') : t('knowledge:addPhotos')}
                   </Text>
+                </PressableScale>
+                <Text
+                  className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}
+                >
+                  {t('knowledge:photoCount', { count: images.length, maximum: MAX_STORY_IMAGES })}
+                </Text>
+                <View className="flex-row flex-wrap gap-sm">
+                  {images.map((image, index) => (
+                    <StoryImagePreview
+                      key={image.uri}
+                      image={image}
+                      number={index + 1}
+                      title={title}
+                      onRemove={removePhoto}
+                    />
+                  ))}
+                </View>
+              </View>
+              <PressableScale
+                testID="story-publication-consent"
+                accessibilityRole="checkbox"
+                accessibilityLabel={t('knowledge:publicationConsent')}
+                onPress={toggleConsent}
+                haptic="selection"
+                isSelected={hasConsent}
+                style={continuousCorners}
+                className={`min-h-recommended flex-row items-start gap-md rounded-md border p-md ${
+                  hasConsent ? 'border-primary bg-primary/10' : 'border-neutral-300 bg-white'
+                }`}
+              >
+                <View
+                  className="h-lg w-lg items-center justify-center rounded-sm border border-primary"
+                  style={continuousCorners}
+                >
+                  {hasConsent ? (
+                    <SymbolView
+                      accessible={false}
+                      name={checkSymbol}
+                      size={tokens.fontSize.md}
+                      tintColor={tokens.colors.primary.dark}
+                    />
+                  ) : null}
+                </View>
+                <View className="flex-1 gap-xs">
                   <Text
-                    className={`text-start text-sm font-medium text-primary ${languageFontClass}`}
+                    className={`text-start text-md font-medium text-neutral-900 ${languageFontClass}`}
                   >
-                    {statusLabel}
+                    {t('knowledge:publicationConsent')}
                   </Text>
                   <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-                    {t('knowledge:storySubmittedDate', {
-                      date: dateFormatter.format(new Date(status.created_at)),
-                    })}
+                    {t('knowledge:publicationConsentHelp')}
                   </Text>
-                  {note.length === 0 ? null : (
-                    <View
-                      testID={`story-team-note-${status.id}`}
-                      className="gap-xs rounded-md bg-white p-sm"
-                      style={continuousCorners}
+                </View>
+              </PressableScale>
+              {!isOnline ? (
+                <Text
+                  selectable
+                  accessibilityRole="alert"
+                  className={`text-start text-sm text-error ${languageFontClass}`}
+                >
+                  {t('knowledge:offlineSubmission')}
+                </Text>
+              ) : null}
+              <ShakeOnError errorCode={errorCode}>
+                <View className="gap-sm">
+                  {validationMessage === null && mutationErrorCode === null ? null : (
+                    <Text
+                      selectable
+                      accessibilityRole="alert"
+                      className={`text-start text-sm text-error ${languageFontClass}`}
                     >
-                      <Text
-                        className={`text-start text-sm font-bold text-neutral-800 ${languageFontClass}`}
-                      >
-                        {t('knowledge:storyTeamNote')}
-                      </Text>
-                      <Text
-                        selectable
-                        className={`text-start text-md text-neutral-800 ${languageFontClass}`}
-                      >
-                        {note}
-                      </Text>
-                    </View>
+                      {validationMessage ?? t('knowledge:submissionFailed')}
+                    </Text>
                   )}
-                </OpenableCard>
-              );
-            })
+                  <AuthSubmitButton
+                    testID="story-submit-button"
+                    label={
+                      isSubmitPending ? t('knowledge:submittingStory') : t('knowledge:submitStory')
+                    }
+                    onPress={submitForm}
+                    isLoading={isSubmitPending}
+                    disabled={!isOnline || isProcessingPhoto || defaultCategoryId === undefined}
+                  />
+                </View>
+              </ShakeOnError>
+            </View>
           )}
-        </View>
-      </FormWidth>
-    </ScrollView>
+
+          <View className="gap-sm pt-lg">
+            <Text
+              accessibilityRole="header"
+              className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
+            >
+              {t('knowledge:myStories')}
+            </Text>
+            {(statusesQuery.data ?? []).length === 0 ? (
+              <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+                {t('knowledge:myStoriesEmpty')}
+              </Text>
+            ) : (
+              (statusesQuery.data ?? []).map((status) => {
+                const storyTitle = resolveLocalizedText(status.title, language)?.text ?? '';
+                const statusLabel = t(statusTranslationKey(status.story_status));
+                const note = status.reviewer_note?.trim() ?? '';
+                return (
+                  <OpenableCard
+                    key={status.id}
+                    testID={`story-status-${status.story_status}`}
+                    accessibilityLabel={[storyTitle, statusLabel, note].filter(Boolean).join('. ')}
+                    onOpen={() => push(`/knowledge/${status.id}` as Href)}
+                    className="rounded-md border border-neutral-200 bg-neutral-50 p-md"
+                  >
+                    <Text
+                      className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}
+                    >
+                      {storyTitle}
+                    </Text>
+                    <Text
+                      className={`text-start text-sm font-medium text-primary ${languageFontClass}`}
+                    >
+                      {statusLabel}
+                    </Text>
+                    <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+                      {t('knowledge:storySubmittedDate', {
+                        date: dateFormatter.format(new Date(status.created_at)),
+                      })}
+                    </Text>
+                    {note.length === 0 ? null : (
+                      <View
+                        testID={`story-team-note-${status.id}`}
+                        className="gap-xs rounded-md bg-white p-sm"
+                        style={continuousCorners}
+                      >
+                        <Text
+                          className={`text-start text-sm font-bold text-neutral-800 ${languageFontClass}`}
+                        >
+                          {t('knowledge:storyTeamNote')}
+                        </Text>
+                        <Text
+                          selectable
+                          className={`text-start text-md text-neutral-800 ${languageFontClass}`}
+                        >
+                          {note}
+                        </Text>
+                      </View>
+                    )}
+                  </OpenableCard>
+                );
+              })
+            )}
+          </View>
+        </FormWidth>
+      </ScrollView>
+    </>
   );
 }

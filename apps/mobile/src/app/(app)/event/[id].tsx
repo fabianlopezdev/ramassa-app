@@ -1,11 +1,11 @@
 import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
-  OfflineBanner,
 } from '@/components/announcements/feed-states';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { EventArticle } from '@/components/events/event-article';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { SuccessPop } from '@/components/motion/success-pop';
 import { EventSurveyPrompt } from '@/components/surveys/survey-prompt';
 import { isEventSignupActionDisabled } from '@/lib/event-signup-policy';
@@ -16,7 +16,6 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import * as Linking from 'expo-linking';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams } from 'expo-router';
-import { Stack } from 'expo-router/stack';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
@@ -83,14 +82,7 @@ export default function EventDetailScreen() {
         : undefined,
     [insets.bottom],
   );
-  const screenOptions = useMemo(
-    () => ({
-      headerShown: true,
-      headerBackButtonDisplayMode: 'minimal' as const,
-      title: title?.text ?? t('playerTitle'),
-    }),
-    [t, title?.text],
-  );
+  const screenTitle = title?.text ?? t('playerTitle');
   const signupError = signupMutationError === null ? null : toAppError(signupMutationError);
   const locationUrl = row?.event.location_url;
   const openMap = useCallback(() => {
@@ -110,7 +102,7 @@ export default function EventDetailScreen() {
   if (isPending && data === undefined) {
     return (
       <>
-        <Stack.Screen options={screenOptions} />
+        <NativeScreenHeader title={screenTitle} />
         <AnnouncementFeedSkeleton accessibilityLabel={t('playerLoading')} />
       </>
     );
@@ -118,7 +110,7 @@ export default function EventDetailScreen() {
   if (isError && data === undefined) {
     return (
       <>
-        <Stack.Screen options={screenOptions} />
+        <NativeScreenHeader title={screenTitle} />
         <AnnouncementFeedError
           message={t('playerLoadFailed')}
           retryLabel={t('playerRetryAction')}
@@ -132,7 +124,7 @@ export default function EventDetailScreen() {
 
   return (
     <>
-      <Stack.Screen options={screenOptions} />
+      <NativeScreenHeader title={screenTitle} />
       <ScrollView
         className="flex-1 bg-white"
         contentContainerClassName="grow px-lg py-lg"
@@ -140,10 +132,6 @@ export default function EventDetailScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         <PageWidth className="gap-lg">
-          {isOffline ? (
-            <OfflineBanner label={t('playerOfflineBanner')} languageFontClass={languageFontClass} />
-          ) : null}
-
           {row === undefined || title === undefined || category === undefined ? (
             <View className="flex-1 items-center justify-center gap-md py-3xl">
               <Text

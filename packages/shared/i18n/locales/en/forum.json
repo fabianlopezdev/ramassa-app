@@ -1,8 +1,6 @@
 {
-  "title": "Community",
   "categoriesLabel": "Forum categories",
   "allCategories": "All",
-  "offline": "No connection. You are seeing posts saved on this phone.",
   "offlineWrite": "Connect to the internet to post, reply, edit, or delete.",
   "loading": "Loading the community",
   "loadFailed": "The community could not be loaded.",

@@ -45,10 +45,7 @@ env:
     visible:
       id: announcement-detail-screen
     timeout: 30000
-- tapOn:
-    id: announcement-detail-back
-    # The Android dev-menu gear overlaps this mirrored button's centre in RTL.
-    point: 20%, 50%
+- runFlow: _native-back.yaml
 - repeat:
     times: 8
     commands:
@@ -165,9 +162,7 @@ env:
     visible:
       id: announcement-detail-screen
     timeout: 30000
-- tapOn:
-    id: announcement-detail-back
-    point: 20%, 50%
+- runFlow: _native-back.yaml
 - repeat:
     times: 8
     commands:

@@ -2,12 +2,11 @@ import {
   AnnouncementEmptyState,
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
-  OfflineBanner,
 } from '@/components/announcements/feed-states';
 import { KnowledgeArticleCard } from '@/components/knowledge/knowledge-article-card';
 import { KnowledgeCategoryGrid } from '@/components/knowledge/knowledge-category-grid';
 import { PageWidth } from '@/components/layout/content-width';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import {
   countPlayerGuidesByCategory,
@@ -40,7 +39,7 @@ const getItemType = (article: KnowledgeArticleListRow) => article.content_type;
 
 export default function PlayerKnowledgeScreen() {
   const { t } = useTranslation(['knowledge', 'common']);
-  const { back, push } = useRouter();
+  const { push } = useRouter();
   const { session } = useAuth();
   const languageFontClass = useLanguageFontClass();
   const networkState = useNetworkState();
@@ -80,19 +79,24 @@ export default function PlayerKnowledgeScreen() {
       styles.content,
       process.env.EXPO_OS === 'android'
         ? {
-            paddingTop: insets.top + tokens.spacing.lg,
+            paddingTop: tokens.spacing.lg,
             paddingBottom: insets.bottom + tokens.spacing['3xl'],
           }
         : { paddingTop: tokens.spacing.lg },
     ],
-    [insets.bottom, insets.top],
+    [insets.bottom],
   );
 
   if (
     (categoriesQuery.isPending && categoriesQuery.data === undefined) ||
     (articlesQuery.isPending && articlesQuery.data === undefined)
   ) {
-    return <AnnouncementFeedSkeleton accessibilityLabel={t('knowledge:guidesLoading')} />;
+    return (
+      <>
+        <NativeScreenHeader title={t('knowledge:guidesTitle')} />
+        <AnnouncementFeedSkeleton accessibilityLabel={t('knowledge:guidesLoading')} />
+      </>
+    );
   }
   const loadError = categoriesQuery.error ?? articlesQuery.error;
   if (
@@ -101,76 +105,59 @@ export default function PlayerKnowledgeScreen() {
     articlesQuery.data === undefined
   ) {
     return (
-      <AnnouncementFeedError
-        message={t('knowledge:playerLoadFailed')}
-        retryLabel={t('knowledge:playerRetry')}
-        code={toAppError(loadError).code}
-        languageFontClass={languageFontClass}
-        onRetry={refresh}
-      />
+      <>
+        <NativeScreenHeader title={t('knowledge:guidesTitle')} />
+        <AnnouncementFeedError
+          message={t('knowledge:playerLoadFailed')}
+          retryLabel={t('knowledge:playerRetry')}
+          code={toAppError(loadError).code}
+          languageFontClass={languageFontClass}
+          onRetry={refresh}
+        />
+      </>
     );
   }
 
   return (
-    <FlashList
-      testID="knowledge-base-screen"
-      data={visibleGuides}
-      renderItem={renderArticle}
-      keyExtractor={keyExtractor}
-      getItemType={getItemType}
-      extraData={filter}
-      style={styles.list}
-      contentContainerStyle={contentContainerStyle}
-      contentInsetAdjustmentBehavior="automatic"
-      refreshing={(categoriesQuery.isRefetching || articlesQuery.isRefetching) && !isOffline}
-      onRefresh={refresh}
-      ListHeaderComponent={
-        <PageWidth className="gap-lg pb-lg">
-          <PressableScale
-            testID="knowledge-back"
-            accessibilityLabel={t('common:back')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center rounded-full border border-neutral-300 px-lg"
-          >
-            <Text className={`text-md font-medium text-primary ${languageFontClass}`}>
-              {t('common:back')}
+    <>
+      <NativeScreenHeader title={t('knowledge:guidesTitle')} />
+      <FlashList
+        testID="knowledge-base-screen"
+        data={visibleGuides}
+        renderItem={renderArticle}
+        keyExtractor={keyExtractor}
+        getItemType={getItemType}
+        extraData={filter}
+        style={styles.list}
+        contentContainerStyle={contentContainerStyle}
+        contentInsetAdjustmentBehavior="automatic"
+        refreshing={(categoriesQuery.isRefetching || articlesQuery.isRefetching) && !isOffline}
+        onRefresh={refresh}
+        ListHeaderComponent={
+          <PageWidth className="gap-lg pb-lg">
+            <KnowledgeCategoryGrid
+              categories={guideCategories}
+              selected={filter}
+              counts={counts}
+              onSelect={setFilter}
+            />
+            <Text
+              className={`text-start text-sm font-semibold tabular-nums text-neutral-600 ${languageFontClass}`}
+            >
+              {t('guidesCount', { count: visibleGuides.length })}
             </Text>
-          </PressableScale>
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
-          >
-            {t('knowledge:guidesTitle')}
-          </Text>
-          {isOffline ? (
-            <OfflineBanner
-              label={t('knowledge:playerOffline')}
+          </PageWidth>
+        }
+        ListEmptyComponent={
+          <PageWidth>
+            <AnnouncementEmptyState
+              title={t('knowledge:playerEmptyTitle')}
+              body={t('knowledge:playerEmptyBody')}
               languageFontClass={languageFontClass}
             />
-          ) : null}
-          <KnowledgeCategoryGrid
-            categories={guideCategories}
-            selected={filter}
-            counts={counts}
-            onSelect={setFilter}
-          />
-          <Text
-            className={`text-start text-sm font-semibold tabular-nums text-neutral-600 ${languageFontClass}`}
-          >
-            {t('guidesCount', { count: visibleGuides.length })}
-          </Text>
-        </PageWidth>
-      }
-      ListEmptyComponent={
-        <PageWidth>
-          <AnnouncementEmptyState
-            title={t('knowledge:playerEmptyTitle')}
-            body={t('knowledge:playerEmptyBody')}
-            languageFontClass={languageFontClass}
-          />
-        </PageWidth>
-      }
-    />
+          </PageWidth>
+        }
+      />
+    </>
   );
 }

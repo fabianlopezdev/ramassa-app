@@ -14,7 +14,6 @@ const HOME_FEED_KEYS = [
   'category.social',
   'category.urgent',
   'pinned',
-  'offlineBanner',
   'emptyTitle',
   'emptyBody',
   'loadFailed',

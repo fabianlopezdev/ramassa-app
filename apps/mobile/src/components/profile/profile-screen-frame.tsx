@@ -5,7 +5,7 @@
  * it, so moving between them never changes the shape of the page.
  */
 import { PageWidth } from '@/components/layout/content-width';
-import { Stack } from 'expo-router/stack';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { useMemo, type ReactNode } from 'react';
 import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,14 +19,6 @@ export function ProfileScreenFrame({
   readonly testID: string;
   readonly children: ReactNode;
 }) {
-  const screenOptions = useMemo(
-    () => ({
-      headerShown: true,
-      headerBackButtonDisplayMode: 'minimal' as const,
-      title,
-    }),
-    [title],
-  );
   // Android only: the header already clears the status bar, and on iOS the
   // automatic inset adjustment clears the home indicator.
   const insets = useSafeAreaInsets();
@@ -36,7 +28,7 @@ export function ProfileScreenFrame({
   );
   return (
     <>
-      <Stack.Screen options={screenOptions} />
+      <NativeScreenHeader title={title} />
       <ScrollView
         testID={testID}
         className="flex-1 bg-neutral-50"

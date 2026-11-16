@@ -1,5 +1,6 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FormWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { uploadGalleryMedia } from '@/lib/gallery-upload';
@@ -54,7 +55,7 @@ const styles = StyleSheet.create({
 export default function GalleryUploadScreen() {
   const { t } = useTranslation(['gallery', 'common']);
   const languageFontClass = useLanguageFontClass();
-  const { back, replace } = useRouter();
+  const { replace } = useRouter();
   const { session } = useAuth();
   const networkState = useNetworkState();
   const isOnline = isNetworkStateOnline(networkState);
@@ -191,208 +192,195 @@ export default function GalleryUploadScreen() {
   }, [submit]);
 
   return (
-    <ScrollView
-      className="flex-1 bg-white"
-      contentContainerClassName="grow px-lg py-lg"
-      contentInsetAdjustmentBehavior="automatic"
-    >
-      <FormWidth className="gap-lg">
-        <PressableScale
-          accessibilityLabel={t('common:back')}
-          onPress={back}
-          haptic="tapLight"
-          className="min-h-recommended self-start justify-center rounded-full border border-neutral-300 px-lg"
-        >
-          <Text className={`font-medium text-primary ${languageFontClass}`}>
-            {t('common:back')}
-          </Text>
-        </PressableScale>
-        <Text
-          accessibilityRole="header"
-          className={`text-start text-3xl font-bold ${languageFontClass}`}
-        >
-          {t('gallery:uploadTitle')}
-        </Text>
-        {selectedDraft === null ? (
-          <PressableScale
-            testID="gallery-pick-media"
-            accessibilityLabel={t('gallery:pickMedia')}
-            onPress={pick}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-          >
-            <Text className={`font-bold text-primary ${languageFontClass}`}>
-              {t('gallery:pickMedia')}
-            </Text>
-          </PressableScale>
-        ) : (
-          <View testID="gallery-selected-media-preview" className="gap-sm">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-            >
-              {t('gallery:selectedMediaPreview')}
-            </Text>
-            {selectedDraft.sourceKind === 'video' ? (
-              <VideoView
-                player={previewVideoPlayer}
-                nativeControls
-                accessibilityLabel={t('gallery:selectedVideoPreview')}
-                contentFit="contain"
-                style={styles.preview}
-              />
-            ) : selectedImageSource === null ? null : (
-              <Image
-                source={selectedImageSource}
-                accessibilityLabel={t('gallery:selectedPhotoPreview')}
-                contentFit="contain"
-                style={styles.preview}
-                className="rounded-md bg-neutral-100"
-              />
-            )}
-            <View className="flex-row gap-sm">
-              <PressableScale
-                testID="gallery-change-media"
-                accessibilityLabel={t('gallery:changeMedia')}
-                onPress={pick}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended grow items-center justify-center rounded-md border border-primary px-md"
-              >
-                <Text className={`font-bold text-primary ${languageFontClass}`}>
-                  {t('gallery:changeMedia')}
-                </Text>
-              </PressableScale>
-              <PressableScale
-                testID="gallery-remove-media"
-                accessibilityLabel={t('gallery:removeMedia')}
-                onPress={removeSelectedMedia}
-                haptic="warning"
-                style={continuousCorners}
-                className="min-h-recommended grow items-center justify-center rounded-md border border-error px-md"
-              >
-                <Text className={`font-bold text-error ${languageFontClass}`}>
-                  {t('gallery:removeMedia')}
-                </Text>
-              </PressableScale>
-            </View>
-          </View>
-        )}
-        {permissionDenied ? (
-          <View testID="gallery-media-permission-error" className="gap-sm">
-            <Text
-              selectable
-              accessibilityRole="alert"
-              className={`text-start text-md text-error ${languageFontClass}`}
-            >
-              {t('gallery:mediaPermissionDenied')}
-            </Text>
+    <>
+      <NativeScreenHeader title={t('gallery:uploadTitle')} />
+      <ScrollView
+        className="flex-1 bg-white"
+        contentContainerClassName="grow px-lg py-lg"
+        contentInsetAdjustmentBehavior="automatic"
+      >
+        <FormWidth className="gap-lg">
+          {selectedDraft === null ? (
             <PressableScale
-              testID="gallery-open-settings"
-              accessibilityLabel={t('gallery:openSettings')}
-              onPress={openSettings}
+              testID="gallery-pick-media"
+              accessibilityLabel={t('gallery:pickMedia')}
+              onPress={pick}
               haptic="tapLight"
               style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
+              className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
             >
-              <Text className={`font-bold text-white ${languageFontClass}`}>
-                {t('gallery:openSettings')}
+              <Text className={`font-bold text-primary ${languageFontClass}`}>
+                {t('gallery:pickMedia')}
               </Text>
             </PressableScale>
-          </View>
-        ) : null}
-        <AuthTextField
-          label={t('gallery:caption')}
-          value={caption}
-          onChangeText={setCaption}
-          maxLength={MEDIA_CAPTION_MAX_LENGTH}
-          multiline
-          style={mixedDirectionInputStyle}
-        />
-        <View
-          accessibilityRole="radiogroup"
-          accessibilityLabel={t('gallery:privacy')}
-          className="gap-sm"
-        >
-          {MEDIA_PRIVACY_OPTIONS.map(renderPrivacyOption)}
-        </View>
-        <View className="flex-row items-center gap-md">
-          <Switch
-            testID="gallery-consent-acknowledgment"
-            style={styles.consentSwitch}
-            value={consent}
-            onValueChange={toggleConsent}
-            accessibilityRole={consentSwitchRole}
-            accessibilityLabel={t('gallery:consentReminder')}
-            accessibilityState={
-              consent ? checkedSwitchAccessibilityState : uncheckedSwitchAccessibilityState
-            }
-          />
-          <Text className={`flex-1 text-start text-md text-neutral-700 ${languageFontClass}`}>
-            {t('gallery:consentReminder')}
-          </Text>
-        </View>
-        {state.status === 'uploading' ? (
-          <View
-            testID="gallery-upload-progress"
-            accessibilityRole="progressbar"
-            accessibilityLabel={uploadProgressLabel}
-            accessibilityValue={uploadProgressAccessibilityValue}
-            className="gap-xs"
-          >
-            <Text
-              className={`text-start text-sm tabular-nums text-neutral-700 ${languageFontClass}`}
-            >
-              {uploadProgressLabel}
-            </Text>
-            <View className="h-xs overflow-hidden rounded-full bg-neutral-200">
-              <View className="h-full bg-primary" style={uploadProgressStyle} />
+          ) : (
+            <View testID="gallery-selected-media-preview" className="gap-sm">
+              <Text
+                accessibilityRole="header"
+                className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
+              >
+                {t('gallery:selectedMediaPreview')}
+              </Text>
+              {selectedDraft.sourceKind === 'video' ? (
+                <VideoView
+                  player={previewVideoPlayer}
+                  nativeControls
+                  accessibilityLabel={t('gallery:selectedVideoPreview')}
+                  contentFit="contain"
+                  style={styles.preview}
+                />
+              ) : selectedImageSource === null ? null : (
+                <Image
+                  source={selectedImageSource}
+                  accessibilityLabel={t('gallery:selectedPhotoPreview')}
+                  contentFit="contain"
+                  style={styles.preview}
+                  className="rounded-md bg-neutral-100"
+                />
+              )}
+              <View className="flex-row gap-sm">
+                <PressableScale
+                  testID="gallery-change-media"
+                  accessibilityLabel={t('gallery:changeMedia')}
+                  onPress={pick}
+                  haptic="tapLight"
+                  style={continuousCorners}
+                  className="min-h-recommended grow items-center justify-center rounded-md border border-primary px-md"
+                >
+                  <Text className={`font-bold text-primary ${languageFontClass}`}>
+                    {t('gallery:changeMedia')}
+                  </Text>
+                </PressableScale>
+                <PressableScale
+                  testID="gallery-remove-media"
+                  accessibilityLabel={t('gallery:removeMedia')}
+                  onPress={removeSelectedMedia}
+                  haptic="warning"
+                  style={continuousCorners}
+                  className="min-h-recommended grow items-center justify-center rounded-md border border-error px-md"
+                >
+                  <Text className={`font-bold text-error ${languageFontClass}`}>
+                    {t('gallery:removeMedia')}
+                  </Text>
+                </PressableScale>
+              </View>
             </View>
-          </View>
-        ) : null}
-        {state.status === 'failed' ? (
-          <View className="gap-sm">
-            <Text
-              selectable
-              accessibilityRole="alert"
-              className={`text-start text-error ${languageFontClass}`}
-            >
-              {state.errorCode === 'VALIDATION-1'
-                ? t('gallery:consentRequired')
-                : t('gallery:uploadFailed')}
-            </Text>
-            {state.draft === null ? null : (
+          )}
+          {permissionDenied ? (
+            <View testID="gallery-media-permission-error" className="gap-sm">
+              <Text
+                selectable
+                accessibilityRole="alert"
+                className={`text-start text-md text-error ${languageFontClass}`}
+              >
+                {t('gallery:mediaPermissionDenied')}
+              </Text>
               <PressableScale
-                testID="gallery-upload-retry"
-                accessibilityLabel={t('gallery:retry')}
-                onPress={retry}
+                testID="gallery-open-settings"
+                accessibilityLabel={t('gallery:openSettings')}
+                onPress={openSettings}
                 haptic="tapLight"
                 style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
+                className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
               >
-                <Text className={`font-bold text-primary ${languageFontClass}`}>
-                  {t('gallery:retry')}
+                <Text className={`font-bold text-white ${languageFontClass}`}>
+                  {t('gallery:openSettings')}
                 </Text>
               </PressableScale>
-            )}
+            </View>
+          ) : null}
+          <AuthTextField
+            label={t('gallery:caption')}
+            value={caption}
+            onChangeText={setCaption}
+            maxLength={MEDIA_CAPTION_MAX_LENGTH}
+            multiline
+            style={mixedDirectionInputStyle}
+          />
+          <View
+            accessibilityRole="radiogroup"
+            accessibilityLabel={t('gallery:privacy')}
+            className="gap-sm"
+          >
+            {MEDIA_PRIVACY_OPTIONS.map(renderPrivacyOption)}
           </View>
-        ) : null}
-        <PressableScale
-          testID="gallery-upload-submit"
-          accessibilityLabel={t('gallery:publish')}
-          onPress={submit}
-          haptic="tapLight"
-          isBusy={state.status === 'uploading'}
-          isDisabled={state.draft === null || !consent}
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-        >
-          <Text className={`font-bold text-white ${languageFontClass}`}>
-            {t('gallery:publish')}
-          </Text>
-        </PressableScale>
-      </FormWidth>
-    </ScrollView>
+          <View className="flex-row items-center gap-md">
+            <Switch
+              testID="gallery-consent-acknowledgment"
+              style={styles.consentSwitch}
+              value={consent}
+              onValueChange={toggleConsent}
+              accessibilityRole={consentSwitchRole}
+              accessibilityLabel={t('gallery:consentReminder')}
+              accessibilityState={
+                consent ? checkedSwitchAccessibilityState : uncheckedSwitchAccessibilityState
+              }
+            />
+            <Text className={`flex-1 text-start text-md text-neutral-700 ${languageFontClass}`}>
+              {t('gallery:consentReminder')}
+            </Text>
+          </View>
+          {state.status === 'uploading' ? (
+            <View
+              testID="gallery-upload-progress"
+              accessibilityRole="progressbar"
+              accessibilityLabel={uploadProgressLabel}
+              accessibilityValue={uploadProgressAccessibilityValue}
+              className="gap-xs"
+            >
+              <Text
+                className={`text-start text-sm tabular-nums text-neutral-700 ${languageFontClass}`}
+              >
+                {uploadProgressLabel}
+              </Text>
+              <View className="h-xs overflow-hidden rounded-full bg-neutral-200">
+                <View className="h-full bg-primary" style={uploadProgressStyle} />
+              </View>
+            </View>
+          ) : null}
+          {state.status === 'failed' ? (
+            <View className="gap-sm">
+              <Text
+                selectable
+                accessibilityRole="alert"
+                className={`text-start text-error ${languageFontClass}`}
+              >
+                {state.errorCode === 'VALIDATION-1'
+                  ? t('gallery:consentRequired')
+                  : t('gallery:uploadFailed')}
+              </Text>
+              {state.draft === null ? null : (
+                <PressableScale
+                  testID="gallery-upload-retry"
+                  accessibilityLabel={t('gallery:retry')}
+                  onPress={retry}
+                  haptic="tapLight"
+                  style={continuousCorners}
+                  className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
+                >
+                  <Text className={`font-bold text-primary ${languageFontClass}`}>
+                    {t('gallery:retry')}
+                  </Text>
+                </PressableScale>
+              )}
+            </View>
+          ) : null}
+          <PressableScale
+            testID="gallery-upload-submit"
+            accessibilityLabel={t('gallery:publish')}
+            onPress={submit}
+            haptic="tapLight"
+            isBusy={state.status === 'uploading'}
+            isDisabled={state.draft === null || !consent}
+            style={continuousCorners}
+            className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
+          >
+            <Text className={`font-bold text-white ${languageFontClass}`}>
+              {t('gallery:publish')}
+            </Text>
+          </PressableScale>
+        </FormWidth>
+      </ScrollView>
+    </>
   );
 }

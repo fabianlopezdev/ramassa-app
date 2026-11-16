@@ -17,7 +17,7 @@
   "messageSenderYou": "Tu",
   "messageStatus": "Estat del missatge: {{status}}",
   "retry": "Torna-ho a provar",
-  "offline": "Sense connexió. Els missatges quedaran en cua.",
+  "offline": "Els missatges quedaran en cua.",
   "unread": "{{count}} missatges sense llegir",
   "unread_one": "{{count}} missatge sense llegir",
   "unread_other": "{{count}} missatges sense llegir",

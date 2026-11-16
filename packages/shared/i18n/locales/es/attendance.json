@@ -11,7 +11,7 @@
   "loading": "Cargando la asistencia",
   "loadFailed": "No hemos podido cargar la asistencia. Comprueba la conexión e inténtalo de nuevo.",
   "retry": "Intentarlo de nuevo",
-  "offlineBanner": "No hay conexión. Las marcas se guardan en este dispositivo y se sincronizan automáticamente cuando vuelvas a conectarte.",
+  "offlineQueued": "Las marcas se guardan en este dispositivo y se sincronizan automáticamente cuando vuelvas a conectarte.",
   "summary": "{{marked}} de {{expected}} marcadas",
   "signedUp": "Inscripción confirmada",
   "statusUnmarked": "Sin marcar",

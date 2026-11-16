@@ -1,7 +1,7 @@
 appId: com.ramassa.app
 name: gallery
 env:
-  COMMUNITY_TITLE: '{{forum:title}}'
+  COMMUNITY_TITLE: '{{nav:tabs.community}}'
   CONSENT_REMINDER: '{{gallery:consentReminder}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
 ---
@@ -40,8 +40,7 @@ env:
     visible:
       id: gallery-privacy-picker
     timeout: 30000
-- tapOn:
-    id: gallery-detail-back
+- runFlow: _native-back.yaml
 - tapOn:
     id: community-share
 - tapOn:

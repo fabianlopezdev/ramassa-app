@@ -2,7 +2,6 @@ import {
   AnnouncementEmptyState,
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
-  OfflineBanner,
 } from '@/components/announcements/feed-states';
 import {
   CommunityShareSheet,
@@ -19,7 +18,7 @@ import {
 } from '@/components/layout/segmented-control';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
+import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
@@ -77,7 +76,7 @@ const shareRoutes: Readonly<Record<CommunityShareChoice, Href>> = {
 };
 
 export default function CommunityScreen() {
-  const { t } = useTranslation(['forum', 'errors']);
+  const { t } = useTranslation(['forum', 'errors', 'nav']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const { session } = useAuth();
@@ -207,16 +206,7 @@ export default function CommunityScreen() {
   const header = (
     <View className="gap-lg pb-lg">
       <PageWidth className="gap-md">
-        <ProfilePhotoButton />
-        <Text
-          accessibilityRole="header"
-          className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
-        >
-          {t('forum:title')}
-        </Text>
-        {isOffline ? (
-          <OfflineBanner label={t('forum:offline')} languageFontClass={languageFontClass} />
-        ) : null}
+        <PlayerTabHeader title={t('nav:tabs.community')} />
         <PressableScale
           testID="community-share"
           accessibilityLabel={t('forum:share')}

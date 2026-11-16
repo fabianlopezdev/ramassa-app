@@ -2,7 +2,6 @@ import {
   AnnouncementEmptyState,
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
-  OfflineBanner,
 } from '@/components/announcements/feed-states';
 import {
   EventCard,
@@ -17,7 +16,7 @@ import {
 } from '@/components/events/event-filters';
 import { PageWidth } from '@/components/layout/content-width';
 import { NavRow } from '@/components/layout/nav-row';
-import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
+import { PlayerTabHeader, PlayerTabStateFrame } from '@/components/profile/player-tab-header';
 import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import {
   addPrivateMentoringMarkedDates,
@@ -288,17 +287,23 @@ export default function EventsScreen() {
   );
 
   if (isPending && data === undefined) {
-    return <AnnouncementFeedSkeleton accessibilityLabel={t('playerLoading')} />;
+    return (
+      <PlayerTabStateFrame title={t('nav:tabs.events')}>
+        <AnnouncementFeedSkeleton accessibilityLabel={t('playerLoading')} />
+      </PlayerTabStateFrame>
+    );
   }
   if (isError && data === undefined) {
     return (
-      <AnnouncementFeedError
-        message={t('playerLoadFailed')}
-        retryLabel={t('playerRetryAction')}
-        code={toAppError(error).code}
-        languageFontClass={languageFontClass}
-        onRetry={onRefresh}
-      />
+      <PlayerTabStateFrame title={t('nav:tabs.events')}>
+        <AnnouncementFeedError
+          message={t('playerLoadFailed')}
+          retryLabel={t('playerRetryAction')}
+          code={toAppError(error).code}
+          languageFontClass={languageFontClass}
+          onRetry={onRefresh}
+        />
+      </PlayerTabStateFrame>
     );
   }
 
@@ -318,21 +323,12 @@ export default function EventsScreen() {
       onLoad={onListLoad}
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
-          <ProfilePhotoButton />
           <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
-            >
-              {t('nav:tabs.events')}
-            </Text>
+            <PlayerTabHeader title={t('nav:tabs.events')} />
             <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
               {t('playerIntro')}
             </Text>
           </View>
-          {isOffline ? (
-            <OfflineBanner label={t('playerOfflineBanner')} languageFontClass={languageFontClass} />
-          ) : null}
           <EventCategoryFilters
             categories={categories}
             selected={category}

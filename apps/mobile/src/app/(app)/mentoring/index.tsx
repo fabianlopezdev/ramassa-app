@@ -2,6 +2,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
 import { FormWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
 import { MentoringPreferencePickers } from '@/components/mentoring/mentoring-preference-pickers';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -13,7 +14,6 @@ import { useCreateMentoringRequest, usePlayerMentoringRequests } from '@/lib/pla
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter, type Href } from 'expo-router';
-import { Stack } from 'expo-router/stack';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -113,14 +113,7 @@ export default function MentoringScreen() {
     ],
     [insets.bottom],
   );
-  const screenOptions = useMemo(
-    () => ({
-      headerShown: true,
-      headerBackButtonDisplayMode: 'minimal' as const,
-      title: t('mentoring:title'),
-    }),
-    [t],
-  );
+  const screenTitle = t('mentoring:title');
   const retryRequests = useCallback(() => void refetchRequests(), [refetchRequests]);
   const renderRequest = useCallback(
     ({ item }: ListRenderItemInfo<MentoringRequest>) => (
@@ -138,7 +131,7 @@ export default function MentoringScreen() {
 
   return (
     <>
-      <Stack.Screen options={screenOptions} />
+      <NativeScreenHeader title={screenTitle} />
       <FlashList
         testID="mentoring-screen"
         data={requestsQuery.data ?? EMPTY_MENTORING_REQUESTS}

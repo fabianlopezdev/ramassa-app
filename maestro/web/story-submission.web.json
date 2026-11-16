@@ -40,7 +40,7 @@
           "value": "A draft that I decide not to send."
         }
       ],
-      "click": "[aria-label=\"{{common:back}}\"]",
+      "click": "[aria-label$=\"back\"]",
       "waitFor": "[data-testid=\"community-share\"]"
     },
     {

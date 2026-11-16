@@ -17,7 +17,7 @@
   "messageSenderYou": "أنتِ",
   "messageStatus": "حالة الرسالة: {{status}}",
   "retry": "حاولي مجددًا",
-  "offline": "لا يوجد اتصال. ستبقى الرسائل في قائمة الانتظار.",
+  "offline": "ستبقى الرسائل في قائمة الانتظار.",
   "unread": "{{count}} رسائل غير مقروءة",
   "unread_one": "{{count}} رسالة غير مقروءة",
   "unread_other": "{{count}} رسالة غير مقروءة",

@@ -16,8 +16,12 @@ describe('native messaging UI contract', () => {
   test('keeps every thread state inside the top and horizontal safe areas', async () => {
     const source = await Bun.file(threadPath).text();
 
-    expect(source).toContain("edges={['top', 'left', 'right']}");
-    expect(source.match(/<SafeAreaView/g)).toHaveLength(3);
+    // Under the native header (her pushed chat, RAPP-806) the header clears the top.
+    expect(source).toContain("OWN_HEADER_EDGES = ['top', 'left', 'right']");
+    expect(source).toContain("NATIVE_HEADER_EDGES = ['left', 'right']");
+    expect(
+      source.match(/<SafeAreaView style=\{screenStyle\} edges=\{safeAreaEdges\}>/g),
+    ).toHaveLength(3);
   });
 
   test('uses logical bubble corners and a shared width token for RTL layouts', async () => {
@@ -96,7 +100,8 @@ describe('native messaging UI contract', () => {
   test('uses the catalog-backed player title for private team chat', async () => {
     const source = await Bun.file(teamChatPath).text();
 
-    expect(source).toContain("title={t('messaging:playerTitle')}");
+    expect(source).toContain("title={t('playerTitle')}");
+    expect(source).toContain("useTranslation('messaging')");
     expect(source).not.toContain('playerThreadTitle');
   });
 
