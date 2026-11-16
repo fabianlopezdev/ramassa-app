@@ -7,8 +7,9 @@ env:
   DEV_CLIENT_URL: ramassa://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
   PLAYER_EMAIL: '{{player:email}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
-  PLAYER_TITLE: '{{knowledge:playerTitle}}'
-  BACK: '{{knowledge:backToResources}}'
+  TAB_HELP: '{{nav:tabs.services}}'
+  PLAYER_TITLE: '{{knowledge:guidesTitle}}'
+  BACK: '{{common:back}}'
 ---
 - clearState
 - openLink: ${DEV_CLIENT_URL}
@@ -166,16 +167,14 @@ env:
 - repeat:
     times: 40
     while:
-      notVisible:
-        id: 'open-knowledge-base'
+      notVisible: '^${TAB_HELP}$'
     commands:
       - tapOn:
           text: '^${PUSH_DECLINE}$'
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
-- assertVisible:
-    id: 'open-knowledge-base'
+- assertVisible: '^${TAB_HELP}$'
 - stopApp
 - openLink: ${DEV_CLIENT_URL}
 - tapOn:
@@ -206,16 +205,14 @@ env:
 - repeat:
     times: 40
     while:
-      notVisible:
-        id: 'open-knowledge-base'
+      notVisible: '^${TAB_HELP}$'
     commands:
       - tapOn:
           text: '^${PUSH_DECLINE}$'
           optional: true
       - waitForAnimationToEnd:
           timeout: 3000
-- assertVisible:
-    id: 'open-knowledge-base'
+- assertVisible: '^${TAB_HELP}$'
 - repeat:
     times: 4
     commands:
@@ -233,10 +230,14 @@ env:
 - openLink: ramassa:///
 - waitForAnimationToEnd:
     timeout: 3000
-- assertVisible:
-    id: 'open-knowledge-base'
+- assertVisible: '^${TAB_HELP}$'
+- tapOn: '^${TAB_HELP}$'
+- extendedWaitUntil:
+    visible:
+      id: 'ajuda-all-guides'
+    timeout: 30000
 - tapOn:
-    id: 'open-knowledge-base'
+    id: 'ajuda-all-guides'
 - extendedWaitUntil:
     visible: '.*${PLAYER_TITLE}.*'
     timeout: 30000

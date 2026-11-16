@@ -1,5 +1,6 @@
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
+import type { PlayerGuideFilter } from '@/lib/player-guides';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { memo, useCallback } from 'react';
@@ -9,17 +10,10 @@ import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import type { KnowledgeCategoryRow } from '@ramassa/shared/knowledge';
 import { tokens } from '@ramassa/shared/tokens';
 
-export type PlayerKnowledgeFilter = 'all' | 'stories' | string;
-
 const allSymbol: SymbolViewProps['name'] = {
   ios: 'rectangle.grid.2x2.fill',
   android: 'apps',
   web: 'apps',
-};
-const storiesSymbol: SymbolViewProps['name'] = {
-  ios: 'person.2.fill',
-  android: 'groups',
-  web: 'groups',
 };
 const rightsSymbol: SymbolViewProps['name'] = {
   ios: 'scale.3d',
@@ -54,13 +48,13 @@ function categorySymbol(slug: string): SymbolViewProps['name'] {
 }
 
 interface CategoryCardProps {
-  readonly id: PlayerKnowledgeFilter;
+  readonly id: PlayerGuideFilter;
   readonly title: string;
   readonly hint: string;
   readonly symbol: SymbolViewProps['name'];
   readonly selected: boolean;
   readonly languageFontClass: string;
-  readonly onSelect: (filter: PlayerKnowledgeFilter) => void;
+  readonly onSelect: (filter: PlayerGuideFilter) => void;
 }
 
 const CategoryCard = memo(function CategoryCard({
@@ -111,8 +105,8 @@ export function KnowledgeCategoryGrid({
   counts,
 }: {
   readonly categories: readonly KnowledgeCategoryRow[];
-  readonly selected: PlayerKnowledgeFilter;
-  readonly onSelect: (filter: PlayerKnowledgeFilter) => void;
+  readonly selected: PlayerGuideFilter;
+  readonly onSelect: (filter: PlayerGuideFilter) => void;
   readonly counts: Readonly<Record<string, number>>;
 }) {
   const { t } = useTranslation('knowledge');
@@ -133,19 +127,10 @@ export function KnowledgeCategoryGrid({
       >
         <CategoryCard
           id="all"
-          title={t('knowledge:allResources')}
-          hint={`${t('knowledge:allResourcesHint')}. ${t('knowledge:resourcesCount', { count: counts.all ?? 0 })}`}
+          title={t('knowledge:guidesAll')}
+          hint={t('guidesCount', { count: counts.all ?? 0 })}
           symbol={allSymbol}
           selected={selected === 'all'}
-          languageFontClass={languageFontClass}
-          onSelect={onSelect}
-        />
-        <CategoryCard
-          id="stories"
-          title={t('knowledge:participantStories')}
-          hint={`${t('knowledge:participantStoriesHint')}. ${t('knowledge:resourcesCount', { count: counts.stories ?? 0 })}`}
-          symbol={storiesSymbol}
-          selected={selected === 'stories'}
           languageFontClass={languageFontClass}
           onSelect={onSelect}
         />
@@ -157,7 +142,7 @@ export function KnowledgeCategoryGrid({
               key={category.id}
               id={category.id}
               title={title.text}
-              hint={t('knowledge:resourcesCount', { count: counts[category.id] ?? 0 })}
+              hint={t('guidesCount', { count: counts[category.id] ?? 0 })}
               symbol={categorySymbol(category.slug)}
               selected={selected === category.id}
               languageFontClass={languageFontClass}
