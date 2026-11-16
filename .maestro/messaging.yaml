@@ -225,8 +225,7 @@ env:
       - assertNotVisible:
           id: message-sync-retrying
 
-- tapOn:
-    id: team-chat-back
+- runFlow: _native-back.yaml
 - tapOn:
     id: player-profile-button
 # The language control has its own screen in the profile menu (RAPP-794).

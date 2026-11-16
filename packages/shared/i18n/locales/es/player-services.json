@@ -22,7 +22,6 @@
   "emptyFilteredTitle": "Ningún servicio coincide",
   "emptyFilteredBody": "Borra algún filtro para ver más opciones.",
   "openService": "Abrir {{title}}",
-  "detailBack": "Volver a los servicios",
   "detailNotFoundTitle": "No encontramos este servicio",
   "detailNotFoundBody": "Puede que ya no esté disponible. Vuelve y elige otro servicio.",
   "details": "Información",

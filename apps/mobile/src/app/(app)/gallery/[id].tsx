@@ -5,6 +5,7 @@ import {
 } from '@/components/announcements/feed-states';
 import { ForumFlagDialog } from '@/components/forum/forum-flag-dialog';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -132,137 +133,134 @@ export default function GalleryItemScreen() {
   }, [back, deleteItem, t]);
 
   if (query.isPending && item === undefined && isOnline) {
-    return <AnnouncementFeedSkeleton accessibilityLabel={t('gallery:loading')} />;
+    return (
+      <>
+        <NativeScreenHeader />
+        <AnnouncementFeedSkeleton accessibilityLabel={t('gallery:loading')} />
+      </>
+    );
   }
 
   return (
-    <ScrollView
-      className="flex-1 bg-white"
-      contentContainerClassName="grow px-lg py-lg"
-      contentInsetAdjustmentBehavior="automatic"
-    >
-      <PageWidth className="gap-lg">
-        <PressableScale
-          testID="gallery-detail-back"
-          accessibilityLabel={t('gallery:back')}
-          onPress={back}
-          haptic="tapLight"
-          className="min-h-recommended self-start justify-center rounded-full border border-neutral-300 px-lg"
-        >
-          <Text className={`font-medium text-primary ${languageFontClass}`}>
-            {t('gallery:back')}
-          </Text>
-        </PressableScale>
-        {!isOnline ? (
-          <OfflineBanner label={t('gallery:offline')} languageFontClass={languageFontClass} />
-        ) : null}
-        {item === undefined && !isOnline ? (
-          <AnnouncementEmptyState
-            title={t('gallery:offlineEmptyTitle')}
-            body={t('gallery:offlineEmptyBody')}
-            languageFontClass={languageFontClass}
-          />
-        ) : item === undefined ? (
-          <View testID="gallery-detail-load-error" className="gap-md py-xl">
-            <Text
-              selectable
-              accessibilityRole="alert"
-              className={`text-start text-xl font-bold text-error ${languageFontClass}`}
-            >
-              {t('gallery:loadFailed')}
-            </Text>
-            <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
-              {t('gallery:loadFailedHelp')}
-            </Text>
-            <PressableScale
-              testID="gallery-detail-retry"
-              accessibilityLabel={t('gallery:retry')}
-              onPress={retryLoad}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-            >
-              <Text className={`text-lg font-bold text-white ${languageFontClass}`}>
-                {t('gallery:retry')}
-              </Text>
-            </PressableScale>
-          </View>
-        ) : (
-          <View className="gap-lg">
-            {item.file_type === 'video' && videoUri !== null && accessToken !== undefined ? (
-              <VideoView
-                player={videoPlayer}
-                nativeControls
-                accessibilityLabel={
-                  item.caption ?? t('gallery:mediaBy', { name: item.uploader_first_name })
-                }
-                contentFit="contain"
-                style={styles.media}
-              />
-            ) : imageSource === null ? null : (
-              <Image
-                source={imageSource}
-                accessibilityLabel={
-                  item.caption ?? t('gallery:mediaBy', { name: item.uploader_first_name })
-                }
-                cachePolicy="memory-disk"
-                contentFit="contain"
-                style={styles.media}
-              />
-            )}
-            <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-              {t('gallery:mediaBy', { name: item.uploader_first_name })}
-            </Text>
-            {item.caption === null ? null : (
+    <>
+      <NativeScreenHeader />
+      <ScrollView
+        className="flex-1 bg-white"
+        contentContainerClassName="grow px-lg py-lg"
+        contentInsetAdjustmentBehavior="automatic"
+      >
+        <PageWidth className="gap-lg">
+          {!isOnline ? (
+            <OfflineBanner label={t('gallery:offline')} languageFontClass={languageFontClass} />
+          ) : null}
+          {item === undefined && !isOnline ? (
+            <AnnouncementEmptyState
+              title={t('gallery:offlineEmptyTitle')}
+              body={t('gallery:offlineEmptyBody')}
+              languageFontClass={languageFontClass}
+            />
+          ) : item === undefined ? (
+            <View testID="gallery-detail-load-error" className="gap-md py-xl">
               <Text
-                style={styles.caption}
-                className={`text-start text-lg text-neutral-900 ${languageFontClass}`}
+                selectable
+                accessibilityRole="alert"
+                className={`text-start text-xl font-bold text-error ${languageFontClass}`}
               >
-                {item.caption}
+                {t('gallery:loadFailed')}
               </Text>
-            )}
-            {canManage ? (
-              <View
-                testID="gallery-privacy-picker"
-                accessibilityRole="radiogroup"
-                accessibilityLabel={t('gallery:privacy')}
-                className="gap-sm"
-              >
-                {MEDIA_PRIVACY_OPTIONS.map(renderPrivacyOption)}
-              </View>
-            ) : null}
-            {canManage ? (
+              <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
+                {t('gallery:loadFailedHelp')}
+              </Text>
               <PressableScale
-                testID="gallery-delete"
-                accessibilityLabel={t('gallery:delete')}
-                onPress={confirmDelete}
-                haptic="warning"
-                isBusy={deleteMutation.isPending}
+                testID="gallery-detail-retry"
+                accessibilityLabel={t('gallery:retry')}
+                onPress={retryLoad}
+                haptic="tapLight"
                 style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md border border-error px-lg"
+                className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
               >
-                <Text className={`font-bold text-error ${languageFontClass}`}>
-                  {t('gallery:delete')}
+                <Text className={`text-lg font-bold text-white ${languageFontClass}`}>
+                  {t('gallery:retry')}
                 </Text>
               </PressableScale>
-            ) : (
-              <PressableScale
-                testID="gallery-flag"
-                accessibilityLabel={t('gallery:flag')}
-                onPress={flagMedia}
-                haptic="warning"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg"
-              >
-                <Text className={`font-bold text-neutral-700 ${languageFontClass}`}>
-                  {t('gallery:flag')}
+            </View>
+          ) : (
+            <View className="gap-lg">
+              {item.file_type === 'video' && videoUri !== null && accessToken !== undefined ? (
+                <VideoView
+                  player={videoPlayer}
+                  nativeControls
+                  accessibilityLabel={
+                    item.caption ?? t('gallery:mediaBy', { name: item.uploader_first_name })
+                  }
+                  contentFit="contain"
+                  style={styles.media}
+                />
+              ) : imageSource === null ? null : (
+                <Image
+                  source={imageSource}
+                  accessibilityLabel={
+                    item.caption ?? t('gallery:mediaBy', { name: item.uploader_first_name })
+                  }
+                  cachePolicy="memory-disk"
+                  contentFit="contain"
+                  style={styles.media}
+                />
+              )}
+              <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+                {t('gallery:mediaBy', { name: item.uploader_first_name })}
+              </Text>
+              {item.caption === null ? null : (
+                <Text
+                  style={styles.caption}
+                  className={`text-start text-lg text-neutral-900 ${languageFontClass}`}
+                >
+                  {item.caption}
                 </Text>
-              </PressableScale>
-            )}
-          </View>
-        )}
-      </PageWidth>
-      <ForumFlagDialog target={flagTarget} onClose={closeFlagDialog} onConfirmed={confirmFlag} />
-    </ScrollView>
+              )}
+              {canManage ? (
+                <View
+                  testID="gallery-privacy-picker"
+                  accessibilityRole="radiogroup"
+                  accessibilityLabel={t('gallery:privacy')}
+                  className="gap-sm"
+                >
+                  {MEDIA_PRIVACY_OPTIONS.map(renderPrivacyOption)}
+                </View>
+              ) : null}
+              {canManage ? (
+                <PressableScale
+                  testID="gallery-delete"
+                  accessibilityLabel={t('gallery:delete')}
+                  onPress={confirmDelete}
+                  haptic="warning"
+                  isBusy={deleteMutation.isPending}
+                  style={continuousCorners}
+                  className="min-h-recommended items-center justify-center rounded-md border border-error px-lg"
+                >
+                  <Text className={`font-bold text-error ${languageFontClass}`}>
+                    {t('gallery:delete')}
+                  </Text>
+                </PressableScale>
+              ) : (
+                <PressableScale
+                  testID="gallery-flag"
+                  accessibilityLabel={t('gallery:flag')}
+                  onPress={flagMedia}
+                  haptic="warning"
+                  style={continuousCorners}
+                  className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg"
+                >
+                  <Text className={`font-bold text-neutral-700 ${languageFontClass}`}>
+                    {t('gallery:flag')}
+                  </Text>
+                </PressableScale>
+              )}
+            </View>
+          )}
+        </PageWidth>
+        <ForumFlagDialog target={flagTarget} onClose={closeFlagDialog} onConfirmed={confirmFlag} />
+      </ScrollView>
+    </>
   );
 }

@@ -39,7 +39,6 @@
   "deleteBody": "The photo or video and its thumbnail will be deleted permanently.",
   "cancel": "Cancel",
   "flag": "Tell the team",
-  "back": "Back",
   "moderationTitle": "Gallery moderation",
   "moderationIntro": "Hide or show again any photo or video, also one nobody has reported.",
   "moderationTotal": "Items: {{count}}",

@@ -9,6 +9,7 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { EntityServiceForm } from '@/components/entity/entity-service-form';
 import { EntityServiceStatus } from '@/components/entity/entity-service-status';
 import { PageWidth } from '@/components/layout/content-width';
+import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import {
@@ -19,7 +20,7 @@ import {
 } from '@/lib/entity-services';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
@@ -83,7 +84,6 @@ export default function EntityServiceScreen() {
   const { t, i18n } = useTranslation('entity-services');
   const { t: tErrors } = useTranslation('errors');
   const fontClass = useLanguageFontClass();
-  const { back } = useRouter();
   const { service, comments } = useEntityService(id);
   const categories = useEntityServiceCategories();
   const contacts = useOwnServiceContacts();
@@ -113,8 +113,9 @@ export default function EntityServiceScreen() {
     <SafeAreaView
       testID="entity-service"
       className="flex-1 bg-neutral-50"
-      edges={['top', 'left', 'right']}
+      edges={['left', 'right']}
     >
+      <NativeScreenHeader />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerClassName="pb-3xl"
@@ -122,18 +123,6 @@ export default function EntityServiceScreen() {
         automaticallyAdjustKeyboardInsets
       >
         <PageWidth className="gap-lg p-lg">
-          <PressableScale
-            testID="entity-service-back"
-            accessibilityLabel={t('backToList')}
-            onPress={back}
-            haptic="tapLight"
-            className="min-h-recommended self-start justify-center"
-          >
-            <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-              {t('backToList')}
-            </Text>
-          </PressableScale>
-
           {data === undefined ? null : canEdit ? (
             categories.data === undefined || contacts.data === undefined ? null : (
               <>

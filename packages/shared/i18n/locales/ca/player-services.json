@@ -22,7 +22,6 @@
   "emptyFilteredTitle": "Cap servei coincideix",
   "emptyFilteredBody": "Esborra algun filtre per veure més opcions.",
   "openService": "Obre {{title}}",
-  "detailBack": "Torna als serveis",
   "detailNotFoundTitle": "No trobem aquest servei",
   "detailNotFoundBody": "Potser ja no està disponible. Torna als serveis i tria una altra opció.",
   "details": "Informació",

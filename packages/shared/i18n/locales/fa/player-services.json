@@ -22,7 +22,6 @@
   "emptyFilteredTitle": "خدمت مطابقی پیدا نشد",
   "emptyFilteredBody": "یک فیلتر را پاک کنید تا گزینه‌های بیشتری ببینید.",
   "openService": "باز کردن {{title}}",
-  "detailBack": "بازگشت به خدمات",
   "detailNotFoundTitle": "این خدمت پیدا نشد",
   "detailNotFoundBody": "ممکن است دیگر در دسترس نباشد. برگردید و خدمت دیگری را انتخاب کنید.",
   "details": "اطلاعات",

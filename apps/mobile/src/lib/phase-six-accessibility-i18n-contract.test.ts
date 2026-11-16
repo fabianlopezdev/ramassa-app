@@ -39,7 +39,8 @@ describe('Phase 6 accessibility and i18n contract', () => {
     expect(galleryGrid).toContain(
       "accessibilityLabel={t('openItem', { name: item.uploader_first_name })}",
     );
-    expect(gallery).toContain('accessibilityRole="header"');
+    // The screen title is the native header's (RAPP-806).
+    expect(gallery).toContain("<NativeScreenHeader title={t('title')} />");
     expect(galleryItem).toMatch(
       /<VideoView[\s\S]*?accessibilityLabel=\{[\s\S]*?item\.caption \?\? t\('gallery:mediaBy'/,
     );

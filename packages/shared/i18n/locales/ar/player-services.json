@@ -22,7 +22,6 @@
   "emptyFilteredTitle": "لا توجد خدمات مطابقة",
   "emptyFilteredBody": "امسحي أحد عوامل التصفية لرؤية خيارات أكثر.",
   "openService": "فتح {{title}}",
-  "detailBack": "العودة إلى الخدمات",
   "detailNotFoundTitle": "لم نعثر على هذه الخدمة",
   "detailNotFoundBody": "ربما لم تعد متاحة. عودي واختاري خدمة أخرى.",
   "details": "المعلومات",

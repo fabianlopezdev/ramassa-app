@@ -48,16 +48,12 @@ env:
     visible:
       id: knowledge-detail-screen
     timeout: 30000
-- tapOn:
-    id: knowledge-detail-back
-    point: 50%, 50%
+- runFlow: _native-back.yaml
 - extendedWaitUntil:
     visible:
       id: knowledge-base-screen
     timeout: 30000
-- tapOn:
-    id: knowledge-back
-    point: 50%, 50%
+- runFlow: _native-back.yaml
 - runFlow:
     when:
       platform: Android

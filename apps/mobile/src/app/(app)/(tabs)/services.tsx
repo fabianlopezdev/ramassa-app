@@ -23,6 +23,7 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
+import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -42,6 +43,12 @@ const styles = StyleSheet.create({
   },
 });
 const keyExtractor = (service: PlayerServiceRow) => service.id;
+// The Ajuda tab's own icon, so the way back to the grid reads as this tab's start.
+const categoryGridSymbol: SymbolViewProps['name'] = {
+  ios: 'square.grid.2x2.fill',
+  android: 'category',
+  web: 'category',
+};
 
 function hasFilters(filters: PlayerServiceFilterSelection): boolean {
   return (
@@ -265,13 +272,23 @@ export default function ServicesScreen() {
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
           <PlayerTabHeader title={t('nav:tabs.services')} />
+          {/* A state of this tab, so it stays an in-page control: it shows
+              the grid again (RAPP-806). */}
           <PressableScale
+            testID="services-show-categories"
             accessibilityLabel={t('playerServices:backCategories')}
             onPress={backToCategories}
             haptic="tapLight"
-            className="min-h-recommended self-start justify-center rounded-full border border-neutral-300 px-lg"
+            style={continuousCorners}
+            className="min-h-recommended flex-row items-center gap-sm rounded-md border border-neutral-300 bg-white px-lg"
           >
-            <Text className={`text-md font-medium text-primary ${languageFontClass}`}>
+            <SymbolView
+              accessible={false}
+              name={categoryGridSymbol}
+              size={tokens.fontSize.xl}
+              tintColor={tokens.colors.primary.dark}
+            />
+            <Text className={`text-start text-md font-bold text-primary-dark ${languageFontClass}`}>
               {t('playerServices:backCategories')}
             </Text>
           </PressableScale>

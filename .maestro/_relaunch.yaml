@@ -44,10 +44,7 @@ env:
                 optional: true
             - waitForAnimationToEnd:
                 timeout: 1000
-            - tapOn:
-                id: knowledge-back
-                point: 50%, 50%
-                optional: true
+            - runFlow: _native-back.yaml
             - tapOn:
                 text: '^${BACK}$'
                 optional: true
@@ -74,12 +71,7 @@ env:
                 optional: true
             - waitForAnimationToEnd:
                 timeout: 1000
-            # Maestro can see this GestureDetector-backed control in the iOS
-            # tree, but default accessibility activation does not dispatch it.
-            - tapOn:
-                id: knowledge-back
-                point: 50%, 50%
-                optional: true
+            - runFlow: _native-back.yaml
             - tapOn:
                 text: '^${BACK}$'
                 optional: true
@@ -100,10 +92,7 @@ env:
           timeout: 3000
 # A late sheet can hide Knowledge while the loop samples Home for one frame.
 # Unwind once more after the sheet is gone before making the root-shell claim.
-- tapOn:
-    id: knowledge-back
-    point: 50%, 50%
-    optional: true
+- runFlow: _native-back.yaml
 - tapOn:
     text: '^${BACK}$'
     optional: true

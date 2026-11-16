@@ -76,9 +76,7 @@ env:
       notVisible:
         id: forum-board
     commands:
-      - tapOn:
-          id: forum-detail-back
-          optional: true
+      - runFlow: _native-back.yaml
       - waitForAnimationToEnd:
           timeout: 1500
 - extendedWaitUntil:
@@ -182,9 +180,7 @@ env:
       notVisible:
         id: forum-board
     commands:
-      - tapOn:
-          id: forum-detail-back
-          optional: true
+      - runFlow: _native-back.yaml
       - waitForAnimationToEnd:
           timeout: 1500
 - extendedWaitUntil:

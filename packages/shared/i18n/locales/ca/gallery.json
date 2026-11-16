@@ -39,7 +39,6 @@
   "deleteBody": "La foto o el vídeo i la seva miniatura s'eliminaran definitivament.",
   "cancel": "Cancel·la",
   "flag": "Avisa l'equip",
-  "back": "Enrere",
   "moderationTitle": "Moderació de la galeria",
   "moderationIntro": "Amaga o torna a mostrar qualsevol foto o vídeo, encara que ningú n'hagi informat.",
   "moderationTotal": "Elements: {{count}}",

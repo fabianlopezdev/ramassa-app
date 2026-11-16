@@ -40,8 +40,7 @@ env:
     visible:
       id: gallery-privacy-picker
     timeout: 30000
-- tapOn:
-    id: gallery-detail-back
+- runFlow: _native-back.yaml
 - tapOn:
     id: community-share
 - tapOn:

@@ -39,7 +39,6 @@
   "deleteBody": "La photo ou la vidéo et sa miniature seront supprimées définitivement.",
   "cancel": "Annule",
   "flag": "Préviens l’équipe",
-  "back": "Retour",
   "moderationTitle": "Modération de la galerie",
   "moderationIntro": "Masque ou affiche de nouveau n’importe quelle photo ou vidéo, même si personne ne l’a signalée.",
   "moderationTotal": "Éléments : {{count}}",
