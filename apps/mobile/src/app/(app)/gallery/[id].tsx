@@ -1,7 +1,6 @@
 import {
   AnnouncementEmptyState,
   AnnouncementFeedSkeleton,
-  OfflineBanner,
 } from '@/components/announcements/feed-states';
 import { ForumFlagDialog } from '@/components/forum/forum-flag-dialog';
 import { PageWidth } from '@/components/layout/content-width';
@@ -150,9 +149,6 @@ export default function GalleryItemScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         <PageWidth className="gap-lg">
-          {!isOnline ? (
-            <OfflineBanner label={t('gallery:offline')} languageFontClass={languageFontClass} />
-          ) : null}
           {item === undefined && !isOnline ? (
             <AnnouncementEmptyState
               title={t('gallery:offlineEmptyTitle')}

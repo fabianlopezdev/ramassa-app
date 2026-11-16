@@ -16,7 +16,6 @@
   "loading": "Loading services",
   "loadFailed": "We could not load the services.",
   "retry": "Try again",
-  "offline": "No connection. You are seeing services saved on this phone.",
   "emptyCategoryTitle": "There are no services here yet",
   "emptyCategoryBody": "Go back to categories and try another option.",
   "emptyFilteredTitle": "No services match",

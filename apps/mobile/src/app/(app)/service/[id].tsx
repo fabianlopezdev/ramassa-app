@@ -1,7 +1,6 @@
 import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
-  OfflineBanner,
 } from '@/components/announcements/feed-states';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
@@ -11,7 +10,6 @@ import { SuccessPop } from '@/components/motion/success-pop';
 import { ServiceArticle } from '@/components/services/service-article';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playErrorHaptic } from '@/lib/haptics/haptics';
-import { isNetworkStateOnline } from '@/lib/network-status';
 import { safeAsync } from '@/lib/observability';
 import {
   usePlayerServiceCategories,
@@ -20,7 +18,6 @@ import {
 } from '@/lib/player-services';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import * as Linking from 'expo-linking';
-import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -35,8 +32,6 @@ export default function ServiceDetailScreen() {
   const { t } = useTranslation(['playerServices', 'errors']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
-  const networkState = useNetworkState();
-  const isOffline = !isNetworkStateOnline(networkState);
   const insets = useSafeAreaInsets();
   const serviceQuery = usePlayerServiceDetail(id);
   const categoriesQuery = usePlayerServiceCategories();
@@ -107,13 +102,6 @@ export default function ServiceDetailScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         <PageWidth className="gap-lg">
-          {isOffline ? (
-            <OfflineBanner
-              label={t('playerServices:offline')}
-              languageFontClass={languageFontClass}
-            />
-          ) : null}
-
           {service === undefined || title === undefined ? (
             <View className="flex-1 items-center justify-center gap-md py-3xl">
               <Text

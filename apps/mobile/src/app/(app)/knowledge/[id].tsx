@@ -1,16 +1,13 @@
 import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
-  OfflineBanner,
 } from '@/components/announcements/feed-states';
 import { KnowledgeArticle } from '@/components/knowledge/knowledge-article';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePlayerKnowledgeArticle } from '@/lib/player-knowledge';
 import { useStaffCards } from '@/lib/staff-cards';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useMemo } from 'react';
@@ -29,8 +26,6 @@ export default function PlayerKnowledgeDetailScreen() {
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { session } = useAuth();
-  const networkState = useNetworkState();
-  const isOffline = !isNetworkStateOnline(networkState);
   const query = usePlayerKnowledgeArticle(id);
   const article = query.data;
   // A team article names its author with her photo; a story keeps the
@@ -102,12 +97,6 @@ export default function PlayerKnowledgeDetailScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         <PageWidth className="gap-lg">
-          {isOffline ? (
-            <OfflineBanner
-              label={t('knowledge:playerOffline')}
-              languageFontClass={languageFontClass}
-            />
-          ) : null}
           {article === undefined ||
           title === undefined ||
           category === undefined ||

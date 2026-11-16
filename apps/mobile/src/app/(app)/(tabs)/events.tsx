@@ -2,7 +2,6 @@ import {
   AnnouncementEmptyState,
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
-  OfflineBanner,
 } from '@/components/announcements/feed-states';
 import {
   EventCard,
@@ -330,9 +329,6 @@ export default function EventsScreen() {
               {t('playerIntro')}
             </Text>
           </View>
-          {isOffline ? (
-            <OfflineBanner label={t('playerOfflineBanner')} languageFontClass={languageFontClass} />
-          ) : null}
           <EventCategoryFilters
             categories={categories}
             selected={category}

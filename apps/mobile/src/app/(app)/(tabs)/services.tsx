@@ -2,7 +2,6 @@ import {
   AnnouncementEmptyState,
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
-  OfflineBanner,
 } from '@/components/announcements/feed-states';
 import { LatestGuidesSection } from '@/components/knowledge/latest-guides-section';
 import { PageWidth } from '@/components/layout/content-width';
@@ -208,12 +207,6 @@ export default function ServicesScreen() {
       >
         <PageWidth className="gap-lg">
           <PlayerTabHeader title={t('nav:tabs.services')} />
-          {isOffline ? (
-            <OfflineBanner
-              label={t('playerServices:offline')}
-              languageFontClass={languageFontClass}
-            />
-          ) : null}
           <LatestGuidesSection />
           <View className="gap-sm">
             <View className="gap-xs">
@@ -305,12 +298,6 @@ export default function ServicesScreen() {
               {t('playerServices:resultsCount', { count: services.length })}
             </Text>
           </View>
-          {isOffline ? (
-            <OfflineBanner
-              label={t('playerServices:offline')}
-              languageFontClass={languageFontClass}
-            />
-          ) : null}
           <PressableScale
             accessibilityLabel={
               filtersVisible

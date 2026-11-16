@@ -2,7 +2,6 @@ import {
   AnnouncementEmptyState,
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
-  OfflineBanner,
 } from '@/components/announcements/feed-states';
 import {
   CommunityShareSheet,
@@ -208,9 +207,6 @@ export default function CommunityScreen() {
     <View className="gap-lg pb-lg">
       <PageWidth className="gap-md">
         <PlayerTabHeader title={t('nav:tabs.community')} />
-        {isOffline ? (
-          <OfflineBanner label={t('forum:offline')} languageFontClass={languageFontClass} />
-        ) : null}
         <PressableScale
           testID="community-share"
           accessibilityLabel={t('forum:share')}

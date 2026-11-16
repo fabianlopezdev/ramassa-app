@@ -17,7 +17,7 @@
   "messageSenderYou": "Toi",
   "messageStatus": "État du message : {{status}}",
   "retry": "Réessaie",
-  "offline": "Pas de connexion. Les messages restent en attente.",
+  "offline": "Les messages restent en attente.",
   "unread": "{{count}} messages non lus",
   "unread_one": "{{count}} message non lu",
   "unread_other": "{{count}} messages non lus",

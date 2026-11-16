@@ -11,7 +11,6 @@
   "playerCalendarLabel": "Activities calendar",
   "playerCalendarHint": "Choose a day. Activities on that day appear in a list after the calendar.",
   "playerToday": "Today",
-  "playerOfflineBanner": "No connection. You are seeing saved activities. You need a connection to sign up.",
   "playerLoading": "Loading activities",
   "playerLoadFailed": "We could not load the activities.",
   "playerRetryAction": "Try again",

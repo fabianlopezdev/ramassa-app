@@ -421,7 +421,7 @@ describe('Maestro selector contracts', () => {
     expect(knowledge).toMatch(/story-submit-button[\s\S]*?story-status-submitted/);
 
     const offline = await Bun.file(path.join(repoRoot, '.maestro/offline-feed.yaml')).text();
-    expect(offline).toContain("OFFLINE_BANNER: '{{home:offlineBanner}}'");
+    expect(offline).toContain("OFFLINE_BANNER: '{{common:offline}}'");
     expect(offline).toMatch(/toggleAirplaneMode[\s\S]*?OFFLINE_BANNER/);
     expect(offline).toMatch(/OFFLINE_BANNER[\s\S]*?toggleAirplaneMode/);
   });

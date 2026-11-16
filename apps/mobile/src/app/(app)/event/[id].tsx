@@ -1,7 +1,6 @@
 import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
-  OfflineBanner,
 } from '@/components/announcements/feed-states';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { EventArticle } from '@/components/events/event-article';
@@ -133,10 +132,6 @@ export default function EventDetailScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         <PageWidth className="gap-lg">
-          {isOffline ? (
-            <OfflineBanner label={t('playerOfflineBanner')} languageFontClass={languageFontClass} />
-          ) : null}
-
           {row === undefined || title === undefined || category === undefined ? (
             <View className="flex-1 items-center justify-center gap-md py-3xl">
               <Text

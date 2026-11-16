@@ -17,7 +17,7 @@
   "messageSenderYou": "Tú",
   "messageStatus": "Estado del mensaje: {{status}}",
   "retry": "Volver a intentarlo",
-  "offline": "Sin conexión. Los mensajes quedarán en cola.",
+  "offline": "Los mensajes quedarán en cola.",
   "unread": "{{count}} mensajes sin leer",
   "unread_one": "{{count}} mensaje sin leer",
   "unread_other": "{{count}} mensajes sin leer",

@@ -11,7 +11,6 @@
   "playerCalendarLabel": "Calendario de actividades",
   "playerCalendarHint": "Elige un día. Las actividades de ese día aparecen en una lista después del calendario.",
   "playerToday": "Hoy",
-  "playerOfflineBanner": "Sin conexión. Estás viendo las actividades guardadas. Necesitas conexión para apuntarte.",
   "playerLoading": "Cargando las actividades",
   "playerLoadFailed": "No hemos podido cargar las actividades.",
   "playerRetryAction": "Volver a intentar",

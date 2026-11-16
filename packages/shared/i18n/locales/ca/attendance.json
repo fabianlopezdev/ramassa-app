@@ -11,7 +11,7 @@
   "loading": "S’està carregant l’assistència",
   "loadFailed": "No hem pogut carregar l’assistència. Comprova la connexió i torna-ho a provar.",
   "retry": "Torna-ho a provar",
-  "offlineBanner": "No hi ha connexió. Les marques es desen en aquest dispositiu i se sincronitzen automàticament quan tornis a connectar-te.",
+  "offlineQueued": "Les marques es desen en aquest dispositiu i se sincronitzen automàticament quan tornis a connectar-te.",
   "summary": "{{marked}} de {{expected}} marcades",
   "signedUp": "Inscripció confirmada",
   "statusUnmarked": "Sense marcar",

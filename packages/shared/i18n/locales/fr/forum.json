@@ -1,7 +1,6 @@
 {
   "categoriesLabel": "Catégories du forum",
   "allCategories": "Tout",
-  "offline": "Pas de connexion. Tu vois les publications enregistrées sur le téléphone.",
   "offlineWrite": "Connecte-toi à internet pour publier, répondre, modifier ou supprimer.",
   "loading": "Chargement de la communauté",
   "loadFailed": "Impossible de charger la communauté.",

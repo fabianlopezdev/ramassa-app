@@ -2,16 +2,13 @@ import { AnnouncementArticle } from '@/components/announcements/announcement-art
 import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
-  OfflineBanner,
 } from '@/components/announcements/feed-states';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
 import { resolveMediaImageSource } from '@/lib/media-source';
-import { isNetworkStateOnline } from '@/lib/network-status';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,8 +25,6 @@ export default function AnnouncementDetailScreen() {
   const { t } = useTranslation(['home', 'common']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
-  const networkState = useNetworkState();
-  const isOffline = !isNetworkStateOnline(networkState);
   const query = usePlayerAnnouncements();
   const { data, refetch } = query;
   const retry = useCallback(() => void refetch(), [refetch]);
@@ -94,10 +89,6 @@ export default function AnnouncementDetailScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         <PageWidth className="gap-lg">
-          {isOffline ? (
-            <OfflineBanner label={t('offlineBanner')} languageFontClass={languageFontClass} />
-          ) : null}
-
           {announcement === undefined || title === undefined || body === undefined ? (
             <View className="flex-1 items-center justify-center gap-md py-3xl">
               <Text

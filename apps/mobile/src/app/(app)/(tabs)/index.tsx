@@ -11,7 +11,6 @@ import {
   AnnouncementEmptyState,
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
-  OfflineBanner,
 } from '@/components/announcements/feed-states';
 import { HomeNextActivity } from '@/components/home/home-next-activity';
 import { HomeSectionHeader } from '@/components/home/home-section-header';
@@ -215,9 +214,6 @@ export default function HomeScreen() {
           <HomeToDo items={toDoItems} languageFontClass={languageFontClass} />
           <HomeNextActivity occurrence={nextActivity} languageFontClass={languageFontClass} />
           <HomeSectionHeader title={t('feedTitle')} languageFontClass={languageFontClass} />
-          {isOffline ? (
-            <OfflineBanner label={t('offlineBanner')} languageFontClass={languageFontClass} />
-          ) : null}
           <CategoryFilters
             selected={category}
             onSelect={setCategory}

@@ -16,7 +16,6 @@
   "loading": "Cargando los servicios",
   "loadFailed": "No hemos podido cargar los servicios.",
   "retry": "Volver a intentarlo",
-  "offline": "Sin conexión. Estás viendo los servicios guardados en este teléfono.",
   "emptyCategoryTitle": "Todavía no hay servicios aquí",
   "emptyCategoryBody": "Vuelve a las categorías y prueba otra opción.",
   "emptyFilteredTitle": "Ningún servicio coincide",

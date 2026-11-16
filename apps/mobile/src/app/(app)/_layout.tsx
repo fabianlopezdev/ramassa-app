@@ -5,6 +5,7 @@ import { SecondFactorScreen } from '@/components/auth/second-factor-screen';
 import { useStaffLanguage } from '@/components/auth/staff-language-gate';
 import { SigningSyncWorker } from '@/components/authorization/signing-sync-worker';
 import { HandoverSyncWorker } from '@/components/equipment/handover-sync-worker';
+import { ShellOfflineFrame } from '@/components/layout/shell-offline-banner';
 import { PushPermissionRationale } from '@/components/push-permission-rationale';
 import { areaHome, awaitsSecondFactor, teamScreens } from '@/lib/account-area';
 import { useAuthorizationStatus } from '@/lib/authorization';
@@ -262,38 +263,40 @@ function AppNavigator() {
           deliberately false while a profile LOOKUP fails (shared/auth): a
           network flake must never route an onboarded player back into the
           wizard. */}
-      <Stack screenOptions={hiddenHeaderScreenOptions}>
-        {/* Signing mode (RAPP-305): the only screen while a player signs on a
+      {/* One offline banner for every role, above the navigator (RAPP-807). */}
+      <ShellOfflineFrame>
+        <Stack screenOptions={hiddenHeaderScreenOptions}>
+          {/* Signing mode (RAPP-305): the only screen while a player signs on a
             staff tablet. Her signature is a drag, which iOS would read as
             swipe back. */}
-        <Stack.Protected guard={isSigning}>
-          <Stack.Screen name="signing-mode" options={noSwipeBackOptions} />
-        </Stack.Protected>
-        {/* signing-mode-off:start Every other screen. */}
-        <Stack.Protected guard={!isSigning}>
-          {/* Her profile edit, also while she must sign: re-registration lets
+          <Stack.Protected guard={isSigning}>
+            <Stack.Screen name="signing-mode" options={noSwipeBackOptions} />
+          </Stack.Protected>
+          {/* signing-mode-off:start Every other screen. */}
+          <Stack.Protected guard={!isSigning}>
+            {/* Her profile edit, also while she must sign: re-registration lets
             her correct her details before she signs (RAPP-306). */}
-          <Stack.Protected guard={area === 'player'}>
-            <Stack.Screen name="profile-edit" />
-          </Stack.Protected>
-          {/* A new app terms version (RAPP-613): the only screen until she accepts. */}
-          <Stack.Protected guard={mustAcceptTerms}>
-            <Stack.Screen name="terms-update" options={noSwipeBackOptions} />
-          </Stack.Protected>
-          <Stack.Protected guard={mustSign}>
-            {/* Her signature is a drag, which iOS would read as swipe back. */}
-            <Stack.Screen name="authorization" options={noSwipeBackOptions} />
-          </Stack.Protected>
-          {/* A form the team created (RAPP-700): from Home, its notification, or
+            <Stack.Protected guard={area === 'player'}>
+              <Stack.Screen name="profile-edit" />
+            </Stack.Protected>
+            {/* A new app terms version (RAPP-613): the only screen until she accepts. */}
+            <Stack.Protected guard={mustAcceptTerms}>
+              <Stack.Screen name="terms-update" options={noSwipeBackOptions} />
+            </Stack.Protected>
+            <Stack.Protected guard={mustSign}>
+              {/* Her signature is a drag, which iOS would read as swipe back. */}
+              <Stack.Screen name="authorization" options={noSwipeBackOptions} />
+            </Stack.Protected>
+            {/* A form the team created (RAPP-700): from Home, its notification, or
             alone while it keeps her from the app. */}
-          <Stack.Protected guard={area === 'player' && !mustSign && !mustAcceptTerms}>
-            <Stack.Screen name="form/[responseId]" options={noSwipeBackOptions} />
-          </Stack.Protected>
-          <Stack.Protected
-            guard={area === 'player' && !mustSign && !mustAcceptTerms && !mustAnswerForm}
-          >
-            <Stack.Screen name="(tabs)" />
-            {/* Pushed OVER the tabs, not inside them: the edit form and the
+            <Stack.Protected guard={area === 'player' && !mustSign && !mustAcceptTerms}>
+              <Stack.Screen name="form/[responseId]" options={noSwipeBackOptions} />
+            </Stack.Protected>
+            <Stack.Protected
+              guard={area === 'player' && !mustSign && !mustAcceptTerms && !mustAnswerForm}
+            >
+              <Stack.Screen name="(tabs)" />
+              {/* Pushed OVER the tabs, not inside them: the edit form and the
               erasure request are full-screen tasks, and the floating tab bar
               would sit on top of their primary action.
 
@@ -302,185 +305,186 @@ function AppNavigator() {
               claim one path. The push then resolves to the menu and the
               screen silently never opens. Her profile opens from her photo
               on every tab, as a menu of screens (RAPP-794). */}
-            <Stack.Screen name="profile" />
-            <Stack.Screen name="profile-data" />
-            <Stack.Screen name="profile-attendance" />
-            <Stack.Screen name="profile-language" />
-            <Stack.Screen name="profile-privacy" />
-            <Stack.Screen name="profile-delete-data" />
-            <Stack.Screen name="announcement/[id]" />
-            <Stack.Screen name="event/[id]" />
-            <Stack.Screen name="knowledge/index" />
-            <Stack.Screen name="knowledge/[id]" />
-            <Stack.Screen name="service/[id]" />
-            <Stack.Screen name="story/submit" />
-            <Stack.Screen name="forum/create" />
-            <Stack.Screen name="forum/[id]" />
-            <Stack.Screen name="gallery/index" />
-            <Stack.Screen name="gallery/upload" />
-            <Stack.Screen name="gallery/[id]" />
-            <Stack.Screen name="team-chat" />
-            <Stack.Screen name="mentoring/index" />
-            <Stack.Screen name="mentoring/[id]" />
-            <Stack.Screen name="feedback/index" />
-            <Stack.Screen name="survey/[id]" />
-          </Stack.Protected>
-          {/* The team shell (RAPP-245): tabs, large buttons or a tablet sidebar,
+              <Stack.Screen name="profile" />
+              <Stack.Screen name="profile-data" />
+              <Stack.Screen name="profile-attendance" />
+              <Stack.Screen name="profile-language" />
+              <Stack.Screen name="profile-privacy" />
+              <Stack.Screen name="profile-delete-data" />
+              <Stack.Screen name="announcement/[id]" />
+              <Stack.Screen name="event/[id]" />
+              <Stack.Screen name="knowledge/index" />
+              <Stack.Screen name="knowledge/[id]" />
+              <Stack.Screen name="service/[id]" />
+              <Stack.Screen name="story/submit" />
+              <Stack.Screen name="forum/create" />
+              <Stack.Screen name="forum/[id]" />
+              <Stack.Screen name="gallery/index" />
+              <Stack.Screen name="gallery/upload" />
+              <Stack.Screen name="gallery/[id]" />
+              <Stack.Screen name="team-chat" />
+              <Stack.Screen name="mentoring/index" />
+              <Stack.Screen name="mentoring/[id]" />
+              <Stack.Screen name="feedback/index" />
+              <Stack.Screen name="survey/[id]" />
+            </Stack.Protected>
+            {/* The team shell (RAPP-245): tabs, large buttons or a tablet sidebar,
             holding the areas the person's permissions open. A session sheet or
             a conversation opens over it. With no area, team-home points to the
             web. */}
-          <Stack.Protected guard={isTeam && hasAppScreen}>
-            <Stack.Screen name="(team)" />
+            <Stack.Protected guard={isTeam && hasAppScreen}>
+              <Stack.Screen name="(team)" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.participants}>
+              <Stack.Screen name="participant/[id]" />
+            </Stack.Protected>
+            {/* Editing a record needs the Personal level, as the database does (RAPP-281). */}
+            <Stack.Protected
+              guard={isTeam && team.participants && permissions.has('participants.view_personal')}
+            >
+              <Stack.Screen name="participant-edit/[id]" />
+            </Stack.Protected>
+            <Stack.Protected
+              guard={isTeam && team.participants && permissions.has('participants.invite')}
+            >
+              <Stack.Screen name="participant-invites" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.participants && permissions.has('rgpd.erase')}>
+              <Stack.Screen name="deletion-requests" />
+            </Stack.Protected>
+            <Stack.Protected
+              guard={isTeam && team.participants && permissions.has('equipment.handover')}
+            >
+              <Stack.Screen name="handover/[participantId]" options={noSwipeBackOptions} />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.announcements}>
+              <Stack.Screen name="content-announcement/[id]" />
+              <Stack.Screen name="content-announcement-edit/[id]" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.events}>
+              <Stack.Screen name="content-event/[id]" />
+              <Stack.Screen name="content-event-edit/[id]" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.eventCategories}>
+              <Stack.Screen name="content-event-categories" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.knowledge}>
+              <Stack.Screen name="content-knowledge/[id]" />
+              <Stack.Screen name="content-knowledge-edit/[id]" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.services}>
+              <Stack.Screen name="content-service/[id]" />
+              <Stack.Screen name="content-service-edit/[id]" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.serviceCategories}>
+              <Stack.Screen name="content-service-categories" />
+              <Stack.Screen name="content-service-category/[id]" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.serviceReviews}>
+              <Stack.Screen name="content-service-review/[id]" />
+              <Stack.Screen name="content-service-approve/[id]" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.mentoring}>
+              <Stack.Screen name="team-mentoring" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.notifications}>
+              <Stack.Screen name="team-notifications" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.surveys}>
+              <Stack.Screen name="team-surveys" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.surveyEditor}>
+              <Stack.Screen name="team-survey-new" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.surveyResults}>
+              <Stack.Screen name="team-survey-results/[id]" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && (team.dataExports || team.auditLog)}>
+              <Stack.Screen name="team-data" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.impact}>
+              <Stack.Screen name="team-impact" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.staff}>
+              <Stack.Screen name="team-staff" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.entities}>
+              <Stack.Screen name="team-entities" />
+              <Stack.Screen name="team-entity/[id]" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.documents}>
+              <Stack.Screen name="team-documents" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.organization}>
+              <Stack.Screen name="team-organization" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.feedback}>
+              <Stack.Screen name="team-feedback" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.galleryModeration}>
+              <Stack.Screen name="team-gallery" />
+            </Stack.Protected>
+            {/* One Moderació for either permission (RAPP-796, decision D4). */}
+            <Stack.Protected guard={isTeam && (team.forumModeration || team.galleryModeration)}>
+              <Stack.Screen name="forum-moderation" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.forumModeration}>
+              <Stack.Screen name="forum-categories" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.attendance}>
+              <Stack.Screen name="attendance/[id]" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.messages}>
+              <Stack.Screen name="messages/[conversationId]" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.stock}>
+              <Stack.Screen name="stock" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.arrivals}>
+              <Stack.Screen name="arrival/new" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.counts}>
+              <Stack.Screen name="count/[itemTypeId]" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.checkouts}>
+              <Stack.Screen name="checkout/new" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.items}>
+              <Stack.Screen name="items" />
+              <Stack.Screen name="item-type/[id]" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && !hasAppScreen}>
+              <Stack.Screen name="team-home" />
+            </Stack.Protected>
+            {/* A photo the desk asked for (RAPP-254); the database checks who. */}
+            <Stack.Protected guard={isTeam}>
+              <Stack.Screen name="photo-handoff/[id]" />
+            </Stack.Protected>
+            {/* The partner entity's tabs (RAPP-410), as the web portal. */}
+            <Stack.Protected guard={area === 'entity'}>
+              <Stack.Screen name="(entity)" />
+              <Stack.Screen name="entity-referral-new" />
+              <Stack.Screen name="entity-referral/[id]" />
+              <Stack.Screen name="entity-service-new" />
+              <Stack.Screen name="entity-service/[id]" />
+            </Stack.Protected>
+            <Stack.Protected guard={area === 'player' || area === 'team' || area === 'entity'}>
+              <Stack.Screen name="app-lock" />
+            </Stack.Protected>
+            <Stack.Protected guard={area === 'unresolved'}>
+              <Stack.Screen name="account-unresolved" />
+            </Stack.Protected>
+            {/* Her first Onboarding: only a player who has not joined yet (RAPP-705). */}
+            <Stack.Protected guard={area === 'onboarding'}>
+              <Stack.Screen name="onboarding" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && permissions.has('consents.collect')}>
+              <Stack.Screen name="collect-signatures" />
+            </Stack.Protected>
           </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.participants}>
-            <Stack.Screen name="participant/[id]" />
-          </Stack.Protected>
-          {/* Editing a record needs the Personal level, as the database does (RAPP-281). */}
-          <Stack.Protected
-            guard={isTeam && team.participants && permissions.has('participants.view_personal')}
-          >
-            <Stack.Screen name="participant-edit/[id]" />
-          </Stack.Protected>
-          <Stack.Protected
-            guard={isTeam && team.participants && permissions.has('participants.invite')}
-          >
-            <Stack.Screen name="participant-invites" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.participants && permissions.has('rgpd.erase')}>
-            <Stack.Screen name="deletion-requests" />
-          </Stack.Protected>
-          <Stack.Protected
-            guard={isTeam && team.participants && permissions.has('equipment.handover')}
-          >
-            <Stack.Screen name="handover/[participantId]" options={noSwipeBackOptions} />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.announcements}>
-            <Stack.Screen name="content-announcement/[id]" />
-            <Stack.Screen name="content-announcement-edit/[id]" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.events}>
-            <Stack.Screen name="content-event/[id]" />
-            <Stack.Screen name="content-event-edit/[id]" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.eventCategories}>
-            <Stack.Screen name="content-event-categories" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.knowledge}>
-            <Stack.Screen name="content-knowledge/[id]" />
-            <Stack.Screen name="content-knowledge-edit/[id]" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.services}>
-            <Stack.Screen name="content-service/[id]" />
-            <Stack.Screen name="content-service-edit/[id]" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.serviceCategories}>
-            <Stack.Screen name="content-service-categories" />
-            <Stack.Screen name="content-service-category/[id]" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.serviceReviews}>
-            <Stack.Screen name="content-service-review/[id]" />
-            <Stack.Screen name="content-service-approve/[id]" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.mentoring}>
-            <Stack.Screen name="team-mentoring" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.notifications}>
-            <Stack.Screen name="team-notifications" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.surveys}>
-            <Stack.Screen name="team-surveys" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.surveyEditor}>
-            <Stack.Screen name="team-survey-new" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.surveyResults}>
-            <Stack.Screen name="team-survey-results/[id]" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && (team.dataExports || team.auditLog)}>
-            <Stack.Screen name="team-data" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.impact}>
-            <Stack.Screen name="team-impact" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.staff}>
-            <Stack.Screen name="team-staff" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.entities}>
-            <Stack.Screen name="team-entities" />
-            <Stack.Screen name="team-entity/[id]" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.documents}>
-            <Stack.Screen name="team-documents" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.organization}>
-            <Stack.Screen name="team-organization" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.feedback}>
-            <Stack.Screen name="team-feedback" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.galleryModeration}>
-            <Stack.Screen name="team-gallery" />
-          </Stack.Protected>
-          {/* One Moderació for either permission (RAPP-796, decision D4). */}
-          <Stack.Protected guard={isTeam && (team.forumModeration || team.galleryModeration)}>
-            <Stack.Screen name="forum-moderation" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.forumModeration}>
-            <Stack.Screen name="forum-categories" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.attendance}>
-            <Stack.Screen name="attendance/[id]" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.messages}>
-            <Stack.Screen name="messages/[conversationId]" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.stock}>
-            <Stack.Screen name="stock" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.arrivals}>
-            <Stack.Screen name="arrival/new" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.counts}>
-            <Stack.Screen name="count/[itemTypeId]" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.checkouts}>
-            <Stack.Screen name="checkout/new" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.items}>
-            <Stack.Screen name="items" />
-            <Stack.Screen name="item-type/[id]" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && !hasAppScreen}>
-            <Stack.Screen name="team-home" />
-          </Stack.Protected>
-          {/* A photo the desk asked for (RAPP-254); the database checks who. */}
-          <Stack.Protected guard={isTeam}>
-            <Stack.Screen name="photo-handoff/[id]" />
-          </Stack.Protected>
-          {/* The partner entity's tabs (RAPP-410), as the web portal. */}
-          <Stack.Protected guard={area === 'entity'}>
-            <Stack.Screen name="(entity)" />
-            <Stack.Screen name="entity-referral-new" />
-            <Stack.Screen name="entity-referral/[id]" />
-            <Stack.Screen name="entity-service-new" />
-            <Stack.Screen name="entity-service/[id]" />
-          </Stack.Protected>
-          <Stack.Protected guard={area === 'player' || area === 'team' || area === 'entity'}>
-            <Stack.Screen name="app-lock" />
-          </Stack.Protected>
-          <Stack.Protected guard={area === 'unresolved'}>
-            <Stack.Screen name="account-unresolved" />
-          </Stack.Protected>
-          {/* Her first Onboarding: only a player who has not joined yet (RAPP-705). */}
-          <Stack.Protected guard={area === 'onboarding'}>
-            <Stack.Screen name="onboarding" />
-          </Stack.Protected>
-          <Stack.Protected guard={isTeam && permissions.has('consents.collect')}>
-            <Stack.Screen name="collect-signatures" />
-          </Stack.Protected>
-        </Stack.Protected>
-        {/* signing-mode-off:end */}
-      </Stack>
+          {/* signing-mode-off:end */}
+        </Stack>
+      </ShellOfflineFrame>
       {isTeam && permissions.has('attendance.mark') && userId !== null ? (
         <AttendanceSyncWorker userId={userId} />
       ) : null}

@@ -16,7 +16,6 @@
   "loading": "Carregant els serveis",
   "loadFailed": "No hem pogut carregar els serveis.",
   "retry": "Torna-ho a provar",
-  "offline": "Sense connexió. Estàs veient els serveis desats al telèfon.",
   "emptyCategoryTitle": "Encara no hi ha serveis aquí",
   "emptyCategoryBody": "Torna a les categories i prova una altra opció.",
   "emptyFilteredTitle": "Cap servei coincideix",

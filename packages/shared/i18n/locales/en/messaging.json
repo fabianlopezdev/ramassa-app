@@ -17,7 +17,7 @@
   "messageSenderYou": "You",
   "messageStatus": "Message status: {{status}}",
   "retry": "Try again",
-  "offline": "Offline. Messages will stay queued.",
+  "offline": "Messages will stay queued.",
   "unread": "{{count}} unread messages",
   "unread_one": "{{count}} unread message",
   "unread_other": "{{count}} unread messages",

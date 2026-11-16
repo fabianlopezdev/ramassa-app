@@ -26,7 +26,6 @@
   "loading": "Chargement de la galerie...",
   "loadFailed": "Impossible de charger ce contenu.",
   "loadFailedHelp": "Vérifie la connexion et réessaie. Si ça ne marche toujours pas, partage le code avec l’équipe.",
-  "offline": "Pas de connexion. Tu vois le contenu de la galerie enregistré sur le téléphone.",
   "emptyTitle": "Rien n’a encore été partagé",
   "emptyBody": "Les photos et les vidéos partagées avec la communauté apparaîtront ici.",
   "offlineEmptyTitle": "La galerie n’est pas disponible sans connexion",

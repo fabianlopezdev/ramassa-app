@@ -8,7 +8,7 @@ env:
   TAB_CHAT: Xat
   CHAT_TITLE: Xat amb l’equip
   COMPOSER: Escriu un missatge
-  OFFLINE: Sense connexió. Els missatges quedaran en cua.
+  OFFLINE: Els missatges quedaran en cua.
 ---
 # Signed in through the shared fragments, like every other flow. The phone app
 # no longer has a password form: players sign in with an emailed code, which a

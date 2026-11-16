@@ -2,7 +2,6 @@ import {
   AnnouncementEmptyState,
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
-  OfflineBanner,
 } from '@/components/announcements/feed-states';
 import { KnowledgeArticleCard } from '@/components/knowledge/knowledge-article-card';
 import { KnowledgeCategoryGrid } from '@/components/knowledge/knowledge-category-grid';
@@ -136,12 +135,6 @@ export default function PlayerKnowledgeScreen() {
         onRefresh={refresh}
         ListHeaderComponent={
           <PageWidth className="gap-lg pb-lg">
-            {isOffline ? (
-              <OfflineBanner
-                label={t('knowledge:playerOffline')}
-                languageFontClass={languageFontClass}
-              />
-            ) : null}
             <KnowledgeCategoryGrid
               categories={guideCategories}
               selected={filter}

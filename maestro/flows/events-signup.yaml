@@ -18,7 +18,7 @@ env:
   CONFIRMED_STATUS: '{{events:playerConfirmed}}'
   CAPACITY_ERROR: '{{errors:EVENTS-1}}'
   BACK: '{{events:playerBack}}'
-  OFFLINE_BANNER: '{{events:playerOfflineBanner}}'
+  OFFLINE_BANNER: '{{common:offline}}'
 ---
 - clearState
 - openLink: ${DEV_CLIENT_URL}
