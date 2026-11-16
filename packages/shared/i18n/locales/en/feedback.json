@@ -36,5 +36,6 @@
   "markInProgress": "Mark in progress",
   "markResolved": "Resolve",
   "respondChat": "Respond in chat",
-  "inboxEmpty": "No feedback matches these filters."
+  "inboxEmpty": "No feedback matches these filters.",
+  "answerInChat": "The answer arrives in the chat"
 }

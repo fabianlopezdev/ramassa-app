@@ -147,6 +147,7 @@
   "invalidForm": "منبع را بررسی کنید: هر بلوک به متن خود نیاز دارد و هر تصویر مرحله به توضیح خود.",
   "blockCancel": "لغو",
   "blockStep": "مرحله",
+  "storyTeamNote": "پیام تیم",
   "communityStoriesLoading": "در حال بارگیری داستان‌ها",
   "communityStoriesLoadFailed": "داستان‌ها بارگیری نشدند.",
   "communityStoriesEmptyTitle": "هنوز داستانی نیست",

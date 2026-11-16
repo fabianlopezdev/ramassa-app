@@ -147,6 +147,7 @@
   "invalidForm": "Revisa el recurs: cada bloc necessita el seu text, i cada imatge d'un pas, la seva descripció.",
   "blockCancel": "Cancel·la",
   "blockStep": "Pas",
+  "storyTeamNote": "Missatge de l’equip",
   "communityStoriesLoading": "Carregant les històries",
   "communityStoriesLoadFailed": "No s'han pogut carregar les històries.",
   "communityStoriesEmptyTitle": "Encara no hi ha històries",

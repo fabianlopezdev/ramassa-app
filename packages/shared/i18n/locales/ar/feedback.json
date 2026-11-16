@@ -36,5 +36,6 @@
   "markInProgress": "بدء المعالجة",
   "markResolved": "حل",
   "respondChat": "الرد في الدردشة",
-  "inboxEmpty": "لا توجد ملاحظات بهذه المرشحات."
+  "inboxEmpty": "لا توجد ملاحظات بهذه المرشحات.",
+  "answerInChat": "يصل الرد إلى الدردشة"
 }

@@ -64,5 +64,9 @@
   "adminScheduleAction": "Programmer et prévenir",
   "adminRescheduleAction": "Mettre à jour et prévenir",
   "adminCompleteAction": "Marquer comme terminée",
-  "adminSaving": "Enregistrement..."
+  "adminSaving": "Enregistrement...",
+  "requestTitle": "Demande de mentorat",
+  "requestNote": "Ta note",
+  "preferredDay": "Préférence : {{date}}",
+  "requestNotFound": "Nous n’avons pas trouvé cette demande."
 }

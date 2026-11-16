@@ -141,7 +141,9 @@ export function useSubmitPlayerStory() {
         (current = []) => [
           {
             id: story.id,
+            title: story.title,
             story_status: story.story_status!,
+            reviewer_note: story.reviewer_note,
             created_at: story.created_at,
             updated_at: story.updated_at,
           },

@@ -36,5 +36,6 @@
   "markInProgress": "Marca en curs",
   "markResolved": "Resol",
   "respondChat": "Respon al xat",
-  "inboxEmpty": "No hi ha suggeriments amb aquests filtres."
+  "inboxEmpty": "No hi ha suggeriments amb aquests filtres.",
+  "answerInChat": "La resposta arriba al xat"
 }

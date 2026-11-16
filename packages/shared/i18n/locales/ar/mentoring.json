@@ -64,5 +64,9 @@
   "adminScheduleAction": "الجدولة والإشعار",
   "adminRescheduleAction": "التحديث والإشعار",
   "adminCompleteAction": "تحديد كمكتمل",
-  "adminSaving": "جارٍ الحفظ..."
+  "adminSaving": "جارٍ الحفظ...",
+  "requestTitle": "طلب إرشاد",
+  "requestNote": "ملاحظتك",
+  "preferredDay": "التفضيل: {{date}}",
+  "requestNotFound": "لم نجد هذا الطلب."
 }

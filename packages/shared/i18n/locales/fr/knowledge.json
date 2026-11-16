@@ -147,6 +147,7 @@
   "invalidForm": "Vérifie la ressource : chaque bloc a besoin de son texte, et chaque image d’étape, de sa description.",
   "blockCancel": "Annule",
   "blockStep": "Étape",
+  "storyTeamNote": "Message de l’équipe",
   "communityStoriesLoading": "Chargement des histoires",
   "communityStoriesLoadFailed": "Les histoires n'ont pas pu être chargées.",
   "communityStoriesEmptyTitle": "Pas encore d'histoires",

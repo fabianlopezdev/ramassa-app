@@ -147,6 +147,7 @@
   "invalidForm": "راجع المورد: كل كتلة تحتاج إلى نصها، وكل صورة خطوة تحتاج إلى وصفها.",
   "blockCancel": "إلغاء",
   "blockStep": "خطوة",
+  "storyTeamNote": "رسالة من الفريق",
   "communityStoriesLoading": "جارٍ تحميل القصص",
   "communityStoriesLoadFailed": "تعذّر تحميل القصص.",
   "communityStoriesEmptyTitle": "لا توجد قصص بعد",

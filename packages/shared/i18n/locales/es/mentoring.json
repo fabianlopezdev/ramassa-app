@@ -64,5 +64,9 @@
   "adminScheduleAction": "Programar y avisar",
   "adminRescheduleAction": "Actualizar y avisar",
   "adminCompleteAction": "Marcar como completada",
-  "adminSaving": "Guardando..."
+  "adminSaving": "Guardando...",
+  "requestTitle": "Solicitud de mentoría",
+  "requestNote": "Tu nota",
+  "preferredDay": "Preferencia: {{date}}",
+  "requestNotFound": "No hemos encontrado esta solicitud."
 }

@@ -147,6 +147,7 @@
   "invalidForm": "Revisa el recurso: cada bloque necesita su texto, y cada imagen de un paso, su descripción.",
   "blockCancel": "Cancelar",
   "blockStep": "Paso",
+  "storyTeamNote": "Mensaje del equipo",
   "communityStoriesLoading": "Cargando las historias",
   "communityStoriesLoadFailed": "No se han podido cargar las historias.",
   "communityStoriesEmptyTitle": "Todavía no hay historias",

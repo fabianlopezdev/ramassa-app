@@ -36,5 +36,6 @@
   "markInProgress": "Marcar en curso",
   "markResolved": "Resolver",
   "respondChat": "Responder en el chat",
-  "inboxEmpty": "No hay sugerencias con estos filtros."
+  "inboxEmpty": "No hay sugerencias con estos filtros.",
+  "answerInChat": "La respuesta llega al chat"
 }

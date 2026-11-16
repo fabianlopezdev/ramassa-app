@@ -64,5 +64,9 @@
   "adminScheduleAction": "زمان‌بندی و اطلاع‌رسانی",
   "adminRescheduleAction": "به‌روزرسانی و اطلاع‌رسانی",
   "adminCompleteAction": "علامت‌گذاری به عنوان تکمیل‌شده",
-  "adminSaving": "در حال ذخیره..."
+  "adminSaving": "در حال ذخیره...",
+  "requestTitle": "درخواست راهنمایی",
+  "requestNote": "یادداشت شما",
+  "preferredDay": "ترجیح: {{date}}",
+  "requestNotFound": "این درخواست پیدا نشد."
 }

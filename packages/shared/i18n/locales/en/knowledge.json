@@ -147,6 +147,7 @@
   "invalidForm": "Check the resource: every block needs its text, and every step image its description.",
   "blockCancel": "Cancel",
   "blockStep": "Step",
+  "storyTeamNote": "Message from the team",
   "communityStoriesLoading": "Loading stories",
   "communityStoriesLoadFailed": "The stories could not be loaded.",
   "communityStoriesEmptyTitle": "No stories yet",
