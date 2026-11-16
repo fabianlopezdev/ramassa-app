@@ -110,9 +110,6 @@ export default function AttendanceOccurrencesScreen() {
       >
         {tNav('team.today')}
       </Text>
-      <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-        {tNav('team.todayIntro')}
-      </Text>
       {hasSessions ? (
         <Text
           accessibilityRole="header"

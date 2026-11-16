@@ -152,11 +152,18 @@ function MentoringRow() {
   );
 }
 
+// Erasure requests are a segment of Participants; on tabs that is its tab.
 function ErasureRow() {
-  const { push } = useRouter();
+  const { navigate } = useRouter();
   const count = useOpenDeletionRequests().data?.length;
   return (
-    <CountRow queue="erasure" count={count} onPress={() => push('/deletion-requests' as Href)} />
+    <CountRow
+      queue="erasure"
+      count={count}
+      onPress={() =>
+        navigate({ pathname: '/participants', params: { segment: 'deletion-requests' } } as Href)
+      }
+    />
   );
 }
 
