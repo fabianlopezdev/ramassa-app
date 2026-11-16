@@ -20,7 +20,9 @@ describe('Phase 6 accessibility and i18n contract', () => {
     expect(pressableScale).toContain('minHeight: tokens.tapTarget.min');
     expect(pressableScale).toContain('minWidth: tokens.tapTarget.min');
     expect(pressableScale).toContain('[styles.minimumTarget, animatedStyle, style]');
-    expect(pressableScale).toContain("accessibilityRole === 'switch'");
+    // The platform press inside a sheet keeps the same minimum target (RAPP-812).
+    expect(pressableScale).toContain('[styles.minimumTarget, style]');
+    expect(pressableScale).toContain("role === 'switch'");
   });
 
   test('onboarding date fields stack before accessibility text reaches 200 percent', async () => {

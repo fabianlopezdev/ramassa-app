@@ -13,6 +13,7 @@ const nativeView = (props: ViewProps & { children?: ReactNode }) => {
 mock.module('@/lib/haptics/haptics', () => ({ playHaptic: haptic }));
 mock.module('react-native', () => ({
   View: nativeView,
+  Pressable: nativeView,
   I18nManager: { isRTL: false },
   StyleSheet: { create: (value: unknown) => value },
 }));

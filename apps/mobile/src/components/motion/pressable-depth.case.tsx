@@ -17,6 +17,7 @@ mock.module('@/lib/haptics/haptics', () => ({ playHaptic: haptic }));
 mock.module('react-native', () => ({
   I18nManager: direction,
   View: ({ children }: { children: ReactNode }) => createElement('div', null, children),
+  Pressable: ({ children }: { children: ReactNode }) => createElement('div', null, children),
 }));
 mock.module('react-native-reanimated', () => ({
   useReducedMotion: () => reduced,

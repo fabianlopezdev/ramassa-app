@@ -3,6 +3,7 @@ import { playHaptic } from '@/lib/haptics/haptics';
 import { useCallback, useMemo, type ReactNode } from 'react';
 import {
   I18nManager,
+  Pressable,
   View,
   type AccessibilityActionEvent,
   type AccessibilityRole,
@@ -19,6 +20,7 @@ import {
 } from 'react-native-reanimated';
 import { motionTokens } from '@ramassa/shared/tokens/motion';
 import { ACTIVATE_ACCESSIBILITY_ACTIONS } from './accessibility-actions';
+import { useIsInNativeModal } from './native-modal-scope';
 import { NativeWindAnimatedView } from './nativewind-animated-view';
 
 const PRESS_IN_TIMING = { duration: motionTokens.depthPress.inMs } as const;
@@ -45,7 +47,71 @@ interface PressableDepthProps {
 }
 
 /** A stationary touch target and shadow, with a face that sinks on the UI thread. */
-export function PressableDepth({
+/** One control, two touch paths: the gesture press on screens, the platform press in a sheet. */
+export function PressableDepth(props: PressableDepthProps) {
+  return useIsInNativeModal() ? (
+    <ModalPressableDepth {...props} />
+  ) : (
+    <GesturePressableDepth {...props} />
+  );
+}
+
+/**
+ * Inside a native Modal (see `NativeModalScope`): the same target, shadow and
+ * face on the platform `Pressable`. The face stays put and the press answers
+ * with the shared press opacity, since no UI-thread gesture reaches it.
+ */
+function ModalPressableDepth({
+  children,
+  shadow,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityLanguage,
+  accessibilityRole = 'button',
+  isSelected,
+  testID,
+  onPress,
+  haptic,
+  className,
+  style,
+  faceClassName,
+  faceStyle,
+}: PressableDepthProps) {
+  const handlePress = useCallback(() => {
+    if (haptic !== undefined) playHaptic(haptic);
+    onPress();
+  }, [haptic, onPress]);
+
+  return (
+    <Pressable
+      testID={testID}
+      accessibilityRole={accessibilityRole}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      accessibilityLanguage={accessibilityLanguage}
+      accessibilityState={
+        isSelected === undefined ? undefined : { selected: isSelected, checked: isSelected }
+      }
+      aria-checked={
+        accessibilityRole === 'radio' || accessibilityRole === 'checkbox' ? isSelected : undefined
+      }
+      onPress={handlePress}
+      className={`${className ?? ''} active:opacity-90`}
+      style={style}
+    >
+      {shadow}
+      <View
+        importantForAccessibility="no-hide-descendants"
+        className={faceClassName}
+        style={faceStyle}
+      >
+        {children}
+      </View>
+    </Pressable>
+  );
+}
+
+function GesturePressableDepth({
   children,
   shadow,
   accessibilityLabel,

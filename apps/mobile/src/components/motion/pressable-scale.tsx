@@ -2,6 +2,7 @@ import type { HapticFeedback } from '@/lib/haptics/haptic-policy';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useCallback, useMemo, type ReactNode } from 'react';
 import {
+  Pressable,
   StyleSheet,
   type AccessibilityActionEvent,
   type AccessibilityRole,
@@ -20,10 +21,13 @@ import {
 import { tokens } from '@ramassa/shared/tokens';
 import { motionTokens, resolvePressScale } from '@ramassa/shared/tokens/motion';
 import { ACTIVATE_ACCESSIBILITY_ACTIONS } from './accessibility-actions';
+import { useIsInNativeModal } from './native-modal-scope';
 import { NativeWindAnimatedView } from './nativewind-animated-view';
 
 const PRESS_TIMING_CONFIG = { duration: motionTokens.duration.fast } as const;
 const REDUCED_MOTION_TIMING_CONFIG = { duration: 0 } as const;
+/** `motionTokens.press.opacity` as a NativeWind press state, for the platform press. */
+const MODAL_PRESSED_CLASS = 'active:opacity-90';
 const styles = StyleSheet.create({
   minimumTarget: {
     minHeight: tokens.tapTarget.min,
@@ -90,7 +94,102 @@ export interface PressableScaleProps {
   readonly accessibilityLanguage?: string;
 }
 
-export function PressableScale({
+function hasCheckedState(role: AccessibilityRole): boolean {
+  return role === 'checkbox' || role === 'radio' || role === 'switch';
+}
+
+function resolveAccessibilityState({
+  accessibilityRole,
+  isBusy,
+  isExpanded,
+  isInteractionBlocked,
+  isSelected,
+}: {
+  readonly accessibilityRole: AccessibilityRole;
+  readonly isBusy: boolean;
+  readonly isExpanded: boolean | undefined;
+  readonly isInteractionBlocked: boolean;
+  readonly isSelected: boolean | undefined;
+}) {
+  return {
+    disabled: isInteractionBlocked,
+    busy: isBusy,
+    ...(hasCheckedState(accessibilityRole) ? { checked: Boolean(isSelected) } : {}),
+    ...(isSelected === undefined ? {} : { selected: isSelected }),
+    ...(isExpanded === undefined ? {} : { expanded: isExpanded }),
+  };
+}
+
+/** One control, two touch paths: the gesture press on screens, the platform press in a sheet. */
+export function PressableScale(props: PressableScaleProps) {
+  return useIsInNativeModal() ? (
+    <ModalPressableScale {...props} />
+  ) : (
+    <GesturePressableScale {...props} />
+  );
+}
+
+/**
+ * Inside a native Modal (see `NativeModalScope`): the platform `Pressable`
+ * with the same name, role, states, haptic and minimum target. The press
+ * answers with the shared press opacity, since no UI-thread gesture reaches it.
+ */
+function ModalPressableScale({
+  children,
+  onPress,
+  testID,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityRole = 'button',
+  haptic,
+  className,
+  style,
+  isDisabled = false,
+  isBusy = false,
+  isSelected,
+  isExpanded,
+  accessibilityLanguage,
+}: PressableScaleProps) {
+  const isInteractionBlocked = isDisabled || isBusy;
+  const handlePress = useCallback(() => {
+    if (isInteractionBlocked) return;
+    if (haptic !== undefined) playHaptic(haptic);
+    onPress();
+  }, [haptic, isInteractionBlocked, onPress]);
+  const composedStyle = useMemo(() => [styles.minimumTarget, style], [style]);
+  const accessibilityState = useMemo(
+    () =>
+      resolveAccessibilityState({
+        accessibilityRole,
+        isBusy,
+        isExpanded,
+        isInteractionBlocked,
+        isSelected,
+      }),
+    [accessibilityRole, isBusy, isExpanded, isInteractionBlocked, isSelected],
+  );
+
+  return (
+    <Pressable
+      testID={testID}
+      accessibilityRole={accessibilityRole}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      accessibilityLanguage={accessibilityLanguage}
+      accessibilityState={accessibilityState}
+      aria-busy={isBusy}
+      aria-checked={hasCheckedState(accessibilityRole) ? Boolean(isSelected) : undefined}
+      disabled={isInteractionBlocked}
+      onPress={handlePress}
+      style={composedStyle}
+      className={`${className ?? ''} ${MODAL_PRESSED_CLASS}`}
+    >
+      {children}
+    </Pressable>
+  );
+}
+
+function GesturePressableScale({
   children,
   onPress,
   testID,
@@ -153,17 +252,14 @@ export function PressableScale({
     [animatedStyle, style],
   );
   const accessibilityState = useMemo(
-    () => ({
-      disabled: isInteractionBlocked,
-      busy: isBusy,
-      ...(accessibilityRole === 'checkbox' ||
-      accessibilityRole === 'radio' ||
-      accessibilityRole === 'switch'
-        ? { checked: Boolean(isSelected) }
-        : {}),
-      ...(isSelected === undefined ? {} : { selected: isSelected }),
-      ...(isExpanded === undefined ? {} : { expanded: isExpanded }),
-    }),
+    () =>
+      resolveAccessibilityState({
+        accessibilityRole,
+        isBusy,
+        isExpanded,
+        isInteractionBlocked,
+        isSelected,
+      }),
     [accessibilityRole, isBusy, isExpanded, isInteractionBlocked, isSelected],
   );
 
@@ -181,13 +277,7 @@ export function PressableScale({
         onAccessibilityAction={handleAccessibilityAction}
         aria-disabled={isInteractionBlocked}
         aria-busy={isBusy}
-        aria-checked={
-          accessibilityRole === 'checkbox' ||
-          accessibilityRole === 'radio' ||
-          accessibilityRole === 'switch'
-            ? Boolean(isSelected)
-            : undefined
-        }
+        aria-checked={hasCheckedState(accessibilityRole) ? Boolean(isSelected) : undefined}
         accessibilityState={accessibilityState}
         style={composedStyle}
         className={className}
