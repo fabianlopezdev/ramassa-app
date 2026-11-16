@@ -93,8 +93,6 @@
   "contentUnavailable": "كتلة المحتوى هذه غير متاحة بعد.",
   "openVideo": "فتح الفيديو: {{title}}",
   "byAuthor": "بقلم {{name}}",
-  "quickStoryTitle": "شاركي قصتك",
-  "quickStoryBody": "أرسلي تجربتك ليراجعها الفريق.",
   "submissionTitle": "شاركي قصتك",
   "submissionIntro": "احكي تجربتك بكلماتك. سيراجعها الفريق قبل أن تتمكن أي مشاركة أخرى من رؤيتها.",
   "submissionFieldTitle": "عنوان القصة",

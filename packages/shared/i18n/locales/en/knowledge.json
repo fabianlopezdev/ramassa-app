@@ -93,8 +93,6 @@
   "contentUnavailable": "This content block is not available yet.",
   "openVideo": "Open video: {{title}}",
   "byAuthor": "By {{name}}",
-  "quickStoryTitle": "Share your story",
-  "quickStoryBody": "Send your experience for the team to review.",
   "submissionTitle": "Share your story",
   "submissionIntro": "Tell your experience in your own words. The team will review it before anyone else can see it.",
   "submissionFieldTitle": "Story title",

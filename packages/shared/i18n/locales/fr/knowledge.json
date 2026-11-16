@@ -93,8 +93,6 @@
   "contentUnavailable": "Ce bloc de contenu n’est pas encore disponible.",
   "openVideo": "Ouvre la vidéo : {{title}}",
   "byAuthor": "Par {{name}}",
-  "quickStoryTitle": "Partage ton histoire",
-  "quickStoryBody": "Envoie ton expérience pour que l’équipe la relise.",
   "submissionTitle": "Partage ton histoire",
   "submissionIntro": "Raconte ton expérience avec tes propres mots. L’équipe la relira avant que d’autres personnes puissent la voir.",
   "submissionFieldTitle": "Titre de l’histoire",
