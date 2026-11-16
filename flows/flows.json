@@ -61,7 +61,7 @@
       "title": "Enviament d'històries"
     },
     { "slug": "admin-announcements", "phase": "3", "surface": "admin", "title": "Gestió d'avisos" },
-    { "slug": "admin-events", "phase": "3", "surface": "admin", "title": "Gestió d'esdeveniments" },
+    { "slug": "admin-events", "phase": "3", "surface": "admin", "title": "Gestió d'activitats" },
     {
       "slug": "admin-knowledge-base",
       "phase": "3",
@@ -113,7 +113,7 @@
       "slug": "admin-conversations",
       "phase": "5b",
       "surface": "admin",
-      "title": "Gestió de converses"
+      "title": "Gestió de xats"
     },
 
     { "slug": "forum", "phase": "6", "surface": "mobile", "title": "Fòrum de la comunitat" },
@@ -158,7 +158,7 @@
       "surface": "mobile",
       "title": "Resposta a enquestes"
     },
-    { "slug": "admin-mentoring", "phase": "8", "surface": "admin", "title": "Gestió de mentories" },
+    { "slug": "admin-mentoring", "phase": "8", "surface": "admin", "title": "Gestió de mentoria" },
     {
       "slug": "admin-feedback-inbox",
       "phase": "8",

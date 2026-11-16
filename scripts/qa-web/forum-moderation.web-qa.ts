@@ -221,7 +221,7 @@ test('staff reviews a flag, manages its post, and restores it after dismissal', 
   await page
     .getByRole('listitem')
     .filter({ hasText: `${qaCategorySlug}-edited` })
-    .getByRole('button', { name: /delete|esborra/i })
+    .getByRole('button', { name: /delete|elimina/i })
     .click();
   await expect
     .poll(() =>
