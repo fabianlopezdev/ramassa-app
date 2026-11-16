@@ -27,8 +27,8 @@
   "searchEmpty": "No hay derivaciones que coincidan con esta búsqueda.",
   "status": {
     "pending": "Pendiente de acogida",
-    "active": "Participante activa",
-    "inactive": "Participante inactiva"
+    "active": "Activa",
+    "inactive": "Inactiva"
   },
   "open": "Abre la derivación",
   "back": "Vuelve a las derivaciones",

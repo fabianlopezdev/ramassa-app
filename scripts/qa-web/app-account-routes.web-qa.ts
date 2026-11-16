@@ -54,6 +54,8 @@ test.describe.serial('app areas by account type', () => {
     await completeSecondFactor(page, ENTITY_EMAIL);
     await expect(page.getByTestId('entity-home')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('tab', { name: 'Home', exact: true })).toHaveCount(0);
+    // Settings and sign-out open from the header button (RAPP-803).
+    await page.getByTestId('entity-account-button').first().click();
     await expect(page.getByTestId('entity-sign-out')).toBeVisible();
   });
 
