@@ -14,6 +14,13 @@ const statusSymbols: Record<AttendanceStatus | 'unmarked', SymbolViewProps['name
   excused: { ios: 'questionmark.circle.fill', android: 'help', web: 'help' },
 };
 
+// Her card, from a separate control beside the row (RAPP-799).
+const openCardSymbol: SymbolViewProps['name'] = {
+  ios: 'person.text.rectangle',
+  android: 'badge',
+  web: 'badge',
+};
+
 const statusColors: Record<AttendanceStatus | 'unmarked', string> = {
   unmarked: tokens.colors.neutral[500],
   present: tokens.colors.success,
@@ -54,6 +61,9 @@ interface AttendanceRowProps {
   readonly discardLabel: string;
   readonly onRetry: (playerId: string) => void;
   readonly onDiscard: (playerId: string) => void;
+  /** Present only for a reader who may open participant cards. */
+  readonly onOpenCard?: (playerId: string) => void;
+  readonly openCardLabel: string;
   readonly onMark: (
     playerId: string,
     status: AttendanceStatus | null,
@@ -77,6 +87,8 @@ export const AttendanceRow = memo(function AttendanceRow({
   discardLabel,
   onRetry,
   onDiscard,
+  onOpenCard,
+  openCardLabel,
   onMark,
 }: AttendanceRowProps) {
   const handlePress = useCallback(
@@ -85,53 +97,76 @@ export const AttendanceRow = memo(function AttendanceRow({
   );
   const handleRetry = useCallback(() => onRetry(playerId), [onRetry, playerId]);
   const handleDiscard = useCallback(() => onDiscard(playerId), [onDiscard, playerId]);
+  const handleOpenCard = useCallback(() => onOpenCard?.(playerId), [onOpenCard, playerId]);
   const visualStatus = status ?? 'unmarked';
 
   return (
     <View>
-      <PressableScale
-        testID={`attendance-player-${playerId}`}
-        accessibilityLabel={accessibilityLabel}
-        onPress={handlePress}
-        haptic="selection"
-        className="min-h-3xl flex-row items-center gap-md border-b border-neutral-200 bg-white px-lg py-md"
-      >
-        <SymbolView
-          accessible={false}
-          name={statusSymbols[visualStatus]}
-          size={tokens.fontSize['3xl']}
-          tintColor={statusColors[visualStatus]}
-        />
-        <View className="flex-1 gap-xs">
-          <Text className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}>
-            {name}
-          </Text>
-          <View className="flex-row flex-wrap items-center gap-sm">
-            <Text
-              testID={`attendance-status-${playerId}-${visualStatus}`}
-              className={`text-start text-sm font-semibold text-neutral-800 ${languageFontClass}`}
-            >
-              {statusLabel}
+      <View className="flex-row items-center border-b border-neutral-200 bg-white">
+        <PressableScale
+          testID={`attendance-player-${playerId}`}
+          accessibilityLabel={accessibilityLabel}
+          onPress={handlePress}
+          haptic="selection"
+          className={`min-h-3xl flex-1 flex-row items-center gap-md py-md ps-lg ${
+            onOpenCard === undefined ? 'pe-lg' : 'pe-sm'
+          }`}
+        >
+          <SymbolView
+            accessible={false}
+            name={statusSymbols[visualStatus]}
+            size={tokens.fontSize['3xl']}
+            tintColor={statusColors[visualStatus]}
+          />
+          <View className="flex-1 gap-xs">
+            <Text className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}>
+              {name}
             </Text>
-            {signedUp ? (
-              <Text className={`text-start text-xs text-neutral-600 ${languageFontClass}`}>
-                {signedUpLabel}
+            <View className="flex-row flex-wrap items-center gap-sm">
+              <Text
+                testID={`attendance-status-${playerId}-${visualStatus}`}
+                className={`text-start text-sm font-semibold text-neutral-800 ${languageFontClass}`}
+              >
+                {statusLabel}
+              </Text>
+              {signedUp ? (
+                <Text className={`text-start text-xs text-neutral-600 ${languageFontClass}`}>
+                  {signedUpLabel}
+                </Text>
+              ) : null}
+            </View>
+            {status !== null || syncState !== 'synced' ? (
+              <Text
+                testID={`attendance-sync-${playerId}-${syncState}`}
+                accessibilityLiveRegion="polite"
+                className={`text-start text-xs ${
+                  syncState === 'rejected' ? 'font-semibold text-error' : 'text-neutral-600'
+                } ${languageFontClass}`}
+              >
+                {syncLabel}
               </Text>
             ) : null}
           </View>
-          {status !== null || syncState !== 'synced' ? (
-            <Text
-              testID={`attendance-sync-${playerId}-${syncState}`}
-              accessibilityLiveRegion="polite"
-              className={`text-start text-xs ${
-                syncState === 'rejected' ? 'font-semibold text-error' : 'text-neutral-600'
-              } ${languageFontClass}`}
-            >
-              {syncLabel}
-            </Text>
-          ) : null}
-        </View>
-      </PressableScale>
+        </PressableScale>
+        {onOpenCard === undefined ? null : (
+          // Beside the row, outside its pressable: a tap on the row still cycles the mark.
+          <PressableScale
+            testID={`attendance-open-card-${playerId}`}
+            accessibilityRole="button"
+            accessibilityLabel={openCardLabel}
+            onPress={handleOpenCard}
+            haptic="tapLight"
+            className="me-sm min-h-recommended min-w-recommended items-center justify-center"
+          >
+            <SymbolView
+              accessible={false}
+              name={openCardSymbol}
+              size={tokens.fontSize['2xl']}
+              tintColor={tokens.colors.primary.dark}
+            />
+          </PressableScale>
+        )}
+      </View>
       {syncState === 'rejected' ? (
         // Outside the row's pressable: a tap on the row cycles the status, and
         // these two act on the refused change itself.

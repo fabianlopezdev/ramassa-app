@@ -690,5 +690,11 @@
       "done": "Respost",
       "dismissed": "Descartat"
     }
+  },
+  "segments": {
+    "label": "Seccions de Participants",
+    "players": "Jugadores",
+    "waiting": "{{label}}, {{count}} pendents",
+    "waiting_one": "{{label}}, 1 pendent"
   }
 }

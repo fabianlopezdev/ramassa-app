@@ -60,5 +60,6 @@
   "syncRejectedPermission": "ذخیره نشد. دیگر نمی‌توانید اینجا حضور و غیاب کنید.",
   "syncRetryAction": "دوباره امتحان کنید",
   "syncDiscardAction": "حذف",
-  "selectSession": "یک جلسه را برای حضور و غیاب انتخاب کنید."
+  "selectSession": "یک جلسه را برای حضور و غیاب انتخاب کنید.",
+  "openParticipantCard": "باز کردن کارت {{name}}"
 }

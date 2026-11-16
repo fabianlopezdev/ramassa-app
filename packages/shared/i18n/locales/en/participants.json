@@ -690,5 +690,11 @@
       "done": "Answered",
       "dismissed": "Dismissed"
     }
+  },
+  "segments": {
+    "label": "Participants sections",
+    "players": "Players",
+    "waiting": "{{label}}, {{count}} waiting",
+    "waiting_one": "{{label}}, 1 waiting"
   }
 }

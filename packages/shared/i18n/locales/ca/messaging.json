@@ -56,5 +56,6 @@
   "deliveryRejectedPermission": "No s'ha enviat. Ja no pots enviar missatges aquí.",
   "discard": "Treu-lo",
   "selectConversation": "Tria un xat.",
-  "noUnread": "Cap missatge sense llegir"
+  "noUnread": "Cap missatge sense llegir",
+  "openParticipantCard": "Obre la fitxa de {{name}}"
 }

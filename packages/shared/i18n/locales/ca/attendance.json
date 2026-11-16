@@ -60,5 +60,6 @@
   "syncRejectedPermission": "No s'ha desat. Ja no pots passar llista aquí.",
   "syncRetryAction": "Torna-ho a provar",
   "syncDiscardAction": "Treu-la",
-  "selectSession": "Tria una sessió per passar llista."
+  "selectSession": "Tria una sessió per passar llista.",
+  "openParticipantCard": "Obre la fitxa de {{name}}"
 }

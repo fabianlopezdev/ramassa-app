@@ -5,7 +5,9 @@ import { PERSON_AVATAR_SIZE, PersonAvatar } from '@/components/people/person-ava
 import { continuousCorners } from '@/lib/continuous-corners';
 import { messageListKeyboardDismissMode, staffConversationTitle } from '@/lib/message-thread-state';
 import { useOwnConversation, useStaffConversation } from '@/lib/messaging';
+import { canOpenParticipantCard, participantCardHref } from '@/lib/participant-segments';
 import { usePersonCards } from '@/lib/person-cards';
+import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
@@ -297,10 +299,15 @@ function MessageThreadView({
   title,
   controller,
   headerAccessory,
+  onTitlePress,
+  titlePressLabel,
 }: {
   readonly title: string;
   readonly controller: MessageThreadController;
   readonly headerAccessory?: ReactNode;
+  /** The staff thread with a player: her name opens her card (RAPP-799). */
+  readonly onTitlePress?: () => void;
+  readonly titlePressLabel?: string;
 }) {
   const { t, i18n } = useTranslation('messaging');
   const { user } = useAuth();
@@ -465,13 +472,30 @@ function MessageThreadView({
           <View className="border-b border-neutral-200 bg-white px-lg py-md">
             <View className="flex-row items-center gap-md">
               {headerAccessory}
-              <Text
-                selectable
-                accessibilityRole="header"
-                className={`flex-1 text-xl font-semibold text-neutral-900 ${fontClass}`}
-              >
-                {title}
-              </Text>
+              {onTitlePress === undefined ? (
+                <Text
+                  selectable
+                  accessibilityRole="header"
+                  className={`flex-1 text-xl font-semibold text-neutral-900 ${fontClass}`}
+                >
+                  {title}
+                </Text>
+              ) : (
+                <PressableScale
+                  testID="staff-message-open-card"
+                  accessibilityRole="button"
+                  accessibilityLabel={titlePressLabel ?? title}
+                  onPress={onTitlePress}
+                  haptic="tapLight"
+                  className="min-h-recommended flex-1 justify-center"
+                >
+                  <Text
+                    className={`text-start text-xl font-semibold text-primary-dark ${fontClass}`}
+                  >
+                    {title}
+                  </Text>
+                </PressableScale>
+              )}
             </View>
             {!isOnline ? (
               <Text
@@ -546,11 +570,17 @@ export function StaffMessageThread({
   /** False in the tablet split view, where the list stays beside it (RAPP-245). */
   readonly showBack?: boolean;
 }) {
-  const { back } = useRouter();
+  const { back, push } = useRouter();
   const { t } = useTranslation('messaging');
   const fontClass = useLanguageFontClass();
   const controller = useStaffConversation(conversationId);
   const participantTitle = staffConversationTitle(controller.peer, title);
+  const { permissions } = useAccountAccess();
+  const peer = controller.peer;
+  const playerId = peer?.role === 'player' && canOpenParticipantCard(permissions) ? peer.id : null;
+  const openCard = useCallback(() => {
+    if (playerId !== null) push(participantCardHref(playerId));
+  }, [playerId, push]);
   const backAction = (
     <PressableScale
       testID="staff-message-back"
@@ -567,6 +597,8 @@ export function StaffMessageThread({
       title={participantTitle}
       controller={controller}
       headerAccessory={showBack ? backAction : undefined}
+      onTitlePress={playerId === null ? undefined : openCard}
+      titlePressLabel={t('openParticipantCard', { name: participantTitle })}
     />
   );
 }

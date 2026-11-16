@@ -60,5 +60,6 @@
   "syncRejectedPermission": "No se ha guardado. Ya no puedes pasar lista aquí.",
   "syncRetryAction": "Volver a intentarlo",
   "syncDiscardAction": "Quitarla",
-  "selectSession": "Elige una sesión para pasar lista."
+  "selectSession": "Elige una sesión para pasar lista.",
+  "openParticipantCard": "Abrir la ficha de {{name}}"
 }

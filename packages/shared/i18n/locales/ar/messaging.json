@@ -56,5 +56,6 @@
   "deliveryRejectedPermission": "لم تُرسل. لم يعد بإمكانكِ إرسال رسائل هنا.",
   "discard": "إزالة",
   "selectConversation": "اختاري دردشة.",
-  "noUnread": "لا توجد رسائل غير مقروءة"
+  "noUnread": "لا توجد رسائل غير مقروءة",
+  "openParticipantCard": "افتح بطاقة {{name}}"
 }

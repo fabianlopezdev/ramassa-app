@@ -60,5 +60,6 @@
   "syncRejectedPermission": "Not saved. You can no longer take attendance here.",
   "syncRetryAction": "Try again",
   "syncDiscardAction": "Remove",
-  "selectSession": "Choose a session to take attendance."
+  "selectSession": "Choose a session to take attendance.",
+  "openParticipantCard": "Open {{name}}’s card"
 }

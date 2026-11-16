@@ -690,5 +690,11 @@
       "done": "Respondido",
       "dismissed": "Descartado"
     }
+  },
+  "segments": {
+    "label": "Secciones de Participantes",
+    "players": "Jugadoras",
+    "waiting": "{{label}}, {{count}} pendientes",
+    "waiting_one": "{{label}}, 1 pendiente"
   }
 }
