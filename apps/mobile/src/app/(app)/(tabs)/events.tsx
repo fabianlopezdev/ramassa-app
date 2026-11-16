@@ -11,8 +11,9 @@ import {
   type PlayerEventFilterOption,
 } from '@/components/events/event-filters';
 import { PageWidth } from '@/components/layout/content-width';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { composeContinuousViewStyle, continuousCorners } from '@/lib/continuous-corners';
+import { NavRow } from '@/components/layout/nav-row';
+import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
+import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import {
   addPrivateMentoringMarkedDates,
   buildCalendarLocale,
@@ -24,6 +25,7 @@ import { isNetworkStateOnline } from '@/lib/network-status';
 import { logger } from '@/lib/observability';
 import { usePlayerEvents } from '@/lib/player-events';
 import { usePlayerMentoringRequests } from '@/lib/player-mentoring';
+import { playerNavIcons } from '@/lib/player-nav-icons';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
@@ -94,7 +96,7 @@ function capacityLabel(row: PlayerEventOccurrence, t: TFunction) {
 }
 
 export default function EventsScreen() {
-  const { t, i18n } = useTranslation(['events', 'common', 'mentoring']);
+  const { t, i18n } = useTranslation(['events', 'common', 'mentoring', 'nav']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -200,7 +202,7 @@ export default function EventsScreen() {
         ),
         mentoringEntries,
         (date) =>
-          `${t('mentoring:calendarPrivateTitle')}. ${dateFormatter.format(
+          `${t('mentoring:title')}. ${dateFormatter.format(
             new Date(`${date}${UTC_MIDDAY_SUFFIX}`),
           )}`,
       ) as MarkedDates,
@@ -326,12 +328,13 @@ export default function EventsScreen() {
       onLoad={onListLoad}
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
+          <ProfilePhotoButton />
           <View className="gap-xs">
             <Text
               accessibilityRole="header"
               className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
             >
-              {t('playerTitle')}
+              {t('nav:tabs.events')}
             </Text>
             <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
               {t('playerIntro')}
@@ -358,41 +361,21 @@ export default function EventsScreen() {
             languageFontClass={languageFontClass}
             onSelect={setView}
           />
+          {/* Her mentoring appointments, a shortcut to Mentoria with the same
+              name and icon as its row in Xat (RAPP-793). */}
           {visibleMentoringEntries.length === 0 ? null : (
             <View className="gap-sm">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('mentoring:calendarPrivateTitle')}
-              </Text>
               {visibleMentoringEntries.map((entry) => (
-                <PressableScale
+                <NavRow
                   key={entry.id}
                   testID={`private-mentoring-calendar-${entry.id}`}
-                  accessibilityLabel={`${t('mentoring:calendarPrivateTitle')}. ${dateFormatter.format(
+                  icon={playerNavIcons.mentoring}
+                  label={t('mentoring:title')}
+                  detail={`${dateFormatter.format(new Date(entry.scheduledAt))} · ${timeFormatter.format(
                     new Date(entry.scheduledAt),
-                  )}. ${timeFormatter.format(new Date(entry.scheduledAt))}`}
+                  )}`}
                   onPress={openMentoring}
-                  haptic="tapLight"
-                  style={continuousCorners}
-                  className="min-h-recommended gap-xs rounded-lg border border-secondary bg-secondary-light p-md"
-                >
-                  <Text
-                    className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}
-                  >
-                    {t('mentoring:calendarPrivateTitle')}
-                  </Text>
-                  <Text
-                    className={`text-start text-md tabular-nums text-neutral-800 ${languageFontClass}`}
-                  >
-                    {dateFormatter.format(new Date(entry.scheduledAt))} ·{' '}
-                    {timeFormatter.format(new Date(entry.scheduledAt))}
-                  </Text>
-                  <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-                    {t('mentoring:calendarPrivateBody')}
-                  </Text>
-                </PressableScale>
+                />
               ))}
             </View>
           )}

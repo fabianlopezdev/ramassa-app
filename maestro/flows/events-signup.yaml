@@ -9,7 +9,7 @@ env:
   HOME_TITLE: '{{home:feedTitle}}'
   PUSH_DECLINE: '{{push:rationaleDecline}}'
   EVENTS_TAB: '{{nav:tabs.events}}'
-  EVENTS_TITLE: '{{events:playerTitle}}'
+  EVENTS_TITLE: '{{nav:tabs.events}}'
   LIST_VIEW_ACTION: '{{events:playerListViewAction}}'
   CALENDAR_VIEW_ACTION: '{{events:playerCalendarViewAction}}'
   CALENDAR_LABEL: '{{events:playerCalendarLabel}}'
@@ -168,7 +168,9 @@ env:
     timeout: 3000
 - tapOn: '^${EVENTS_TAB}$'
 - extendedWaitUntil:
-    visible: '.*${EVENTS_TITLE}.*'
+    visible:
+      text: '^${EVENTS_TITLE}$'
+      index: 1
     timeout: 120000
 - waitForAnimationToEnd:
     timeout: 3000

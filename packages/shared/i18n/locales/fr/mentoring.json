@@ -44,8 +44,6 @@
   "loadFailed": "Nous n’avons pas pu charger les demandes.",
   "retry": "Réessaie",
   "communityAction": "Demander un mentorat privé",
-  "calendarPrivateTitle": "Rendez-vous privé avec l’équipe",
-  "calendarPrivateBody": "Ce rendez-vous est visible seulement par toi et l’équipe.",
   "calendarOpen": "Ouvrir le mentorat privé",
   "adminTitle": "Mentorats",
   "adminIntro": "Programme les demandes privées et clôture les séances terminées.",

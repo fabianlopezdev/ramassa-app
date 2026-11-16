@@ -44,8 +44,6 @@
   "loadFailed": "We could not load the requests.",
   "retry": "Try again",
   "communityAction": "Request private mentoring",
-  "calendarPrivateTitle": "Private appointment with the team",
-  "calendarPrivateBody": "This appointment is visible only to you and the team.",
   "calendarOpen": "Open private mentoring",
   "adminTitle": "Mentoring",
   "adminIntro": "Schedule private requests and close completed sessions.",
