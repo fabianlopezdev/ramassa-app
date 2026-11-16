@@ -41,7 +41,8 @@ test('player feedback reaches the staff inbox, transitions, filters, and existin
 }) => {
   test.setTimeout(180_000);
   await signInPlayer(page);
-  await page.getByTestId('home-open-feedback').click();
+  await page.goto(`${playerOrigin}/chat`, { waitUntil: 'domcontentloaded' });
+  await page.getByTestId('chat-open-feedback').click();
   await expect(page.getByTestId('feedback-screen')).toBeVisible({ timeout: 30_000 });
 
   for (const type of types) {
