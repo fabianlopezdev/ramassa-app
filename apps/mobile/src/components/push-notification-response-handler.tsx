@@ -1,42 +1,72 @@
+import { areaHome } from '@/lib/account-area';
 import {
   pushDetailQueryRoot,
+  pushReferralUpdateId,
+  referralParticipantRoute,
   resolvePushDetailRoute,
   shouldOpenPushDetail,
-  type PushDetailQueryRoot,
+  type PushRouteAccess,
 } from '@/lib/push-deep-link';
+import { fetchReferralUpdateSubject } from '@/lib/push-referral-subject';
 import { resolvePushPlatform } from '@/lib/push-registration';
 import { queryClient } from '@/lib/query-client';
+import { supabase } from '@/lib/supabase';
+import { useAccountAccess } from '@/lib/use-account-access';
 import * as Notifications from 'expo-notifications';
-import { router, useRootNavigationState } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform } from 'react-native';
+import { router, useRootNavigationState, type Href } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Platform, useWindowDimensions } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 
 interface PendingPushDetail {
   readonly responseId: string;
-  readonly route: NonNullable<ReturnType<typeof resolvePushDetailRoute>>;
-  readonly queryRoot: PushDetailQueryRoot;
+  readonly data: unknown;
+}
+
+const KNOWN_AREAS = new Set(['player', 'team', 'entity']);
+
+/**
+ * The precise target of a referral update: her card, read through the update
+ * (the payload names only the update). Any failure keeps the closest screen.
+ */
+async function referralTarget(
+  data: unknown,
+  access: PushRouteAccess,
+  closest: Href,
+): Promise<Href> {
+  const updateId = pushReferralUpdateId(data);
+  if (updateId === null || closest !== '/participants') return closest;
+  try {
+    return referralParticipantRoute(await fetchReferralUpdateSubject(supabase, updateId), access);
+  } catch {
+    return closest;
+  }
 }
 
 export function PushNotificationResponseHandler() {
   const { session, needsOnboarding } = useAuth();
+  const { area, permissions } = useAccountAccess();
+  const { width } = useWindowDimensions();
   const hasSession = session !== null;
   const navigationState = useRootNavigationState();
   const [pending, setPending] = useState<PendingPushDetail | null>(null);
   const handledResponseIds = useRef(new Set<string>());
+  const access = useMemo<PushRouteAccess>(
+    () => ({ permissions, start: (areaHome(area, permissions, width) ?? '/') as Href }),
+    [area, permissions, width],
+  );
 
   const receiveResponse = useCallback((response: Notifications.NotificationResponse) => {
     const responseId = response.notification.request.identifier;
     if (handledResponseIds.current.has(responseId)) return;
 
-    const data = response.notification.request.content.data;
-    const route = resolvePushDetailRoute(data);
-    const queryRoot =
+    const data: unknown = response.notification.request.content.data;
+    const contentType =
       data === null || typeof data !== 'object'
-        ? null
-        : pushDetailQueryRoot((data as { readonly contentType?: unknown }).contentType);
-    if (route === null || queryRoot === null) return;
-    setPending({ responseId, route, queryRoot });
+        ? undefined
+        : (data as { readonly contentType?: unknown }).contentType;
+    if (pushDetailQueryRoot(contentType) === null) return;
+    setPending({ responseId, data });
   }, []);
 
   useEffect(() => {
@@ -64,17 +94,28 @@ export function PushNotificationResponseHandler() {
         hasSession,
         needsOnboarding,
         isNavigationReady: navigationState?.key !== undefined,
+        isAccessKnown: KNOWN_AREAS.has(area),
       })
     ) {
       return;
     }
 
     handledResponseIds.current.add(pending.responseId);
-    void queryClient.invalidateQueries({ queryKey: [pending.queryRoot], refetchType: 'all' });
-    router.push(pending.route);
     setPending(null);
     void Notifications.clearLastNotificationResponseAsync();
-  }, [hasSession, navigationState?.key, needsOnboarding, pending]);
+    const route = resolvePushDetailRoute(pending.data, access);
+    const queryRoot = pushDetailQueryRoot(
+      (pending.data as { readonly contentType?: unknown }).contentType,
+    );
+    if (route === null || queryRoot === null) return;
+    // A root is the first segment of a player key and a later one of a team
+    // key (`['team', userId, 'forum-moderation', ...]`).
+    void queryClient.invalidateQueries({
+      predicate: (query) => query.queryKey.includes(queryRoot),
+      refetchType: 'all',
+    });
+    void referralTarget(pending.data, access, route).then((target) => router.push(target));
+  }, [access, area, hasSession, navigationState?.key, needsOnboarding, pending]);
 
   return null;
 }
