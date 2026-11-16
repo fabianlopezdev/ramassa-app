@@ -6,6 +6,8 @@ import {
   knowledgeArticleInputSchema,
   nextStoryPublicationState,
   normalizeVideoEmbedUrl,
+  participantStoryEditableDraft,
+  resendParticipantStory,
   resolveLocalizedKnowledgeBlocks,
   translateKnowledgeBody,
   type KnowledgeBlock,
@@ -188,6 +190,102 @@ describe('participant story state machine', () => {
     expect(canTransitionStoryStatus('changes_requested', 'submitted')).toBe(true);
     expect(canTransitionStoryStatus('published', 'in_review')).toBe(false);
     expect(canTransitionStoryStatus('rejected', 'in_review')).toBe(false);
+  });
+});
+
+describe('a story the team sent back for changes (RAPP-814)', () => {
+  const sentBack: Parameters<typeof participantStoryEditableDraft>[0] = {
+    story_status: 'changes_requested',
+    submission_language: 'ar',
+    title: { ar: 'قصتي', ca: 'La meva història' },
+    body: {
+      ar: [
+        { type: 'paragraph', text: 'الفقرة الأولى' },
+        { type: 'paragraph', text: 'الفقرة الثانية' },
+      ],
+      ca: [{ type: 'paragraph', text: 'Primer paràgraf' }],
+    },
+  };
+
+  test('her edit starts from her own title and text, in the language she wrote it', () => {
+    expect(participantStoryEditableDraft(sentBack)).toEqual({
+      title: 'قصتي',
+      story: 'الفقرة الأولى\n\nالفقرة الثانية',
+    });
+  });
+
+  test('a step block keeps its title and text in her draft', () => {
+    expect(
+      participantStoryEditableDraft({
+        ...sentBack,
+        body: {
+          ar: [
+            {
+              type: 'step',
+              title: 'الخطوة',
+              text: 'النص',
+              imageUrl: null,
+              imageAlt: null,
+            },
+          ],
+        },
+      })?.story,
+    ).toBe('الخطوة\n\nالنص');
+  });
+
+  test('only a story waiting for changes, with a known language, is editable', () => {
+    for (const status of ['submitted', 'in_review', 'published', 'rejected'] as const) {
+      expect(participantStoryEditableDraft({ ...sentBack, story_status: status })).toBeNull();
+    }
+    expect(participantStoryEditableDraft({ ...sentBack, submission_language: null })).toBeNull();
+  });
+
+  test('the resend goes through the database function with her trimmed text', async () => {
+    let rpcName: string | undefined;
+    let rpcArgs: unknown;
+    const rpc = async (name: string, args: unknown) => {
+      rpcName = name;
+      rpcArgs = args;
+      return { data: null, error: null };
+    };
+    await resendParticipantStory({ rpc } as never, {
+      storyId: '5eed0000-0000-4000-8814-000000000001',
+      title: '  قصتي الجديدة ',
+      story: ' النص الجديد ',
+    });
+    expect(rpcName).toBe('resend_participant_story');
+    expect(rpcArgs).toEqual({
+      p_story_id: '5eed0000-0000-4000-8814-000000000001',
+      p_title: 'قصتي الجديدة',
+      p_story: 'النص الجديد',
+    });
+  });
+
+  test('a refused resend is a typed database error', async () => {
+    const rpc = async () => ({ data: null, error: { message: 'No story of hers is waiting' } });
+    await expect(
+      resendParticipantStory({ rpc } as never, {
+        storyId: '5eed0000-0000-4000-8814-000000000001',
+        title: 'Títol',
+        story: 'Text',
+      }),
+    ).rejects.toMatchObject({ code: 'DB-1' });
+  });
+
+  test('a blank title never reaches the database', async () => {
+    let called = false;
+    const rpc = async () => {
+      called = true;
+      return { data: null, error: null };
+    };
+    await expect(
+      resendParticipantStory({ rpc } as never, {
+        storyId: '5eed0000-0000-4000-8814-000000000001',
+        title: '   ',
+        story: 'Text',
+      }),
+    ).rejects.toBeDefined();
+    expect(called).toBe(false);
   });
 });
 

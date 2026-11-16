@@ -45,3 +45,12 @@ export const participantStorySubmissionSchema = z.object({
 });
 
 export type ParticipantStorySubmission = z.infer<typeof participantStorySubmissionSchema>;
+
+/** Her edited title and text for a story the team sent back for changes (RAPP-814). */
+export const participantStoryResendSchema = z.object({
+  storyId: z.uuid(),
+  title: storyTitleSchema,
+  story: storyTextSchema,
+});
+
+export type ParticipantStoryResend = z.infer<typeof participantStoryResendSchema>;

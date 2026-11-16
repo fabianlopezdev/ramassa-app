@@ -7755,6 +7755,10 @@ export type Database = {
         Args: { p_category_ids: string[] };
         Returns: undefined;
       };
+      resend_participant_story: {
+        Args: { p_story: string; p_story_id: string; p_title: string };
+        Returns: undefined;
+      };
       reset_second_factor: {
         Args: { p_profile_id: string };
         Returns: undefined;
