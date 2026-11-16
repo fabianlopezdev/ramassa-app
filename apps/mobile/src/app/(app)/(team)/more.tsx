@@ -56,6 +56,7 @@ export default function TeamMoreScreen() {
   const { t: tCommon } = useTranslation('common');
   const { t: tMentoring } = useTranslation('mentoring');
   const { t: tFeedback } = useTranslation('feedback');
+  const { t: tForum } = useTranslation('forum');
   const { t: tNotifications } = useTranslation('notifications');
   const { t: tSurveys } = useTranslation('surveys');
   const { t: tEntities } = useTranslation('entity-management');
@@ -80,7 +81,7 @@ export default function TeamMoreScreen() {
     stock: tParticipants('stock.title'),
     mentoring: tMentoring('adminTitle'),
     feedback: tFeedback('inboxTitle'),
-    moderation: t('team.moderation'),
+    moderation: tForum('moderationScreenTitle'),
     notifications: tNotifications('title'),
     surveys: tSurveys('title'),
     impact: tAdmin('impactReportTitle'),

@@ -72,7 +72,6 @@
       "organization": "Organization",
       "app": "The app"
     },
-    "moderation": "Moderation",
     "organizationData": "Organization details",
     "pending": "Pending",
     "pendingRow": {
