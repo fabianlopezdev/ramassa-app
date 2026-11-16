@@ -14,7 +14,7 @@ import { TeamSidebarItem } from '@/components/team/team-sidebar-item';
 import { useUnreadMessages } from '@/lib/messaging';
 import { nativeTabsHostProps } from '@/lib/native-tabs-direction';
 import { boundedTabSlotStyle } from '@/lib/tab-slot-style';
-import { isCompactSidebar, teamAreas, teamLayout } from '@/lib/team-shell';
+import { isCompactSidebar, showsToday, teamAreas, teamLayout } from '@/lib/team-shell';
 import { unreadBadgeProps } from '@/lib/unread-badge';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { usePathname } from 'expo-router';
@@ -71,7 +71,9 @@ export default function TeamShellLayout() {
   // The open entry, from the path: the trigger's own focus flag stayed false
   // on the iPad, so the sidebar showed no selected entry.
   const pathname = usePathname();
-  const hasAttendance = areas.includes('attendance');
+  // Avui is everyone's start (RAPP-795): sessions for attendance, and the
+  // "Pendent" list for every queue her own permissions open.
+  const hasToday = showsToday(permissions);
   const hasParticipants = areas.includes('participants');
   const hasContent = areas.includes('content');
   const hasMessages = areas.includes('messages');
@@ -90,7 +92,7 @@ export default function TeamShellLayout() {
             accessibilityLabel={t('team.navigation')}
             style={compact ? compactSidebarStyle : wideSidebarStyle}
           >
-            {hasAttendance ? (
+            {hasToday ? (
               <TabTrigger name="today" href="/today" asChild>
                 <TeamSidebarItem
                   compact={compact}
@@ -155,7 +157,7 @@ export default function TeamShellLayout() {
     shell = (
       <Stack screenOptions={hiddenHeaderScreenOptions}>
         <Stack.Screen name="home" />
-        <Stack.Protected guard={hasAttendance}>
+        <Stack.Protected guard={hasToday}>
           <Stack.Screen name="today" />
         </Stack.Protected>
         <Stack.Protected guard={hasParticipants}>
@@ -185,7 +187,7 @@ export default function TeamShellLayout() {
         labelVisibilityMode="labeled"
         tintColor={tokens.colors.primary.dark}
       >
-        <NativeTabs.Trigger name="today" hidden={!hasAttendance} testID="team-tab-today">
+        <NativeTabs.Trigger name="today" hidden={!hasToday} testID="team-tab-today">
           <NativeTabs.Trigger.Icon sf="sun.max.fill" md="today" />
           <NativeTabs.Trigger.Label>{t('team.today')}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>

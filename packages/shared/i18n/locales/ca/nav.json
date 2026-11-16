@@ -62,8 +62,28 @@
     "homeTitle": "Què vols fer?",
     "navigation": "Navegació de l'equip",
     "backToHome": "Torna a l'inici",
-    "todayIntro": "El que cal fer ara.",
     "participants": "Participants",
-    "content": "Contingut"
+    "content": "Contingut",
+    "moreGroups": {
+      "field": "Al camp",
+      "players": "Jugadores",
+      "communication": "Comunicació",
+      "data": "Dades",
+      "organization": "Organització",
+      "app": "L'app"
+    },
+    "moderation": "Moderació",
+    "organizationData": "Dades de l'organització",
+    "pending": "Pendent",
+    "pendingRow": {
+      "serviceReviews": "Serveis per revisar",
+      "stories": "Històries per revisar",
+      "reports": "Contingut denunciat",
+      "feedback": "Suggeriments nous",
+      "mentoring": "Peticions de mentoria",
+      "erasure": "Peticions d'esborrat",
+      "messages": "Xats sense llegir",
+      "stockAlerts": "Material sota zero"
+    }
   }
 }

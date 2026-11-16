@@ -34,7 +34,7 @@ test('a request waits on Today, is scheduled in Madrid time, then completed', as
     await signInPlayer(page, STAFF_EMAIL);
     await completeSecondFactor(page, STAFF_EMAIL);
     const card = page.getByTestId('today-mentoring');
-    await expect(card).toContainText(/: 1/, { timeout: 30_000 });
+    await expect(card).toContainText(/Mentoring requests\s*1/, { timeout: 30_000 });
     await card.click();
     const request = page.getByTestId(`mentoring-request-${id}`);
     await expect(request).toBeVisible({ timeout: 30_000 });

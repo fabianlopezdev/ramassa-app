@@ -242,8 +242,6 @@
     "cancel": "Cancel·lar",
     "returnFailed": "La devolució no s'ha desat. Comprova la connexió i torna-ho a provar.",
     "loadFailed": "No s'ha pogut carregar el seu material.",
-    "stockTitle": "Material",
-    "stockFine": "No hi ha estoc per revisar.",
     "stockAlert": "{{item}}: sota zero. Compta'l.",
     "saveFailed": "El lliurament no s'ha desat. Torna-ho a provar.",
     "detail": {

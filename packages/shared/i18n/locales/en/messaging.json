@@ -56,6 +56,5 @@
   "deliveryRejectedPermission": "Not sent. You can no longer send messages here.",
   "discard": "Remove",
   "selectConversation": "Choose a chat.",
-  "noUnread": "No unread messages",
   "openParticipantCard": "Open {{name}}’s card"
 }

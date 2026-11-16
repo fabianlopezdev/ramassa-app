@@ -1,14 +1,15 @@
 /**
  * The large-button start (RAPP-245) for a team member with one or two areas on
- * a phone: one button per area, then Settings and sign-out. Easier than a tab
- * bar for a coach whose whole job in the app is taking attendance.
+ * a phone: Avui (RAPP-795), one button per area, More whenever she holds one
+ * of its tools (RAPP-797), then Settings and sign-out. Easier than a tab bar
+ * for a coach whose whole job in the app is taking attendance.
  */
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useUnreadMessages } from '@/lib/messaging';
 import { useGuardedLogout } from '@/lib/sign-out-guard';
-import { teamAreas } from '@/lib/team-shell';
+import { hasMoreEntries, showsToday, teamAreas } from '@/lib/team-shell';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
@@ -51,14 +52,14 @@ function HomeButton({
 export default function TeamHomeButtonsScreen() {
   const signOut = useGuardedLogout();
   const { t } = useTranslation('nav');
-  const { t: tAttendance } = useTranslation('attendance');
   const { t: tMessaging } = useTranslation('messaging');
   const { t: tAuth } = useTranslation('auth');
   const { t: tProfile } = useTranslation('profile');
   const { t: tParticipants } = useTranslation('participants');
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
-  const areas = teamAreas(useAccountAccess().permissions);
+  const { permissions } = useAccountAccess();
+  const areas = teamAreas(permissions);
   const unread = useUnreadMessages().data ?? 0;
 
   return (
@@ -71,10 +72,10 @@ export default function TeamHomeButtonsScreen() {
           >
             {t('team.homeTitle')}
           </Text>
-          {areas.includes('attendance') ? (
+          {showsToday(permissions) ? (
             <HomeButton
               testID="team-home-attendance"
-              label={tAttendance('title')}
+              label={t('team.today')}
               onPress={() => push('/today' as Href)}
             />
           ) : null}
@@ -105,6 +106,13 @@ export default function TeamHomeButtonsScreen() {
               testID="team-home-stock"
               label={tParticipants('stock.title')}
               onPress={() => push('/stock' as Href)}
+            />
+          ) : null}
+          {hasMoreEntries(permissions) ? (
+            <HomeButton
+              testID="team-home-more"
+              label={t('team.more')}
+              onPress={() => push('/more' as Href)}
             />
           ) : null}
           <View className="gap-sm pt-md">

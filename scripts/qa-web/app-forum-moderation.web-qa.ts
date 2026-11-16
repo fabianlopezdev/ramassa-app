@@ -40,7 +40,7 @@ test('Today shows the open reports and opens the moderation screen', async ({ pa
   await signInPlayer(page, STAFF_EMAIL);
   await completeSecondFactor(page, STAFF_EMAIL);
   const card = page.getByTestId('today-forum');
-  await expect(card).toContainText('Pending: 1', { timeout: 30_000 });
+  await expect(card).toContainText(/Reported content\s*1/, { timeout: 30_000 });
   await card.click();
   await expect(page.getByTestId(`forum-report-post-${POST}`)).toBeVisible({ timeout: 30_000 });
 });

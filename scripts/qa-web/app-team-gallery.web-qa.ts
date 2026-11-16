@@ -23,8 +23,9 @@ const REMOVABLE_ITEM = '5eed0000-0000-4000-8014-000000000097';
 async function openGallery(page: Page): Promise<void> {
   await signInPlayer(page, STAFF_EMAIL);
   await completeSecondFactor(page, STAFF_EMAIL);
+  // More has one Moderation entry (RAPP-796); the gallery list opens by its route.
   await page.getByTestId('team-sidebar-more').click({ timeout: 30_000 });
-  await page.getByTestId('team-more-gallery').click({ timeout: 30_000 });
+  await page.goto(new URL('/team-gallery', page.url()).href);
   await expect(page.getByTestId('team-gallery-total')).toBeVisible({ timeout: 30_000 });
 }
 

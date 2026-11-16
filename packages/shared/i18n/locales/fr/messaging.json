@@ -56,6 +56,5 @@
   "deliveryRejectedPermission": "Non envoyé. Tu ne peux plus envoyer de messages ici.",
   "discard": "Retire-le",
   "selectConversation": "Choisis une discussion.",
-  "noUnread": "Aucun message non lu",
   "openParticipantCard": "Ouvre la fiche de {{name}}"
 }

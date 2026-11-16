@@ -1,39 +1,67 @@
 import { expect, test } from 'bun:test';
 import type { PermissionCode } from '@ramassa/shared/permissions';
-import { todaySections } from './today';
+import { pendingQueues } from './today';
 
-const none = new Set<PermissionCode>();
+const codes = (...list: PermissionCode[]) => new Set<PermissionCode>(list);
 
-test('Today shows a section per area she may use, field work first', () => {
-  expect(todaySections(['messages', 'attendance'], none)).toEqual(['attendance', 'messages']);
-  expect(todaySections(['messages'], none)).toEqual(['messages']);
-  expect(todaySections([], none)).toEqual([]);
+test('late loans show for every team member: the database returns her own or, for the storeroom, all', () => {
+  expect(pendingQueues(codes())).toEqual(['lateLoans']);
 });
 
-test('material shows for whoever counts stock or hands it out', () => {
-  expect(todaySections(['attendance'], new Set<PermissionCode>(['equipment.handover']))).toEqual([
-    'attendance',
-    'material',
+test('every queue in a fixed order, each with its own permission (RAPP-795)', () => {
+  expect(
+    pendingQueues(
+      codes(
+        'services.review',
+        'knowledge.publish',
+        'forum.moderate',
+        'feedback.view',
+        'mentoring.manage',
+        'participants.view',
+        'rgpd.erase',
+        'messages.inbox',
+        'equipment.count',
+      ),
+    ),
+  ).toEqual([
+    'serviceReviews',
+    'stories',
+    'reports',
+    'feedback',
+    'mentoring',
+    'erasure',
+    'messages',
+    'lateLoans',
+    'stockAlerts',
+    'monthlyCount',
   ]);
-  expect(todaySections([], new Set<PermissionCode>(['equipment.count']))).toEqual(['material']);
-  expect(todaySections([], new Set<PermissionCode>(['equipment.receive']))).toEqual([]);
 });
 
-test('waiting service reviews show for whoever reviews them (RAPP-345)', () => {
-  expect(
-    todaySections(['messages', 'content'], new Set<PermissionCode>(['services.review'])),
-  ).toEqual(['reviews', 'messages']);
-  expect(todaySections(['content'], new Set<PermissionCode>(['services.edit']))).toEqual([]);
+test('no queue depends on an attendance permission', () => {
+  expect(pendingQueues(codes('attendance.mark', 'attendance.reports'))).toEqual(['lateLoans']);
 });
 
-test('open forum reports show for whoever moderates the forum (RAPP-380)', () => {
-  expect(todaySections([], new Set<PermissionCode>(['forum.moderate', 'services.review']))).toEqual(
-    ['reviews', 'forum'],
-  );
+test('stories show for whoever edits or publishes the knowledge base', () => {
+  expect(pendingQueues(codes('knowledge.edit'))).toContain('stories');
+  expect(pendingQueues(codes('knowledge.publish'))).toContain('stories');
 });
 
-test('mentoring requests show for whoever manages them (RAPP-382)', () => {
-  expect(
-    todaySections(['messages'], new Set<PermissionCode>(['mentoring.manage', 'forum.moderate'])),
-  ).toEqual(['forum', 'mentoring', 'messages']);
+test('reported content shows for the forum or the gallery moderator', () => {
+  expect(pendingQueues(codes('forum.moderate'))).toContain('reports');
+  expect(pendingQueues(codes('gallery.moderate'))).toContain('reports');
+});
+
+test('erasure requests need the participants area, as their screen does', () => {
+  expect(pendingQueues(codes('rgpd.erase'))).not.toContain('erasure');
+  expect(pendingQueues(codes('rgpd.erase', 'participants.view'))).toContain('erasure');
+});
+
+test('stock below zero for whoever counts or hands out; the monthly count for whoever counts', () => {
+  expect(pendingQueues(codes('equipment.handover'))).toEqual(['lateLoans', 'stockAlerts']);
+  expect(pendingQueues(codes('equipment.count'))).toEqual([
+    'lateLoans',
+    'stockAlerts',
+    'monthlyCount',
+  ]);
+  expect(pendingQueues(codes('equipment.receive'))).toEqual(['lateLoans']);
 });

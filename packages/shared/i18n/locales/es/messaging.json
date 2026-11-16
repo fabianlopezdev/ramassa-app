@@ -56,6 +56,5 @@
   "deliveryRejectedPermission": "No se ha enviado. Ya no puedes enviar mensajes aquí.",
   "discard": "Quitarlo",
   "selectConversation": "Elige un chat.",
-  "noUnread": "Ningún mensaje sin leer",
   "openParticipantCard": "Abrir la ficha de {{name}}"
 }
