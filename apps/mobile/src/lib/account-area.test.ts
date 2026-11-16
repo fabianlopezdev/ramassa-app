@@ -323,8 +323,11 @@ test('each area starts on its own home; the player keeps the root', () => {
   const tablet = 1024;
   expect(areaHome('team', new Set(['attendance.mark', 'messages.inbox']), phone)).toBe('/home');
   expect(areaHome('team', new Set(['attendance.mark', 'messages.inbox']), tablet)).toBe('/today');
-  expect(areaHome('team', new Set(['messages.inbox']), tablet)).toBe('/messages');
-  expect(areaHome('team', new Set(['settings.branding']), phone)).toBe('/team-home');
+  // Avui is everyone's start (RAPP-795): the unread chats wait there.
+  expect(areaHome('team', new Set(['messages.inbox']), tablet)).toBe('/today');
+  // Only a More tool: the large-button home with its More button (RAPP-797).
+  expect(areaHome('team', new Set(['settings.branding']), phone)).toBe('/home');
+  expect(areaHome('team', new Set(['onboarding.design']), phone)).toBe('/team-home');
   expect(areaHome('entity', new Set(), phone)).toBe('/entity-home');
   expect(areaHome('unresolved', new Set(), phone)).toBe('/account-unresolved');
   expect(areaHome('player', new Set(), phone)).toBeNull();

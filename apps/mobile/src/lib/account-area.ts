@@ -18,7 +18,7 @@
 import type { PermissionCode } from '@ramassa/shared/permissions';
 import { PERMISSION_CATALOG } from '@ramassa/shared/permissions';
 import type { AppRole } from '@ramassa/shared/schemas';
-import { contentKinds, teamAreas, teamLayout, teamStart } from './team-shell';
+import { contentKinds, teamAreas, teamHome } from './team-shell';
 
 export type AccountArea = 'player' | 'team' | 'entity' | 'onboarding' | 'resolving' | 'unresolved';
 
@@ -232,10 +232,7 @@ export function areaHome(
   | '/entity-home'
   | '/account-unresolved'
   | null {
-  if (area === 'team') {
-    const areas = teamAreas(permissions);
-    return teamStart(areas, teamLayout({ areaCount: areas.length, width }));
-  }
+  if (area === 'team') return teamHome(permissions, width);
   if (area === 'entity') return '/entity-home';
   if (area === 'unresolved') return '/account-unresolved';
   return null;

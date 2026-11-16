@@ -14,6 +14,7 @@ import { useFinishOnboardingChain, useMyOnboardingChain } from '@/lib/onboarding
 import { OnboardingEntranceProvider } from '@/lib/onboarding-entrance';
 import { canPromptForPush } from '@/lib/push-prompt-eligibility';
 import { useSigningSession } from '@/lib/tablet-signing';
+import { hasTeamAppScreen } from '@/lib/team-shell';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePushRegistration } from '@/lib/use-push-registration';
@@ -57,6 +58,7 @@ function AppNavigator() {
   const { area, permissions, secondFactorWaived } = useAccountAccess();
   const team = teamScreens(permissions);
   const isTeam = area === 'team';
+  const hasAppScreen = hasTeamAppScreen(permissions);
   // Before any early return, so the authenticator screen is covered (RAPP-238).
   useStaffLanguage(isTeam || area === 'entity');
 
@@ -320,12 +322,7 @@ function AppNavigator() {
             holding the areas the person's permissions open. A session sheet or
             a conversation opens over it. With no area, team-home points to the
             web. */}
-          <Stack.Protected
-            guard={
-              isTeam &&
-              (team.attendance || team.participants || team.content || team.messages || team.stock)
-            }
-          >
+          <Stack.Protected guard={isTeam && hasAppScreen}>
             <Stack.Screen name="(team)" />
           </Stack.Protected>
           <Stack.Protected guard={isTeam && team.participants}>
@@ -417,8 +414,11 @@ function AppNavigator() {
           <Stack.Protected guard={isTeam && team.galleryModeration}>
             <Stack.Screen name="team-gallery" />
           </Stack.Protected>
-          <Stack.Protected guard={isTeam && team.forumModeration}>
+          {/* One Moderació for either permission (RAPP-796, decision D4). */}
+          <Stack.Protected guard={isTeam && (team.forumModeration || team.galleryModeration)}>
             <Stack.Screen name="forum-moderation" />
+          </Stack.Protected>
+          <Stack.Protected guard={isTeam && team.forumModeration}>
             <Stack.Screen name="forum-categories" />
           </Stack.Protected>
           <Stack.Protected guard={isTeam && team.attendance}>
@@ -443,16 +443,7 @@ function AppNavigator() {
             <Stack.Screen name="items" />
             <Stack.Screen name="item-type/[id]" />
           </Stack.Protected>
-          <Stack.Protected
-            guard={
-              isTeam &&
-              !team.attendance &&
-              !team.participants &&
-              !team.content &&
-              !team.messages &&
-              !team.stock
-            }
-          >
+          <Stack.Protected guard={isTeam && !hasAppScreen}>
             <Stack.Screen name="team-home" />
           </Stack.Protected>
           {/* A photo the desk asked for (RAPP-254); the database checks who. */}
