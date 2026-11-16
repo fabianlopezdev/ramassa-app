@@ -4,6 +4,10 @@
  * tablet it is a table with sortable columns, and her card opens beside it.
  * Everything comes through `list_participants`, so the database decides per
  * person which fields come back and which filters apply.
+ *
+ * Since RAPP-798 the invites and the deletion requests are segments beside the
+ * roster, each with its own permission and a count of what waits. A link can
+ * open one directly with `?segment=invites` or `?segment=deletion-requests`.
  */
 import {
   AnnouncementEmptyState,
@@ -11,12 +15,15 @@ import {
 } from '@/components/announcements/feed-states';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
+import { SegmentedControl } from '@/components/layout/segmented-control';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { DeletionRequestsPanel } from '@/components/participants/deletion-requests-panel';
 import { ParticipantCard } from '@/components/participants/participant-card';
 import {
   ParticipantFilterSheet,
   SORT_LABEL_KEYS,
 } from '@/components/participants/participant-filter-sheet';
+import { ParticipantInvitesPanel } from '@/components/participants/participant-invites-panel';
 import { TeamBackToHome } from '@/components/team/team-back-to-home';
 import { useTeamLayout } from '@/components/team/team-layout-context';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -25,11 +32,20 @@ import {
   nextSort,
   type ParticipantListSearch,
 } from '@/lib/participant-filters';
+import { useParticipantInvites } from '@/lib/participant-invites';
 import { useParticipantList } from '@/lib/participant-lookup';
+import {
+  participantCardHref,
+  participantSegments,
+  pendingInviteCount,
+  resolveParticipantSegment,
+  type ParticipantSegment,
+} from '@/lib/participant-segments';
+import { useOpenDeletionRequests } from '@/lib/rgpd';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
-import { useRouter, type Href } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -62,6 +78,21 @@ const listPaneStyle = { flex: 1 } as const;
 const DETAIL_MIN = 320;
 const DETAIL_MAX = 480;
 const keyExtractor = (row: ParticipantListRow) => row.id;
+const segmentScrollContentStyle = {
+  paddingHorizontal: tokens.spacing.lg,
+  paddingBottom: tokens.spacing['3xl'],
+} as const;
+const SEGMENT_LABEL_KEYS = {
+  players: 'segments.players',
+  invites: 'invitesTitle',
+  'deletion-requests': 'deletionRequestsTitle',
+} as const satisfies Record<ParticipantSegment, string>;
+// The existing automation hooks of the two header links these segments replace.
+const SEGMENT_TEST_IDS = {
+  players: 'participants-players',
+  invites: 'participants-invites',
+  'deletion-requests': 'participants-deletion-requests',
+} as const satisfies Record<ParticipantSegment, string>;
 // One width per column, shared by the header and the rows so they line up.
 // Cells are Views with a zero basis, so every row splits the width the same way.
 // A new sort or filter starts at the top. FlashList keeps the old rows in view by default.
@@ -194,6 +225,18 @@ export default function ParticipantListScreen() {
   const { permissions } = useAccountAccess();
   const canInvite = permissions.has('participants.invite');
   const canHandleRgpd = permissions.has('rgpd.erase');
+  const segments = useMemo(() => participantSegments(permissions), [permissions]);
+  const { segment: requestedSegment } = useLocalSearchParams<{ segment?: string }>();
+  const [chosenSegment, setChosenSegment] = useState<string | undefined>(requestedSegment);
+  useEffect(() => setChosenSegment(requestedSegment), [requestedSegment]);
+  const segment = resolveParticipantSegment(chosenSegment, segments);
+  // The counts share the panels' queries, so a segment opens with its rows ready.
+  const inviteRows = useParticipantInvites(canInvite).invites.data;
+  const waitingInvites = useMemo(
+    () => (inviteRows === undefined ? 0 : pendingInviteCount(inviteRows, new Date())),
+    [inviteRows],
+  );
+  const waitingDeletions = useOpenDeletionRequests(canHandleRgpd).data?.length ?? 0;
   const isSplit = useTeamLayout() === 'sidebar';
   const [search, setSearch] = useState<ParticipantListSearch>(DEFAULT_SEARCH);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -231,7 +274,7 @@ export default function ParticipantListScreen() {
   );
 
   const open = useCallback(
-    (id: string) => (isSplit ? setSelectedId(id) : push(`/participant/${id}` as Href)),
+    (id: string) => (isSplit ? setSelectedId(id) : push(participantCardHref(id))),
     [isSplit, push],
   );
   const renderItem = useCallback(
@@ -282,46 +325,44 @@ export default function ParticipantListScreen() {
   };
 
   const header = (
-    <View className="gap-sm px-lg pb-md pt-lg">
+    <View className="gap-md px-lg pb-md pt-lg">
       <TeamBackToHome />
-      <View className="flex-row flex-wrap items-center justify-between gap-sm">
-        <Text
-          accessibilityRole="header"
-          className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
-        >
-          {tNav('team.participants')}
-        </Text>
-        <View className="flex-row flex-wrap gap-md">
-          {canHandleRgpd ? (
-            <PressableScale
-              testID="participants-deletion-requests"
-              accessibilityRole="button"
-              accessibilityLabel={t('deletionRequestsTitle')}
-              onPress={() => push('/deletion-requests' as Href)}
-              haptic="tapLight"
-              className="min-h-recommended justify-center"
-            >
-              <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-                {t('deletionRequestsTitle')}
-              </Text>
-            </PressableScale>
-          ) : null}
-          {canInvite ? (
-            <PressableScale
-              testID="participants-invites"
-              accessibilityRole="button"
-              accessibilityLabel={t('invitesAction')}
-              onPress={() => push('/participant-invites' as Href)}
-              haptic="tapLight"
-              className="min-h-recommended justify-center"
-            >
-              <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-                {t('invitesAction')}
-              </Text>
-            </PressableScale>
-          ) : null}
-        </View>
-      </View>
+      <Text
+        accessibilityRole="header"
+        className={`text-start text-3xl font-bold text-neutral-900 ${fontClass}`}
+      >
+        {tNav('team.participants')}
+      </Text>
+      {segments.length > 1 ? (
+        <SegmentedControl
+          testID="participants-segments"
+          accessibilityLabel={t('segments.label')}
+          languageFontClass={fontClass}
+          selected={segment}
+          onSelect={setChosenSegment}
+          options={segments.map((key) => {
+            const label = t(SEGMENT_LABEL_KEYS[key]);
+            const count =
+              key === 'invites'
+                ? waitingInvites
+                : key === 'deletion-requests'
+                  ? waitingDeletions
+                  : 0;
+            return {
+              key,
+              label,
+              count,
+              testID: SEGMENT_TEST_IDS[key],
+              accessibilityLabel: count > 0 ? t('segments.waiting', { label, count }) : label,
+            };
+          })}
+        />
+      ) : null}
+    </View>
+  );
+
+  const rosterControls = (
+    <View className="gap-sm px-lg pb-md">
       <View className="flex-row items-center gap-sm">
         <TextInput
           testID="participant-search"
@@ -465,6 +506,24 @@ export default function ParticipantListScreen() {
     />
   );
 
+  // The invites and deletion requests scroll as one page under the shared header.
+  const segmentPanel =
+    segment === 'players' ? null : (
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={segmentScrollContentStyle}
+        keyboardShouldPersistTaps="handled"
+      >
+        {segment === 'invites' ? (
+          <ParticipantInvitesPanel />
+        ) : (
+          <DeletionRequestsPanel onOpenParticipant={open} />
+        )}
+      </ScrollView>
+    );
+  // A deletion request opens her card beside the list, as a roster row does.
+  const hasDetailPane = segment !== 'invites';
+
   return (
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['top', 'left', 'right']}>
       {isSplit ? (
@@ -474,37 +533,51 @@ export default function ParticipantListScreen() {
             onLayout={(event: LayoutChangeEvent) => setTableWidth(event.nativeEvent.layout.width)}
           >
             {header}
-            <View className="flex-row items-center gap-md border-b border-neutral-300 px-md">
-              {sortHeader('last_name', nameColumnStyle)}
-              {sortHeader('city', columnStyle)}
-              {sortHeader('reference_entity', columnStyle)}
-              {wide ? (
-                <View style={columnStyle}>
-                  <Text className={`text-start text-sm font-bold text-neutral-700 ${fontClass}`}>
-                    {t('columnStatus')}
-                  </Text>
+            {segmentPanel ?? (
+              <>
+                {rosterControls}
+                <View className="flex-row items-center gap-md border-b border-neutral-300 px-md">
+                  {sortHeader('last_name', nameColumnStyle)}
+                  {sortHeader('city', columnStyle)}
+                  {sortHeader('reference_entity', columnStyle)}
+                  {wide ? (
+                    <View style={columnStyle}>
+                      <Text
+                        className={`text-start text-sm font-bold text-neutral-700 ${fontClass}`}
+                      >
+                        {t('columnStatus')}
+                      </Text>
+                    </View>
+                  ) : null}
+                  {wide ? sortHeader('created_at', columnStyle) : null}
                 </View>
-              ) : null}
-              {wide ? sortHeader('created_at', columnStyle) : null}
-            </View>
-            {body}
-          </View>
-          <View style={detailStyle} className="border-s border-neutral-200 bg-white">
-            {selectedId === null ? (
-              <View className="flex-1 items-center justify-center p-lg">
-                <Text className={`text-center text-md text-neutral-600 ${fontClass}`}>
-                  {t('selectParticipant')}
-                </Text>
-              </View>
-            ) : (
-              <ParticipantCard key={selectedId} participantId={selectedId} />
+                {body}
+              </>
             )}
           </View>
+          {hasDetailPane ? (
+            <View style={detailStyle} className="border-s border-neutral-200 bg-white">
+              {selectedId === null ? (
+                <View className="flex-1 items-center justify-center p-lg">
+                  <Text className={`text-center text-md text-neutral-600 ${fontClass}`}>
+                    {t('selectParticipant')}
+                  </Text>
+                </View>
+              ) : (
+                <ParticipantCard key={selectedId} participantId={selectedId} />
+              )}
+            </View>
+          ) : null}
         </View>
       ) : (
         <PageWidth className="flex-1">
           {header}
-          {body}
+          {segmentPanel ?? (
+            <>
+              {rosterControls}
+              {body}
+            </>
+          )}
         </PageWidth>
       )}
       <ParticipantFilterSheet

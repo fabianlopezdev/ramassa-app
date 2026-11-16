@@ -22,12 +22,13 @@ import { mobileClientEnv, supabase } from './supabase';
 
 const SIGNED_OUT = 'signed-out';
 
-export function useOpenDeletionRequests() {
+/** `isEnabled` false skips the fetch for a person without `rgpd.erase`. */
+export function useOpenDeletionRequests(isEnabled = true) {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['participants', user?.id ?? SIGNED_OUT, 'deletion-requests'],
     queryFn: () => fetchDeletionRequests(supabase, 'open'),
-    enabled: user !== null,
+    enabled: isEnabled && user !== null,
   });
 }
 

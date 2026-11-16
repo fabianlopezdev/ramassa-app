@@ -21,7 +21,8 @@ import { supabase } from './supabase';
 
 const SIGNED_OUT = 'signed-out';
 
-export function useParticipantInvites() {
+/** `isEnabled` false skips the fetch for a person without `participants.invite`. */
+export function useParticipantInvites(isEnabled = true) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const queryKey = ['participants', user?.id ?? SIGNED_OUT, 'invites'];
@@ -29,7 +30,7 @@ export function useParticipantInvites() {
   const invites = useQuery({
     queryKey,
     queryFn: () => fetchInvites(supabase),
-    enabled: user !== null,
+    enabled: isEnabled && user !== null,
   });
   // With the questions staff confirmed she is asked (RAPP-618), saved in the
   // same database call as the invitation.
