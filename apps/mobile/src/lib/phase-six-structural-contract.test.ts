@@ -18,7 +18,11 @@ const playerFacingSources = [
 ] as const;
 
 const scrollableSources = [
-  ...playerFacingSources.slice(0, 6),
+  ...playerFacingSources.slice(0, 4),
+  'app/(app)/gallery/upload.tsx',
+  'components/gallery/gallery-grid.tsx',
+  'components/knowledge/community-story-list.tsx',
+  'components/community/community-share-sheet.tsx',
   'components/forum/forum-category-tabs.tsx',
   'components/forum/forum-flag-dialog.tsx',
 ] as const;

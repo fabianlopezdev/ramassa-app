@@ -1,10 +1,7 @@
 {
   "title": "Comunitat",
-  "intro": "Pregunta, comparteix i ajuda altres jugadores.",
   "categoriesLabel": "Categories del fòrum",
   "allCategories": "Tot",
-  "newPost": "Escriu una publicació",
-  "teamChat": "Xat privat amb l'equip",
   "offline": "Sense connexió. Estàs veient les publicacions desades al telèfon.",
   "offlineWrite": "Connecta't a internet per publicar, respondre, editar o esborrar.",
   "loading": "S'està carregant la comunitat",
@@ -113,5 +110,13 @@
   "categorySave": "Desa la categoria",
   "gallery": "Galeria",
   "categorySlugHelp": "Lletres minúscules, números i guions. Es crea a partir del nom en català.",
-  "categorySlugInvalid": "L'identificador només pot tenir lletres minúscules, números i guions."
+  "categorySlugInvalid": "L'identificador només pot tenir lletres minúscules, números i guions.",
+  "share": "Comparteix",
+  "sharePost": "Una publicació",
+  "shareMedia": "Una foto o un vídeo",
+  "shareStory": "La meva història",
+  "segmentsLabel": "Seccions de la comunitat",
+  "segmentForum": "Fòrum",
+  "segmentGallery": "Galeria",
+  "segmentStories": "Històries"
 }

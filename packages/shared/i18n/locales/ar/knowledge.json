@@ -150,5 +150,9 @@
   "blockEmpty": "كتلة فارغة",
   "invalidForm": "راجع المورد: كل كتلة تحتاج إلى نصها، وكل صورة خطوة تحتاج إلى وصفها.",
   "blockCancel": "إلغاء",
-  "blockStep": "خطوة"
+  "blockStep": "خطوة",
+  "communityStoriesLoading": "جارٍ تحميل القصص",
+  "communityStoriesLoadFailed": "تعذّر تحميل القصص.",
+  "communityStoriesEmptyTitle": "لا توجد قصص بعد",
+  "communityStoriesEmptyBody": "عندما ينشر الفريق قصة، ستجدينها هنا."
 }

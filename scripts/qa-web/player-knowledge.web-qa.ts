@@ -35,8 +35,9 @@ test('browses a structured resource and submits a consented story for review', a
   await expect(page.getByRole('heading', { name: 'Protect your account' })).toBeVisible();
   await expect(page.getByRole('heading', { name: '1. Use a secure code' })).toBeVisible();
 
-  await page.goto(playerOrigin, { waitUntil: 'domcontentloaded', timeout: 120_000 });
-  await page.getByTestId('open-story-submission').click();
+  await page.goto(`${playerOrigin}/community`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+  await page.getByTestId('community-share').click();
+  await page.getByTestId('community-share-story').click();
   await expect(page.getByTestId('story-submission-screen')).toBeVisible({ timeout: 30_000 });
   await page.getByTestId('story-title-input').fill(runTag);
   await page

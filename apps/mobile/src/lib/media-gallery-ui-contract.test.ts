@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from 'bun:test';
 
-const gallery = readFileSync(new URL('../app/(app)/gallery/index.tsx', import.meta.url), 'utf8');
+const gallery = readFileSync(
+  new URL('../components/gallery/gallery-grid.tsx', import.meta.url),
+  'utf8',
+);
 const galleryTile = readFileSync(
   new URL('../components/gallery/gallery-tile.tsx', import.meta.url),
   'utf8',

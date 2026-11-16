@@ -87,7 +87,9 @@ env:
       id: forum-board
     timeout: 30000
 - tapOn:
-    id: forum-new-post
+    id: community-share
+- tapOn:
+    id: community-share-post
 - extendedWaitUntil:
     visible:
       id: forum-create-screen
@@ -246,7 +248,9 @@ env:
     timeout: 60000
 - assertVisible: '^${ARABIC_TITLE}$'
 - tapOn:
-    id: forum-new-post
+    id: community-share
+- tapOn:
+    id: community-share-post
 - extendedWaitUntil:
     visible:
       id: forum-create-screen

@@ -7,12 +7,16 @@ const readMobileSource = (path: string) => readFile(`${mobileRoot}${path}`, 'utf
 
 describe('RAPP-65 player hardening contract', () => {
   test('gallery list has distinct shared loading, empty, offline, and taxonomy error states', async () => {
-    const gallery = await readMobileSource('app/(app)/gallery/index.tsx');
+    // The grid owns its states; each screen that renders it owns the offline banner.
+    const gallery = await readMobileSource('components/gallery/gallery-grid.tsx');
+    const galleryRoute = await readMobileSource('app/(app)/gallery/index.tsx');
+    const community = await readMobileSource('app/(app)/(tabs)/community.tsx');
 
     expect(gallery).toContain('AnnouncementFeedSkeleton');
     expect(gallery).toContain('AnnouncementEmptyState');
     expect(gallery).toContain('AnnouncementFeedError');
-    expect(gallery).toContain('OfflineBanner');
+    expect(galleryRoute).toContain('OfflineBanner');
+    expect(community).toContain('OfflineBanner');
     expect(gallery).toContain('toAppError(query.error).code');
     expect(gallery).not.toContain("t(query.isPending ? 'loading' : 'empty')");
   });

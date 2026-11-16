@@ -150,5 +150,9 @@
   "blockEmpty": "Empty block",
   "invalidForm": "Check the resource: every block needs its text, and every step image its description.",
   "blockCancel": "Cancel",
-  "blockStep": "Step"
+  "blockStep": "Step",
+  "communityStoriesLoading": "Loading stories",
+  "communityStoriesLoadFailed": "The stories could not be loaded.",
+  "communityStoriesEmptyTitle": "No stories yet",
+  "communityStoriesEmptyBody": "When the team publishes a story, you will find it here."
 }
