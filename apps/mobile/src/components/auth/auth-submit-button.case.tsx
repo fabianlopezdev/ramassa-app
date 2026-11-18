@@ -3,6 +3,7 @@ import { afterAll, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
 
 const box = ({ children }: { children?: ReactNode }) => createElement('div', null, children);
+mock.module('@/components/icons/icon', () => ({ Icon: () => null }));
 mock.module('react-native', () => ({
   View: box,
   Text: ({ children, className }: { children: ReactNode; className: string }) =>

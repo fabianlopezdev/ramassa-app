@@ -3,6 +3,7 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import {
   CommunityShareSheet,
   type CommunityShareChoice,
@@ -10,7 +11,6 @@ import {
 import { ForumCategoryFilters } from '@/components/forum/forum-category-tabs';
 import { ForumPostCard } from '@/components/forum/forum-post-card';
 import { GalleryGrid } from '@/components/gallery/gallery-grid';
-import { Icon } from '@/components/icons/icon';
 import { CommunityStoryList } from '@/components/knowledge/community-story-list';
 import { PageWidth } from '@/components/layout/content-width';
 import { raisedToneFromColorName, type RaisedTone } from '@/components/layout/raised-surface';
@@ -18,10 +18,9 @@ import {
   SegmentedControl,
   type SegmentedControlOption,
 } from '@/components/layout/segmented-control';
+import { TabScreenAction } from '@/components/layout/tab-screen-action';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
 import { useForumCategories, useForumPosts } from '@/lib/player-forum';
@@ -32,7 +31,7 @@ import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import {
@@ -92,7 +91,20 @@ export default function CommunityScreen() {
     [categoriesQuery.data],
   );
   const tabInsets = usePlayerTabContentInsets();
-  const contentStyle = useMemo(() => [styles.content, tabInsets], [tabInsets]);
+  // Share is pinned above the tab bar; the list keeps its height free at the end.
+  const [shareActionHeight, setShareActionHeight] = useState(0);
+  const contentStyle = useMemo(
+    () => [
+      styles.content,
+      tabInsets,
+      {
+        paddingBottom:
+          (('paddingBottom' in tabInsets ? tabInsets.paddingBottom : undefined) ??
+            tokens.spacing['3xl']) + shareActionHeight,
+      },
+    ],
+    [shareActionHeight, tabInsets],
+  );
   const openPost = useCallback(
     (id: string) => push({ pathname: '/forum/[id]', params: { id } } as unknown as Href),
     [push],
@@ -197,24 +209,6 @@ export default function CommunityScreen() {
     <View className="gap-lg pb-lg">
       <PageWidth className="gap-md">
         <PlayerTabHeader title={t('nav:tabs.community')} />
-        <PressableScale
-          testID="community-share"
-          accessibilityLabel={t('forum:share')}
-          onPress={openShareSheet}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended flex-row items-center justify-center gap-sm rounded-md bg-primary px-lg"
-        >
-          <Icon
-            name="plus"
-            weight="boldDuotone"
-            size={tokens.fontSize.xl}
-            color={tokens.colors.white}
-          />
-          <Text className={`text-md font-bold text-white ${languageFontClass}`}>
-            {t('forum:share')}
-          </Text>
-        </PressableScale>
         <SegmentedControl
           testID="community-segments"
           options={segmentOptions}
@@ -262,6 +256,14 @@ export default function CommunityScreen() {
   return (
     <>
       {segmentList}
+      <TabScreenAction testID="community-share-action" onContentHeight={setShareActionHeight}>
+        <AuthSubmitButton
+          testID="community-share"
+          label={t('forum:share')}
+          icon="plus"
+          onPress={openShareSheet}
+        />
+      </TabScreenAction>
       <CommunityShareSheet
         visible={isShareSheetOpen}
         isPostDisabled={isOffline}

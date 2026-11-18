@@ -5,8 +5,9 @@ import { describe, expect, test } from 'bun:test';
 const mobileRoot = fileURLToPath(new URL('../', import.meta.url));
 const readMobileSource = (path: string) => readFile(`${mobileRoot}${path}`, 'utf8');
 
+// Comunitat's own presses moved into shared components (RAPP-852): the raised
+// cards, the filter chips and the onboarding call to action.
 const playerFacingSources = [
-  'app/(app)/(tabs)/community.tsx',
   'app/(app)/forum/[id].tsx',
   'app/(app)/forum/create.tsx',
   'app/(app)/gallery/[id].tsx',
@@ -17,7 +18,10 @@ const playerFacingSources = [
 ] as const;
 
 const scrollableSources = [
-  ...playerFacingSources.slice(0, 4),
+  'app/(app)/(tabs)/community.tsx',
+  'app/(app)/forum/[id].tsx',
+  'app/(app)/forum/create.tsx',
+  'app/(app)/gallery/[id].tsx',
   'app/(app)/gallery/upload.tsx',
   'components/gallery/gallery-grid.tsx',
   'components/knowledge/community-story-list.tsx',
