@@ -5,7 +5,7 @@
  *
  * - Per fer: counts until she completes or puts off the form or survey.
  * - Avisos: an announcement counts until she opens it (RAPP-848).
- * - Pròxima activitat: a new activity counts until she opens it or signs up.
+ * - Propera activitat: a new activity counts until she opens it or signs up.
  */
 
 import { pickNextPlayerActivity } from '@/lib/home-next-activity';

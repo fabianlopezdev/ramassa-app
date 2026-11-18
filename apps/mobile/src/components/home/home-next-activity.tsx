@@ -1,5 +1,5 @@
 /**
- * Pròxima activitat on Inici (RAPP-790): the Activitats card for her next
+ * Propera activitat on Inici (RAPP-790): the Activitats card for her next
  * activity, opening the same activity detail. No upcoming activity: the card
  * is not rendered.
  */

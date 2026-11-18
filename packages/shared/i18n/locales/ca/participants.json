@@ -580,7 +580,7 @@
   "inviteQuestionNotAsked": "No se li pregunta",
   "inviteQuestionAskedWhenItApplies": "Se li pregunta quan li correspon",
   "testScenarioTitle": "Escenari de prova",
-  "testScenarioIntro": "Tria la seva situació i després obre l'app com si fossis ella. L'app ho mostra el pròxim cop que s'obri.",
+  "testScenarioIntro": "Tria la seva situació i després obre l'app com si fossis ella. L'app ho mostra el proper cop que s'obri.",
   "testScenarioTermsTitle": "Condicions de l'app",
   "testScenarioTermsAccepted": "Acceptades: ja ha entrat i no passa per la inscripció.",
   "testScenarioTermsNot": "No acceptades: passa per la inscripció.",
