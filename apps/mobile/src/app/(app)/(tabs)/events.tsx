@@ -31,6 +31,7 @@ import { usePlayerEvents } from '@/lib/player-events';
 import { usePlayerMentoringRequests } from '@/lib/player-mentoring';
 import { playerNavIcons } from '@/lib/player-nav-icons';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
@@ -39,7 +40,6 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { Calendar, LocaleConfig, type DateData } from 'react-native-calendars';
 import type { MarkedDates } from 'react-native-calendars/src/types';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toAppError } from '@ramassa/shared/errors';
 import {
   filterPlayerEventOccurrences,
@@ -250,19 +250,8 @@ export default function EventsScreen() {
     [dateFormatter, language, languageFontClass, openOccurrence, t, timeFormatter],
   );
 
-  const insets = useSafeAreaInsets();
-  const contentContainerStyle = useMemo(
-    () => [
-      styles.content,
-      process.env.EXPO_OS === 'android'
-        ? {
-            paddingTop: insets.top + tokens.spacing.lg,
-            paddingBottom: insets.bottom + tokens.spacing['3xl'],
-          }
-        : { paddingTop: tokens.spacing.lg },
-    ],
-    [insets.bottom, insets.top],
-  );
+  const tabInsets = usePlayerTabContentInsets();
+  const contentContainerStyle = useMemo(() => [styles.content, tabInsets], [tabInsets]);
   const onRefresh = useCallback(
     () => void Promise.all([refetch(), refetchMentoring()]),
     [refetch, refetchMentoring],

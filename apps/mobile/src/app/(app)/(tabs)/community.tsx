@@ -24,6 +24,7 @@ import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
 import { useForumCategories, useForumPosts } from '@/lib/player-forum';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
@@ -31,7 +32,6 @@ import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import {
@@ -80,7 +80,6 @@ export default function CommunityScreen() {
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const { session } = useAuth();
-  const insets = useSafeAreaInsets();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
   const categoriesQuery = useForumCategories();
@@ -100,18 +99,8 @@ export default function CommunityScreen() {
     [postsQuery.data],
   );
   const personCards = usePersonCards(authorIds);
-  const contentStyle = useMemo(
-    () => [
-      styles.content,
-      process.env.EXPO_OS === 'android'
-        ? {
-            paddingTop: insets.top + tokens.spacing.lg,
-            paddingBottom: insets.bottom + tokens.spacing['3xl'],
-          }
-        : { paddingTop: tokens.spacing.lg },
-    ],
-    [insets.bottom, insets.top],
-  );
+  const tabInsets = usePlayerTabContentInsets();
+  const contentStyle = useMemo(() => [styles.content, tabInsets], [tabInsets]);
   const openPost = useCallback(
     (id: string) => push({ pathname: '/forum/[id]', params: { id } } as unknown as Href),
     [push],

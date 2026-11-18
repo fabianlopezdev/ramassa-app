@@ -26,13 +26,13 @@ import { logger } from '@/lib/observability';
 import { usePlayerEvents } from '@/lib/player-events';
 import { usePlayerSurveys } from '@/lib/player-surveys';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   filterAndOrderPlayerAnnouncements,
   type AnnouncementListRow,
@@ -157,19 +157,8 @@ export default function HomeScreen() {
     [announcements.length],
   );
 
-  const insets = useSafeAreaInsets();
-  const contentContainerStyle = useMemo(
-    () => [
-      styles.content,
-      process.env.EXPO_OS === 'android'
-        ? {
-            paddingTop: insets.top + tokens.spacing.lg,
-            paddingBottom: insets.bottom + tokens.spacing['3xl'],
-          }
-        : { paddingTop: tokens.spacing.lg },
-    ],
-    [insets.bottom, insets.top],
-  );
+  const tabInsets = usePlayerTabContentInsets();
+  const contentContainerStyle = useMemo(() => [styles.content, tabInsets], [tabInsets]);
 
   if (isPending && data === undefined) {
     return (

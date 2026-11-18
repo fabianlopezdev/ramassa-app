@@ -12,11 +12,11 @@ import { latestOpenMentoringRequest } from '@/lib/player-chat-tab';
 import { usePlayerMentoringRequests } from '@/lib/player-mentoring';
 import { playerNavIcons } from '@/lib/player-nav-icons';
 import { formatUnreadBadge } from '@/lib/unread-badge';
+import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MentoringStatus } from '@ramassa/shared/mentoring';
 
 const MENTORING_STATUS_KEYS: Readonly<Record<MentoringStatus, string>> = {
@@ -35,16 +35,7 @@ export default function ChatTabScreen() {
     () => latestOpenMentoringRequest(mentoring.data ?? []),
     [mentoring.data],
   );
-  const insets = useSafeAreaInsets();
-  // Android only: on iOS the automatic inset adjustment already clears the
-  // status bar and the floating tab bar.
-  const androidEdgeInsets = useMemo(
-    () =>
-      process.env.EXPO_OS === 'android'
-        ? { paddingTop: insets.top, paddingBottom: insets.bottom }
-        : undefined,
-    [insets.top, insets.bottom],
-  );
+  const tabInsets = usePlayerTabContentInsets();
   const openTeamChat = useCallback(() => push('/team-chat' as Href), [push]);
   const openMentoring = useCallback(() => push('/mentoring' as Href), [push]);
   const openFeedback = useCallback(() => push('/feedback' as Href), [push]);
@@ -53,8 +44,8 @@ export default function ChatTabScreen() {
     <ScrollView
       testID="player-chat-tab"
       className="flex-1 bg-neutral-50"
-      contentContainerClassName="grow p-lg"
-      contentContainerStyle={androidEdgeInsets}
+      contentContainerClassName="grow px-lg pb-lg"
+      contentContainerStyle={tabInsets}
       contentInsetAdjustmentBehavior="automatic"
     >
       <PageWidth className="gap-lg">

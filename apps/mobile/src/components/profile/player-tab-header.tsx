@@ -10,6 +10,7 @@
 import { PageWidth } from '@/components/layout/content-width';
 import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { PLAYER_TAB_TOP_GAP } from '@/lib/use-player-tab-content-insets';
 import { useMemo, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,10 +39,13 @@ export function PlayerTabStateFrame({
   readonly children: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
-  const topInset = useMemo(() => ({ paddingTop: insets.top }), [insets.top]);
+  const topInset = useMemo(
+    () => ({ paddingTop: insets.top + PLAYER_TAB_TOP_GAP }),
+    [insets.top],
+  );
   return (
     <View className="flex-1 bg-white" style={topInset}>
-      <View className="px-lg pt-lg">
+      <View className="px-lg">
         <PageWidth>
           <PlayerTabHeader title={title} />
         </PageWidth>

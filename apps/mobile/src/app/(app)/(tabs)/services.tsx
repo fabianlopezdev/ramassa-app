@@ -19,6 +19,7 @@ import {
   type PlayerServiceFilterSelection,
 } from '@/lib/player-services';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
@@ -26,7 +27,6 @@ import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toAppError } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import type { PlayerServiceRow } from '@ramassa/shared/services';
@@ -74,7 +74,6 @@ export default function ServicesScreen() {
   const { push } = useRouter();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
-  const insets = useSafeAreaInsets();
   const categoriesQuery = usePlayerServiceCategories();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [filters, setFilters] = useState<PlayerServiceFilterSelection>(EMPTY_FILTERS);
@@ -88,18 +87,8 @@ export default function ServicesScreen() {
   const selectedFilterCount = activeFilterCount(filters);
   const selectedCategoryName =
     category === null ? undefined : resolveLocalizedText(category.name, language);
-  const contentContainerStyle = useMemo(
-    () => [
-      styles.listContent,
-      process.env.EXPO_OS === 'android'
-        ? {
-            paddingTop: insets.top + tokens.spacing.lg,
-            paddingBottom: insets.bottom + tokens.spacing['3xl'],
-          }
-        : { paddingTop: tokens.spacing.lg },
-    ],
-    [insets.bottom, insets.top],
-  );
+  const tabInsets = usePlayerTabContentInsets();
+  const contentContainerStyle = useMemo(() => [styles.listContent, tabInsets], [tabInsets]);
   const currencyFormatter = useMemo(
     () =>
       new Intl.NumberFormat(i18n.resolvedLanguage ?? 'ca', {
