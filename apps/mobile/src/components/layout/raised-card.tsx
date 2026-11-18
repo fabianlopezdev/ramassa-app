@@ -9,6 +9,7 @@
  * activity, the icon of a Per fer item. The block has one width, so the
  * dividers line up from card to card.
  */
+import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
 import { forwardSymbol } from '@/components/layout/openable-card';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
@@ -18,14 +19,19 @@ import { tokens } from '@ramassa/shared/tokens';
 
 const leadingBlockStyle = { minWidth: tokens.spacing['2xl'] } as const;
 
-/** An icon for the block at the start of a card, in the brand's dark tone with nothing behind it. */
+/**
+ * An icon for the block at the start of a card: as wide as the block, in the
+ * organization's brand colour like the card's border, with nothing behind it
+ * (RAPP-832).
+ */
 export function RaisedCardSymbol({ name }: { readonly name: SymbolViewProps['name'] }) {
+  const brandColor = useBrandColor();
   return (
     <SymbolView
       accessible={false}
       name={name}
-      size={tokens.fontSize['4xl']}
-      tintColor={tokens.colors.primary.dark}
+      size={tokens.spacing['2xl']}
+      tintColor={brandColor}
     />
   );
 }
@@ -49,6 +55,7 @@ export function RaisedCard({
   showsArrow = true,
   children,
 }: RaisedCardProps) {
+  const brandColor = useBrandColor();
   return (
     <SelectionChoiceSurface
       testID={testID}
@@ -72,7 +79,7 @@ export function RaisedCard({
             accessible={false}
             name={forwardSymbol}
             size={tokens.fontSize.xl}
-            tintColor={tokens.colors.primary.dark}
+            tintColor={brandColor}
           />
         </View>
       ) : null}

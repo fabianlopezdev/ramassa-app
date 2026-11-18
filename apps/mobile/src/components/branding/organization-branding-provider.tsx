@@ -30,6 +30,14 @@ export function useOrganizationBranding(): OrganizationRow | null {
   return use(OrganizationBrandingContext);
 }
 
+/**
+ * The organization's brand colour as a value, for native parts that cannot
+ * read the theme's classes: an icon's tint, the tab bar's badges (RAPP-832).
+ */
+export function useBrandColor(): string {
+  return use(OrganizationBrandingContext)?.primary_color ?? tokens.colors.primary.DEFAULT;
+}
+
 /** Reads the organization again, after its settings change on the phone (RAPP-403). */
 export function useRefreshOrganizationBranding(): () => void {
   return use(RefreshBrandingContext);
