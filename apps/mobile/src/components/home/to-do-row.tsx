@@ -4,7 +4,6 @@
  * continue once she has started), its name and an arrow. The whole row opens
  * it. A pending form and a survey share it.
  */
-import { Badge } from '@/components/layout/badge';
 import { RaisedCard, RaisedCardSymbol } from '@/components/layout/raised-card';
 import { Text } from 'react-native';
 
@@ -37,15 +36,10 @@ export function ToDoRow({
       accessibilityLabel={accessibilityLabel}
       onOpen={onOpen}
       leading={<RaisedCardSymbol name="clipboard" />}
+      badge={
+        markLabel === undefined ? null : { label: markLabel, tone: isStarted ? 'accent' : 'brand' }
+      }
     >
-      {markLabel === undefined ? null : (
-        <Badge
-          label={markLabel}
-          tone={isStarted ? 'accentSoft' : 'brand'}
-          languageFontClass={languageFontClass}
-          className="self-start"
-        />
-      )}
       <Text className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}>
         {title}
       </Text>

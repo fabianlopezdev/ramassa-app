@@ -91,7 +91,7 @@ export const ForumPostCard = memo(function ForumPostCard({
             languageFontClass={languageFontClass}
           />
           {post.is_pinned ? (
-            <Badge label={pinnedLabel} tone="accentSoft" languageFontClass={languageFontClass} />
+            <Badge label={pinnedLabel} tone="accent" languageFontClass={languageFontClass} />
           ) : null}
         </View>
         {post.content === null ? null : (

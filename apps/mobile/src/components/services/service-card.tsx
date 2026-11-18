@@ -82,7 +82,7 @@ export const ServiceCard = memo(function ServiceCard({
         {interested ? (
           <Badge
             label={interestedLabel}
-            tone="accentSoft"
+            tone="accent"
             languageFontClass={languageFontClass}
             className="self-start"
           />

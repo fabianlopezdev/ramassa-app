@@ -15,10 +15,8 @@ const toneClasses = {
   brand: { box: 'bg-primary-dark', text: 'text-white' },
   /** A soft brand tint, for a category. */
   brandSoft: { box: 'bg-primary/10', text: 'text-primary-dark' },
-  /** Her own state or a highlight: the secondary colour. */
+  /** Her own state or a highlight, in the one yellow every badge shares (RAPP-839). */
   accent: { box: 'bg-secondary', text: 'text-neutral-900' },
-  /** A quieter highlight, such as something she has started. */
-  accentSoft: { box: 'bg-secondary-light', text: 'text-neutral-900' },
   neutral: { box: 'bg-neutral-100', text: 'text-neutral-800' },
   outline: { box: 'border border-neutral-300', text: 'text-neutral-800' },
   danger: { box: 'bg-error', text: 'text-white' },

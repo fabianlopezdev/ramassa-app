@@ -1,7 +1,6 @@
-import { Badge } from '@/components/layout/badge';
-import { RaisedCard } from '@/components/layout/raised-card';
+import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
 import type { TFunction } from 'i18next';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import {
   MADRID_TIME_ZONE,
@@ -139,6 +138,11 @@ export const EventCard = memo(function EventCard({
     [eventId, occurrenceId, onOpen],
   );
   const { day, month, time } = eventCardDateParts(startsAt, locale);
+  // One badge on the card's edge: her sign-up once she has one, else "Nou" while it is new to her.
+  const badge = useMemo<RaisedCardBadge | null>(() => {
+    if (signupLabel !== null) return { label: signupLabel, tone: 'accent' };
+    return unseenLabel === null ? null : { label: unseenLabel, tone: 'brand' };
+  }, [signupLabel, unseenLabel]);
 
   return (
     <RaisedCard
@@ -146,6 +150,7 @@ export const EventCard = memo(function EventCard({
       accessibilityLabel={accessibilityLabel}
       onOpen={handleOpen}
       showsArrow={false}
+      badge={badge}
       leading={
         <>
           <Text
@@ -159,14 +164,6 @@ export const EventCard = memo(function EventCard({
         </>
       }
     >
-      {unseenLabel === null ? null : (
-        <Badge
-          label={unseenLabel}
-          tone="brand"
-          languageFontClass={languageFontClass}
-          className="self-start"
-        />
-      )}
       <Text
         className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
         numberOfLines={2}
@@ -184,14 +181,6 @@ export const EventCard = memo(function EventCard({
       >
         {location}
       </Text>
-      {signupLabel === null ? null : (
-        <Badge
-          label={signupLabel}
-          tone="accent"
-          languageFontClass={languageFontClass}
-          className="self-start"
-        />
-      )}
     </RaisedCard>
   );
 });

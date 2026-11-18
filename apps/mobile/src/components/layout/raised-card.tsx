@@ -8,11 +8,18 @@
  * A card may start with a block and a divider (RAPP-830): the date of an
  * activity, the icon of a Per fer item. The block has one width, so the
  * dividers line up from card to card.
+ *
+ * A card may carry one badge (RAPP-840): "Nou", the word for continue, her
+ * sign-up state. It sits on the card's top edge near the start, half above
+ * the border and half inside, so it reads as a label on the card and leaves
+ * the content to the name.
  */
 import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
 import { FORWARD_CHEVRON } from '@/components/icons/direction';
 import { Icon, type IconName } from '@/components/icons/icon';
+import { Badge, type BadgeTone } from '@/components/layout/badge';
+import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
@@ -37,7 +44,14 @@ interface RaisedCardProps {
   readonly leading?: ReactNode;
   /** The forward arrow at the end. Off for a card whose content already fills the row. */
   readonly showsArrow?: boolean;
+  /** The label on the card's top edge. Its word is also part of `accessibilityLabel`. */
+  readonly badge?: RaisedCardBadge | null;
   readonly children: ReactNode;
+}
+
+export interface RaisedCardBadge {
+  readonly label: string;
+  readonly tone: BadgeTone;
 }
 
 export function RaisedCard({
@@ -46,10 +60,12 @@ export function RaisedCard({
   onOpen,
   leading,
   showsArrow = true,
+  badge = null,
   children,
 }: RaisedCardProps) {
   const brandColor = useBrandColor();
-  return (
+  const languageFontClass = useLanguageFontClass();
+  const card = (
     <SelectionChoiceSurface
       testID={testID}
       label={accessibilityLabel}
@@ -72,5 +88,21 @@ export function RaisedCard({
         </View>
       ) : null}
     </SelectionChoiceSurface>
+  );
+  if (badge === null) return card;
+  // The badge is drawn over the card from outside it, because the card's face
+  // clips what it holds. The room above keeps it clear of what comes before.
+  return (
+    <View className="relative pt-sm">
+      {card}
+      <View
+        pointerEvents="none"
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
+        className="absolute start-lg top-sm -translate-y-1/2"
+      >
+        <Badge label={badge.label} tone={badge.tone} languageFontClass={languageFontClass} />
+      </View>
+    </View>
   );
 }

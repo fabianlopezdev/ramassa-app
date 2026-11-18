@@ -1,6 +1,5 @@
-import { Badge } from '@/components/layout/badge';
-import { RaisedCard } from '@/components/layout/raised-card';
-import { memo, useCallback } from 'react';
+import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
+import { memo, useCallback, useMemo } from 'react';
 import { Text } from 'react-native';
 
 export interface AnnouncementCardProps {
@@ -27,16 +26,12 @@ export const AnnouncementCard = memo(function AnnouncementCard({
   onOpen,
 }: AnnouncementCardProps) {
   const handleOpen = useCallback(() => onOpen(id), [id, onOpen]);
+  const badge = useMemo<RaisedCardBadge | null>(
+    () => (unseenLabel === null ? null : { label: unseenLabel, tone: 'brand' }),
+    [unseenLabel],
+  );
   return (
-    <RaisedCard accessibilityLabel={accessibilityLabel} onOpen={handleOpen}>
-      {unseenLabel === null ? null : (
-        <Badge
-          label={unseenLabel}
-          tone="brand"
-          languageFontClass={languageFontClass}
-          className="self-start"
-        />
-      )}
+    <RaisedCard accessibilityLabel={accessibilityLabel} onOpen={handleOpen} badge={badge}>
       <Text
         className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
         numberOfLines={2}
