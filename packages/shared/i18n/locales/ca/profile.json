@@ -54,7 +54,7 @@
     "settings": "Obre la configuració",
     "failed": "No s’ha pogut desar el canvi. Torna-ho a provar."
   },
-  "appLockIntro": "Amb el bloqueig activat, l'aplicació del Ramassà et demana Face ID, l'empremta o el codi del telèfon quan tornes a l'app. Així les teves dades estan protegides si algú agafa el teu telèfon.",
+  "appLockIntro": "Amb el bloqueig activat, l'aplicació d'AE Ramassà et demana Face ID, l'empremta o el codi del telèfon quan tornes a l'app. Així les teves dades estan protegides si algú agafa el teu telèfon.",
   "menu": {
     "data": "Les meves dades",
     "attendance": "La meva assistència",

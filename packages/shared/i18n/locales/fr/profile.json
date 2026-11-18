@@ -54,7 +54,7 @@
     "settings": "Ouvre les réglages",
     "failed": "Le changement n’a pas pu être enregistré. Réessaie."
   },
-  "appLockIntro": "Quand le verrouillage est activé, l’application du Ramassà te demande Face ID, l’empreinte ou le code du téléphone quand tu reviens dans l’app. Ainsi, tes données sont protégées si quelqu’un prend ton téléphone.",
+  "appLockIntro": "Quand le verrouillage est activé, l’application d’AE Ramassà te demande Face ID, l’empreinte ou le code du téléphone quand tu reviens dans l’app. Ainsi, tes données sont protégées si quelqu’un prend ton téléphone.",
   "menu": {
     "data": "Mes données",
     "attendance": "Ma présence",

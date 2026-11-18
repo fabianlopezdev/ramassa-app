@@ -6,12 +6,12 @@
   "eventFallbackBody": "Appuie pour voir l’activité.",
   "announcementFallbackBody": "Appuie pour lire l’annonce.",
   "messageTitle": "Nouveau message de l’équipe technique",
-  "messageBody": "Ouvre l’application du Ramassà pour le lire.",
+  "messageBody": "Ouvre l’application d’AE Ramassà pour le lire.",
   "forumFlagTitle": "Nouveau contenu signalé sur le forum",
   "forumFlagBody": "Ouvre la modération du forum pour le vérifier.",
   "referralUpdateTitle": "Nouvelle mise à jour d’une orientation",
   "referralUpdateBody": "Ouvre la fiche de la participante pour la vérifier.",
   "mentoringUpdateTitle": "Mise à jour de ton mentorat",
-  "mentoringUpdateBody": "Ouvre l’application du Ramassà pour voir le jour et l’heure.",
+  "mentoringUpdateBody": "Ouvre l’application d’AE Ramassà pour voir le jour et l’heure.",
   "customFormFallbackBody": "Appuie pour y répondre."
 }

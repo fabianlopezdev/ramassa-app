@@ -6,12 +6,12 @@
   "eventFallbackBody": "Tap to view the activity.",
   "announcementFallbackBody": "Tap to read the announcement.",
   "messageTitle": "New message from the technical team",
-  "messageBody": "Open the Ramassà app to read it.",
+  "messageBody": "Open the AE Ramassà app to read it.",
   "forumFlagTitle": "New reported content in the forum",
   "forumFlagBody": "Open forum moderation to review it.",
   "referralUpdateTitle": "New referral update",
   "referralUpdateBody": "Open the participant record to review it.",
   "mentoringUpdateTitle": "Update to your mentoring",
-  "mentoringUpdateBody": "Open the Ramassà app to see the date and time.",
+  "mentoringUpdateBody": "Open the AE Ramassà app to see the date and time.",
   "customFormFallbackBody": "Tap to answer it."
 }
