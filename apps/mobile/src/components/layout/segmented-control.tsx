@@ -1,4 +1,4 @@
-import { Icon, type IconName } from '@/components/icons/icon';
+import { Icon, iconArtworkMargin, type IconName } from '@/components/icons/icon';
 import {
   RaisedSurfaceEdge,
   raisedSurfaceWrapperStyle,
@@ -7,6 +7,7 @@ import {
 import { PressableDepth } from '@/components/motion/pressable-depth';
 import { SelectionTransition } from '@/components/motion/selection-transition';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { useCapToBaselineTrim } from '@/lib/use-cap-to-baseline-trim';
 import { memo, useCallback, useMemo, type JSX } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
@@ -23,7 +24,10 @@ import { tokens } from '@ramassa/shared/tokens';
  * With two options the icon sits beside the label. From three, each option
  * is about a third of the screen, and a long word such as "Històries" would
  * break inside itself, so the icon goes above the label and the word gets the
- * option's whole width (RAPP-852). Every option has the same width and the
+ * option's whole width (RAPP-852). Stacked, the icon and the label are
+ * centred by what is drawn: the icon gives back its artwork's empty margin
+ * and the label is trimmed from its capitals to its baseline, so the space
+ * above the icon matches the space below the word. Every option has the same width and the
  * row stretches every option to the tallest one, so a label that wraps to two
  * lines keeps the row edge to edge with equal heights.
  */
@@ -42,11 +46,13 @@ export interface SegmentedControlOption<Key extends string> {
 const { shadowInlineOffset, shadowBlockOffset } = tokens.languageChoice;
 /** From this many options, the icon goes above the label. */
 const STACKED_LAYOUT_MIN_OPTIONS = 3;
+const OPTION_ICON_SIZE = tokens.fontSize['2xl'];
 
 // The bar's outer corners belong to its first and last options, matching the
 // `rounded-lg` of the edge under the bar.
 const styles = StyleSheet.create({
   count: { fontVariant: ['tabular-nums'] },
+  stackedIcon: { marginVertical: -iconArtworkMargin(OPTION_ICON_SIZE) },
   startCorners: {
     ...continuousCorners,
     borderTopStartRadius: tokens.radius.lg,
@@ -91,6 +97,7 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
   const handlePress = useCallback(() => onSelect(optionKey), [onSelect, optionKey]);
   const visibleCount = count !== undefined && count > 0 ? count : null;
   const contentColor = isSelected ? tokens.colors.neutral[900] : tokens.colors.primary.dark;
+  const labelTrim = useCapToBaselineTrim();
   return (
     <PressableDepth
       testID={testID}
@@ -101,8 +108,8 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
       isSelected={isSelected}
       className="flex-1"
       faceStyle={faceStyle}
-      faceClassName={`relative flex-1 items-center justify-center overflow-hidden border-y border-s border-primary bg-white px-sm py-xs ${
-        isStacked ? 'gap-xs' : 'flex-row gap-sm'
+      faceClassName={`relative flex-1 items-center justify-center gap-sm overflow-hidden border-y border-s border-primary bg-white px-sm py-xs ${
+        isStacked ? '' : 'flex-row'
       } ${isLast ? 'border-e' : ''}`}
       inlineOffset={isLast ? shadowInlineOffset : 0}
       blockOffset={shadowBlockOffset}
@@ -115,16 +122,20 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
         style={cornerStyle}
       />
       {symbol === undefined ? null : (
-        <Icon
-          name={symbol}
-          weight={isSelected ? 'boldDuotone' : 'linear'}
-          size={tokens.fontSize['2xl']}
-          color={contentColor}
-        />
+        <View style={isStacked ? styles.stackedIcon : undefined}>
+          <Icon
+            name={symbol}
+            weight={isSelected ? 'boldDuotone' : 'linear'}
+            size={OPTION_ICON_SIZE}
+            color={contentColor}
+          />
+        </View>
       )}
       <View className="shrink flex-row items-center justify-center gap-xs">
         <Text
           numberOfLines={2}
+          onTextLayout={isStacked ? labelTrim.onTextLayout : undefined}
+          style={isStacked ? labelTrim.style : undefined}
           className={`shrink text-center text-lg font-bold ${
             isSelected ? 'text-neutral-900' : 'text-primary-dark'
           } ${languageFontClass}`}

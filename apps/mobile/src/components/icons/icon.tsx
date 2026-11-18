@@ -19,6 +19,17 @@ import { ICON_GRID, iconPaths, type IconName, type IconWeight } from './icon-set
 
 const VIEW_BOX = `0 0 ${ICON_GRID} ${ICON_GRID}`;
 
+/**
+ * Solar draws each icon inside a margin of this many grid units (its 20-unit
+ * live area), so an icon carries that empty margin on every side.
+ */
+const ICON_ARTWORK_MARGIN = 2;
+
+/** The empty margin around an icon's artwork at a size, in points (RAPP-852). */
+export function iconArtworkMargin(size: number): number {
+  return (size * ICON_ARTWORK_MARGIN) / ICON_GRID;
+}
+
 interface IconProps {
   readonly name: IconName;
   /** `linear` for rows and arrows; `boldDuotone` where the icon is the subject. */
