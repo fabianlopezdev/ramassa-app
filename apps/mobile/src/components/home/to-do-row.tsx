@@ -21,7 +21,8 @@ interface ToDoRowProps {
   /** A line under the name, such as the date a form is due. */
   readonly detail?: string;
   readonly accessibilityLabel: string;
-  readonly markLabel: string;
+  /** Nou, or the word for continue. Left out in her later list. */
+  readonly markLabel?: string;
   readonly isStarted?: boolean;
   readonly languageFontClass: string;
   readonly onOpen: () => void;
@@ -44,12 +45,14 @@ export function ToDoRow({
       onOpen={onOpen}
       leading={<RaisedCardSymbol name={toDoSymbol} />}
     >
-      <Badge
-        label={markLabel}
-        tone={isStarted ? 'accentSoft' : 'brand'}
-        languageFontClass={languageFontClass}
-        className="self-start"
-      />
+      {markLabel === undefined ? null : (
+        <Badge
+          label={markLabel}
+          tone={isStarted ? 'accentSoft' : 'brand'}
+          languageFontClass={languageFontClass}
+          className="self-start"
+        />
+      )}
       <Text className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}>
         {title}
       </Text>

@@ -4,7 +4,7 @@
  */
 
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
-import { useMyCustomForms } from '@/lib/custom-forms';
+import { useMyCustomFormsByPlace } from '@/lib/custom-forms';
 import { buildHomeAttention, type HomeAttention } from '@/lib/home-attention';
 import { usePlayerEvents } from '@/lib/player-events';
 import { usePlayerSurveys } from '@/lib/player-surveys';
@@ -78,7 +78,8 @@ export function useMarkEventSeen(eventId: string | undefined) {
 
 /** Everything on Inici she has not dealt with, for the tab badge and the screen. */
 export function useHomeAttention(): HomeAttention {
-  const { data: forms } = useMyCustomForms(true);
+  // A form she put off with "Ara no" is in her later list, out of Per fer and the count (RAPP-833).
+  const { waiting: forms } = useMyCustomFormsByPlace();
   const { data: surveys } = usePlayerSurveys();
   const { data: events } = usePlayerEvents();
   const { data: announcements } = usePlayerAnnouncements();

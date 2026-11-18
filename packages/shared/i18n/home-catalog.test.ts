@@ -21,6 +21,11 @@ const HOME_FEED_KEYS = [
   'retryAction',
   'loading',
   'toDo.title',
+  'later.title',
+  'later.delete',
+  'later.cancel',
+  'later.deleteTitle',
+  'later.deleteBody',
   'nextActivity.title',
 ] as const;
 

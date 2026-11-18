@@ -18,6 +18,7 @@ export const playerNavIcons = {
     android: 'event_available',
     web: 'event_available',
   },
+  formsLater: { ios: 'clock.fill', android: 'schedule', web: 'schedule' },
   language: { ios: 'globe', android: 'language', web: 'language' },
   appLock: { ios: 'lock.fill', android: 'lock', web: 'lock' },
   privacy: { ios: 'hand.raised.fill', android: 'privacy_tip', web: 'privacy_tip' },

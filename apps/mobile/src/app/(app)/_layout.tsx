@@ -308,6 +308,7 @@ function AppNavigator() {
               <Stack.Screen name="profile" />
               <Stack.Screen name="profile-data" />
               <Stack.Screen name="profile-attendance" />
+              <Stack.Screen name="forms-later" />
               <Stack.Screen name="profile-language" />
               <Stack.Screen name="profile-privacy" />
               <Stack.Screen name="profile-delete-data" />
