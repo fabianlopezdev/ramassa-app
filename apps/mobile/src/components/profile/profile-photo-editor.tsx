@@ -83,7 +83,12 @@ export function ProfilePhotoEditor({ profile }: { readonly profile: ProfileRecor
   }
 
   const portrait = (
-    <PersonAvatar name={profile.first_name} avatarKey={profile.avatar_url} size="profile" />
+    <PersonAvatar
+      name={profile.first_name}
+      avatarKey={profile.avatar_url}
+      size="profile"
+      fallback="person"
+    />
   );
   return (
     <View className="gap-md">
