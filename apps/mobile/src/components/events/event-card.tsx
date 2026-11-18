@@ -73,7 +73,7 @@ export function EventDetailLine({
 }
 
 // One width for the date block, so the names line up from card to card in a list.
-const dateBlockStyle = { minWidth: tokens.spacing['3xl'] } as const;
+const dateBlockStyle = { minWidth: tokens.spacing['2xl'] } as const;
 
 interface EventCardDateParts {
   readonly day: string;
