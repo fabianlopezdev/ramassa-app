@@ -1,30 +1,21 @@
-import { FIELD_SHAPE_CLASS_NAME } from '@/components/forms/field-appearance';
+import {
+  outlinedSurfaceClassName,
+  RaisedSurfaceEdge,
+  raisedSurfaceWrapperStyle,
+} from '@/components/layout/raised-surface';
 import { PressableDepth } from '@/components/motion/pressable-depth';
 import { SelectionTransition } from '@/components/motion/selection-transition';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useMemo, type ReactNode } from 'react';
 import {
   useWindowDimensions,
-  View,
   type AccessibilityRole,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
-const FACE_CLASS = `relative overflow-hidden ${FIELD_SHAPE_CLASS_NAME} border-primary bg-white px-lg`;
-const wrapperStyle = {
-  paddingEnd: tokens.languageChoice.shadowInlineOffset,
-  paddingBottom: tokens.languageChoice.shadowBlockOffset,
-} as const;
-const shadowStyle = {
-  ...continuousCorners,
-  position: 'absolute',
-  top: tokens.languageChoice.shadowBlockOffset,
-  start: tokens.languageChoice.shadowInlineOffset,
-  end: 0,
-  bottom: 0,
-} as const;
+const FACE_CLASS = `relative overflow-hidden ${outlinedSurfaceClassName()} px-lg`;
 
 interface SelectionChoiceSurfaceProps {
   readonly children: ReactNode;
@@ -74,13 +65,13 @@ export function SelectionChoiceSurface({
       isSelected={isSelected}
       onPress={onPress}
       haptic="selection"
-      style={wrapperStyle}
+      style={raisedSurfaceWrapperStyle}
       className={`relative ${className ?? ''}`}
       faceStyle={rowStyle ?? defaultRowStyle}
       faceClassName={`${FACE_CLASS} ${contentClassName}`}
       inlineOffset={tokens.languageChoice.shadowInlineOffset}
       blockOffset={tokens.languageChoice.shadowBlockOffset}
-      shadow={<View pointerEvents="none" className="rounded-lg bg-primary" style={shadowStyle} />}
+      shadow={<RaisedSurfaceEdge />}
     >
       <SelectionTransition
         active={isSelected === true}

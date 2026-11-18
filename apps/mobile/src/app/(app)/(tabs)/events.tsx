@@ -14,17 +14,15 @@ import {
   EventViewToggle,
   type PlayerEventFilterOption,
 } from '@/components/events/event-filters';
+import { EventMonthCalendar } from '@/components/events/event-month-calendar';
 import { PageWidth } from '@/components/layout/content-width';
 import { NavRow } from '@/components/layout/nav-row';
 import { PlayerTabHeader, PlayerTabStateFrame } from '@/components/profile/player-tab-header';
-import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import {
   addPrivateMentoringMarkedDates,
-  buildCalendarLocale,
   buildEventMarkedDates,
   eventDateKey,
 } from '@/lib/event-calendar';
-import { playHaptic } from '@/lib/haptics/haptics';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { logger } from '@/lib/observability';
 import { usePlayerEvents } from '@/lib/player-events';
@@ -38,7 +36,6 @@ import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { Calendar, LocaleConfig, type DateData } from 'react-native-calendars';
 import type { MarkedDates } from 'react-native-calendars/src/types';
 import { toAppError } from '@ramassa/shared/errors';
 import {
@@ -52,31 +49,12 @@ import { getPrivateMentoringCalendarEntries } from '@ramassa/shared/mentoring';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_EVENTS: readonly PlayerEventOccurrence[] = [];
-const CALENDAR_FIRST_DAY_MONDAY = 1;
 const UTC_MIDDAY_SUFFIX = 'T12:00:00Z';
-const CALENDAR_BORDER_WIDTH = StyleSheet.hairlineWidth;
 
 const styles = StyleSheet.create({
   list: { flex: 1, backgroundColor: tokens.colors.white },
   content: { paddingHorizontal: tokens.spacing.lg, paddingBottom: tokens.spacing['3xl'] },
-  calendar: {
-    borderWidth: CALENDAR_BORDER_WIDTH,
-    borderColor: tokens.colors.neutral[200],
-    borderRadius: tokens.radius.lg,
-    overflow: 'hidden',
-  },
 });
-const calendarTheme = {
-  calendarBackground: tokens.colors.white,
-  selectedDayBackgroundColor: tokens.colors.primary.light,
-  selectedDayTextColor: tokens.colors.neutral[900],
-  todayTextColor: tokens.colors.primary.dark,
-  arrowColor: tokens.colors.primary.DEFAULT,
-  monthTextColor: tokens.colors.neutral[900],
-  dayTextColor: tokens.colors.neutral[800],
-  textDisabledColor: tokens.colors.neutral[400],
-} as const;
-const calendarStyle = composeContinuousViewStyle(styles.calendar);
 
 const keyExtractor = (item: PlayerEventOccurrence) => item.occurrence_id;
 const getItemType = (item: PlayerEventOccurrence) =>
@@ -160,23 +138,6 @@ export default function EventsScreen() {
       }),
     [i18n.resolvedLanguage],
   );
-  const calendarLocaleKey = `ramassa-${language}`;
-  const calendarLocale = useMemo(
-    () => buildCalendarLocale(language, t('playerToday')),
-    [language, t],
-  );
-  const calendarLocaleDefinition = useMemo(
-    () => ({
-      monthNames: [...calendarLocale.monthNames],
-      monthNamesShort: [...calendarLocale.monthNamesShort],
-      dayNames: [...calendarLocale.dayNames],
-      dayNamesShort: [...calendarLocale.dayNamesShort],
-      today: calendarLocale.today,
-    }),
-    [calendarLocale],
-  );
-  LocaleConfig.locales[calendarLocaleKey] = calendarLocaleDefinition;
-  LocaleConfig.defaultLocale = calendarLocaleKey;
   const markedDates = useMemo(
     () =>
       addPrivateMentoringMarkedDates(
@@ -253,10 +214,8 @@ export default function EventsScreen() {
     () => void Promise.all([refetch(), refetchMentoring()]),
     [refetch, refetchMentoring],
   );
-  const selectCalendarDay = useCallback((day: DateData) => {
-    playHaptic('selection');
-    setSelectedDate(day.dateString);
-  }, []);
+  // The day presses with its own selection haptic.
+  const selectCalendarDay = useCallback((date: string) => setSelectedDate(date), []);
   const listExtraData = useMemo(
     () => ({ category, effectiveSelectedDate, view }),
     [category, effectiveSelectedDate, view],
@@ -315,14 +274,6 @@ export default function EventsScreen() {
               {t('playerIntro')}
             </Text>
           </View>
-          <EventCategoryFilters
-            categories={categories}
-            selected={category}
-            allLabel={t('playerFilterAll')}
-            accessibilityLabel={t('playerFilterLabel')}
-            languageFontClass={languageFontClass}
-            onSelect={setCategory}
-          />
           <EventViewToggle
             selected={view}
             listLabel={t('playerListView')}
@@ -332,6 +283,14 @@ export default function EventsScreen() {
             accessibilityLabel={t('playerViewLabel')}
             languageFontClass={languageFontClass}
             onSelect={setView}
+          />
+          <EventCategoryFilters
+            categories={categories}
+            selected={category}
+            allLabel={t('playerFilterAll')}
+            accessibilityLabel={t('playerFilterLabel')}
+            languageFontClass={languageFontClass}
+            onSelect={setCategory}
           />
           {/* Her mentoring appointments, a shortcut to Mentoria with the same
               name and icon as its row in Xat (RAPP-793). */}
@@ -359,21 +318,14 @@ export default function EventsScreen() {
               >
                 {t('playerCalendarLabel')}
               </Text>
-              <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-                {t('playerCalendarHint')}
-              </Text>
-              <Calendar
-                key={calendarLocaleKey}
+              <EventMonthCalendar
+                language={language}
+                todayLabel={t('playerToday')}
                 current={effectiveSelectedDate}
                 minDate={eventDateKey(now.toISOString())}
-                firstDay={CALENDAR_FIRST_DAY_MONDAY}
-                markingType="multi-dot"
                 markedDates={markedDates}
-                enableSwipeMonths
-                onDayPress={selectCalendarDay}
+                onSelectDay={selectCalendarDay}
                 testID="player-events-calendar"
-                style={calendarStyle}
-                theme={calendarTheme}
               />
               <Text
                 accessibilityRole="header"

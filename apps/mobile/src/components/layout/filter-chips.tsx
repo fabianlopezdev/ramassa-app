@@ -6,6 +6,7 @@
  * Activitats share it.
  */
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
+import { RAISED_FACE_MIN_HEIGHT } from '@/components/layout/raised-surface';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { memo, useCallback } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
@@ -19,7 +20,7 @@ const styles = StyleSheet.create({
 });
 const chipStyle = {
   ...continuousCorners,
-  minHeight: tokens.tapTarget.recommended - tokens.languageChoice.shadowBlockOffset,
+  minHeight: RAISED_FACE_MIN_HEIGHT,
 } as const;
 
 export interface FilterChipOption<Id extends string> {
