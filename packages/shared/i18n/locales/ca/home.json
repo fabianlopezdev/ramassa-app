@@ -3,6 +3,8 @@
   "feedTitle": "Avisos",
   "filterLabel": "Filtra els avisos per categoria",
   "filterAll": "Tot",
+  "filterNewCount_one": "{{count}} nou",
+  "filterNewCount_other": "{{count}} nous",
   "category": {
     "info": "Informació",
     "training": "Entrenaments",

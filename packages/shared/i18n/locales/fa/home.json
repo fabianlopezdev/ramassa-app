@@ -3,6 +3,8 @@
   "feedTitle": "اطلاعیه‌ها",
   "filterLabel": "فیلتر اطلاعیه‌ها بر اساس دسته",
   "filterAll": "همه",
+  "filterNewCount_one": "{{count}} اعلان جدید",
+  "filterNewCount_other": "{{count}} اعلان جدید",
   "category": {
     "info": "اطلاعات",
     "training": "تمرین‌ها",

@@ -3,6 +3,12 @@
   "feedTitle": "الإعلانات",
   "filterLabel": "تصفية الإعلانات حسب الفئة",
   "filterAll": "الكل",
+  "filterNewCount_zero": "لا إعلانات جديدة",
+  "filterNewCount_one": "إعلان جديد واحد",
+  "filterNewCount_two": "إعلانان جديدان",
+  "filterNewCount_few": "{{count}} إعلانات جديدة",
+  "filterNewCount_many": "{{count}} إعلانًا جديدًا",
+  "filterNewCount_other": "{{count}} إعلان جديد",
   "category": {
     "info": "معلومات",
     "training": "التدريبات",

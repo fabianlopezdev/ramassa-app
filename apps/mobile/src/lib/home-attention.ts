@@ -4,7 +4,7 @@
  * matches what she finds when she opens the tab.
  *
  * - Per fer: counts until she completes or puts off the form or survey.
- * - Avisos: an announcement counts until she has seen it.
+ * - Avisos: an announcement counts until she opens it (RAPP-848).
  * - Pròxima activitat: a new activity counts until she opens it or signs up.
  */
 

@@ -3,6 +3,8 @@
   "feedTitle": "Annonces",
   "filterLabel": "Filtre les annonces par catégorie",
   "filterAll": "Tout",
+  "filterNewCount_one": "{{count}} nouveau",
+  "filterNewCount_other": "{{count}} nouveaux",
   "category": {
     "info": "Information",
     "training": "Entraînements",

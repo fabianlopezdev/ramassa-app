@@ -13,7 +13,8 @@
  * sign-up state. It sits on the card's top edge near the start, half above
  * the border and half inside, so it reads as a label on the card and leaves
  * the content to the name. A count, such as unread messages, sits on the same
- * edge near the end, in a circle (RAPP-842).
+ * edge near the end, in a circle (RAPP-842). Both come from `EdgeMarks`,
+ * which the filter chips share (RAPP-848).
  *
  * A card may take the colour of its kind on its face (RAPP-845), as a pale
  * wash; its border, edge and arrow stay in the brand.
@@ -22,10 +23,8 @@ import { useBrandColor } from '@/components/branding/organization-branding-provi
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
 import { FORWARD_CHEVRON } from '@/components/icons/direction';
 import { Icon, type IconName } from '@/components/icons/icon';
-import { Badge, type BadgeTone } from '@/components/layout/badge';
-import { CountBubble } from '@/components/layout/count-bubble';
+import { EdgeMarks, type EdgeMarkBadge } from '@/components/layout/edge-marks';
 import type { RaisedTone } from '@/components/layout/raised-surface';
-import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
@@ -59,10 +58,7 @@ interface RaisedCardProps {
   readonly children: ReactNode;
 }
 
-export interface RaisedCardBadge {
-  readonly label: string;
-  readonly tone: BadgeTone;
-}
+export type RaisedCardBadge = EdgeMarkBadge;
 
 export function RaisedCard({
   testID,
@@ -76,7 +72,6 @@ export function RaisedCard({
   children,
 }: RaisedCardProps) {
   const brandColor = useBrandColor();
-  const languageFontClass = useLanguageFontClass();
   const card = (
     <SelectionChoiceSurface
       testID={testID}
@@ -103,32 +98,9 @@ export function RaisedCard({
     </SelectionChoiceSurface>
   );
   if (badge === null && count === null) return card;
-  // The badge and the count are drawn over the card from outside it, because
-  // the card's face clips what it holds. The room above keeps them clear of
-  // what comes before.
   return (
-    <View className="relative pt-sm">
+    <EdgeMarks badge={badge} count={count}>
       {card}
-      {badge === null ? null : (
-        <View
-          pointerEvents="none"
-          accessible={false}
-          importantForAccessibility="no-hide-descendants"
-          className="absolute start-lg top-sm -translate-y-1/2"
-        >
-          <Badge label={badge.label} tone={badge.tone} languageFontClass={languageFontClass} />
-        </View>
-      )}
-      {count === null ? null : (
-        <View
-          pointerEvents="none"
-          accessible={false}
-          importantForAccessibility="no-hide-descendants"
-          className="absolute end-lg top-sm -translate-y-1/2"
-        >
-          <CountBubble label={count} />
-        </View>
-      )}
-    </View>
+    </EdgeMarks>
   );
 }

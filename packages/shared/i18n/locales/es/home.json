@@ -3,6 +3,8 @@
   "feedTitle": "Avisos",
   "filterLabel": "Filtra los avisos por categoría",
   "filterAll": "Todo",
+  "filterNewCount_one": "{{count}} nuevo",
+  "filterNewCount_other": "{{count}} nuevos",
   "category": {
     "info": "Información",
     "training": "Entrenamientos",

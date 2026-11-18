@@ -3,6 +3,8 @@
   "feedTitle": "Announcements",
   "filterLabel": "Filter announcements by category",
   "filterAll": "All",
+  "filterNewCount_one": "{{count}} new",
+  "filterNewCount_other": "{{count}} new",
   "category": {
     "info": "Information",
     "training": "Training",
