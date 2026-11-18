@@ -9,7 +9,7 @@ export function HomeSectionHeader({ title, languageFontClass }: HomeSectionHeade
   return (
     <Text
       accessibilityRole="header"
-      className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
+      className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
     >
       {title}
     </Text>

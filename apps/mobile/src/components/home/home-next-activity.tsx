@@ -9,11 +9,10 @@ import {
   playerEventCapacityLabel,
   playerEventSignupLabel,
 } from '@/components/events/event-card';
-import { HomeSectionHeader } from '@/components/home/home-section-header';
+import { HomeSection } from '@/components/home/home-section';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
 import { MADRID_TIME_ZONE, type PlayerEventOccurrence } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE, resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 
@@ -69,18 +68,18 @@ export function HomeNextActivity({
   const unseenLabel = isUnseen ? t('home:unseen') : null;
 
   return (
-    <View testID="home-next-activity" className="gap-sm">
-      <HomeSectionHeader title={t('nextActivity.title')} languageFontClass={languageFontClass} />
+    <HomeSection
+      testID="home-next-activity"
+      title={t('nextActivity.title')}
+      languageFontClass={languageFontClass}
+    >
       <EventCard
         eventId={occurrence.event.id}
         occurrenceId={occurrence.occurrence_id}
         title={title.text}
-        category={categoryName.text}
-        categoryColor={occurrence.event.category.color}
-        date={date}
-        time={time}
+        startsAt={occurrence.occurrence_starts_at}
+        locale={locale}
         location={occurrence.event.location}
-        capacityLabel={capacity}
         signupLabel={signup}
         unseenLabel={unseenLabel}
         accessibilityLabel={[
@@ -98,6 +97,6 @@ export function HomeNextActivity({
         languageFontClass={languageFontClass}
         onOpen={openOccurrence}
       />
-    </View>
+    </HomeSection>
   );
 }

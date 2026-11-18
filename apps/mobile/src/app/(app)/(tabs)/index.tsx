@@ -1,8 +1,4 @@
-import {
-  AnnouncementCard,
-  PinnedAnnouncementCard,
-  type AnnouncementCardProps,
-} from '@/components/announcements/announcement-card';
+import { AnnouncementCard } from '@/components/announcements/announcement-card';
 import {
   announcementCategoryLabel,
   CategoryFilters,
@@ -13,7 +9,7 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { HomeNextActivity } from '@/components/home/home-next-activity';
-import { HomeSectionHeader } from '@/components/home/home-section-header';
+import { HomeSection } from '@/components/home/home-section';
 import { HomeToDo } from '@/components/home/home-to-do';
 import { PageWidth } from '@/components/layout/content-width';
 import { PlayerTabHeader, PlayerTabStateFrame } from '@/components/profile/player-tab-header';
@@ -37,7 +33,6 @@ import {
   type AnnouncementListRow,
   type PlayerAnnouncementCategoryFilter,
 } from '@ramassa/shared/announcements';
-import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import { DEFAULT_LANGUAGE, resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
@@ -61,15 +56,12 @@ const styles = StyleSheet.create({
 });
 
 const keyExtractor = (item: AnnouncementListRow) => item.id;
-const getItemType = (item: AnnouncementListRow) =>
-  item.image_url === null ? 'text-announcement' : 'image-announcement';
 
 export default function HomeScreen() {
   const { t, i18n } = useTranslation(['home', 'common', 'nav']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
-  const { session } = useAuth();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
   const [category, setCategory] = useState<PlayerAnnouncementCategoryFilter>('all');
@@ -151,58 +143,32 @@ export default function HomeScreen() {
   const renderAnnouncement = useCallback(
     ({ item }: ListRenderItemInfo<AnnouncementListRow>) => {
       const title = resolveLocalizedText(item.title, language);
-      const body = resolveLocalizedText(item.body, language);
-      if (title === undefined || body === undefined) return null;
-      const imageAlt =
-        item.image_alt === null ? undefined : resolveLocalizedText(item.image_alt, language);
-      const categoryLabel = announcementCategoryLabel(item.category, t);
+      if (title === undefined) return null;
       const unseenLabel = markedAnnouncementIds.has(item.id) ? t('unseen') : null;
-      const publishedDate = dateFormatter.format(new Date(item.published_at ?? item.created_at));
-      const completeLabel = [
+      const accessibilityLabel = [
         unseenLabel,
-        categoryLabel,
+        announcementCategoryLabel(item.category, t),
         item.is_pinned ? t('pinned') : null,
         title.text,
-        body.text,
-        imageAlt?.text ?? null,
-        publishedDate,
+        dateFormatter.format(new Date(item.published_at ?? item.created_at)),
       ]
         .filter((part): part is string => typeof part === 'string')
         .join('. ');
-      const cardProps: AnnouncementCardProps = {
-        id: item.id,
-        title: title.text,
-        body: body.text,
-        category: categoryLabel,
-        publishedDate,
-        imageObjectKeyOrUrl: item.image_url,
-        accessToken: session?.access_token,
-        imageAlt: imageAlt?.text ?? null,
-        accessibilityLabel: completeLabel,
-        unseenLabel,
-        languageFontClass,
-        onOpen: openAnnouncement,
-      };
 
       return (
         <PageWidth className="pb-md">
-          {item.is_pinned ? (
-            <PinnedAnnouncementCard {...cardProps} pinnedLabel={t('pinned')} />
-          ) : (
-            <AnnouncementCard {...cardProps} />
-          )}
+          <AnnouncementCard
+            id={item.id}
+            title={title.text}
+            accessibilityLabel={accessibilityLabel}
+            unseenLabel={unseenLabel}
+            languageFontClass={languageFontClass}
+            onOpen={openAnnouncement}
+          />
         </PageWidth>
       );
     },
-    [
-      dateFormatter,
-      language,
-      languageFontClass,
-      markedAnnouncementIds,
-      openAnnouncement,
-      session?.access_token,
-      t,
-    ],
+    [dateFormatter, language, languageFontClass, markedAnnouncementIds, openAnnouncement, t],
   );
 
   const onRefresh = useCallback(() => {
@@ -254,7 +220,6 @@ export default function HomeScreen() {
       data={announcements}
       renderItem={renderAnnouncement}
       keyExtractor={keyExtractor}
-      getItemType={getItemType}
       extraData={listExtraData}
       viewabilityConfig={announcementViewability}
       onViewableItemsChanged={onViewableItemsChanged}
@@ -274,13 +239,14 @@ export default function HomeScreen() {
             isUnseen={isNextActivityUnseen}
             languageFontClass={languageFontClass}
           />
-          <HomeSectionHeader title={t('feedTitle')} languageFontClass={languageFontClass} />
-          <CategoryFilters
-            selected={category}
-            onSelect={setCategory}
-            t={t}
-            languageFontClass={languageFontClass}
-          />
+          <HomeSection title={t('feedTitle')} languageFontClass={languageFontClass} isLast>
+            <CategoryFilters
+              selected={category}
+              onSelect={setCategory}
+              t={t}
+              languageFontClass={languageFontClass}
+            />
+          </HomeSection>
         </PageWidth>
       }
       ListEmptyComponent={

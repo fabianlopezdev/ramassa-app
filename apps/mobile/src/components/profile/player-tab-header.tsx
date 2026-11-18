@@ -21,7 +21,7 @@ export function PlayerTabHeader({ title }: { readonly title: string }) {
     <View testID="player-tab-header" className="flex-row items-center gap-md">
       <Text
         accessibilityRole="header"
-        className={`flex-1 text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
+        className={`flex-1 text-start text-4xl font-extrabold text-neutral-900 ${languageFontClass}`}
       >
         {title}
       </Text>
@@ -39,10 +39,7 @@ export function PlayerTabStateFrame({
   readonly children: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
-  const topInset = useMemo(
-    () => ({ paddingTop: insets.top + PLAYER_TAB_TOP_GAP }),
-    [insets.top],
-  );
+  const topInset = useMemo(() => ({ paddingTop: insets.top + PLAYER_TAB_TOP_GAP }), [insets.top]);
   return (
     <View className="flex-1 bg-white" style={topInset}>
       <View className="px-lg">

@@ -1,17 +1,17 @@
 /**
  * A pending form on Inici (RAPP-700), shown inside the Per fer block
- * (RAPP-790), in the survey prompt's pattern: what it is, its name, its date when it has one,
- * and Respon. An optional form also has "Ara no", which takes it off her Home;
- * a legal one never does (RAPP-771).
+ * (RAPP-790) as a raised row (RAPP-827): its mark, its name, its date when it
+ * has one. The row opens the form. An optional form also has "Ara no", which
+ * takes it off her Home; a legal one never does (RAPP-771).
  */
 
-import { AttentionChip } from '@/components/home/attention-chip';
+import { ToDoRow } from '@/components/home/to-do-row';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useDismissCustomForm } from '@/lib/custom-forms';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { DEFAULT_LANGUAGE, useLanguage } from '@ramassa/shared/i18n';
@@ -32,44 +32,26 @@ export function PendingFormPrompt({ form }: { readonly form: PendingCustomForm }
       }),
     [i18n.resolvedLanguage],
   );
+  const open = useCallback(() => push(`/form/${form.responseId}` as Href), [form.responseId, push]);
   const name = textIn(form.name, language);
   return (
-    <View
-      testID="pending-form-prompt"
-      className="gap-md rounded-lg border border-primary/20 bg-primary/5 p-lg"
-      style={continuousCorners}
-    >
-      <View className="flex-row flex-wrap items-center gap-sm">
-        {/* A half-answered form is not saved, so a form has no started state (RAPP-825). */}
-        <AttentionChip label={t('unseen')} languageFontClass={languageFontClass} />
-        <Text
-          className={`text-start text-sm font-bold uppercase text-primary ${languageFontClass}`}
-        >
-          {t('pendingForm.eyebrow')}
-        </Text>
-      </View>
-      <Text className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}>
-        {name}
-      </Text>
-      {form.deadline === null ? null : (
-        <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
-          {t('pendingForm.deadline', {
-            date: dateFormatter.format(new Date(`${form.deadline}T12:00:00`)),
-          })}
-        </Text>
-      )}
-      <PressableScale
+    <View testID="pending-form-prompt" className="gap-xs">
+      {/* A half-answered form is not saved, so a form has no started state (RAPP-825). */}
+      <ToDoRow
         testID="pending-form-answer"
+        title={name}
+        detail={
+          form.deadline === null
+            ? undefined
+            : t('pendingForm.deadline', {
+                date: dateFormatter.format(new Date(`${form.deadline}T12:00:00`)),
+              })
+        }
         accessibilityLabel={`${t('pendingForm.answer')}: ${name}`}
-        onPress={() => push(`/form/${form.responseId}` as Href)}
-        haptic="tapLight"
-        style={continuousCorners}
-        className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-      >
-        <Text className={`text-md font-bold text-white ${languageFontClass}`}>
-          {t('pendingForm.answer')}
-        </Text>
-      </PressableScale>
+        markLabel={t('unseen')}
+        languageFontClass={languageFontClass}
+        onOpen={open}
+      />
       {/* A legal form is never put off (RAPP-771). */}
       {form.mandatory === 'optional' && form.kind !== 'legal' ? (
         <PressableScale
@@ -82,7 +64,7 @@ export function PendingFormPrompt({ form }: { readonly form: PendingCustomForm }
           }}
           haptic="tapLight"
           style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md px-lg"
+          className="min-h-min items-center justify-center self-start rounded-md px-sm"
         >
           <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
             {t('pendingForm.dismiss')}

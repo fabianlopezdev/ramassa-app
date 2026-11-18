@@ -1,34 +1,15 @@
 import { AttentionChip } from '@/components/home/attention-chip';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { composeContinuousViewStyle } from '@/lib/continuous-corners';
+import { RaisedCard } from '@/components/layout/raised-card';
 import type { TFunction } from 'i18next';
 import { memo, useCallback } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import type {
-  EventCategoryColor,
-  EventSignupState,
-  PlayerEventOccurrence,
+import { Text, View } from 'react-native';
+import {
+  MADRID_TIME_ZONE,
+  type EventCategoryColor,
+  type EventSignupState,
+  type PlayerEventOccurrence,
 } from '@ramassa/shared/events';
 import { tokens } from '@ramassa/shared/tokens';
-
-const styles = StyleSheet.create({
-  card: {
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: tokens.colors.neutral[200],
-    borderRadius: tokens.radius.lg,
-    backgroundColor: tokens.colors.white,
-  },
-});
-const categoryBackgroundStyles = StyleSheet.create({
-  primary: { backgroundColor: tokens.colors.primary.DEFAULT },
-  secondary: { backgroundColor: tokens.colors.secondary.dark },
-  accent: { backgroundColor: tokens.colors.info },
-  'chart-1': { backgroundColor: tokens.colors.success },
-  'chart-2': { backgroundColor: tokens.colors.warning },
-  'chart-3': { backgroundColor: tokens.colors.error },
-});
-const cardStyle = composeContinuousViewStyle(styles.card);
 
 export function eventCategoryColor(color: EventCategoryColor): string {
   switch (color) {
@@ -45,10 +26,6 @@ export function eventCategoryColor(color: EventCategoryColor): string {
     case 'chart-3':
       return tokens.colors.error;
   }
-}
-
-export function eventCategoryBackgroundStyle(color: EventCategoryColor) {
-  return categoryBackgroundStyles[color];
 }
 
 /** Her sign-up chip on an activity card; `t` resolves the `events` namespace. */
@@ -95,16 +72,45 @@ export function EventDetailLine({
   );
 }
 
+// One width for the date block, so the names line up from card to card in a list.
+const dateBlockStyle = { minWidth: tokens.spacing['3xl'] } as const;
+
+interface EventCardDateParts {
+  readonly day: string;
+  readonly month: string;
+  readonly time: string;
+}
+
+const datePartFormatters = new Map<string, readonly Intl.DateTimeFormat[]>();
+
+/** The day, short month and time of an activity, in Madrid time, for the card's date block. */
+function eventCardDateParts(startsAt: string, locale: string): EventCardDateParts {
+  let formatters = datePartFormatters.get(locale);
+  if (formatters === undefined) {
+    formatters = [
+      new Intl.DateTimeFormat(locale, { day: 'numeric', timeZone: MADRID_TIME_ZONE }),
+      new Intl.DateTimeFormat(locale, { month: 'short', timeZone: MADRID_TIME_ZONE }),
+      new Intl.DateTimeFormat(locale, {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: MADRID_TIME_ZONE,
+      }),
+    ];
+    datePartFormatters.set(locale, formatters);
+  }
+  const date = new Date(startsAt);
+  const [day, month, time] = formatters.map((formatter) => formatter.format(date));
+  return { day: day ?? '', month: month ?? '', time: time ?? '' };
+}
+
 export interface EventCardProps {
   readonly eventId: string;
   readonly occurrenceId: string;
   readonly title: string;
-  readonly category: string;
-  readonly categoryColor: EventCategoryColor;
-  readonly date: string;
-  readonly time: string;
+  /** When this occurrence starts; the card shows its day, month and time. */
+  readonly startsAt: string;
+  readonly locale: string;
   readonly location: string;
-  readonly capacityLabel: string;
   readonly signupLabel: string | null;
   /** Set while the activity is new to her (RAPP-821): the word shown on its mark. */
   readonly unseenLabel?: string | null;
@@ -113,62 +119,55 @@ export interface EventCardProps {
   readonly onOpen: (eventId: string, occurrenceId: string) => void;
 }
 
+/**
+ * An activity as a raised card (RAPP-828): its day and month in a block at the
+ * start, then its name, time, place and her sign-up. The same card on Inici
+ * and in the Activitats list.
+ */
 export const EventCard = memo(function EventCard({
   eventId,
   occurrenceId,
   title,
-  category,
-  categoryColor,
-  date,
-  time,
+  startsAt,
+  locale,
   location,
-  capacityLabel,
   signupLabel,
   unseenLabel = null,
   accessibilityLabel,
   languageFontClass,
   onOpen,
 }: EventCardProps) {
-  const handlePress = useCallback(
+  const handleOpen = useCallback(
     () => onOpen(eventId, occurrenceId),
     [eventId, occurrenceId, onOpen],
   );
+  const { day, month, time } = eventCardDateParts(startsAt, locale);
 
   return (
-    <View testID={`event-card-${eventId}-${occurrenceId}`}>
-      <PressableScale
-        accessibilityLabel={accessibilityLabel}
-        onPress={handlePress}
-        haptic="tapLight"
-        style={cardStyle}
-        className="overflow-hidden rounded-lg border border-neutral-200 bg-white"
-      >
-        <View
-          accessible={false}
-          className="h-xs"
-          style={eventCategoryBackgroundStyle(categoryColor)}
-        />
-        <View className="gap-sm p-md">
-          <View className="flex-row flex-wrap items-center gap-sm">
-            <AttentionChip label={unseenLabel} languageFontClass={languageFontClass} />
-            <View className="flex-row items-center gap-xs rounded-full bg-neutral-100 px-sm py-xs">
-              <View
-                accessible={false}
-                className="h-sm w-sm rounded-full"
-                style={eventCategoryBackgroundStyle(categoryColor)}
-              />
-              <Text className={`text-sm font-medium text-neutral-700 ${languageFontClass}`}>
-                {category}
-              </Text>
+    <RaisedCard
+      testID={`event-card-${eventId}-${occurrenceId}`}
+      accessibilityLabel={accessibilityLabel}
+      onOpen={handleOpen}
+      showsArrow={false}
+    >
+      <View className="flex-row items-stretch gap-md">
+        <View className="items-center justify-center" style={dateBlockStyle}>
+          <Text
+            className={`text-4xl font-extrabold tabular-nums text-neutral-900 ${languageFontClass}`}
+          >
+            {day}
+          </Text>
+          <Text className={`text-md font-bold uppercase text-primary-dark ${languageFontClass}`}>
+            {month}
+          </Text>
+        </View>
+        <View accessible={false} className="border-s-2 border-neutral-300" />
+        <View className="flex-1 gap-xs">
+          {unseenLabel === null ? null : (
+            <View className="flex-row">
+              <AttentionChip label={unseenLabel} languageFontClass={languageFontClass} />
             </View>
-            {signupLabel === null ? null : (
-              <View className="rounded-full bg-secondary-light px-sm py-xs">
-                <Text className={`text-sm font-semibold text-neutral-900 ${languageFontClass}`}>
-                  {signupLabel}
-                </Text>
-              </View>
-            )}
-          </View>
+          )}
           <Text
             className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
             numberOfLines={2}
@@ -176,9 +175,9 @@ export const EventCard = memo(function EventCard({
             {title}
           </Text>
           <Text
-            className={`text-start text-md font-medium tabular-nums text-primary-dark ${languageFontClass}`}
+            className={`text-start text-lg font-bold tabular-nums text-primary-dark ${languageFontClass}`}
           >
-            {date} · {time}
+            {time}
           </Text>
           <Text
             className={`text-start text-md text-neutral-700 ${languageFontClass}`}
@@ -186,11 +185,17 @@ export const EventCard = memo(function EventCard({
           >
             {location}
           </Text>
-          <Text className={`text-start text-sm tabular-nums text-neutral-500 ${languageFontClass}`}>
-            {capacityLabel}
-          </Text>
+          {signupLabel === null ? null : (
+            <View className="flex-row">
+              <View className="rounded-full bg-secondary px-md py-xs">
+                <Text className={`text-sm font-semibold text-neutral-900 ${languageFontClass}`}>
+                  {signupLabel}
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
-      </PressableScale>
-    </View>
+      </View>
+    </RaisedCard>
   );
 });

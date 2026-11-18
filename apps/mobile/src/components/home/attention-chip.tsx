@@ -3,7 +3,8 @@
  * an announcement or activity she has not seen and on a form or survey she has
  * not started, and the word for continue on a survey she started and did not
  * finish. A word and a colour together, so the state never depends on colour
- * alone.
+ * alone. Its corners are square like the card it sits on, where a pill would
+ * read as a filter (RAPP-826).
  */
 
 import { Text, View } from 'react-native';
@@ -24,7 +25,7 @@ export function AttentionChip({ label, tone = 'new', languageFontClass }: Attent
   if (label === null) return null;
   const classes = toneClasses[tone];
   return (
-    <View testID={`attention-chip-${tone}`} className={`rounded-full px-sm py-xs ${classes.chip}`}>
+    <View testID={`attention-chip-${tone}`} className={`rounded-sm px-sm py-xs ${classes.chip}`}>
       <Text className={`text-sm font-semibold ${classes.text} ${languageFontClass}`}>{label}</Text>
     </View>
   );

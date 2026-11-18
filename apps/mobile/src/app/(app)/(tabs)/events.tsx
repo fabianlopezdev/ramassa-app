@@ -116,7 +116,6 @@ export default function EventsScreen() {
         byId.set(row.event.category.id, {
           id: row.event.category.id,
           label: name.text,
-          color: row.event.category.color,
         });
       }
     }
@@ -143,6 +142,7 @@ export default function EventsScreen() {
           ),
     [effectiveSelectedDate, mentoringEntries, view],
   );
+  const locale = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;
   const dateFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, {
@@ -223,12 +223,9 @@ export default function EventsScreen() {
             eventId={item.event.id}
             occurrenceId={item.occurrence_id}
             title={title.text}
-            category={categoryName.text}
-            categoryColor={item.event.category.color}
-            date={date}
-            time={time}
+            startsAt={item.occurrence_starts_at}
+            locale={locale}
             location={item.event.location}
-            capacityLabel={capacity}
             signupLabel={signup}
             accessibilityLabel={[
               t('playerOpenEvent', { title: title.text }),
@@ -247,7 +244,7 @@ export default function EventsScreen() {
         </PageWidth>
       );
     },
-    [dateFormatter, language, languageFontClass, openOccurrence, t, timeFormatter],
+    [dateFormatter, language, languageFontClass, locale, openOccurrence, t, timeFormatter],
   );
 
   const tabInsets = usePlayerTabContentInsets();

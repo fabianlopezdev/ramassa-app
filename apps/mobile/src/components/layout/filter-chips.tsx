@@ -1,0 +1,101 @@
+/**
+ * A row of filter chips (RAPP-829): raised like the cards, so they read as
+ * something to press, with the chosen one filled. The row scrolls sideways
+ * and runs to the edge of the screen, where a cut-off chip shows there are
+ * more. The announcement categories on Inici and the activity categories on
+ * Activitats share it.
+ */
+import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
+import { continuousCorners } from '@/lib/continuous-corners';
+import { memo, useCallback } from 'react';
+import { ScrollView, StyleSheet, Text } from 'react-native';
+import { tokens } from '@ramassa/shared/tokens';
+
+const styles = StyleSheet.create({
+  // The row leaves the page's side padding and takes it back inside, so the
+  // first chip lines up with the cards and the last can scroll under the edge.
+  row: { marginHorizontal: -tokens.spacing.lg },
+  rowContent: { gap: tokens.spacing.sm, paddingHorizontal: tokens.spacing.lg },
+});
+const chipStyle = {
+  ...continuousCorners,
+  minHeight: tokens.tapTarget.recommended - tokens.languageChoice.shadowBlockOffset,
+} as const;
+
+export interface FilterChipOption<Id extends string> {
+  readonly id: Id;
+  readonly label: string;
+  readonly testID?: string;
+}
+
+interface FilterChipProps<Id extends string> extends FilterChipOption<Id> {
+  readonly isSelected: boolean;
+  readonly languageFontClass: string;
+  readonly onSelect: (id: Id) => void;
+}
+
+function FilterChipInner<Id extends string>({
+  id,
+  label,
+  testID,
+  isSelected,
+  languageFontClass,
+  onSelect,
+}: FilterChipProps<Id>) {
+  const handlePress = useCallback(() => onSelect(id), [id, onSelect]);
+  return (
+    <SelectionChoiceSurface
+      testID={testID}
+      label={label}
+      accessibilityRole="radio"
+      isSelected={isSelected}
+      onPress={handlePress}
+      contentClassName="justify-center"
+      rowStyle={chipStyle}
+    >
+      <Text
+        className={`text-center text-md font-bold ${
+          isSelected ? 'text-neutral-900' : 'text-primary-dark'
+        } ${languageFontClass}`}
+      >
+        {label}
+      </Text>
+    </SelectionChoiceSurface>
+  );
+}
+const FilterChip = memo(FilterChipInner) as typeof FilterChipInner;
+
+export function FilterChips<Id extends string>({
+  options,
+  selected,
+  accessibilityLabel,
+  languageFontClass,
+  onSelect,
+}: {
+  readonly options: readonly FilterChipOption<Id>[];
+  readonly selected: Id;
+  readonly accessibilityLabel: string;
+  readonly languageFontClass: string;
+  readonly onSelect: (id: Id) => void;
+}) {
+  return (
+    <ScrollView
+      horizontal
+      accessibilityRole="radiogroup"
+      accessibilityLabel={accessibilityLabel}
+      showsHorizontalScrollIndicator={false}
+      style={styles.row}
+      contentContainerStyle={styles.rowContent}
+    >
+      {options.map((option) => (
+        <FilterChip
+          key={option.id}
+          {...option}
+          isSelected={selected === option.id}
+          languageFontClass={languageFontClass}
+          onSelect={onSelect}
+        />
+      ))}
+    </ScrollView>
+  );
+}
