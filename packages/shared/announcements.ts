@@ -10,6 +10,11 @@ import {
 import type { Database } from './types/database';
 
 export const ANNOUNCEMENT_CATEGORIES = ['info', 'training', 'social', 'urgent'] as const;
+/**
+ * The order the player app shows the kinds in (RAPP-850): urgent first,
+ * because it is what the team needs her to see now.
+ */
+export const PLAYER_ANNOUNCEMENT_CATEGORY_ORDER = ['urgent', 'info', 'training', 'social'] as const;
 export const ANNOUNCEMENT_STATUSES = ['draft', 'published'] as const;
 export const ANNOUNCEMENT_LIFECYCLES = ['draft', 'published', 'scheduled', 'expired'] as const;
 export const ANNOUNCEMENT_STATUS_FILTERS = ['all', ...ANNOUNCEMENT_LIFECYCLES] as const;
@@ -228,6 +233,9 @@ export function filterAndOrderPlayerAnnouncements(
     )
     .sort((left, right) => {
       if (left.is_pinned !== right.is_pinned) return left.is_pinned ? -1 : 1;
+      // Urgent comes next, before newer ordinary news (RAPP-850).
+      const leftIsUrgent = left.category === 'urgent';
+      if (leftIsUrgent !== (right.category === 'urgent')) return leftIsUrgent ? -1 : 1;
       const publishedDifference =
         new Date(right.published_at ?? 0).getTime() - new Date(left.published_at ?? 0).getTime();
       return publishedDifference === 0 ? left.id.localeCompare(right.id) : publishedDifference;

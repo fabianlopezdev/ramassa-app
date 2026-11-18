@@ -3,7 +3,7 @@ import type { RaisedTone } from '@/components/layout/raised-surface';
 import type { TFunction } from 'i18next';
 import { useMemo } from 'react';
 import {
-  ANNOUNCEMENT_CATEGORIES,
+  PLAYER_ANNOUNCEMENT_CATEGORY_ORDER,
   type AnnouncementCategory,
   type PlayerAnnouncementCategoryFilter,
 } from '@ramassa/shared/announcements';
@@ -23,10 +23,17 @@ export function countNewAnnouncements(
   return counts;
 }
 
-/** "Tot" first, then the kinds with something new, then the rest, each in the usual order. */
+/**
+ * "Tot" first, then the kinds with something new, then the rest, each with
+ * Urgent first (RAPP-850).
+ */
 function orderedFilters(newCounts: NewAnnouncementCounts): PlayerAnnouncementCategoryFilter[] {
-  const withNew = ANNOUNCEMENT_CATEGORIES.filter((category) => (newCounts.get(category) ?? 0) > 0);
-  const without = ANNOUNCEMENT_CATEGORIES.filter((category) => !withNew.includes(category));
+  const withNew = PLAYER_ANNOUNCEMENT_CATEGORY_ORDER.filter(
+    (category) => (newCounts.get(category) ?? 0) > 0,
+  );
+  const without = PLAYER_ANNOUNCEMENT_CATEGORY_ORDER.filter(
+    (category) => !withNew.includes(category),
+  );
   return ['all', ...withNew, ...without];
 }
 

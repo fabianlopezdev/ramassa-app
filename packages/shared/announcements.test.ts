@@ -163,6 +163,30 @@ describe('player announcement feed', () => {
     ]);
   });
 
+  test('puts urgent items after pinned ones and before newer ordinary ones', () => {
+    const ordered = filterAndOrderPlayerAnnouncements(
+      [
+        row('info-newest', { category: 'info', published_at: '2026-08-04T11:00:00.000Z' }),
+        row('urgent-older', { category: 'urgent', published_at: '2026-08-02T10:00:00.000Z' }),
+        row('urgent-newer', { category: 'urgent', published_at: '2026-08-03T10:00:00.000Z' }),
+        row('pinned-info', {
+          category: 'info',
+          is_pinned: true,
+          published_at: '2026-08-01T10:00:00.000Z',
+        }),
+      ],
+      'all',
+      now,
+    );
+
+    expect(ordered.map(({ id }) => id)).toEqual([
+      'pinned-info',
+      'urgent-newer',
+      'urgent-older',
+      'info-newest',
+    ]);
+  });
+
   test('applies a category without changing pinned-first ordering', () => {
     const filtered = filterAndOrderPlayerAnnouncements(
       [
