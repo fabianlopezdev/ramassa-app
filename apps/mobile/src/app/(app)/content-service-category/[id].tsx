@@ -14,11 +14,12 @@ import { ServiceFieldForm } from '@/components/content/service-field-form';
 import {
   SERVICE_FIELD_TYPE_KEYS,
   SERVICE_ICON_KEYS,
-  SERVICE_ICON_SYMBOLS,
+  SERVICE_ICON_NAMES,
 } from '@/components/content/service-labels';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { eventCategoryColor } from '@/components/events/event-card';
+import { Icon } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { useContentServiceCategories, useServiceCategoryActions } from '@/lib/content-services';
@@ -42,7 +43,6 @@ import {
 import { generateDrafts } from '@/lib/translation-worker';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -212,12 +212,17 @@ function CategoryEditor({ category }: { readonly category: AdminServiceCategory 
         <SectionLabel>{t('categoryIcon')}</SectionLabel>
         <View className="flex-row flex-wrap gap-sm">
           {withStored(SERVICE_CATEGORY_ICONS, form.icon).map((icon) => {
-            const symbol = SERVICE_ICON_SYMBOLS[icon as keyof typeof SERVICE_ICON_SYMBOLS];
+            const symbol = SERVICE_ICON_NAMES[icon as keyof typeof SERVICE_ICON_NAMES];
             const key = SERVICE_ICON_KEYS[icon as keyof typeof SERVICE_ICON_KEYS];
             return (
               <View key={icon} className="flex-row items-center gap-xs">
                 {symbol === undefined ? null : (
-                  <SymbolView name={symbol} size={18} tintColor={tokens.colors.primary.DEFAULT} />
+                  <Icon
+                    name={symbol}
+                    weight="boldDuotone"
+                    size={tokens.fontSize.lg}
+                    color={tokens.colors.primary.DEFAULT}
+                  />
                 )}
                 <ChoiceOption
                   testID={`service-category-icon-${icon}`}

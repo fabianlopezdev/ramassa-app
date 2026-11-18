@@ -31,8 +31,20 @@ const ROOT = resolve(import.meta.dirname, '..');
 const SVG_DIR = resolve(ROOT, 'docs/design/icons/svg');
 const OUT = resolve(ROOT, 'apps/mobile/assets/images/tab');
 
-/** The five player tabs, by OUR icon names. */
-const ICONS = ['home', 'calendar', 'chat', 'chats', 'grid'] as const;
+/** Every icon a tab bar shows (player, team and entity), by OUR icon names. */
+const ICONS = [
+  'calendar',
+  'chart',
+  'chat',
+  'chats',
+  'document',
+  'grid',
+  'home',
+  'more',
+  'sun',
+  'user-plus',
+  'users',
+] as const;
 const WEIGHTS = ['linear', 'boldDuotone'] as const;
 /** A tab icon sits in a 25-point square. */
 const POINT = 25;

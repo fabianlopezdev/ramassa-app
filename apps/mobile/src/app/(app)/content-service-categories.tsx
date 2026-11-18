@@ -10,8 +10,9 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
-import { SERVICE_ICON_SYMBOLS } from '@/components/content/service-labels';
+import { SERVICE_ICON_NAMES } from '@/components/content/service-labels';
 import { FailureNotice } from '@/components/error-code-line';
+import { Icon } from '@/components/icons/icon';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -20,7 +21,6 @@ import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { Alert, Platform, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -137,8 +137,7 @@ export default function ServiceCategoriesScreen() {
           ) : (
             <View className="gap-sm" accessibilityRole="list">
               {rows.map((category, index) => {
-                const symbol =
-                  SERVICE_ICON_SYMBOLS[category.icon as keyof typeof SERVICE_ICON_SYMBOLS];
+                const symbol = SERVICE_ICON_NAMES[category.icon as keyof typeof SERVICE_ICON_NAMES];
                 return (
                   <View
                     key={category.id}
@@ -148,10 +147,11 @@ export default function ServiceCategoriesScreen() {
                   >
                     <View className="flex-row items-center gap-xs">
                       {symbol === undefined ? null : (
-                        <SymbolView
+                        <Icon
                           name={symbol}
-                          size={18}
-                          tintColor={tokens.colors.primary.DEFAULT}
+                          weight="boldDuotone"
+                          size={tokens.fontSize.lg}
+                          color={tokens.colors.primary.DEFAULT}
                         />
                       )}
                       <Text

@@ -1,14 +1,10 @@
 import { DataIcon } from '@/components/forms/data-icon';
+import type { IconName } from '@/components/icons/icon';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import type { SymbolViewProps } from 'expo-symbols';
 import { Text, View } from 'react-native';
 
 /** The icon of a point when the screen gives none: a plain tick. */
-const POINT_SYMBOL: SymbolViewProps['name'] = {
-  ios: 'checkmark.circle',
-  android: 'check_circle',
-  web: 'check_circle',
-};
+const POINT_ICON: IconName = 'check-circle';
 
 /**
  * Points she reads, each a title and a text after its icon: the app terms'
@@ -18,11 +14,11 @@ const POINT_SYMBOL: SymbolViewProps['name'] = {
  */
 export function PointsBlock({
   points,
-  symbols = [POINT_SYMBOL],
+  symbols = [POINT_ICON],
   testID,
 }: {
   readonly points: readonly { readonly title: string; readonly body: string }[];
-  readonly symbols?: readonly SymbolViewProps['name'][];
+  readonly symbols?: readonly IconName[];
   readonly testID?: string;
 }) {
   const languageFontClass = useLanguageFontClass();
@@ -30,7 +26,7 @@ export function PointsBlock({
     <View className="gap-lg" testID={testID}>
       {points.map((point, index) => (
         <View key={index} className="flex-row items-start gap-sm">
-          <DataIcon name={symbols[Math.min(index, symbols.length - 1)] ?? POINT_SYMBOL} />
+          <DataIcon name={symbols[Math.min(index, symbols.length - 1)] ?? POINT_ICON} />
           <View className="flex-1 gap-xs">
             <Text
               className={`text-start text-form font-bold text-neutral-900 ${languageFontClass}`}

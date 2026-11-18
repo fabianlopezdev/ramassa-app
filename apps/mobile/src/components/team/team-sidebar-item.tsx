@@ -4,8 +4,8 @@
  * the selected tab when it is the open screen. `TabTrigger asChild` passes the
  * press handler and `isFocused`.
  */
+import { Icon, type IconName } from '@/components/icons/icon';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Pressable, Text, View, type PressableProps } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -25,7 +25,7 @@ const compactLayout = {
 
 type TeamSidebarItemProps = Omit<PressableProps, 'children'> & {
   readonly label: string;
-  readonly icon: SymbolViewProps['name'];
+  readonly icon: IconName;
   readonly badge?: string | null;
   readonly isFocused?: boolean;
   readonly href?: unknown;
@@ -57,11 +57,11 @@ export function TeamSidebarItem({
         compact ? 'gap-xs px-xs py-sm' : 'gap-md px-md'
       } ${isFocused ? 'bg-neutral-100' : ''}`}
     >
-      <SymbolView
-        accessible={false}
+      <Icon
         name={icon}
+        weight={isFocused ? 'boldDuotone' : 'linear'}
         size={tokens.fontSize.xl}
-        tintColor={isFocused ? tokens.colors.primary.dark : tokens.colors.neutral[700]}
+        color={isFocused ? tokens.colors.primary.dark : tokens.colors.neutral[700]}
       />
       <Text
         className={`${compact ? 'text-center text-xs' : 'flex-1 text-start text-md'} ${

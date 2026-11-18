@@ -10,6 +10,8 @@
  */
 import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-load-failure';
 import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
+import { FORWARD_CHEVRON } from '@/components/icons/direction';
+import { Icon } from '@/components/icons/icon';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { BarRow, MonthBars, Sparkline } from '@/components/team/impact-charts';
@@ -17,24 +19,14 @@ import { continuousCorners } from '@/lib/continuous-corners';
 import { useEntityDashboard } from '@/lib/entity-portal';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { I18nManager, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
 
 const TABLET_WIDTH = 768;
-
-// The forward chevron of the app's other rows that open a detail
-// (attendance-occurrence-row). SF Symbols mirror by themselves; the Material
-// name is picked by direction.
-const forwardSymbol = {
-  ios: 'chevron.forward',
-  android: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',
-  web: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',
-} as const;
 
 const percent = (value: number | null) => (value === null ? '' : `${value.toFixed(2)}%`);
 
@@ -236,11 +228,10 @@ export default function EntityHomeScreen() {
                           share={row.attendanceRate / 100}
                         />
                       </View>
-                      <SymbolView
-                        accessible={false}
-                        name={forwardSymbol}
+                      <Icon
+                        name={FORWARD_CHEVRON}
                         size={tokens.fontSize.lg}
-                        tintColor={tokens.colors.neutral[500]}
+                        color={tokens.colors.neutral[500]}
                       />
                     </PressableScale>
                   );

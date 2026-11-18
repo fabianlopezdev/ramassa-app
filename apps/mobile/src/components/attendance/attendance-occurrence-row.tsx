@@ -1,20 +1,10 @@
+import { FORWARD_CHEVRON } from '@/components/icons/direction';
+import { Icon } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
-import { SymbolView } from 'expo-symbols';
 import { memo, useCallback } from 'react';
 import { Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
-
-const soccerSymbol = {
-  ios: 'figure.soccer',
-  android: 'sports_soccer',
-  web: 'sports_soccer',
-} as const;
-const forwardSymbol = {
-  ios: 'chevron.forward',
-  android: 'chevron_right',
-  web: 'chevron_right',
-} as const;
 
 interface AttendanceOccurrenceRowProps {
   readonly id: string;
@@ -45,11 +35,11 @@ export const AttendanceOccurrenceRow = memo(function AttendanceOccurrenceRow({
       style={continuousCorners}
       className="min-h-recommended flex-row items-center gap-md rounded-lg border border-neutral-200 bg-white p-md"
     >
-      <SymbolView
-        accessible={false}
-        name={soccerSymbol}
+      <Icon
+        name="football"
+        weight="boldDuotone"
         size={tokens.fontSize['2xl']}
-        tintColor={tokens.colors.primary.dark}
+        color={tokens.colors.primary.dark}
       />
       <View className="flex-1 gap-xs">
         <Text className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}>
@@ -59,12 +49,7 @@ export const AttendanceOccurrenceRow = memo(function AttendanceOccurrenceRow({
           {time} · {location}
         </Text>
       </View>
-      <SymbolView
-        accessible={false}
-        name={forwardSymbol}
-        size={tokens.fontSize.lg}
-        tintColor={tokens.colors.neutral[500]}
-      />
+      <Icon name={FORWARD_CHEVRON} size={tokens.fontSize.lg} color={tokens.colors.neutral[500]} />
     </PressableScale>
   );
 });

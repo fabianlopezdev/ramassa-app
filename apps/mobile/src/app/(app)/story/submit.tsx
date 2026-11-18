@@ -1,5 +1,6 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { Icon, type IconName } from '@/components/icons/icon';
 import { StoryImagePreview } from '@/components/knowledge/story-image-preview';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
@@ -22,7 +23,6 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import * as ImagePicker from 'expo-image-picker';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -37,21 +37,6 @@ import {
 import { MAX_STORY_IMAGES, participantStoryDraftSchema } from '@ramassa/shared/story-submission';
 import { tokens } from '@ramassa/shared/tokens';
 
-const addPhotoSymbol: SymbolViewProps['name'] = {
-  ios: 'photo.badge.plus',
-  android: 'add_photo_alternate',
-  web: 'add_photo_alternate',
-};
-const editSymbol: SymbolViewProps['name'] = {
-  ios: 'pencil',
-  android: 'edit',
-  web: 'edit',
-};
-const checkSymbol: SymbolViewProps['name'] = {
-  ios: 'checkmark',
-  android: 'check',
-  web: 'check',
-};
 const styles = StyleSheet.create({
   storyInput: { minHeight: tokens.spacing['3xl'] * 2 },
 });
@@ -71,7 +56,7 @@ function OutlinedIconAction({
 }: {
   readonly testID: string;
   readonly label: string;
-  readonly symbol: SymbolViewProps['name'];
+  readonly symbol: IconName;
   readonly onPress: () => void;
   readonly isDisabled?: boolean;
   readonly isBusy?: boolean;
@@ -91,12 +76,7 @@ function OutlinedIconAction({
       {isBusy ? (
         <ActivityIndicator accessible={false} color={tokens.colors.primary.DEFAULT} />
       ) : (
-        <SymbolView
-          accessible={false}
-          name={symbol}
-          size={tokens.fontSize.xl}
-          tintColor={tokens.colors.primary.DEFAULT}
-        />
+        <Icon name={symbol} size={tokens.fontSize.xl} color={tokens.colors.primary.DEFAULT} />
       )}
       <Text className={`text-md font-bold text-primary ${languageFontClass}`}>{label}</Text>
     </PressableScale>
@@ -429,7 +409,7 @@ export default function StorySubmissionScreen() {
                           ? t('knowledge:processingPhoto')
                           : t('knowledge:addPhotos')
                       }
-                      symbol={addPhotoSymbol}
+                      symbol="gallery-add"
                       onPress={addPhotos}
                       isDisabled={images.length >= MAX_STORY_IMAGES || isProcessingPhoto}
                       isBusy={isProcessingPhoto}
@@ -471,11 +451,10 @@ export default function StorySubmissionScreen() {
                       style={continuousCorners}
                     >
                       {hasConsent ? (
-                        <SymbolView
-                          accessible={false}
-                          name={checkSymbol}
+                        <Icon
+                          name="check"
                           size={tokens.fontSize.md}
-                          tintColor={tokens.colors.primary.dark}
+                          color={tokens.colors.primary.dark}
                         />
                       ) : null}
                     </View>
@@ -601,7 +580,7 @@ export default function StorySubmissionScreen() {
                       <OutlinedIconAction
                         testID={`story-edit-${status.id}`}
                         label={t('knowledge:editStory')}
-                        symbol={editSymbol}
+                        symbol="pen"
                         onPress={() => startEditing(status)}
                         isDisabled={editingStory?.id === status.id}
                       />

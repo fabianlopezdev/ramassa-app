@@ -1,5 +1,6 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { FailureNotice } from '@/components/error-code-line';
+import { Icon } from '@/components/icons/icon';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -11,7 +12,6 @@ import {
 } from '@/lib/player-surveys';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -51,26 +51,6 @@ const YES_NO_OPTIONS = [true, false] as const;
 const EMPTY_SURVEY_QUESTIONS: readonly SurveyQuestion[] = [];
 const EMPTY_SURVEY_ANSWERS: Readonly<Record<string, SurveyAnswer>> = {};
 const SURVEY_FREE_TEXT_MAX_LENGTH = 4_000;
-const starSymbol: SymbolViewProps['name'] = {
-  ios: 'star.fill',
-  android: 'star',
-  web: 'star',
-};
-const yesSymbol: SymbolViewProps['name'] = {
-  ios: 'checkmark',
-  android: 'check',
-  web: 'check',
-};
-const noSymbol: SymbolViewProps['name'] = {
-  ios: 'xmark',
-  android: 'close',
-  web: 'close',
-};
-const successSymbol: SymbolViewProps['name'] = {
-  ios: 'checkmark.circle.fill',
-  android: 'check_circle',
-  web: 'check_circle',
-};
 
 interface QuestionControlProps {
   readonly question: SurveyQuestion;
@@ -113,11 +93,11 @@ function RatingQuestionControl({ question, answer, language, onChange }: Questio
           style={answer === rating ? selectedOptionStyle : optionStyle}
           className={`min-h-recommended min-w-12 flex-1 items-center justify-center rounded-md border-2 border-neutral-200 ${answer === rating ? 'bg-primary/10' : 'bg-white'}`}
         >
-          <SymbolView
-            accessible={false}
-            name={starSymbol}
+          <Icon
+            name="star"
+            weight="boldDuotone"
             size={tokens.fontSize['3xl']}
-            tintColor={tokens.colors.secondary.dark}
+            color={tokens.colors.secondary.dark}
           />
         </PressableScale>
       ))}
@@ -188,11 +168,10 @@ function YesNoQuestionControl({
           style={answer === value ? selectedOptionStyle : optionStyle}
           className={`min-h-recommended flex-1 flex-row items-center justify-center gap-sm rounded-md border-2 border-neutral-200 px-lg py-xl ${answer === value ? 'bg-primary/10' : 'bg-white'}`}
         >
-          <SymbolView
-            accessible={false}
-            name={value ? yesSymbol : noSymbol}
+          <Icon
+            name={value ? 'check' : 'close'}
             size={tokens.fontSize['2xl']}
-            tintColor={tokens.colors.neutral[900]}
+            color={tokens.colors.neutral[900]}
           />
           <Text className={`text-2xl font-bold text-neutral-900 ${languageFontClass}`}>
             {value ? t('yes') : t('no')}
@@ -416,11 +395,11 @@ export default function SurveyScreen() {
         contentContainerClassName="grow items-center justify-center gap-lg p-xl"
       >
         <View testID="survey-completion" className="w-full items-center gap-lg">
-          <SymbolView
-            accessible={false}
-            name={successSymbol}
+          <Icon
+            name="check-circle"
+            weight="boldDuotone"
             size={tokens.fontSize['4xl']}
-            tintColor={tokens.colors.success}
+            color={tokens.colors.success}
           />
           <Text
             accessibilityRole="header"

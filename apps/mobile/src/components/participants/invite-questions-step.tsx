@@ -12,7 +12,7 @@
  * onboarding close the list, locked. The presets fill every choice at once.
  */
 import { ChoiceOption } from '@/components/equipment/choice-option';
-import { BrandSymbol } from '@/components/forms/data-icon';
+import { BrandIcon } from '@/components/forms/data-icon';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
@@ -56,11 +56,7 @@ const CHOICE_LABEL_KEYS: Readonly<Record<IntakeQuestionState, string>> = {
   skip: 'inviteChoiceSkip',
 };
 
-const chevron = {
-  down: { ios: 'chevron.down', android: 'expand_more', web: 'expand_more' },
-  up: { ios: 'chevron.up', android: 'expand_less', web: 'expand_less' },
-  lock: { ios: 'lock', android: 'lock', web: 'lock' },
-} as const;
+const chevron = { down: 'chevron-down', up: 'chevron-up', lock: 'lock' } as const;
 
 export function InviteQuestionsStep({
   answered,
@@ -154,7 +150,7 @@ export function InviteQuestionsStep({
               className="min-h-recommended flex-row items-center gap-sm px-md"
               testID={`invite-screen-${screen.step.key}`}
             >
-              <BrandSymbol name={chevron.lock} size={tokens.spacing.md} />
+              <BrandIcon name={chevron.lock} size={tokens.spacing.md} />
               <Text className={`flex-1 text-start text-md text-neutral-800 ${fontClass}`}>
                 {flowStepName(screen.step, language, t)}
               </Text>
@@ -224,7 +220,7 @@ function ScreenGroup({
             </Text>
             <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>{subtitle}</Text>
           </View>
-          <BrandSymbol name={isOpen ? chevron.up : chevron.down} size={tokens.spacing.md} />
+          <BrandIcon name={isOpen ? chevron.up : chevron.down} size={tokens.spacing.md} />
         </Pressable>
         <Switch
           testID={`invite-screen-switch-${step.key}`}

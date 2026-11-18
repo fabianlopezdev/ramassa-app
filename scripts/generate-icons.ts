@@ -43,6 +43,8 @@ const VIEW_BOX = `0 0 ${GRID} ${GRID}`;
  */
 const WEIGHTS = { linear: 'linear', boldDuotone: 'bold-duotone' } as const;
 
+const FETCH_PAUSE_MS = 200;
+
 const LICENCE = {
   set: 'Solar',
   author: '480 Design',
@@ -60,20 +62,33 @@ const LICENCE = {
 const ICONS: Readonly<Record<string, string>> = {
   book: 'book',
   briefcase: 'case',
+  buildings: 'buildings',
   calendar: 'calendar',
   'calendar-check': 'calendar-check',
+  chart: 'chart-2',
   chat: 'chat-round',
   'chat-text': 'chat-round-line',
   chats: 'dialog-2',
+  check: 'check',
+  'check-circle': 'check-circle',
+  'chevron-down': 'alt-arrow-down',
   'chevron-left': 'alt-arrow-left',
   'chevron-right': 'alt-arrow-right',
+  'chevron-up': 'alt-arrow-up',
+  circle: 'circle',
   clipboard: 'clipboard-list',
   clock: 'clock-circle',
+  close: 'close',
+  'close-circle': 'close-circle',
   document: 'document-text',
+  dumbbell: 'dumbbell',
+  football: 'football',
   gallery: 'gallery',
+  'gallery-add': 'gallery-add',
   globe: 'global',
   'graduation-cap': 'square-academic-cap',
   grid: 'widget',
+  heart: 'heart',
   'heart-pulse': 'heart-pulse',
   // The set's plain `home` in bold duotone is built from a mask, which this
   // script does not read; `home-smile` is paths only.
@@ -83,15 +98,27 @@ const ICONS: Readonly<Record<string, string>> = {
   list: 'list',
   lock: 'lock-keyhole',
   logout: 'logout-2',
+  'map-point': 'map-point',
+  masks: 'masks',
+  more: 'menu-dots-circle',
+  pen: 'pen',
   pencil: 'pen-new-square',
+  phone: 'phone',
   plus: 'add-circle',
+  'question-circle': 'question-circle',
   scale: 'justice-scale',
   shield: 'shield-check',
+  shirt: 't-shirt',
   smartphone: 'smartphone',
+  star: 'star',
+  sun: 'sun',
   ticket: 'ticket',
   translate: 'translate',
   user: 'user',
+  'user-circle': 'user-circle',
+  'user-plus': 'user-plus-rounded',
   users: 'users-group-rounded',
+  walking: 'walking',
   'wifi-off': 'wi-fi-off',
 };
 
@@ -237,6 +264,8 @@ async function fetchIcons(only: readonly string[]): Promise<void> {
     for (const [weight, suffix] of Object.entries(WEIGHTS)) {
       const url = `https://api.iconify.design/solar/${source}-${suffix}.svg`;
       const response = await fetch(url, { headers: { 'User-Agent': 'icons-fetch' } });
+      // A short pause between requests, so a long list is not refused.
+      await new Promise((done) => setTimeout(done, FETCH_PAUSE_MS));
       const body = await response.text();
       if (!response.ok || !body.includes('<svg')) fail(`${url} did not return an SVG`);
       writeFileSync(svgFile(name, weight), body);

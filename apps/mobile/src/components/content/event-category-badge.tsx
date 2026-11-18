@@ -3,11 +3,11 @@
  * its Catalan name, as the web admin's badge shows them.
  */
 import { eventCategoryColor } from '@/components/events/event-card';
+import { Icon } from '@/components/icons/icon';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { SymbolView } from 'expo-symbols';
 import { Text, View } from 'react-native';
 import type { EventCategoryRow } from '@ramassa/shared/events';
-import { EVENT_ICON_SYMBOLS } from './event-labels';
+import { EVENT_ICON_NAMES } from './event-labels';
 
 export function EventCategoryGlyph({
   category,
@@ -17,10 +17,11 @@ export function EventCategoryGlyph({
   readonly size?: number;
 }) {
   return (
-    <SymbolView
-      name={EVENT_ICON_SYMBOLS[category.icon]}
+    <Icon
+      name={EVENT_ICON_NAMES[category.icon]}
+      weight="boldDuotone"
       size={size}
-      tintColor={eventCategoryColor(category.color)}
+      color={eventCategoryColor(category.color)}
     />
   );
 }

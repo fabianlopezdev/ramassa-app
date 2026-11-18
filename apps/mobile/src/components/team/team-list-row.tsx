@@ -4,18 +4,13 @@
  * at the end, and a forward chevron when it opens something. A row without
  * `onPress` does not look tappable.
  */
+import { FORWARD_CHEVRON } from '@/components/icons/direction';
+import { Icon } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { SymbolView } from 'expo-symbols';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
-
-const forwardSymbol = {
-  ios: 'chevron.forward',
-  android: 'chevron_right',
-  web: 'chevron_right',
-} as const;
 
 export function TeamListRow({
   testID,
@@ -61,12 +56,7 @@ export function TeamListRow({
         </Text>
       )}
       {onPress === undefined || tone === 'action' ? null : (
-        <SymbolView
-          accessible={false}
-          name={forwardSymbol}
-          size={tokens.fontSize.lg}
-          tintColor={tokens.colors.neutral[500]}
-        />
+        <Icon name={FORWARD_CHEVRON} size={tokens.fontSize.lg} color={tokens.colors.neutral[500]} />
       )}
     </View>
   );

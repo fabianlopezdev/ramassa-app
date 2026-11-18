@@ -25,7 +25,7 @@ mock.module('react-native', () => ({
   }) => createElement('button', { 'data-testid': testID, onClick: onPress }, children),
   Switch: ({ testID }: { testID?: string }) => createElement('input', { 'data-testid': testID }),
 }));
-mock.module('@/components/forms/data-icon', () => ({ BrandSymbol: () => null }));
+mock.module('@/components/forms/data-icon', () => ({ BrandIcon: () => null }));
 mock.module('@/lib/haptics/haptics', () => ({ playHaptic: () => undefined }));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
 mock.module('@ramassa/shared/i18n', () => ({ useLanguage: () => ({ language: 'ca' }) }));

@@ -1,9 +1,9 @@
 /**
  * Translation keys and symbols for an event's status, sign-up mode, and
  * category icon and colour (RAPP-342), as the web admin names them. The icon
- * codes are the web admin's; each has the closest system symbol per platform.
+ * codes are the web admin's; each has the closest icon of the app's set.
  */
-import type { SymbolViewProps } from 'expo-symbols';
+import type { IconName } from '@/components/icons/icon';
 import type { AnnouncementLifecycle } from '@ramassa/shared/announcements';
 import type {
   EventCategoryColor,
@@ -43,12 +43,12 @@ export const EVENT_COLOR_KEYS = {
   'chart-3': 'colorChart3',
 } as const satisfies Record<EventCategoryColor, string>;
 
-export const EVENT_ICON_SYMBOLS = {
-  dumbbell: { ios: 'dumbbell.fill', android: 'fitness_center', web: 'fitness_center' },
-  'graduation-cap': { ios: 'graduationcap.fill', android: 'school', web: 'school' },
-  theater: { ios: 'theatermasks.fill', android: 'theater_comedy', web: 'theater_comedy' },
-  'briefcase-business': { ios: 'briefcase.fill', android: 'work', web: 'work' },
-  languages: { ios: 'character.bubble.fill', android: 'translate', web: 'translate' },
-  footprints: { ios: 'figure.walk', android: 'directions_walk', web: 'directions_walk' },
-  users: { ios: 'person.3.fill', android: 'group', web: 'group' },
-} as const satisfies Record<EventCategoryIcon, SymbolViewProps['name']>;
+export const EVENT_ICON_NAMES = {
+  dumbbell: 'dumbbell',
+  'graduation-cap': 'graduation-cap',
+  theater: 'masks',
+  'briefcase-business': 'briefcase',
+  languages: 'translate',
+  footprints: 'walking',
+  users: 'users',
+} as const satisfies Record<EventCategoryIcon, IconName>;

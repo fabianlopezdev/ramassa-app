@@ -1,25 +1,24 @@
+import { Icon, type IconName, type IconWeight } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import type { AttendanceSyncState } from '@/lib/attendance';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { memo, useCallback } from 'react';
 import { Text, View } from 'react-native';
 import type { AttendanceStatus } from '@ramassa/shared/attendance';
 import type { AppErrorCode } from '@ramassa/shared/errors';
 import { tokens } from '@ramassa/shared/tokens';
 
-const statusSymbols: Record<AttendanceStatus | 'unmarked', SymbolViewProps['name']> = {
-  unmarked: { ios: 'circle', android: 'radio_button_unchecked', web: 'circle' },
-  present: { ios: 'checkmark.circle.fill', android: 'check_circle', web: 'check_circle' },
-  absent: { ios: 'xmark.circle.fill', android: 'cancel', web: 'cancel' },
-  excused: { ios: 'questionmark.circle.fill', android: 'help', web: 'help' },
+// An empty ring while nobody is marked; a filled two-tone mark once she is.
+const statusIcons: Record<
+  AttendanceStatus | 'unmarked',
+  { readonly name: IconName; readonly weight: IconWeight }
+> = {
+  unmarked: { name: 'circle', weight: 'linear' },
+  present: { name: 'check-circle', weight: 'boldDuotone' },
+  absent: { name: 'close-circle', weight: 'boldDuotone' },
+  excused: { name: 'question-circle', weight: 'boldDuotone' },
 };
 
 // Her card, from a separate control beside the row (RAPP-799).
-const openCardSymbol: SymbolViewProps['name'] = {
-  ios: 'person.text.rectangle',
-  android: 'badge',
-  web: 'badge',
-};
 
 const statusColors: Record<AttendanceStatus | 'unmarked', string> = {
   unmarked: tokens.colors.neutral[500],
@@ -112,11 +111,11 @@ export const AttendanceRow = memo(function AttendanceRow({
             onOpenCard === undefined ? 'pe-lg' : 'pe-sm'
           }`}
         >
-          <SymbolView
-            accessible={false}
-            name={statusSymbols[visualStatus]}
+          <Icon
+            name={statusIcons[visualStatus].name}
+            weight={statusIcons[visualStatus].weight}
             size={tokens.fontSize['3xl']}
-            tintColor={statusColors[visualStatus]}
+            color={statusColors[visualStatus]}
           />
           <View className="flex-1 gap-xs">
             <Text className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}>
@@ -158,11 +157,11 @@ export const AttendanceRow = memo(function AttendanceRow({
             haptic="tapLight"
             className="me-sm min-h-recommended min-w-recommended items-center justify-center"
           >
-            <SymbolView
-              accessible={false}
-              name={openCardSymbol}
+            <Icon
+              name="id-card"
+              weight="boldDuotone"
               size={tokens.fontSize['2xl']}
-              tintColor={tokens.colors.primary.dark}
+              color={tokens.colors.primary.dark}
             />
           </PressableScale>
         )}

@@ -13,12 +13,12 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { useFormFieldAppearance } from '@/components/forms/field-appearance';
+import type { IconName } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { OnboardingQuestionHeading } from '@/components/onboarding/onboarding-question-heading';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import type { SymbolViewProps } from 'expo-symbols';
 import { memo, useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Modal, Pressable, Text, View, type ListRenderItemInfo } from 'react-native';
@@ -118,7 +118,7 @@ export interface CountryPickerProps {
   readonly value: string;
   readonly onChange: (canonical: string) => void;
   readonly errorMessage?: string;
-  readonly symbol?: SymbolViewProps['name'];
+  readonly symbol?: IconName;
 }
 
 export function CountryPicker({

@@ -1,23 +1,14 @@
 import { GlassIconSurface } from '@/components/forms/glass-icon-surface';
+import { BACKWARD_CHEVRON } from '@/components/icons/direction';
+import { Icon } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
-import { I18nManager } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 export function AuthBackButton({ onPress }: { readonly onPress: () => void }) {
   const { t } = useTranslation('common');
   const icon = (
-    <SymbolView
-      accessible={false}
-      name={{
-        ios: 'chevron.backward',
-        android: I18nManager.isRTL ? 'arrow_forward' : 'arrow_back',
-        web: I18nManager.isRTL ? 'arrow_right' : 'arrow_left',
-      }}
-      size={tokens.spacing.lg}
-      tintColor={tokens.colors.neutral[900]}
-    />
+    <Icon name={BACKWARD_CHEVRON} size={tokens.spacing.lg} color={tokens.colors.neutral[900]} />
   );
   return (
     <PressableScale
