@@ -1,6 +1,6 @@
 {
   "title": "Galeria de la comunitat",
-  "intro": "Comparteix fotos i vídeos amb la comunitat o només amb el Ramassà.",
+  "intro": "Comparteix fotos i vídeos amb la comunitat o només amb l'equip tècnic.",
   "upload": "Comparteix contingut",
   "uploadTitle": "Comparteix una foto o un vídeo",
   "pickMedia": "Tria una foto o un vídeo",
@@ -15,7 +15,7 @@
   "privacy": "Qui ho pot veure?",
   "privacyLevels": {
     "community": "Tota la comunitat",
-    "staff_only": "Només el Ramassà"
+    "staff_only": "Només l'equip tècnic"
   },
   "consentReminder": "Confirmo que totes les persones que hi apareixen han acceptat compartir aquest contingut.",
   "consentRequired": "Cal confirmar el consentiment abans de publicar.",
@@ -25,7 +25,7 @@
   "retry": "Torna-ho a provar",
   "loading": "Carregant la galeria...",
   "loadFailed": "No s'ha pogut carregar aquest contingut.",
-  "loadFailedHelp": "Comprova la connexió i torna-ho a provar. Si continua fallant, comparteix el codi amb el Ramassà.",
+  "loadFailedHelp": "Comprova la connexió i torna-ho a provar. Si continua fallant, comparteix el codi amb l'equip tècnic.",
   "emptyTitle": "Encara no s'ha compartit res",
   "emptyBody": "Les fotos i els vídeos compartits amb la comunitat apareixeran aquí.",
   "offlineEmptyTitle": "La galeria no està disponible sense connexió",
@@ -37,7 +37,7 @@
   "deleteTitle": "Vols eliminar aquest contingut?",
   "deleteBody": "La foto o el vídeo i la seva miniatura s'eliminaran definitivament.",
   "cancel": "Cancel·la",
-  "flag": "Avisa el Ramassà",
+  "flag": "Avisa l'equip tècnic",
   "moderationTitle": "Moderació de la galeria",
   "moderationIntro": "Amaga o torna a mostrar qualsevol foto o vídeo, encara que ningú n'hagi informat.",
   "moderationTotal": "Elements: {{count}}",

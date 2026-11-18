@@ -48,7 +48,7 @@
   "no": "Non",
   "optional": "Facultatif",
   "thankTitle": "Merci d’avoir donné ton avis",
-  "thankBody": "Tes réponses ont été envoyées au Ramassà.",
+  "thankBody": "Tes réponses ont été envoyées à l’équipe technique.",
   "loadError": "Nous n’avons pas pu charger l’enquête.",
   "alreadyCompleted": "Tu as déjà répondu à cette enquête.",
   "ratingLabel": "Note : {{count}} sur 5",

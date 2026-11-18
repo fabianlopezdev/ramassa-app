@@ -6,7 +6,7 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
   "ca": {
     "announcementFallbackBody": "Toca per llegir l'avís.",
     "eventFallbackBody": "Toca per veure l'activitat.",
-    "messageTitle": "Nou missatge del Ramassà",
+    "messageTitle": "Nou missatge de l’equip tècnic",
     "messageBody": "Obre l'aplicació del Ramassà per llegir-lo.",
     "forumFlagTitle": "Nou contingut denunciat al fòrum",
     "forumFlagBody": "Obre la moderació del fòrum per revisar-lo.",
@@ -19,7 +19,7 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
   "es": {
     "announcementFallbackBody": "Toca para leer el aviso.",
     "eventFallbackBody": "Toca para ver la actividad.",
-    "messageTitle": "Nuevo mensaje del Ramassà",
+    "messageTitle": "Nuevo mensaje del equipo técnico",
     "messageBody": "Abre la aplicación del Ramassà para leerlo.",
     "forumFlagTitle": "Nuevo contenido denunciado en el foro",
     "forumFlagBody": "Abre la moderación del foro para revisarlo.",
@@ -32,7 +32,7 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
   "en": {
     "announcementFallbackBody": "Tap to read the announcement.",
     "eventFallbackBody": "Tap to view the activity.",
-    "messageTitle": "New message from Ramassà",
+    "messageTitle": "New message from the technical team",
     "messageBody": "Open the Ramassà app to read it.",
     "forumFlagTitle": "New reported content in the forum",
     "forumFlagBody": "Open forum moderation to review it.",
@@ -45,7 +45,7 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
   "fr": {
     "announcementFallbackBody": "Appuie pour lire l’annonce.",
     "eventFallbackBody": "Appuie pour voir l’activité.",
-    "messageTitle": "Nouveau message du Ramassà",
+    "messageTitle": "Nouveau message de l’équipe technique",
     "messageBody": "Ouvre l’application du Ramassà pour le lire.",
     "forumFlagTitle": "Nouveau contenu signalé sur le forum",
     "forumFlagBody": "Ouvre la modération du forum pour le vérifier.",
@@ -58,7 +58,7 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
   "ar": {
     "announcementFallbackBody": "اضغطي لقراءة الإعلان.",
     "eventFallbackBody": "اضغطي لعرض النشاط.",
-    "messageTitle": "رسالة جديدة من نادي راماسا",
+    "messageTitle": "رسالة جديدة من الطاقم الفني",
     "messageBody": "افتحي تطبيق Ramassà لقراءتها.",
     "forumFlagTitle": "محتوى جديد مُبلَّغ عنه في المنتدى",
     "forumFlagBody": "افتحي الإشراف على المنتدى لمراجعته.",
@@ -71,7 +71,7 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
   "fa": {
     "announcementFallbackBody": "برای خواندن اطلاعیه ضربه بزنید.",
     "eventFallbackBody": "برای دیدن برنامه ضربه بزنید.",
-    "messageTitle": "پیام جدید از باشگاه راماسا",
+    "messageTitle": "پیام جدید از کادر فنی",
     "messageBody": "برنامه Ramassà را باز کنید تا آن را بخوانید.",
     "forumFlagTitle": "محتوای گزارش‌شده جدید در انجمن",
     "forumFlagBody": "نظارت انجمن را برای بررسی باز کنید.",

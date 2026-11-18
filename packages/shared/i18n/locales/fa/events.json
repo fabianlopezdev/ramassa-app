@@ -16,7 +16,7 @@
   "playerLoadFailed": "برنامه‌ها بارگیری نشدند.",
   "playerRetryAction": "تلاش دوباره",
   "playerEmptyTitle": "برنامه‌ای در پیش نیست",
-  "playerEmptyBody": "وقتی باشگاه راماسا برنامه‌ای منتشر کند، آن را اینجا می‌بینید.",
+  "playerEmptyBody": "وقتی کادر فنی برنامه‌ای منتشر کند، آن را اینجا می‌بینید.",
   "playerSelectedDate": "برنامه‌های {{date}}",
   "playerNoEventsDate": "در این روز برنامه‌ای نیست.",
   "playerOpenEvent": "باز کردن برنامه: {{title}}",

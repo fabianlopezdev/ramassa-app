@@ -48,7 +48,7 @@
   "no": "No",
   "optional": "Optional",
   "thankTitle": "Thank you for sharing your opinion",
-  "thankBody": "Your responses were sent to Ramassà.",
+  "thankBody": "Your responses were sent to the technical team.",
   "loadError": "We could not load the survey.",
   "alreadyCompleted": "You already completed this survey.",
   "ratingLabel": "{{count}} of 5 stars",

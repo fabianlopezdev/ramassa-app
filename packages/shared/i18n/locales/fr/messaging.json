@@ -1,9 +1,9 @@
 {
-  "playerTitle": "Discussion avec le Ramassà",
+  "playerTitle": "Discussion avec l’équipe technique",
   "entityTitle": "Discussion avec l’équipe",
   "staffTitle": "Discussion",
   "emptyTitle": "Il n’y a pas encore de messages",
-  "emptyBody": "Écris au Ramassà quand tu as besoin d’aide.",
+  "emptyBody": "Écris à l’équipe technique quand tu as besoin d’aide.",
   "composerPlaceholder": "Écris un message",
   "send": "Envoie",
   "sendError": "Non envoyé. Vérifie la connexion et réessaie.",

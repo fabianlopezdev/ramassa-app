@@ -48,7 +48,7 @@
   "no": "No",
   "optional": "Opcional",
   "thankTitle": "Gràcies per compartir la teva opinió",
-  "thankBody": "Les teves respostes s'han enviat al Ramassà.",
+  "thankBody": "Les teves respostes s'han enviat a l'equip tècnic.",
   "loadError": "No hem pogut carregar l'enquesta.",
   "alreadyCompleted": "Ja has completat aquesta enquesta.",
   "ratingLabel": "{{count}} de 5 estrelles",

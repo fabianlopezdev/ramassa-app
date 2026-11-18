@@ -48,7 +48,7 @@
   "no": "No",
   "optional": "Opcional",
   "thankTitle": "Gracias por compartir tu opinión",
-  "thankBody": "Tus respuestas se enviaron al Ramassà.",
+  "thankBody": "Tus respuestas se enviaron al equipo técnico.",
   "loadError": "No hemos podido cargar la encuesta.",
   "alreadyCompleted": "Ya has completado esta encuesta.",
   "ratingLabel": "{{count}} de 5 estrellas",

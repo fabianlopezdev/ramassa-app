@@ -1,9 +1,9 @@
 {
-  "playerTitle": "Chat con el Ramassà",
+  "playerTitle": "Chat con el equipo técnico",
   "entityTitle": "Chat con el equipo",
   "staffTitle": "Chat",
   "emptyTitle": "Todavía no hay mensajes",
-  "emptyBody": "Escribe al Ramassà cuando necesites ayuda.",
+  "emptyBody": "Escribe al equipo técnico cuando necesites ayuda.",
   "composerPlaceholder": "Escribe un mensaje",
   "send": "Enviar",
   "sendError": "No se ha enviado. Revisa la conexión y vuelve a intentarlo.",

@@ -1,11 +1,11 @@
 {
   "rationaleTitle": "Would you like to get alerts?",
-  "rationaleBody": "We will let you know when there is a new activity, a schedule change, or a message from Ramassà. Nothing else.",
+  "rationaleBody": "We will let you know when there is a new activity, a schedule change, or a message from the technical team. Nothing else.",
   "rationaleAccept": "Yes, turn them on",
   "rationaleDecline": "Not now",
   "eventFallbackBody": "Tap to view the activity.",
   "announcementFallbackBody": "Tap to read the announcement.",
-  "messageTitle": "New message from Ramassà",
+  "messageTitle": "New message from the technical team",
   "messageBody": "Open the Ramassà app to read it.",
   "forumFlagTitle": "New reported content in the forum",
   "forumFlagBody": "Open forum moderation to review it.",

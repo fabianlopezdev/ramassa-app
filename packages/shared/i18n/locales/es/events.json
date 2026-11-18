@@ -16,7 +16,7 @@
   "playerLoadFailed": "No hemos podido cargar las actividades.",
   "playerRetryAction": "Volver a intentar",
   "playerEmptyTitle": "No hay actividades próximas",
-  "playerEmptyBody": "Cuando el Ramassà publique una actividad, la encontrarás aquí.",
+  "playerEmptyBody": "Cuando el equipo técnico publique una actividad, la encontrarás aquí.",
   "playerSelectedDate": "Actividades del {{date}}",
   "playerNoEventsDate": "No hay actividades este día.",
   "playerOpenEvent": "Abrir la actividad: {{title}}",

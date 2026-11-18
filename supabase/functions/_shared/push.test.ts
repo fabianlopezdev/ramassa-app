@@ -87,7 +87,7 @@ describe('recipient language selection', () => {
     };
 
     const resolved = buildExpoMessage('ExponentPushToken[test]', message, 'ca');
-    expect(resolved.title).toBe('Nou missatge del Ramassà');
+    expect(resolved.title).toBe('Nou missatge de l’equip tècnic');
     expect(resolved.body).toBe("Obre l'aplicació del Ramassà per llegir-lo.");
     expect(JSON.stringify(resolved)).not.toContain('private-message');
   });
