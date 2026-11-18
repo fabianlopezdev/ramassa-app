@@ -1,7 +1,8 @@
 /**
  * Her photo in the header of every player tab (RAPP-794, RAPP-813): the door to
- * "El meu perfil", now that the profile has left the tab bar. Her initial shows
- * while the photo loads or when she has none. `PlayerTabHeader` places it.
+ * "El meu perfil", now that the profile has left the tab bar. A person icon
+ * shows while the photo loads or when she has none (RAPP-819).
+ * `PlayerTabHeader` places it.
  */
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { PersonAvatar } from '@/components/people/person-avatar';
@@ -28,7 +29,12 @@ export const ProfilePhotoButton = memo(function ProfilePhotoButton() {
       haptic="tapLight"
       className="min-h-min min-w-min items-center justify-center rounded-full"
     >
-      <PersonAvatar name={card?.firstName} avatarKey={card?.avatarKey} size="header" />
+      <PersonAvatar
+        name={card?.firstName}
+        avatarKey={card?.avatarKey}
+        size="header"
+        fallback="person"
+      />
     </PressableScale>
   );
 });

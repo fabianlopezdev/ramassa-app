@@ -3,10 +3,16 @@
  * worker when there is one, her initial on the brand colour underneath, so
  * the initial shows while the photo loads or when it cannot load. One
  * component for chat, forum and articles, with one size per context.
+ *
+ * Where the avatar stands for "me" and no name sits beside it, such as the
+ * button that opens her profile, `fallback="person"` shows a person icon in
+ * place of the initial (RAPP-819). Lists of people keep the initial, because
+ * the letter is what tells two people apart.
  */
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { Image } from 'expo-image';
+import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { memo, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
@@ -54,6 +60,12 @@ const styles = StyleSheet.create({
   photo: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
 });
 
+const personSymbol: SymbolViewProps['name'] = {
+  ios: 'person.fill',
+  android: 'person',
+  web: 'person',
+};
+
 /** The first letter of the name, or nothing for an empty one. */
 function personInitial(name: string | null | undefined): string {
   const first = [...(name ?? '').trim()][0];
@@ -64,11 +76,14 @@ export const PersonAvatar = memo(function PersonAvatar({
   name,
   avatarKey,
   size = 'small',
+  fallback = 'initial',
   testID,
 }: {
   readonly name: string | null | undefined;
   readonly avatarKey: string | null | undefined;
   readonly size?: PersonAvatarSize;
+  /** What shows under the photo: her initial, or a person icon. */
+  readonly fallback?: 'initial' | 'person';
   readonly testID?: string;
 }) {
   const { session } = useAuth();
@@ -89,12 +104,21 @@ export const PersonAvatar = memo(function PersonAvatar({
       importantForAccessibility="no-hide-descendants"
       style={[styles.circle, styles[size]]}
     >
-      <Text
-        className={`font-semibold text-white ${size === 'profile' ? 'text-2xl' : size === 'small' ? 'text-xs' : size === 'header' ? 'text-lg' : 'text-md'}`}
-        allowFontScaling={false}
-      >
-        {personInitial(name)}
-      </Text>
+      {fallback === 'person' ? (
+        <SymbolView
+          accessible={false}
+          name={personSymbol}
+          size={PERSON_AVATAR_SIZE[size] / 2}
+          tintColor={tokens.colors.white}
+        />
+      ) : (
+        <Text
+          className={`font-semibold text-white ${size === 'profile' ? 'text-2xl' : size === 'small' ? 'text-xs' : size === 'header' ? 'text-lg' : 'text-md'}`}
+          allowFontScaling={false}
+        >
+          {personInitial(name)}
+        </Text>
+      )}
       {source === null ? null : (
         <Image
           source={source}
