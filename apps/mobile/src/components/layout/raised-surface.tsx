@@ -39,6 +39,14 @@ const raisedToneWashClasses = {
 
 export type RaisedTone = keyof typeof raisedToneWashClasses;
 
+/**
+ * The tone a stored colour name stands for, such as a forum category's
+ * `color` (RAPP-852); a name with no tone, like `neutral`, leaves the face white.
+ */
+export function raisedToneFromColorName(colorName: string): RaisedTone | undefined {
+  return Object.hasOwn(raisedToneWashClasses, colorName) ? (colorName as RaisedTone) : undefined;
+}
+
 /** The outlined face: white, with the brand border, in the given shape. */
 export function outlinedSurfaceClassName(shapeClassName = RAISED_SHAPE_CLASS_NAME): string {
   return `${shapeClassName} border border-primary bg-white`;

@@ -7,12 +7,13 @@ import {
   CommunityShareSheet,
   type CommunityShareChoice,
 } from '@/components/community/community-share-sheet';
-import { ForumCategoryTabs } from '@/components/forum/forum-category-tabs';
+import { ForumCategoryFilters } from '@/components/forum/forum-category-tabs';
 import { ForumPostCard } from '@/components/forum/forum-post-card';
 import { GalleryGrid } from '@/components/gallery/gallery-grid';
 import { Icon } from '@/components/icons/icon';
 import { CommunityStoryList } from '@/components/knowledge/community-story-list';
 import { PageWidth } from '@/components/layout/content-width';
+import { raisedToneFromColorName, type RaisedTone } from '@/components/layout/raised-surface';
 import {
   SegmentedControl,
   type SegmentedControlOption,
@@ -79,6 +80,17 @@ export default function CommunityScreen() {
     [postsQuery.data],
   );
   const personCards = usePersonCards(authorIds);
+  // Each category's colour, which tints its pill and its posts (RAPP-852).
+  const toneByCategoryId = useMemo<Readonly<Record<string, RaisedTone | undefined>>>(
+    () =>
+      Object.fromEntries(
+        (categoriesQuery.data ?? EMPTY_CATEGORIES).map((category) => [
+          category.id,
+          raisedToneFromColorName(category.color),
+        ]),
+      ),
+    [categoriesQuery.data],
+  );
   const tabInsets = usePlayerTabContentInsets();
   const contentStyle = useMemo(() => [styles.content, tabInsets], [tabInsets]);
   const openPost = useCallback(
@@ -127,6 +139,7 @@ export default function CommunityScreen() {
         <FadeSlideIn index={index}>
           <ForumPostCard
             post={item}
+            tone={toneByCategoryId[item.category_id]}
             authorLabel={t('forum:postBy', { name: item.author_first_name })}
             authorAvatarKey={personCards.get(item.author_id)?.avatarKey ?? null}
             repliesLabel={t('forum:repliesCount', { count: item.reply_count })}
@@ -141,7 +154,15 @@ export default function CommunityScreen() {
         </FadeSlideIn>
       </PageWidth>
     ),
-    [languageFontClass, openLinkLabel, openPost, session?.access_token, personCards, t],
+    [
+      languageFontClass,
+      openLinkLabel,
+      openPost,
+      session?.access_token,
+      personCards,
+      t,
+      toneByCategoryId,
+    ],
   );
 
   const loadError = categoriesQuery.error ?? postsQuery.error;
@@ -202,16 +223,16 @@ export default function CommunityScreen() {
           accessibilityLabel={t('forum:segmentsLabel')}
           languageFontClass={languageFontClass}
         />
+        {segment === 'forum' ? (
+          <ForumCategoryFilters
+            categories={categoriesQuery.data ?? EMPTY_CATEGORIES}
+            selectedId={categoryId}
+            allLabel={t('forum:allCategories')}
+            accessibilityLabel={t('forum:categoriesLabel')}
+            onSelect={setCategoryId}
+          />
+        ) : null}
       </PageWidth>
-      {segment === 'forum' ? (
-        <ForumCategoryTabs
-          categories={categoriesQuery.data ?? EMPTY_CATEGORIES}
-          selectedId={categoryId}
-          allLabel={t('forum:allCategories')}
-          accessibilityLabel={t('forum:categoriesLabel')}
-          onSelect={setCategoryId}
-        />
-      ) : null}
     </View>
   );
 

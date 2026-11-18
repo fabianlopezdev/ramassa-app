@@ -1,15 +1,12 @@
+import { FilterChips } from '@/components/layout/filter-chips';
+import { raisedToneFromColorName } from '@/components/layout/raised-surface';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { memo, useCallback } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { memo, useCallback, useMemo } from 'react';
+import { Text } from 'react-native';
 import type { ForumCategoryRow } from '@ramassa/shared/forum';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
-import { tokens } from '@ramassa/shared/tokens';
-
-const styles = StyleSheet.create({
-  content: { gap: tokens.spacing.sm, paddingHorizontal: tokens.spacing.lg },
-});
 
 export const ForumCategoryOption = memo(function ForumCategoryOption({
   id,
@@ -53,7 +50,13 @@ export const ForumCategoryOption = memo(function ForumCategoryOption({
   );
 });
 
-export const ForumCategoryTabs = memo(function ForumCategoryTabs({
+const ALL_CATEGORIES = 'all';
+
+/**
+ * The forum categories on Comunitat as the shared filter chips (RAPP-852),
+ * the same pills as Avisos on Inici, each tinted by its category's colour.
+ */
+export const ForumCategoryFilters = memo(function ForumCategoryFilters({
   categories,
   selectedId,
   allLabel,
@@ -67,41 +70,30 @@ export const ForumCategoryTabs = memo(function ForumCategoryTabs({
   readonly onSelect: (id: string | null) => void;
 }) {
   const { language } = useLanguage();
-  const renderCategory = useCallback(
-    (category: ForumCategoryRow) => {
-      const label = resolveLocalizedText(category.name, language)?.text ?? category.slug;
-      return (
-        <ForumCategoryOption
-          key={category.id}
-          id={category.id}
-          label={label}
-          selected={selectedId === category.id}
-          onSelect={onSelect}
-          testID={`forum-category-${category.id}`}
-          accessibilityRole="tab"
-        />
-      );
-    },
-    [language, onSelect, selectedId],
+  const languageFontClass = useLanguageFontClass();
+  const options = useMemo(
+    () => [
+      { id: ALL_CATEGORIES, label: allLabel, testID: 'forum-category-all' },
+      ...categories.map((category) => ({
+        id: category.id,
+        label: resolveLocalizedText(category.name, language)?.text ?? category.slug,
+        tone: raisedToneFromColorName(category.color),
+        testID: `forum-category-${category.id}`,
+      })),
+    ],
+    [allLabel, categories, language],
+  );
+  const select = useCallback(
+    (id: string) => onSelect(id === ALL_CATEGORIES ? null : id),
+    [onSelect],
   );
   return (
-    <View accessibilityRole="tablist" accessibilityLabel={accessibilityLabel}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-        contentInsetAdjustmentBehavior="automatic"
-      >
-        <ForumCategoryOption
-          id={null}
-          label={allLabel}
-          selected={selectedId === null}
-          onSelect={onSelect}
-          testID="forum-category-all"
-          accessibilityRole="tab"
-        />
-        {categories.map(renderCategory)}
-      </ScrollView>
-    </View>
+    <FilterChips
+      options={options}
+      selected={selectedId ?? ALL_CATEGORIES}
+      accessibilityLabel={accessibilityLabel}
+      languageFontClass={languageFontClass}
+      onSelect={select}
+    />
   );
 });

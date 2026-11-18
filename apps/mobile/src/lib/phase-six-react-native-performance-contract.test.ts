@@ -91,7 +91,8 @@ describe('Phase 6 React Native performance contract', () => {
     expect(community).toContain('categoriesQuery.data ?? EMPTY_CATEGORIES');
     expect(forumComposer).toContain('categoriesQuery.data ?? EMPTY_CATEGORIES');
     expect(forumComposer).toContain('.map(renderCategory)');
-    expect(categoryTabs).toContain('categories.map(renderCategory)');
+    // The category pills are the shared filter chips (RAPP-852).
+    expect(categoryTabs).toContain('<FilterChips');
     expect(flagDialog).toContain('FORUM_FLAG_REASONS.map(renderReason)');
     expect(forumPlainText).toContain('segments.map(renderSegment)');
     expect(galleryItem).toContain('MEDIA_PRIVACY_OPTIONS.map(renderPrivacyOption)');

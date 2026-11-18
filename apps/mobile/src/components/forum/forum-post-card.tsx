@@ -1,33 +1,30 @@
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
-import { Badge } from '@/components/layout/badge';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
+import type { RaisedTone } from '@/components/layout/raised-surface';
 import { AuthorLine } from '@/components/people/person-avatar';
-import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { Image } from 'expo-image';
 import { memo, useCallback, useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import type { ForumPostRow } from '@ramassa/shared/forum';
 import { tokens } from '@ramassa/shared/tokens';
 
 const FORUM_POST_IMAGE_HEIGHT = tokens.spacing['3xl'] * 3;
 const FORUM_POST_PREVIEW_LINES = 5;
-const FORUM_POST_CARD_BORDER_WIDTH = 1;
 const styles = StyleSheet.create({
-  card: {
-    overflow: 'hidden',
-    borderWidth: FORUM_POST_CARD_BORDER_WIDTH,
-    borderColor: tokens.colors.neutral[200],
-    borderRadius: tokens.radius.lg,
-    backgroundColor: tokens.colors.white,
-  },
   image: { width: '100%', height: FORUM_POST_IMAGE_HEIGHT },
 });
-const cardStyle = composeContinuousViewStyle(styles.card);
 
+/**
+ * A forum post on Comunitat as the shared raised card (RAPP-852): its photo
+ * across the top, the author, a preview of the text and the number of
+ * replies, in the colour of its category. A pinned post carries the word on
+ * the card's top edge, like "Nou" on an avis.
+ */
 export const ForumPostCard = memo(function ForumPostCard({
   post,
+  tone,
   authorLabel,
   authorAvatarKey,
   repliesLabel,
@@ -40,6 +37,8 @@ export const ForumPostCard = memo(function ForumPostCard({
   onOpen,
 }: {
   readonly post: ForumPostRow;
+  /** The colour of the post's category, as a wash on the card. */
+  readonly tone?: RaisedTone;
   readonly authorLabel: string;
   /** A team member's photo (RAPP-639); players show their initial. */
   readonly authorAvatarKey: string | null;
@@ -62,50 +61,54 @@ export const ForumPostCard = memo(function ForumPostCard({
     [accessToken, post.image_url],
   );
   const open = useCallback(() => onOpen(post.id), [onOpen, post.id]);
+  const badge = useMemo<RaisedCardBadge | null>(
+    () => (post.is_pinned ? { label: pinnedLabel, tone: 'accent' } : null),
+    [pinnedLabel, post.is_pinned],
+  );
+  const cardAccessibilityLabel = [
+    accessibilityLabel,
+    post.is_pinned ? pinnedLabel : null,
+    repliesLabel,
+  ]
+    .filter((part): part is string => part !== null)
+    .join('. ');
   return (
-    <PressableScale
+    <RaisedCard
       testID={`forum-post-${post.id}`}
-      accessibilityLabel={accessibilityLabel}
-      accessibilityHint={repliesLabel}
-      onPress={open}
-      haptic="tapLight"
-      style={cardStyle}
-      className="overflow-hidden rounded-lg border border-neutral-200 bg-white"
+      accessibilityLabel={cardAccessibilityLabel}
+      onOpen={open}
+      badge={badge}
+      tone={tone}
+      media={
+        imageSource === null ? null : (
+          <Image
+            source={imageSource}
+            accessibilityLabel={imageAlt}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            recyclingKey={post.image_url ?? post.id}
+            style={styles.image}
+          />
+        )
+      }
     >
-      {imageSource === null ? null : (
-        <Image
-          source={imageSource}
-          accessibilityLabel={imageAlt}
-          contentFit="cover"
-          cachePolicy="memory-disk"
-          recyclingKey={post.image_url ?? post.id}
-          style={styles.image}
+      <AuthorLine
+        name={post.author_first_name}
+        avatarKey={authorAvatarKey}
+        label={authorLabel}
+        languageFontClass={languageFontClass}
+      />
+      {post.content === null ? null : (
+        <ForumPlainText
+          content={post.content}
+          languageFontClass={languageFontClass}
+          openLinkLabel={openLinkLabel}
+          numberOfLines={FORUM_POST_PREVIEW_LINES}
         />
       )}
-      <View className="gap-sm p-md">
-        <View className="flex-row flex-wrap items-center gap-sm">
-          <AuthorLine
-            name={post.author_first_name}
-            avatarKey={authorAvatarKey}
-            label={authorLabel}
-            languageFontClass={languageFontClass}
-          />
-          {post.is_pinned ? (
-            <Badge label={pinnedLabel} tone="accent" languageFontClass={languageFontClass} />
-          ) : null}
-        </View>
-        {post.content === null ? null : (
-          <ForumPlainText
-            content={post.content}
-            languageFontClass={languageFontClass}
-            openLinkLabel={openLinkLabel}
-            numberOfLines={FORUM_POST_PREVIEW_LINES}
-          />
-        )}
-        <Text className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}>
-          {repliesLabel}
-        </Text>
-      </View>
-    </PressableScale>
+      <Text className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}>
+        {repliesLabel}
+      </Text>
+    </RaisedCard>
   );
 });

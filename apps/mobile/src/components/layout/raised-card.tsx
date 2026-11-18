@@ -18,6 +18,10 @@
  *
  * A card may take the colour of its kind on its face (RAPP-845), as a pale
  * wash; its border, edge and arrow stay in the brand.
+ *
+ * A card may open with a photo (RAPP-852), such as a forum post's or a
+ * story's: full width across the top of the face, clipped by its corners,
+ * with the row under it.
  */
 import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
@@ -30,6 +34,9 @@ import { View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 const leadingBlockStyle = { minWidth: tokens.spacing['2xl'] } as const;
+// The face keeps its side padding for the row; the photo reaches past it.
+const mediaBleedStyle = { marginHorizontal: -tokens.spacing.lg } as const;
+const ROW_CLASS_NAME = 'flex-row items-stretch gap-md';
 
 /**
  * An icon for the block at the start of a card: as wide as the block, in the
@@ -55,6 +62,8 @@ interface RaisedCardProps {
   readonly count?: string | null;
   /** The colour of the card's kind, as a wash on its face. */
   readonly tone?: RaisedTone;
+  /** A full-width photo above the row, such as a post's image. */
+  readonly media?: ReactNode;
   readonly children: ReactNode;
 }
 
@@ -69,18 +78,13 @@ export function RaisedCard({
   badge = null,
   count = null,
   tone,
+  media,
   children,
 }: RaisedCardProps) {
   const brandColor = useBrandColor();
-  const card = (
-    <SelectionChoiceSurface
-      testID={testID}
-      label={accessibilityLabel}
-      accessibilityRole="link"
-      onPress={onOpen}
-      contentClassName="flex-row items-stretch gap-md py-md"
-      tone={tone}
-    >
+  const hasMedia = media !== undefined && media !== null;
+  const rowContent = (
+    <>
       {leading === undefined ? null : (
         <>
           <View className="items-center justify-center" style={leadingBlockStyle}>
@@ -95,6 +99,25 @@ export function RaisedCard({
           <Icon name={FORWARD_CHEVRON} size={tokens.fontSize['2xl']} color={brandColor} />
         </View>
       ) : null}
+    </>
+  );
+  const card = (
+    <SelectionChoiceSurface
+      testID={testID}
+      label={accessibilityLabel}
+      accessibilityRole="link"
+      onPress={onOpen}
+      contentClassName={hasMedia ? 'gap-md pb-md' : `${ROW_CLASS_NAME} py-md`}
+      tone={tone}
+    >
+      {hasMedia ? (
+        <>
+          <View style={mediaBleedStyle}>{media}</View>
+          <View className={ROW_CLASS_NAME}>{rowContent}</View>
+        </>
+      ) : (
+        rowContent
+      )}
     </SelectionChoiceSurface>
   );
   if (badge === null && count === null) return card;

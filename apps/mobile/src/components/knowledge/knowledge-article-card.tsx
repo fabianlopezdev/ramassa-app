@@ -1,6 +1,5 @@
 import { Badge } from '@/components/layout/badge';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { RaisedCard } from '@/components/layout/raised-card';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -22,6 +21,11 @@ function typeTranslationKey(contentType: KnowledgeContentType) {
   return 'knowledge:typeArticle' as const;
 }
 
+/**
+ * A guide or a story as the shared raised card (RAPP-852): its cover across
+ * the top, its category and type, its title and author. Comunitat's stories
+ * and Ajuda's guides share it.
+ */
 export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
   article,
   accessToken,
@@ -50,6 +54,7 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
           }),
     [accessToken, article.image_url, compact],
   );
+  const handlePress = useCallback(() => onOpen(article.id), [article.id, onOpen]);
   if (title === undefined || category === undefined) return null;
 
   const type = t(typeTranslationKey(article.content_type));
@@ -57,43 +62,39 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
     article.author_first_name === null
       ? null
       : t('knowledge:byAuthor', { name: article.author_first_name });
-  const handlePress = useCallback(() => onOpen(article.id), [article.id, onOpen]);
   return (
-    <PressableScale
+    <RaisedCard
       testID={`knowledge-article-${article.id}`}
       accessibilityLabel={[title.text, category.text, type, attribution].filter(Boolean).join('. ')}
-      onPress={handlePress}
-      haptic="tapLight"
-      style={continuousCorners}
-      className="overflow-hidden rounded-lg border border-neutral-200 bg-white"
+      onOpen={handlePress}
+      media={
+        imageSource === null ? null : (
+          <Image
+            source={imageSource}
+            accessibilityLabel={title.text}
+            cachePolicy="memory-disk"
+            contentFit="cover"
+            recyclingKey={article.id}
+            style={imageStyle}
+          />
+        )
+      }
     >
-      {imageSource === null ? null : (
-        <Image
-          source={imageSource}
-          accessibilityLabel={title.text}
-          cachePolicy="memory-disk"
-          contentFit="cover"
-          recyclingKey={article.id}
-          style={imageStyle}
-        />
-      )}
-      <View className="gap-sm p-md">
-        <View className="flex-row flex-wrap gap-xs">
-          <Badge label={category.text} tone="brandSoft" languageFontClass={languageFontClass} />
-          <Badge label={type} languageFontClass={languageFontClass} />
-        </View>
-        <Text
-          accessibilityRole="header"
-          className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-        >
-          {title.text}
-        </Text>
-        {attribution === null ? null : (
-          <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-            {attribution}
-          </Text>
-        )}
+      <View className="flex-row flex-wrap gap-xs">
+        <Badge label={category.text} tone="brandSoft" languageFontClass={languageFontClass} />
+        <Badge label={type} languageFontClass={languageFontClass} />
       </View>
-    </PressableScale>
+      <Text
+        accessibilityRole="header"
+        className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
+      >
+        {title.text}
+      </Text>
+      {attribution === null ? null : (
+        <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+          {attribution}
+        </Text>
+      )}
+    </RaisedCard>
   );
 });

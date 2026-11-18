@@ -17,6 +17,7 @@ import {
   useReducedMotion,
   useSharedValue,
   withTiming,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { motionTokens } from '@ramassa/shared/tokens/motion';
 import { ACTIVATE_ACCESSIBILITY_ACTIONS } from './accessibility-actions';
@@ -46,6 +47,27 @@ interface PressableDepthProps {
   readonly blockOffset: number;
   /** A fill that covers the face while it is held down, such as `bg-secondary`. */
   readonly pressedFillClassName?: string;
+}
+
+/**
+ * The fill that covers a face while it is held, on the UI thread. Its own
+ * component, so a control without a fill sets up no animation for one.
+ */
+function PressedFill({
+  pressed,
+  className,
+}: {
+  readonly pressed: SharedValue<number>;
+  readonly className: string;
+}) {
+  const style = useAnimatedStyle(() => ({ opacity: pressed.get() }));
+  return (
+    <NativeWindAnimatedView
+      pointerEvents="none"
+      className={`absolute inset-0 ${className}`}
+      style={style}
+    />
+  );
 }
 
 /** A stationary touch target and shadow, with a face that sinks on the UI thread. */
@@ -176,7 +198,6 @@ function GesturePressableDepth({
     ],
     opacity: reduced ? 1 - pressed.get() * (1 - motionTokens.press.opacity) : 1,
   }));
-  const pressedFillStyle = useAnimatedStyle(() => ({ opacity: pressed.get() }));
 
   return (
     <GestureDetector gesture={tap}>
@@ -206,11 +227,7 @@ function GesturePressableDepth({
           style={[faceStyle, animatedStyle]}
         >
           {pressedFillClassName === undefined ? null : (
-            <NativeWindAnimatedView
-              pointerEvents="none"
-              className={`absolute inset-0 ${pressedFillClassName}`}
-              style={pressedFillStyle}
-            />
+            <PressedFill pressed={pressed} className={pressedFillClassName} />
           )}
           {children}
         </NativeWindAnimatedView>

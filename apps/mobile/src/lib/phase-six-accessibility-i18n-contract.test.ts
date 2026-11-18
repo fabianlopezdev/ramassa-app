@@ -115,7 +115,8 @@ describe('Phase 6 accessibility and i18n contract', () => {
 
     expect(composer).toContain('FORUM_COMPOSER_INPUT_MIN_HEIGHT');
     expect(flagDialog).toContain('FORUM_FLAG_COMMENT_MIN_HEIGHT');
-    expect(forumPostCard).toContain('FORUM_POST_CARD_BORDER_WIDTH');
+    // The post card draws its border through the shared raised card (RAPP-852).
+    expect(forumPostCard).toContain('<RaisedCard');
     expect(playerForum).toContain('FORUM_POSTING_STATUS_STALE_TIME_MS');
   });
 
