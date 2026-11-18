@@ -31,6 +31,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import {
   filterAndOrderPlayerAnnouncements,
+  raiseUnopenedUrgentAnnouncements,
   type AnnouncementListRow,
   type PlayerAnnouncementCategoryFilter,
 } from '@ramassa/shared/announcements';
@@ -82,8 +83,12 @@ export default function HomeScreen() {
   );
 
   const announcements = useMemo(
-    () => filterAndOrderPlayerAnnouncements(data ?? EMPTY_ANNOUNCEMENTS, category),
-    [category, data],
+    () =>
+      raiseUnopenedUrgentAnnouncements(
+        filterAndOrderPlayerAnnouncements(data ?? EMPTY_ANNOUNCEMENTS, category),
+        unseenAnnouncementIds,
+      ),
+    [category, data, unseenAnnouncementIds],
   );
   const dateFormatter = useMemo(
     () =>

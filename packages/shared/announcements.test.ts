@@ -5,6 +5,7 @@ import {
   filterAndOrderPlayerAnnouncements,
   getAnnouncementLifecycle,
   isContentVisible,
+  raiseUnopenedUrgentAnnouncements,
 } from './announcements';
 import {
   approveTranslation,
@@ -163,12 +164,13 @@ describe('player announcement feed', () => {
     ]);
   });
 
-  test('puts urgent items after pinned ones and before newer ordinary ones', () => {
+  test('raises urgent items she has not opened to just after the pinned ones', () => {
     const ordered = filterAndOrderPlayerAnnouncements(
       [
         row('info-newest', { category: 'info', published_at: '2026-08-04T11:00:00.000Z' }),
-        row('urgent-older', { category: 'urgent', published_at: '2026-08-02T10:00:00.000Z' }),
-        row('urgent-newer', { category: 'urgent', published_at: '2026-08-03T10:00:00.000Z' }),
+        row('urgent-opened', { category: 'urgent', published_at: '2026-08-03T11:00:00.000Z' }),
+        row('urgent-unopened', { category: 'urgent', published_at: '2026-08-02T10:00:00.000Z' }),
+        row('info-older', { category: 'info', published_at: '2026-08-03T10:00:00.000Z' }),
         row('pinned-info', {
           category: 'info',
           is_pinned: true,
@@ -179,11 +181,17 @@ describe('player announcement feed', () => {
       now,
     );
 
-    expect(ordered.map(({ id }) => id)).toEqual([
+    const raised = raiseUnopenedUrgentAnnouncements(
+      ordered,
+      new Set(['urgent-unopened', 'info-newest']),
+    );
+
+    expect(raised.map(({ id }) => id)).toEqual([
       'pinned-info',
-      'urgent-newer',
-      'urgent-older',
+      'urgent-unopened',
       'info-newest',
+      'urgent-opened',
+      'info-older',
     ]);
   });
 

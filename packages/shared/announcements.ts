@@ -233,13 +233,28 @@ export function filterAndOrderPlayerAnnouncements(
     )
     .sort((left, right) => {
       if (left.is_pinned !== right.is_pinned) return left.is_pinned ? -1 : 1;
-      // Urgent comes next, before newer ordinary news (RAPP-850).
-      const leftIsUrgent = left.category === 'urgent';
-      if (leftIsUrgent !== (right.category === 'urgent')) return leftIsUrgent ? -1 : 1;
       const publishedDifference =
         new Date(right.published_at ?? 0).getTime() - new Date(left.published_at ?? 0).getTime();
       return publishedDifference === 0 ? left.id.localeCompare(right.id) : publishedDifference;
     });
+}
+
+/**
+ * Urgent announcements she has not opened move up to just after the pinned
+ * ones (RAPP-850). Once she opens one, it goes back to its place by date, so
+ * an old urgent notice never sits above newer news. Takes rows already
+ * ordered by `filterAndOrderPlayerAnnouncements`.
+ */
+export function raiseUnopenedUrgentAnnouncements<
+  Row extends { readonly id: string; readonly category: string; readonly is_pinned: boolean },
+>(rows: readonly Row[], unopenedIds: ReadonlySet<string>): readonly Row[] {
+  const isRaised = (row: Row) =>
+    !row.is_pinned && row.category === 'urgent' && unopenedIds.has(row.id);
+  return [
+    ...rows.filter((row) => row.is_pinned),
+    ...rows.filter(isRaised),
+    ...rows.filter((row) => !row.is_pinned && !isRaised(row)),
+  ];
 }
 
 export interface AnnouncementQueryBuilder {
