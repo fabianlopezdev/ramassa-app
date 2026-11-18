@@ -26,7 +26,6 @@ const phaseSixTargets = [
   'lib/query-persistence.ts',
   'components/gallery/gallery-grid.tsx',
   'components/knowledge/community-story-list.tsx',
-  'components/community/community-share-sheet.tsx',
   'lib/community-stories.ts',
 ] as const;
 

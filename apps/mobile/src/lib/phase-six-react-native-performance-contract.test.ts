@@ -12,7 +12,6 @@ const phaseSixTargets = [
   'app/(app)/gallery/[id].tsx',
   'app/(app)/gallery/index.tsx',
   'app/(app)/gallery/upload.tsx',
-  'components/community/community-share-sheet.tsx',
   'components/gallery/gallery-grid.tsx',
   'components/gallery/gallery-tile.tsx',
   'components/knowledge/community-story-list.tsx',

@@ -4,10 +4,6 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
-import {
-  CommunityShareSheet,
-  type CommunityShareChoice,
-} from '@/components/community/community-share-sheet';
 import { ForumCategoryFilters } from '@/components/forum/forum-category-tabs';
 import { ForumPostCard } from '@/components/forum/forum-post-card';
 import { GalleryGrid } from '@/components/gallery/gallery-grid';
@@ -49,10 +45,16 @@ const styles = StyleSheet.create({
 });
 const postKeyExtractor = (post: ForumPostRow) => post.id;
 type CommunitySegment = 'forum' | 'gallery' | 'stories';
-const shareRoutes: Readonly<Record<CommunityShareChoice, Href>> = {
-  post: '/forum/create' as Href,
-  media: '/gallery/upload' as Href,
-  story: '/story/submit' as Href,
+/**
+ * The pinned button opens the form of the section on show (RAPP-858), with
+ * its own words, so she never has to pick again what she already picked.
+ */
+const shareActions: Readonly<
+  Record<CommunitySegment, { readonly route: Href; readonly labelKey: string }>
+> = {
+  forum: { route: '/forum/create' as Href, labelKey: 'forum:shareForum' },
+  gallery: { route: '/gallery/upload' as Href, labelKey: 'forum:shareGallery' },
+  stories: { route: '/story/submit' as Href, labelKey: 'forum:shareStories' },
 };
 
 export default function CommunityScreen() {
@@ -68,7 +70,6 @@ export default function CommunityScreen() {
   const refetchPosts = postsQuery.refetch;
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [segment, setSegment] = useState<CommunitySegment>('forum');
-  const [isShareSheetOpen, setIsShareSheetOpen] = useState(false);
   const posts = useMemo(
     () => filterForumPostsByCategory(postsQuery.data ?? EMPTY_POSTS, categoryId),
     [categoryId, postsQuery.data],
@@ -109,15 +110,7 @@ export default function CommunityScreen() {
     (id: string) => push({ pathname: '/forum/[id]', params: { id } } as unknown as Href),
     [push],
   );
-  const openShareSheet = useCallback(() => setIsShareSheetOpen(true), []);
-  const closeShareSheet = useCallback(() => setIsShareSheetOpen(false), []);
-  const chooseShare = useCallback(
-    (choice: CommunityShareChoice) => {
-      setIsShareSheetOpen(false);
-      push(shareRoutes[choice]);
-    },
-    [push],
-  );
+  const share = useCallback(() => push(shareActions[segment].route), [push, segment]);
   const segmentOptions = useMemo<readonly SegmentedControlOption<CommunitySegment>[]>(
     () => [
       {
@@ -259,17 +252,13 @@ export default function CommunityScreen() {
       <TabScreenAction testID="community-share-action" onContentHeight={setShareActionHeight}>
         <AuthSubmitButton
           testID="community-share"
-          label={t('forum:share')}
+          label={t(shareActions[segment].labelKey)}
           icon="plus"
-          onPress={openShareSheet}
+          // A forum post needs the network; the sheet used to grey it out the same way.
+          disabled={segment === 'forum' && isOffline}
+          onPress={share}
         />
       </TabScreenAction>
-      <CommunityShareSheet
-        visible={isShareSheetOpen}
-        isPostDisabled={isOffline}
-        onChoose={chooseShare}
-        onClose={closeShareSheet}
-      />
     </>
   );
 }
