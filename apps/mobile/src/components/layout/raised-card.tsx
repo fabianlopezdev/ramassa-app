@@ -15,8 +15,8 @@
  * the content to the name. A count, such as unread messages, sits on the same
  * edge near the end, in a circle (RAPP-842).
  *
- * A card may take the colour of its kind instead of the brand (RAPP-845):
- * border, edge and arrow in the colour, the face a pale wash of it.
+ * A card may take the colour of its kind on its face (RAPP-845), as a pale
+ * wash; its border, edge and arrow stay in the brand.
  */
 import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
@@ -24,7 +24,7 @@ import { FORWARD_CHEVRON } from '@/components/icons/direction';
 import { Icon, type IconName } from '@/components/icons/icon';
 import { Badge, type BadgeTone } from '@/components/layout/badge';
 import { CountBubble } from '@/components/layout/count-bubble';
-import { useRaisedToneColor, type RaisedTone } from '@/components/layout/raised-surface';
+import type { RaisedTone } from '@/components/layout/raised-surface';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
@@ -54,7 +54,7 @@ interface RaisedCardProps {
   readonly badge?: RaisedCardBadge | null;
   /** A number in a circle on the top edge near the end. Also part of `accessibilityLabel`. */
   readonly count?: string | null;
-  /** The colour of the card's kind, instead of the brand. */
+  /** The colour of the card's kind, as a wash on its face. */
   readonly tone?: RaisedTone;
   readonly children: ReactNode;
 }
@@ -75,7 +75,7 @@ export function RaisedCard({
   tone,
   children,
 }: RaisedCardProps) {
-  const arrowColor = useRaisedToneColor(tone);
+  const brandColor = useBrandColor();
   const languageFontClass = useLanguageFontClass();
   const card = (
     <SelectionChoiceSurface
@@ -97,7 +97,7 @@ export function RaisedCard({
       <View className="flex-1 justify-center gap-xs">{children}</View>
       {showsArrow ? (
         <View className="justify-center">
-          <Icon name={FORWARD_CHEVRON} size={tokens.fontSize['2xl']} color={arrowColor} />
+          <Icon name={FORWARD_CHEVRON} size={tokens.fontSize['2xl']} color={brandColor} />
         </View>
       ) : null}
     </SelectionChoiceSurface>

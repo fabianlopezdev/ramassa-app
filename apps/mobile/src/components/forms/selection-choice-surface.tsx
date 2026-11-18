@@ -14,9 +14,7 @@ import type { ReactNode } from 'react';
 import { type AccessibilityRole, type StyleProp, type ViewStyle } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
-function faceClassName(tone: RaisedTone | undefined): string {
-  return `relative overflow-hidden ${outlinedSurfaceClassName(undefined, tone)} px-lg`;
-}
+const FACE_CLASS = `relative overflow-hidden ${outlinedSurfaceClassName()} px-lg`;
 
 interface SelectionChoiceSurfaceProps {
   readonly children: ReactNode;
@@ -30,10 +28,8 @@ interface SelectionChoiceSurfaceProps {
   readonly className?: string;
   readonly contentClassName: string;
   readonly rowStyle?: StyleProp<ViewStyle>;
-  /** A colour instead of the brand (RAPP-845): a pale face, and a full fill when chosen. */
+  /** A colour for the face (RAPP-845): a pale wash, and a full fill when chosen. */
   readonly tone?: RaisedTone;
-  /** Whether the border and edge take the tone too. Off keeps them in the brand. */
-  readonly tonesOutline?: boolean;
 }
 
 /** One raised picker surface for full-width cards and compact option buttons. */
@@ -50,10 +46,8 @@ export function SelectionChoiceSurface({
   contentClassName,
   rowStyle,
   tone,
-  tonesOutline = true,
 }: SelectionChoiceSurfaceProps) {
   const defaultRowStyle = useRaisedChoiceFaceStyle();
-  const outlineTone = tonesOutline ? tone : undefined;
   return (
     <PressableDepth
       testID={testID}
@@ -67,10 +61,10 @@ export function SelectionChoiceSurface({
       style={raisedSurfaceWrapperStyle}
       className={`relative ${className ?? ''}`}
       faceStyle={rowStyle ?? defaultRowStyle}
-      faceClassName={`${faceClassName(outlineTone)} ${contentClassName}`}
+      faceClassName={`${FACE_CLASS} ${contentClassName}`}
       inlineOffset={tokens.languageChoice.shadowInlineOffset}
       blockOffset={tokens.languageChoice.shadowBlockOffset}
-      shadow={<RaisedSurfaceEdge tone={outlineTone} />}
+      shadow={<RaisedSurfaceEdge />}
     >
       <RaisedToneWash tone={tone} />
       <SelectionTransition

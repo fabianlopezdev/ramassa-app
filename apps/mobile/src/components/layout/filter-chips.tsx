@@ -69,7 +69,6 @@ function FilterChipInner<Id extends string>({
       contentClassName="justify-center"
       rowStyle={chipStyle}
       tone={tone}
-      tonesOutline={false}
     >
       <Text
         className={`text-center text-md font-bold ${chipTextClassName(
