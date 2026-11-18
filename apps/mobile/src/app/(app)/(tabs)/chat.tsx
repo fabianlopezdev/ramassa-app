@@ -21,8 +21,14 @@ import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import type { MentoringStatus } from '@ramassa/shared/mentoring';
+import { tokens } from '@ramassa/shared/tokens';
+
+/** The page colour every tab shares (RAPP-847), set the same way as on the other tabs. */
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: tokens.colors.surface.page },
+});
 
 const MENTORING_STATUS_KEYS: Readonly<Record<MentoringStatus, string>> = {
   requested: 'mentoring:statusRequested',
@@ -58,7 +64,7 @@ export default function ChatTabScreen() {
   return (
     <ScrollView
       testID="player-chat-tab"
-      className="flex-1 bg-surface-page"
+      style={styles.screen}
       contentContainerClassName="grow px-lg pb-lg"
       contentContainerStyle={tabInsets}
       contentInsetAdjustmentBehavior="automatic"

@@ -12,8 +12,14 @@ import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { PLAYER_TAB_TOP_GAP } from '@/lib/use-player-tab-content-insets';
 import { useMemo, type ReactNode } from 'react';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { tokens } from '@ramassa/shared/tokens';
+
+/** The page colour every tab shares (RAPP-847). */
+const styles = StyleSheet.create({
+  frame: { flex: 1, backgroundColor: tokens.colors.surface.page },
+});
 
 export function PlayerTabHeader({ title }: { readonly title: string }) {
   const languageFontClass = useLanguageFontClass();
@@ -41,7 +47,7 @@ export function PlayerTabStateFrame({
   const insets = useSafeAreaInsets();
   const topInset = useMemo(() => ({ paddingTop: insets.top + PLAYER_TAB_TOP_GAP }), [insets.top]);
   return (
-    <View className="flex-1 bg-surface-page" style={topInset}>
+    <View style={[styles.frame, topInset]}>
       <View className="px-lg">
         <PageWidth>
           <PlayerTabHeader title={title} />
