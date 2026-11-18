@@ -18,6 +18,9 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
 
+/** The page colour of the app (RAPP-847, RAPP-849). */
+const pageBackground = { backgroundColor: tokens.colors.surface.page } as const;
+
 const scrollViewportStyle = { flex: 1, overflow: 'hidden' } as const;
 
 export default function PreAuthLanguageScreen() {
@@ -66,7 +69,7 @@ export default function PreAuthLanguageScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['left', 'right']}>
+    <SafeAreaView className="flex-1" style={pageBackground} edges={['left', 'right']}>
       <BlurTargetView
         ref={blurTarget}
         testID="language-scroll-viewport"

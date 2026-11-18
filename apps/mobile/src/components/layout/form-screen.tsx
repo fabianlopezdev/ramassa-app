@@ -18,6 +18,9 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { tokens } from '@ramassa/shared/tokens';
 import { motionTokens } from '@ramassa/shared/tokens/motion';
 
+/** The page colour of the app (RAPP-847, RAPP-849): onboarding, sign-in and forms sit on it. */
+const pageBackground = { backgroundColor: tokens.colors.surface.page } as const;
+
 const viewportStyle = { flex: 1, overflow: 'hidden' } as const;
 // NativeWind's remapped flex class overrides the height behavior's flex: 0.
 // A native style lets KeyboardAvoidingView shrink its container on Android.
@@ -146,9 +149,9 @@ export function FormScreen({
   return (
     <SafeAreaView
       testID={testID}
-      style={style}
+      style={[pageBackground, style]}
       accessibilityLanguage={accessibilityLanguage}
-      className="flex-1 bg-white"
+      className="flex-1"
       edges={['top', 'left', 'right']}
     >
       {navigation}
