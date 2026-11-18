@@ -1,10 +1,8 @@
 import type { IconName } from '@/components/icons/icon';
-import { RaisedIconCard } from '@/components/layout/raised-icon-card';
-import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { memo, useCallback } from 'react';
-import { View } from 'react-native';
-import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
+import { CategoryTileGrid, type CategoryTile } from '@/components/layout/category-tile-grid';
+import { useMemo } from 'react';
 import { categoryWash } from '@ramassa/shared/category-colors';
+import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { type AdminServiceCategory } from '@ramassa/shared/services';
 
 const categoryIcons: Readonly<Record<string, IconName>> = {
@@ -19,46 +17,7 @@ const categoryIcons: Readonly<Record<string, IconName>> = {
 };
 const defaultCategoryIcon: IconName = 'grid';
 
-interface ServiceCategoryRowProps {
-  readonly id: string;
-  readonly slug: string;
-  readonly color: string;
-  readonly title: string;
-  readonly languageFontClass: string;
-  readonly onSelect: (id: string) => void;
-}
-
-/**
- * One category as a tile of the card Inici uses for Formularis i enquestes
- * (RAPP-854): its icon in a circle of the category's own colour (RAPP-856),
- * the divider and its name.
- */
-const ServiceCategoryRow = memo(function ServiceCategoryRow({
-  id,
-  slug,
-  color,
-  title,
-  languageFontClass,
-  onSelect,
-}: ServiceCategoryRowProps) {
-  const handlePress = useCallback(() => onSelect(id), [id, onSelect]);
-  return (
-    <View className="basis-[46%] grow">
-      <RaisedIconCard
-        testID={`service-category-${slug}`}
-        icon={categoryIcons[slug] ?? defaultCategoryIcon}
-        iconWash={categoryWash(color)}
-        title={title}
-        accessibilityLabel={title}
-        languageFontClass={languageFontClass}
-        onOpen={handlePress}
-        tile
-      />
-    </View>
-  );
-});
-
-/** The Ajuda service categories, two tiles to a row. */
+/** The Ajuda service categories as the shared category tiles (RAPP-870). */
 export function ServiceCategoryGrid({
   categories,
   onSelect,
@@ -67,24 +26,23 @@ export function ServiceCategoryGrid({
   readonly onSelect: (id: string) => void;
 }) {
   const { language } = useLanguage();
-  const languageFontClass = useLanguageFontClass();
-  return (
-    <View className="flex-row flex-wrap gap-md">
-      {categories.map((category) => {
+  const tiles = useMemo(
+    () =>
+      categories.flatMap((category): CategoryTile[] => {
         const title = resolveLocalizedText(category.name, language);
-        if (title === undefined) return null;
-        return (
-          <ServiceCategoryRow
-            key={category.id}
-            id={category.id}
-            slug={category.slug}
-            color={category.color}
-            title={title.text}
-            languageFontClass={languageFontClass}
-            onSelect={onSelect}
-          />
-        );
-      })}
-    </View>
+        return title === undefined
+          ? []
+          : [
+              {
+                id: category.id,
+                testID: `service-category-${category.slug}`,
+                icon: categoryIcons[category.slug] ?? defaultCategoryIcon,
+                wash: categoryWash(category.color),
+                title: title.text,
+              },
+            ];
+      }),
+    [categories, language],
   );
+  return <CategoryTileGrid tiles={tiles} onSelect={onSelect} />;
 }

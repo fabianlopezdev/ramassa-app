@@ -38,6 +38,7 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
   onOpen,
   compact = false,
   authorAvatarKey = null,
+  showsCategory = true,
 }: {
   readonly article: KnowledgeArticleListRow;
   readonly accessToken: string | undefined;
@@ -46,6 +47,8 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
   readonly compact?: boolean;
   /** A story author's photo; without one, the person icon. */
   readonly authorAvatarKey?: string | null;
+  /** Off inside an open category, where every guide shares it (RAPP-870). */
+  readonly showsCategory?: boolean;
 }) {
   const { t } = useTranslation('knowledge');
   const { language } = useLanguage();
@@ -107,7 +110,9 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
     >
       {isStory ? null : (
         <View className="flex-row flex-wrap gap-xs">
-          <Badge label={category.text} tone="brandSoft" languageFontClass={languageFontClass} />
+          {showsCategory ? (
+            <Badge label={category.text} tone="brandSoft" languageFontClass={languageFontClass} />
+          ) : null}
           <Badge label={type} languageFontClass={languageFontClass} />
         </View>
       )}

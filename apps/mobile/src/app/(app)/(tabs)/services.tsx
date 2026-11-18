@@ -3,8 +3,8 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
-import { Icon } from '@/components/icons/icon';
 import { PlayerGuideList } from '@/components/knowledge/player-guide-list';
+import { BackToCategoriesButton } from '@/components/layout/back-to-categories-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { Divider } from '@/components/layout/divider';
 import {
@@ -32,9 +32,9 @@ import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { categoryWash } from '@ramassa/shared/category-colors';
 import { toAppError } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
-import { categoryWash } from '@ramassa/shared/category-colors';
 import { type PlayerServiceRow } from '@ramassa/shared/services';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -307,26 +307,7 @@ export default function ServicesScreen() {
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
           {tabHeader}
-          {/* A state of this tab, so it stays an in-page control: it shows
-              the grid again (RAPP-806). */}
-          <PressableScale
-            testID="services-show-categories"
-            accessibilityLabel={t('playerServices:backCategories')}
-            onPress={backToCategories}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended flex-row items-center gap-sm rounded-md border border-neutral-300 bg-white px-lg"
-          >
-            <Icon
-              name="grid"
-              weight="boldDuotone"
-              size={tokens.fontSize.xl}
-              color={tokens.colors.primary.dark}
-            />
-            <Text className={`text-start text-md font-bold text-primary-dark ${languageFontClass}`}>
-              {t('playerServices:backCategories')}
-            </Text>
-          </PressableScale>
+          <BackToCategoriesButton testID="services-show-categories" onPress={backToCategories} />
           <View className="gap-xs">
             <Text
               accessibilityRole="header"

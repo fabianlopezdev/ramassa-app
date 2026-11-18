@@ -15,8 +15,12 @@ import {
   RaisedCardSymbol,
   type RaisedCardBadge,
 } from '@/components/layout/raised-card';
+import { WholeWordsText } from '@/components/layout/whole-words-text';
 import { Text } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
+
+/** The sizes a tile's name may take, largest first (RAPP-870). */
+const TILE_TITLE_SIZES = ['text-md', 'text-sm', 'text-xs'] as const;
 
 interface RaisedIconCardProps {
   readonly testID?: string;
@@ -70,11 +74,21 @@ export function RaisedIconCard({
       tile={tile}
       showsArrow={!isDanger}
     >
-      <Text
-        className={`text-start ${tile ? 'text-md' : 'text-xl'} font-bold ${isDanger ? 'text-error' : 'text-neutral-900'} ${languageFontClass}`}
-      >
-        {title}
-      </Text>
+      {tile ? (
+        // A tile is narrow, so a long word steps the name down a size before it breaks.
+        <WholeWordsText
+          sizeClassNames={TILE_TITLE_SIZES}
+          className={`text-start font-bold text-neutral-900 ${languageFontClass}`}
+        >
+          {title}
+        </WholeWordsText>
+      ) : (
+        <Text
+          className={`text-start text-xl font-bold ${isDanger ? 'text-error' : 'text-neutral-900'} ${languageFontClass}`}
+        >
+          {title}
+        </Text>
+      )}
       {detail === undefined ? null : (
         <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>{detail}</Text>
       )}
