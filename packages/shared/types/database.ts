@@ -1156,6 +1156,7 @@ export type Database = {
           id: string;
           org_id: string;
           profile_id: string;
+          put_off_at: string | null;
           season_id: string | null;
           status: string;
           version: number;
@@ -1169,6 +1170,7 @@ export type Database = {
           id?: string;
           org_id: string;
           profile_id: string;
+          put_off_at?: string | null;
           season_id?: string | null;
           status?: string;
           version: number;
@@ -1182,6 +1184,7 @@ export type Database = {
           id?: string;
           org_id?: string;
           profile_id?: string;
+          put_off_at?: string | null;
           season_id?: string | null;
           status?: string;
           version?: number;
@@ -6710,6 +6713,11 @@ export type Database = {
         Returns: undefined;
       };
       my_home_seen: { Args: never; Returns: Json };
+      my_put_off_custom_forms: { Args: never; Returns: string[] };
+      put_off_custom_form: {
+        Args: { p_response_id: string };
+        Returns: undefined;
+      };
       set_player_profile_banner: {
         Args: { p_profile_id: string; p_object_key: string; p_all_players: boolean };
         Returns: Json;
