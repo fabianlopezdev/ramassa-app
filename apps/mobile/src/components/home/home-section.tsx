@@ -3,6 +3,7 @@
  * separates it from the next section. The last section leaves the line out.
  */
 import { HomeSectionHeader } from '@/components/home/home-section-header';
+import { Divider } from '@/components/layout/divider';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
@@ -27,7 +28,7 @@ export function HomeSection({
         <HomeSectionHeader title={title} languageFontClass={languageFontClass} />
         {children}
       </View>
-      {isLast ? null : <View accessible={false} className="border-b border-neutral-200" />}
+      {isLast ? null : <Divider />}
     </View>
   );
 }

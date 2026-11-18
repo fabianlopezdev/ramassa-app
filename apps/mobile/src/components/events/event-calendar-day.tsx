@@ -2,8 +2,8 @@
  * One day of the Activitats calendar in the raised style (RAPP-841). A day
  * with activities is a raised box with one dot per kind of activity, so it
  * reads as something to press; the chosen day fills with the yellow of the
- * chosen filter chip; today has a ring. Other days are plain numbers. Saturday and Sunday sit on
- * a tinted column.
+ * chosen filter chip; today has a ring. Other days are plain numbers. Saturday
+ * and Sunday sit on a light grey column (RAPP-843).
  *
  * Every day presses with the full height of a tap target, whatever the size
  * of the box drawn inside it.
@@ -24,8 +24,11 @@ import { tokens } from '@ramassa/shared/tokens';
 export const CALENDAR_DAY_FACE_SIZE = tokens.tapTarget.min - tokens.spacing.sm;
 /** The corners of a day box, smaller than a card's to suit its size. */
 export const CALENDAR_DAY_SHAPE_CLASS_NAME = 'rounded-md';
-/** The tint of the Saturday and Sunday columns, from the day names to the last week. */
-export const WEEKEND_COLUMN_CLASS_NAME = 'bg-primary/10';
+/**
+ * The light grey of the Saturday and Sunday columns, from the day names to the
+ * bottom edge of the calendar (RAPP-843).
+ */
+export const WEEKEND_COLUMN_CLASS_NAME = 'bg-neutral-100';
 /** As many dots as fit across a day box; the day's label still names every activity. */
 const MAX_VISIBLE_DOTS = 3;
 

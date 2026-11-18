@@ -1,7 +1,8 @@
 /**
  * The header of the Activitats calendar (RAPP-841): raised arrows that fill
  * with the selection yellow while they are held, the month in her language,
- * and the day names, with Saturday and Sunday on the tinted weekend column.
+ * and the day names, with Saturday and Sunday on the grey weekend column. A
+ * line separates the day names from the days (RAPP-843).
  *
  * The calendar library renders it as its `customHeader` and only passes its
  * own props, so the labels in her language arrive through a context.
@@ -14,6 +15,7 @@ import {
 } from '@/components/events/event-calendar-day';
 import { BACKWARD_CHEVRON, FORWARD_CHEVRON } from '@/components/icons/direction';
 import { Icon, type IconName } from '@/components/icons/icon';
+import { Divider } from '@/components/layout/divider';
 import { RaisedPressable } from '@/components/layout/raised-surface';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { isWeekendWeekdayIndex, mondayFirstWeekdayIndexes } from '@/lib/event-calendar';
@@ -88,7 +90,7 @@ export function EventCalendarHeader({ month, addMonth, testID }: CalendarHeaderP
   const title = `${labels.monthNames[month.getMonth()] ?? ''} ${month.getFullYear()}`;
   return (
     <View testID={testID} className="gap-sm pt-sm">
-      <View className="flex-row items-center justify-between gap-sm px-sm">
+      <View className="flex-row items-center justify-between gap-sm px-md">
         <MonthArrow
           icon={BACKWARD_CHEVRON}
           label={labels.previousMonthLabel}
@@ -122,6 +124,7 @@ export function EventCalendarHeader({ month, addMonth, testID }: CalendarHeaderP
           </View>
         ))}
       </View>
+      <Divider className="-mt-sm" />
     </View>
   );
 }

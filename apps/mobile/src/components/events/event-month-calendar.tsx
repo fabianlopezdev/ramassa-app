@@ -2,8 +2,10 @@
  * The month calendar on Activitats in the raised style (RAPP-841): an
  * outlined panel with its own header (`EventCalendarHeader`: raised arrows,
  * the month, the day names) and raised days where there are activities
- * (`EventCalendarDay`). Saturday and Sunday run down a tinted column. Weeks
- * start on Monday and the month and day names come in her language.
+ * (`EventCalendarDay`). Saturday and Sunday run down a grey column that
+ * reaches the edges of the panel (RAPP-843), so the panel has no side
+ * padding. Weeks start on Monday and the month and day names come in her
+ * language.
  */
 import { EventCalendarDay } from '@/components/events/event-calendar-day';
 import {
@@ -26,6 +28,8 @@ const calendarTheme = {
   calendarBackground: tokens.colors.white,
   weekVerticalMargin: 0,
 } as const;
+/** The library pads its month at the sides; the weekend columns run to the edge instead. */
+const calendarStyle = { paddingLeft: 0, paddingRight: 0 } as const;
 
 export function EventMonthCalendar({
   language,
@@ -76,10 +80,7 @@ export function EventMonthCalendar({
 
   return (
     <EventCalendarHeaderLabelsContext.Provider value={headerLabels}>
-      <View
-        className={`overflow-hidden px-xs ${outlinedSurfaceClassName()}`}
-        style={continuousCorners}
-      >
+      <View className={`overflow-hidden ${outlinedSurfaceClassName()}`} style={continuousCorners}>
         <Calendar
           key={localeKey}
           current={current}
@@ -93,6 +94,7 @@ export function EventMonthCalendar({
           customHeader={EventCalendarHeader}
           testID={testID}
           theme={calendarTheme}
+          style={calendarStyle}
         />
       </View>
     </EventCalendarHeaderLabelsContext.Provider>
