@@ -1,3 +1,4 @@
+import { useOrganizationBranding } from '@/components/branding/organization-branding-provider';
 import { useUnreadMessages } from '@/lib/messaging';
 import { nativeTabsHostProps } from '@/lib/native-tabs-direction';
 import { playerNavIcons } from '@/lib/player-nav-icons';
@@ -42,11 +43,15 @@ export default function TabsLayout() {
   const unreadBadge = unreadBadgeProps(unread);
   // What on Inici she has not dealt with yet, the same count the screen shows (RAPP-821).
   const homeBadge = unreadBadgeProps(useHomeAttention().count);
+  // Badges take the organization's brand colour, calmer than the system red (RAPP-823).
+  const badgeColor = useOrganizationBranding()?.primary_color ?? tokens.colors.primary.DEFAULT;
   return (
     <NativeTabs
       // The tab bar mirrors with the screens (RAPP-531).
       unstable_nativeProps={nativeTabsHostProps(I18nManager.isRTL)}
       backgroundColor={tokens.colors.white}
+      badgeBackgroundColor={badgeColor}
+      badgeTextColor={tokens.colors.white}
       iconColor={{ default: tokens.colors.neutral[700], selected: tokens.colors.primary.dark }}
       indicatorColor={tokens.colors.neutral[100]}
       labelStyle={{
