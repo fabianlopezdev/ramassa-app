@@ -44,6 +44,8 @@ interface PressableDepthProps {
   readonly faceStyle?: StyleProp<ViewStyle>;
   readonly inlineOffset: number;
   readonly blockOffset: number;
+  /** A fill that covers the face while it is held down, such as `bg-secondary`. */
+  readonly pressedFillClassName?: string;
 }
 
 /** A stationary touch target and shadow, with a face that sinks on the UI thread. */
@@ -76,6 +78,7 @@ function ModalPressableDepth({
   style,
   faceClassName,
   faceStyle,
+  pressedFillClassName,
 }: PressableDepthProps) {
   const handlePress = useCallback(() => {
     if (haptic !== undefined) playHaptic(haptic);
@@ -99,14 +102,21 @@ function ModalPressableDepth({
       className={`${className ?? ''} active:opacity-90`}
       style={style}
     >
-      {shadow}
-      <View
-        importantForAccessibility="no-hide-descendants"
-        className={faceClassName}
-        style={faceStyle}
-      >
-        {children}
-      </View>
+      {({ pressed }) => (
+        <>
+          {shadow}
+          <View
+            importantForAccessibility="no-hide-descendants"
+            className={faceClassName}
+            style={faceStyle}
+          >
+            {pressedFillClassName === undefined || !pressed ? null : (
+              <View pointerEvents="none" className={`absolute inset-0 ${pressedFillClassName}`} />
+            )}
+            {children}
+          </View>
+        </>
+      )}
     </Pressable>
   );
 }
@@ -128,6 +138,7 @@ function GesturePressableDepth({
   faceStyle,
   inlineOffset,
   blockOffset,
+  pressedFillClassName,
 }: PressableDepthProps) {
   const reduced = useReducedMotion();
   const pressed = useSharedValue(0);
@@ -165,6 +176,7 @@ function GesturePressableDepth({
     ],
     opacity: reduced ? 1 - pressed.get() * (1 - motionTokens.press.opacity) : 1,
   }));
+  const pressedFillStyle = useAnimatedStyle(() => ({ opacity: pressed.get() }));
 
   return (
     <GestureDetector gesture={tap}>
@@ -193,6 +205,13 @@ function GesturePressableDepth({
           className={faceClassName}
           style={[faceStyle, animatedStyle]}
         >
+          {pressedFillClassName === undefined ? null : (
+            <NativeWindAnimatedView
+              pointerEvents="none"
+              className={`absolute inset-0 ${pressedFillClassName}`}
+              style={pressedFillStyle}
+            />
+          )}
           {children}
         </NativeWindAnimatedView>
       </View>

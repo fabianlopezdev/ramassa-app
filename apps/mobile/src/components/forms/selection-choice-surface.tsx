@@ -2,17 +2,13 @@ import {
   outlinedSurfaceClassName,
   RaisedSurfaceEdge,
   raisedSurfaceWrapperStyle,
+  useRaisedChoiceFaceStyle,
 } from '@/components/layout/raised-surface';
 import { PressableDepth } from '@/components/motion/pressable-depth';
 import { SelectionTransition } from '@/components/motion/selection-transition';
 import { continuousCorners } from '@/lib/continuous-corners';
-import { useMemo, type ReactNode } from 'react';
-import {
-  useWindowDimensions,
-  type AccessibilityRole,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import type { ReactNode } from 'react';
+import { type AccessibilityRole, type StyleProp, type ViewStyle } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 const FACE_CLASS = `relative overflow-hidden ${outlinedSurfaceClassName()} px-lg`;
@@ -45,16 +41,7 @@ export function SelectionChoiceSurface({
   contentClassName,
   rowStyle,
 }: SelectionChoiceSurfaceProps) {
-  const { fontScale } = useWindowDimensions();
-  const defaultRowStyle = useMemo(
-    () => ({
-      ...continuousCorners,
-      minHeight:
-        tokens.formField.minHeight * Math.max(1, fontScale) -
-        tokens.languageChoice.shadowBlockOffset,
-    }),
-    [fontScale],
-  );
+  const defaultRowStyle = useRaisedChoiceFaceStyle();
   return (
     <PressableDepth
       testID={testID}

@@ -17,6 +17,27 @@ const eventDateKeyFormatter = new Intl.DateTimeFormat('en-CA-u-ca-gregory', {
   timeZone: MADRID_TIME_ZONE,
 });
 
+const SUNDAY_INDEX = 0;
+const SATURDAY_INDEX = 6;
+const MONDAY_INDEX = 1;
+const UTC_MIDNIGHT_SUFFIX = 'T00:00:00Z';
+
+/** Saturday and Sunday, in the Sunday-based day order of `Date` and the calendar's locale arrays. */
+export function isWeekendWeekdayIndex(weekdayIndex: number): boolean {
+  return weekdayIndex === SATURDAY_INDEX || weekdayIndex === SUNDAY_INDEX;
+}
+
+/** Whether a `YYYY-MM-DD` date key falls on a weekend. */
+export function isWeekendDateKey(dateKey: string): boolean {
+  return isWeekendWeekdayIndex(new Date(`${dateKey}${UTC_MIDNIGHT_SUFFIX}`).getUTCDay());
+}
+
+/** The Sunday-based day indexes in the order a Monday-first week shows them. */
+export const mondayFirstWeekdayIndexes: readonly number[] = Array.from(
+  { length: WEEKDAY_COUNT },
+  (_unused, column) => (MONDAY_INDEX + column) % WEEKDAY_COUNT,
+);
+
 export interface CalendarLocaleDefinition {
   readonly monthNames: readonly string[];
   readonly monthNamesShort: readonly string[];

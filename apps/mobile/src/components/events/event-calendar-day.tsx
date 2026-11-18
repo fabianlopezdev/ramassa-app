@@ -2,21 +2,17 @@
  * One day of the Activitats calendar in the raised style (RAPP-841). A day
  * with activities is a raised box with one dot per kind of activity, so it
  * reads as something to press; the chosen day fills with the yellow of the
- * chosen filter chip; today has a ring. Other days are plain numbers.
+ * chosen filter chip; today has a ring. Other days are plain numbers. Saturday and Sunday sit on
+ * a tinted column.
  *
  * Every day presses with the full height of a tap target, whatever the size
  * of the box drawn inside it.
  */
-import {
-  outlinedSurfaceClassName,
-  RaisedSurfaceEdge,
-  raisedSurfaceWrapperStyle,
-} from '@/components/layout/raised-surface';
-import { PressableDepth } from '@/components/motion/pressable-depth';
+import { RaisedPressable } from '@/components/layout/raised-surface';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SelectionTransition } from '@/components/motion/selection-transition';
 import { continuousCorners } from '@/lib/continuous-corners';
-import { eventDateKey } from '@/lib/event-calendar';
+import { eventDateKey, isWeekendDateKey } from '@/lib/event-calendar';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { memo, useCallback, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -28,10 +24,13 @@ import { tokens } from '@ramassa/shared/tokens';
 export const CALENDAR_DAY_FACE_SIZE = tokens.tapTarget.min - tokens.spacing.sm;
 /** The corners of a day box, smaller than a card's to suit its size. */
 export const CALENDAR_DAY_SHAPE_CLASS_NAME = 'rounded-md';
+/** The tint of the Saturday and Sunday columns, from the day names to the last week. */
+export const WEEKEND_COLUMN_CLASS_NAME = 'bg-primary/10';
 /** As many dots as fit across a day box; the day's label still names every activity. */
 const MAX_VISIBLE_DOTS = 3;
 
 const styles = StyleSheet.create({
+  column: { alignSelf: 'stretch' },
   target: { minHeight: tokens.tapTarget.min, alignSelf: 'stretch' },
   face: {
     ...continuousCorners,
@@ -45,10 +44,6 @@ const styles = StyleSheet.create({
   },
   number: { fontVariant: ['tabular-nums'] },
 });
-
-const RAISED_FACE_CLASS_NAME = `relative items-center justify-center overflow-hidden ${outlinedSurfaceClassName(
-  CALENDAR_DAY_SHAPE_CLASS_NAME,
-)}`;
 
 type EventCalendarDayProps = DayProps & {
   readonly date?: DateData;
@@ -95,6 +90,9 @@ function EventCalendarDayInner({
   const isDisabled = state === 'disabled';
   const isToday = date !== undefined && date.dateString === eventDateKey(new Date().toISOString());
   const label = accessibilityLabel ?? date?.dateString ?? '';
+  const columnClassName = `items-center justify-center ${
+    date !== undefined && isWeekendDateKey(date.dateString) ? WEEKEND_COLUMN_CLASS_NAME : ''
+  }`;
   const number = (
     <DayNumber isDisabled={isDisabled} isToday={isToday}>
       {children}
@@ -103,43 +101,39 @@ function EventCalendarDayInner({
 
   if (!isSelected && dots.length === 0) {
     return (
-      <PressableScale
-        testID={testID}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        onPress={handlePress}
-        haptic="selection"
-        style={styles.target}
-        className="items-center justify-center"
-      >
-        <View
-          style={styles.face}
-          className={`items-center justify-center rounded-full ${
-            isToday ? 'border-2 border-primary bg-primary/10' : ''
-          }`}
+      <View style={styles.column} className={columnClassName}>
+        <PressableScale
+          testID={testID}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+          onPress={handlePress}
+          haptic="selection"
+          style={styles.target}
+          className="items-center justify-center"
         >
-          {number}
-        </View>
-      </PressableScale>
+          <View
+            style={styles.face}
+            className={`items-center justify-center rounded-full ${
+              isToday ? 'border-2 border-primary bg-primary/20' : ''
+            }`}
+          >
+            {number}
+          </View>
+        </PressableScale>
+      </View>
     );
   }
 
   return (
-    <View style={styles.target} className="items-center justify-center">
-      <PressableDepth
+    <View style={styles.target} className={columnClassName}>
+      <RaisedPressable
         testID={testID}
-        accessibilityRole="button"
         accessibilityLabel={label}
         isSelected={isSelected}
         onPress={handlePress}
-        haptic="selection"
-        style={raisedSurfaceWrapperStyle}
-        className="relative"
         faceStyle={styles.face}
-        faceClassName={RAISED_FACE_CLASS_NAME}
-        inlineOffset={tokens.languageChoice.shadowInlineOffset}
-        blockOffset={tokens.languageChoice.shadowBlockOffset}
-        shadow={<RaisedSurfaceEdge shapeClassName={CALENDAR_DAY_SHAPE_CLASS_NAME} />}
+        faceClassName="items-center justify-center"
+        shapeClassName={CALENDAR_DAY_SHAPE_CLASS_NAME}
       >
         <SelectionTransition
           active={isSelected}
@@ -154,7 +148,7 @@ function EventCalendarDayInner({
             ))}
           </View>
         )}
-      </PressableDepth>
+      </RaisedPressable>
     </View>
   );
 }

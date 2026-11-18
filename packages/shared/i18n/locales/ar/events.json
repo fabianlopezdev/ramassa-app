@@ -9,6 +9,8 @@
   "playerListViewAction": "عرض الأنشطة في قائمة",
   "playerCalendarViewAction": "عرض الأنشطة في تقويم",
   "playerCalendarLabel": "تقويم الأنشطة",
+  "playerPreviousMonth": "الشهر السابق",
+  "playerNextMonth": "الشهر التالي",
   "playerToday": "اليوم",
   "playerLoading": "جار تحميل الأنشطة",
   "playerLoadFailed": "تعذر تحميل الأنشطة.",

@@ -6,6 +6,9 @@ import {
   buildCalendarLocale,
   buildEventMarkedDates,
   eventDateKey,
+  isWeekendDateKey,
+  isWeekendWeekdayIndex,
+  mondayFirstWeekdayIndexes,
 } from './event-calendar';
 
 const row = (id: string, startsAt: string, categoryId: string): PlayerEventOccurrence =>
@@ -94,4 +97,18 @@ test('calendar presentation colors come from the shared token vocabulary', async
 
   expect(source).toContain('tokens.colors.primary.light');
   expect(source).not.toMatch(/#[\dA-Fa-f]{3,8}/);
+});
+
+describe('weekend columns', () => {
+  test('Saturday and Sunday are the weekend, in date keys and Sunday-based indexes', () => {
+    expect(isWeekendDateKey('2026-11-21')).toBe(true);
+    expect(isWeekendDateKey('2026-11-22')).toBe(true);
+    expect(isWeekendDateKey('2026-11-20')).toBe(false);
+    expect(isWeekendDateKey('2026-11-23')).toBe(false);
+    expect([0, 1, 2, 3, 4, 5, 6].filter(isWeekendWeekdayIndex)).toEqual([0, 6]);
+  });
+
+  test('a Monday-first week lists the Sunday-based indexes with the weekend last', () => {
+    expect(mondayFirstWeekdayIndexes).toEqual([1, 2, 3, 4, 5, 6, 0]);
+  });
 });

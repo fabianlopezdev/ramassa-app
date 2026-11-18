@@ -321,6 +321,8 @@ export default function EventsScreen() {
               <EventMonthCalendar
                 language={language}
                 todayLabel={t('playerToday')}
+                previousMonthLabel={t('playerPreviousMonth')}
+                nextMonthLabel={t('playerNextMonth')}
                 current={effectiveSelectedDate}
                 minDate={eventDateKey(now.toISOString())}
                 markedDates={markedDates}

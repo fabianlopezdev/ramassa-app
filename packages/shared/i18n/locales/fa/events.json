@@ -9,6 +9,8 @@
   "playerListViewAction": "نمایش برنامه‌ها در فهرست",
   "playerCalendarViewAction": "نمایش برنامه‌ها در تقویم",
   "playerCalendarLabel": "تقویم برنامه‌ها",
+  "playerPreviousMonth": "ماه قبل",
+  "playerNextMonth": "ماه بعد",
   "playerToday": "امروز",
   "playerLoading": "در حال بارگیری برنامه‌ها",
   "playerLoadFailed": "برنامه‌ها بارگیری نشدند.",

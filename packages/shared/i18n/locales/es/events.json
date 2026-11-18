@@ -9,6 +9,8 @@
   "playerListViewAction": "Mostrar las actividades en una lista",
   "playerCalendarViewAction": "Mostrar las actividades en un calendario",
   "playerCalendarLabel": "Calendario de actividades",
+  "playerPreviousMonth": "Mes anterior",
+  "playerNextMonth": "Mes siguiente",
   "playerToday": "Hoy",
   "playerLoading": "Cargando las actividades",
   "playerLoadFailed": "No hemos podido cargar las actividades.",

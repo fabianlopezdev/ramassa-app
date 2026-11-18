@@ -1,15 +1,15 @@
 import { Icon, type IconName } from '@/components/icons/icon';
-import { RAISED_FACE_MIN_HEIGHT, RaisedPanel } from '@/components/layout/raised-surface';
+import { RaisedPanel, useRaisedChoiceFaceStyle } from '@/components/layout/raised-surface';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SelectionTransition } from '@/components/motion/selection-transition';
 import { memo, useCallback, type JSX } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 /**
  * One row of mutually exclusive views of the same screen: the events list or
  * calendar, the Comunitat segments, the participant segments. It is one raised
- * surface (RAPP-841) split by lines, and the chosen option fills with the
+ * surface (RAPP-841) as tall as a raised choice, split by lines, and the chosen option fills with the
  * yellow the chosen filter chip uses. Every option has the same width and the
  * row stretches every option to the tallest one, so a label that wraps to two
  * lines keeps the row edge to edge with equal heights.
@@ -27,7 +27,6 @@ export interface SegmentedControlOption<Key extends string> {
 }
 
 const styles = StyleSheet.create({
-  option: { minHeight: RAISED_FACE_MIN_HEIGHT },
   count: { fontVariant: ['tabular-nums'] },
 });
 
@@ -35,6 +34,8 @@ interface SegmentedControlOptionViewProps<Key extends string> extends SegmentedC
   readonly isSelected: boolean;
   /** Every option after the first draws the line that splits it from the one before. */
   readonly isFirst: boolean;
+  /** The height of a raised choice, shared by every option. */
+  readonly optionStyle: StyleProp<ViewStyle>;
   readonly languageFontClass: string;
   readonly onSelect: (key: Key) => void;
 }
@@ -48,6 +49,7 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
   testID,
   isSelected,
   isFirst,
+  optionStyle,
   languageFontClass,
   onSelect,
 }: Omit<SegmentedControlOptionViewProps<Key>, 'key'> & { readonly optionKey: Key }) {
@@ -62,7 +64,7 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
       onPress={handlePress}
       haptic="selection"
       isSelected={isSelected}
-      style={styles.option}
+      style={optionStyle}
       className={`relative flex-1 flex-row items-center justify-center gap-sm px-sm py-xs ${
         isFirst ? '' : 'border-s border-primary'
       }`}
@@ -122,6 +124,7 @@ export function SegmentedControl<Key extends string>({
   readonly languageFontClass: string;
   readonly testID?: string;
 }) {
+  const optionStyle = useRaisedChoiceFaceStyle();
   return (
     <View testID={testID} accessibilityRole="radiogroup" accessibilityLabel={accessibilityLabel}>
       <RaisedPanel faceClassName="flex-row overflow-hidden">
@@ -136,6 +139,7 @@ export function SegmentedControl<Key extends string>({
             testID={option.testID}
             isSelected={selected === option.key}
             isFirst={index === 0}
+            optionStyle={optionStyle}
             languageFontClass={languageFontClass}
             onSelect={onSelect}
           />

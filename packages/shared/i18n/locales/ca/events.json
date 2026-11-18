@@ -9,6 +9,8 @@
   "playerListViewAction": "Mostra les activitats en una llista",
   "playerCalendarViewAction": "Mostra les activitats en un calendari",
   "playerCalendarLabel": "Calendari d'activitats",
+  "playerPreviousMonth": "Mes anterior",
+  "playerNextMonth": "Mes següent",
   "playerToday": "Avui",
   "playerLoading": "Carregant les activitats",
   "playerLoadFailed": "No hem pogut carregar les activitats.",
