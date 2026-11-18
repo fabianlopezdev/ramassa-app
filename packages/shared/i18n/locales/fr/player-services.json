@@ -1,4 +1,7 @@
 {
+  "segmentsLabel": "Sections d'aide",
+  "segmentServices": "Services",
+  "segmentGuides": "Guides",
   "chooseCategory": "De quoi as-tu besoin ?",
   "categoryHint": "Touche une catégorie pour voir les services.",
   "backCategories": "Reviens aux catégories",

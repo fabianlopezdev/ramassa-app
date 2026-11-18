@@ -132,7 +132,6 @@
   "storyPhoto": "Photo {{number}} from the story {{title}}",
   "openExternalResource": "Open external resource",
   "guidesTitle": "Guides",
-  "allGuides": "All guides",
   "guidesAll": "All",
   "guidesCount_one": "{{count}} guide",
   "guidesCount_other": "{{count}} guides",

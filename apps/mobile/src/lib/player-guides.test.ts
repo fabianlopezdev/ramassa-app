@@ -7,9 +7,7 @@ import type {
 import {
   countPlayerGuidesByCategory,
   filterPlayerGuides,
-  LATEST_PLAYER_GUIDES_LIMIT,
   selectGuideCategories,
-  selectLatestPlayerGuides,
   selectPlayerGuides,
 } from './player-guides';
 
@@ -67,16 +65,6 @@ describe('player guides', () => {
 
   test('returns an empty list when there is no feed yet', () => {
     expect(selectPlayerGuides(undefined)).toEqual([]);
-    expect(selectLatestPlayerGuides(undefined)).toEqual([]);
-  });
-
-  test('the latest guides are the first three guides of the newest-first feed', () => {
-    expect(LATEST_PLAYER_GUIDES_LIMIT).toBe(3);
-    expect(selectLatestPlayerGuides(feed).map((row) => row.id)).toEqual([
-      'guide-1',
-      'guide-2',
-      'guide-3',
-    ]);
   });
 
   test('filters guides by category and keeps every guide under all', () => {

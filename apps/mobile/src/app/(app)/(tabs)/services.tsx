@@ -4,11 +4,15 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { Icon } from '@/components/icons/icon';
-import { LatestGuidesSection } from '@/components/knowledge/latest-guides-section';
+import { PlayerGuideList } from '@/components/knowledge/player-guide-list';
 import { PageWidth } from '@/components/layout/content-width';
+import {
+  SegmentedControl,
+  type SegmentedControlOption,
+} from '@/components/layout/segmented-control';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { PlayerTabHeader, PlayerTabStateFrame } from '@/components/profile/player-tab-header';
+import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { ServiceCard } from '@/components/services/service-card';
 import { ServiceCategoryGrid } from '@/components/services/service-category-grid';
 import { ServiceFilterPanel } from '@/components/services/service-filter-panel';
@@ -24,7 +28,7 @@ import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { toAppError } from '@ramassa/shared/errors';
@@ -42,6 +46,9 @@ const styles = StyleSheet.create({
   },
 });
 const keyExtractor = (service: PlayerServiceRow) => service.id;
+/** The two views of Ajuda (RAPP-851): services by category, and the guides. */
+type AjudaSegment = 'services' | 'guides';
+
 function hasFilters(filters: PlayerServiceFilterSelection): boolean {
   return (
     filters.zone !== undefined ||
@@ -68,6 +75,7 @@ export default function ServicesScreen() {
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
   const categoriesQuery = usePlayerServiceCategories();
+  const [segment, setSegment] = useState<AjudaSegment>('services');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [filters, setFilters] = useState<PlayerServiceFilterSelection>(EMPTY_FILTERS);
   const [filtersVisible, setFiltersVisible] = useState(false);
@@ -157,79 +165,115 @@ export default function ServicesScreen() {
     },
     [currencyFormatter, language, languageFontClass, openService, t],
   );
+  const segmentOptions = useMemo<readonly SegmentedControlOption<AjudaSegment>[]>(
+    () => [
+      {
+        key: 'services',
+        label: t('playerServices:segmentServices'),
+        symbol: 'grid',
+        testID: 'ajuda-segment-services',
+      },
+      {
+        key: 'guides',
+        label: t('playerServices:segmentGuides'),
+        symbol: 'book',
+        testID: 'ajuda-segment-guides',
+      },
+    ],
+    [t],
+  );
+
+  // One header for both segments, so the switch stays in place while either loads.
+  const tabHeader = (
+    <View className="gap-md">
+      <PlayerTabHeader title={t('nav:tabs.services')} />
+      <SegmentedControl
+        testID="ajuda-segments"
+        options={segmentOptions}
+        selected={segment}
+        onSelect={setSegment}
+        accessibilityLabel={t('playerServices:segmentsLabel')}
+        languageFontClass={languageFontClass}
+      />
+    </View>
+  );
+
+  if (segment === 'guides') {
+    return (
+      <PlayerGuideList
+        header={<PageWidth className="pb-lg">{tabHeader}</PageWidth>}
+        contentContainerStyle={contentContainerStyle}
+      />
+    );
+  }
+
+  const stateScreen = (body: ReactElement, testID?: string) => (
+    <ScrollView
+      testID={testID}
+      style={styles.screen}
+      contentContainerStyle={contentContainerStyle}
+      contentInsetAdjustmentBehavior="automatic"
+    >
+      <View className="gap-lg">
+        <PageWidth>{tabHeader}</PageWidth>
+        {body}
+      </View>
+    </ScrollView>
+  );
 
   if (categoriesQuery.isPending && categoriesQuery.data === undefined) {
-    return (
-      <PlayerTabStateFrame title={t('nav:tabs.services')}>
-        <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />
-      </PlayerTabStateFrame>
+    return stateScreen(
+      <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />,
     );
   }
   if (categoriesQuery.isError && categoriesQuery.data === undefined) {
-    return (
-      <PlayerTabStateFrame title={t('nav:tabs.services')}>
-        <AnnouncementFeedError
-          message={t('playerServices:loadFailed')}
-          retryLabel={t('playerServices:retry')}
-          code={toAppError(categoriesQuery.error).code}
-          languageFontClass={languageFontClass}
-          onRetry={() => void categoriesQuery.refetch()}
-        />
-      </PlayerTabStateFrame>
+    return stateScreen(
+      <AnnouncementFeedError
+        message={t('playerServices:loadFailed')}
+        retryLabel={t('playerServices:retry')}
+        code={toAppError(categoriesQuery.error).code}
+        languageFontClass={languageFontClass}
+        onRetry={() => void categoriesQuery.refetch()}
+      />,
     );
   }
 
   if (category === null || selectedCategoryName === undefined) {
-    return (
-      <ScrollView
-        testID="player-services-categories"
-        style={styles.screen}
-        contentContainerStyle={contentContainerStyle}
-        contentInsetAdjustmentBehavior="automatic"
-      >
-        <PageWidth className="gap-lg">
-          <PlayerTabHeader title={t('nav:tabs.services')} />
-          <LatestGuidesSection />
-          <View className="gap-sm">
-            <View className="gap-xs">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('playerServices:chooseCategory')}
-              </Text>
-              <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-                {t('playerServices:categoryHint')}
-              </Text>
-            </View>
-            <ServiceCategoryGrid
-              categories={categoriesQuery.data ?? []}
-              onSelect={selectCategory}
-            />
+    return stateScreen(
+      <PageWidth>
+        <View className="gap-sm">
+          <View className="gap-xs">
+            <Text
+              accessibilityRole="header"
+              className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
+            >
+              {t('playerServices:chooseCategory')}
+            </Text>
+            <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+              {t('playerServices:categoryHint')}
+            </Text>
           </View>
-        </PageWidth>
-      </ScrollView>
+          <ServiceCategoryGrid categories={categoriesQuery.data ?? []} onSelect={selectCategory} />
+        </View>
+      </PageWidth>,
+      'player-services-categories',
     );
   }
 
   if (servicesQuery.isPending && servicesQuery.data === undefined) {
-    return (
-      <PlayerTabStateFrame title={t('nav:tabs.services')}>
-        <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />
-      </PlayerTabStateFrame>
+    return stateScreen(
+      <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />,
     );
   }
   if (servicesQuery.isError && servicesQuery.data === undefined) {
-    return (
-      <PlayerTabStateFrame title={t('nav:tabs.services')}>
-        <AnnouncementFeedError
-          message={t('playerServices:loadFailed')}
-          retryLabel={t('playerServices:retry')}
-          code={toAppError(servicesQuery.error).code}
-          languageFontClass={languageFontClass}
-          onRetry={() => void servicesQuery.refetch()}
-        />
-      </PlayerTabStateFrame>
+    return stateScreen(
+      <AnnouncementFeedError
+        message={t('playerServices:loadFailed')}
+        retryLabel={t('playerServices:retry')}
+        code={toAppError(servicesQuery.error).code}
+        languageFontClass={languageFontClass}
+        onRetry={() => void servicesQuery.refetch()}
+      />,
     );
   }
 
@@ -246,7 +290,7 @@ export default function ServicesScreen() {
       onRefresh={refresh}
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
-          <PlayerTabHeader title={t('nav:tabs.services')} />
+          {tabHeader}
           {/* A state of this tab, so it stays an in-page control: it shows
               the grid again (RAPP-806). */}
           <PressableScale

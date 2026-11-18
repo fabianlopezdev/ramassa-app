@@ -132,7 +132,6 @@
   "storyPhoto": "Photo {{number}} de l’histoire {{title}}",
   "openExternalResource": "Ouvre la ressource externe",
   "guidesTitle": "Guides",
-  "allGuides": "Tous les guides",
   "guidesAll": "Tout",
   "guidesCount_one": "{{count}} guide",
   "guidesCount_other": "{{count}} guides",

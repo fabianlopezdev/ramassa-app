@@ -314,7 +314,6 @@ function AppNavigator() {
               <Stack.Screen name="profile-delete-data" />
               <Stack.Screen name="announcement/[id]" />
               <Stack.Screen name="event/[id]" />
-              <Stack.Screen name="knowledge/index" />
               <Stack.Screen name="knowledge/[id]" />
               <Stack.Screen name="service/[id]" />
               <Stack.Screen name="story/submit" />

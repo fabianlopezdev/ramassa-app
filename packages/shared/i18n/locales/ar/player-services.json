@@ -1,4 +1,7 @@
 {
+  "segmentsLabel": "أقسام المساعدة",
+  "segmentServices": "الخدمات",
+  "segmentGuides": "الأدلة",
   "chooseCategory": "ماذا تحتاجين؟",
   "categoryHint": "اضغطي على فئة لرؤية خدماتها.",
   "backCategories": "العودة إلى الفئات",
