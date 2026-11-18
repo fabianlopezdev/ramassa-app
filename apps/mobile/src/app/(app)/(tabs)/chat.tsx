@@ -1,5 +1,6 @@
 /**
- * Xat (RAPP-789): everything private between her and the team, in one tab.
+ * Contacte, once called Xat (RAPP-789, RAPP-860): everything private between
+ * her and the staff, in one tab.
  * Three large cards and nothing else: the chat with its unread count, mentoring
  * with the state of the request she is waiting on, and suggestions. Each opens
  * the screen it always opened (`team-chat`, `mentoring`, `feedback`). The cards

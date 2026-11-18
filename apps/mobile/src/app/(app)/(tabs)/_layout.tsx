@@ -11,9 +11,11 @@ import { tokens } from '@ramassa/shared/tokens';
 
 /**
  * The player navigation shell (RAPP-16): five bottom tabs, the SPEC's whole
- * primary IA (max 2 nav levels). Since RAPP-789 they are Inici, Activitats,
- * Xat, Comunitat and Ajuda: Xat holds everything private with the team and
- * carries the unread badge, Inici carries the count of what she has not dealt
+ * primary IA (max 2 nav levels). They are Inici, Activitats, Comunitat, Ajuda
+ * and Contacte (RAPP-789, RAPP-860): Contacte holds everything private with
+ * the staff and carries the unread badge. It was called Xat and sat third; it
+ * is last now, where people look for a way to reach someone, and next to
+ * Ajuda. Its route is still `chat`. Inici carries the count of what she has not dealt
  * with yet (RAPP-821), and her profile opens from her photo at the top of
  * each tab (RAPP-794), because Android allows five tabs and no more.
  *
@@ -72,13 +74,6 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Icon src={tabIcons.calendar} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.events')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="chat" testID="player-tab-chat">
-        <NativeTabs.Trigger.Icon src={tabIcons.chat} renderingMode="template" />
-        <NativeTabs.Trigger.Label>{t('nav:tabs.chat')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Badge hidden={unreadBadge.hidden}>
-          {unreadBadge.children}
-        </NativeTabs.Trigger.Badge>
-      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="community" testID="player-tab-community">
         <NativeTabs.Trigger.Icon src={tabIcons.chats} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.community')}</NativeTabs.Trigger.Label>
@@ -86,6 +81,13 @@ export default function TabsLayout() {
       <NativeTabs.Trigger name="services">
         <NativeTabs.Trigger.Icon src={tabIcons.grid} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.services')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="chat" testID="player-tab-chat">
+        <NativeTabs.Trigger.Icon src={tabIcons.chat} renderingMode="template" />
+        <NativeTabs.Trigger.Label>{t('nav:tabs.chat')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Badge hidden={unreadBadge.hidden}>
+          {unreadBadge.children}
+        </NativeTabs.Trigger.Badge>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
