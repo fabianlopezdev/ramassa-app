@@ -153,5 +153,17 @@
   "communityStoriesLoading": "Chargement des histoires",
   "communityStoriesLoadFailed": "Les histoires n'ont pas pu être chargées.",
   "communityStoriesEmptyTitle": "Pas encore d'histoires",
-  "communityStoriesEmptyBody": "Quand l'équipe technique publiera une histoire, tu la trouveras ici."
+  "communityStoriesEmptyBody": "Quand l'équipe technique publiera une histoire, tu la trouveras ici.",
+  "categoriesAction": "Gère les catégories",
+  "categoriesTitle": "Catégories de la base de connaissances",
+  "newCategory": "Nouvelle catégorie",
+  "editCategory": "Modifie la catégorie",
+  "categoryName": "Nom de la catégorie",
+  "categorySlug": "Identifiant",
+  "categoryIcon": "Icône",
+  "categorySave": "Enregistre la catégorie",
+  "categoryCancel": "Annule",
+  "categoryEdit": "Modifie",
+  "categoryDelete": "Supprime",
+  "categoryDeleteConfirm": "Veux-tu supprimer cette catégorie ?"
 }

@@ -153,5 +153,17 @@
   "communityStoriesLoading": "در حال بارگیری داستان‌ها",
   "communityStoriesLoadFailed": "داستان‌ها بارگیری نشدند.",
   "communityStoriesEmptyTitle": "هنوز داستانی نیست",
-  "communityStoriesEmptyBody": "وقتی کادر فنی داستانی منتشر کند، آن را اینجا پیدا می‌کنید."
+  "communityStoriesEmptyBody": "وقتی کادر فنی داستانی منتشر کند، آن را اینجا پیدا می‌کنید.",
+  "categoriesAction": "مدیریت دسته‌ها",
+  "categoriesTitle": "دسته‌های پایگاه دانش",
+  "newCategory": "دستهٔ جدید",
+  "editCategory": "ویرایش دسته",
+  "categoryName": "نام دسته",
+  "categorySlug": "شناسه",
+  "categoryIcon": "نماد",
+  "categorySave": "ذخیرهٔ دسته",
+  "categoryCancel": "لغو",
+  "categoryEdit": "ویرایش",
+  "categoryDelete": "حذف",
+  "categoryDeleteConfirm": "این دسته حذف شود؟"
 }

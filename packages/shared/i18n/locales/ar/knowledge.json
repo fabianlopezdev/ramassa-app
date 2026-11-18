@@ -153,5 +153,17 @@
   "communityStoriesLoading": "جارٍ تحميل القصص",
   "communityStoriesLoadFailed": "تعذّر تحميل القصص.",
   "communityStoriesEmptyTitle": "لا توجد قصص بعد",
-  "communityStoriesEmptyBody": "عندما ينشر الطاقم الفني قصة، ستجدينها هنا."
+  "communityStoriesEmptyBody": "عندما ينشر الطاقم الفني قصة، ستجدينها هنا.",
+  "categoriesAction": "إدارة الفئات",
+  "categoriesTitle": "فئات قاعدة المعرفة",
+  "newCategory": "فئة جديدة",
+  "editCategory": "تعديل الفئة",
+  "categoryName": "اسم الفئة",
+  "categorySlug": "المعرّف",
+  "categoryIcon": "الأيقونة",
+  "categorySave": "حفظ الفئة",
+  "categoryCancel": "إلغاء",
+  "categoryEdit": "تعديل",
+  "categoryDelete": "حذف",
+  "categoryDeleteConfirm": "هل تريد حذف هذه الفئة؟"
 }

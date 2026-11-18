@@ -153,5 +153,17 @@
   "communityStoriesLoading": "Carregant les històries",
   "communityStoriesLoadFailed": "No s'han pogut carregar les històries.",
   "communityStoriesEmptyTitle": "Encara no hi ha històries",
-  "communityStoriesEmptyBody": "Quan l'equip tècnic publiqui una història, la trobaràs aquí."
+  "communityStoriesEmptyBody": "Quan l'equip tècnic publiqui una història, la trobaràs aquí.",
+  "categoriesAction": "Gestiona les categories",
+  "categoriesTitle": "Categories de la base de coneixement",
+  "newCategory": "Nova categoria",
+  "editCategory": "Edita la categoria",
+  "categoryName": "Nom de la categoria",
+  "categorySlug": "Identificador",
+  "categoryIcon": "Icona",
+  "categorySave": "Desa la categoria",
+  "categoryCancel": "Cancel·la",
+  "categoryEdit": "Edita",
+  "categoryDelete": "Elimina",
+  "categoryDeleteConfirm": "Vols eliminar aquesta categoria?"
 }

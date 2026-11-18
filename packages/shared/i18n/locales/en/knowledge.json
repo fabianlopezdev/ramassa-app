@@ -153,5 +153,17 @@
   "communityStoriesLoading": "Loading stories",
   "communityStoriesLoadFailed": "The stories could not be loaded.",
   "communityStoriesEmptyTitle": "No stories yet",
-  "communityStoriesEmptyBody": "When the technical team publishes a story, you will find it here."
+  "communityStoriesEmptyBody": "When the technical team publishes a story, you will find it here.",
+  "categoriesAction": "Manage categories",
+  "categoriesTitle": "Knowledge base categories",
+  "newCategory": "New category",
+  "editCategory": "Edit category",
+  "categoryName": "Category name",
+  "categorySlug": "Slug",
+  "categoryIcon": "Icon",
+  "categorySave": "Save category",
+  "categoryCancel": "Cancel",
+  "categoryEdit": "Edit",
+  "categoryDelete": "Delete",
+  "categoryDeleteConfirm": "Delete this category?"
 }

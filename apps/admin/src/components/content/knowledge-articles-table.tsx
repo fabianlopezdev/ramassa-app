@@ -10,6 +10,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getAnnouncementLifecycle } from '@ramassa/shared/announcements';
+import { useAuth } from '@ramassa/shared/auth';
 import type { AppErrorCode } from '@ramassa/shared/errors';
 import { resolveLocalizedText } from '@ramassa/shared/i18n';
 import {
@@ -32,6 +33,7 @@ export function KnowledgeArticlesTable({ page, search }: KnowledgeArticlesTableP
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [errorCode, setErrorCode] = useState<AppErrorCode | null>(null);
+  const { permissions } = useAuth();
 
   function applySearch(next: Partial<KnowledgeSearch>) {
     void navigate({ search: (previous) => ({ ...previous, page: 1, ...next }) });
@@ -153,9 +155,16 @@ export function KnowledgeArticlesTable({ page, search }: KnowledgeArticlesTableP
             {t('knowledge:summary', { count: page.total })}
           </p>
         </div>
-        <Button asChild size="lg">
-          <Link to="/content/knowledge/new">{t('knowledge:newAction')}</Link>
-        </Button>
+        <div className="flex gap-2">
+          {permissions.has('knowledge.edit') ? (
+            <Button asChild variant="outline" size="lg">
+              <Link to="/content/knowledge/categories">{t('knowledge:categoriesAction')}</Link>
+            </Button>
+          ) : null}
+          <Button asChild size="lg">
+            <Link to="/content/knowledge/new">{t('knowledge:newAction')}</Link>
+          </Button>
+        </div>
       </header>
       <div className="grid gap-3 md:grid-cols-2">
         <label className="flex flex-col gap-2">

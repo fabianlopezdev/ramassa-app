@@ -67,6 +67,7 @@ import { Route as StaffContentEventsCategoriesRouteImport } from './routes/_staf
 import { Route as StaffContentEventsNewRouteImport } from './routes/_staff.content.events.new'
 import { Route as StaffContentKnowledgeIndexRouteImport } from './routes/_staff.content.knowledge.index'
 import { Route as StaffContentKnowledgeArticleIdRouteImport } from './routes/_staff.content.knowledge.$articleId'
+import { Route as StaffContentKnowledgeCategoriesRouteImport } from './routes/_staff.content.knowledge.categories'
 import { Route as StaffContentKnowledgeNewRouteImport } from './routes/_staff.content.knowledge.new'
 import { Route as StaffContentServicesIndexRouteImport } from './routes/_staff.content.services.index'
 import { Route as StaffContentServicesServiceIdRouteImport } from './routes/_staff.content.services.$serviceId'
@@ -393,6 +394,12 @@ const StaffContentKnowledgeArticleIdRoute =
     path: '/knowledge/$articleId',
     getParentRoute: () => StaffContentRoute,
   } as any)
+const StaffContentKnowledgeCategoriesRoute =
+  StaffContentKnowledgeCategoriesRouteImport.update({
+    id: '/knowledge/categories',
+    path: '/knowledge/categories',
+    getParentRoute: () => StaffContentRoute,
+  } as any)
 const StaffContentKnowledgeNewRoute =
   StaffContentKnowledgeNewRouteImport.update({
     id: '/knowledge/new',
@@ -439,7 +446,6 @@ const StaffFormsCustomIndexRoute = StaffFormsCustomIndexRouteImport.update({
   path: '/forms/custom/',
   getParentRoute: () => StaffRoute,
 } as any)
-
 const StaffFormsLegalIndexRoute = StaffFormsLegalIndexRouteImport.update({
   id: '/forms/legal/',
   path: '/forms/legal/',
@@ -538,6 +544,7 @@ export interface FileRoutesByFullPath {
   '/content/events/categories': typeof StaffContentEventsCategoriesRoute
   '/content/events/new': typeof StaffContentEventsNewRoute
   '/content/knowledge/$articleId': typeof StaffContentKnowledgeArticleIdRoute
+  '/content/knowledge/categories': typeof StaffContentKnowledgeCategoriesRoute
   '/content/knowledge/new': typeof StaffContentKnowledgeNewRoute
   '/content/services/$serviceId': typeof StaffContentServicesServiceIdRoute
   '/content/services/categories': typeof StaffContentServicesCategoriesRoute
@@ -607,6 +614,7 @@ export interface FileRoutesByTo {
   '/content/events/categories': typeof StaffContentEventsCategoriesRoute
   '/content/events/new': typeof StaffContentEventsNewRoute
   '/content/knowledge/$articleId': typeof StaffContentKnowledgeArticleIdRoute
+  '/content/knowledge/categories': typeof StaffContentKnowledgeCategoriesRoute
   '/content/knowledge/new': typeof StaffContentKnowledgeNewRoute
   '/content/services/$serviceId': typeof StaffContentServicesServiceIdRoute
   '/content/services/categories': typeof StaffContentServicesCategoriesRoute
@@ -684,6 +692,7 @@ export interface FileRoutesById {
   '/_staff/content/events/categories': typeof StaffContentEventsCategoriesRoute
   '/_staff/content/events/new': typeof StaffContentEventsNewRoute
   '/_staff/content/knowledge/$articleId': typeof StaffContentKnowledgeArticleIdRoute
+  '/_staff/content/knowledge/categories': typeof StaffContentKnowledgeCategoriesRoute
   '/_staff/content/knowledge/new': typeof StaffContentKnowledgeNewRoute
   '/_staff/content/services/$serviceId': typeof StaffContentServicesServiceIdRoute
   '/_staff/content/services/categories': typeof StaffContentServicesCategoriesRoute
@@ -760,6 +769,7 @@ export interface FileRouteTypes {
     | '/content/events/categories'
     | '/content/events/new'
     | '/content/knowledge/$articleId'
+    | '/content/knowledge/categories'
     | '/content/knowledge/new'
     | '/content/services/$serviceId'
     | '/content/services/categories'
@@ -829,6 +839,7 @@ export interface FileRouteTypes {
     | '/content/events/categories'
     | '/content/events/new'
     | '/content/knowledge/$articleId'
+    | '/content/knowledge/categories'
     | '/content/knowledge/new'
     | '/content/services/$serviceId'
     | '/content/services/categories'
@@ -905,6 +916,7 @@ export interface FileRouteTypes {
     | '/_staff/content/events/categories'
     | '/_staff/content/events/new'
     | '/_staff/content/knowledge/$articleId'
+    | '/_staff/content/knowledge/categories'
     | '/_staff/content/knowledge/new'
     | '/_staff/content/services/$serviceId'
     | '/_staff/content/services/categories'
@@ -1343,6 +1355,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffContentKnowledgeArticleIdRouteImport
       parentRoute: typeof StaffContentRoute
     }
+    '/_staff/content/knowledge/categories': {
+      id: '/_staff/content/knowledge/categories'
+      path: '/knowledge/categories'
+      fullPath: '/content/knowledge/categories'
+      preLoaderRoute: typeof StaffContentKnowledgeCategoriesRouteImport
+      parentRoute: typeof StaffContentRoute
+    }
     '/_staff/content/knowledge/new': {
       id: '/_staff/content/knowledge/new'
       path: '/knowledge/new'
@@ -1531,6 +1550,7 @@ interface StaffContentRouteChildren {
   StaffContentEventsCategoriesRoute: typeof StaffContentEventsCategoriesRoute
   StaffContentEventsNewRoute: typeof StaffContentEventsNewRoute
   StaffContentKnowledgeArticleIdRoute: typeof StaffContentKnowledgeArticleIdRoute
+  StaffContentKnowledgeCategoriesRoute: typeof StaffContentKnowledgeCategoriesRoute
   StaffContentKnowledgeNewRoute: typeof StaffContentKnowledgeNewRoute
   StaffContentServicesServiceIdRoute: typeof StaffContentServicesServiceIdRoute
   StaffContentServicesCategoriesRoute: typeof StaffContentServicesCategoriesRoute
@@ -1552,6 +1572,7 @@ const StaffContentRouteChildren: StaffContentRouteChildren = {
   StaffContentEventsCategoriesRoute: StaffContentEventsCategoriesRoute,
   StaffContentEventsNewRoute: StaffContentEventsNewRoute,
   StaffContentKnowledgeArticleIdRoute: StaffContentKnowledgeArticleIdRoute,
+  StaffContentKnowledgeCategoriesRoute: StaffContentKnowledgeCategoriesRoute,
   StaffContentKnowledgeNewRoute: StaffContentKnowledgeNewRoute,
   StaffContentServicesServiceIdRoute: StaffContentServicesServiceIdRoute,
   StaffContentServicesCategoriesRoute: StaffContentServicesCategoriesRoute,

@@ -4,6 +4,7 @@ import {
   canTransitionStoryStatus,
   hasAlignedKnowledgeBlocks,
   knowledgeArticleInputSchema,
+  knowledgeCategoryInputSchema,
   nextStoryPublicationState,
   normalizeVideoEmbedUrl,
   participantStoryEditableDraft,
@@ -359,5 +360,26 @@ describe('the shared body translation (RAPP-343)', () => {
     expect(nextStoryPublicationState('published', true)).toBe('published');
     expect(() => nextStoryPublicationState('submitted', true)).toThrow();
     expect(() => nextStoryPublicationState('rejected', true)).toThrow();
+  });
+});
+
+describe('guide category input (RAPP-869)', () => {
+  const category = { name: completeTitle, slug: 'rights-asylum', icon: 'scale', color: 'indigo' };
+
+  test('a category with its name in every language and a palette colour is accepted', () => {
+    expect(knowledgeCategoryInputSchema.safeParse(category).success).toBe(true);
+  });
+
+  test('a colour outside the category palette is refused', () => {
+    expect(knowledgeCategoryInputSchema.safeParse({ ...category, color: 'primary' }).success).toBe(
+      false,
+    );
+  });
+
+  test('a name missing a language is refused, as the database check does', () => {
+    const withoutFrench = { ...completeTitle, fr: undefined };
+    expect(
+      knowledgeCategoryInputSchema.safeParse({ ...category, name: withoutFrench }).success,
+    ).toBe(false);
   });
 });
