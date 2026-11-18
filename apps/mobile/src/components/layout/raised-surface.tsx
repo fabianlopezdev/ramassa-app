@@ -83,6 +83,12 @@ const raisedSurfaceEdgeStyle = {
 export const RAISED_FACE_MIN_HEIGHT = tokens.tapTarget.recommended - shadowBlockOffset;
 
 /**
+ * A small raised button's face (RAPP-867), such as "Ara no" under a form: as
+ * tall as the minimum tap target once its edge is added.
+ */
+export const RAISED_COMPACT_FACE_MIN_HEIGHT = tokens.tapTarget.min - shadowBlockOffset;
+
+/**
  * The face of a raised choice (a picker card, the segmented control): as tall
  * as a form field once its edge is added, and taller with larger text.
  */

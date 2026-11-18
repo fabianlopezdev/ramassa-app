@@ -8,16 +8,16 @@
  * confirms. A legal form has neither (RAPP-771).
  */
 
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ToDoRow } from '@/components/home/to-do-row';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { useDismissCustomForm, usePutOffCustomForm } from '@/lib/custom-forms';
 import { playHaptic } from '@/lib/haptics/haptics';
+import { playerNavIcons } from '@/lib/player-nav-icons';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Text, View } from 'react-native';
+import { Alert, View } from 'react-native';
 import { DEFAULT_LANGUAGE, useLanguage } from '@ramassa/shared/i18n';
 import { textIn, type PendingCustomForm } from '@ramassa/shared/intake-builder';
 
@@ -52,6 +52,7 @@ export function PendingFormPrompt({ form, place = 'toDo' }: PendingFormPromptPro
     [form.responseId],
   );
   // Deleting closes the form for good, so she is told what it means first.
+  const putOffNow = useCallback(() => run(putOff), [putOff, run]);
   const confirmDelete = useCallback(() => {
     Alert.alert(t('later.deleteTitle'), t('later.deleteBody'), [
       { text: t('later.cancel'), style: 'cancel' },
@@ -69,7 +70,7 @@ export function PendingFormPrompt({ form, place = 'toDo' }: PendingFormPromptPro
   const isLater = place === 'later';
   const secondLabel = isLater ? t('later.delete') : t('pendingForm.dismiss');
   return (
-    <View testID="pending-form-prompt" className="gap-xs">
+    <View testID="pending-form-prompt" className="gap-sm">
       {/* A half-answered form is not saved, so a form has no started state (RAPP-825). */}
       <ToDoRow
         testID="pending-form-answer"
@@ -88,21 +89,16 @@ export function PendingFormPrompt({ form, place = 'toDo' }: PendingFormPromptPro
       />
       {/* A legal form is never put off or deleted (RAPP-771). */}
       {form.mandatory === 'optional' && form.kind !== 'legal' ? (
-        <PressableScale
+        <RaisedActionButton
           testID={isLater ? 'pending-form-delete' : 'pending-form-dismiss'}
+          size="compact"
+          icon={isLater ? 'trash' : playerNavIcons.formsLater}
+          tone={isLater ? 'danger' : 'brand'}
+          label={secondLabel}
           accessibilityLabel={`${secondLabel}: ${name}`}
           isDisabled={isBusy}
-          onPress={isLater ? confirmDelete : () => run(putOff)}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-min items-center justify-center self-start rounded-md px-sm"
-        >
-          <Text
-            className={`text-md font-bold ${isLater ? 'text-error' : 'text-primary'} ${languageFontClass}`}
-          >
-            {secondLabel}
-          </Text>
-        </PressableScale>
+          onPress={isLater ? confirmDelete : putOffNow}
+        />
       ) : null}
     </View>
   );

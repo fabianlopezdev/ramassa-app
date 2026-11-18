@@ -114,6 +114,7 @@ const ICONS: Readonly<Record<string, string>> = {
   sun: 'sun',
   ticket: 'ticket',
   translate: 'translate',
+  trash: 'trash-bin-trash',
   user: 'user',
   'user-circle': 'user-circle',
   'user-plus': 'user-plus-rounded',
