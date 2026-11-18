@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   number: { fontVariant: ['tabular-nums'] },
 });
 
-type EventCalendarDayProps = DayProps & {
+type EventCalendarDayProps = Omit<DayProps, 'date'> & {
   readonly date?: DateData;
   readonly children?: ReactNode;
 };

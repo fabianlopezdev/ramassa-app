@@ -32,6 +32,44 @@ export function isWeekendDateKey(dateKey: string): boolean {
   return isWeekendWeekdayIndex(new Date(`${dateKey}${UTC_MIDNIGHT_SUFFIX}`).getUTCDay());
 }
 
+const MONTH_KEY_LENGTH = 'YYYY-MM'.length;
+const DATE_KEY_LENGTH = 'YYYY-MM-DD'.length;
+const FIRST_OF_MONTH_SUFFIX = '-01';
+const NEXT_MONTH = 1;
+const LAST_DAY_OF_PREVIOUS_MONTH = 0;
+
+/** The most weeks a month can cover when weeks start on Monday. */
+export const CALENDAR_MAX_WEEKS = 6;
+
+/** The `YYYY-MM` month of a `YYYY-MM-DD` date key. */
+export function monthKeyOf(dateKey: string): string {
+  return dateKey.slice(0, MONTH_KEY_LENGTH);
+}
+
+/**
+ * The weeks after a `YYYY-MM` month that bring it to six weeks (RAPP-844), as
+ * Monday-first rows of `YYYY-MM-DD` date keys of the next month. A month that
+ * already covers six weeks gets none.
+ */
+export function weeksAfterMonth(monthKey: string): readonly (readonly string[])[] {
+  const first = new Date(`${monthKey}${FIRST_OF_MONTH_SUFFIX}${UTC_MIDNIGHT_SUFFIX}`);
+  const year = first.getUTCFullYear();
+  const month = first.getUTCMonth();
+  const daysInMonth = new Date(
+    Date.UTC(year, month + NEXT_MONTH, LAST_DAY_OF_PREVIOUS_MONTH),
+  ).getUTCDate();
+  const daysBeforeFirst = (first.getUTCDay() - MONDAY_INDEX + WEEKDAY_COUNT) % WEEKDAY_COUNT;
+  const weeksShown = Math.ceil((daysBeforeFirst + daysInMonth) / WEEKDAY_COUNT);
+  const firstDayAfter = weeksShown * WEEKDAY_COUNT - daysBeforeFirst + FIRST_DAY_OF_MONTH;
+  return Array.from({ length: CALENDAR_MAX_WEEKS - weeksShown }, (_unused, week) =>
+    Array.from({ length: WEEKDAY_COUNT }, (_unusedDay, day) =>
+      new Date(Date.UTC(year, month, firstDayAfter + week * WEEKDAY_COUNT + day))
+        .toISOString()
+        .slice(0, DATE_KEY_LENGTH),
+    ),
+  );
+}
+
 /** The Sunday-based day indexes in the order a Monday-first week shows them. */
 export const mondayFirstWeekdayIndexes: readonly number[] = Array.from(
   { length: WEEKDAY_COUNT },
