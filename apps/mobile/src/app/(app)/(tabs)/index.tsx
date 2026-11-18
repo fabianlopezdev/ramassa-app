@@ -191,13 +191,18 @@ export default function HomeScreen() {
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
           <PlayerTabHeader title={t('nav:tabs.home')} />
-          {/* Per fer, then her next activity, then the announcements (RAPP-790). */}
-          <HomeToDo items={toDoItems} languageFontClass={languageFontClass} />
+          {/*
+            Her next activity, then the forms and surveys that wait, then the
+            announcements (RAPP-790). The activity comes first because it is
+            what she opens the app for, and it is there every week, so the top
+            of Inici stays the same when forms come and go (RAPP-855).
+          */}
           <HomeNextActivity
             occurrence={nextActivity}
             isUnseen={isNextActivityUnseen}
             languageFontClass={languageFontClass}
           />
+          <HomeToDo items={toDoItems} languageFontClass={languageFontClass} />
           <HomeSection title={t('feedTitle')} languageFontClass={languageFontClass} isLast>
             <CategoryFilters
               selected={category}
