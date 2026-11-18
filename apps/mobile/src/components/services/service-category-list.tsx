@@ -1,12 +1,10 @@
 import type { IconName } from '@/components/icons/icon';
-import { IconDisc } from '@/components/icons/icon-disc';
-import { RaisedPressable } from '@/components/layout/raised-surface';
+import { RaisedIconCard } from '@/components/layout/raised-icon-card';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { memo, useCallback } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { serviceCategoryWash, type AdminServiceCategory } from '@ramassa/shared/services';
-import { tokens } from '@ramassa/shared/tokens';
 
 const categoryIcons: Readonly<Record<string, IconName>> = {
   housing: 'home',
@@ -20,51 +18,44 @@ const categoryIcons: Readonly<Record<string, IconName>> = {
 };
 const defaultCategoryIcon: IconName = 'grid';
 
-interface ServiceCategoryCardProps {
+interface ServiceCategoryRowProps {
   readonly id: string;
   readonly slug: string;
   readonly color: string;
   readonly title: string;
+  readonly languageFontClass: string;
   readonly onSelect: (id: string) => void;
 }
 
-const ServiceCategoryCard = memo(function ServiceCategoryCard({
+/**
+ * One category as the card Inici uses for Formularis i enquestes (RAPP-854):
+ * its icon in a circle of the category's own colour (RAPP-856), the divider,
+ * its name and the arrow.
+ */
+const ServiceCategoryRow = memo(function ServiceCategoryRow({
   id,
   slug,
   color,
   title,
+  languageFontClass,
   onSelect,
-}: ServiceCategoryCardProps) {
-  const languageFontClass = useLanguageFontClass();
+}: ServiceCategoryRowProps) {
   const handlePress = useCallback(() => onSelect(id), [id, onSelect]);
-  // The app's raised surface (RAPP-854): border, edge and press come from
-  // raised-surface, so the tiles follow every change to it. Cards in one row
-  // share a height because the cell and the face both fill.
   return (
-    <View className="basis-[46%] grow">
-      <RaisedPressable
-        testID={`service-category-${slug}`}
-        accessibilityLabel={title}
-        onPress={handlePress}
-        className="flex-1"
-        faceClassName="flex-1 flex-row items-center gap-sm px-sm py-md"
-      >
-        <IconDisc
-          name={categoryIcons[slug] ?? defaultCategoryIcon}
-          wash={serviceCategoryWash(color)}
-          size={tokens.fontSize.xl}
-        />
-        <Text
-          className={`flex-1 text-start text-md font-bold text-neutral-900 ${languageFontClass}`}
-        >
-          {title}
-        </Text>
-      </RaisedPressable>
-    </View>
+    <RaisedIconCard
+      testID={`service-category-${slug}`}
+      icon={categoryIcons[slug] ?? defaultCategoryIcon}
+      iconWash={serviceCategoryWash(color)}
+      title={title}
+      accessibilityLabel={title}
+      languageFontClass={languageFontClass}
+      onOpen={handlePress}
+    />
   );
 });
 
-export function ServiceCategoryGrid({
+/** The Ajuda service categories, one card per row like the cards on Inici. */
+export function ServiceCategoryList({
   categories,
   onSelect,
 }: {
@@ -72,18 +63,20 @@ export function ServiceCategoryGrid({
   readonly onSelect: (id: string) => void;
 }) {
   const { language } = useLanguage();
+  const languageFontClass = useLanguageFontClass();
   return (
-    <View className="flex-row flex-wrap gap-md">
+    <View className="gap-md">
       {categories.map((category) => {
         const title = resolveLocalizedText(category.name, language);
         if (title === undefined) return null;
         return (
-          <ServiceCategoryCard
+          <ServiceCategoryRow
             key={category.id}
             id={category.id}
             slug={category.slug}
             color={category.color}
             title={title.text}
+            languageFontClass={languageFontClass}
             onSelect={onSelect}
           />
         );

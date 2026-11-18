@@ -129,7 +129,6 @@ export function RaisedPressable({
   faceStyle,
   pressedFillClassName,
   shapeClassName = RAISED_SHAPE_CLASS_NAME,
-  className,
 }: {
   readonly children: ReactNode;
   readonly accessibilityLabel: string;
@@ -143,8 +142,6 @@ export function RaisedPressable({
   readonly faceStyle?: StyleProp<ViewStyle>;
   readonly pressedFillClassName?: string;
   readonly shapeClassName?: string;
-  /** Layout for the whole pressable, edge included, such as `flex-1` to fill a grid cell. */
-  readonly className?: string;
 }) {
   return (
     <PressableDepth
@@ -155,7 +152,7 @@ export function RaisedPressable({
       onPress={onPress}
       haptic={haptic}
       style={raisedSurfaceWrapperStyle}
-      className={`relative ${className ?? ''}`}
+      className="relative"
       faceStyle={faceStyle ?? continuousCorners}
       faceClassName={`relative overflow-hidden ${outlinedSurfaceClassName(shapeClassName)} ${
         faceClassName ?? ''

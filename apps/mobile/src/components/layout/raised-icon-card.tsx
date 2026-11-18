@@ -1,10 +1,13 @@
 /**
  * A raised card that opens a place or a task (RAPP-842): a big icon in the
  * block at the start, the divider, a name, an optional line under it and the
- * arrow. The Per fer rows and the rows of the Xat tab share it, so a row that
- * opens something looks and presses the same in both.
+ * arrow. The Per fer rows, the rows of the Xat tab and the Ajuda service
+ * categories share it, so a row that opens something looks and presses the
+ * same everywhere. With `iconWash` the icon sits in a circle of that colour,
+ * such as an Ajuda category's own (RAPP-856).
  */
 import type { IconName } from '@/components/icons/icon';
+import { IconDisc } from '@/components/icons/icon-disc';
 import {
   RaisedCard,
   RaisedCardSymbol,
@@ -15,6 +18,8 @@ import { Text } from 'react-native';
 interface RaisedIconCardProps {
   readonly testID?: string;
   readonly icon: IconName;
+  /** A pale colour for a circle behind the icon. Without it the icon stands alone. */
+  readonly iconWash?: string;
   readonly title: string;
   /** A line under the name, such as the date a form is due. */
   readonly detail?: string;
@@ -29,6 +34,7 @@ interface RaisedIconCardProps {
 export function RaisedIconCard({
   testID,
   icon,
+  iconWash,
   title,
   detail,
   accessibilityLabel,
@@ -42,7 +48,13 @@ export function RaisedIconCard({
       testID={testID}
       accessibilityLabel={accessibilityLabel}
       onOpen={onOpen}
-      leading={<RaisedCardSymbol name={icon} />}
+      leading={
+        iconWash === undefined ? (
+          <RaisedCardSymbol name={icon} />
+        ) : (
+          <IconDisc name={icon} wash={iconWash} />
+        )
+      }
       badge={badge}
       count={count}
     >
