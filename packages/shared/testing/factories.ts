@@ -587,6 +587,7 @@ export function buildKnowledgeCategory(
   return {
     id: '5eed0000-0000-4000-8004-000000000099',
     org_id: SEED_ORGANIZATION_ID,
+    color: 'indigo',
     name: {
       ca: 'Drets i asil',
       es: 'Derechos y asilo',

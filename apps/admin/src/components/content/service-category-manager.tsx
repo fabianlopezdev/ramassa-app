@@ -9,19 +9,8 @@ import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { localizedTextFromReview } from '@ramassa/shared/announcements';
 import type { AppErrorCode } from '@ramassa/shared/errors';
-import {
-  countServicesIncompatibleWithCategorySchema,
-  createServiceCategory,
-  deleteServiceCategory,
-  isServiceCategoryColor,
-  moveServiceCategory,
-  reorderServiceCategories,
-  SERVICE_CATEGORY_COLORS,
-  serviceCategoryInputSchema,
-  serviceMetadataSchemaDefinitionSchema,
-  updateServiceCategory,
-  type AdminServiceCategory,
-} from '@ramassa/shared/services';
+import { isCategoryColor, CATEGORY_COLORS } from '@ramassa/shared/category-colors';
+import { countServicesIncompatibleWithCategorySchema, createServiceCategory, deleteServiceCategory, moveServiceCategory, reorderServiceCategories, serviceCategoryInputSchema, serviceMetadataSchemaDefinitionSchema, updateServiceCategory, type AdminServiceCategory } from '@ramassa/shared/services';
 import { isTranslationReviewPublishable } from '@ramassa/shared/translation';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 import { approveAll, reviewOptions, startGeneratedReview } from './announcement-editor';
@@ -41,7 +30,7 @@ export function ServiceCategoryManager({
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [icon, setIcon] = useState('circle');
-  const [color, setColor] = useState<string>(SERVICE_CATEGORY_COLORS[0] ?? 'sky');
+  const [color, setColor] = useState<string>(CATEGORY_COLORS[0] ?? 'sky');
   const [schemaText, setSchemaText] = useState(EMPTY_SCHEMA);
   const [incompatibleCount, setIncompatibleCount] = useState(0);
   const [schemaInvalid, setSchemaInvalid] = useState(false);
@@ -57,7 +46,7 @@ export function ServiceCategoryManager({
     setName('');
     setSlug('');
     setIcon('circle');
-    setColor(SERVICE_CATEGORY_COLORS[0] ?? 'sky');
+    setColor(CATEGORY_COLORS[0] ?? 'sky');
     setSchemaText(EMPTY_SCHEMA);
     setIncompatibleCount(0);
     setSchemaInvalid(false);
@@ -340,12 +329,12 @@ export function ServiceCategoryManager({
             value={color}
             onChange={(event) => setColor(event.target.value)}
           >
-            {(isServiceCategoryColor(color)
-              ? SERVICE_CATEGORY_COLORS
-              : [...SERVICE_CATEGORY_COLORS, color]
+            {(isCategoryColor(color)
+              ? CATEGORY_COLORS
+              : [...CATEGORY_COLORS, color]
             ).map((value) => (
               <option key={value} value={value}>
-                {isServiceCategoryColor(value)
+                {isCategoryColor(value)
                   ? t(`services:categoryColor${value.charAt(0).toUpperCase()}${value.slice(1)}`)
                   : value}
               </option>

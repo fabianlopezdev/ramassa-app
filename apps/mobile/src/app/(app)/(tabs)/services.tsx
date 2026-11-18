@@ -34,7 +34,8 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { toAppError } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
-import { serviceCategoryWash, type PlayerServiceRow } from '@ramassa/shared/services';
+import { categoryWash } from '@ramassa/shared/category-colors';
+import { type PlayerServiceRow } from '@ramassa/shared/services';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_FILTERS: PlayerServiceFilterSelection = {};
@@ -91,13 +92,13 @@ export default function ServicesScreen() {
     category === null ? undefined : resolveLocalizedText(category.name, language);
   // An open category sits on the wash of its own colour, the shade of its
   // icon circle in the grid (RAPP-856); the grid and Guies keep the page grey.
-  const categoryWash = category === null ? undefined : serviceCategoryWash(category.color);
+  const openCategoryWash = category === null ? undefined : categoryWash(category.color);
   const categoryScreenStyle = useMemo(
     () =>
-      categoryWash === undefined
+      openCategoryWash === undefined
         ? styles.screen
-        : { ...styles.screen, backgroundColor: categoryWash },
-    [categoryWash],
+        : { ...styles.screen, backgroundColor: openCategoryWash },
+    [openCategoryWash],
   );
   const tabInsets = usePlayerTabContentInsets();
   const contentContainerStyle = useMemo(() => [styles.listContent, tabInsets], [tabInsets]);

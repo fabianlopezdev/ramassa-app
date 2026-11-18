@@ -10,6 +10,7 @@
     "./logger": "./logger/index.ts",
     "./tokens": "./tokens/index.ts",
     "./brand-theme": "./brand-theme.ts",
+    "./category-colors": "./category-colors.ts",
     "./env": "./env.ts",
     "./i18n": "./i18n/index.ts",
     "./i18n/languages": "./i18n/languages.ts",

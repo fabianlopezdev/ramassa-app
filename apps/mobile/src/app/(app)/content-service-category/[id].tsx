@@ -31,7 +31,7 @@ import {
   isCategoryInputValid,
   isFieldValid,
   moveField,
-  SERVICE_CATEGORY_COLORS,
+  CATEGORY_COLORS,
   SERVICE_CATEGORY_ICONS,
   slugFromName,
   startingCategoryForm,
@@ -47,12 +47,8 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getErrorMessageKey, toAppError, type AppErrorCode } from '@ramassa/shared/errors';
-import {
-  isServiceCategoryColor,
-  serviceCategoryHue,
-  type AdminServiceCategory,
-  type ServiceCategoryColor,
-} from '@ramassa/shared/services';
+import { isCategoryColor, categoryHue, type CategoryColor } from '@ramassa/shared/category-colors';
+import { type AdminServiceCategory } from '@ramassa/shared/services';
 import { tokens } from '@ramassa/shared/tokens';
 import {
   isTranslationReviewPublishable,
@@ -70,7 +66,7 @@ const COLOR_KEYS = {
   teal: 'categoryColorTeal',
   amber: 'categoryColorAmber',
   indigo: 'categoryColorIndigo',
-} as const satisfies Record<ServiceCategoryColor, string>;
+} as const satisfies Record<CategoryColor, string>;
 
 type FormError =
   AppErrorCode | 'invalid' | 'name' | 'fieldOpen' | { readonly incompatible: number };
@@ -246,9 +242,9 @@ function CategoryEditor({ category }: { readonly category: AdminServiceCategory 
       <View className="gap-xs">
         <SectionLabel>{t('categoryColor')}</SectionLabel>
         <View className="flex-row flex-wrap gap-sm">
-          {withStored(SERVICE_CATEGORY_COLORS, form.color).map((color) => {
-            const key = isServiceCategoryColor(color) ? COLOR_KEYS[color] : undefined;
-            const hue = serviceCategoryHue(color);
+          {withStored(CATEGORY_COLORS, form.color).map((color) => {
+            const key = isCategoryColor(color) ? COLOR_KEYS[color] : undefined;
+            const hue = categoryHue(color);
             return (
               <View key={color} className="flex-row items-center gap-xs">
                 {hue === undefined ? null : (

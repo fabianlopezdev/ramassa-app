@@ -4,7 +4,8 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { memo, useCallback } from 'react';
 import { View } from 'react-native';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
-import { serviceCategoryWash, type AdminServiceCategory } from '@ramassa/shared/services';
+import { categoryWash } from '@ramassa/shared/category-colors';
+import { type AdminServiceCategory } from '@ramassa/shared/services';
 
 const categoryIcons: Readonly<Record<string, IconName>> = {
   housing: 'home',
@@ -46,7 +47,7 @@ const ServiceCategoryRow = memo(function ServiceCategoryRow({
       <RaisedIconCard
         testID={`service-category-${slug}`}
         icon={categoryIcons[slug] ?? defaultCategoryIcon}
-        iconWash={serviceCategoryWash(color)}
+        iconWash={categoryWash(color)}
         title={title}
         accessibilityLabel={title}
         languageFontClass={languageFontClass}

@@ -3303,6 +3303,7 @@ export type Database = {
       };
       knowledge_categories: {
         Row: {
+          color: string;
           created_at: string;
           icon: string;
           id: string;
@@ -3313,6 +3314,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          color?: string;
           created_at?: string;
           icon: string;
           id?: string;
@@ -3323,6 +3325,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          color?: string;
           created_at?: string;
           icon?: string;
           id?: string;

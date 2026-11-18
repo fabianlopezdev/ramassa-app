@@ -9,14 +9,8 @@
  * Labels need every supported language, as players read them.
  */
 import { localizedTextFromReview } from '@ramassa/shared/announcements';
-import {
-  serviceCategoryInputSchema,
-  serviceMetadataFieldDefinitionSchema,
-  type AdminServiceCategory,
-  type ServiceCategoryColor,
-  type ServiceCategoryInput,
-  type ServiceMetadataFieldType,
-} from '@ramassa/shared/services';
+import { type CategoryColor } from '@ramassa/shared/category-colors';
+import { serviceCategoryInputSchema, serviceMetadataFieldDefinitionSchema, type AdminServiceCategory, type ServiceCategoryInput, type ServiceMetadataFieldType } from '@ramassa/shared/services';
 import type { TranslationReview } from '@ramassa/shared/translation';
 
 export const SERVICE_CATEGORY_ICONS = [
@@ -32,9 +26,9 @@ export const SERVICE_CATEGORY_ICONS = [
 ] as const;
 
 // The hues a category can carry live with the tokens (RAPP-856).
-export { SERVICE_CATEGORY_COLORS } from '@ramassa/shared/services';
+export { CATEGORY_COLORS } from '@ramassa/shared/category-colors';
 
-const DEFAULT_CATEGORY_COLOR: ServiceCategoryColor = 'sky';
+const DEFAULT_CATEGORY_COLOR: CategoryColor = 'sky';
 
 export interface FormField {
   /** Stable while editing; the stored key for a stored field. */

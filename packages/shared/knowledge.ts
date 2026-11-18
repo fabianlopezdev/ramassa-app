@@ -320,6 +320,8 @@ export interface KnowledgeCategoryRow {
   readonly name: KnowledgeLocalizedText;
   readonly slug: string;
   readonly icon: string;
+  /** One of the category palette's colours (RAPP-868), see `@ramassa/shared/category-colors`. */
+  readonly color: string;
   readonly sort_order: number;
 }
 
@@ -358,7 +360,7 @@ export interface KnowledgeArticlePage {
 
 type Client = SupabaseClient<Database>;
 const KNOWLEDGE_COLUMNS =
-  'id, category_id, category:knowledge_categories!knowledge_articles_category_same_org(id, name, slug, icon, sort_order), title, body, image_url, video_url, external_url, content_type, story_status, submission_language, story_image_urls, publication_consent, publication_consent_at, publication_consent_version, author_id, author_first_name, created_by, reviewer_note, is_published, published_at, expires_at, created_at, updated_at';
+  'id, category_id, category:knowledge_categories!knowledge_articles_category_same_org(id, name, slug, icon, color, sort_order), title, body, image_url, video_url, external_url, content_type, story_status, submission_language, story_image_urls, publication_consent, publication_consent_at, publication_consent_version, author_id, author_first_name, created_by, reviewer_note, is_published, published_at, expires_at, created_at, updated_at';
 
 export async function fetchKnowledgeCategories(
   client: Client,
@@ -366,7 +368,7 @@ export async function fetchKnowledgeCategories(
 ): Promise<KnowledgeCategoryRow[]> {
   let query = client
     .from('knowledge_categories')
-    .select('id, name, slug, icon, sort_order')
+    .select('id, name, slug, icon, color, sort_order')
     .order('sort_order', { ascending: true })
     .order('id', { ascending: true });
   if (options.signal !== undefined) query = query.abortSignal(options.signal);
