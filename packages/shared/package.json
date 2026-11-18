@@ -40,6 +40,7 @@
     "./translation/react": "./translation/react.ts",
     "./announcements": "./announcements.ts",
     "./events": "./events.ts",
+    "./home-seen": "./home-seen.ts",
     "./forum": "./forum.ts",
     "./media": "./media.ts",
     "./attendance": "./attendance.ts",

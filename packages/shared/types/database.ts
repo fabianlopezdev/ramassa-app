@@ -28,6 +28,49 @@ export type Database = {
   };
   public: {
     Tables: {
+      announcement_reads: {
+        Row: {
+          announcement_id: string;
+          org_id: string;
+          seen_at: string;
+          user_id: string;
+        };
+        Insert: {
+          announcement_id: string;
+          org_id: string;
+          seen_at?: string;
+          user_id: string;
+        };
+        Update: {
+          announcement_id?: string;
+          org_id?: string;
+          seen_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'announcement_reads_announcement_id_fkey';
+            columns: ['announcement_id'];
+            isOneToOne: false;
+            referencedRelation: 'announcements';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'announcement_reads_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'announcement_reads_user_tenant_fkey';
+            columns: ['org_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       announcements: {
         Row: {
           body: Json;
@@ -2062,6 +2105,49 @@ export type Database = {
             columns: ['org_id', 'event_id'];
             isOneToOne: false;
             referencedRelation: 'events';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
+      event_reads: {
+        Row: {
+          event_id: string;
+          org_id: string;
+          seen_at: string;
+          user_id: string;
+        };
+        Insert: {
+          event_id: string;
+          org_id: string;
+          seen_at?: string;
+          user_id: string;
+        };
+        Update: {
+          event_id?: string;
+          org_id?: string;
+          seen_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'event_reads_event_tenant_fkey';
+            columns: ['org_id', 'event_id'];
+            isOneToOne: false;
+            referencedRelation: 'events';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'event_reads_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'event_reads_user_tenant_fkey';
+            columns: ['org_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
             referencedColumns: ['org_id', 'id'];
           },
         ];
@@ -6619,6 +6705,11 @@ export type Database = {
         Args: { p_profile_id: string };
         Returns: Json;
       };
+      mark_home_items_seen: {
+        Args: { p_announcement_ids?: string[]; p_event_ids?: string[] };
+        Returns: undefined;
+      };
+      my_home_seen: { Args: never; Returns: Json };
       set_player_profile_banner: {
         Args: { p_profile_id: string; p_object_key: string; p_all_players: boolean };
         Returns: Json;
