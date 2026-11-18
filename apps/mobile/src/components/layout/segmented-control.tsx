@@ -27,7 +27,9 @@ import { tokens } from '@ramassa/shared/tokens';
  * option's whole width (RAPP-852). Stacked, the icon and the label are
  * centred by what is drawn: the icon gives back its artwork's empty margin
  * and the label is trimmed from its capitals to its baseline, so the space
- * above the icon matches the space below the word. Every option has the same width and the
+ * above the icon matches the space below the word. That space is the one the
+ * icon has in a one-line bar, so a stacked bar grows taller and keeps the
+ * same breathing room at its edges. Every option has the same width and the
  * row stretches every option to the tallest one, so a label that wraps to two
  * lines keeps the row edge to edge with equal heights.
  */
@@ -108,8 +110,8 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
       isSelected={isSelected}
       className="flex-1"
       faceStyle={faceStyle}
-      faceClassName={`relative flex-1 items-center justify-center gap-sm overflow-hidden border-y border-s border-primary bg-white px-sm py-xs ${
-        isStacked ? '' : 'flex-row'
+      faceClassName={`relative flex-1 items-center justify-center overflow-hidden border-y border-s border-primary bg-white px-sm ${
+        isStacked ? 'gap-md' : 'flex-row gap-sm py-xs'
       } ${isLast ? 'border-e' : ''}`}
       inlineOffset={isLast ? shadowInlineOffset : 0}
       blockOffset={shadowBlockOffset}
@@ -194,6 +196,16 @@ export function SegmentedControl<Key extends string>({
   readonly testID?: string;
 }) {
   const choiceFaceStyle = useRaisedChoiceFaceStyle();
+  const isStacked = options.length >= STACKED_LAYOUT_MIN_OPTIONS;
+  // The room between the border and the icon's drawing in a one-line bar.
+  const stackedEdgeStyle = useMemo(
+    () => ({
+      paddingVertical:
+        (choiceFaceStyle.minHeight - (OPTION_ICON_SIZE - 2 * iconArtworkMargin(OPTION_ICON_SIZE))) /
+        2,
+    }),
+    [choiceFaceStyle.minHeight],
+  );
   const positionStyles = useMemo(
     () =>
       Object.fromEntries(
@@ -201,14 +213,18 @@ export function SegmentedControl<Key extends string>({
           position,
           {
             cornerStyle: cornerStyleByPosition[position],
-            faceStyle: [choiceFaceStyle, cornerStyleByPosition[position]],
+            faceStyle: [
+              choiceFaceStyle,
+              cornerStyleByPosition[position],
+              isStacked ? stackedEdgeStyle : undefined,
+            ],
           },
         ]),
       ) as Record<
         OptionPosition,
         { cornerStyle: StyleProp<ViewStyle>; faceStyle: StyleProp<ViewStyle> }
       >,
-    [choiceFaceStyle],
+    [choiceFaceStyle, isStacked, stackedEdgeStyle],
   );
   const lastIndex = options.length - 1;
   return (
@@ -231,7 +247,7 @@ export function SegmentedControl<Key extends string>({
           testID={option.testID}
           isSelected={selected === option.key}
           isLast={index === lastIndex}
-          isStacked={options.length >= STACKED_LAYOUT_MIN_OPTIONS}
+          isStacked={isStacked}
           {...positionStyles[optionPosition(index, lastIndex)]}
           languageFontClass={languageFontClass}
           onSelect={onSelect}
