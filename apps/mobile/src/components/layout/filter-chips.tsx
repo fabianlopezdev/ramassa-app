@@ -4,9 +4,9 @@
  * and runs to the edge of the screen, where a cut-off chip shows there are
  * more. The announcement categories on Inici and the activity categories on
  * Activitats share it. A chip may take the colour of what it filters
- * (RAPP-845), such as the kind of an announcement: its face is tinted and
- * fills with the colour when chosen, while its border and edge stay in the
- * brand, like every other chip.
+ * (RAPP-845), such as the kind of an announcement, as a pale wash on its
+ * face. Its border and edge stay in the brand, and a chosen chip fills with
+ * the secondary colour, like every other chip.
  *
  * A chip may carry a count on its top edge, in the circle cards use for one
  * (RAPP-848): the new announcements of a kind. When any chip has one, every
@@ -14,11 +14,7 @@
  */
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
 import { EdgeMarks } from '@/components/layout/edge-marks';
-import {
-  RAISED_FACE_MIN_HEIGHT,
-  raisedToneClassNames,
-  type RaisedTone,
-} from '@/components/layout/raised-surface';
+import { RAISED_FACE_MIN_HEIGHT, type RaisedTone } from '@/components/layout/raised-surface';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { memo, useCallback } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
@@ -51,9 +47,9 @@ export interface FilterChipOption<Id extends string> {
 }
 
 function chipTextClassName(tone: RaisedTone | undefined, isSelected: boolean): string {
-  if (tone === undefined) return isSelected ? 'text-neutral-900' : 'text-primary-dark';
-  const classes = raisedToneClassNames(tone);
-  return isSelected ? classes.filledText : classes.text;
+  // A chosen chip fills with the secondary colour, and a tinted one reads in
+  // dark text, so only a plain chip that is not chosen uses the brand's dark.
+  return isSelected || tone !== undefined ? 'text-neutral-900' : 'text-primary-dark';
 }
 
 interface FilterChipProps<Id extends string> extends FilterChipOption<Id> {

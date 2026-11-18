@@ -27,42 +27,17 @@ export const RAISED_SHAPE_CLASS_NAME = 'rounded-lg';
 
 /**
  * A colour a raised surface can take on its face (RAPP-845), such as the kind
- * of an announcement on Inici. The face is a pale wash of the colour, and a
- * chosen face fills with it. The border and edge stay in the brand.
+ * of an announcement on Inici: a pale wash of it. The border and edge stay in
+ * the brand, and a chosen face still fills with the secondary colour.
  */
-const raisedToneClasses = {
-  primary: {
-    wash: 'bg-primary/10',
-    fill: 'bg-primary',
-    text: 'text-neutral-900',
-    filledText: 'text-white',
-  },
-  secondary: {
-    wash: 'bg-secondary/25',
-    fill: 'bg-secondary-dark',
-    text: 'text-neutral-900',
-    filledText: 'text-neutral-900',
-  },
-  error: {
-    wash: 'bg-error/10',
-    fill: 'bg-error',
-    text: 'text-neutral-900',
-    filledText: 'text-white',
-  },
-  info: {
-    wash: 'bg-info/10',
-    fill: 'bg-info',
-    text: 'text-neutral-900',
-    // White on the info blue is under 4.5:1, dark text is above it.
-    filledText: 'text-neutral-900',
-  },
+const raisedToneWashClasses = {
+  primary: 'bg-primary/10',
+  secondary: 'bg-secondary/25',
+  error: 'bg-error/10',
+  info: 'bg-info/10',
 } as const;
 
-export type RaisedTone = keyof typeof raisedToneClasses;
-
-export function raisedToneClassNames(tone: RaisedTone) {
-  return raisedToneClasses[tone];
-}
+export type RaisedTone = keyof typeof raisedToneWashClasses;
 
 /** The outlined face: white, with the brand border, in the given shape. */
 export function outlinedSurfaceClassName(shapeClassName = RAISED_SHAPE_CLASS_NAME): string {
@@ -76,7 +51,7 @@ export function RaisedToneWash({ tone }: { readonly tone: RaisedTone | undefined
     <View
       pointerEvents="none"
       accessible={false}
-      className={`absolute inset-0 ${raisedToneClasses[tone].wash}`}
+      className={`absolute inset-0 ${raisedToneWashClasses[tone]}`}
     />
   );
 }

@@ -2,7 +2,6 @@ import {
   outlinedSurfaceClassName,
   RaisedSurfaceEdge,
   raisedSurfaceWrapperStyle,
-  raisedToneClassNames,
   RaisedToneWash,
   useRaisedChoiceFaceStyle,
   type RaisedTone,
@@ -28,7 +27,7 @@ interface SelectionChoiceSurfaceProps {
   readonly className?: string;
   readonly contentClassName: string;
   readonly rowStyle?: StyleProp<ViewStyle>;
-  /** A colour for the face (RAPP-845): a pale wash, and a full fill when chosen. */
+  /** A colour for the face (RAPP-845), as a pale wash. */
   readonly tone?: RaisedTone;
 }
 
@@ -70,7 +69,7 @@ export function SelectionChoiceSurface({
       <SelectionTransition
         active={isSelected === true}
         duration="base"
-        className={`absolute inset-0 ${tone === undefined ? 'bg-secondary' : raisedToneClassNames(tone).fill}`}
+        className="absolute inset-0 bg-secondary"
         style={continuousCorners}
       />
       {children}
