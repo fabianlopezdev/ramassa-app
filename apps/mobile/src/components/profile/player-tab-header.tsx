@@ -41,7 +41,7 @@ export function PlayerTabStateFrame({
   const insets = useSafeAreaInsets();
   const topInset = useMemo(() => ({ paddingTop: insets.top + PLAYER_TAB_TOP_GAP }), [insets.top]);
   return (
-    <View className="flex-1 bg-white" style={topInset}>
+    <View className="flex-1 bg-surface-page" style={topInset}>
       <View className="px-lg">
         <PageWidth>
           <PlayerTabHeader title={title} />

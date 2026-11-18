@@ -48,7 +48,7 @@ const announcementViewability = {
 } as const;
 
 const styles = StyleSheet.create({
-  list: { flex: 1, backgroundColor: tokens.colors.neutral[50] },
+  list: { flex: 1, backgroundColor: tokens.colors.surface.page },
   content: {
     paddingHorizontal: tokens.spacing.lg,
     paddingBottom: tokens.spacing['3xl'],

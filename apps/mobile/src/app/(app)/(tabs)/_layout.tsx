@@ -49,7 +49,7 @@ export default function TabsLayout() {
     <NativeTabs
       // The tab bar mirrors with the screens (RAPP-531).
       unstable_nativeProps={nativeTabsHostProps(I18nManager.isRTL)}
-      backgroundColor={tokens.colors.white}
+      backgroundColor={tokens.colors.surface.page}
       badgeBackgroundColor={badgeColor}
       badgeTextColor={tokens.colors.white}
       iconColor={{ default: tokens.colors.neutral[700], selected: tokens.colors.primary.dark }}

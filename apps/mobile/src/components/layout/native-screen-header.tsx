@@ -14,7 +14,7 @@ import { useMemo } from 'react';
 import { tokens } from '@ramassa/shared/tokens';
 
 const headerStyles = {
-  page: { backgroundColor: tokens.colors.neutral[50] },
+  page: { backgroundColor: tokens.colors.surface.page },
   white: { backgroundColor: tokens.colors.white },
 } as const;
 

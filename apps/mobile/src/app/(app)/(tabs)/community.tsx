@@ -44,7 +44,7 @@ import { tokens } from '@ramassa/shared/tokens';
 const EMPTY_POSTS: readonly ForumPostRow[] = [];
 const EMPTY_CATEGORIES: readonly ForumCategoryRow[] = [];
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: tokens.colors.neutral[50] },
+  screen: { flex: 1, backgroundColor: tokens.colors.surface.page },
   content: { paddingBottom: tokens.spacing['3xl'], paddingHorizontal: tokens.spacing.lg },
 });
 const postKeyExtractor = (post: ForumPostRow) => post.id;

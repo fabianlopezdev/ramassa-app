@@ -58,7 +58,7 @@ export default function ChatTabScreen() {
   return (
     <ScrollView
       testID="player-chat-tab"
-      className="flex-1 bg-neutral-50"
+      className="flex-1 bg-surface-page"
       contentContainerClassName="grow px-lg pb-lg"
       contentContainerStyle={tabInsets}
       contentInsetAdjustmentBehavior="automatic"

@@ -52,7 +52,7 @@ const EMPTY_EVENTS: readonly PlayerEventOccurrence[] = [];
 const UTC_MIDDAY_SUFFIX = 'T12:00:00Z';
 
 const styles = StyleSheet.create({
-  list: { flex: 1, backgroundColor: tokens.colors.white },
+  list: { flex: 1, backgroundColor: tokens.colors.surface.page },
   hidden: { display: 'none' },
   content: { paddingHorizontal: tokens.spacing.lg, paddingBottom: tokens.spacing['3xl'] },
 });

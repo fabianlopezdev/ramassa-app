@@ -10,6 +10,21 @@
  * `primary` and `secondary` palettes at runtime from the `organizations` table.
  */
 
+// Neutral ramp for text, surfaces, and borders. Declared first so the page
+// colour below can name one of its steps.
+const neutral = {
+  50: '#F8FAFC',
+  100: '#F1F5F9',
+  200: '#E2E8F0',
+  300: '#CBD5E1',
+  400: '#94A3B8',
+  500: '#64748B',
+  600: '#475569',
+  700: '#334155',
+  800: '#1E293B',
+  900: '#0F172A',
+} as const;
+
 export const tokens = {
   colors: {
     // Club identity: blue primary, gold secondary.
@@ -23,23 +38,13 @@ export const tokens = {
     error: '#BE123C',
     info: '#118AB2',
 
-    // Neutral ramp for text, surfaces, and borders.
-    neutral: {
-      50: '#F8FAFC',
-      100: '#F1F5F9',
-      200: '#E2E8F0',
-      300: '#CBD5E1',
-      400: '#94A3B8',
-      500: '#64748B',
-      600: '#475569',
-      700: '#334155',
-      800: '#1E293B',
-      900: '#0F172A',
-    },
+    neutral,
 
     // The warm page canvas behind cards (RAPP-631): the same warm white as the
     // player app's splash screen, so both apps share one paper colour.
-    surface: { warm: '#F7F5EE' },
+    // `page` (RAPP-847): the light grey behind the cards of the player app,
+    // on every tab, its tab bar and the header of pushed screens.
+    surface: { warm: '#F7F5EE', page: neutral[50] },
 
     white: '#FFFFFF',
     black: '#000000',

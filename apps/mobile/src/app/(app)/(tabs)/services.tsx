@@ -35,7 +35,7 @@ import { tokens } from '@ramassa/shared/tokens';
 const EMPTY_FILTERS: PlayerServiceFilterSelection = {};
 const EMPTY_SERVICES: readonly PlayerServiceRow[] = [];
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: tokens.colors.white },
+  screen: { flex: 1, backgroundColor: tokens.colors.surface.page },
   listContent: {
     paddingHorizontal: tokens.spacing.lg,
     paddingBottom: tokens.spacing['3xl'],
