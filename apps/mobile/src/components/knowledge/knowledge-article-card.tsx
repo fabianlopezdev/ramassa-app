@@ -1,5 +1,6 @@
 import { Badge } from '@/components/layout/badge';
 import { RaisedCard } from '@/components/layout/raised-card';
+import { PersonAvatar } from '@/components/people/person-avatar';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -23,20 +24,28 @@ function typeTranslationKey(contentType: KnowledgeContentType) {
 
 /**
  * A guide or a story as the shared raised card (RAPP-852): its cover across
- * the top, its category and type, its title and author. Comunitat's stories
- * and Ajuda's guides share it.
+ * the top, its title and author. Comunitat's stories and Ajuda's guides share
+ * it.
+ *
+ * A guide shows its category and kind, which help her choose between guides.
+ * A story shows neither, since on Històries every item is a story and the
+ * categories are the guides' own; it shows its author's avatar before the
+ * divider instead, like a forum post (RAPP-861).
  */
 export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
   article,
   accessToken,
   onOpen,
   compact = false,
+  authorAvatarKey = null,
 }: {
   readonly article: KnowledgeArticleListRow;
   readonly accessToken: string | undefined;
   readonly onOpen: (id: string) => void;
   /** Without the cover image, for short lists above other content. */
   readonly compact?: boolean;
+  /** A story author's photo; without one, the person icon. */
+  readonly authorAvatarKey?: string | null;
 }) {
   const { t } = useTranslation('knowledge');
   const { language } = useLanguage();
@@ -57,6 +66,7 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
   const handlePress = useCallback(() => onOpen(article.id), [article.id, onOpen]);
   if (title === undefined || category === undefined) return null;
 
+  const isStory = article.content_type === 'participant_story';
   const type = t(typeTranslationKey(article.content_type));
   const attribution =
     article.author_first_name === null
@@ -65,8 +75,23 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
   return (
     <RaisedCard
       testID={`knowledge-article-${article.id}`}
-      accessibilityLabel={[title.text, category.text, type, attribution].filter(Boolean).join('. ')}
+      accessibilityLabel={(isStory
+        ? [title.text, attribution]
+        : [title.text, category.text, type, attribution]
+      )
+        .filter(Boolean)
+        .join('. ')}
       onOpen={handlePress}
+      leading={
+        isStory ? (
+          <PersonAvatar
+            name={article.author_first_name}
+            avatarKey={authorAvatarKey}
+            size="card"
+            fallback="person"
+          />
+        ) : undefined
+      }
       media={
         imageSource === null ? null : (
           <Image
@@ -80,10 +105,12 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
         )
       }
     >
-      <View className="flex-row flex-wrap gap-xs">
-        <Badge label={category.text} tone="brandSoft" languageFontClass={languageFontClass} />
-        <Badge label={type} languageFontClass={languageFontClass} />
-      </View>
+      {isStory ? null : (
+        <View className="flex-row flex-wrap gap-xs">
+          <Badge label={category.text} tone="brandSoft" languageFontClass={languageFontClass} />
+          <Badge label={type} languageFontClass={languageFontClass} />
+        </View>
+      )}
       <Text
         accessibilityRole="header"
         className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}

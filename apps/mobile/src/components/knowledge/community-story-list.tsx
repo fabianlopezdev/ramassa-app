@@ -8,11 +8,12 @@ import { PageWidth } from '@/components/layout/content-width';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { useCommunityStories } from '@/lib/community-stories';
 import { isNetworkStateOnline } from '@/lib/network-status';
+import { usePersonCards } from '@/lib/person-cards';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
-import { useCallback, type ReactElement } from 'react';
+import { useCallback, useMemo, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
@@ -22,7 +23,7 @@ import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_STORIES: readonly KnowledgeArticleListRow[] = [];
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: tokens.colors.neutral[50] },
+  screen: { flex: 1, backgroundColor: tokens.colors.surface.page },
 });
 const keyExtractor = (story: KnowledgeArticleListRow) => story.id;
 
@@ -43,6 +44,11 @@ export function CommunityStoryList({
   const { session } = useAuth();
   const isOnline = isNetworkStateOnline(useNetworkState());
   const query = useCommunityStories();
+  const authorIds = useMemo(
+    () => (query.data ?? EMPTY_STORIES).map((story) => story.author_id),
+    [query.data],
+  );
+  const personCards = usePersonCards(authorIds);
   const refetchStories = query.refetch;
   const accessToken = session?.access_token;
   const openStory = useCallback(
@@ -54,11 +60,18 @@ export function CommunityStoryList({
     ({ item, index }: ListRenderItemInfo<KnowledgeArticleListRow>) => (
       <PageWidth className="pb-md">
         <FadeSlideIn index={index}>
-          <KnowledgeArticleCard article={item} accessToken={accessToken} onOpen={openStory} />
+          <KnowledgeArticleCard
+            article={item}
+            accessToken={accessToken}
+            onOpen={openStory}
+            authorAvatarKey={
+              item.author_id === null ? null : (personCards.get(item.author_id)?.avatarKey ?? null)
+            }
+          />
         </FadeSlideIn>
       </PageWidth>
     ),
-    [accessToken, openStory],
+    [accessToken, openStory, personCards],
   );
 
   let emptyState: ReactElement;
