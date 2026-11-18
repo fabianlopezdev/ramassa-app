@@ -34,7 +34,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { toAppError } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
-import type { PlayerServiceRow } from '@ramassa/shared/services';
+import { serviceCategoryWash, type PlayerServiceRow } from '@ramassa/shared/services';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_FILTERS: PlayerServiceFilterSelection = {};
@@ -89,6 +89,16 @@ export default function ServicesScreen() {
   const selectedFilterCount = activeFilterCount(filters);
   const selectedCategoryName =
     category === null ? undefined : resolveLocalizedText(category.name, language);
+  // An open category sits on the wash of its own colour, the shade of its
+  // icon circle in the grid (RAPP-856); the grid and Guies keep the page grey.
+  const categoryWash = category === null ? undefined : serviceCategoryWash(category.color);
+  const categoryScreenStyle = useMemo(
+    () =>
+      categoryWash === undefined
+        ? styles.screen
+        : { ...styles.screen, backgroundColor: categoryWash },
+    [categoryWash],
+  );
   const tabInsets = usePlayerTabContentInsets();
   const contentContainerStyle = useMemo(() => [styles.listContent, tabInsets], [tabInsets]);
   const currencyFormatter = useMemo(
@@ -215,7 +225,7 @@ export default function ServicesScreen() {
   const stateScreen = (body: ReactElement, testID?: string) => (
     <ScrollView
       testID={testID}
-      style={styles.screen}
+      style={categoryScreenStyle}
       contentContainerStyle={contentContainerStyle}
       contentInsetAdjustmentBehavior="automatic"
     >
@@ -288,7 +298,7 @@ export default function ServicesScreen() {
       data={services}
       renderItem={renderService}
       keyExtractor={keyExtractor}
-      style={styles.screen}
+      style={categoryScreenStyle}
       contentContainerStyle={contentContainerStyle}
       contentInsetAdjustmentBehavior="automatic"
       refreshing={servicesQuery.isRefetching && !isOffline}

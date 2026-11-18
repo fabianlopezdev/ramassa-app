@@ -5,7 +5,7 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { memo, useCallback } from 'react';
 import { Text, View } from 'react-native';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
-import type { AdminServiceCategory } from '@ramassa/shared/services';
+import { serviceCategoryWash, type AdminServiceCategory } from '@ramassa/shared/services';
 import { tokens } from '@ramassa/shared/tokens';
 
 const categoryIcons: Readonly<Record<string, IconName>> = {
@@ -23,6 +23,7 @@ const defaultCategoryIcon: IconName = 'grid';
 interface ServiceCategoryCardProps {
   readonly id: string;
   readonly slug: string;
+  readonly color: string;
   readonly title: string;
   readonly onSelect: (id: string) => void;
 }
@@ -30,6 +31,7 @@ interface ServiceCategoryCardProps {
 const ServiceCategoryCard = memo(function ServiceCategoryCard({
   id,
   slug,
+  color,
   title,
   onSelect,
 }: ServiceCategoryCardProps) {
@@ -47,7 +49,11 @@ const ServiceCategoryCard = memo(function ServiceCategoryCard({
         className="flex-1"
         faceClassName="flex-1 flex-row items-center gap-sm px-sm py-md"
       >
-        <IconDisc name={categoryIcons[slug] ?? defaultCategoryIcon} size={tokens.fontSize.xl} />
+        <IconDisc
+          name={categoryIcons[slug] ?? defaultCategoryIcon}
+          wash={serviceCategoryWash(color)}
+          size={tokens.fontSize.xl}
+        />
         <Text
           className={`flex-1 text-start text-md font-bold text-neutral-900 ${languageFontClass}`}
         >
@@ -76,6 +82,7 @@ export function ServiceCategoryGrid({
             key={category.id}
             id={category.id}
             slug={category.slug}
+            color={category.color}
             title={title.text}
             onSelect={onSelect}
           />

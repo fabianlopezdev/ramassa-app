@@ -13,8 +13,10 @@ import {
   countServicesIncompatibleWithCategorySchema,
   createServiceCategory,
   deleteServiceCategory,
+  isServiceCategoryColor,
   moveServiceCategory,
   reorderServiceCategories,
+  SERVICE_CATEGORY_COLORS,
   serviceCategoryInputSchema,
   serviceMetadataSchemaDefinitionSchema,
   updateServiceCategory,
@@ -39,7 +41,7 @@ export function ServiceCategoryManager({
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [icon, setIcon] = useState('circle');
-  const [color, setColor] = useState('primary');
+  const [color, setColor] = useState<string>(SERVICE_CATEGORY_COLORS[0] ?? 'sky');
   const [schemaText, setSchemaText] = useState(EMPTY_SCHEMA);
   const [incompatibleCount, setIncompatibleCount] = useState(0);
   const [schemaInvalid, setSchemaInvalid] = useState(false);
@@ -55,7 +57,7 @@ export function ServiceCategoryManager({
     setName('');
     setSlug('');
     setIcon('circle');
-    setColor('primary');
+    setColor(SERVICE_CATEGORY_COLORS[0] ?? 'sky');
     setSchemaText(EMPTY_SCHEMA);
     setIncompatibleCount(0);
     setSchemaInvalid(false);
@@ -330,12 +332,25 @@ export function ServiceCategoryManager({
         </label>
         <label className="flex flex-col gap-2">
           <span className="text-sm font-medium">{t('services:categoryColor')}</span>
-          <Input
+          {/* The hues of the player app (RAPP-856); an older stored value stays listed. */}
+          <select
             required
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
             data-testid="service-category-color"
             value={color}
             onChange={(event) => setColor(event.target.value)}
-          />
+          >
+            {(isServiceCategoryColor(color)
+              ? SERVICE_CATEGORY_COLORS
+              : [...SERVICE_CATEGORY_COLORS, color]
+            ).map((value) => (
+              <option key={value} value={value}>
+                {isServiceCategoryColor(value)
+                  ? t(`services:categoryColor${value.charAt(0).toUpperCase()}${value.slice(1)}`)
+                  : value}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="flex flex-col gap-2">
           <span className="text-sm font-medium">{t('services:categorySchema')}</span>

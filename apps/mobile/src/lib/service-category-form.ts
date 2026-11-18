@@ -13,6 +13,7 @@ import {
   serviceCategoryInputSchema,
   serviceMetadataFieldDefinitionSchema,
   type AdminServiceCategory,
+  type ServiceCategoryColor,
   type ServiceCategoryInput,
   type ServiceMetadataFieldType,
 } from '@ramassa/shared/services';
@@ -30,14 +31,10 @@ export const SERVICE_CATEGORY_ICONS = [
   'circle',
 ] as const;
 
-export const SERVICE_CATEGORY_COLORS = [
-  'primary',
-  'secondary',
-  'accent',
-  'chart-1',
-  'chart-2',
-  'chart-3',
-] as const;
+// The hues a category can carry live with the tokens (RAPP-856).
+export { SERVICE_CATEGORY_COLORS } from '@ramassa/shared/services';
+
+const DEFAULT_CATEGORY_COLOR: ServiceCategoryColor = 'sky';
 
 export interface FormField {
   /** Stable while editing; the stored key for a stored field. */
@@ -109,7 +106,7 @@ export function startingCategoryForm(category: AdminServiceCategory | undefined)
     name: category?.name.ca ?? '',
     slug: category?.slug ?? '',
     icon: category?.icon ?? 'circle',
-    color: category?.color ?? 'primary',
+    color: category?.color ?? DEFAULT_CATEGORY_COLOR,
     fields: (category?.metadataSchema.fields ?? []).map((field) => ({
       id: field.key,
       key: field.key,

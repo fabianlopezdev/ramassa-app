@@ -18,7 +18,6 @@ import {
 } from '@/components/content/service-labels';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
-import { eventCategoryColor } from '@/components/events/event-card';
 import { Icon } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
@@ -48,8 +47,12 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getErrorMessageKey, toAppError, type AppErrorCode } from '@ramassa/shared/errors';
-import type { EventCategoryColor } from '@ramassa/shared/events';
-import type { AdminServiceCategory } from '@ramassa/shared/services';
+import {
+  isServiceCategoryColor,
+  serviceCategoryHue,
+  type AdminServiceCategory,
+  type ServiceCategoryColor,
+} from '@ramassa/shared/services';
 import { tokens } from '@ramassa/shared/tokens';
 import {
   isTranslationReviewPublishable,
@@ -57,14 +60,17 @@ import {
 } from '@ramassa/shared/translation';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 
+// The label of each category hue (RAPP-856), in the services namespace.
 const COLOR_KEYS = {
-  primary: 'colorPrimary',
-  secondary: 'colorSecondary',
-  accent: 'colorAccent',
-  'chart-1': 'colorChart1',
-  'chart-2': 'colorChart2',
-  'chart-3': 'colorChart3',
-} as const satisfies Record<(typeof SERVICE_CATEGORY_COLORS)[number], string>;
+  sky: 'categoryColorSky',
+  green: 'categoryColorGreen',
+  purple: 'categoryColorPurple',
+  orange: 'categoryColorOrange',
+  pink: 'categoryColorPink',
+  teal: 'categoryColorTeal',
+  amber: 'categoryColorAmber',
+  indigo: 'categoryColorIndigo',
+} as const satisfies Record<ServiceCategoryColor, string>;
 
 type FormError =
   AppErrorCode | 'invalid' | 'name' | 'fieldOpen' | { readonly incompatible: number };
@@ -241,20 +247,21 @@ function CategoryEditor({ category }: { readonly category: AdminServiceCategory 
         <SectionLabel>{t('categoryColor')}</SectionLabel>
         <View className="flex-row flex-wrap gap-sm">
           {withStored(SERVICE_CATEGORY_COLORS, form.color).map((color) => {
-            const key = COLOR_KEYS[color as keyof typeof COLOR_KEYS];
+            const key = isServiceCategoryColor(color) ? COLOR_KEYS[color] : undefined;
+            const hue = serviceCategoryHue(color);
             return (
               <View key={color} className="flex-row items-center gap-xs">
-                {key === undefined ? null : (
+                {hue === undefined ? null : (
                   <View
                     accessible={false}
                     className="h-md w-md rounded-full"
-                    style={{ backgroundColor: eventCategoryColor(color as EventCategoryColor) }}
+                    style={{ backgroundColor: hue }}
                   />
                 )}
                 <ChoiceOption
                   testID={`service-category-color-${color}`}
                   value={color}
-                  label={key === undefined ? color : tEvents(key)}
+                  label={key === undefined ? color : t(key)}
                   selected={color === form.color}
                   onSelect={(value) => set({ color: value })}
                   languageFontClass={fontClass}

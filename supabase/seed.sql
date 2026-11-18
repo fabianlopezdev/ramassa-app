@@ -87,56 +87,56 @@ values
     '5eed0000-0000-4000-8009-000000000001',
     '5eed0000-0000-4000-8000-000000000000',
     '{"ca":"Allotjament","es":"Alojamiento","en":"Housing","ar":"السكن","fa":"مسکن"}',
-    'housing', 'house', 'primary', 10,
+    'housing', 'house', 'orange', 10,
     $schema${"fields":[{"key":"housing_type","label":{"ca":"Tipus d’allotjament","es":"Tipo de alojamiento","en":"Housing type","ar":"نوع السكن","fa":"نوع مسکن"},"type":"select","required":true,"filterable":true,"options":["room","shared_flat","apartment","emergency_shelter","social_housing"]},{"key":"duration","label":{"ca":"Durada","es":"Duración","en":"Duration","ar":"المدة","fa":"مدت"},"type":"select","required":true,"filterable":true,"options":["temporary","long_term","emergency"]},{"key":"deposit_required","label":{"ca":"Cal dipòsit","es":"Requiere depósito","en":"Deposit required","ar":"يتطلب وديعة","fa":"نیاز به ودیعه"},"type":"boolean","required":true,"filterable":true},{"key":"deposit_amount","label":{"ca":"Import del dipòsit","es":"Importe del depósito","en":"Deposit amount","ar":"مبلغ الوديعة","fa":"مبلغ ودیعه"},"type":"number","required":false,"filterable":false,"minimum":0},{"key":"for_whom","label":{"ca":"Per a qui","es":"Para quién","en":"For whom","ar":"لمن","fa":"برای چه کسی"},"type":"select","required":true,"filterable":true,"options":["women_only","families","singles","any"]},{"key":"restrictions","label":{"ca":"Restriccions","es":"Restricciones","en":"Restrictions","ar":"القيود","fa":"محدودیت‌ها"},"type":"text","required":false,"filterable":false}]}$schema$::jsonb
   ),
   (
     '5eed0000-0000-4000-8009-000000000002',
     '5eed0000-0000-4000-8000-000000000000',
     '{"ca":"Cursos d''idiomes","es":"Cursos de idiomas","en":"Language Courses","ar":"دورات اللغة","fa":"دوره‌های زبان"}',
-    'language-courses', 'languages', 'secondary', 20,
+    'language-courses', 'languages', 'purple', 20,
     $schema${"fields":[{"key":"language_taught","label":{"ca":"Idioma","es":"Idioma","en":"Language taught","ar":"اللغة","fa":"زبان"},"type":"select","required":true,"filterable":true,"options":["catalan","spanish","english","other"]},{"key":"level","label":{"ca":"Nivell","es":"Nivel","en":"Level","ar":"المستوى","fa":"سطح"},"type":"select","required":true,"filterable":true,"options":["beginner","intermediate","advanced","all_levels"]},{"key":"modality","label":{"ca":"Modalitat","es":"Modalidad","en":"Modality","ar":"طريقة الدراسة","fa":"شیوه برگزاری"},"type":"select","required":true,"filterable":true,"options":["in_person","online","hybrid"]},{"key":"registration_deadline","label":{"ca":"Data límit","es":"Fecha límite","en":"Registration deadline","ar":"آخر موعد للتسجيل","fa":"مهلت ثبت‌نام"},"type":"date","required":false,"filterable":false}]}$schema$::jsonb
   ),
   (
     '5eed0000-0000-4000-8009-000000000003',
     '5eed0000-0000-4000-8000-000000000000',
     '{"ca":"Inserció laboral","es":"Inserción laboral","en":"Job Insertion","ar":"الاندماج المهني","fa":"ورود به بازار کار"}',
-    'job-insertion', 'briefcase-business', 'primary', 30,
+    'job-insertion', 'briefcase-business', 'pink', 30,
     $schema${"fields":[{"key":"job_type","label":{"ca":"Tipus de recurs","es":"Tipo de recurso","en":"Job resource type","ar":"نوع المورد","fa":"نوع منبع شغلی"},"type":"select","required":true,"filterable":true,"options":["job_offer","training","cv_workshop","interview_prep","internship"]},{"key":"sector","label":{"ca":"Sector","es":"Sector","en":"Sector","ar":"القطاع","fa":"بخش"},"type":"select","required":true,"filterable":true,"options":["hospitality","care","cleaning","retail","admin","other"]},{"key":"requirements","label":{"ca":"Requisits","es":"Requisitos","en":"Requirements","ar":"المتطلبات","fa":"شرایط"},"type":"text","required":false,"filterable":false},{"key":"language_required","label":{"ca":"Idioma requerit","es":"Idioma requerido","en":"Language required","ar":"اللغة المطلوبة","fa":"زبان مورد نیاز"},"type":"select","required":false,"filterable":true,"options":["catalan","spanish","english","none"]}]}$schema$::jsonb
   ),
   (
     '5eed0000-0000-4000-8009-000000000004',
     '5eed0000-0000-4000-8000-000000000000',
     '{"ca":"Assessoria jurídica","es":"Asesoría jurídica","en":"Legal Aid","ar":"المساعدة القانونية","fa":"کمک حقوقی"}',
-    'legal-aid', 'scale', 'secondary', 40,
+    'legal-aid', 'scale', 'indigo', 40,
     $schema${"fields":[{"key":"legal_type","label":{"ca":"Tipus d’assessoria","es":"Tipo de asesoría","en":"Legal aid type","ar":"نوع المساعدة","fa":"نوع کمک حقوقی"},"type":"select","required":true,"filterable":true,"options":["asylum","residency","family_reunification","labor_rights","gender_violence","general"]},{"key":"languages_available","label":{"ca":"Idiomes disponibles","es":"Idiomas disponibles","en":"Languages available","ar":"اللغات المتاحة","fa":"زبان‌های موجود"},"type":"string-array","required":true,"filterable":true,"options":["ca","es","en","ar","fa"]},{"key":"appointment_required","label":{"ca":"Cal cita","es":"Requiere cita","en":"Appointment required","ar":"يتطلب موعداً","fa":"نیاز به وقت قبلی"},"type":"boolean","required":true,"filterable":true}]}$schema$::jsonb
   ),
   (
     '5eed0000-0000-4000-8009-000000000005',
     '5eed0000-0000-4000-8000-000000000000',
     '{"ca":"Salut","es":"Salud","en":"Health","ar":"الصحة","fa":"سلامت"}',
-    'health', 'heart-pulse', 'primary', 50,
+    'health', 'heart-pulse', 'green', 50,
     $schema${"fields":[{"key":"health_type","label":{"ca":"Tipus d’atenció","es":"Tipo de atención","en":"Health service type","ar":"نوع الرعاية","fa":"نوع خدمات سلامت"},"type":"select","required":true,"filterable":true,"options":["medical","dental","mental_health","reproductive","emergency"]},{"key":"health_card_required","label":{"ca":"Cal targeta sanitària","es":"Requiere tarjeta sanitaria","en":"Health card required","ar":"تتطلب بطاقة صحية","fa":"نیاز به کارت سلامت"},"type":"boolean","required":true,"filterable":true},{"key":"languages_available","label":{"ca":"Idiomes disponibles","es":"Idiomas disponibles","en":"Languages available","ar":"اللغات المتاحة","fa":"زبان‌های موجود"},"type":"string-array","required":true,"filterable":true,"options":["ca","es","en","ar","fa"]},{"key":"appointment_required","label":{"ca":"Cal cita","es":"Requiere cita","en":"Appointment required","ar":"يتطلب موعداً","fa":"نیاز به وقت قبلی"},"type":"boolean","required":true,"filterable":true}]}$schema$::jsonb
   ),
   (
     '5eed0000-0000-4000-8009-000000000006',
     '5eed0000-0000-4000-8000-000000000000',
     '{"ca":"Formació","es":"Formación","en":"Training","ar":"التدريب","fa":"آموزش"}',
-    'training', 'graduation-cap', 'secondary', 60,
+    'training', 'graduation-cap', 'sky', 60,
     $schema${"fields":[{"key":"training_type","label":{"ca":"Tipus de formació","es":"Tipo de formación","en":"Training type","ar":"نوع التدريب","fa":"نوع آموزش"},"type":"select","required":true,"filterable":true,"options":["digital_literacy","professional","certificate"]},{"key":"modality","label":{"ca":"Modalitat","es":"Modalidad","en":"Modality","ar":"طريقة الدراسة","fa":"شیوه برگزاری"},"type":"select","required":true,"filterable":true,"options":["in_person","online","hybrid"]},{"key":"requirements","label":{"ca":"Requisits","es":"Requisitos","en":"Requirements","ar":"المتطلبات","fa":"شرایط"},"type":"text","required":false,"filterable":false},{"key":"registration_deadline","label":{"ca":"Data límit","es":"Fecha límite","en":"Registration deadline","ar":"آخر موعد للتسجيل","fa":"مهلت ثبت‌نام"},"type":"date","required":false,"filterable":false}]}$schema$::jsonb
   ),
   (
     '5eed0000-0000-4000-8009-000000000007',
     '5eed0000-0000-4000-8000-000000000000',
     '{"ca":"Oci i cultura","es":"Ocio y cultura","en":"Leisure & Culture","ar":"الترفيه والثقافة","fa":"تفریح و فرهنگ"}',
-    'leisure-culture', 'tickets', 'primary', 70,
+    'leisure-culture', 'tickets', 'amber', 70,
     $schema${"fields":[{"key":"activity_type","label":{"ca":"Tipus d’activitat","es":"Tipo de actividad","en":"Activity type","ar":"نوع النشاط","fa":"نوع فعالیت"},"type":"select","required":true,"filterable":true,"options":["sports","cultural","social","trips"]},{"key":"family_friendly","label":{"ca":"Per a famílies","es":"Para familias","en":"Family friendly","ar":"مناسب للعائلات","fa":"مناسب خانواده"},"type":"boolean","required":true,"filterable":true},{"key":"age_restriction","label":{"ca":"Edat mínima","es":"Edad mínima","en":"Minimum age","ar":"الحد الأدنى للعمر","fa":"حداقل سن"},"type":"number","required":false,"filterable":true,"minimum":0}]}$schema$::jsonb
   ),
   (
     '5eed0000-0000-4000-8009-000000000008',
     '5eed0000-0000-4000-8000-000000000000',
     '{"ca":"Tràmits","es":"Trámites","en":"Documentation & Administrative","ar":"الوثائق والإجراءات","fa":"مدارک و امور اداری"}',
-    'documentation', 'file-text', 'secondary', 80,
+    'documentation', 'file-text', 'teal', 80,
     $schema${"fields":[{"key":"document_type","label":{"ca":"Tipus de tràmit","es":"Tipo de trámite","en":"Document type","ar":"نوع الإجراء","fa":"نوع مدرک"},"type":"select","required":true,"filterable":true,"options":["empadronament","nie","tie","health_card","social_services","other"]},{"key":"appointment_required","label":{"ca":"Cal cita","es":"Requiere cita","en":"Appointment required","ar":"يتطلب موعداً","fa":"نیاز به وقت قبلی"},"type":"boolean","required":true,"filterable":true},{"key":"documents_needed","label":{"ca":"Documents necessaris","es":"Documentos necesarios","en":"Documents needed","ar":"المستندات المطلوبة","fa":"مدارک مورد نیاز"},"type":"text","required":false,"filterable":false},{"key":"languages_available","label":{"ca":"Idiomes disponibles","es":"Idiomas disponibles","en":"Languages available","ar":"اللغات المتاحة","fa":"زبان‌های موجود"},"type":"string-array","required":true,"filterable":true,"options":["ca","es","en","ar","fa"]},{"key":"processing_time","label":{"ca":"Temps de tramitació","es":"Tiempo de tramitación","en":"Processing time","ar":"مدة المعالجة","fa":"زمان پردازش"},"type":"text","required":false,"filterable":false}]}$schema$::jsonb
   )
 on conflict (id) do nothing;

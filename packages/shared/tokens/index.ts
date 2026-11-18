@@ -46,6 +46,21 @@ export const tokens = {
     // on every tab, its tab bar and the header of pushed screens.
     surface: { warm: '#F7F5EE', page: neutral[50] },
 
+    // Service category hues (RAPP-856): each Ajuda category is told apart by
+    // a pale wash of one of these, on its icon circle and behind its list.
+    // Kept apart from the status colours, so no category reads as an error;
+    // `pink` sits on the magenta side, away from the Urgent avisos red.
+    category: {
+      sky: '#0284C7',
+      green: '#16A34A',
+      purple: '#9333EA',
+      orange: '#EA580C',
+      pink: '#DB2777',
+      teal: '#0D9488',
+      amber: '#D97706',
+      indigo: '#4F46E5',
+    },
+
     white: '#FFFFFF',
     black: '#000000',
   },
