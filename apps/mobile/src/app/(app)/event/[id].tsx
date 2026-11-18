@@ -102,7 +102,7 @@ export default function EventDetailScreen() {
   if (isPending && data === undefined) {
     return (
       <>
-        <NativeScreenHeader title={screenTitle} />
+        <NativeScreenHeader surface="white" title={screenTitle} />
         <AnnouncementFeedSkeleton accessibilityLabel={t('playerLoading')} />
       </>
     );
@@ -110,7 +110,7 @@ export default function EventDetailScreen() {
   if (isError && data === undefined) {
     return (
       <>
-        <NativeScreenHeader title={screenTitle} />
+        <NativeScreenHeader surface="white" title={screenTitle} />
         <AnnouncementFeedError
           message={t('playerLoadFailed')}
           retryLabel={t('playerRetryAction')}
@@ -124,7 +124,7 @@ export default function EventDetailScreen() {
 
   return (
     <>
-      <NativeScreenHeader title={screenTitle} />
+      <NativeScreenHeader surface="white" title={screenTitle} />
       <ScrollView
         className="flex-1 bg-white"
         contentContainerClassName="grow px-lg py-lg"

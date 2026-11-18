@@ -57,7 +57,7 @@ export default function AnnouncementDetailScreen() {
   if (query.isPending && data === undefined) {
     return (
       <>
-        <NativeScreenHeader />
+        <NativeScreenHeader surface="white" />
         <AnnouncementFeedSkeleton accessibilityLabel={t('loading')} />
       </>
     );
@@ -66,7 +66,7 @@ export default function AnnouncementDetailScreen() {
   if (query.isError && data === undefined) {
     return (
       <>
-        <NativeScreenHeader />
+        <NativeScreenHeader surface="white" />
         <AnnouncementFeedError
           message={t('loadFailed')}
           retryLabel={t('retryAction')}
@@ -80,7 +80,7 @@ export default function AnnouncementDetailScreen() {
 
   return (
     <>
-      <NativeScreenHeader />
+      <NativeScreenHeader surface="white" />
       <ScrollView
         testID="announcement-detail-screen"
         className="flex-1 bg-white"

@@ -242,7 +242,7 @@ function SurveyScreenFrame({
 }: SurveyScreenFrameProps) {
   return (
     <>
-      <NativeScreenHeader title={screenTitle} />
+      <NativeScreenHeader surface="white" title={screenTitle} />
       <ScrollView
         className="flex-1 bg-white"
         contentContainerClassName={contentContainerClassName}

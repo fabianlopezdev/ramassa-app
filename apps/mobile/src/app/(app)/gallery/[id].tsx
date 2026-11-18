@@ -134,7 +134,7 @@ export default function GalleryItemScreen() {
   if (query.isPending && item === undefined && isOnline) {
     return (
       <>
-        <NativeScreenHeader />
+        <NativeScreenHeader surface="white" />
         <AnnouncementFeedSkeleton accessibilityLabel={t('gallery:loading')} />
       </>
     );
@@ -142,7 +142,7 @@ export default function GalleryItemScreen() {
 
   return (
     <>
-      <NativeScreenHeader />
+      <NativeScreenHeader surface="white" />
       <ScrollView
         className="flex-1 bg-white"
         contentContainerClassName="grow px-lg py-lg"

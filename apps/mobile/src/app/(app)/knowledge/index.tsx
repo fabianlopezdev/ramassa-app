@@ -93,7 +93,7 @@ export default function PlayerKnowledgeScreen() {
   ) {
     return (
       <>
-        <NativeScreenHeader title={t('knowledge:guidesTitle')} />
+        <NativeScreenHeader surface="white" title={t('knowledge:guidesTitle')} />
         <AnnouncementFeedSkeleton accessibilityLabel={t('knowledge:guidesLoading')} />
       </>
     );
@@ -106,7 +106,7 @@ export default function PlayerKnowledgeScreen() {
   ) {
     return (
       <>
-        <NativeScreenHeader title={t('knowledge:guidesTitle')} />
+        <NativeScreenHeader surface="white" title={t('knowledge:guidesTitle')} />
         <AnnouncementFeedError
           message={t('knowledge:playerLoadFailed')}
           retryLabel={t('knowledge:playerRetry')}
@@ -120,7 +120,7 @@ export default function PlayerKnowledgeScreen() {
 
   return (
     <>
-      <NativeScreenHeader title={t('knowledge:guidesTitle')} />
+      <NativeScreenHeader surface="white" title={t('knowledge:guidesTitle')} />
       <FlashList
         testID="knowledge-base-screen"
         data={visibleGuides}

@@ -346,7 +346,7 @@ export default function StorySubmissionScreen() {
 
   return (
     <>
-      <NativeScreenHeader title={t('knowledge:submissionTitle')} />
+      <NativeScreenHeader surface="white" title={t('knowledge:submissionTitle')} />
       <ScrollView
         ref={scrollViewRef}
         testID="story-submission-screen"

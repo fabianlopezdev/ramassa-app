@@ -71,7 +71,7 @@ export default function ServiceDetailScreen() {
   if (serviceQuery.isPending && serviceQuery.data === undefined) {
     return (
       <>
-        <NativeScreenHeader />
+        <NativeScreenHeader surface="white" />
         <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />
       </>
     );
@@ -79,7 +79,7 @@ export default function ServiceDetailScreen() {
   if (serviceQuery.isError && serviceQuery.data === undefined) {
     return (
       <>
-        <NativeScreenHeader />
+        <NativeScreenHeader surface="white" />
         <AnnouncementFeedError
           message={t('playerServices:loadFailed')}
           retryLabel={t('playerServices:retry')}
@@ -93,7 +93,7 @@ export default function ServiceDetailScreen() {
 
   return (
     <>
-      <NativeScreenHeader />
+      <NativeScreenHeader surface="white" />
       <ScrollView
         testID="player-service-detail"
         className="flex-1 bg-white"

@@ -158,7 +158,7 @@ export default function ForumPostComposerScreen() {
 
   return (
     <>
-      <NativeScreenHeader title={t('forum:composerTitle')} />
+      <NativeScreenHeader surface="white" title={t('forum:composerTitle')} />
       <ScrollView
         testID="forum-create-screen"
         className="flex-1 bg-white"

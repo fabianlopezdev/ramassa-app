@@ -66,7 +66,7 @@ export default function PlayerKnowledgeDetailScreen() {
   if (query.isPending && article === undefined) {
     return (
       <>
-        <NativeScreenHeader />
+        <NativeScreenHeader surface="white" />
         <AnnouncementFeedSkeleton accessibilityLabel={t('knowledge:itemLoading')} />
       </>
     );
@@ -74,7 +74,7 @@ export default function PlayerKnowledgeDetailScreen() {
   if (query.isError && article === undefined) {
     return (
       <>
-        <NativeScreenHeader />
+        <NativeScreenHeader surface="white" />
         <AnnouncementFeedError
           message={t('knowledge:playerLoadFailed')}
           retryLabel={t('knowledge:playerRetry')}
@@ -88,7 +88,7 @@ export default function PlayerKnowledgeDetailScreen() {
 
   return (
     <>
-      <NativeScreenHeader />
+      <NativeScreenHeader surface="white" />
       <ScrollView
         testID="knowledge-detail-screen"
         className="flex-1 bg-white"

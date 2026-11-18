@@ -193,7 +193,7 @@ export default function GalleryUploadScreen() {
 
   return (
     <>
-      <NativeScreenHeader title={t('gallery:uploadTitle')} />
+      <NativeScreenHeader surface="white" title={t('gallery:uploadTitle')} />
       <ScrollView
         className="flex-1 bg-white"
         contentContainerClassName="grow px-lg py-lg"
