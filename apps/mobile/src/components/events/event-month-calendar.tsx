@@ -17,7 +17,7 @@ import {
 import { outlinedSurfaceClassName } from '@/components/layout/raised-surface';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { buildCalendarLocale, monthKeyOf, weeksAfterMonth } from '@/lib/event-calendar';
-import { useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Calendar, LocaleConfig, type DateData } from 'react-native-calendars';
 import type { MarkedDates } from 'react-native-calendars/src/types';
@@ -89,7 +89,11 @@ function WeeksAfterMonth({
   ));
 }
 
-export function EventMonthCalendar({
+/**
+ * Memoised: the view switch above it re-renders the screen first (RAPP-841),
+ * and the calendar should not redraw its weeks for that.
+ */
+export const EventMonthCalendar = memo(function EventMonthCalendar({
   language,
   todayLabel,
   previousMonthLabel,
@@ -180,4 +184,4 @@ export function EventMonthCalendar({
       </View>
     </EventCalendarHeaderLabelsContext.Provider>
   );
-}
+});

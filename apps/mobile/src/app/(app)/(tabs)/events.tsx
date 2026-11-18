@@ -33,7 +33,7 @@ import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { MarkedDates } from 'react-native-calendars/src/types';
@@ -53,6 +53,7 @@ const UTC_MIDDAY_SUFFIX = 'T12:00:00Z';
 
 const styles = StyleSheet.create({
   list: { flex: 1, backgroundColor: tokens.colors.white },
+  hidden: { display: 'none' },
   content: { paddingHorizontal: tokens.spacing.lg, paddingBottom: tokens.spacing['3xl'] },
 });
 
@@ -71,6 +72,13 @@ export default function EventsScreen() {
   const isOffline = !isNetworkStateOnline(networkState);
   const [category, setCategory] = useState<PlayerEventCategoryFilter>('all');
   const [view, setView] = useState<'list' | 'calendar'>('list');
+  // The switch answers the tap at once; the list or calendar under it follows
+  // as soon as React has it ready, without holding the switch back.
+  const contentView = useDeferredValue(view);
+  // Once opened, the calendar stays mounted and only hides behind the list, so
+  // coming back to it skips building its weeks again and keeps her month.
+  const [hasOpenedCalendar, setHasOpenedCalendar] = useState(false);
+  if (contentView === 'calendar' && !hasOpenedCalendar) setHasOpenedCalendar(true);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const { data, isPending, isError, error, isRefetching, refetch } = usePlayerEvents();
   const mentoringQuery = usePlayerMentoringRequests();
@@ -106,19 +114,19 @@ export default function EventsScreen() {
     );
   const visibleEvents = useMemo(
     () =>
-      view === 'list'
+      contentView === 'list'
         ? events
         : events.filter((row) => eventDateKey(row.occurrence_starts_at) === effectiveSelectedDate),
-    [effectiveSelectedDate, events, view],
+    [effectiveSelectedDate, events, contentView],
   );
   const visibleMentoringEntries = useMemo(
     () =>
-      view === 'list'
+      contentView === 'list'
         ? mentoringEntries
         : mentoringEntries.filter(
             (entry) => eventDateKey(entry.scheduledAt) === effectiveSelectedDate,
           ),
-    [effectiveSelectedDate, mentoringEntries, view],
+    [effectiveSelectedDate, mentoringEntries, contentView],
   );
   const locale = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;
   const dateFormatter = useMemo(
@@ -217,18 +225,18 @@ export default function EventsScreen() {
   // The day presses with its own selection haptic.
   const selectCalendarDay = useCallback((date: string) => setSelectedDate(date), []);
   const listExtraData = useMemo(
-    () => ({ category, effectiveSelectedDate, view }),
-    [category, effectiveSelectedDate, view],
+    () => ({ category, effectiveSelectedDate, view: contentView }),
+    [category, effectiveSelectedDate, contentView],
   );
   const onListLoad = useCallback(
     ({ elapsedTimeInMs }: { readonly elapsedTimeInMs: number }) => {
       logger.info('player events rendered', {
         elapsedTimeInMs: Math.round(elapsedTimeInMs),
         itemCount: visibleEvents.length,
-        view,
+        view: contentView,
       });
     },
-    [view, visibleEvents.length],
+    [contentView, visibleEvents.length],
   );
 
   if (isPending && data === undefined) {
@@ -310,8 +318,8 @@ export default function EventsScreen() {
               ))}
             </View>
           )}
-          {view === 'calendar' ? (
-            <View className="gap-sm">
+          {hasOpenedCalendar ? (
+            <View className="gap-sm" style={contentView === 'calendar' ? undefined : styles.hidden}>
               <Text
                 accessibilityRole="header"
                 className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
@@ -347,11 +355,11 @@ export default function EventsScreen() {
         <PageWidth>
           <AnnouncementEmptyState
             title={
-              view === 'calendar' && events.length > 0
+              contentView === 'calendar' && events.length > 0
                 ? t('playerNoEventsDate')
                 : t('playerEmptyTitle')
             }
-            body={view === 'calendar' && events.length > 0 ? '' : t('playerEmptyBody')}
+            body={contentView === 'calendar' && events.length > 0 ? '' : t('playerEmptyBody')}
             languageFontClass={languageFontClass}
           />
         </PageWidth>
