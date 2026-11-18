@@ -1,7 +1,7 @@
-import { AttentionChip } from '@/components/home/attention-chip';
+import { Badge } from '@/components/layout/badge';
 import { RaisedCard } from '@/components/layout/raised-card';
 import { memo, useCallback } from 'react';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 
 export interface AnnouncementCardProps {
   readonly id: string;
@@ -30,9 +30,12 @@ export const AnnouncementCard = memo(function AnnouncementCard({
   return (
     <RaisedCard accessibilityLabel={accessibilityLabel} onOpen={handleOpen}>
       {unseenLabel === null ? null : (
-        <View className="flex-row">
-          <AttentionChip label={unseenLabel} languageFontClass={languageFontClass} />
-        </View>
+        <Badge
+          label={unseenLabel}
+          tone="brand"
+          languageFontClass={languageFontClass}
+          className="self-start"
+        />
       )}
       <Text
         className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}

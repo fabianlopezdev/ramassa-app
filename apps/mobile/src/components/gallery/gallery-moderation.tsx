@@ -10,6 +10,7 @@
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { useAppLock } from '@/components/auth/app-lock';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { Badge } from '@/components/layout/badge';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -108,16 +109,10 @@ function Tile({ item, onOpen }: { readonly item: MediaItemRow; readonly onOpen: 
       {state === null && item.file_type === 'image' ? null : (
         <View className="absolute bottom-xs start-xs flex-row gap-xs">
           {item.file_type === 'video' ? (
-            <View className="rounded-full bg-neutral-900/80 px-sm py-xs">
-              <Text className={`text-xs font-semibold text-white ${fontClass}`}>
-                {t('moderationVideo')}
-              </Text>
-            </View>
+            <Badge label={t('moderationVideo')} tone="overlay" languageFontClass={fontClass} />
           ) : null}
           {state === null ? null : (
-            <View className="rounded-full bg-error px-sm py-xs">
-              <Text className={`text-xs font-semibold text-white ${fontClass}`}>{t(state)}</Text>
-            </View>
+            <Badge label={t(state)} tone="danger" languageFontClass={fontClass} />
           )}
         </View>
       )}

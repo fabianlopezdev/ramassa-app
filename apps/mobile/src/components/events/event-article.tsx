@@ -6,6 +6,7 @@
  */
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { EventDetailLine } from '@/components/events/event-card';
+import { Badge } from '@/components/layout/badge';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -75,11 +76,11 @@ export function EventArticle({
   return (
     <View className="gap-xl">
       <View className="gap-md">
-        <View className="self-start rounded-full bg-neutral-100 px-sm py-xs">
-          <Text className={`text-sm font-medium text-neutral-700 ${languageFontClass}`}>
-            {category?.text ?? ''}
-          </Text>
-        </View>
+        <Badge
+          label={category?.text ?? ''}
+          languageFontClass={languageFontClass}
+          className="self-start"
+        />
         <Text
           accessibilityRole="header"
           className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}

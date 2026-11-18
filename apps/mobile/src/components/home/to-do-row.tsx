@@ -1,12 +1,13 @@
 /**
- * One thing waiting for her in Per fer (RAPP-827): a raised row with an icon,
- * its mark (Nou, or the word for continue once she has started), its name and
- * an arrow. The whole row opens it. A pending form and a survey share it.
+ * One thing waiting for her in Per fer (RAPP-827): a raised row with an icon
+ * in the block at the start (RAPP-830), its mark (Nou, or the word for
+ * continue once she has started), its name and an arrow. The whole row opens
+ * it. A pending form and a survey share it.
  */
-import { AttentionChip } from '@/components/home/attention-chip';
-import { RaisedCard } from '@/components/layout/raised-card';
+import { Badge } from '@/components/layout/badge';
+import { RaisedCard, RaisedCardSymbol } from '@/components/layout/raised-card';
 import type { SymbolViewProps } from 'expo-symbols';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 
 const toDoSymbol: SymbolViewProps['name'] = {
   ios: 'list.clipboard',
@@ -41,15 +42,14 @@ export function ToDoRow({
       testID={testID}
       accessibilityLabel={accessibilityLabel}
       onOpen={onOpen}
-      symbol={toDoSymbol}
+      leading={<RaisedCardSymbol name={toDoSymbol} />}
     >
-      <View className="flex-row">
-        <AttentionChip
-          label={markLabel}
-          tone={isStarted ? 'started' : 'new'}
-          languageFontClass={languageFontClass}
-        />
-      </View>
+      <Badge
+        label={markLabel}
+        tone={isStarted ? 'accentSoft' : 'brand'}
+        languageFontClass={languageFontClass}
+        className="self-start"
+      />
       <Text className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}>
         {title}
       </Text>

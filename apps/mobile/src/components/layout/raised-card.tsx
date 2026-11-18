@@ -4,6 +4,10 @@
  * below it say "this presses", and the face sinks onto the edge on touch.
  * Cards on Inici (a pending form or survey, the next activity, an
  * announcement) share it, so they all look and press the same.
+ *
+ * A card may start with a block and a divider (RAPP-830): the date of an
+ * activity, the icon of a Per fer item. The block has one width, so the
+ * dividers line up from card to card.
  */
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
 import { forwardSymbol } from '@/components/layout/openable-card';
@@ -12,12 +16,26 @@ import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
+const leadingBlockStyle = { minWidth: tokens.spacing['2xl'] } as const;
+
+/** An icon for the block at the start of a card, in the brand's dark tone with nothing behind it. */
+export function RaisedCardSymbol({ name }: { readonly name: SymbolViewProps['name'] }) {
+  return (
+    <SymbolView
+      accessible={false}
+      name={name}
+      size={tokens.fontSize['4xl']}
+      tintColor={tokens.colors.primary.dark}
+    />
+  );
+}
+
 interface RaisedCardProps {
   readonly testID?: string;
   readonly accessibilityLabel: string;
   readonly onOpen: () => void;
-  /** An icon before the content, drawn in the brand's dark tone with nothing behind it. */
-  readonly symbol?: SymbolViewProps['name'];
+  /** The block at the start, before a divider: a date or an icon. */
+  readonly leading?: ReactNode;
   /** The forward arrow at the end. Off for a card whose content already fills the row. */
   readonly showsArrow?: boolean;
   readonly children: ReactNode;
@@ -27,7 +45,7 @@ export function RaisedCard({
   testID,
   accessibilityLabel,
   onOpen,
-  symbol,
+  leading,
   showsArrow = true,
   children,
 }: RaisedCardProps) {
@@ -37,24 +55,26 @@ export function RaisedCard({
       label={accessibilityLabel}
       accessibilityRole="link"
       onPress={onOpen}
-      contentClassName="flex-row items-center gap-md py-md"
+      contentClassName="flex-row items-stretch gap-md py-md"
     >
-      {symbol === undefined ? null : (
-        <SymbolView
-          accessible={false}
-          name={symbol}
-          size={tokens.fontSize['3xl']}
-          tintColor={tokens.colors.primary.dark}
-        />
+      {leading === undefined ? null : (
+        <>
+          <View className="items-center justify-center" style={leadingBlockStyle}>
+            {leading}
+          </View>
+          <View accessible={false} className="border-s-2 border-neutral-300" />
+        </>
       )}
-      <View className="flex-1 gap-xs">{children}</View>
+      <View className="flex-1 justify-center gap-xs">{children}</View>
       {showsArrow ? (
-        <SymbolView
-          accessible={false}
-          name={forwardSymbol}
-          size={tokens.fontSize.xl}
-          tintColor={tokens.colors.primary.dark}
-        />
+        <View className="justify-center">
+          <SymbolView
+            accessible={false}
+            name={forwardSymbol}
+            size={tokens.fontSize.xl}
+            tintColor={tokens.colors.primary.dark}
+          />
+        </View>
       ) : null}
     </SelectionChoiceSurface>
   );

@@ -5,6 +5,7 @@
  * forum posting off or on (RAPP-802), with the participant card's own write.
  */
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { Badge } from '@/components/layout/badge';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { confirmDelete } from '@/lib/confirm-delete';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -115,22 +116,18 @@ export function ModerationReportCard({
       className="gap-md rounded-md border border-neutral-200 bg-white p-md"
     >
       <View className="flex-row flex-wrap items-center gap-sm">
-        <View className="rounded-full bg-error px-sm py-xs">
-          <Text className={`text-sm font-semibold text-white ${fontClass}`}>
-            {t('moderationFlags', { count: row.flag_count })}
-          </Text>
-        </View>
-        <View className="rounded-full border border-neutral-300 px-sm py-xs">
-          <Text className={`text-sm font-medium text-neutral-800 ${fontClass}`}>
-            {t(`moderationTarget.${row.target_type}`)}
-          </Text>
-        </View>
+        <Badge
+          label={t('moderationFlags', { count: row.flag_count })}
+          tone="danger"
+          languageFontClass={fontClass}
+        />
+        <Badge
+          label={t(`moderationTarget.${row.target_type}`)}
+          tone="outline"
+          languageFontClass={fontClass}
+        />
         {row.target_type === 'media' ? null : (
-          <View className="rounded-full bg-neutral-100 px-sm py-xs">
-            <Text className={`text-sm font-medium text-neutral-800 ${fontClass}`}>
-              {categoryName}
-            </Text>
-          </View>
+          <Badge label={categoryName} languageFontClass={fontClass} />
         )}
       </View>
       <View className="gap-xs">

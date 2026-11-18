@@ -1,3 +1,4 @@
+import { Badge } from '@/components/layout/badge';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
@@ -79,11 +80,12 @@ export const ServiceCard = memo(function ServiceCard({
       )}
       <View className="gap-sm p-md">
         {interested ? (
-          <View className="self-start rounded-full bg-secondary-light px-sm py-xs">
-            <Text className={`text-sm font-semibold text-neutral-900 ${languageFontClass}`}>
-              {interestedLabel}
-            </Text>
-          </View>
+          <Badge
+            label={interestedLabel}
+            tone="accentSoft"
+            languageFontClass={languageFontClass}
+            className="self-start"
+          />
         ) : null}
         <Text
           className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}

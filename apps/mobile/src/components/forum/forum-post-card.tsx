@@ -1,4 +1,5 @@
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
+import { Badge } from '@/components/layout/badge';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { AuthorLine } from '@/components/people/person-avatar';
 import { composeContinuousViewStyle } from '@/lib/continuous-corners';
@@ -90,11 +91,7 @@ export const ForumPostCard = memo(function ForumPostCard({
             languageFontClass={languageFontClass}
           />
           {post.is_pinned ? (
-            <Text
-              className={`rounded-full bg-secondary-light px-sm py-xs text-xs font-semibold text-neutral-900 ${languageFontClass}`}
-            >
-              {pinnedLabel}
-            </Text>
+            <Badge label={pinnedLabel} tone="accentSoft" languageFontClass={languageFontClass} />
           ) : null}
         </View>
         {post.content === null ? null : (

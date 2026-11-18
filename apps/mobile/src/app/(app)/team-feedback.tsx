@@ -7,6 +7,7 @@
  */
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { Badge } from '@/components/layout/badge';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -98,19 +99,13 @@ function SubmissionCard({
           </Text>
         </View>
         <View className="flex-row flex-wrap gap-xs">
-          <View className="rounded-full bg-neutral-100 px-sm py-xs">
-            <Text className={`text-sm font-semibold text-neutral-800 ${fontClass}`}>
-              {t(TYPE_KEYS[submission.type])}
-            </Text>
-          </View>
-          <View className="rounded-full border border-neutral-300 px-sm py-xs">
-            <Text
-              testID={`feedback-status-${submission.id}`}
-              className={`text-sm font-semibold text-neutral-800 ${fontClass}`}
-            >
-              {t(STATUS_KEYS[submission.status])}
-            </Text>
-          </View>
+          <Badge label={t(TYPE_KEYS[submission.type])} languageFontClass={fontClass} />
+          <Badge
+            testID={`feedback-status-${submission.id}`}
+            label={t(STATUS_KEYS[submission.status])}
+            tone="outline"
+            languageFontClass={fontClass}
+          />
         </View>
       </View>
       <Text selectable className={`text-start text-md text-neutral-900 ${fontClass}`}>

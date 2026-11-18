@@ -5,6 +5,7 @@
  * (RAPP-373), so the preview is the player's own layout.
  */
 import { announcementCategoryLabel } from '@/components/announcements/category-filters';
+import { Badge } from '@/components/layout/badge';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -60,17 +61,12 @@ export function AnnouncementArticle({
     <FadeSlideIn index={0}>
       <View className="gap-md">
         <View className="flex-row flex-wrap items-center gap-sm">
-          <View className="rounded-full bg-neutral-100 px-sm py-xs">
-            <Text className={`text-sm font-medium text-neutral-700 ${languageFontClass}`}>
-              {announcementCategoryLabel(announcement.category, t)}
-            </Text>
-          </View>
+          <Badge
+            label={announcementCategoryLabel(announcement.category, t)}
+            languageFontClass={languageFontClass}
+          />
           {announcement.isPinned ? (
-            <View className="rounded-full bg-secondary px-sm py-xs">
-              <Text className={`text-sm font-semibold text-neutral-900 ${languageFontClass}`}>
-                {t('pinned')}
-              </Text>
-            </View>
+            <Badge label={t('pinned')} tone="accent" languageFontClass={languageFontClass} />
           ) : null}
         </View>
         <Text

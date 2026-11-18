@@ -1,3 +1,4 @@
+import { Badge } from '@/components/layout/badge';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
@@ -78,20 +79,8 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
       )}
       <View className="gap-sm p-md">
         <View className="flex-row flex-wrap gap-xs">
-          <View className="rounded-full bg-primary/10 px-sm py-xs">
-            <Text
-              className={`text-start text-xs font-semibold text-primary-dark ${languageFontClass}`}
-            >
-              {category.text}
-            </Text>
-          </View>
-          <View className="rounded-full bg-neutral-100 px-sm py-xs">
-            <Text
-              className={`text-start text-xs font-semibold text-neutral-700 ${languageFontClass}`}
-            >
-              {type}
-            </Text>
-          </View>
+          <Badge label={category.text} tone="brandSoft" languageFontClass={languageFontClass} />
+          <Badge label={type} languageFontClass={languageFontClass} />
         </View>
         <Text
           accessibilityRole="header"

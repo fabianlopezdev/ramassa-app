@@ -10,6 +10,7 @@ import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { DateTimeField } from '@/components/content/date-time-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { Badge } from '@/components/layout/badge';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -99,14 +100,11 @@ function RequestCard({
             {t('adminRequested', { date: requestedAt })}
           </Text>
         </View>
-        <View className="rounded-full bg-neutral-100 px-sm py-xs">
-          <Text
-            testID={`mentoring-status-${request.id}`}
-            className={`text-sm font-semibold text-neutral-800 ${fontClass}`}
-          >
-            {t(MENTORING_STATUS_KEYS[request.status])}
-          </Text>
-        </View>
+        <Badge
+          testID={`mentoring-status-${request.id}`}
+          label={t(MENTORING_STATUS_KEYS[request.status])}
+          languageFontClass={fontClass}
+        />
       </View>
       <View style={continuousCorners} className="gap-xs rounded-md bg-neutral-50 p-md">
         <Text className={`text-start text-md font-semibold text-neutral-900 ${fontClass}`}>

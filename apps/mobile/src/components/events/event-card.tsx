@@ -1,4 +1,4 @@
-import { AttentionChip } from '@/components/home/attention-chip';
+import { Badge } from '@/components/layout/badge';
 import { RaisedCard } from '@/components/layout/raised-card';
 import type { TFunction } from 'i18next';
 import { memo, useCallback } from 'react';
@@ -71,9 +71,6 @@ export function EventDetailLine({
     </View>
   );
 }
-
-// One width for the date block, so the names line up from card to card in a list.
-const dateBlockStyle = { minWidth: tokens.spacing['2xl'] } as const;
 
 interface EventCardDateParts {
   readonly day: string;
@@ -149,9 +146,8 @@ export const EventCard = memo(function EventCard({
       accessibilityLabel={accessibilityLabel}
       onOpen={handleOpen}
       showsArrow={false}
-    >
-      <View className="flex-row items-stretch gap-md">
-        <View className="items-center justify-center" style={dateBlockStyle}>
+      leading={
+        <>
           <Text
             className={`text-4xl font-extrabold tabular-nums text-neutral-900 ${languageFontClass}`}
           >
@@ -160,42 +156,42 @@ export const EventCard = memo(function EventCard({
           <Text className={`text-md font-bold uppercase text-primary-dark ${languageFontClass}`}>
             {month}
           </Text>
-        </View>
-        <View accessible={false} className="border-s-2 border-neutral-300" />
-        <View className="flex-1 gap-xs">
-          {unseenLabel === null ? null : (
-            <View className="flex-row">
-              <AttentionChip label={unseenLabel} languageFontClass={languageFontClass} />
-            </View>
-          )}
-          <Text
-            className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-            numberOfLines={2}
-          >
-            {title}
-          </Text>
-          <Text
-            className={`text-start text-lg font-bold tabular-nums text-primary-dark ${languageFontClass}`}
-          >
-            {time}
-          </Text>
-          <Text
-            className={`text-start text-md text-neutral-700 ${languageFontClass}`}
-            numberOfLines={2}
-          >
-            {location}
-          </Text>
-          {signupLabel === null ? null : (
-            <View className="flex-row">
-              <View className="rounded-full bg-secondary px-md py-xs">
-                <Text className={`text-sm font-semibold text-neutral-900 ${languageFontClass}`}>
-                  {signupLabel}
-                </Text>
-              </View>
-            </View>
-          )}
-        </View>
-      </View>
+        </>
+      }
+    >
+      {unseenLabel === null ? null : (
+        <Badge
+          label={unseenLabel}
+          tone="brand"
+          languageFontClass={languageFontClass}
+          className="self-start"
+        />
+      )}
+      <Text
+        className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
+        numberOfLines={2}
+      >
+        {title}
+      </Text>
+      <Text
+        className={`text-start text-lg font-bold tabular-nums text-primary-dark ${languageFontClass}`}
+      >
+        {time}
+      </Text>
+      <Text
+        className={`text-start text-md text-neutral-700 ${languageFontClass}`}
+        numberOfLines={2}
+      >
+        {location}
+      </Text>
+      {signupLabel === null ? null : (
+        <Badge
+          label={signupLabel}
+          tone="accent"
+          languageFontClass={languageFontClass}
+          className="self-start"
+        />
+      )}
     </RaisedCard>
   );
 });
