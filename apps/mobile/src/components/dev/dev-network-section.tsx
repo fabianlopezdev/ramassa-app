@@ -1,4 +1,6 @@
 import { devNetworkLog } from '@/lib/dev/dev-instrumentation';
+import { useIsOnline } from '@/lib/use-is-online';
+import { onlineManager } from '@tanstack/react-query';
 import { useSyncExternalStore } from 'react';
 import { Text, View } from 'react-native';
 import { DevButton, DevButtonRow, DevNote, DevSection } from './dev-ui';
@@ -10,9 +12,15 @@ import { DevButton, DevButtonRow, DevNote, DevSection } from './dev-ui';
  * cold start, not just what happened after the menu opened. URLs arrive already
  * redacted: a magic-link callback carries a live access token in its query
  * string and this screen gets screenshotted.
+ *
+ * "Simulate offline" (RAPP-817) flips the app's one online state, so the offline
+ * strip and every paused request can be seen on a simulator whose local backend
+ * always counts as reachable. It lasts until it is switched back or the app
+ * reloads.
  */
 export function DevNetworkSection() {
   const entries = useSyncExternalStore(devNetworkLog.subscribe, devNetworkLog.entries);
+  const isOnline = useIsOnline();
 
   return (
     <DevSection title="Network">
@@ -22,6 +30,12 @@ export function DevNetworkSection() {
       </DevNote>
       <DevButtonRow>
         <DevButton label="Clear" onPress={devNetworkLog.clear} />
+        <DevButton
+          testID="dev-simulate-offline"
+          label={isOnline ? 'Simulate offline' : 'Back online'}
+          isActive={!isOnline}
+          onPress={() => onlineManager.setOnline(!isOnline)}
+        />
       </DevButtonRow>
       {entries.length === 0 ? (
         <DevNote>Nothing captured yet.</DevNote>

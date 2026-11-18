@@ -19,6 +19,10 @@ describe('RAPP-65 player hardening contract', () => {
     expect(galleryRoute).not.toContain('OfflineBanner');
     expect(community).not.toContain('OfflineBanner');
     expect(shell).toContain('<ShellOfflineFrame>');
+    // The strip follows the app's one online state, never the raw network hook (RAPP-817).
+    const offlineStrip = await readMobileSource('components/layout/shell-offline-banner.tsx');
+    expect(offlineStrip).toContain('useIsOnline()');
+    expect(offlineStrip).not.toContain('useNetworkState');
     expect(gallery).toContain("isOnline ? 'emptyTitle' : 'offlineEmptyTitle'");
     expect(gallery).toContain('toAppError(query.error).code');
     expect(gallery).not.toContain("t(query.isPending ? 'loading' : 'empty')");
