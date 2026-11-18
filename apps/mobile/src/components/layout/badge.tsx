@@ -3,7 +3,8 @@
  * a category, a status. Its shape (corners, padding, text size) is set here
  * and nowhere else, so a change reaches every badge at once. The corners are
  * square like the cards; a pill is kept for things she can press, such as
- * filters. A number bubble, such as an unread count, is a different thing.
+ * filters. A number, such as an unread count, is a different thing: it goes
+ * in the circle of `CountBubble`.
  */
 import { Text, View } from 'react-native';
 

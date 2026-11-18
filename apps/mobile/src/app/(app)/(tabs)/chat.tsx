@@ -1,17 +1,22 @@
 /**
  * Xat (RAPP-789): everything private between her and the team, in one tab.
- * Three large rows and nothing else: the chat with its unread count, mentoring
+ * Three large cards and nothing else: the chat with its unread count, mentoring
  * with the state of the request she is waiting on, and suggestions. Each opens
- * the screen it always opened (`team-chat`, `mentoring`, `feedback`).
+ * the screen it always opened (`team-chat`, `mentoring`, `feedback`). The cards
+ * are the raised card of Per fer (RAPP-842). The unread count sits in a circle
+ * on the top edge near the end, and the state of her request is a badge on the
+ * top edge near the start, like "Nou". Both are in the brand colour.
  */
 import { PageWidth } from '@/components/layout/content-width';
-import { NavRow } from '@/components/layout/nav-row';
+import type { RaisedCardBadge } from '@/components/layout/raised-card';
+import { RaisedIconCard } from '@/components/layout/raised-icon-card';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { useUnreadMessages } from '@/lib/messaging';
 import { latestOpenMentoringRequest } from '@/lib/player-chat-tab';
 import { usePlayerMentoringRequests } from '@/lib/player-mentoring';
 import { playerNavIcons } from '@/lib/player-nav-icons';
 import { formatUnreadBadge } from '@/lib/unread-badge';
+import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
@@ -26,6 +31,10 @@ const MENTORING_STATUS_KEYS: Readonly<Record<MentoringStatus, string>> = {
   cancelled: 'mentoring:statusCancelled',
 };
 
+function stateBadge(label: string | null): RaisedCardBadge | null {
+  return label === null ? null : { label, tone: 'brand' };
+}
+
 export default function ChatTabScreen() {
   const { t } = useTranslation(['nav', 'messaging', 'mentoring', 'feedback']);
   const { push } = useRouter();
@@ -36,6 +45,12 @@ export default function ChatTabScreen() {
     [mentoring.data],
   );
   const tabInsets = usePlayerTabContentInsets();
+  const languageFontClass = useLanguageFontClass();
+  const teamChatTitle = t('messaging:playerTitle');
+  const mentoringTitle = t('mentoring:title');
+  const feedbackTitle = t('feedback:title');
+  const unreadLabel = formatUnreadBadge(unread);
+  const mentoringState = openRequest === null ? null : t(MENTORING_STATUS_KEYS[openRequest.status]);
   const openTeamChat = useCallback(() => push('/team-chat' as Href), [push]);
   const openMentoring = useCallback(() => push('/mentoring' as Href), [push]);
   const openFeedback = useCallback(() => push('/feedback' as Href), [push]);
@@ -50,26 +65,37 @@ export default function ChatTabScreen() {
     >
       <PageWidth className="gap-lg">
         <PlayerTabHeader title={t('nav:tabs.chat')} />
-        <NavRow
+        <RaisedIconCard
           testID="chat-open-team-chat"
           icon={playerNavIcons.teamChat}
-          label={t('messaging:playerTitle')}
-          badge={formatUnreadBadge(unread)}
-          badgeAccessibilityLabel={t('messaging:unread', { count: unread })}
-          onPress={openTeamChat}
+          title={teamChatTitle}
+          accessibilityLabel={
+            unreadLabel === null
+              ? teamChatTitle
+              : `${teamChatTitle}, ${t('messaging:unread', { count: unread })}`
+          }
+          count={unreadLabel}
+          languageFontClass={languageFontClass}
+          onOpen={openTeamChat}
         />
-        <NavRow
+        <RaisedIconCard
           testID="chat-open-mentoring"
           icon={playerNavIcons.mentoring}
-          label={t('mentoring:title')}
-          detail={openRequest === null ? null : t(MENTORING_STATUS_KEYS[openRequest.status])}
-          onPress={openMentoring}
+          title={mentoringTitle}
+          accessibilityLabel={
+            mentoringState === null ? mentoringTitle : `${mentoringTitle}, ${mentoringState}`
+          }
+          badge={stateBadge(mentoringState)}
+          languageFontClass={languageFontClass}
+          onOpen={openMentoring}
         />
-        <NavRow
+        <RaisedIconCard
           testID="chat-open-feedback"
           icon={playerNavIcons.feedback}
-          label={t('feedback:title')}
-          onPress={openFeedback}
+          title={feedbackTitle}
+          accessibilityLabel={feedbackTitle}
+          languageFontClass={languageFontClass}
+          onOpen={openFeedback}
         />
       </PageWidth>
     </ScrollView>

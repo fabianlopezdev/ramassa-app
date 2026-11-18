@@ -1,11 +1,10 @@
 /**
- * One thing waiting for her in Per fer (RAPP-827): a raised row with an icon
- * in the block at the start (RAPP-830), its mark (Nou, or the word for
- * continue once she has started), its name and an arrow. The whole row opens
- * it. A pending form and a survey share it.
+ * One thing waiting for her in Per fer (RAPP-827): the shared raised card
+ * with an icon in the block at the start (RAPP-830, RAPP-842), its mark (Nou,
+ * or the word for continue once she has started), its name and an arrow. The
+ * whole row opens it. A pending form and a survey share it.
  */
-import { RaisedCard, RaisedCardSymbol } from '@/components/layout/raised-card';
-import { Text } from 'react-native';
+import { RaisedIconCard } from '@/components/layout/raised-icon-card';
 
 interface ToDoRowProps {
   readonly testID?: string;
@@ -31,21 +30,17 @@ export function ToDoRow({
   onOpen,
 }: ToDoRowProps) {
   return (
-    <RaisedCard
+    <RaisedIconCard
       testID={testID}
+      icon="clipboard"
+      title={title}
+      detail={detail}
       accessibilityLabel={accessibilityLabel}
-      onOpen={onOpen}
-      leading={<RaisedCardSymbol name="clipboard" />}
       badge={
         markLabel === undefined ? null : { label: markLabel, tone: isStarted ? 'accent' : 'brand' }
       }
-    >
-      <Text className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}>
-        {title}
-      </Text>
-      {detail === undefined ? null : (
-        <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>{detail}</Text>
-      )}
-    </RaisedCard>
+      languageFontClass={languageFontClass}
+      onOpen={onOpen}
+    />
   );
 }

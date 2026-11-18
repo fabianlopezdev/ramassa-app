@@ -1,9 +1,8 @@
 /**
  * One large row that opens a screen (RAPP-789, RAPP-794): an icon and a label,
  * never one without the other, at least the recommended touch height. An
- * optional status line sits under the label and an optional count sits at the
- * end. The Xat tab and the profile menu use it, so a player meets the same
- * shape in both places.
+ * optional status line sits under the label. The profile menu and the
+ * mentoring row on Activitats use it.
  */
 import { FORWARD_CHEVRON } from '@/components/icons/direction';
 import { Icon, type IconName } from '@/components/icons/icon';
@@ -21,10 +20,6 @@ export interface NavRowProps {
   readonly testID: string;
   /** A short state under the label, such as the status of her request. */
   readonly detail?: string | null;
-  /** A count at the end, such as unread messages. Hidden when null. */
-  readonly badge?: string | null;
-  /** The badge read out in words, such as "3 unread messages". */
-  readonly badgeAccessibilityLabel?: string | null;
   readonly tone?: 'default' | 'danger';
 }
 
@@ -34,12 +29,10 @@ export const NavRow = memo(function NavRow({
   onPress,
   testID,
   detail = null,
-  badge = null,
-  badgeAccessibilityLabel = null,
   tone = 'default',
 }: NavRowProps) {
   const languageFontClass = useLanguageFontClass();
-  const accessibilityLabel = [label, detail, badge === null ? null : badgeAccessibilityLabel]
+  const accessibilityLabel = [label, detail]
     .filter((part): part is string => typeof part === 'string' && part !== '')
     .join(', ');
   const iconColor = tone === 'danger' ? tokens.colors.error : tokens.colors.primary.dark;
@@ -70,11 +63,6 @@ export const NavRow = memo(function NavRow({
           </Text>
         )}
       </View>
-      {badge === null ? null : (
-        <View className="min-w-min items-center rounded-full bg-error px-sm py-xs">
-          <Text className="text-md font-bold tabular-nums text-white">{badge}</Text>
-        </View>
-      )}
       {/* An action row (sign out) opens no screen, so it shows no arrow. */}
       {tone === 'danger' ? null : (
         <Icon name={FORWARD_CHEVRON} size={tokens.fontSize.lg} color={tokens.colors.neutral[500]} />

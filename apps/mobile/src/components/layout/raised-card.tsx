@@ -12,13 +12,15 @@
  * A card may carry one badge (RAPP-840): "Nou", the word for continue, her
  * sign-up state. It sits on the card's top edge near the start, half above
  * the border and half inside, so it reads as a label on the card and leaves
- * the content to the name.
+ * the content to the name. A count, such as unread messages, sits on the same
+ * edge near the end, in a circle (RAPP-842).
  */
 import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
 import { FORWARD_CHEVRON } from '@/components/icons/direction';
 import { Icon, type IconName } from '@/components/icons/icon';
 import { Badge, type BadgeTone } from '@/components/layout/badge';
+import { CountBubble } from '@/components/layout/count-bubble';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
@@ -46,6 +48,8 @@ interface RaisedCardProps {
   readonly showsArrow?: boolean;
   /** The label on the card's top edge. Its word is also part of `accessibilityLabel`. */
   readonly badge?: RaisedCardBadge | null;
+  /** A number in a circle on the top edge near the end. Also part of `accessibilityLabel`. */
+  readonly count?: string | null;
   readonly children: ReactNode;
 }
 
@@ -61,6 +65,7 @@ export function RaisedCard({
   leading,
   showsArrow = true,
   badge = null,
+  count = null,
   children,
 }: RaisedCardProps) {
   const brandColor = useBrandColor();
@@ -89,20 +94,33 @@ export function RaisedCard({
       ) : null}
     </SelectionChoiceSurface>
   );
-  if (badge === null) return card;
-  // The badge is drawn over the card from outside it, because the card's face
-  // clips what it holds. The room above keeps it clear of what comes before.
+  if (badge === null && count === null) return card;
+  // The badge and the count are drawn over the card from outside it, because
+  // the card's face clips what it holds. The room above keeps them clear of
+  // what comes before.
   return (
     <View className="relative pt-sm">
       {card}
-      <View
-        pointerEvents="none"
-        accessible={false}
-        importantForAccessibility="no-hide-descendants"
-        className="absolute start-lg top-sm -translate-y-1/2"
-      >
-        <Badge label={badge.label} tone={badge.tone} languageFontClass={languageFontClass} />
-      </View>
+      {badge === null ? null : (
+        <View
+          pointerEvents="none"
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          className="absolute start-lg top-sm -translate-y-1/2"
+        >
+          <Badge label={badge.label} tone={badge.tone} languageFontClass={languageFontClass} />
+        </View>
+      )}
+      {count === null ? null : (
+        <View
+          pointerEvents="none"
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          className="absolute end-lg top-sm -translate-y-1/2"
+        >
+          <CountBubble label={count} />
+        </View>
+      )}
     </View>
   );
 }
