@@ -3,10 +3,15 @@
  * something to press, with the chosen one filled. The row scrolls sideways
  * and runs to the edge of the screen, where a cut-off chip shows there are
  * more. The announcement categories on Inici and the activity categories on
- * Activitats share it.
+ * Activitats share it. A chip may take the colour of what it filters
+ * (RAPP-845), such as the kind of an announcement.
  */
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
-import { RAISED_FACE_MIN_HEIGHT } from '@/components/layout/raised-surface';
+import {
+  RAISED_FACE_MIN_HEIGHT,
+  raisedToneClassNames,
+  type RaisedTone,
+} from '@/components/layout/raised-surface';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { memo, useCallback } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
@@ -27,6 +32,13 @@ export interface FilterChipOption<Id extends string> {
   readonly id: Id;
   readonly label: string;
   readonly testID?: string;
+  readonly tone?: RaisedTone;
+}
+
+function chipTextClassName(tone: RaisedTone | undefined, isSelected: boolean): string {
+  if (tone === undefined) return isSelected ? 'text-neutral-900' : 'text-primary-dark';
+  const classes = raisedToneClassNames(tone);
+  return isSelected ? classes.filledText : classes.text;
 }
 
 interface FilterChipProps<Id extends string> extends FilterChipOption<Id> {
@@ -39,6 +51,7 @@ function FilterChipInner<Id extends string>({
   id,
   label,
   testID,
+  tone,
   isSelected,
   languageFontClass,
   onSelect,
@@ -53,11 +66,13 @@ function FilterChipInner<Id extends string>({
       onPress={handlePress}
       contentClassName="justify-center"
       rowStyle={chipStyle}
+      tone={tone}
     >
       <Text
-        className={`text-center text-md font-bold ${
-          isSelected ? 'text-neutral-900' : 'text-primary-dark'
-        } ${languageFontClass}`}
+        className={`text-center text-md font-bold ${chipTextClassName(
+          tone,
+          isSelected,
+        )} ${languageFontClass}`}
       >
         {label}
       </Text>

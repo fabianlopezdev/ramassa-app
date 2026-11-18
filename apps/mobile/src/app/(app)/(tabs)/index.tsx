@@ -160,6 +160,7 @@ export default function HomeScreen() {
           <AnnouncementCard
             id={item.id}
             title={title.text}
+            category={item.category}
             accessibilityLabel={accessibilityLabel}
             unseenLabel={unseenLabel}
             languageFontClass={languageFontClass}

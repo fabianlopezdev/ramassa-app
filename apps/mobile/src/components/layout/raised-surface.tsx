@@ -7,6 +7,7 @@
  * The wrapper keeps room for the edge, the edge sits absolute behind the face,
  * and the face holds the content. Face and edge share one shape class.
  */
+import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { PressableDepth } from '@/components/motion/pressable-depth';
 import { continuousCorners } from '@/lib/continuous-corners';
 import type { HapticFeedback } from '@/lib/haptics/haptic-policy';
@@ -25,9 +26,88 @@ const { shadowInlineOffset, shadowBlockOffset } = tokens.languageChoice;
 /** The corners of a card-sized raised surface, the same as a form field's. */
 export const RAISED_SHAPE_CLASS_NAME = 'rounded-lg';
 
-/** The outlined face: white, with the brand border, in the given shape. */
-export function outlinedSurfaceClassName(shapeClassName = RAISED_SHAPE_CLASS_NAME): string {
-  return `${shapeClassName} border border-primary bg-white`;
+/**
+ * A colour a raised surface can take instead of the brand (RAPP-845), such as
+ * the kind of an announcement on Inici. Its border and edge take the colour,
+ * its face a pale wash of it, and a chosen face fills with it.
+ */
+const raisedToneClasses = {
+  primary: {
+    border: 'border-primary',
+    edge: 'bg-primary',
+    wash: 'bg-primary/10',
+    fill: 'bg-primary',
+    text: 'text-neutral-900',
+    filledText: 'text-white',
+  },
+  secondary: {
+    border: 'border-secondary-dark',
+    edge: 'bg-secondary-dark',
+    wash: 'bg-secondary/25',
+    fill: 'bg-secondary-dark',
+    text: 'text-neutral-900',
+    filledText: 'text-neutral-900',
+  },
+  error: {
+    border: 'border-error',
+    edge: 'bg-error',
+    wash: 'bg-error/10',
+    fill: 'bg-error',
+    text: 'text-neutral-900',
+    filledText: 'text-white',
+  },
+  info: {
+    border: 'border-info',
+    edge: 'bg-info',
+    wash: 'bg-info/10',
+    fill: 'bg-info',
+    text: 'text-neutral-900',
+    // White on the info blue is under 4.5:1, dark text is above it.
+    filledText: 'text-neutral-900',
+  },
+} as const;
+
+export type RaisedTone = keyof typeof raisedToneClasses;
+
+export function raisedToneClassNames(tone: RaisedTone) {
+  return raisedToneClasses[tone];
+}
+
+/** A tone's colour as a value, for an icon's tint. */
+export function useRaisedToneColor(tone: RaisedTone | undefined): string {
+  const brandColor = useBrandColor();
+  switch (tone) {
+    case undefined:
+    case 'primary':
+      return brandColor;
+    case 'secondary':
+      return tokens.colors.secondary.dark;
+    case 'error':
+      return tokens.colors.error;
+    case 'info':
+      return tokens.colors.info;
+  }
+}
+
+/** The outlined face: white, with the brand border (or the tone's), in the given shape. */
+export function outlinedSurfaceClassName(
+  shapeClassName = RAISED_SHAPE_CLASS_NAME,
+  tone?: RaisedTone,
+): string {
+  const border = tone === undefined ? 'border-primary' : raisedToneClasses[tone].border;
+  return `${shapeClassName} border ${border} bg-white`;
+}
+
+/** The pale wash of a tone over a white face, under its content. */
+export function RaisedToneWash({ tone }: { readonly tone: RaisedTone | undefined }) {
+  if (tone === undefined) return null;
+  return (
+    <View
+      pointerEvents="none"
+      accessible={false}
+      className={`absolute inset-0 ${raisedToneClasses[tone].wash}`}
+    />
+  );
 }
 
 /** The room the solid edge takes below and to the end of a raised face. */
@@ -66,14 +146,17 @@ export function useRaisedChoiceFaceStyle() {
 /** The solid edge behind a raised face. */
 export function RaisedSurfaceEdge({
   shapeClassName = RAISED_SHAPE_CLASS_NAME,
+  tone,
 }: {
   readonly shapeClassName?: string;
+  readonly tone?: RaisedTone;
 }) {
+  const edge = tone === undefined ? 'bg-primary' : raisedToneClasses[tone].edge;
   return (
     <View
       pointerEvents="none"
       accessible={false}
-      className={`bg-primary ${shapeClassName}`}
+      className={`${edge} ${shapeClassName}`}
       style={raisedSurfaceEdgeStyle}
     />
   );

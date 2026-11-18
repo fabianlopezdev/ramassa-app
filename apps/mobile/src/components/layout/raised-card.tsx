@@ -14,6 +14,9 @@
  * the border and half inside, so it reads as a label on the card and leaves
  * the content to the name. A count, such as unread messages, sits on the same
  * edge near the end, in a circle (RAPP-842).
+ *
+ * A card may take the colour of its kind instead of the brand (RAPP-845):
+ * border, edge and arrow in the colour, the face a pale wash of it.
  */
 import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
@@ -21,6 +24,7 @@ import { FORWARD_CHEVRON } from '@/components/icons/direction';
 import { Icon, type IconName } from '@/components/icons/icon';
 import { Badge, type BadgeTone } from '@/components/layout/badge';
 import { CountBubble } from '@/components/layout/count-bubble';
+import { useRaisedToneColor, type RaisedTone } from '@/components/layout/raised-surface';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
@@ -50,6 +54,8 @@ interface RaisedCardProps {
   readonly badge?: RaisedCardBadge | null;
   /** A number in a circle on the top edge near the end. Also part of `accessibilityLabel`. */
   readonly count?: string | null;
+  /** The colour of the card's kind, instead of the brand. */
+  readonly tone?: RaisedTone;
   readonly children: ReactNode;
 }
 
@@ -66,9 +72,10 @@ export function RaisedCard({
   showsArrow = true,
   badge = null,
   count = null,
+  tone,
   children,
 }: RaisedCardProps) {
-  const brandColor = useBrandColor();
+  const arrowColor = useRaisedToneColor(tone);
   const languageFontClass = useLanguageFontClass();
   const card = (
     <SelectionChoiceSurface
@@ -77,6 +84,7 @@ export function RaisedCard({
       accessibilityRole="link"
       onPress={onOpen}
       contentClassName="flex-row items-stretch gap-md py-md"
+      tone={tone}
     >
       {leading === undefined ? null : (
         <>
@@ -89,7 +97,7 @@ export function RaisedCard({
       <View className="flex-1 justify-center gap-xs">{children}</View>
       {showsArrow ? (
         <View className="justify-center">
-          <Icon name={FORWARD_CHEVRON} size={tokens.fontSize['2xl']} color={brandColor} />
+          <Icon name={FORWARD_CHEVRON} size={tokens.fontSize['2xl']} color={arrowColor} />
         </View>
       ) : null}
     </SelectionChoiceSurface>

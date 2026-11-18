@@ -2,7 +2,10 @@ import {
   outlinedSurfaceClassName,
   RaisedSurfaceEdge,
   raisedSurfaceWrapperStyle,
+  raisedToneClassNames,
+  RaisedToneWash,
   useRaisedChoiceFaceStyle,
+  type RaisedTone,
 } from '@/components/layout/raised-surface';
 import { PressableDepth } from '@/components/motion/pressable-depth';
 import { SelectionTransition } from '@/components/motion/selection-transition';
@@ -11,7 +14,9 @@ import type { ReactNode } from 'react';
 import { type AccessibilityRole, type StyleProp, type ViewStyle } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
-const FACE_CLASS = `relative overflow-hidden ${outlinedSurfaceClassName()} px-lg`;
+function faceClassName(tone: RaisedTone | undefined): string {
+  return `relative overflow-hidden ${outlinedSurfaceClassName(undefined, tone)} px-lg`;
+}
 
 interface SelectionChoiceSurfaceProps {
   readonly children: ReactNode;
@@ -25,6 +30,8 @@ interface SelectionChoiceSurfaceProps {
   readonly className?: string;
   readonly contentClassName: string;
   readonly rowStyle?: StyleProp<ViewStyle>;
+  /** A colour instead of the brand (RAPP-845): a pale face, and a full fill when chosen. */
+  readonly tone?: RaisedTone;
 }
 
 /** One raised picker surface for full-width cards and compact option buttons. */
@@ -40,6 +47,7 @@ export function SelectionChoiceSurface({
   className,
   contentClassName,
   rowStyle,
+  tone,
 }: SelectionChoiceSurfaceProps) {
   const defaultRowStyle = useRaisedChoiceFaceStyle();
   return (
@@ -55,15 +63,16 @@ export function SelectionChoiceSurface({
       style={raisedSurfaceWrapperStyle}
       className={`relative ${className ?? ''}`}
       faceStyle={rowStyle ?? defaultRowStyle}
-      faceClassName={`${FACE_CLASS} ${contentClassName}`}
+      faceClassName={`${faceClassName(tone)} ${contentClassName}`}
       inlineOffset={tokens.languageChoice.shadowInlineOffset}
       blockOffset={tokens.languageChoice.shadowBlockOffset}
-      shadow={<RaisedSurfaceEdge />}
+      shadow={<RaisedSurfaceEdge tone={tone} />}
     >
+      <RaisedToneWash tone={tone} />
       <SelectionTransition
         active={isSelected === true}
         duration="base"
-        className="absolute inset-0 bg-secondary"
+        className={`absolute inset-0 ${tone === undefined ? 'bg-secondary' : raisedToneClassNames(tone).fill}`}
         style={continuousCorners}
       />
       {children}
