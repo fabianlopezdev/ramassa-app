@@ -18,7 +18,12 @@ import { tokens } from '@ramassa/shared/tokens';
  * every option is its own face on that edge, split from the next by a line.
  * Pressing an option sinks that face onto the edge like a key, while the rest
  * of the bar stays up. The chosen option fills with the yellow the chosen
- * filter chip uses. Every option has the same width and the
+ * filter chip uses.
+ *
+ * With two options the icon sits beside the label. From three, each option
+ * is about a third of the screen, and a long word such as "Històries" would
+ * break inside itself, so the icon goes above the label and the word gets the
+ * option's whole width (RAPP-852). Every option has the same width and the
  * row stretches every option to the tallest one, so a label that wraps to two
  * lines keeps the row edge to edge with equal heights.
  */
@@ -35,6 +40,8 @@ export interface SegmentedControlOption<Key extends string> {
 }
 
 const { shadowInlineOffset, shadowBlockOffset } = tokens.languageChoice;
+/** From this many options, the icon goes above the label. */
+const STACKED_LAYOUT_MIN_OPTIONS = 3;
 
 // The bar's outer corners belong to its first and last options, matching the
 // `rounded-lg` of the edge under the bar.
@@ -56,6 +63,8 @@ interface SegmentedControlOptionViewProps<Key extends string> extends SegmentedC
   readonly isSelected: boolean;
   /** The last option closes the bar with its end border and sinks toward the end too. */
   readonly isLast: boolean;
+  /** The icon above the label, for a bar of three or more options. */
+  readonly isStacked: boolean;
   /** The height of a raised choice, with the bar's outer corners where this option has them. */
   readonly faceStyle: StyleProp<ViewStyle>;
   /** Those outer corners alone, so the yellow fill keeps inside the border. */
@@ -73,6 +82,7 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
   testID,
   isSelected,
   isLast,
+  isStacked,
   faceStyle,
   cornerStyle,
   languageFontClass,
@@ -91,9 +101,9 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
       isSelected={isSelected}
       className="flex-1"
       faceStyle={faceStyle}
-      faceClassName={`relative flex-1 flex-row items-center justify-center gap-sm overflow-hidden border-y border-s border-primary bg-white px-sm py-xs ${
-        isLast ? 'border-e' : ''
-      }`}
+      faceClassName={`relative flex-1 items-center justify-center overflow-hidden border-y border-s border-primary bg-white px-sm py-xs ${
+        isStacked ? 'gap-xs' : 'flex-row gap-sm'
+      } ${isLast ? 'border-e' : ''}`}
       inlineOffset={isLast ? shadowInlineOffset : 0}
       blockOffset={shadowBlockOffset}
       shadow={null}
@@ -112,27 +122,29 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
           color={contentColor}
         />
       )}
-      <Text
-        numberOfLines={2}
-        className={`shrink text-center text-lg font-bold ${
-          isSelected ? 'text-neutral-900' : 'text-primary-dark'
-        } ${languageFontClass}`}
-      >
-        {label}
-      </Text>
-      {visibleCount === null ? null : (
-        <View
-          accessible={false}
-          className="items-center justify-center rounded-full bg-primary-dark px-sm"
+      <View className="shrink flex-row items-center justify-center gap-xs">
+        <Text
+          numberOfLines={2}
+          className={`shrink text-center text-lg font-bold ${
+            isSelected ? 'text-neutral-900' : 'text-primary-dark'
+          } ${languageFontClass}`}
         >
-          <Text
-            style={styles.count}
-            className={`text-sm font-bold text-white ${languageFontClass}`}
+          {label}
+        </Text>
+        {visibleCount === null ? null : (
+          <View
+            accessible={false}
+            className="items-center justify-center rounded-full bg-primary-dark px-sm"
           >
-            {visibleCount}
-          </Text>
-        </View>
-      )}
+            <Text
+              style={styles.count}
+              className={`text-sm font-bold text-white ${languageFontClass}`}
+            >
+              {visibleCount}
+            </Text>
+          </View>
+        )}
+      </View>
     </PressableDepth>
   );
 }) as <Key extends string>(
@@ -208,6 +220,7 @@ export function SegmentedControl<Key extends string>({
           testID={option.testID}
           isSelected={selected === option.key}
           isLast={index === lastIndex}
+          isStacked={options.length >= STACKED_LAYOUT_MIN_OPTIONS}
           {...positionStyles[optionPosition(index, lastIndex)]}
           languageFontClass={languageFontClass}
           onSelect={onSelect}
