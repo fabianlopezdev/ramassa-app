@@ -23,8 +23,7 @@
     "dismiss": "الان نه"
   },
   "toDo": {
-    "title": "کارهای مانده",
-    "count": "{{current}} از {{total}}"
+    "title": "کارهای مانده"
   },
   "nextActivity": {
     "title": "برنامه بعدی"

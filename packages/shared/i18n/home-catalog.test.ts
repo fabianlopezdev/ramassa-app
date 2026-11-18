@@ -14,13 +14,13 @@ const HOME_FEED_KEYS = [
   'category.social',
   'category.urgent',
   'pinned',
+  'unseen',
   'emptyTitle',
   'emptyBody',
   'loadFailed',
   'retryAction',
   'loading',
   'toDo.title',
-  'toDo.count',
   'nextActivity.title',
 ] as const;
 

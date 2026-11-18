@@ -23,8 +23,7 @@
     "dismiss": "Ara no"
   },
   "toDo": {
-    "title": "Per fer",
-    "count": "{{current}} de {{total}}"
+    "title": "Per fer"
   },
   "nextActivity": {
     "title": "Pròxima activitat"

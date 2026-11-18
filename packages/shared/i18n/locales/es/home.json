@@ -23,8 +23,7 @@
     "dismiss": "Ahora no"
   },
   "toDo": {
-    "title": "Pendiente",
-    "count": "{{current}} de {{total}}"
+    "title": "Pendiente"
   },
   "nextActivity": {
     "title": "Próxima actividad"

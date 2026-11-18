@@ -1,7 +1,8 @@
 /**
- * Per fer on Inici (RAPP-790): the first thing waiting for her, one card at a
- * time, with "1 de 2" when more wait. Answering or putting off the card shows
- * the next one. Nothing waiting: the block is not rendered.
+ * Per fer on Inici (RAPP-790): everything waiting for her, each form and
+ * survey in its own card, one under the other (RAPP-824), so the number on the
+ * Inici tab matches what she sees. Answering or putting off a card removes it.
+ * Nothing waiting: the block is not rendered.
  */
 
 import { PendingFormPrompt } from '@/components/forms/pending-form-prompt';
@@ -18,22 +19,20 @@ interface HomeToDoProps {
 
 export function HomeToDo({ items, languageFontClass }: HomeToDoProps) {
   const { t } = useTranslation('home');
-  const current = items[0];
-  if (current === undefined) return null;
-  const count = items.length > 1 ? t('toDo.count', { current: 1, total: items.length }) : undefined;
+  if (items.length === 0) return null;
 
   return (
     <View testID="home-to-do" className="gap-sm">
-      <HomeSectionHeader
-        title={t('toDo.title')}
-        trailing={count}
-        languageFontClass={languageFontClass}
-      />
-      {current.kind === 'form' ? (
-        <PendingFormPrompt key={current.key} form={current.form} />
-      ) : (
-        <SurveyPromptCard key={current.key} survey={current.survey} />
-      )}
+      <HomeSectionHeader title={t('toDo.title')} languageFontClass={languageFontClass} />
+      <View className="gap-md">
+        {items.map((item) =>
+          item.kind === 'form' ? (
+            <PendingFormPrompt key={item.key} form={item.form} />
+          ) : (
+            <SurveyPromptCard key={item.key} survey={item.survey} />
+          ),
+        )}
+      </View>
     </View>
   );
 }

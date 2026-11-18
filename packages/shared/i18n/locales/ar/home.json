@@ -23,8 +23,7 @@
     "dismiss": "ليس الآن"
   },
   "toDo": {
-    "title": "بانتظارك",
-    "count": "{{current}} من {{total}}"
+    "title": "بانتظارك"
   },
   "nextActivity": {
     "title": "النشاط القادم"
