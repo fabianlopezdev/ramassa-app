@@ -11,10 +11,9 @@
  */
 import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
-import { forwardSymbol } from '@/components/layout/openable-card';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+import { Icon, type IconName } from '@/components/icons/icon';
 import type { ReactNode } from 'react';
-import { View } from 'react-native';
+import { I18nManager, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 const leadingBlockStyle = { minWidth: tokens.spacing['2xl'] } as const;
@@ -24,16 +23,9 @@ const leadingBlockStyle = { minWidth: tokens.spacing['2xl'] } as const;
  * organization's brand colour like the card's border, with nothing behind it
  * (RAPP-832).
  */
-export function RaisedCardSymbol({ name }: { readonly name: SymbolViewProps['name'] }) {
+export function RaisedCardSymbol({ name }: { readonly name: IconName }) {
   const brandColor = useBrandColor();
-  return (
-    <SymbolView
-      accessible={false}
-      name={name}
-      size={tokens.spacing['2xl']}
-      tintColor={brandColor}
-    />
-  );
+  return <Icon name={name} weight="boldDuotone" size={tokens.spacing['2xl']} color={brandColor} />;
 }
 
 interface RaisedCardProps {
@@ -75,11 +67,10 @@ export function RaisedCard({
       <View className="flex-1 justify-center gap-xs">{children}</View>
       {showsArrow ? (
         <View className="justify-center">
-          <SymbolView
-            accessible={false}
-            name={forwardSymbol}
-            size={tokens.fontSize.xl}
-            tintColor={brandColor}
+          <Icon
+            name={I18nManager.isRTL ? 'chevron-left' : 'chevron-right'}
+            size={tokens.fontSize['2xl']}
+            color={brandColor}
           />
         </View>
       ) : null}

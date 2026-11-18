@@ -12,7 +12,7 @@ import { I18nManager, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 // iOS flips `chevron.forward` itself; the Material glyph needs the direction.
-export const forwardSymbol: SymbolViewProps['name'] = {
+const forwardSymbol: SymbolViewProps['name'] = {
   ios: 'chevron.forward',
   android: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',
   web: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',

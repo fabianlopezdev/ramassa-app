@@ -6,14 +6,7 @@
  */
 import { Badge } from '@/components/layout/badge';
 import { RaisedCard, RaisedCardSymbol } from '@/components/layout/raised-card';
-import type { SymbolViewProps } from 'expo-symbols';
 import { Text } from 'react-native';
-
-const toDoSymbol: SymbolViewProps['name'] = {
-  ios: 'list.clipboard',
-  android: 'assignment',
-  web: 'assignment',
-};
 
 interface ToDoRowProps {
   readonly testID?: string;
@@ -43,7 +36,7 @@ export function ToDoRow({
       testID={testID}
       accessibilityLabel={accessibilityLabel}
       onOpen={onOpen}
-      leading={<RaisedCardSymbol name={toDoSymbol} />}
+      leading={<RaisedCardSymbol name="clipboard" />}
     >
       {markLabel === undefined ? null : (
         <Badge

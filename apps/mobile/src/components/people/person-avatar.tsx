@@ -9,10 +9,10 @@
  * place of the initial (RAPP-819). Lists of people keep the initial, because
  * the letter is what tells two people apart.
  */
+import { Icon } from '@/components/icons/icon';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { Image } from 'expo-image';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { memo, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
@@ -60,12 +60,6 @@ const styles = StyleSheet.create({
   photo: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
 });
 
-const personSymbol: SymbolViewProps['name'] = {
-  ios: 'person.fill',
-  android: 'person',
-  web: 'person',
-};
-
 /** The first letter of the name, or nothing for an empty one. */
 function personInitial(name: string | null | undefined): string {
   const first = [...(name ?? '').trim()][0];
@@ -105,11 +99,11 @@ export const PersonAvatar = memo(function PersonAvatar({
       style={[styles.circle, styles[size]]}
     >
       {fallback === 'person' ? (
-        <SymbolView
-          accessible={false}
-          name={personSymbol}
+        <Icon
+          name="user"
+          weight="boldDuotone"
           size={PERSON_AVATAR_SIZE[size] / 2}
-          tintColor={tokens.colors.white}
+          color={tokens.colors.white}
         />
       ) : (
         <Text
