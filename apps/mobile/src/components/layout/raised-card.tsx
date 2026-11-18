@@ -22,6 +22,10 @@
  * A card may open with a photo (RAPP-852), such as a forum post's or a
  * story's: full width across the top of the face, clipped by its corners,
  * with the row under it.
+ *
+ * A card may be a tile in a grid (RAPP-854), such as an Ajuda category: the
+ * same face, block and divider with tighter padding and gaps, no arrow, and
+ * it fills its cell so the tiles in a row share a height.
  */
 import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
@@ -37,6 +41,7 @@ const leadingBlockStyle = { minWidth: tokens.spacing['2xl'] } as const;
 // The face keeps its side padding for the row; the photo reaches past it.
 const mediaBleedStyle = { marginHorizontal: -tokens.spacing.lg } as const;
 const ROW_CLASS_NAME = 'flex-row items-stretch gap-md';
+const TILE_ROW_CLASS_NAME = 'flex-1 flex-row items-stretch gap-sm';
 
 /**
  * An icon for the block at the start of a card: as wide as the block, in the
@@ -64,6 +69,8 @@ interface RaisedCardProps {
   readonly tone?: RaisedTone;
   /** A full-width photo above the row, such as a post's image. */
   readonly media?: ReactNode;
+  /** A tile in a grid: tighter, no arrow, fills its cell. */
+  readonly tile?: boolean;
   readonly children: ReactNode;
 }
 
@@ -79,6 +86,7 @@ export function RaisedCard({
   count = null,
   tone,
   media,
+  tile = false,
   children,
 }: RaisedCardProps) {
   const brandColor = useBrandColor();
@@ -87,14 +95,17 @@ export function RaisedCard({
     <>
       {leading === undefined ? null : (
         <>
-          <View className="items-center justify-center" style={leadingBlockStyle}>
+          <View
+            className="items-center justify-center"
+            style={tile ? undefined : leadingBlockStyle}
+          >
             {leading}
           </View>
           <View accessible={false} className="border-s-2 border-neutral-300" />
         </>
       )}
       <View className="flex-1 justify-center gap-xs">{children}</View>
-      {showsArrow ? (
+      {showsArrow && !tile ? (
         <View className="justify-center">
           <Icon name={FORWARD_CHEVRON} size={tokens.fontSize['2xl']} color={brandColor} />
         </View>
@@ -107,7 +118,11 @@ export function RaisedCard({
       label={accessibilityLabel}
       accessibilityRole="link"
       onPress={onOpen}
-      contentClassName={hasMedia ? 'gap-md pb-md' : `${ROW_CLASS_NAME} py-md`}
+      contentClassName={
+        hasMedia ? 'gap-md pb-md' : `${tile ? TILE_ROW_CLASS_NAME : ROW_CLASS_NAME} py-md`
+      }
+      className={tile ? 'flex-1' : undefined}
+      paddingClassName={tile ? 'px-sm' : undefined}
       tone={tone}
     >
       {hasMedia ? (

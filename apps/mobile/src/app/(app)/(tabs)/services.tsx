@@ -15,7 +15,7 @@ import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { ServiceCard } from '@/components/services/service-card';
-import { ServiceCategoryList } from '@/components/services/service-category-list';
+import { ServiceCategoryGrid } from '@/components/services/service-category-grid';
 import { ServiceFilterPanel } from '@/components/services/service-filter-panel';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { isNetworkStateOnline } from '@/lib/network-status';
@@ -268,7 +268,7 @@ export default function ServicesScreen() {
               {t('playerServices:categoryHint')}
             </Text>
           </View>
-          <ServiceCategoryList categories={categoriesQuery.data ?? []} onSelect={selectCategory} />
+          <ServiceCategoryGrid categories={categoriesQuery.data ?? []} onSelect={selectCategory} />
         </View>
       </PageWidth>,
       'player-services-categories',

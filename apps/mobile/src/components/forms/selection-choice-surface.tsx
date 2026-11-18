@@ -13,7 +13,7 @@ import type { ReactNode } from 'react';
 import { type AccessibilityRole, type StyleProp, type ViewStyle } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
-const FACE_CLASS = `relative overflow-hidden ${outlinedSurfaceClassName()} px-lg`;
+const FACE_CLASS = `relative overflow-hidden ${outlinedSurfaceClassName()}`;
 
 interface SelectionChoiceSurfaceProps {
   readonly children: ReactNode;
@@ -25,6 +25,8 @@ interface SelectionChoiceSurfaceProps {
   readonly isSelected?: boolean;
   readonly onPress: () => void;
   readonly className?: string;
+  /** The face's side padding; a grid tile takes less (RAPP-854). */
+  readonly paddingClassName?: string;
   readonly contentClassName: string;
   readonly rowStyle?: StyleProp<ViewStyle>;
   /** A colour for the face (RAPP-845), as a pale wash. */
@@ -42,6 +44,7 @@ export function SelectionChoiceSurface({
   isSelected,
   onPress,
   className,
+  paddingClassName = 'px-lg',
   contentClassName,
   rowStyle,
   tone,
@@ -60,7 +63,7 @@ export function SelectionChoiceSurface({
       style={raisedSurfaceWrapperStyle}
       className={`relative ${className ?? ''}`}
       faceStyle={rowStyle ?? defaultRowStyle}
-      faceClassName={`${FACE_CLASS} ${contentClassName}`}
+      faceClassName={`${FACE_CLASS} ${paddingClassName} ${contentClassName}`}
       inlineOffset={tokens.languageChoice.shadowInlineOffset}
       blockOffset={tokens.languageChoice.shadowBlockOffset}
       shadow={<RaisedSurfaceEdge />}

@@ -28,9 +28,9 @@ interface ServiceCategoryRowProps {
 }
 
 /**
- * One category as the card Inici uses for Formularis i enquestes (RAPP-854):
- * its icon in a circle of the category's own colour (RAPP-856), the divider,
- * its name and the arrow.
+ * One category as a tile of the card Inici uses for Formularis i enquestes
+ * (RAPP-854): its icon in a circle of the category's own colour (RAPP-856),
+ * the divider and its name.
  */
 const ServiceCategoryRow = memo(function ServiceCategoryRow({
   id,
@@ -42,20 +42,23 @@ const ServiceCategoryRow = memo(function ServiceCategoryRow({
 }: ServiceCategoryRowProps) {
   const handlePress = useCallback(() => onSelect(id), [id, onSelect]);
   return (
-    <RaisedIconCard
-      testID={`service-category-${slug}`}
-      icon={categoryIcons[slug] ?? defaultCategoryIcon}
-      iconWash={serviceCategoryWash(color)}
-      title={title}
-      accessibilityLabel={title}
-      languageFontClass={languageFontClass}
-      onOpen={handlePress}
-    />
+    <View className="basis-[46%] grow">
+      <RaisedIconCard
+        testID={`service-category-${slug}`}
+        icon={categoryIcons[slug] ?? defaultCategoryIcon}
+        iconWash={serviceCategoryWash(color)}
+        title={title}
+        accessibilityLabel={title}
+        languageFontClass={languageFontClass}
+        onOpen={handlePress}
+        tile
+      />
+    </View>
   );
 });
 
-/** The Ajuda service categories, one card per row like the cards on Inici. */
-export function ServiceCategoryList({
+/** The Ajuda service categories, two tiles to a row. */
+export function ServiceCategoryGrid({
   categories,
   onSelect,
 }: {
@@ -65,7 +68,7 @@ export function ServiceCategoryList({
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   return (
-    <View className="gap-md">
+    <View className="flex-row flex-wrap gap-md">
       {categories.map((category) => {
         const title = resolveLocalizedText(category.name, language);
         if (title === undefined) return null;

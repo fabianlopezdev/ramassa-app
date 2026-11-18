@@ -14,6 +14,7 @@ import {
   type RaisedCardBadge,
 } from '@/components/layout/raised-card';
 import { Text } from 'react-native';
+import { tokens } from '@ramassa/shared/tokens';
 
 interface RaisedIconCardProps {
   readonly testID?: string;
@@ -28,6 +29,8 @@ interface RaisedIconCardProps {
   /** A number in a circle on the top edge near the end, such as unread messages. */
   readonly count?: string | null;
   readonly languageFontClass: string;
+  /** A tile in a grid, such as an Ajuda category: tighter, no arrow, smaller name. */
+  readonly tile?: boolean;
   readonly onOpen: () => void;
 }
 
@@ -41,6 +44,7 @@ export function RaisedIconCard({
   badge = null,
   count = null,
   languageFontClass,
+  tile = false,
   onOpen,
 }: RaisedIconCardProps) {
   return (
@@ -52,13 +56,16 @@ export function RaisedIconCard({
         iconWash === undefined ? (
           <RaisedCardSymbol name={icon} />
         ) : (
-          <IconDisc name={icon} wash={iconWash} />
+          <IconDisc name={icon} wash={iconWash} size={tile ? tokens.fontSize.xl : undefined} />
         )
       }
       badge={badge}
       count={count}
+      tile={tile}
     >
-      <Text className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}>
+      <Text
+        className={`text-start ${tile ? 'text-md' : 'text-xl'} font-bold text-neutral-900 ${languageFontClass}`}
+      >
         {title}
       </Text>
       {detail === undefined ? null : (
