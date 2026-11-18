@@ -41,7 +41,12 @@ const leadingBlockStyle = { minWidth: tokens.spacing['2xl'] } as const;
 // The face keeps its side padding for the row; the photo reaches past it.
 const mediaBleedStyle = { marginHorizontal: -tokens.spacing.lg } as const;
 const ROW_CLASS_NAME = 'flex-row items-stretch gap-md';
-const TILE_ROW_CLASS_NAME = 'flex-1 flex-row items-stretch gap-sm';
+/**
+ * A tile is half the width of a card, so its row keeps the spacing tight
+ * (RAPP-870): a name such as "Alfabetització" fits whole at the size every
+ * other tile uses.
+ */
+const TILE_ROW_CLASS_NAME = 'flex-1 flex-row items-stretch gap-xs';
 
 /**
  * An icon for the block at the start of a card: as wide as the block, in the
@@ -136,7 +141,7 @@ export function RaisedCard({
         hasMedia ? 'gap-md pb-md' : `${tile ? TILE_ROW_CLASS_NAME : ROW_CLASS_NAME} py-md`
       }
       className={tile ? 'flex-1' : undefined}
-      paddingClassName={tile ? 'px-sm' : undefined}
+      paddingClassName={tile ? 'px-xs' : undefined}
       tone={tone}
     >
       {hasMedia ? (

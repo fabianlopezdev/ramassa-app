@@ -4,8 +4,7 @@
  * circle of the category's own colour (RAPP-856, RAPP-868), the divider and
  * its name. Serveis and Guies both draw their categories with it, so a change
  * here reaches both. Tiles go in pairs, so a lone tile or the last of an odd
- * number keeps half the width, like every other tile; a long name steps down
- * a size before a word would break (see `WholeWordsText`).
+ * number keeps half the width, like every other tile.
  */
 import type { IconName } from '@/components/icons/icon';
 import { RaisedIconCard } from '@/components/layout/raised-icon-card';

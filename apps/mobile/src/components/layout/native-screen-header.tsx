@@ -21,20 +21,23 @@ const headerStyles = {
 export function NativeScreenHeader({
   title = '',
   surface = 'page',
+  backgroundColor,
 }: {
   readonly title?: string;
   /** The background of the screen under the header. */
   readonly surface?: keyof typeof headerStyles;
+  /** A screen on its own colour, such as an open Ajuda category's wash (RAPP-870). */
+  readonly backgroundColor?: string;
 }) {
   const options = useMemo(
     () => ({
       headerShown: true,
       headerBackButtonDisplayMode: 'minimal' as const,
       headerShadowVisible: false,
-      headerStyle: headerStyles[surface],
+      headerStyle: backgroundColor === undefined ? headerStyles[surface] : { backgroundColor },
       title,
     }),
-    [surface, title],
+    [backgroundColor, surface, title],
   );
   return <Stack.Screen options={options} />;
 }
