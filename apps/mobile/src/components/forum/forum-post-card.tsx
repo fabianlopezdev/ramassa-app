@@ -1,7 +1,7 @@
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
 import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
 import type { RaisedTone } from '@/components/layout/raised-surface';
-import { AuthorLine } from '@/components/people/person-avatar';
+import { PersonAvatar } from '@/components/people/person-avatar';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { Image } from 'expo-image';
@@ -18,9 +18,13 @@ const styles = StyleSheet.create({
 
 /**
  * A forum post on Comunitat as the shared raised card (RAPP-852): its photo
- * across the top, the author, a preview of the text and the number of
+ * across the top, the author's avatar in the block before the divider
+ * (RAPP-859), the author's name, a preview of the text and the number of
  * replies, in the colour of its category. A pinned post carries the word on
  * the card's top edge, like "Nou" on an avis.
+ *
+ * Without a photo the avatar shows the person icon in place of the initial,
+ * so a photo is what makes her card hers.
  */
 export const ForumPostCard = memo(function ForumPostCard({
   post,
@@ -40,7 +44,7 @@ export const ForumPostCard = memo(function ForumPostCard({
   /** The colour of the post's category, as a wash on the card. */
   readonly tone?: RaisedTone;
   readonly authorLabel: string;
-  /** A team member's photo (RAPP-639); players show their initial. */
+  /** The author's photo (RAPP-639); without one, the person icon. */
   readonly authorAvatarKey: string | null;
   readonly repliesLabel: string;
   readonly pinnedLabel: string;
@@ -79,6 +83,14 @@ export const ForumPostCard = memo(function ForumPostCard({
       onOpen={open}
       badge={badge}
       tone={tone}
+      leading={
+        <PersonAvatar
+          name={post.author_first_name}
+          avatarKey={authorAvatarKey}
+          size="card"
+          fallback="person"
+        />
+      }
       media={
         imageSource === null ? null : (
           <Image
@@ -92,12 +104,9 @@ export const ForumPostCard = memo(function ForumPostCard({
         )
       }
     >
-      <AuthorLine
-        name={post.author_first_name}
-        avatarKey={authorAvatarKey}
-        label={authorLabel}
-        languageFontClass={languageFontClass}
-      />
+      <Text className={`text-start text-md font-bold text-primary-dark ${languageFontClass}`}>
+        {authorLabel}
+      </Text>
       {post.content === null ? null : (
         <ForumPlainText
           content={post.content}

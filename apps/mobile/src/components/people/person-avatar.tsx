@@ -20,12 +20,14 @@ import { tokens } from '@ramassa/shared/tokens';
 
 /**
  * `small` beside chat bubbles and forum author lines, `medium` on an article,
- * `header` on the photo button that opens her profile (a full touch target).
+ * `header` on the photo button that opens her profile (a full touch target),
+ * `card` in the start block of a raised card, as wide as the block (RAPP-859).
  */
 export const PERSON_AVATAR_SIZE = {
   small: 28,
   medium: 40,
   header: tokens.tapTarget.min,
+  card: tokens.spacing['2xl'],
   profile: tokens.spacing['3xl'] * 2,
 } as const;
 export type PersonAvatarSize = keyof typeof PERSON_AVATAR_SIZE;
@@ -45,6 +47,11 @@ const styles = StyleSheet.create({
     width: PERSON_AVATAR_SIZE.header,
     height: PERSON_AVATAR_SIZE.header,
     borderRadius: PERSON_AVATAR_SIZE.header / 2,
+  },
+  card: {
+    width: PERSON_AVATAR_SIZE.card,
+    height: PERSON_AVATAR_SIZE.card,
+    borderRadius: PERSON_AVATAR_SIZE.card / 2,
   },
   profile: {
     width: PERSON_AVATAR_SIZE.profile,
@@ -107,7 +114,7 @@ export const PersonAvatar = memo(function PersonAvatar({
         />
       ) : (
         <Text
-          className={`font-semibold text-white ${size === 'profile' ? 'text-2xl' : size === 'small' ? 'text-xs' : size === 'header' ? 'text-lg' : 'text-md'}`}
+          className={`font-semibold text-white ${size === 'profile' ? 'text-2xl' : size === 'small' ? 'text-xs' : size === 'header' || size === 'card' ? 'text-lg' : 'text-md'}`}
           allowFontScaling={false}
         >
           {personInitial(name)}
