@@ -13,6 +13,7 @@
  * that already point here keep working.
  */
 
+import { ICON_LICENCE } from '@/components/icons/icon';
 import { NavRow } from '@/components/layout/nav-row';
 import { ProfileScreenFrame } from '@/components/profile/profile-screen-frame';
 import { logout } from '@/lib/auth';
@@ -100,6 +101,13 @@ export default function ProfileScreen() {
         className={`text-start text-xs leading-body text-neutral-600 ${languageFontClass}`}
       >
         {t('common:fundingAcknowledgment')}
+      </Text>
+      {/* The icon set's licence asks for a credit she can reach (RAPP-834). */}
+      <Text
+        testID="icon-credit"
+        className={`text-start text-xs leading-body text-neutral-600 ${languageFontClass}`}
+      >
+        {ICON_LICENCE.credit}
       </Text>
       {DevMenuEntry === null ? null : <DevMenuEntry />}
     </ProfileScreenFrame>
