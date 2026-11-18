@@ -1,19 +1,7 @@
 import { FilterChips } from '@/components/layout/filter-chips';
 import { SegmentedControl } from '@/components/layout/segmented-control';
-import type { SymbolViewProps } from 'expo-symbols';
 import { useMemo } from 'react';
 import type { PlayerEventCategoryFilter } from '@ramassa/shared/events';
-
-const listViewSymbol: SymbolViewProps['name'] = {
-  ios: 'list.bullet',
-  android: 'view_list',
-  web: 'view_list',
-};
-const monthViewSymbol: SymbolViewProps['name'] = {
-  ios: 'calendar',
-  android: 'calendar_month',
-  web: 'calendar_month',
-};
 
 export interface PlayerEventFilterOption {
   readonly id: string;
@@ -81,13 +69,13 @@ export function EventViewToggle({
           key: 'list',
           label: listLabel,
           accessibilityLabel: listAccessibilityLabel,
-          symbol: listViewSymbol,
+          symbol: 'list',
         },
         {
           key: 'calendar',
           label: calendarLabel,
           accessibilityLabel: calendarAccessibilityLabel,
-          symbol: monthViewSymbol,
+          symbol: 'calendar',
         },
       ] as const,
     [calendarAccessibilityLabel, calendarLabel, listAccessibilityLabel, listLabel],

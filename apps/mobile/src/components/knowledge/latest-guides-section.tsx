@@ -1,3 +1,4 @@
+import { Icon } from '@/components/icons/icon';
 import { KnowledgeArticleCard } from '@/components/knowledge/knowledge-article-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -5,18 +6,11 @@ import { selectLatestPlayerGuides } from '@/lib/player-guides';
 import { usePlayerKnowledgeArticles } from '@/lib/player-knowledge';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { tokens } from '@ramassa/shared/tokens';
-
-const allGuidesSymbol: SymbolViewProps['name'] = {
-  ios: 'book.closed.fill',
-  android: 'menu_book',
-  web: 'menu_book',
-};
 
 /** The Ajuda tab's "Guies" section: the latest guides and the door to all of them. */
 export function LatestGuidesSection() {
@@ -61,11 +55,11 @@ export function LatestGuidesSection() {
         style={continuousCorners}
         className="min-h-recommended flex-row items-center justify-center gap-sm rounded-md border border-primary px-lg"
       >
-        <SymbolView
-          accessible={false}
-          name={allGuidesSymbol}
+        <Icon
+          name="book"
+          weight="boldDuotone"
           size={tokens.fontSize.xl}
-          tintColor={tokens.colors.primary.dark}
+          color={tokens.colors.primary.dark}
         />
         <Text className={`text-md font-bold text-primary-dark ${languageFontClass}`}>
           {t('knowledge:allGuides')}

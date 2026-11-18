@@ -5,25 +5,18 @@
  * end. The Xat tab and the profile menu use it, so a player meets the same
  * shape in both places.
  */
+import { FORWARD_CHEVRON } from '@/components/icons/direction';
+import { Icon, type IconName } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { memo } from 'react';
-import { I18nManager, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
-
-// SF Symbols mirror `chevron.forward` with the layout on iOS, so only the
-// Material names pick a side, as `AuthBackButton` does.
-const forwardChevron: SymbolViewProps['name'] = {
-  ios: 'chevron.forward',
-  android: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',
-  web: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',
-};
 
 export interface NavRowProps {
   readonly label: string;
-  readonly icon: SymbolViewProps['name'];
+  readonly icon: IconName;
   readonly onPress: () => void;
   readonly testID: string;
   /** A short state under the label, such as the status of her request. */
@@ -59,12 +52,7 @@ export const NavRow = memo(function NavRow({
       style={continuousCorners}
       className="min-h-recommended flex-row items-center gap-md rounded-lg border border-neutral-200 bg-white px-md py-sm"
     >
-      <SymbolView
-        accessible={false}
-        name={icon}
-        size={tokens.fontSize['2xl']}
-        tintColor={iconColor}
-      />
+      <Icon name={icon} weight="boldDuotone" size={tokens.fontSize['2xl']} color={iconColor} />
       <View className="flex-1 gap-xs">
         <Text
           className={`text-start text-form font-bold ${
@@ -89,12 +77,7 @@ export const NavRow = memo(function NavRow({
       )}
       {/* An action row (sign out) opens no screen, so it shows no arrow. */}
       {tone === 'danger' ? null : (
-        <SymbolView
-          accessible={false}
-          name={forwardChevron}
-          size={tokens.fontSize.lg}
-          tintColor={tokens.colors.neutral[500]}
-        />
+        <Icon name={FORWARD_CHEVRON} size={tokens.fontSize.lg} color={tokens.colors.neutral[500]} />
       )}
     </PressableScale>
   );

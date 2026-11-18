@@ -58,17 +58,41 @@ const LICENCE = {
  * ("clipboard") and never the job ("to do").
  */
 const ICONS: Readonly<Record<string, string>> = {
+  book: 'book',
+  briefcase: 'case',
   calendar: 'calendar',
+  'calendar-check': 'calendar-check',
   chat: 'chat-round',
+  'chat-text': 'chat-round-line',
   chats: 'dialog-2',
   'chevron-left': 'alt-arrow-left',
   'chevron-right': 'alt-arrow-right',
   clipboard: 'clipboard-list',
+  clock: 'clock-circle',
+  document: 'document-text',
+  gallery: 'gallery',
+  globe: 'global',
+  'graduation-cap': 'square-academic-cap',
   grid: 'widget',
+  'heart-pulse': 'heart-pulse',
   // The set's plain `home` in bold duotone is built from a mask, which this
   // script does not read; `home-smile` is paths only.
   home: 'home-smile',
+  'id-card': 'user-id',
+  lightbulb: 'lightbulb',
+  list: 'list',
+  lock: 'lock-keyhole',
+  logout: 'logout-2',
+  pencil: 'pen-new-square',
+  plus: 'add-circle',
+  scale: 'justice-scale',
+  shield: 'shield-check',
+  smartphone: 'smartphone',
+  ticket: 'ticket',
+  translate: 'translate',
   user: 'user',
+  users: 'users-group-rounded',
+  'wifi-off': 'wi-fi-off',
 };
 
 interface IconPath {

@@ -12,9 +12,9 @@
  * status bar a second time while the strip is up. A plain view, so the app
  * lock cover hides it like any other screen content.
  */
+import { Icon } from '@/components/icons/icon';
 import { useIsOnline } from '@/lib/use-is-online';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -26,12 +26,6 @@ import {
 import { tokens } from '@ramassa/shared/tokens';
 
 const styles = StyleSheet.create({ fill: { flex: 1 } });
-
-const offlineSymbol: SymbolViewProps['name'] = {
-  ios: 'wifi.slash',
-  android: 'wifi_off',
-  web: 'wifi_off',
-};
 
 function ShellOfflineBanner({ topInset }: { readonly topInset: number }) {
   const { t } = useTranslation('common');
@@ -47,12 +41,7 @@ function ShellOfflineBanner({ topInset }: { readonly topInset: number }) {
         accessibilityLabel={t('offline')}
         className="flex-row items-center justify-center gap-xs border-b border-neutral-200 bg-neutral-100 px-lg py-xs"
       >
-        <SymbolView
-          accessible={false}
-          name={offlineSymbol}
-          size={tokens.fontSize.md}
-          tintColor={tokens.colors.neutral[700]}
-        />
+        <Icon name="wifi-off" size={tokens.fontSize.md} color={tokens.colors.neutral[700]} />
         <Text className={`text-center text-sm font-medium text-neutral-800 ${languageFontClass}`}>
           {t('offline')}
         </Text>

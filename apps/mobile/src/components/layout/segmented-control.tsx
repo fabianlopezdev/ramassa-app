@@ -1,10 +1,10 @@
+import { Icon, type IconName } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import {
   composeContinuousViewStyle,
   composeViewStyles,
   continuousCorners,
 } from '@/lib/continuous-corners';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { memo, useCallback, type JSX } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
@@ -23,7 +23,7 @@ export interface SegmentedControlOption<Key extends string> {
   /** A count shown after the label when it is above zero. */
   readonly count?: number;
   /** Decorative icon above the label: players navigate by icon shape. */
-  readonly symbol?: SymbolViewProps['name'];
+  readonly symbol?: IconName;
   readonly testID?: string;
 }
 
@@ -77,11 +77,11 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
       }`}
     >
       {symbol === undefined ? null : (
-        <SymbolView
-          accessible={false}
+        <Icon
           name={symbol}
+          weight={isSelected ? 'boldDuotone' : 'linear'}
           size={tokens.fontSize.xl}
-          tintColor={isSelected ? tokens.colors.primary.dark : tokens.colors.neutral[600]}
+          color={isSelected ? tokens.colors.primary.dark : tokens.colors.neutral[600]}
         />
       )}
       <View className="flex-row items-center justify-center gap-xs">

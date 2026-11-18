@@ -3,6 +3,7 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { Icon } from '@/components/icons/icon';
 import { LatestGuidesSection } from '@/components/knowledge/latest-guides-section';
 import { PageWidth } from '@/components/layout/content-width';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
@@ -23,7 +24,6 @@ import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -42,13 +42,6 @@ const styles = StyleSheet.create({
   },
 });
 const keyExtractor = (service: PlayerServiceRow) => service.id;
-// The Ajuda tab's own icon, so the way back to the grid reads as this tab's start.
-const categoryGridSymbol: SymbolViewProps['name'] = {
-  ios: 'square.grid.2x2.fill',
-  android: 'category',
-  web: 'category',
-};
-
 function hasFilters(filters: PlayerServiceFilterSelection): boolean {
   return (
     filters.zone !== undefined ||
@@ -264,11 +257,11 @@ export default function ServicesScreen() {
             style={continuousCorners}
             className="min-h-recommended flex-row items-center gap-sm rounded-md border border-neutral-300 bg-white px-lg"
           >
-            <SymbolView
-              accessible={false}
-              name={categoryGridSymbol}
+            <Icon
+              name="grid"
+              weight="boldDuotone"
               size={tokens.fontSize.xl}
-              tintColor={tokens.colors.primary.dark}
+              color={tokens.colors.primary.dark}
             />
             <Text className={`text-start text-md font-bold text-primary-dark ${languageFontClass}`}>
               {t('playerServices:backCategories')}

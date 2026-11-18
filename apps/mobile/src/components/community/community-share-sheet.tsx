@@ -1,8 +1,8 @@
+import { Icon, type IconName } from '@/components/icons/icon';
 import { AppSheet } from '@/components/layout/app-sheet';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -10,10 +10,10 @@ import { tokens } from '@ramassa/shared/tokens';
 
 export type CommunityShareChoice = 'post' | 'media' | 'story';
 
-const choiceSymbols: Readonly<Record<CommunityShareChoice, SymbolViewProps['name']>> = {
-  post: { ios: 'text.bubble.fill', android: 'forum', web: 'forum' },
-  media: { ios: 'photo.on.rectangle.angled', android: 'photo_library', web: 'photo_library' },
-  story: { ios: 'square.and.pencil', android: 'edit_note', web: 'edit_note' },
+const choiceIcons: Readonly<Record<CommunityShareChoice, IconName>> = {
+  post: 'chat-text',
+  media: 'gallery',
+  story: 'pencil',
 };
 const choiceLabelKeys = {
   post: 'forum:sharePost',
@@ -47,11 +47,11 @@ const ShareChoiceRow = memo(function ShareChoiceRow({
       style={continuousCorners}
       className={`min-h-recommended flex-row items-center gap-md rounded-lg border border-neutral-200 bg-neutral-50 p-md ${isDisabled ? 'opacity-50' : ''}`}
     >
-      <SymbolView
-        accessible={false}
-        name={choiceSymbols[choice]}
+      <Icon
+        name={choiceIcons[choice]}
+        weight="boldDuotone"
         size={tokens.fontSize['2xl']}
-        tintColor={tokens.colors.primary.DEFAULT}
+        color={tokens.colors.primary.DEFAULT}
       />
       <Text className={`flex-1 text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}>
         {label}

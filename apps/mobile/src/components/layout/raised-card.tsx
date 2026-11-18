@@ -11,9 +11,10 @@
  */
 import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
+import { FORWARD_CHEVRON } from '@/components/icons/direction';
 import { Icon, type IconName } from '@/components/icons/icon';
 import type { ReactNode } from 'react';
-import { I18nManager, View } from 'react-native';
+import { View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 const leadingBlockStyle = { minWidth: tokens.spacing['2xl'] } as const;
@@ -67,11 +68,7 @@ export function RaisedCard({
       <View className="flex-1 justify-center gap-xs">{children}</View>
       {showsArrow ? (
         <View className="justify-center">
-          <Icon
-            name={I18nManager.isRTL ? 'chevron-left' : 'chevron-right'}
-            size={tokens.fontSize['2xl']}
-            color={brandColor}
-          />
+          <Icon name={FORWARD_CHEVRON} size={tokens.fontSize['2xl']} color={brandColor} />
         </View>
       ) : null}
     </SelectionChoiceSurface>

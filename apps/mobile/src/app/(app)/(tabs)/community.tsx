@@ -10,6 +10,7 @@ import {
 import { ForumCategoryTabs } from '@/components/forum/forum-category-tabs';
 import { ForumPostCard } from '@/components/forum/forum-post-card';
 import { GalleryGrid } from '@/components/gallery/gallery-grid';
+import { Icon } from '@/components/icons/icon';
 import { CommunityStoryList } from '@/components/knowledge/community-story-list';
 import { PageWidth } from '@/components/layout/content-width';
 import {
@@ -28,7 +29,6 @@ import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -48,26 +48,6 @@ const styles = StyleSheet.create({
   content: { paddingBottom: tokens.spacing['3xl'], paddingHorizontal: tokens.spacing.lg },
 });
 const postKeyExtractor = (post: ForumPostRow) => post.id;
-const shareSymbol: SymbolViewProps['name'] = {
-  ios: 'plus.circle.fill',
-  android: 'add_circle',
-  web: 'add_circle',
-};
-const forumSymbol: SymbolViewProps['name'] = {
-  ios: 'bubble.left.and.bubble.right.fill',
-  android: 'forum',
-  web: 'forum',
-};
-const gallerySymbol: SymbolViewProps['name'] = {
-  ios: 'photo.on.rectangle.angled',
-  android: 'photo_library',
-  web: 'photo_library',
-};
-const storiesSymbol: SymbolViewProps['name'] = {
-  ios: 'book.fill',
-  android: 'auto_stories',
-  web: 'auto_stories',
-};
 type CommunitySegment = 'forum' | 'gallery' | 'stories';
 const shareRoutes: Readonly<Record<CommunityShareChoice, Href>> = {
   post: '/forum/create' as Href,
@@ -119,19 +99,19 @@ export default function CommunityScreen() {
       {
         key: 'forum',
         label: t('forum:segmentForum'),
-        symbol: forumSymbol,
+        symbol: 'chats',
         testID: 'community-segment-forum',
       },
       {
         key: 'gallery',
         label: t('forum:segmentGallery'),
-        symbol: gallerySymbol,
+        symbol: 'gallery',
         testID: 'community-segment-gallery',
       },
       {
         key: 'stories',
         label: t('forum:segmentStories'),
-        symbol: storiesSymbol,
+        symbol: 'book',
         testID: 'community-segment-stories',
       },
     ],
@@ -204,11 +184,11 @@ export default function CommunityScreen() {
           style={continuousCorners}
           className="min-h-recommended flex-row items-center justify-center gap-sm rounded-md bg-primary px-lg"
         >
-          <SymbolView
-            accessible={false}
-            name={shareSymbol}
+          <Icon
+            name="plus"
+            weight="boldDuotone"
             size={tokens.fontSize.xl}
-            tintColor={tokens.colors.white}
+            color={tokens.colors.white}
           />
           <Text className={`text-md font-bold text-white ${languageFontClass}`}>
             {t('forum:share')}

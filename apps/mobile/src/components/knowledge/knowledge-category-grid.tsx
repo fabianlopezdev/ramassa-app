@@ -1,8 +1,8 @@
+import { Icon, type IconName } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import type { PlayerGuideFilter } from '@/lib/player-guides';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -10,48 +10,18 @@ import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import type { KnowledgeCategoryRow } from '@ramassa/shared/knowledge';
 import { tokens } from '@ramassa/shared/tokens';
 
-const allSymbol: SymbolViewProps['name'] = {
-  ios: 'rectangle.grid.2x2.fill',
-  android: 'apps',
-  web: 'apps',
-};
-const rightsSymbol: SymbolViewProps['name'] = {
-  ios: 'scale.3d',
-  android: 'gavel',
-  web: 'gavel',
-};
-const digitalSkillsSymbol: SymbolViewProps['name'] = {
-  ios: 'iphone',
-  android: 'smartphone',
-  web: 'smartphone',
-};
-const genderEqualitySymbol: SymbolViewProps['name'] = {
-  ios: 'shield.lefthalf.filled',
-  android: 'health_and_safety',
-  web: 'health_and_safety',
-};
-const defaultCategorySymbol: SymbolViewProps['name'] = {
-  ios: 'book.closed.fill',
-  android: 'auto_stories',
-  web: 'auto_stories',
-};
-
-function categorySymbol(slug: string): SymbolViewProps['name'] {
-  if (slug === 'rights-asylum') return rightsSymbol;
-  if (slug === 'digital-skills' || slug === 'digital-literacy') {
-    return digitalSkillsSymbol;
-  }
-  if (slug === 'gender-based-violence' || slug === 'gender-equality') {
-    return genderEqualitySymbol;
-  }
-  return defaultCategorySymbol;
+function categoryIcon(slug: string): IconName {
+  if (slug === 'rights-asylum') return 'scale';
+  if (slug === 'digital-skills' || slug === 'digital-literacy') return 'smartphone';
+  if (slug === 'gender-based-violence' || slug === 'gender-equality') return 'shield';
+  return 'book';
 }
 
 interface CategoryCardProps {
   readonly id: PlayerGuideFilter;
   readonly title: string;
   readonly hint: string;
-  readonly symbol: SymbolViewProps['name'];
+  readonly symbol: IconName;
   readonly selected: boolean;
   readonly languageFontClass: string;
   readonly onSelect: (filter: PlayerGuideFilter) => void;
@@ -81,11 +51,11 @@ const CategoryCard = memo(function CategoryCard({
           selected ? 'border-primary bg-primary/10' : 'border-neutral-200 bg-neutral-50'
         }`}
       >
-        <SymbolView
-          accessible={false}
+        <Icon
           name={symbol}
+          weight={selected ? 'boldDuotone' : 'linear'}
           size={tokens.fontSize['2xl']}
-          tintColor={selected ? tokens.colors.primary.dark : tokens.colors.neutral[600]}
+          color={selected ? tokens.colors.primary.dark : tokens.colors.neutral[600]}
         />
         <Text className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}>
           {title}
@@ -129,7 +99,7 @@ export function KnowledgeCategoryGrid({
           id="all"
           title={t('knowledge:guidesAll')}
           hint={t('guidesCount', { count: counts.all ?? 0 })}
-          symbol={allSymbol}
+          symbol="grid"
           selected={selected === 'all'}
           languageFontClass={languageFontClass}
           onSelect={onSelect}
@@ -143,7 +113,7 @@ export function KnowledgeCategoryGrid({
               id={category.id}
               title={title.text}
               hint={t('guidesCount', { count: counts[category.id] ?? 0 })}
-              symbol={categorySymbol(category.slug)}
+              symbol={categoryIcon(category.slug)}
               selected={selected === category.id}
               languageFontClass={languageFontClass}
               onSelect={onSelect}

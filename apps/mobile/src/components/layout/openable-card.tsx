@@ -4,19 +4,13 @@
  * it the same content renders as a plain card, so a dead end never looks like
  * a door.
  */
+import { FORWARD_CHEVRON } from '@/components/icons/direction';
+import { Icon } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import type { ReactNode } from 'react';
-import { I18nManager, View } from 'react-native';
+import { View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
-
-// iOS flips `chevron.forward` itself; the Material glyph needs the direction.
-const forwardSymbol: SymbolViewProps['name'] = {
-  ios: 'chevron.forward',
-  android: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',
-  web: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',
-};
 
 export function OpenableCard({
   testID,
@@ -57,12 +51,7 @@ export function OpenableCard({
       className={`min-h-recommended flex-row items-center gap-md ${className}`}
     >
       <View className="flex-1 gap-xs">{children}</View>
-      <SymbolView
-        accessible={false}
-        name={forwardSymbol}
-        size={tokens.fontSize.lg}
-        tintColor={tokens.colors.neutral[500]}
-      />
+      <Icon name={FORWARD_CHEVRON} size={tokens.fontSize.lg} color={tokens.colors.neutral[500]} />
     </PressableScale>
   );
 }
