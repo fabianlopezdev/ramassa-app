@@ -1,11 +1,11 @@
 {
   "rationaleTitle": "Vols rebre notificacions?",
-  "rationaleBody": "T'avisarem quan hi hagi una activitat nova, un canvi d'horari o un missatge de l'equip. Res més.",
+  "rationaleBody": "T'avisarem quan hi hagi una activitat nova, un canvi d'horari o un missatge del Ramassà. Res més.",
   "rationaleAccept": "D'acord, activa-les",
   "rationaleDecline": "Ara no",
   "eventFallbackBody": "Toca per veure l'activitat.",
   "announcementFallbackBody": "Toca per llegir l'avís.",
-  "messageTitle": "Nou missatge de l’equip",
+  "messageTitle": "Nou missatge del Ramassà",
   "messageBody": "Obre l'aplicació del Ramassà per llegir-lo.",
   "forumFlagTitle": "Nou contingut denunciat al fòrum",
   "forumFlagBody": "Obre la moderació del fòrum per revisar-lo.",

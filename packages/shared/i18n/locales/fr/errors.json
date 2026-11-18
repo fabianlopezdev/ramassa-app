@@ -1,5 +1,5 @@
 {
-  "AUTH-1": "Nous n’avons pas pu te connecter. Réessaie dans un moment. Si cela continue, demande de l’aide à l’équipe de Ramassà.",
+  "AUTH-1": "Nous n’avons pas pu te connecter. Réessaie dans un moment. Si cela continue, demande de l’aide au Ramassà.",
   "AUTH-2": "La session a expiré. Reconnecte-toi.",
   "AUTH-3": "Tu n’as pas la permission de faire cette action.",
   "AUTH-4": "Ce code n’est pas correct ou il a expiré. Demandes-en un nouveau.",
@@ -40,6 +40,6 @@
   "fallbackTitle": "Quelque chose n’a pas marché",
   "retry": "Réessaie",
   "errorCodeLabel": "Code d’erreur",
-  "AUTH-10": "Nous n’avons trouvé aucun compte avec cette adresse e-mail. Vérifie que c’est celle que tu as donnée à l’équipe de Ramassà. Si tu as besoin d’aide, demande à l’équipe.",
+  "AUTH-10": "Nous n’avons trouvé aucun compte avec cette adresse e-mail. Vérifie que c’est celle que tu as donnée au Ramassà. Si tu as besoin d’aide, demande au Ramassà.",
   "AUTH-11": "Nous ne pouvons pas envoyer de code à cette adresse e-mail. Vérifie qu’elle est bien écrite et utilise une adresse qui peut recevoir des messages."
 }

@@ -1,6 +1,6 @@
 {
   "title": "Galerie de la communauté",
-  "intro": "Partage des photos et des vidéos avec la communauté ou seulement avec l’équipe.",
+  "intro": "Partage des photos et des vidéos avec la communauté ou seulement avec le Ramassà.",
   "upload": "Partage du contenu",
   "uploadTitle": "Partage une photo ou une vidéo",
   "pickMedia": "Choisis une photo ou une vidéo",
@@ -15,7 +15,7 @@
   "privacy": "Qui peut le voir ?",
   "privacyLevels": {
     "community": "Toute la communauté",
-    "staff_only": "Seulement l’équipe"
+    "staff_only": "Seulement le Ramassà"
   },
   "consentReminder": "Je confirme que toutes les personnes qui apparaissent ont accepté de partager ce contenu.",
   "consentRequired": "Tu dois confirmer le consentement avant de publier.",
@@ -25,7 +25,7 @@
   "retry": "Réessaie",
   "loading": "Chargement de la galerie...",
   "loadFailed": "Impossible de charger ce contenu.",
-  "loadFailedHelp": "Vérifie la connexion et réessaie. Si ça ne marche toujours pas, partage le code avec l’équipe.",
+  "loadFailedHelp": "Vérifie la connexion et réessaie. Si ça ne marche toujours pas, partage le code avec le Ramassà.",
   "emptyTitle": "Rien n’a encore été partagé",
   "emptyBody": "Les photos et les vidéos partagées avec la communauté apparaîtront ici.",
   "offlineEmptyTitle": "La galerie n’est pas disponible sans connexion",
@@ -37,7 +37,7 @@
   "deleteTitle": "Veux-tu supprimer ce contenu ?",
   "deleteBody": "La photo ou la vidéo et sa miniature seront supprimées définitivement.",
   "cancel": "Annule",
-  "flag": "Préviens l’équipe",
+  "flag": "Préviens le Ramassà",
   "moderationTitle": "Modération de la galerie",
   "moderationIntro": "Masque ou affiche de nouveau n’importe quelle photo ou vidéo, même si personne ne l’a signalée.",
   "moderationTotal": "Éléments : {{count}}",

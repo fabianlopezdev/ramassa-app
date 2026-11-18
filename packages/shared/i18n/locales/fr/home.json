@@ -14,7 +14,7 @@
   "pinned": "À la une",
   "unseen": "Nouveau",
   "emptyTitle": "Pas encore d’annonces",
-  "emptyBody": "Quand l’équipe publiera une nouvelle, tu la trouveras ici.",
+  "emptyBody": "Quand le Ramassà publiera une nouvelle, tu la trouveras ici.",
   "loadFailed": "Nous n’avons pas pu charger les annonces.",
   "retryAction": "Réessaie",
   "loading": "Chargement des annonces",
@@ -29,7 +29,7 @@
     "delete": "Supprime",
     "cancel": "Annule",
     "deleteTitle": "Supprimer ce formulaire ?",
-    "deleteBody": "Tu ne pourras plus y répondre. L'équipe verra que tu l'as écarté."
+    "deleteBody": "Tu ne pourras plus y répondre. Le Ramassà verra que tu l'as écarté."
   },
   "toDo": {
     "title": "Formulaires et enquêtes"

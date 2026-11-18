@@ -16,7 +16,7 @@
   "playerLoadFailed": "تعذر تحميل الأنشطة.",
   "playerRetryAction": "حاولي مرة أخرى",
   "playerEmptyTitle": "لا توجد أنشطة قادمة",
-  "playerEmptyBody": "عندما ينشر الفريق نشاطا ستجدينه هنا.",
+  "playerEmptyBody": "عندما ينشر نادي راماسا نشاطا ستجدينه هنا.",
   "playerSelectedDate": "أنشطة يوم {{date}}",
   "playerNoEventsDate": "لا توجد أنشطة في هذا اليوم.",
   "playerOpenEvent": "فتح النشاط: {{title}}",

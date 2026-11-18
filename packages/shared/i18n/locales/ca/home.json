@@ -14,7 +14,7 @@
   "pinned": "Destacat",
   "unseen": "Nou",
   "emptyTitle": "Encara no hi ha avisos",
-  "emptyBody": "Quan l'equip publiqui una novetat, la trobaràs aquí.",
+  "emptyBody": "Quan el Ramassà publiqui una novetat, la trobaràs aquí.",
   "loadFailed": "No hem pogut carregar els avisos.",
   "retryAction": "Torna-ho a provar",
   "loading": "Carregant els avisos",
@@ -29,7 +29,7 @@
     "delete": "Elimina",
     "cancel": "Cancel·la",
     "deleteTitle": "Vols eliminar aquest formulari?",
-    "deleteBody": "Ja no el podràs respondre. L'equip veurà que l'has descartat."
+    "deleteBody": "Ja no el podràs respondre. El Ramassà veurà que l'has descartat."
   },
   "toDo": {
     "title": "Formularis i enquestes"
