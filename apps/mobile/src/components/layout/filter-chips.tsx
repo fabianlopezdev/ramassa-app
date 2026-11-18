@@ -4,7 +4,9 @@
  * and runs to the edge of the screen, where a cut-off chip shows there are
  * more. The announcement categories on Inici and the activity categories on
  * Activitats share it. A chip may take the colour of what it filters
- * (RAPP-845), such as the kind of an announcement.
+ * (RAPP-845), such as the kind of an announcement: its face is tinted and
+ * fills with the colour when chosen, while its border and edge stay in the
+ * brand, like every other chip.
  */
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
 import {
@@ -67,6 +69,7 @@ function FilterChipInner<Id extends string>({
       contentClassName="justify-center"
       rowStyle={chipStyle}
       tone={tone}
+      tonesOutline={false}
     >
       <Text
         className={`text-center text-md font-bold ${chipTextClassName(

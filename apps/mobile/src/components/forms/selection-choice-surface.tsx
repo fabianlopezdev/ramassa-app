@@ -32,6 +32,8 @@ interface SelectionChoiceSurfaceProps {
   readonly rowStyle?: StyleProp<ViewStyle>;
   /** A colour instead of the brand (RAPP-845): a pale face, and a full fill when chosen. */
   readonly tone?: RaisedTone;
+  /** Whether the border and edge take the tone too. Off keeps them in the brand. */
+  readonly tonesOutline?: boolean;
 }
 
 /** One raised picker surface for full-width cards and compact option buttons. */
@@ -48,8 +50,10 @@ export function SelectionChoiceSurface({
   contentClassName,
   rowStyle,
   tone,
+  tonesOutline = true,
 }: SelectionChoiceSurfaceProps) {
   const defaultRowStyle = useRaisedChoiceFaceStyle();
+  const outlineTone = tonesOutline ? tone : undefined;
   return (
     <PressableDepth
       testID={testID}
@@ -63,10 +67,10 @@ export function SelectionChoiceSurface({
       style={raisedSurfaceWrapperStyle}
       className={`relative ${className ?? ''}`}
       faceStyle={rowStyle ?? defaultRowStyle}
-      faceClassName={`${faceClassName(tone)} ${contentClassName}`}
+      faceClassName={`${faceClassName(outlineTone)} ${contentClassName}`}
       inlineOffset={tokens.languageChoice.shadowInlineOffset}
       blockOffset={tokens.languageChoice.shadowBlockOffset}
-      shadow={<RaisedSurfaceEdge tone={tone} />}
+      shadow={<RaisedSurfaceEdge tone={outlineTone} />}
     >
       <RaisedToneWash tone={tone} />
       <SelectionTransition
