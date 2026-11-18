@@ -48,9 +48,23 @@ const TILE_ROW_CLASS_NAME = 'flex-1 flex-row items-stretch gap-sm';
  * organization's brand colour like the card's border, with nothing behind it
  * (RAPP-832).
  */
-export function RaisedCardSymbol({ name }: { readonly name: IconName }) {
+export function RaisedCardSymbol({
+  name,
+  color,
+}: {
+  readonly name: IconName;
+  /** In place of the brand colour, such as the error red of signing out. */
+  readonly color?: string;
+}) {
   const brandColor = useBrandColor();
-  return <Icon name={name} weight="boldDuotone" size={tokens.spacing['2xl']} color={brandColor} />;
+  return (
+    <Icon
+      name={name}
+      weight="boldDuotone"
+      size={tokens.spacing['2xl']}
+      color={color ?? brandColor}
+    />
+  );
 }
 
 interface RaisedCardProps {

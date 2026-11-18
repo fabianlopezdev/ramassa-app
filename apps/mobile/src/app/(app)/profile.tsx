@@ -1,7 +1,7 @@
 /**
  * El meu perfil (RAPP-22, RAPP-794): opened from her photo at the top of every
- * tab, as a short menu of six rows. Each row opens one screen, except the last,
- * which signs her out.
+ * tab, as a short menu of six rows on the shared raised icon card (RAPP-863).
+ * Each row opens one screen, except the last, which signs her out.
  *
  * It stays the RGPD self-service surface. She sees and corrects her data under
  * "Les meves dades", and gives or withdraws her consents and asks for erasure
@@ -14,7 +14,7 @@
  */
 
 import { ICON_LICENCE } from '@/components/icons/icon';
-import { NavRow } from '@/components/layout/nav-row';
+import { RaisedIconCard } from '@/components/layout/raised-icon-card';
 import { ProfileScreenFrame } from '@/components/profile/profile-screen-frame';
 import { logout } from '@/lib/auth';
 import { useMyCustomFormsByPlace } from '@/lib/custom-forms';
@@ -49,52 +49,66 @@ export default function ProfileScreen() {
     <ProfileScreenFrame title={t('title')} testID="profile-menu">
       {/* The forms she put off with "Ara no" (RAPP-833); no row while there are none. */}
       {hasFormsForLater ? (
-        <NavRow
+        <RaisedIconCard
           testID="profile-open-forms-later"
           icon={playerNavIcons.formsLater}
-          label={t('home:later.title')}
-          onPress={openFormsLater}
+          title={t('home:later.title')}
+          accessibilityLabel={t('home:later.title')}
+          languageFontClass={languageFontClass}
+          onOpen={openFormsLater}
         />
       ) : null}
-      <NavRow
+      <RaisedIconCard
         testID="profile-open-data"
         icon={playerNavIcons.myData}
-        label={t('menu.data')}
-        onPress={openData}
+        title={t('menu.data')}
+        accessibilityLabel={t('menu.data')}
+        languageFontClass={languageFontClass}
+        onOpen={openData}
       />
-      <NavRow
+      <RaisedIconCard
         testID="profile-open-attendance"
         icon={playerNavIcons.attendance}
-        label={t('menu.attendance')}
-        onPress={openAttendance}
+        title={t('menu.attendance')}
+        accessibilityLabel={t('menu.attendance')}
+        languageFontClass={languageFontClass}
+        onOpen={openAttendance}
       />
-      <NavRow
+      <RaisedIconCard
         testID="profile-open-language"
         icon={playerNavIcons.language}
-        label={t('menu.language')}
-        onPress={openLanguage}
+        title={t('menu.language')}
+        accessibilityLabel={t('menu.language')}
+        languageFontClass={languageFontClass}
+        onOpen={openLanguage}
       />
       {/* The lock does not exist on the web. */}
       {Platform.OS === 'web' ? null : (
-        <NavRow
+        <RaisedIconCard
           testID="open-app-lock"
           icon={playerNavIcons.appLock}
-          label={t('menu.appLock')}
-          onPress={openAppLock}
+          title={t('menu.appLock')}
+          accessibilityLabel={t('menu.appLock')}
+          languageFontClass={languageFontClass}
+          onOpen={openAppLock}
         />
       )}
-      <NavRow
+      <RaisedIconCard
         testID="profile-open-privacy"
         icon={playerNavIcons.privacy}
-        label={t('menu.privacy')}
-        onPress={openPrivacy}
+        title={t('menu.privacy')}
+        accessibilityLabel={t('menu.privacy')}
+        languageFontClass={languageFontClass}
+        onOpen={openPrivacy}
       />
-      <NavRow
+      <RaisedIconCard
         testID="profile-sign-out"
         icon={playerNavIcons.signOut}
-        label={t('signOutAction')}
+        title={t('signOutAction')}
+        accessibilityLabel={t('signOutAction')}
+        languageFontClass={languageFontClass}
         tone="danger"
-        onPress={signOut}
+        onOpen={signOut}
       />
       <Text
         testID="generalitat-credit"

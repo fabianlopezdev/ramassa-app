@@ -4,7 +4,9 @@
  * arrow. The Per fer rows, the rows of the Xat tab and the Ajuda service
  * categories share it, so a row that opens something looks and presses the
  * same everywhere. With `iconWash` the icon sits in a circle of that colour,
- * such as an Ajuda category's own (RAPP-856).
+ * such as an Ajuda category's own (RAPP-856). El meu perfil uses it for its
+ * menu (RAPP-863); its sign-out row is `tone="danger"`: red icon and name, and
+ * no arrow, since it opens no screen.
  */
 import type { IconName } from '@/components/icons/icon';
 import { IconDisc } from '@/components/icons/icon-disc';
@@ -31,6 +33,8 @@ interface RaisedIconCardProps {
   readonly languageFontClass: string;
   /** A tile in a grid, such as an Ajuda category: tighter, no arrow, smaller name. */
   readonly tile?: boolean;
+  /** An action that ends something, such as signing out. */
+  readonly tone?: 'default' | 'danger';
   readonly onOpen: () => void;
 }
 
@@ -45,8 +49,10 @@ export function RaisedIconCard({
   count = null,
   languageFontClass,
   tile = false,
+  tone = 'default',
   onOpen,
 }: RaisedIconCardProps) {
+  const isDanger = tone === 'danger';
   return (
     <RaisedCard
       testID={testID}
@@ -54,7 +60,7 @@ export function RaisedIconCard({
       onOpen={onOpen}
       leading={
         iconWash === undefined ? (
-          <RaisedCardSymbol name={icon} />
+          <RaisedCardSymbol name={icon} color={isDanger ? tokens.colors.error : undefined} />
         ) : (
           <IconDisc name={icon} wash={iconWash} size={tile ? tokens.fontSize.xl : undefined} />
         )
@@ -62,9 +68,10 @@ export function RaisedIconCard({
       badge={badge}
       count={count}
       tile={tile}
+      showsArrow={!isDanger}
     >
       <Text
-        className={`text-start ${tile ? 'text-md' : 'text-xl'} font-bold text-neutral-900 ${languageFontClass}`}
+        className={`text-start ${tile ? 'text-md' : 'text-xl'} font-bold ${isDanger ? 'text-error' : 'text-neutral-900'} ${languageFontClass}`}
       >
         {title}
       </Text>
