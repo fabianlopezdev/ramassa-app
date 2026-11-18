@@ -79,32 +79,6 @@ export function RaisedSurfaceEdge({
   );
 }
 
-/** A raised surface that does not press: it holds controls that press on their own. */
-export function RaisedPanel({
-  children,
-  faceClassName,
-  faceStyle = continuousCorners,
-  shapeClassName = RAISED_SHAPE_CLASS_NAME,
-}: {
-  readonly children: ReactNode;
-  readonly faceClassName?: string;
-  /** A hoisted style for the face; it replaces the default continuous corners, so include them. */
-  readonly faceStyle?: StyleProp<ViewStyle>;
-  readonly shapeClassName?: string;
-}) {
-  return (
-    <View style={raisedSurfaceWrapperStyle} className="relative">
-      <RaisedSurfaceEdge shapeClassName={shapeClassName} />
-      <View
-        className={`${outlinedSurfaceClassName(shapeClassName)} ${faceClassName ?? ''}`}
-        style={faceStyle}
-      >
-        {children}
-      </View>
-    </View>
-  );
-}
-
 /**
  * A raised surface that presses: the face sinks onto its edge on touch. With
  * `pressedFillClassName` the face also fills while it is held down.
