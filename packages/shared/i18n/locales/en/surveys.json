@@ -37,6 +37,7 @@
   "closes": "Closes {{date}}",
   "promptEyebrow": "Your opinion matters",
   "promptAction": "Answer now",
+  "promptStarted": "Continue",
   "attributedNotice": "This response is not anonymous. Staff can see who responded.",
   "back": "Back",
   "next": "Continue",

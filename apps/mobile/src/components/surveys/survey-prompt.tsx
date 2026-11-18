@@ -1,3 +1,4 @@
+import { AttentionChip } from '@/components/home/attention-chip';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { usePlayerSurveys } from '@/lib/player-surveys';
@@ -19,20 +20,31 @@ export function EventSurveyPrompt({ eventId }: { readonly eventId: string }) {
 }
 
 export function SurveyPromptCard({ survey }: { readonly survey: PlayerSurvey | undefined }) {
-  const { t } = useTranslation('surveys');
+  const { t } = useTranslation(['surveys', 'home']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   if (survey === undefined) return null;
   const title = resolveSurveyCopy(survey.title, language);
+  // Her saved answers reopen with the survey, so a started one says so (RAPP-825).
+  const isStarted = survey.responseStatus === 'in_progress';
   return (
     <View
       className="gap-md rounded-lg border border-primary/20 bg-primary/5 p-lg"
       style={continuousCorners}
     >
-      <Text className={`text-start text-sm font-bold uppercase text-primary ${languageFontClass}`}>
-        {t('promptEyebrow')}
-      </Text>
+      <View className="flex-row flex-wrap items-center gap-sm">
+        <AttentionChip
+          label={isStarted ? t('promptStarted') : t('home:unseen')}
+          tone={isStarted ? 'started' : 'new'}
+          languageFontClass={languageFontClass}
+        />
+        <Text
+          className={`text-start text-sm font-bold uppercase text-primary ${languageFontClass}`}
+        >
+          {t('promptEyebrow')}
+        </Text>
+      </View>
       <Text className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}>
         {title}
       </Text>

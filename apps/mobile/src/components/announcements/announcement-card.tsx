@@ -1,4 +1,4 @@
-import { UnseenChip } from '@/components/home/unseen-chip';
+import { AttentionChip } from '@/components/home/attention-chip';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
@@ -77,7 +77,7 @@ function AnnouncementCardFrame({
       )}
       <View className="gap-sm p-md">
         <View className="flex-row flex-wrap items-center gap-sm">
-          <UnseenChip label={unseenLabel} languageFontClass={languageFontClass} />
+          <AttentionChip label={unseenLabel} languageFontClass={languageFontClass} />
           <View className="rounded-full bg-neutral-100 px-sm py-xs">
             <Text className={`text-sm font-medium text-neutral-700 ${languageFontClass}`}>
               {category}

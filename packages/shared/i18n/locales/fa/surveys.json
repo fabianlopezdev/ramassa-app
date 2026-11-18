@@ -37,6 +37,7 @@
   "closes": "پایان {{date}}",
   "promptEyebrow": "نظر شما مهم است",
   "promptAction": "اکنون پاسخ دهید",
+  "promptStarted": "ادامه",
   "attributedNotice": "این پاسخ ناشناس نیست. تیم می تواند ببیند چه کسی پاسخ داده است.",
   "back": "بازگشت",
   "next": "ادامه",

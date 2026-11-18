@@ -37,6 +37,7 @@
   "closes": "يغلق {{date}}",
   "promptEyebrow": "رأيك مهم",
   "promptAction": "أجيبي الآن",
+  "promptStarted": "متابعة",
   "attributedNotice": "هذا الرد ليس مجهولاً. يمكن للفريق معرفة من أجاب.",
   "back": "رجوع",
   "next": "متابعة",

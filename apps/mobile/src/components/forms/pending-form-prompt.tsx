@@ -5,6 +5,7 @@
  * a legal one never does (RAPP-771).
  */
 
+import { AttentionChip } from '@/components/home/attention-chip';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useDismissCustomForm } from '@/lib/custom-forms';
@@ -38,9 +39,15 @@ export function PendingFormPrompt({ form }: { readonly form: PendingCustomForm }
       className="gap-md rounded-lg border border-primary/20 bg-primary/5 p-lg"
       style={continuousCorners}
     >
-      <Text className={`text-start text-sm font-bold uppercase text-primary ${languageFontClass}`}>
-        {t('pendingForm.eyebrow')}
-      </Text>
+      <View className="flex-row flex-wrap items-center gap-sm">
+        {/* A half-answered form is not saved, so a form has no started state (RAPP-825). */}
+        <AttentionChip label={t('unseen')} languageFontClass={languageFontClass} />
+        <Text
+          className={`text-start text-sm font-bold uppercase text-primary ${languageFontClass}`}
+        >
+          {t('pendingForm.eyebrow')}
+        </Text>
+      </View>
       <Text className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}>
         {name}
       </Text>

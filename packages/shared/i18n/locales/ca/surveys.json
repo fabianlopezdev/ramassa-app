@@ -37,6 +37,7 @@
   "closes": "Tanca {{date}}",
   "promptEyebrow": "La teva opinió compta",
   "promptAction": "Respondre ara",
+  "promptStarted": "Continua",
   "attributedNotice": "Aquesta resposta no és anònima. L'equip podrà veure qui ha respost.",
   "back": "Enrere",
   "next": "Continua",

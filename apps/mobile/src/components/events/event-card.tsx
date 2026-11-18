@@ -1,4 +1,4 @@
-import { UnseenChip } from '@/components/home/unseen-chip';
+import { AttentionChip } from '@/components/home/attention-chip';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import type { TFunction } from 'i18next';
@@ -150,7 +150,7 @@ export const EventCard = memo(function EventCard({
         />
         <View className="gap-sm p-md">
           <View className="flex-row flex-wrap items-center gap-sm">
-            <UnseenChip label={unseenLabel} languageFontClass={languageFontClass} />
+            <AttentionChip label={unseenLabel} languageFontClass={languageFontClass} />
             <View className="flex-row items-center gap-xs rounded-full bg-neutral-100 px-sm py-xs">
               <View
                 accessible={false}
