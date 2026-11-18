@@ -6,12 +6,12 @@
   "eventFallbackBody": "اضغطي لعرض النشاط.",
   "announcementFallbackBody": "اضغطي لقراءة الإعلان.",
   "messageTitle": "رسالة جديدة من الفريق",
-  "messageBody": "افتحي Ramassà لقراءتها.",
+  "messageBody": "افتحي تطبيق Ramassà لقراءتها.",
   "forumFlagTitle": "محتوى جديد مُبلَّغ عنه في المنتدى",
   "forumFlagBody": "افتحي الإشراف على المنتدى لمراجعته.",
   "referralUpdateTitle": "تحديث جديد لإحالة",
   "referralUpdateBody": "افتحي سجل المشاركة لمراجعته.",
   "mentoringUpdateTitle": "تحديث بشأن الإرشاد",
-  "mentoringUpdateBody": "افتحي Ramassà لرؤية اليوم والوقت.",
+  "mentoringUpdateBody": "افتحي تطبيق Ramassà لرؤية اليوم والوقت.",
   "customFormFallbackBody": "اضغطي للإجابة عليه."
 }

@@ -6,7 +6,7 @@ env:
   PUSH_DECLINE: Ara no
   TAB_HOME: Inici
   TAB_CHAT: Contacte
-  CHAT_TITLE: Xat amb l’staff
+  CHAT_TITLE: Xat amb el Ramassà
   COMPOSER: Escriu un missatge
   OFFLINE: Els missatges quedaran en cua.
 ---

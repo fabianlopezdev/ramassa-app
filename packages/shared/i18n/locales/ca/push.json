@@ -6,12 +6,12 @@
   "eventFallbackBody": "Toca per veure l'activitat.",
   "announcementFallbackBody": "Toca per llegir l'avís.",
   "messageTitle": "Nou missatge de l’equip",
-  "messageBody": "Obre Ramassà per llegir-lo.",
+  "messageBody": "Obre l'aplicació del Ramassà per llegir-lo.",
   "forumFlagTitle": "Nou contingut denunciat al fòrum",
   "forumFlagBody": "Obre la moderació del fòrum per revisar-lo.",
   "referralUpdateTitle": "Nova actualització d’una derivació",
   "referralUpdateBody": "Obre la fitxa de la participant per revisar-la.",
   "mentoringUpdateTitle": "Actualització de la teva mentoria",
-  "mentoringUpdateBody": "Obre Ramassà per veure el dia i l’hora.",
+  "mentoringUpdateBody": "Obre l'aplicació del Ramassà per veure el dia i l’hora.",
   "customFormFallbackBody": "Toca per respondre'l."
 }
