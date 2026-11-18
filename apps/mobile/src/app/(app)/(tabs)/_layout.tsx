@@ -1,7 +1,7 @@
 import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { useUnreadMessages } from '@/lib/messaging';
 import { nativeTabsHostProps } from '@/lib/native-tabs-direction';
-import { playerNavIcons } from '@/lib/player-nav-icons';
+import { tabIcons } from '@/lib/tab-icons';
 import { unreadBadgeProps } from '@/lib/unread-badge';
 import { useHomeAttention } from '@/lib/use-home-attention';
 import { NativeTabs } from 'expo-router/native-tabs';
@@ -62,32 +62,29 @@ export default function TabsLayout() {
       tintColor={tokens.colors.primary.dark}
     >
       <NativeTabs.Trigger name="index" testID="player-tab-home">
-        <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
+        <NativeTabs.Trigger.Icon src={tabIcons.home} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.home')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Badge hidden={homeBadge.hidden}>
           {homeBadge.children}
         </NativeTabs.Trigger.Badge>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="events">
-        <NativeTabs.Trigger.Icon sf="calendar" md="calendar_month" />
+        <NativeTabs.Trigger.Icon src={tabIcons.calendar} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.events')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="chat" testID="player-tab-chat">
-        <NativeTabs.Trigger.Icon
-          sf={playerNavIcons.teamChat.ios}
-          md={playerNavIcons.teamChat.android}
-        />
+        <NativeTabs.Trigger.Icon src={tabIcons.chat} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.chat')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Badge hidden={unreadBadge.hidden}>
           {unreadBadge.children}
         </NativeTabs.Trigger.Badge>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="community" testID="player-tab-community">
-        <NativeTabs.Trigger.Icon sf="bubble.left.and.bubble.right.fill" md="chat" />
+        <NativeTabs.Trigger.Icon src={tabIcons.chats} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.community')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="services">
-        <NativeTabs.Trigger.Icon sf="square.grid.2x2.fill" md="category" />
+        <NativeTabs.Trigger.Icon src={tabIcons.grid} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.services')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>
