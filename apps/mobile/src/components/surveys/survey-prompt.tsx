@@ -28,6 +28,7 @@ export function SurveyPromptCard({ survey }: { readonly survey: PlayerSurvey | u
   const title = resolveSurveyCopy(survey.title, language);
   // Her saved answers reopen with the survey, so a started one says so (RAPP-825).
   const isStarted = survey.responseStatus === 'in_progress';
+  const actionLabel = isStarted ? t('promptStarted') : t('promptAction');
   return (
     <View
       className="gap-md rounded-lg border border-primary/20 bg-primary/5 p-lg"
@@ -35,7 +36,7 @@ export function SurveyPromptCard({ survey }: { readonly survey: PlayerSurvey | u
     >
       <View className="flex-row flex-wrap items-center gap-sm">
         <AttentionChip
-          label={isStarted ? t('promptStarted') : t('home:unseen')}
+          label={isStarted ? actionLabel : t('home:unseen')}
           tone={isStarted ? 'started' : 'new'}
           languageFontClass={languageFontClass}
         />
@@ -50,15 +51,13 @@ export function SurveyPromptCard({ survey }: { readonly survey: PlayerSurvey | u
       </Text>
       <PressableScale
         testID="survey-prompt-action"
-        accessibilityLabel={t('promptAction')}
+        accessibilityLabel={actionLabel}
         onPress={() => push(`/survey/${survey.id}` as Href)}
         haptic="tapLight"
         style={continuousCorners}
         className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
       >
-        <Text className={`text-md font-bold text-white ${languageFontClass}`}>
-          {t('promptAction')}
-        </Text>
+        <Text className={`text-md font-bold text-white ${languageFontClass}`}>{actionLabel}</Text>
       </PressableScale>
     </View>
   );
