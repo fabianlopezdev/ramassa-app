@@ -19,10 +19,16 @@ import { DEFAULT_LANGUAGE, resolveLocalizedText, useLanguage } from '@ramassa/sh
 
 interface HomeNextActivityProps {
   readonly occurrence: PlayerEventOccurrence | null;
+  /** New to her: not opened and not answered yet (RAPP-821). */
+  readonly isUnseen: boolean;
   readonly languageFontClass: string;
 }
 
-export function HomeNextActivity({ occurrence, languageFontClass }: HomeNextActivityProps) {
+export function HomeNextActivity({
+  occurrence,
+  isUnseen,
+  languageFontClass,
+}: HomeNextActivityProps) {
   const { t, i18n } = useTranslation(['home', 'events']);
   const { language } = useLanguage();
   const { push } = useRouter();
@@ -60,6 +66,7 @@ export function HomeNextActivity({ occurrence, languageFontClass }: HomeNextActi
   const time = timeFormatter.format(startsAt);
   const capacity = playerEventCapacityLabel(occurrence, t);
   const signup = playerEventSignupLabel(occurrence.signup?.state, t);
+  const unseenLabel = isUnseen ? t('home:unseen') : null;
 
   return (
     <View testID="home-next-activity" className="gap-sm">
@@ -75,7 +82,9 @@ export function HomeNextActivity({ occurrence, languageFontClass }: HomeNextActi
         location={occurrence.event.location}
         capacityLabel={capacity}
         signupLabel={signup}
+        unseenLabel={unseenLabel}
         accessibilityLabel={[
+          unseenLabel,
           t('events:playerOpenEvent', { title: title.text }),
           categoryName.text,
           date,

@@ -1,3 +1,4 @@
+import { UnseenChip } from '@/components/home/unseen-chip';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
@@ -19,6 +20,8 @@ export interface AnnouncementCardProps {
   readonly accessToken: string | undefined;
   readonly imageAlt: string | null;
   readonly accessibilityLabel: string;
+  /** Set while she has not seen the announcement (RAPP-821): the word shown on its mark. */
+  readonly unseenLabel?: string | null;
   readonly languageFontClass: string;
   readonly onOpen: (id: string) => void;
 }
@@ -37,6 +40,7 @@ function AnnouncementCardFrame({
   accessToken,
   imageAlt,
   accessibilityLabel,
+  unseenLabel = null,
   languageFontClass,
   onOpen,
   children,
@@ -73,6 +77,7 @@ function AnnouncementCardFrame({
       )}
       <View className="gap-sm p-md">
         <View className="flex-row flex-wrap items-center gap-sm">
+          <UnseenChip label={unseenLabel} languageFontClass={languageFontClass} />
           <View className="rounded-full bg-neutral-100 px-sm py-xs">
             <Text className={`text-sm font-medium text-neutral-700 ${languageFontClass}`}>
               {category}

@@ -8,6 +8,7 @@ import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
+import { useMarkAnnouncementSeen } from '@/lib/use-home-attention';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo } from 'react';
@@ -29,6 +30,7 @@ export default function AnnouncementDetailScreen() {
   const { data, refetch } = query;
   const retry = useCallback(() => void refetch(), [refetch]);
   const announcement = data?.find((row) => row.id === id);
+  useMarkAnnouncementSeen(announcement?.id);
   const title =
     announcement === undefined ? undefined : resolveLocalizedText(announcement.title, language);
   const body =

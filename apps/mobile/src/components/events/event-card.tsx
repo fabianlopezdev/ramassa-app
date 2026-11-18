@@ -1,3 +1,4 @@
+import { UnseenChip } from '@/components/home/unseen-chip';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import type { TFunction } from 'i18next';
@@ -105,6 +106,8 @@ export interface EventCardProps {
   readonly location: string;
   readonly capacityLabel: string;
   readonly signupLabel: string | null;
+  /** Set while the activity is new to her (RAPP-821): the word shown on its mark. */
+  readonly unseenLabel?: string | null;
   readonly accessibilityLabel: string;
   readonly languageFontClass: string;
   readonly onOpen: (eventId: string, occurrenceId: string) => void;
@@ -121,6 +124,7 @@ export const EventCard = memo(function EventCard({
   location,
   capacityLabel,
   signupLabel,
+  unseenLabel = null,
   accessibilityLabel,
   languageFontClass,
   onOpen,
@@ -146,6 +150,7 @@ export const EventCard = memo(function EventCard({
         />
         <View className="gap-sm p-md">
           <View className="flex-row flex-wrap items-center gap-sm">
+            <UnseenChip label={unseenLabel} languageFontClass={languageFontClass} />
             <View className="flex-row items-center gap-xs rounded-full bg-neutral-100 px-sm py-xs">
               <View
                 accessible={false}

@@ -19,18 +19,17 @@ import { PageWidth } from '@/components/layout/content-width';
 import { PlayerTabHeader, PlayerTabStateFrame } from '@/components/profile/player-tab-header';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
 import { useMyCustomForms } from '@/lib/custom-forms';
-import { pickNextPlayerActivity } from '@/lib/home-next-activity';
-import { buildHomeToDoQueue } from '@/lib/home-to-do';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { logger } from '@/lib/observability';
 import { usePlayerEvents } from '@/lib/player-events';
 import { usePlayerSurveys } from '@/lib/player-surveys';
+import { useHomeAttention, useHomeSeen, useMarkHomeItemsSeen } from '@/lib/use-home-attention';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
-import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
+import { FlashList, type ListRenderItemInfo, type ViewToken } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
-import { useRouter, type Href } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useFocusEffect, useIsFocused, useRouter, type Href } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import {
@@ -44,6 +43,14 @@ import { DEFAULT_LANGUAGE, resolveLocalizedText, useLanguage } from '@ramassa/sh
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_ANNOUNCEMENTS: readonly AnnouncementListRow[] = [];
+const NO_IDS: ReadonlySet<string> = new Set();
+
+/** An announcement is seen once most of its card stayed on screen this long (RAPP-821). */
+const SEEN_AFTER_MS = 1000;
+const announcementViewability = {
+  itemVisiblePercentThreshold: 60,
+  minimumViewTime: SEEN_AFTER_MS,
+} as const;
 
 const styles = StyleSheet.create({
   list: { flex: 1, backgroundColor: tokens.colors.white },
@@ -73,12 +80,59 @@ export default function HomeScreen() {
   const refetchForms = formsQuery.refetch;
   const refetchSurveys = surveysQuery.refetch;
   const refetchEvents = eventsQuery.refetch;
+  const refetchSeen = useHomeSeen().refetch;
 
-  const toDoItems = useMemo(
-    () => buildHomeToDoQueue(formsQuery.data, surveysQuery.data),
-    [formsQuery.data, surveysQuery.data],
+  // The same count the Inici tab shows as its badge (RAPP-821).
+  const { toDoItems, nextActivity, isNextActivityUnseen, unseenAnnouncementIds } =
+    useHomeAttention();
+  const { mutate: markSeen } = useMarkHomeItemsSeen();
+  const isFocused = useIsFocused();
+  const isFocusedRef = useRef(isFocused);
+  const unseenIdsRef = useRef(unseenAnnouncementIds);
+  const viewableIdsRef = useRef<readonly string[]>([]);
+  // Announcements seen during this visit keep their mark until she leaves Inici,
+  // so she can still tell which ones were new.
+  const [seenThisVisitIds, setSeenThisVisitIds] = useState<ReadonlySet<string>>(NO_IDS);
+  useEffect(() => {
+    isFocusedRef.current = isFocused;
+    unseenIdsRef.current = unseenAnnouncementIds;
+  }, [isFocused, unseenAnnouncementIds]);
+
+  const markViewableSeen = useCallback(() => {
+    if (!isFocusedRef.current) return;
+    const ids = viewableIdsRef.current.filter((id) => unseenIdsRef.current.has(id));
+    if (ids.length === 0) return;
+    setSeenThisVisitIds((current) => new Set([...current, ...ids]));
+    markSeen({ announcementIds: ids, eventIds: [] });
+  }, [markSeen]);
+  const onViewableItemsChanged = useCallback(
+    ({ viewableItems }: { readonly viewableItems: readonly ViewToken<AnnouncementListRow>[] }) => {
+      viewableIdsRef.current = viewableItems
+        .filter((token) => token.isViewable)
+        .map((token) => token.item.id);
+      markViewableSeen();
+    },
+    [markViewableSeen],
   );
-  const nextActivity = useMemo(() => pickNextPlayerActivity(eventsQuery.data), [eventsQuery.data]);
+  // Cards already on screen when she comes back to Inici, or when a new
+  // announcement arrives, raise no viewability change, so they are checked here.
+  useEffect(() => {
+    if (!isFocused || unseenAnnouncementIds.size === 0) return;
+    const timer = setTimeout(markViewableSeen, SEEN_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, [isFocused, markViewableSeen, unseenAnnouncementIds]);
+  useFocusEffect(useCallback(() => () => setSeenThisVisitIds(NO_IDS), []));
+  const markedAnnouncementIds = useMemo(
+    () =>
+      seenThisVisitIds.size === 0
+        ? unseenAnnouncementIds
+        : new Set([...unseenAnnouncementIds, ...seenThisVisitIds]),
+    [seenThisVisitIds, unseenAnnouncementIds],
+  );
+  const listExtraData = useMemo(
+    () => ({ category, markedAnnouncementIds }),
+    [category, markedAnnouncementIds],
+  );
 
   const announcements = useMemo(
     () => filterAndOrderPlayerAnnouncements(data ?? EMPTY_ANNOUNCEMENTS, category),
@@ -102,8 +156,10 @@ export default function HomeScreen() {
       const imageAlt =
         item.image_alt === null ? undefined : resolveLocalizedText(item.image_alt, language);
       const categoryLabel = announcementCategoryLabel(item.category, t);
+      const unseenLabel = markedAnnouncementIds.has(item.id) ? t('unseen') : null;
       const publishedDate = dateFormatter.format(new Date(item.published_at ?? item.created_at));
       const completeLabel = [
+        unseenLabel,
         categoryLabel,
         item.is_pinned ? t('pinned') : null,
         title.text,
@@ -123,6 +179,7 @@ export default function HomeScreen() {
         accessToken: session?.access_token,
         imageAlt: imageAlt?.text ?? null,
         accessibilityLabel: completeLabel,
+        unseenLabel,
         languageFontClass,
         onOpen: openAnnouncement,
       };
@@ -137,7 +194,15 @@ export default function HomeScreen() {
         </PageWidth>
       );
     },
-    [dateFormatter, language, languageFontClass, openAnnouncement, session?.access_token, t],
+    [
+      dateFormatter,
+      language,
+      languageFontClass,
+      markedAnnouncementIds,
+      openAnnouncement,
+      session?.access_token,
+      t,
+    ],
   );
 
   const onRefresh = useCallback(() => {
@@ -145,7 +210,8 @@ export default function HomeScreen() {
     void refetchForms();
     void refetchSurveys();
     void refetchEvents();
-  }, [refetch, refetchEvents, refetchForms, refetchSurveys]);
+    void refetchSeen();
+  }, [refetch, refetchEvents, refetchForms, refetchSeen, refetchSurveys]);
 
   const onListLoad = useCallback(
     ({ elapsedTimeInMs }: { readonly elapsedTimeInMs: number }) => {
@@ -189,7 +255,9 @@ export default function HomeScreen() {
       renderItem={renderAnnouncement}
       keyExtractor={keyExtractor}
       getItemType={getItemType}
-      extraData={category}
+      extraData={listExtraData}
+      viewabilityConfig={announcementViewability}
+      onViewableItemsChanged={onViewableItemsChanged}
       style={styles.list}
       contentContainerStyle={contentContainerStyle}
       contentInsetAdjustmentBehavior="automatic"
@@ -201,7 +269,11 @@ export default function HomeScreen() {
           <PlayerTabHeader title={t('nav:tabs.home')} />
           {/* Per fer, then her next activity, then the announcements (RAPP-790). */}
           <HomeToDo items={toDoItems} languageFontClass={languageFontClass} />
-          <HomeNextActivity occurrence={nextActivity} languageFontClass={languageFontClass} />
+          <HomeNextActivity
+            occurrence={nextActivity}
+            isUnseen={isNextActivityUnseen}
+            languageFontClass={languageFontClass}
+          />
           <HomeSectionHeader title={t('feedTitle')} languageFontClass={languageFontClass} />
           <CategoryFilters
             selected={category}

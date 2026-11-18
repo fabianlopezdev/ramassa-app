@@ -10,6 +10,7 @@
     "urgent": "Urgent"
   },
   "pinned": "À la une",
+  "unseen": "Nouveau",
   "emptyTitle": "Pas encore d’annonces",
   "emptyBody": "Quand l’équipe publiera une nouvelle, tu la trouveras ici.",
   "loadFailed": "Nous n’avons pas pu charger les annonces.",

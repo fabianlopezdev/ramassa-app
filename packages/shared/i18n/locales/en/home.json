@@ -10,6 +10,7 @@
     "urgent": "Urgent"
   },
   "pinned": "Pinned",
+  "unseen": "New",
   "emptyTitle": "No announcements yet",
   "emptyBody": "When the team posts an update, you will find it here.",
   "loadFailed": "We could not load the announcements.",

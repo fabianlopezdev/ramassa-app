@@ -2,6 +2,7 @@ import { useUnreadMessages } from '@/lib/messaging';
 import { nativeTabsHostProps } from '@/lib/native-tabs-direction';
 import { playerNavIcons } from '@/lib/player-nav-icons';
 import { unreadBadgeProps } from '@/lib/unread-badge';
+import { useHomeAttention } from '@/lib/use-home-attention';
 import { NativeTabs } from 'expo-router/native-tabs';
 import { useTranslation } from 'react-i18next';
 import { I18nManager } from 'react-native';
@@ -11,7 +12,8 @@ import { tokens } from '@ramassa/shared/tokens';
  * The player navigation shell (RAPP-16): five bottom tabs, the SPEC's whole
  * primary IA (max 2 nav levels). Since RAPP-789 they are Inici, Activitats,
  * Xat, Comunitat and Ajuda: Xat holds everything private with the team and
- * carries the unread badge, and her profile opens from her photo at the top of
+ * carries the unread badge, Inici carries the count of what she has not dealt
+ * with yet (RAPP-821), and her profile opens from her photo at the top of
  * each tab (RAPP-794), because Android allows five tabs and no more.
  *
  * NativeTabs (not JS tabs) on purpose: the native tab bar gives platform-correct
@@ -38,6 +40,8 @@ export default function TabsLayout() {
   const { t } = useTranslation('nav');
   const unread = useUnreadMessages().data ?? 0;
   const unreadBadge = unreadBadgeProps(unread);
+  // What on Inici she has not dealt with yet, the same count the screen shows (RAPP-821).
+  const homeBadge = unreadBadgeProps(useHomeAttention().count);
   return (
     <NativeTabs
       // The tab bar mirrors with the screens (RAPP-531).
@@ -55,6 +59,9 @@ export default function TabsLayout() {
       <NativeTabs.Trigger name="index" testID="player-tab-home">
         <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.home')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Badge hidden={homeBadge.hidden}>
+          {homeBadge.children}
+        </NativeTabs.Trigger.Badge>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="events">
         <NativeTabs.Trigger.Icon sf="calendar" md="calendar_month" />

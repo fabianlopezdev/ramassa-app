@@ -10,6 +10,7 @@
     "urgent": "Urgent"
   },
   "pinned": "Destacat",
+  "unseen": "Nou",
   "emptyTitle": "Encara no hi ha avisos",
   "emptyBody": "Quan l'equip publiqui una novetat, la trobaràs aquí.",
   "loadFailed": "No hem pogut carregar els avisos.",

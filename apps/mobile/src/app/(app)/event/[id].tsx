@@ -12,6 +12,7 @@ import { isEventSignupActionDisabled } from '@/lib/event-signup-policy';
 import { playErrorHaptic } from '@/lib/haptics/haptics';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { useEventSignup, usePlayerEvents } from '@/lib/player-events';
+import { useMarkEventSeen } from '@/lib/use-home-attention';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import * as Linking from 'expo-linking';
 import { useNetworkState } from 'expo-network';
@@ -50,6 +51,7 @@ export default function EventDetailScreen() {
   const row =
     data?.find((candidate) => candidate.occurrence_id === occurrenceId) ??
     data?.find((candidate) => candidate.event.id === id);
+  useMarkEventSeen(row?.event.id);
   const title = row === undefined ? undefined : resolveLocalizedText(row.event.title, language);
   const category =
     row === undefined ? undefined : resolveLocalizedText(row.event.category.name, language);
