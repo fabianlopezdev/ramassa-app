@@ -6,6 +6,7 @@ import {
 import { Icon } from '@/components/icons/icon';
 import { PlayerGuideList } from '@/components/knowledge/player-guide-list';
 import { PageWidth } from '@/components/layout/content-width';
+import { Divider } from '@/components/layout/divider';
 import {
   SegmentedControl,
   type SegmentedControlOption,
@@ -184,17 +185,21 @@ export default function ServicesScreen() {
   );
 
   // One header for both segments, so the switch stays in place while either loads.
+  // The line under the switch is Inici's section divider (RAPP-854).
   const tabHeader = (
-    <View className="gap-md">
-      <PlayerTabHeader title={t('nav:tabs.services')} />
-      <SegmentedControl
-        testID="ajuda-segments"
-        options={segmentOptions}
-        selected={segment}
-        onSelect={setSegment}
-        accessibilityLabel={t('playerServices:segmentsLabel')}
-        languageFontClass={languageFontClass}
-      />
+    <View className="gap-lg">
+      <View className="gap-md">
+        <PlayerTabHeader title={t('nav:tabs.services')} />
+        <SegmentedControl
+          testID="ajuda-segments"
+          options={segmentOptions}
+          selected={segment}
+          onSelect={setSegment}
+          accessibilityLabel={t('playerServices:segmentsLabel')}
+          languageFontClass={languageFontClass}
+        />
+      </View>
+      <Divider />
     </View>
   );
 

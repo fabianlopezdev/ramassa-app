@@ -6,6 +6,7 @@ import { memo, useCallback } from 'react';
 import { Text, View } from 'react-native';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import type { AdminServiceCategory } from '@ramassa/shared/services';
+import { tokens } from '@ramassa/shared/tokens';
 
 const categoryIcons: Readonly<Record<string, IconName>> = {
   housing: 'home',
@@ -44,10 +45,12 @@ const ServiceCategoryCard = memo(function ServiceCategoryCard({
         accessibilityLabel={title}
         onPress={handlePress}
         className="flex-1"
-        faceClassName="flex-1 items-start gap-sm p-md"
+        faceClassName="flex-1 flex-row items-center gap-sm px-sm py-md"
       >
-        <IconDisc name={categoryIcons[slug] ?? defaultCategoryIcon} />
-        <Text className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}>
+        <IconDisc name={categoryIcons[slug] ?? defaultCategoryIcon} size={tokens.fontSize.xl} />
+        <Text
+          className={`flex-1 text-start text-md font-bold text-neutral-900 ${languageFontClass}`}
+        >
           {title}
         </Text>
       </RaisedPressable>

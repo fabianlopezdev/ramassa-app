@@ -21,7 +21,7 @@ export function IconDisc({
   return (
     <View
       accessible={false}
-      className="items-center justify-center self-start rounded-full bg-primary-light/20 p-sm"
+      className="items-center justify-center rounded-full bg-primary-light/20 p-sm"
     >
       <Icon name={name} weight={weight} size={size} color={brandColor} />
     </View>
