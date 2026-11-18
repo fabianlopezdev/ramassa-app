@@ -26,6 +26,9 @@
   },
   "later": {
     "title": "برای بعد",
+    "waiting": "{{count}} فرم برای بعد",
+    "waiting_one": "{{count}} فرم برای بعد",
+    "waiting_other": "{{count}} فرم برای بعد",
     "delete": "حذف",
     "cancel": "لغو",
     "deleteTitle": "این فرم حذف شود؟",

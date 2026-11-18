@@ -26,6 +26,9 @@
   },
   "later": {
     "title": "Para más tarde",
+    "waiting": "{{count}} formularios para más tarde",
+    "waiting_one": "{{count}} formulario para más tarde",
+    "waiting_other": "{{count}} formularios para más tarde",
     "delete": "Eliminar",
     "cancel": "Cancelar",
     "deleteTitle": "¿Quieres eliminar este formulario?",

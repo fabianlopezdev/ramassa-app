@@ -17,7 +17,6 @@ import { ICON_LICENCE } from '@/components/icons/icon';
 import { RaisedIconCard } from '@/components/layout/raised-icon-card';
 import { ProfileScreenFrame } from '@/components/profile/profile-screen-frame';
 import { logout } from '@/lib/auth';
-import { useMyCustomFormsByPlace } from '@/lib/custom-forms';
 import { playerNavIcons } from '@/lib/player-nav-icons';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
@@ -33,12 +32,10 @@ const DevMenuEntry = __DEV__
   : null;
 
 export default function ProfileScreen() {
-  const { t } = useTranslation(['profile', 'common', 'home']);
+  const { t } = useTranslation(['profile', 'common']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const openData = useCallback(() => push('/profile-data' as Href), [push]);
-  const openFormsLater = useCallback(() => push('/forms-later' as Href), [push]);
-  const hasFormsForLater = useMyCustomFormsByPlace().later.length > 0;
   const openAttendance = useCallback(() => push('/profile-attendance' as Href), [push]);
   const openLanguage = useCallback(() => push('/profile-language' as Href), [push]);
   const openAppLock = useCallback(() => push('/app-lock' as Href), [push]);
@@ -47,17 +44,6 @@ export default function ProfileScreen() {
 
   return (
     <ProfileScreenFrame title={t('title')} testID="profile-menu">
-      {/* The forms she put off with "Ara no" (RAPP-833); no row while there are none. */}
-      {hasFormsForLater ? (
-        <RaisedIconCard
-          testID="profile-open-forms-later"
-          icon={playerNavIcons.formsLater}
-          title={t('home:later.title')}
-          accessibilityLabel={t('home:later.title')}
-          languageFontClass={languageFontClass}
-          onOpen={openFormsLater}
-        />
-      ) : null}
       <RaisedIconCard
         testID="profile-open-data"
         icon={playerNavIcons.myData}

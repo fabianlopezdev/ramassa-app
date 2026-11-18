@@ -1,9 +1,9 @@
 /**
  * Per a més tard (RAPP-833): the optional forms she put off with "Ara no" on
  * Inici. Each row opens its form, so she can still answer it, and has
- * "Esborra", which closes it for good after a warning. Opened from her
- * profile, where its row shows only while a form waits here; when the last
- * one leaves, the screen closes.
+ * "Esborra", which closes it for good after a warning. Opened from the quiet
+ * line at the end of the forms section on Inici (RAPP-865), which shows only
+ * while a form waits here; when the last one leaves, the screen closes.
  */
 
 import { PendingFormPrompt } from '@/components/forms/pending-form-prompt';

@@ -26,6 +26,9 @@
   },
   "later": {
     "title": "Per a més tard",
+    "waiting": "{{count}} formularis per a més tard",
+    "waiting_one": "{{count}} formulari per a més tard",
+    "waiting_other": "{{count}} formularis per a més tard",
     "delete": "Elimina",
     "cancel": "Cancel·la",
     "deleteTitle": "Vols eliminar aquest formulari?",

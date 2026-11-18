@@ -30,6 +30,9 @@
   },
   "later": {
     "title": "لوقت لاحق",
+    "waiting": "{{count}} نماذج لوقت لاحق",
+    "waiting_one": "{{count}} نموذج لوقت لاحق",
+    "waiting_other": "{{count}} نموذج لوقت لاحق",
     "delete": "حذف",
     "cancel": "إلغاء",
     "deleteTitle": "هل تريدين حذف هذا النموذج؟",

@@ -26,6 +26,9 @@
   },
   "later": {
     "title": "For later",
+    "waiting": "{{count}} forms for later",
+    "waiting_one": "{{count}} form for later",
+    "waiting_other": "{{count}} forms for later",
     "delete": "Delete",
     "cancel": "Cancel",
     "deleteTitle": "Delete this form?",
