@@ -6,6 +6,7 @@ import {
   fetchTabNews,
   forumNewsCount,
   helpNewsCount,
+  isSameSectionNews,
   isSectionNewsEmpty,
   mergeSectionNews,
   withHelpItemsSeen,
@@ -147,6 +148,50 @@ describe('mergeSectionNews (RAPP-873)', () => {
   test('an arriving slice that is empty keeps the slice as it was', () => {
     const earlier = news.stories;
     expect(mergeSectionNews('stories', earlier, EMPTY_TAB_NEWS.stories)).toBe(earlier);
+  });
+});
+
+describe('isSameSectionNews (RAPP-873)', () => {
+  test('equal content in another order is the same', () => {
+    expect(
+      isSameSectionNews(
+        'forum',
+        { newPostIds: [POST_A, POST_B], newRepliesByPostId: { [MY_POST]: 2, [POST_A]: 1 } },
+        { newPostIds: [POST_B, POST_A], newRepliesByPostId: { [POST_A]: 1, [MY_POST]: 2 } },
+      ),
+    ).toBe(true);
+    expect(
+      isSameSectionNews('gallery', { newItemIds: [ITEM, STORY] }, { newItemIds: [STORY, ITEM] }),
+    ).toBe(true);
+  });
+
+  test('a different reply count is different', () => {
+    expect(
+      isSameSectionNews(
+        'forum',
+        { newPostIds: [], newRepliesByPostId: { [MY_POST]: 2 } },
+        { newPostIds: [], newRepliesByPostId: { [MY_POST]: 3 } },
+      ),
+    ).toBe(false);
+  });
+
+  test('an extra id is different', () => {
+    expect(
+      isSameSectionNews('stories', { newArticleIds: [STORY] }, { newArticleIds: [STORY, ITEM] }),
+    ).toBe(false);
+    expect(
+      isSameSectionNews(
+        'forum',
+        { newPostIds: [POST_A], newRepliesByPostId: {} },
+        { newPostIds: [POST_A], newRepliesByPostId: { [MY_POST]: 1 } },
+      ),
+    ).toBe(false);
+  });
+
+  test('two empty slices are the same', () => {
+    expect(
+      isSameSectionNews('mentoring', EMPTY_TAB_NEWS.mentoring, { changedRequestIds: [] }),
+    ).toBe(true);
   });
 });
 
