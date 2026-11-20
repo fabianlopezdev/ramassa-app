@@ -68,6 +68,7 @@
     "push:scheduler:configure": "bun run scripts/configure-local-push-scheduler.ts",
     "push:catalog:generate": "bun run scripts/generate-push-edge-catalog.ts",
     "content:translate-french": "bun run scripts/translate-missing-french.ts",
+    "tester-ground": "bun run scripts/tester-ground/run.ts",
     "municipalities:generate": "bun run scripts/generate-municipalities.ts",
     "capture:flow": "bun run scripts/capture-flow.ts",
     "capture:phase": "bun run scripts/capture-phase.ts",
