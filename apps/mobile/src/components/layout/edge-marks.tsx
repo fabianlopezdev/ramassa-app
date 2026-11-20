@@ -26,10 +26,21 @@ export interface EdgeMarkBadge {
   readonly tone: BadgeTone;
 }
 
+/**
+ * How far in from the sides the marks sit: the side padding of the surface
+ * they mark, so a mark starts where the surface's content starts. Whole class
+ * names, so NativeWind sees them.
+ */
+const MARK_INSET = {
+  lg: { badge: 'start-lg', count: 'end-lg' },
+  md: { badge: 'start-md', count: 'end-md' },
+} as const;
+
 export function EdgeMarks({
   badge = null,
   count = null,
   className,
+  inset = 'lg',
   children,
 }: {
   readonly badge?: EdgeMarkBadge | null;
@@ -39,6 +50,12 @@ export function EdgeMarks({
    * of the segmented control (RAPP-873) fills its cell.
    */
   readonly className?: string;
+  /**
+   * The surface's own side padding. A half card keeps less room at its sides
+   * than a full-width card (RAPP-882), and with the marks on that same line
+   * its word and its count clear each other on the narrower edge.
+   */
+  readonly inset?: keyof typeof MARK_INSET;
   readonly children: ReactNode;
 }) {
   const languageFontClass = useLanguageFontClass();
@@ -50,7 +67,7 @@ export function EdgeMarks({
           pointerEvents="none"
           accessible={false}
           importantForAccessibility="no-hide-descendants"
-          className="absolute start-lg top-sm -translate-y-1/2"
+          className={`absolute ${MARK_INSET[inset].badge} top-sm -translate-y-1/2`}
         >
           <Badge label={badge.label} tone={badge.tone} languageFontClass={languageFontClass} />
         </View>
@@ -60,7 +77,7 @@ export function EdgeMarks({
           pointerEvents="none"
           accessible={false}
           importantForAccessibility="no-hide-descendants"
-          className="absolute end-lg top-sm -translate-y-1/2"
+          className={`absolute ${MARK_INSET[inset].count} top-sm -translate-y-1/2`}
         >
           <CountBubble label={count} />
         </View>

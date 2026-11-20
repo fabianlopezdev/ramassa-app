@@ -136,7 +136,7 @@ export function RaisedHalfCard({
     );
   }
   return (
-    <EdgeMarks badge={badge} count={count} className="flex-1">
+    <EdgeMarks badge={badge} count={count} className="flex-1" inset="md">
       <SelectionChoiceSurface
         testID={testID}
         label={accessibilityLabel}
