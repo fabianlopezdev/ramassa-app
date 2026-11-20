@@ -125,6 +125,19 @@ export function raisedIconHitSlop(
 }
 
 /**
+ * How far the touch reaches past a small icon button with a neighbour on each
+ * side, `halfGap` away: half the gap towards each, so the tap areas meet in the
+ * middle of each gap. Above and below it still reaches to a full tap target.
+ */
+export function raisedIconHitSlopBetweenNeighbours(
+  face: RaisedIconFaceSize,
+  halfGap: number,
+): Insets {
+  const { top, bottom } = raisedIconHitSlop(face);
+  return { top, bottom, left: halfGap, right: halfGap };
+}
+
+/**
  * The start reach of a small icon button whose only neighbour sits at its end,
  * `halfGap` away: its touch reaches only half the gap towards the neighbour, and
  * the rest of its full tap target reaches away from it, at the start.

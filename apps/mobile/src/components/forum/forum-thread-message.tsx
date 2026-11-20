@@ -21,6 +21,7 @@ import { ForumFlagButton } from '@/components/forum/forum-flag-button';
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
 import {
   raisedIconHitSlop,
+  raisedIconHitSlopBetweenNeighbours,
   raisedIconStartReachBeforeNeighbour,
 } from '@/components/layout/raised-surface';
 import { PERSON_AVATAR_SIZE, PersonAvatar } from '@/components/people/person-avatar';
@@ -49,25 +50,26 @@ const RAIL_GAP = tokens.spacing.sm;
 const CORNER_WIDTH = AVATAR_SIZE - LINE_START + RAIL_GAP;
 const CORNER_HEIGHT = AVATAR_MIDDLE + LINE_WIDTH / 2;
 const CORNER_RADIUS = Math.min(CORNER_WIDTH, CORNER_HEIGHT);
-// Flag and reply sit as a pair, `gap-sm` apart. Each touch reaches half the gap
-// towards the other, so the two tap areas meet in its middle without
-// overlapping, and the rest of each full tap target reaches away from the pair.
-const PAIR_HALF_GAP = tokens.spacing.sm / 2;
-// Her own post has three: delete, edit and reply, `gap-md` apart, so the
-// middle one's tap area (its face plus a half gap each side) still reaches a
-// full tap target across.
-const TRIO_HALF_GAP = tokens.spacing.md / 2;
+// The buttons of an action row sit one gap apart: flag and reply, or on her
+// own post delete, edit and reply. The class and the number are the same gap,
+// kept here together so the two kinds of row cannot differ. Each touch reaches
+// half the gap towards its neighbour, so the tap areas meet in the middle of
+// each gap without overlapping, and the first and the last reach the rest of a
+// full tap target away from the row's other buttons. The middle one (edit) is
+// its face plus a half gap each side across, under a full tap target, which the
+// owner accepted for an even row (RAPP-884).
+const ACTION_GAP_CLASS_NAME = 'gap-sm';
+const ACTION_HALF_GAP = tokens.spacing.sm / 2;
 
-const REPLY_HIT_SLOP = raisedIconHitSlop('regular', PAIR_HALF_GAP, I18nManager.isRTL);
-const TRIO_REPLY_HIT_SLOP = raisedIconHitSlop('regular', TRIO_HALF_GAP, I18nManager.isRTL);
+const REPLY_HIT_SLOP = raisedIconHitSlop('regular', ACTION_HALF_GAP, I18nManager.isRTL);
 /** Where the touch of her own post's delete and edit buttons reaches (RAPP-884). */
 export const OWN_POST_HIT_SLOPS = {
   delete: raisedIconHitSlop(
     'small',
-    raisedIconStartReachBeforeNeighbour('small', TRIO_HALF_GAP),
+    raisedIconStartReachBeforeNeighbour('small', ACTION_HALF_GAP),
     I18nManager.isRTL,
   ),
-  edit: raisedIconHitSlop('regular', TRIO_HALF_GAP, I18nManager.isRTL),
+  edit: raisedIconHitSlopBetweenNeighbours('regular', ACTION_HALF_GAP),
 } as const;
 const styles = StyleSheet.create({
   rail: { width: AVATAR_SIZE },
@@ -214,14 +216,12 @@ export const ForumThreadMessage = memo(function ForumThreadMessage({
             />
           ))}
         {onFlag === null && onReply === null && startActions === undefined ? null : (
-          <View
-            className={`flex-row items-center justify-end ${startActions === undefined ? 'gap-sm' : 'gap-md'}`}
-          >
+          <View className={`flex-row items-center justify-end ${ACTION_GAP_CLASS_NAME}`}>
             {startActions}
             {onFlag === null || startActions !== undefined ? null : (
               <ForumFlagButton
                 testID={kind === 'post' ? 'forum-flag-post' : `forum-flag-reply-${id}`}
-                endNeighbourHalfGap={onReply === null ? undefined : PAIR_HALF_GAP}
+                endNeighbourHalfGap={onReply === null ? undefined : ACTION_HALF_GAP}
                 accessibilityLabel={flagAccessibilityLabel}
                 onPress={flag}
                 isDisabled={isFlagDisabled}
@@ -233,13 +233,7 @@ export const ForumThreadMessage = memo(function ForumThreadMessage({
                 size="compact"
                 icon="reply"
                 isLabelHidden
-                hitSlop={
-                  startActions !== undefined
-                    ? TRIO_REPLY_HIT_SLOP
-                    : onFlag === null
-                      ? undefined
-                      : REPLY_HIT_SLOP
-                }
+                hitSlop={startActions === undefined && onFlag === null ? undefined : REPLY_HIT_SLOP}
                 label={replyLabel}
                 onPress={reply}
                 isDisabled={isReplyDisabled}
