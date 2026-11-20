@@ -39,13 +39,17 @@ export default function ServicesScreen() {
   const { push } = useRouter();
   const categoriesQuery = usePlayerServiceCategories();
   const [segment, setSegment] = useState<AjudaSegment>('services');
-  // What is new stays new until she opens that service or guide (RAPP-873).
+  // The numbers count what she has not seen in a category's list; the "Nou"
+  // stays until she opens that service or guide (RAPP-873).
   const { data: news } = useTabNews();
   const serviceNews = useMemo(
-    () => (news === undefined ? NO_HELP_NEWS : summarizeHelpNews(news.services.newServices)),
+    () =>
+      news === undefined
+        ? NO_HELP_NEWS
+        : summarizeHelpNews(news.services.unseenServices, news.services.unopenedServices),
     [news],
   );
-  const guideNewsCount = news?.guides.newArticles.length ?? 0;
+  const guideNewsCount = news?.guides.unseenArticles.length ?? 0;
   const tabInsets = usePlayerTabContentInsets();
   const contentContainerStyle = useMemo(() => [styles.listContent, tabInsets], [tabInsets]);
   const selectCategory = useCallback(

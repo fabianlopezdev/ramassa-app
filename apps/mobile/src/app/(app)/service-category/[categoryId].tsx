@@ -97,7 +97,9 @@ export default function ServiceCategoryScreen() {
   // A service keeps "Nou" until she opens it, also after she comes back (RAPP-873).
   const { data: news, refetch: refetchNews } = useTabNews();
   const newServiceIds = useMemo(
-    () => (news === undefined ? NO_HELP_NEWS : summarizeHelpNews(news.services.newServices)).newIds,
+    () =>
+      (news === undefined ? NO_HELP_NEWS : summarizeHelpNews(news.services.unopenedServices))
+        .newIds,
     [news],
   );
   const title =

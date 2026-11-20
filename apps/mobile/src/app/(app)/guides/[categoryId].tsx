@@ -73,7 +73,8 @@ export default function GuideCategoryScreen() {
   // A guide keeps "Nou" until she opens it, also after she comes back (RAPP-873).
   const { data: news, refetch: refetchNews } = useTabNews();
   const newGuideIds = useMemo(
-    () => (news === undefined ? NO_HELP_NEWS : summarizeHelpNews(news.guides.newArticles)).newIds,
+    () =>
+      (news === undefined ? NO_HELP_NEWS : summarizeHelpNews(news.guides.unopenedArticles)).newIds,
     [news],
   );
   const refresh = useCallback(() => {

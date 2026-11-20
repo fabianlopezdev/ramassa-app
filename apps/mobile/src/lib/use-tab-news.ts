@@ -1,23 +1,30 @@
 /**
  * The hooks behind the numbers on Comunitat, Ajuda and Contacte (RAPP-873):
- * what is new for her, opening a thing, and the counts the tab bar shows. A
- * thing is new until she opens that thing; opening a section or a list clears
- * nothing. They mirror the Inici hooks in `use-home-attention.ts`.
+ * what is new for her, seeing a list, opening a thing, and the counts the tab
+ * bar shows. Seeing the list that shows a card clears its number; opening the
+ * thing clears its "Nou". What is addressed to her (replies on her post, her
+ * mentoring, her suggestions) clears only when she opens it. They mirror the
+ * Inici hooks in `use-home-attention.ts`.
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@ramassa/shared/auth';
 import {
   communityNewsCount,
   contactNewsCount,
   fetchTabNews,
+  hasUnseenInList,
   helpNewsCount,
   isTabItemNew,
+  markListsSeen,
   markTabItemsSeen,
   NO_TAB_ITEMS_SEEN,
+  withListsSeen,
   withTabItemsSeen,
   type TabItemsSeen,
+  type TabListKey,
   type TabNews,
 } from '@ramassa/shared/tab-news';
 import { supabase } from './supabase';
@@ -78,6 +85,70 @@ function useMarkTabItemsSeen() {
     },
     onError: () => queryClient.invalidateQueries({ queryKey }),
   });
+}
+
+/** Records the lists she saw; their numbers drop at once. */
+function useMarkListsSeenMutation() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const queryKey = useMemo(() => tabNewsQueryKey(user?.id ?? 'signed-out'), [user?.id]);
+  return useMutation({
+    mutationKey: ['tab-news-lists-seen', user?.id ?? 'signed-out'],
+    mutationFn: (keys: readonly TabListKey[]) => markListsSeen(supabase, keys),
+    onMutate: async (keys) => {
+      // A fetch started before the mark must not put back what was just seen.
+      await queryClient.cancelQueries({ queryKey });
+      const now = new Date().toISOString();
+      queryClient.setQueryData<TabNews>(queryKey, (current) =>
+        current === undefined ? current : withListsSeen(current, keys, now),
+      );
+    },
+    onError: () => queryClient.invalidateQueries({ queryKey }),
+  });
+}
+
+/** A stable callback for screens that mark several lists at once. */
+export function useMarkListsSeen(): (keys: readonly TabListKey[]) => void {
+  const { mutate } = useMarkListsSeenMutation();
+  return useCallback((keys: readonly TabListKey[]) => mutate(keys), [mutate]);
+}
+
+/**
+ * Seeing a list clears its number. While the screen is focused, `isActive` is
+ * true and the list has unseen things, the list is marked seen. The cards read
+ * the live unopened lists for their "Nou", so nothing is returned.
+ */
+export function useListSeen(key: TabListKey | undefined, isActive: boolean): void {
+  const { data: news } = useTabNews();
+  const { mutate } = useMarkListsSeenMutation();
+  const [isFocused, setIsFocused] = useState(false);
+  // A key is held from the moment it is sent. A success lets it go, so things
+  // arriving later while she looks are marked too. A failure keeps it until she
+  // leaves the screen and comes back: the refetch after the failure brings the
+  // same unseen things, and marking again would repeat without end (RAPP-873).
+  const heldThisFocus = useRef(new Set<TabListKey>());
+
+  useFocusEffect(
+    useCallback(() => {
+      setIsFocused(true);
+      return () => {
+        setIsFocused(false);
+        heldThisFocus.current.clear();
+      };
+    }, []),
+  );
+
+  const hasUnseen = key !== undefined && news !== undefined && hasUnseenInList(news, key);
+  useEffect(() => {
+    if (!isFocused || !isActive || !hasUnseen || key === undefined) return;
+    if (heldThisFocus.current.has(key)) return;
+    heldThisFocus.current.add(key);
+    mutate([key], {
+      onSuccess: () => {
+        heldThisFocus.current.delete(key);
+      },
+    });
+  }, [hasUnseen, isActive, isFocused, key, mutate]);
 }
 
 type TabItemKind = keyof TabItemsSeen;

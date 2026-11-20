@@ -24,7 +24,7 @@ import { useForumCategories, useForumPosts } from '@/lib/player-forum';
 import { formatUnreadBadge } from '@/lib/unread-badge';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
-import { useTabNews } from '@/lib/use-tab-news';
+import { useListSeen, useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
@@ -74,20 +74,24 @@ export default function CommunityScreen() {
   const refetchPosts = postsQuery.refetch;
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [segment, setSegment] = useState<CommunitySegment>('forum');
-  // The live news gives the numbers on the switch and the "Nou" on each card. A
-  // thing stays new until she opens it; opening a section clears nothing (RAPP-873).
+  // The live news gives the numbers on the switch, from what she has not seen in
+  // each list, and the "Nou" on each card, from what she has not opened. Seeing
+  // a section's list clears its number (RAPP-873).
   const tabNewsQuery = useTabNews();
   const refetchTabNews = tabNewsQuery.refetch;
   const segmentCounts = useMemo(
     () => communitySegmentCounts(tabNewsQuery.data),
     [tabNewsQuery.data],
   );
+  useListSeen('forum', segment === 'forum');
+  useListSeen('gallery', segment === 'gallery');
+  useListSeen('stories', segment === 'stories');
   const forumVisit = tabNewsQuery.data?.forum ?? EMPTY_TAB_NEWS.forum;
   const galleryVisit = tabNewsQuery.data?.gallery ?? EMPTY_TAB_NEWS.gallery;
   const storiesVisit = tabNewsQuery.data?.stories ?? EMPTY_TAB_NEWS.stories;
-  const galleryNewItemIds = useMemo(() => toNewIdSet(galleryVisit.newItemIds), [galleryVisit]);
+  const galleryNewItemIds = useMemo(() => toNewIdSet(galleryVisit.unopenedItemIds), [galleryVisit]);
   const storiesNewArticleIds = useMemo(
-    () => toNewIdSet(storiesVisit.newArticleIds),
+    () => toNewIdSet(storiesVisit.unopenedArticleIds),
     [storiesVisit],
   );
   const posts = useMemo(

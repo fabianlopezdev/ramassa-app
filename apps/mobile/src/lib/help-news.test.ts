@@ -30,4 +30,17 @@ describe('summarizeHelpNews (RAPP-873)', () => {
     expect(summary.newIds.has('a')).toBe(true);
     expect(summary.newIds.has('b')).toBe(true);
   });
+
+  it('counts the unseen items and marks the unopened ones', () => {
+    const summary = summarizeHelpNews(
+      [{ id: 'a', categoryId: 'housing' }],
+      [
+        { id: 'a', categoryId: 'housing' },
+        { id: 'b', categoryId: 'housing' },
+      ],
+    );
+    expect(summary.total).toBe(1);
+    expect(summary.countsByCategoryId).toEqual({ housing: 1 });
+    expect([...summary.newIds].sort()).toEqual(['a', 'b']);
+  });
 });

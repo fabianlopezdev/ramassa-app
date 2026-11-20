@@ -61,7 +61,10 @@ export function PlayerGuideList({
   // A tile counts the new guides of its category until she opens each (RAPP-873).
   const { data: news, refetch: refetchNews } = useTabNews();
   const guideNews = useMemo(
-    () => (news === undefined ? NO_HELP_NEWS : summarizeHelpNews(news.guides.newArticles)),
+    () =>
+      news === undefined
+        ? NO_HELP_NEWS
+        : summarizeHelpNews(news.guides.unseenArticles, news.guides.unopenedArticles),
     [news],
   );
   const guides = useMemo(() => selectPlayerGuides(articlesQuery.data), [articlesQuery.data]);
