@@ -140,6 +140,8 @@
   "categoryColorTeal": "Verd blavós",
   "categoryColorAmber": "Ambre",
   "categoryColorIndigo": "Anyil",
+  "categoryColorPrimary": "Color del club",
+  "categoryColorNone": "Sense color",
   "categorySchema": "Esquema de metadades JSON",
   "categorySave": "Desa la categoria",
   "categoryCancel": "Cancel·la",
