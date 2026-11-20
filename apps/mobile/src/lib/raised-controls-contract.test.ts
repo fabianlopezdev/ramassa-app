@@ -74,6 +74,9 @@ const keepsABorder = new Set([
   'app/(app)/(team)/participants.tsx',
   // The time field of a mentoring request, drawn as a form field.
   'components/mentoring/mentoring-preference-pickers.tsx',
+  // The pencil circle over her photo on Les meves dades (RAPP-888): a white
+  // ring keeps the small badge apart from the photo under it.
+  'components/profile/profile-photo-editor.tsx',
 ]);
 const withOwnBorder = [...sources('app'), ...sources('components')].filter(
   (path) => !path.startsWith('components/motion/') && hasOwnBorder(read(path)),

@@ -13,7 +13,7 @@ import { SwitchCard } from '@/components/forms/switch-card';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import type { SupportedLanguage } from '@ramassa/shared/i18n';
 import type { ServiceMetadataFieldDefinition } from '@ramassa/shared/services';
 import { DateField } from './date-field';
