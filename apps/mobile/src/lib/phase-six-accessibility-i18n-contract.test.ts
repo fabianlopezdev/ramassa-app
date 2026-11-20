@@ -38,9 +38,7 @@ describe('Phase 6 accessibility and i18n contract', () => {
     const galleryGrid = await readMobileSource('components/gallery/gallery-grid.tsx');
     const galleryItem = await readMobileSource('app/(app)/gallery/[id].tsx');
 
-    expect(galleryGrid).toContain(
-      "accessibilityLabel={t('openItem', { name: item.uploader_first_name })}",
-    );
+    expect(galleryGrid).toContain("t('openItem', { name: item.uploader_first_name })");
     // The screen title is the native header's (RAPP-806).
     expect(gallery).toContain("<NativeScreenHeader title={t('title')} />");
     expect(galleryItem).toMatch(

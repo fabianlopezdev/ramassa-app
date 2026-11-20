@@ -17,11 +17,14 @@ import {
 import { TabScreenAction } from '@/components/layout/tab-screen-action';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
+import { communitySegmentCounts, forumPostNews, toNewIdSet } from '@/lib/community-news';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
 import { useForumCategories, useForumPosts } from '@/lib/player-forum';
+import { formatUnreadBadge } from '@/lib/unread-badge';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
+import { useSectionVisit, useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
@@ -58,7 +61,7 @@ const shareActions: Readonly<
 };
 
 export default function CommunityScreen() {
-  const { t } = useTranslation(['forum', 'errors', 'nav']);
+  const { t } = useTranslation(['forum', 'errors', 'nav', 'common', 'home']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const { session } = useAuth();
@@ -70,6 +73,23 @@ export default function CommunityScreen() {
   const refetchPosts = postsQuery.refetch;
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [segment, setSegment] = useState<CommunitySegment>('forum');
+  // The live news gives the numbers on the switch; each section's visit gives
+  // what was new when she arrived, so its cards keep "Nou" while she stays
+  // (RAPP-873). Opening a section clears its number at once.
+  const tabNewsQuery = useTabNews();
+  const refetchTabNews = tabNewsQuery.refetch;
+  const segmentCounts = useMemo(
+    () => communitySegmentCounts(tabNewsQuery.data),
+    [tabNewsQuery.data],
+  );
+  const forumVisit = useSectionVisit('forum', segment === 'forum');
+  const galleryVisit = useSectionVisit('gallery', segment === 'gallery');
+  const storiesVisit = useSectionVisit('stories', segment === 'stories');
+  const galleryNewItemIds = useMemo(() => toNewIdSet(galleryVisit.newItemIds), [galleryVisit]);
+  const storiesNewArticleIds = useMemo(
+    () => toNewIdSet(storiesVisit.newArticleIds),
+    [storiesVisit],
+  );
   const posts = useMemo(
     () => filterForumPostsByCategory(postsQuery.data ?? EMPTY_POSTS, categoryId),
     [categoryId, postsQuery.data],
@@ -111,55 +131,80 @@ export default function CommunityScreen() {
     [push],
   );
   const share = useCallback(() => push(shareActions[segment].route), [push, segment]);
-  const segmentOptions = useMemo<readonly SegmentedControlOption<CommunitySegment>[]>(
-    () => [
+  const segmentOptions = useMemo<readonly SegmentedControlOption<CommunitySegment>[]>(() => {
+    const newCountLabel = (label: string, count: number) =>
+      count > 0 ? t('common:newCount', { label, count }) : undefined;
+    const forumLabel = t('forum:segmentForum');
+    const galleryLabel = t('forum:segmentGallery');
+    const storiesLabel = t('forum:segmentStories');
+    return [
       {
         key: 'forum',
-        label: t('forum:segmentForum'),
+        label: forumLabel,
         symbol: 'chats',
         testID: 'community-segment-forum',
+        count: segmentCounts.forum,
+        accessibilityLabel: newCountLabel(forumLabel, segmentCounts.forum),
       },
       {
         key: 'gallery',
-        label: t('forum:segmentGallery'),
+        label: galleryLabel,
         symbol: 'gallery',
         testID: 'community-segment-gallery',
+        count: segmentCounts.gallery,
+        accessibilityLabel: newCountLabel(galleryLabel, segmentCounts.gallery),
       },
       {
         key: 'stories',
-        label: t('forum:segmentStories'),
+        label: storiesLabel,
         symbol: 'book',
         testID: 'community-segment-stories',
+        count: segmentCounts.stories,
+        accessibilityLabel: newCountLabel(storiesLabel, segmentCounts.stories),
       },
-    ],
-    [t],
-  );
+    ];
+  }, [segmentCounts, t]);
   const openLinkLabel = useCallback((url: string) => t('forum:openLink', { url }), [t]);
   const refresh = useCallback(() => {
-    void Promise.all([refetchCategories(), refetchPosts()]);
-  }, [refetchCategories, refetchPosts]);
+    void Promise.all([refetchCategories(), refetchPosts(), refetchTabNews()]);
+  }, [refetchCategories, refetchPosts, refetchTabNews]);
   const renderPost = useCallback(
-    ({ item, index }: ListRenderItemInfo<ForumPostRow>) => (
-      <PageWidth className="pb-md">
-        <FadeSlideIn index={index}>
-          <ForumPostCard
-            post={item}
-            tone={toneByCategoryId[item.category_id]}
-            authorLabel={t('forum:postBy', { name: item.author_first_name })}
-            authorAvatarKey={personCards.get(item.author_id)?.avatarKey ?? null}
-            repliesLabel={t('forum:repliesCount', { count: item.reply_count })}
-            pinnedLabel={t('forum:pinned')}
-            imageAlt={t('forum:imageAlt', { name: item.author_first_name })}
-            accessibilityLabel={t('forum:openPost', { name: item.author_first_name })}
-            languageFontClass={languageFontClass}
-            accessToken={session?.access_token}
-            openLinkLabel={openLinkLabel}
-            onOpen={openPost}
-          />
-        </FadeSlideIn>
-      </PageWidth>
-    ),
+    ({ item, index }: ListRenderItemInfo<ForumPostRow>) => {
+      const news = forumPostNews(forumVisit, item.id);
+      const unseenLabel = news.isNew ? t('home:unseen') : null;
+      // The card adds pinned and the reply count; the word goes first (RAPP-873).
+      const accessibilityLabel = [
+        unseenLabel,
+        t('forum:openPost', { name: item.author_first_name }),
+        news.newReplies > 0 ? t('forum:newReplies', { count: news.newReplies }) : null,
+      ]
+        .filter((part): part is string => part !== null)
+        .join('. ');
+      return (
+        <PageWidth className="pb-md">
+          <FadeSlideIn index={index}>
+            <ForumPostCard
+              post={item}
+              tone={toneByCategoryId[item.category_id]}
+              authorLabel={t('forum:postBy', { name: item.author_first_name })}
+              authorAvatarKey={personCards.get(item.author_id)?.avatarKey ?? null}
+              repliesLabel={t('forum:repliesCount', { count: item.reply_count })}
+              pinnedLabel={t('forum:pinned')}
+              imageAlt={t('forum:imageAlt', { name: item.author_first_name })}
+              accessibilityLabel={accessibilityLabel}
+              languageFontClass={languageFontClass}
+              accessToken={session?.access_token}
+              openLinkLabel={openLinkLabel}
+              onOpen={openPost}
+              unseenLabel={unseenLabel}
+              newRepliesCount={formatUnreadBadge(news.newReplies)}
+            />
+          </FadeSlideIn>
+        </PageWidth>
+      );
+    },
     [
+      forumVisit,
       languageFontClass,
       openLinkLabel,
       openPost,
@@ -225,9 +270,21 @@ export default function CommunityScreen() {
 
   let segmentList: ReactElement;
   if (segment === 'gallery') {
-    segmentList = <GalleryGrid header={header} contentContainerStyle={contentStyle} />;
+    segmentList = (
+      <GalleryGrid
+        header={header}
+        contentContainerStyle={contentStyle}
+        newItemIds={galleryNewItemIds}
+      />
+    );
   } else if (segment === 'stories') {
-    segmentList = <CommunityStoryList header={header} contentContainerStyle={contentStyle} />;
+    segmentList = (
+      <CommunityStoryList
+        header={header}
+        contentContainerStyle={contentStyle}
+        newArticleIds={storiesNewArticleIds}
+      />
+    );
   } else {
     segmentList = (
       <FlashList
@@ -235,6 +292,7 @@ export default function CommunityScreen() {
         data={posts}
         renderItem={renderPost}
         keyExtractor={postKeyExtractor}
+        extraData={forumVisit}
         style={styles.screen}
         contentContainerStyle={contentStyle}
         contentInsetAdjustmentBehavior="automatic"
