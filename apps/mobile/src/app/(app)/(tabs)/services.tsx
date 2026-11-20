@@ -5,10 +5,12 @@ import {
 import { PlayerGuideList } from '@/components/knowledge/player-guide-list';
 import { PageWidth } from '@/components/layout/content-width';
 import { Divider } from '@/components/layout/divider';
+import { ScreenSection } from '@/components/layout/screen-section';
 import {
   SegmentedControl,
   type SegmentedControlOption,
 } from '@/components/layout/segmented-control';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { ServiceCategoryGrid } from '@/components/services/service-category-grid';
 import { countUnseenHelpItems, NO_HELP_NUMBERS } from '@/lib/help-news';
@@ -19,7 +21,7 @@ import { useTabNews } from '@/lib/use-tab-news';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { toAppError } from '@ramassa/shared/errors';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -33,7 +35,7 @@ const styles = StyleSheet.create({
 /** The two views of Ajuda (RAPP-851): services by category, and the guides. */
 type AjudaSegment = 'services' | 'guides';
 
-export default function ServicesScreen() {
+function ServicesScreen() {
   const { t } = useTranslation(['playerServices', 'errors', 'nav', 'common']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -153,25 +155,16 @@ export default function ServicesScreen() {
 
   return stateScreen(
     <PageWidth>
-      <View className="gap-sm">
-        <View className="gap-xs">
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-          >
-            {t('playerServices:chooseCategory')}
-          </Text>
-          <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-            {t('playerServices:categoryHint')}
-          </Text>
-        </View>
+      <ScreenSection title={t('playerServices:chooseCategory')} isLast>
         <ServiceCategoryGrid
           categories={categoriesQuery.data ?? []}
           newCounts={serviceNews.countsByCategoryId}
           onSelect={selectCategory}
         />
-      </View>
+      </ScreenSection>
     </PageWidth>,
     'player-services-categories',
   );
 }
+
+export default withScreenEntrance('services', ServicesScreen);

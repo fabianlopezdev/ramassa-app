@@ -7,6 +7,7 @@ import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { StaffMessageThread } from '@/components/messaging/message-thread';
 import { StaffConversationCard } from '@/components/messaging/staff-conversation-card';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { useTeamLayout } from '@/components/team/team-layout-context';
 import { useStaffConversationList } from '@/lib/messaging';
 import { formatUnreadBadge } from '@/lib/unread-badge';
@@ -33,7 +34,7 @@ const keyExtractor = (row: StaffConversationRow) => row.conversationId;
 const listPaneStyle = { flex: 2, minWidth: 280, maxWidth: 400 } as const;
 const detailPaneStyle = { flex: 3 } as const;
 
-export default function StaffConversationsScreen() {
+function StaffConversationsScreen() {
   const { t } = useTranslation('messaging');
   const fontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -168,3 +169,5 @@ export default function StaffConversationsScreen() {
     </SafeAreaView>
   );
 }
+
+export default withScreenEntrance('messages', StaffConversationsScreen);

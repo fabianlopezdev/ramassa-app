@@ -1,10 +1,7 @@
-import { FilterChips } from '@/components/layout/filter-chips';
+import { FilterChips, RaisedChip } from '@/components/layout/filter-chips';
 import { raisedToneFromColorName } from '@/components/layout/raised-surface';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { memo, useCallback, useMemo } from 'react';
-import { Text } from 'react-native';
 import type { ForumCategoryRow } from '@ramassa/shared/forum';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 
@@ -26,27 +23,18 @@ export const ForumCategoryOption = memo(function ForumCategoryOption({
   readonly isDisabled?: boolean;
 }) {
   const languageFontClass = useLanguageFontClass();
-  const select = useCallback(() => onSelect(id), [id, onSelect]);
+  const select = useCallback(() => {
+    if (!isDisabled) onSelect(id);
+  }, [id, isDisabled, onSelect]);
   return (
-    <PressableScale
+    <RaisedChip
       testID={testID}
-      accessibilityLabel={label}
+      label={label}
       accessibilityRole={accessibilityRole}
-      onPress={select}
-      haptic="selection"
       isSelected={selected}
-      isDisabled={isDisabled}
-      style={continuousCorners}
-      className={`min-h-recommended justify-center rounded-full border px-lg ${
-        selected ? 'border-primary bg-primary' : 'border-neutral-300 bg-white'
-      }`}
-    >
-      <Text
-        className={`text-md font-semibold ${selected ? 'text-white' : 'text-neutral-800'} ${languageFontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
+      onPress={select}
+      languageFontClass={languageFontClass}
+    />
   );
 });
 

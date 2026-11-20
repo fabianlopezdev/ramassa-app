@@ -25,8 +25,11 @@
  *
  * A card may be a tile in a grid (RAPP-854), such as an Ajuda category: the
  * same face, block and divider with tighter padding and gaps, no arrow, and
- * it fills its cell so the tiles in a row share a height. A tile with a mark
- * on its edge still fills it (RAPP-873), since its marks grow with the cell.
+ * it fills its cell so the tiles in a row share a height. A tile may stack
+ * (RAPP-879): icon on top, name under it, no divider; the other tile of
+ * its row then takes the stacked tile's height. A tile with a mark on its
+ * edge still fills its cell (RAPP-873): its marks grow from their own height
+ * like the tile does.
  */
 import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
@@ -42,12 +45,14 @@ const leadingBlockStyle = { minWidth: tokens.spacing['2xl'] } as const;
 // The face keeps its side padding for the row; the photo reaches past it.
 const mediaBleedStyle = { marginHorizontal: -tokens.spacing.lg } as const;
 const ROW_CLASS_NAME = 'flex-row items-stretch gap-md';
+/** A tile is half the width of a card, so its row keeps a smaller gap. */
+const TILE_ROW_CLASS_NAME = 'grow flex-row items-stretch gap-sm';
 /**
- * A tile is half the width of a card, so its row keeps the spacing tight
- * (RAPP-870): a name such as "Alfabetització" fits whole at the size every
- * other tile uses.
+ * A stacked tile (RAPP-879): the icon on top and the name under it, both on
+ * the start edge, with no divider. The name keeps to the bottom, so when the
+ * other tile of the row is taller the name still sits at its foot.
  */
-const TILE_ROW_CLASS_NAME = 'flex-1 flex-row items-stretch gap-xs';
+const TILE_STACK_CLASS_NAME = 'grow items-stretch gap-sm';
 
 /**
  * An icon for the block at the start of a card: as wide as the block, in the
@@ -57,20 +62,16 @@ const TILE_ROW_CLASS_NAME = 'flex-1 flex-row items-stretch gap-xs';
 export function RaisedCardSymbol({
   name,
   color,
+  size = tokens.spacing['2xl'],
 }: {
   readonly name: IconName;
   /** In place of the brand colour, such as the error red of signing out. */
   readonly color?: string;
+  /** Larger on a half-width card (RAPP-874), where the icon sits above the name. */
+  readonly size?: number;
 }) {
   const brandColor = useBrandColor();
-  return (
-    <Icon
-      name={name}
-      weight="boldDuotone"
-      size={tokens.spacing['2xl']}
-      color={color ?? brandColor}
-    />
-  );
+  return <Icon name={name} weight="boldDuotone" size={size} color={color ?? brandColor} />;
 }
 
 interface RaisedCardProps {
@@ -91,6 +92,11 @@ interface RaisedCardProps {
   readonly media?: ReactNode;
   /** A tile in a grid: tighter, no arrow, fills its cell. */
   readonly tile?: boolean;
+  /**
+   * A tile with its icon on top and its name under it, for a name with a word
+   * too long to fit beside the icon (RAPP-879).
+   */
+  readonly stacked?: boolean;
   readonly children: ReactNode;
 }
 
@@ -107,10 +113,18 @@ export function RaisedCard({
   tone,
   media,
   tile = false,
+  stacked = false,
   children,
 }: RaisedCardProps) {
   const brandColor = useBrandColor();
   const hasMedia = media !== undefined && media !== null;
+  const isStackedTile = tile && stacked && !hasMedia;
+  const stackedContent = (
+    <>
+      {leading === undefined ? null : <View className="items-start">{leading}</View>}
+      <View className="grow justify-end gap-xs">{children}</View>
+    </>
+  );
   const rowContent = (
     <>
       {leading === undefined ? null : (
@@ -139,13 +153,17 @@ export function RaisedCard({
       accessibilityRole="link"
       onPress={onOpen}
       contentClassName={
-        hasMedia ? 'gap-md pb-md' : `${tile ? TILE_ROW_CLASS_NAME : ROW_CLASS_NAME} py-md`
+        hasMedia
+          ? 'gap-md pb-md'
+          : `${isStackedTile ? TILE_STACK_CLASS_NAME : tile ? TILE_ROW_CLASS_NAME : ROW_CLASS_NAME} py-md`
       }
-      className={tile ? 'flex-1' : undefined}
-      paddingClassName={tile ? 'px-xs' : undefined}
+      className={tile ? 'grow' : undefined}
+      paddingClassName={tile ? 'px-md' : undefined}
       tone={tone}
     >
-      {hasMedia ? (
+      {isStackedTile ? (
+        stackedContent
+      ) : hasMedia ? (
         <>
           <View style={mediaBleedStyle}>{media}</View>
           <View className={ROW_CLASS_NAME}>{rowContent}</View>
@@ -157,7 +175,7 @@ export function RaisedCard({
   );
   if (badge === null && count === null) return card;
   return (
-    <EdgeMarks badge={badge} count={count} fill={tile}>
+    <EdgeMarks badge={badge} count={count} className={tile ? 'grow' : undefined}>
       {card}
     </EdgeMarks>
   );

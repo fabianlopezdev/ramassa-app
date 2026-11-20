@@ -14,7 +14,7 @@
   "pinned": "Pinned",
   "unseen": "New",
   "emptyTitle": "No announcements yet",
-  "emptyBody": "When the technical team posts an update, you will find it here.",
+  "emptyBody": "When the staff posts an update, you will find it here.",
   "loadFailed": "We could not load the announcements.",
   "retryAction": "Try again",
   "loading": "Loading announcements",
@@ -32,7 +32,7 @@
     "delete": "Delete",
     "cancel": "Cancel",
     "deleteTitle": "Delete this form?",
-    "deleteBody": "You will not be able to answer it any more. The technical team will see that you discarded it."
+    "deleteBody": "You will not be able to answer it any more. The staff will see that you discarded it."
   },
   "toDo": {
     "title": "Forms and surveys"

@@ -2,8 +2,8 @@
  * The way to the app lock settings (RAPP-236), from the player profile and the
  * team screens. Hidden on the web, where the lock does not exist.
  */
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
@@ -36,18 +36,10 @@ export function AppLockLink({ variant }: { readonly variant: 'link' | 'button' }
     );
   }
   return (
-    <PressableScale
+    <RaisedActionButton
       testID="open-app-lock"
-      accessibilityRole="button"
-      accessibilityLabel={label}
+      label={label}
       onPress={() => push('/app-lock' as Href)}
-      haptic="selection"
-      style={continuousCorners}
-      className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-    >
-      <Text className={`text-center text-md font-bold text-primary ${languageFontClass}`}>
-        {label}
-      </Text>
-    </PressableScale>
+    />
   );
 }

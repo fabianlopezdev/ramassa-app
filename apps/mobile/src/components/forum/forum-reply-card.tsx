@@ -1,5 +1,5 @@
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { AuthorLine } from '@/components/people/person-avatar';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { memo, useCallback } from 'react';
@@ -57,17 +57,14 @@ export const ForumReplyCard = memo(function ForumReplyCard({
         )}
       </View>
       {onFlag === null ? null : (
-        <PressableScale
+        <RaisedActionButton
           testID={`forum-flag-reply-${reply.id}`}
+          size="compact"
+          label={flagLabel}
           accessibilityLabel={flagAccessibilityLabel}
           onPress={flag}
-          haptic="warning"
           isDisabled={isFlagDisabled}
-          style={continuousCorners}
-          className="min-h-recommended self-start justify-center rounded-md border border-neutral-300 px-lg"
-        >
-          <Text className={`font-semibold text-neutral-700 ${languageFontClass}`}>{flagLabel}</Text>
-        </PressableScale>
+        />
       )}
     </View>
   );

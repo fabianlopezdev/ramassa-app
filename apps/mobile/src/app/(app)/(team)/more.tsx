@@ -8,6 +8,7 @@
  */
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PreviewStartFailed, useStartPreview } from '@/components/preview/preview-as-player';
 import { ProfileSection } from '@/components/profile/profile-section';
 import { useTeamLayout } from '@/components/team/team-layout-context';
@@ -47,7 +48,7 @@ const ROUTES: Readonly<
   settings: { testID: 'team-more-settings', href: '/app-lock' as Href },
 };
 
-export default function TeamMoreScreen() {
+function TeamMoreScreen() {
   const signOut = useGuardedLogout();
   // In the large-button layout More is a screen pushed from the home, so
   // the native header goes back to it (RAPP-815); tabs and the sidebar need none.
@@ -174,3 +175,5 @@ export default function TeamMoreScreen() {
     </SafeAreaView>
   );
 }
+
+export default withScreenEntrance('more', TeamMoreScreen);

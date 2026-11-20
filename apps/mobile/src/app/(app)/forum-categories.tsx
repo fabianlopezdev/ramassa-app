@@ -10,6 +10,7 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
@@ -110,19 +111,11 @@ export default function ForumCategoriesScreen() {
           <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
             {tEvents('categoriesHelpPhone')}
           </Text>
-          <PressableScale
+          <AuthSubmitButton
             testID="forum-category-new"
-            accessibilityRole="button"
-            accessibilityLabel={tEvents('newCategory')}
+            label={tEvents('newCategory')}
             onPress={() => setSheet({ category: null })}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center self-start rounded-md bg-primary px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-              {tEvents('newCategory')}
-            </Text>
-          </PressableScale>
+          />
           {remove.isError ? (
             <FailureNotice code="DB-1" message={t('categoryDeleteFailed')} />
           ) : reorder.isError ? (

@@ -7,6 +7,7 @@
  */
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { OpenableCard } from '@/components/layout/openable-card';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { logger } from '@/lib/observability';
 import {
@@ -92,13 +93,7 @@ export function ParticipantActivity({ participantId }: { readonly participantId:
   );
 
   return (
-    <View className="gap-sm" testID="participant-activity">
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-      >
-        {t('sectionActivity')}
-      </Text>
+    <ScreenSection testID="participant-activity" title={t('sectionActivity')}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View className="flex-row gap-sm">
           {ACTIVITY_FILTERS.map((candidate) => (
@@ -181,6 +176,6 @@ export function ParticipantActivity({ participantId }: { readonly participantId:
           ) : null}
         </View>
       )}
-    </View>
+    </ScreenSection>
   );
 }

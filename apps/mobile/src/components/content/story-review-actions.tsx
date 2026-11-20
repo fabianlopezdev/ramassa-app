@@ -4,6 +4,7 @@
  * Decline) with the note she reads. Publishing needs `knowledge.publish` and
  * every version approved in the editor; the database checks the rest.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -60,25 +61,17 @@ export function StoryReviewActions({ article }: { readonly article: KnowledgeArt
   if (article.story_status === 'submitted') {
     return (
       <View className="gap-sm" testID="knowledge-review">
-        <PressableScale
+        <AuthSubmitButton
           testID="knowledge-start-review"
-          accessibilityRole="button"
-          accessibilityLabel={t('startReview')}
+          label={t('startReview')}
           onPress={() =>
             transition.mutate(
               { id: article.id, from: 'submitted', to: 'in_review', reviewerNote: null },
               { onSuccess: () => playHaptic('success') },
             )
           }
-          isBusy={transition.isPending}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-            {t('startReview')}
-          </Text>
-        </PressableScale>
+          isLoading={transition.isPending}
+        />
         {failure === null ? null : (
           <FailureNotice
             code={toAppError(failure).code}
@@ -104,21 +97,13 @@ export function StoryReviewActions({ article }: { readonly article: KnowledgeArt
         multiline
       />
       {canPublish ? (
-        <PressableScale
+        <AuthSubmitButton
           testID="knowledge-publish"
-          accessibilityRole="button"
-          accessibilityLabel={t('publish')}
+          label={t('publish')}
           onPress={publishNow}
-          isBusy={publish.isPending}
-          isDisabled={isBusy}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-            {t('publish')}
-          </Text>
-        </PressableScale>
+          isLoading={publish.isPending}
+          disabled={isBusy}
+        />
       ) : null}
       <View className="flex-row gap-sm">
         <PressableScale

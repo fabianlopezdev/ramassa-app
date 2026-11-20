@@ -9,7 +9,9 @@
  */
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { useAppLock } from '@/components/auth/app-lock';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { Badge } from '@/components/layout/badge';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -237,36 +239,21 @@ function ItemDetail({
         )}
       </View>
       <View className="flex-row flex-wrap gap-sm">
-        <PressableScale
+        <AuthSubmitButton
           testID={isVisible ? 'team-gallery-hide' : 'team-gallery-show'}
-          accessibilityRole="button"
-          accessibilityLabel={isVisible ? t('moderationHide') : t('moderationShow')}
+          label={isVisible ? t('moderationHide') : t('moderationShow')}
           onPress={() =>
             setState.mutate({ id: item.id, state: isVisible ? 'hidden' : 'visible' }, done)
           }
-          isBusy={setState.isPending}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-            {isVisible ? t('moderationHide') : t('moderationShow')}
-          </Text>
-        </PressableScale>
-        <PressableScale
+          isLoading={setState.isPending}
+        />
+        <RaisedActionButton
           testID="team-gallery-remove"
-          accessibilityRole="button"
-          accessibilityLabel={t('delete')}
+          tone="danger"
+          label={t('delete')}
           onPress={confirmRemove}
-          isBusy={remove.isPending}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md border border-error bg-white px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-error ${fontClass}`}>
-            {t('delete')}
-          </Text>
-        </PressableScale>
+          isDisabled={remove.isPending}
+        />
       </View>
       {hasFailed ? (
         <Text

@@ -6,10 +6,11 @@
  * was. A chosen photo is uploaded when the resource is saved.
  */
 import { useAppLock } from '@/components/auth/app-lock';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import type { PickedPhoto } from '@/lib/content-upload';
-import { continuousCorners } from '@/lib/continuous-corners';
 import type { FormBlock } from '@/lib/knowledge-draft';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import * as ImagePicker from 'expo-image-picker';
@@ -162,32 +163,16 @@ function BlockForm({
         </>
       )}
       <View className="flex-row flex-wrap gap-sm">
-        <PressableScale
+        <AuthSubmitButton
           testID="knowledge-block-done"
-          accessibilityRole="button"
-          accessibilityLabel={t('blockDone')}
+          label={t('blockDone')}
           onPress={() => onDone(draft, photo)}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-            {t('blockDone')}
-          </Text>
-        </PressableScale>
-        <PressableScale
+        />
+        <RaisedActionButton
           testID="knowledge-block-cancel"
-          accessibilityRole="button"
-          accessibilityLabel={t('blockCancel')}
+          label={t('blockCancel')}
           onPress={onCancel}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-            {t('blockCancel')}
-          </Text>
-        </PressableScale>
+        />
       </View>
     </ScrollView>
   );

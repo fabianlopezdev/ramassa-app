@@ -7,10 +7,12 @@
  * Choices take a Catalan label with its own review, where the web form asks
  * for the five labels by hand.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { DateTimeField } from '@/components/content/date-time-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { AudiencePicker } from '@/components/team/audience-picker';
 import { ReviewedField, type ReviewedText } from '@/components/team/reviewed-field';
@@ -21,7 +23,7 @@ import { generateDrafts } from '@/lib/translation-worker';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { randomUUID } from 'expo-crypto';
 import { useRouter } from 'expo-router';
-import { useCallback, useState, type ReactNode } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -81,24 +83,6 @@ function newQuestion(type: SurveyQuestionType = 'rating'): DraftQuestion {
 function nextChoiceId(choices: readonly DraftChoice[]): string {
   const used = choices.map((choice) => Number(choice.id.replace('option_', '')) || 0);
   return `option_${Math.max(0, ...used) + 1}`;
-}
-
-function Section({ title, children }: { readonly title: string; readonly children: ReactNode }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View
-      style={continuousCorners}
-      className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-    >
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-      >
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
 }
 
 function OutlineButton({
@@ -273,7 +257,7 @@ export default function TeamSurveyNewScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <PageWidth className="gap-lg p-lg">
-          <Section title={t('newSurvey')}>
+          <ScreenSection title={t('newSurvey')}>
             <ReviewedField
               reviewKey={TITLE_KEY}
               testIDPrefix="survey-title"
@@ -338,9 +322,9 @@ export default function TeamSurveyNewScreen() {
                 }}
               />
             )}
-          </Section>
+          </ScreenSection>
 
-          <Section title={t('questionsTitle')}>
+          <ScreenSection title={t('questionsTitle')}>
             {questions.map((question, index) => (
               <View
                 key={question.id}
@@ -463,7 +447,7 @@ export default function TeamSurveyNewScreen() {
                 setQuestions((current) => [...current, newQuestion()]);
               }}
             />
-          </Section>
+          </ScreenSection>
 
           <View className="gap-sm">
             <PressableScale
@@ -488,21 +472,13 @@ export default function TeamSurveyNewScreen() {
             <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
               {t('translationHelp')}
             </Text>
-            <PressableScale
+            <AuthSubmitButton
               testID="survey-save"
-              accessibilityRole="button"
-              accessibilityLabel={save.isPending ? t('saving') : t('savePublish')}
+              label={save.isPending ? t('saving') : t('savePublish')}
               onPress={submit}
-              isBusy={save.isPending}
-              isDisabled={audience === null}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-                {save.isPending ? t('saving') : t('savePublish')}
-              </Text>
-            </PressableScale>
+              isLoading={save.isPending}
+              disabled={audience === null}
+            />
             {noticeText === null ? null : (
               <Text
                 testID="survey-notice"

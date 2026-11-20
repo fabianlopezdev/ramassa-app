@@ -273,7 +273,7 @@ export function SegmentedControl<Key extends string>({
             <EdgeMarks
               key={option.key}
               count={option.count === undefined ? null : formatUnreadBadge(option.count)}
-              fill
+              className="flex-1"
             >
               <View className="flex-1" />
             </EdgeMarks>

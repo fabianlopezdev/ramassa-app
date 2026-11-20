@@ -17,6 +17,8 @@ import {
 import { EventMonthCalendar } from '@/components/events/event-month-calendar';
 import { PageWidth } from '@/components/layout/content-width';
 import { NavRow } from '@/components/layout/nav-row';
+import { ScreenSection, SectionTitle } from '@/components/layout/screen-section';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader, PlayerTabStateFrame } from '@/components/profile/player-tab-header';
 import {
   addPrivateMentoringMarkedDates,
@@ -38,7 +40,7 @@ import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import type { MarkedDates } from 'react-native-calendars/src/types';
 import { toAppError } from '@ramassa/shared/errors';
 import {
@@ -66,7 +68,7 @@ const getItemType = (item: PlayerEventOccurrence) =>
     ? 'signed-up-event'
     : 'event';
 
-export default function EventsScreen() {
+function EventsScreen() {
   const { t, i18n } = useTranslation(['events', 'common', 'mentoring', 'nav', 'home']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
@@ -302,12 +304,7 @@ export default function EventsScreen() {
       onLoad={onListLoad}
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
-          <View className="gap-xs">
-            <PlayerTabHeader title={t('nav:tabs.events')} />
-            <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-              {t('playerIntro')}
-            </Text>
-          </View>
+          <PlayerTabHeader title={t('nav:tabs.events')} />
           <EventViewToggle
             selected={view}
             listLabel={t('playerListView')}
@@ -345,34 +342,28 @@ export default function EventsScreen() {
             </View>
           )}
           {hasOpenedCalendar ? (
-            <View className="gap-sm" style={contentView === 'calendar' ? undefined : styles.hidden}>
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('playerCalendarLabel')}
-              </Text>
-              <EventMonthCalendar
-                language={language}
-                todayLabel={t('playerToday')}
-                previousMonthLabel={t('playerPreviousMonth')}
-                nextMonthLabel={t('playerNextMonth')}
-                current={effectiveSelectedDate}
-                minDate={eventDateKey(now.toISOString())}
-                markedDates={markedDates}
-                onSelectDay={selectCalendarDay}
-                testID="player-events-calendar"
-              />
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-lg font-bold tabular-nums text-neutral-900 ${languageFontClass}`}
-              >
-                {t('playerSelectedDate', {
+            <View className="gap-lg" style={contentView === 'calendar' ? undefined : styles.hidden}>
+              <ScreenSection title={t('playerCalendarLabel')}>
+                <EventMonthCalendar
+                  language={language}
+                  todayLabel={t('playerToday')}
+                  previousMonthLabel={t('playerPreviousMonth')}
+                  nextMonthLabel={t('playerNextMonth')}
+                  current={effectiveSelectedDate}
+                  minDate={eventDateKey(now.toISOString())}
+                  markedDates={markedDates}
+                  onSelectDay={selectCalendarDay}
+                  testID="player-events-calendar"
+                />
+              </ScreenSection>
+              <SectionTitle
+                className="tabular-nums"
+                title={t('playerSelectedDate', {
                   date: dateFormatter.format(
                     new Date(`${effectiveSelectedDate}${UTC_MIDDAY_SUFFIX}`),
                   ),
                 })}
-              </Text>
+              />
             </View>
           ) : null}
         </PageWidth>
@@ -393,3 +384,5 @@ export default function EventsScreen() {
     />
   );
 }
+
+export default withScreenEntrance('events', EventsScreen);

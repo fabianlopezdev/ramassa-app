@@ -1,9 +1,8 @@
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { GalleryGrid } from '@/components/gallery/gallery-grid';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { toUnopenedIdSet } from '@/lib/community-news';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTabNews } from '@/lib/use-tab-news';
 import { useRouter, type Href } from 'expo-router';
@@ -37,16 +36,7 @@ export default function GalleryScreen() {
         <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
           {t('intro')}
         </Text>
-        <PressableScale
-          testID="gallery-upload"
-          accessibilityLabel={t('upload')}
-          onPress={openUpload}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-        >
-          <Text className={`font-bold text-white ${languageFontClass}`}>{t('upload')}</Text>
-        </PressableScale>
+        <AuthSubmitButton testID="gallery-upload" label={t('upload')} onPress={openUpload} />
       </PageWidth>
     ),
     [languageFontClass, openUpload, t],

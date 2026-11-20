@@ -8,8 +8,10 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { readValue } from '@/lib/arrival-form';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -18,7 +20,7 @@ import { useItemLabel } from '@/lib/item-label';
 import { useSaveItemType } from '@/lib/stock';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -32,27 +34,6 @@ import { toAppError, type AppError } from '@ramassa/shared/errors';
 import { LANGUAGE_NATIVE_NAMES } from '@ramassa/shared/i18n';
 
 type Kind = 'player_kit' | 'team_equipment';
-
-function Section({
-  title,
-  hint,
-  children,
-}: {
-  readonly title: string;
-  readonly hint?: string;
-  readonly children: ReactNode;
-}) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View className="gap-sm">
-      <Text className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}>{title}</Text>
-      {children}
-      {hint === undefined ? null : (
-        <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>{hint}</Text>
-      )}
-    </View>
-  );
-}
 
 export default function ItemTypeScreen() {
   const { id = 'new' } = useLocalSearchParams<{ id: string }>();
@@ -162,7 +143,7 @@ export default function ItemTypeScreen() {
           )}
 
           {isBuiltin ? null : (
-            <Section title={t('items.kindLabel')} hint={t('items.kindHint')}>
+            <ScreenSection title={t('items.kindLabel')}>
               <View
                 accessibilityRole="radiogroup"
                 accessibilityLabel={t('items.kindLabel')}
@@ -180,10 +161,10 @@ export default function ItemTypeScreen() {
                   />
                 ))}
               </View>
-            </Section>
+            </ScreenSection>
           )}
 
-          <Section title={t('items.sizesLabel')} hint={t('items.sizesHint')}>
+          <ScreenSection title={t('items.sizesLabel')}>
             <View className="flex-row flex-wrap gap-sm">
               {sizes.length === 0 ? (
                 <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
@@ -191,21 +172,17 @@ export default function ItemTypeScreen() {
                 </Text>
               ) : null}
               {sizes.map((size) => (
-                <PressableScale
+                <RaisedActionButton
                   key={size}
                   testID={`item-size-remove-${size}`}
-                  accessibilityRole="button"
+                  size="compact"
+                  icon="close"
+                  label={size}
                   accessibilityLabel={t('items.removeSize', { size })}
                   onPress={() =>
                     setSizes((current) => current.filter((candidate) => candidate !== size))
                   }
-                  haptic="selection"
-                  style={continuousCorners}
-                  className="min-h-recommended min-w-recommended flex-row items-center justify-center gap-xs rounded-md border border-neutral-300 bg-white px-md"
-                >
-                  <Text className={`font-semibold text-neutral-900 ${fontClass}`}>{size}</Text>
-                  <Text className="text-neutral-500">×</Text>
-                </PressableScale>
+                />
               ))}
             </View>
             <View className="flex-row items-end gap-sm">
@@ -220,22 +197,14 @@ export default function ItemTypeScreen() {
                   onSubmitEditing={addSize}
                 />
               </View>
-              <PressableScale
+              <RaisedActionButton
                 testID="item-add-size"
-                accessibilityRole="button"
-                accessibilityLabel={t('items.addSize')}
+                label={t('items.addSize')}
                 onPress={addSize}
                 isDisabled={newSize.trim() === ''}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md border border-primary px-md"
-              >
-                <Text className={`font-bold text-primary-dark ${fontClass}`}>
-                  {t('items.addSize')}
-                </Text>
-              </PressableScale>
+              />
             </View>
-          </Section>
+          </ScreenSection>
 
           <AuthTextField
             testID="item-value"
@@ -272,7 +241,7 @@ export default function ItemTypeScreen() {
             </Text>
           ) : null}
 
-          <Section title={t('items.activeLabel')} hint={t('items.activeHint')}>
+          <ScreenSection title={t('items.activeLabel')}>
             <View
               accessibilityRole="radiogroup"
               accessibilityLabel={t('items.activeLabel')}
@@ -290,7 +259,7 @@ export default function ItemTypeScreen() {
                 />
               ))}
             </View>
-          </Section>
+          </ScreenSection>
 
           {error === null || errorMessage === null ? null : (
             <FailureNotice code={error.code} message={errorMessage} />

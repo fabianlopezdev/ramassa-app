@@ -1,3 +1,5 @@
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import {
@@ -94,19 +96,12 @@ export function MentoringPreferencePickers({
           <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
             {t('mentoring:preferredDateLabel')}
           </Text>
-          <PressableScale
+          <RaisedActionButton
             testID="mentoring-preferred-date"
+            label={displayedDate}
             accessibilityLabel={`${t('mentoring:preferredDateLabel')}: ${displayedDate}`}
-            accessibilityHint={t('mentoring:preferredDateChoose')}
             onPress={() => openPicker('date')}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended justify-center rounded-md border border-neutral-300 bg-white px-md"
-          >
-            <Text className={`text-start text-md text-neutral-900 ${languageFontClass}`}>
-              {displayedDate}
-            </Text>
-          </PressableScale>
+          />
           {preferredDate.length === 0 ? null : (
             <PressableScale
               testID="mentoring-preferred-date-clear"
@@ -199,16 +194,7 @@ export function MentoringPreferencePickers({
                   {t('mentoring:pickerCancel')}
                 </Text>
               </PressableScale>
-              <PressableScale
-                accessibilityLabel={t('mentoring:pickerDone')}
-                onPress={confirmInlinePicker}
-                haptic="success"
-                className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-              >
-                <Text className={`text-md font-bold text-white ${languageFontClass}`}>
-                  {t('mentoring:pickerDone')}
-                </Text>
-              </PressableScale>
+              <AuthSubmitButton label={t('mentoring:pickerDone')} onPress={confirmInlinePicker} />
             </View>
           ) : null}
         </View>

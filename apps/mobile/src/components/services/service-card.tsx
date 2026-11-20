@@ -1,7 +1,4 @@
-import { Badge } from '@/components/layout/badge';
-import { EdgeMarks, type EdgeMarkBadge } from '@/components/layout/edge-marks';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { composeContinuousViewStyle } from '@/lib/continuous-corners';
+import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { Image } from 'expo-image';
@@ -11,16 +8,8 @@ import { useAuth } from '@ramassa/shared/auth';
 import { tokens } from '@ramassa/shared/tokens';
 
 const styles = StyleSheet.create({
-  card: {
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: tokens.colors.neutral[200],
-    borderRadius: tokens.radius.lg,
-    backgroundColor: tokens.colors.white,
-  },
   image: { width: '100%', height: tokens.spacing['3xl'] * 3 },
 });
-const cardStyle = composeContinuousViewStyle(styles.card);
 
 export interface ServiceCardProps {
   readonly id: string;
@@ -66,38 +55,32 @@ export const ServiceCard = memo(function ServiceCard({
     accessToken: session?.access_token,
   });
   const handlePress = useCallback(() => onOpen(id), [id, onOpen]);
-  const badge = useMemo<EdgeMarkBadge | null>(
-    () => (unseenLabel === null ? null : { label: unseenLabel, tone: 'brand' }),
-    [unseenLabel],
-  );
-  const card = (
-    <PressableScale
+  // Her saved interest sits on the card's edge, like her sign-up on an activity
+  // card. While the service is new to her, "Nou" takes that place (RAPP-873).
+  const badge = useMemo<RaisedCardBadge | null>(() => {
+    if (unseenLabel !== null) return { label: unseenLabel, tone: 'brand' };
+    return interested ? { label: interestedLabel, tone: 'accent' } : null;
+  }, [interested, interestedLabel, unseenLabel]);
+  return (
+    <RaisedCard
       testID={`service-card-${id}`}
       accessibilityLabel={accessibilityLabel}
-      onPress={handlePress}
-      haptic="tapLight"
-      style={cardStyle}
-      className="overflow-hidden rounded-lg border border-neutral-200 bg-white"
-    >
-      {imageSource === null ? null : (
-        <Image
-          source={imageSource}
-          accessibilityLabel={imageAlt ?? title}
-          contentFit="cover"
-          cachePolicy="memory-disk"
-          recyclingKey={imageObjectKey ?? id}
-          style={styles.image}
-        />
-      )}
-      <View className="gap-sm p-md">
-        {interested ? (
-          <Badge
-            label={interestedLabel}
-            tone="accent"
-            languageFontClass={languageFontClass}
-            className="self-start"
+      onOpen={handlePress}
+      badge={badge}
+      media={
+        imageSource === null ? undefined : (
+          <Image
+            source={imageSource}
+            accessibilityLabel={imageAlt ?? title}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            recyclingKey={imageObjectKey ?? id}
+            style={styles.image}
           />
-        ) : null}
+        )
+      }
+    >
+      <View className="gap-sm">
         <Text
           className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
           numberOfLines={2}
@@ -128,9 +111,6 @@ export const ServiceCard = memo(function ServiceCard({
           </Text>
         </View>
       </View>
-    </PressableScale>
+    </RaisedCard>
   );
-  if (badge === null) return card;
-  // The card is not a raised card, so the shared marks place the word.
-  return <EdgeMarks badge={badge}>{card}</EdgeMarks>;
 });

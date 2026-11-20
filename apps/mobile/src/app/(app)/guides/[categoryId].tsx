@@ -12,7 +12,6 @@ import {
 import { KnowledgeArticleCard } from '@/components/knowledge/knowledge-article-card';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { NO_UNOPENED_HELP_IDS, unopenedHelpIds } from '@/lib/help-news';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { filterPlayerGuides, selectPlayerGuides } from '@/lib/player-guides';
@@ -88,17 +87,15 @@ export default function GuideCategoryScreen() {
     void Promise.all([refetchArticles(), refetchNews()]);
   }, [refetchArticles, refetchNews]);
   const renderGuide = useCallback(
-    ({ item, index }: ListRenderItemInfo<KnowledgeArticleListRow>) => (
+    ({ item }: ListRenderItemInfo<KnowledgeArticleListRow>) => (
       <PageWidth className="pb-md">
-        <FadeSlideIn index={index}>
-          <KnowledgeArticleCard
-            article={item}
-            accessToken={accessToken}
-            onOpen={openGuide}
-            showsCategory={false}
-            unseenLabel={newGuideIds.has(item.id) ? t('home:unseen') : null}
-          />
-        </FadeSlideIn>
+        <KnowledgeArticleCard
+          article={item}
+          accessToken={accessToken}
+          onOpen={openGuide}
+          showsCategory={false}
+          unseenLabel={newGuideIds.has(item.id) ? t('home:unseen') : null}
+        />
       </PageWidth>
     ),
     [accessToken, newGuideIds, openGuide, t],

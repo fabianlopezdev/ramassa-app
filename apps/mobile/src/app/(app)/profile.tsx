@@ -1,7 +1,9 @@
 /**
  * El meu perfil (RAPP-22, RAPP-794): opened from her photo at the top of every
- * tab, as a short menu of six rows on the shared raised icon card (RAPP-863).
- * Each row opens one screen, except the last, which signs her out.
+ * tab, as a short menu on the shared raised cards (RAPP-863). Her data and her
+ * attendance come first, as a pair of half-width raised cards (RAPP-874); the
+ * other rows follow on the raised icon card. Each opens one screen, except the
+ * last, which signs her out.
  *
  * It stays the RGPD self-service surface. She sees and corrects her data under
  * "Les meves dades", and gives or withdraws her consents and asks for erasure
@@ -14,6 +16,7 @@
  */
 
 import { ICON_LICENCE } from '@/components/icons/icon';
+import { RaisedHalfCard, RaisedHalfCardRow } from '@/components/layout/raised-half-card';
 import { RaisedIconCard } from '@/components/layout/raised-icon-card';
 import { ProfileScreenFrame } from '@/components/profile/profile-screen-frame';
 import { logout } from '@/lib/auth';
@@ -22,7 +25,7 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 
 // The dev-menu entry, required inside a __DEV__ branch so neither the component
 // nor its label reaches a production bundle (RAPP-19).
@@ -42,24 +45,50 @@ export default function ProfileScreen() {
   const openPrivacy = useCallback(() => push('/profile-privacy' as Href), [push]);
   const signOut = useCallback(() => void logout(), []);
 
+  /*
+    The credits, together and centred in the frame's footer, at the very
+    bottom of the phone (RAPP-877): the funding the grant terms ask to
+    mention (RAPP-64), then the icon set's licence credit (RAPP-834). Small
+    type takes a tight line height, so a wrapped line stays close to the
+    one above.
+  */
+  const credits = (
+    <View className="items-center gap-xs">
+      <Text
+        testID="generalitat-credit"
+        className={`text-center text-xs leading-5 text-neutral-600 ${languageFontClass}`}
+      >
+        {t('common:fundingAcknowledgment')}
+      </Text>
+      <Text
+        testID="icon-credit"
+        className={`text-center text-xs leading-5 text-neutral-600 ${languageFontClass}`}
+      >
+        {ICON_LICENCE.credit}
+      </Text>
+    </View>
+  );
+
   return (
-    <ProfileScreenFrame title={t('title')} testID="profile-menu">
-      <RaisedIconCard
-        testID="profile-open-data"
-        icon={playerNavIcons.myData}
-        title={t('menu.data')}
-        accessibilityLabel={t('menu.data')}
-        languageFontClass={languageFontClass}
-        onOpen={openData}
-      />
-      <RaisedIconCard
-        testID="profile-open-attendance"
-        icon={playerNavIcons.attendance}
-        title={t('menu.attendance')}
-        accessibilityLabel={t('menu.attendance')}
-        languageFontClass={languageFontClass}
-        onOpen={openAttendance}
-      />
+    <ProfileScreenFrame title={t('title')} testID="profile-menu" footer={credits}>
+      <RaisedHalfCardRow>
+        <RaisedHalfCard
+          testID="profile-open-data"
+          icon={playerNavIcons.myData}
+          title={t('menu.data')}
+          accessibilityLabel={t('menu.data')}
+          languageFontClass={languageFontClass}
+          onOpen={openData}
+        />
+        <RaisedHalfCard
+          testID="profile-open-attendance"
+          icon={playerNavIcons.attendance}
+          title={t('menu.attendance')}
+          accessibilityLabel={t('menu.attendance')}
+          languageFontClass={languageFontClass}
+          onOpen={openAttendance}
+        />
+      </RaisedHalfCardRow>
       <RaisedIconCard
         testID="profile-open-language"
         icon={playerNavIcons.language}
@@ -96,19 +125,6 @@ export default function ProfileScreen() {
         tone="danger"
         onOpen={signOut}
       />
-      <Text
-        testID="generalitat-credit"
-        className={`text-start text-xs leading-body text-neutral-600 ${languageFontClass}`}
-      >
-        {t('common:fundingAcknowledgment')}
-      </Text>
-      {/* The icon set's licence asks for a credit she can reach (RAPP-834). */}
-      <Text
-        testID="icon-credit"
-        className={`text-start text-xs leading-body text-neutral-600 ${languageFontClass}`}
-      >
-        {ICON_LICENCE.credit}
-      </Text>
       {DevMenuEntry === null ? null : <DevMenuEntry />}
     </ProfileScreenFrame>
   );

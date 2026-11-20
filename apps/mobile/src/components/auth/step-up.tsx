@@ -14,6 +14,7 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthFormError } from '@/components/auth/auth-form-error';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { supabase } from '@/lib/supabase';
@@ -204,19 +205,11 @@ function StepUpSheet({
                   {t('secondFactorVerifyAction')}
                 </Text>
               </PressableScale>
-              <PressableScale
+              <RaisedActionButton
                 testID="step-up-cancel"
-                accessibilityRole="button"
-                accessibilityLabel={t('stepUpCancel')}
+                label={t('stepUpCancel')}
                 onPress={() => close(false)}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-              >
-                <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                  {t('stepUpCancel')}
-                </Text>
-              </PressableScale>
+              />
             </View>
           </ScrollView>
         </KeyboardAvoidingView>

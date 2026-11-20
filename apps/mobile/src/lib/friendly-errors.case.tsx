@@ -46,6 +46,11 @@ mock.module('@/components/motion/pressable-scale', () => ({
   PressableScale: ({ children, onPress }: { children: ReactNode; onPress: () => void }) =>
     createElement('button', { onClick: onPress }, children),
 }));
+// The fallback's retry is the shared primary button (RAPP-878), as a plain button here.
+mock.module('@/components/auth/auth-submit-button', () => ({
+  AuthSubmitButton: ({ label, onPress }: { label: string; onPress: () => void }) =>
+    createElement('button', { onClick: onPress }, label),
+}));
 const { AuthFormError } = await import('../components/auth/auth-form-error');
 const { FailureNotice } = await import('../components/error-code-line');
 const { ErrorFallback } = await import('../components/error-fallback');

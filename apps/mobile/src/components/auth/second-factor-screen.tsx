@@ -8,6 +8,7 @@
 import { AuthFormError } from '@/components/auth/auth-form-error';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { safeAsync } from '@/lib/observability';
@@ -79,18 +80,11 @@ export function SecondFactorScreen() {
             ) : null}
             {start?.kind === 'enroll' ? (
               <View className="gap-sm">
-                <PressableScale
+                <RaisedActionButton
                   testID="second-factor-open-authenticator"
-                  accessibilityRole="button"
-                  accessibilityLabel={t('secondFactorOpenAuthenticator')}
+                  label={t('secondFactorOpenAuthenticator')}
                   onPress={() => void Linking.openURL(start.uri)}
-                  haptic="selection"
-                  className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg"
-                >
-                  <Text className={`text-md font-semibold text-primary-dark ${languageFontClass}`}>
-                    {t('secondFactorOpenAuthenticator')}
-                  </Text>
-                </PressableScale>
+                />
                 <Text className={`text-start text-sm text-neutral-700 ${languageFontClass}`}>
                   {t('secondFactorSecretLabel')}
                 </Text>

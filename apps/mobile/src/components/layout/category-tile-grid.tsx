@@ -4,7 +4,9 @@
  * circle of the category's own colour (RAPP-856, RAPP-868), the divider and
  * its name. Serveis and Guies both draw their categories with it, so a change
  * here reaches both. Tiles go in pairs, so a lone tile or the last of an odd
- * number keeps half the width, like every other tile.
+ * number keeps half the width, like every other tile. A tile whose name would
+ * break inside a word stacks its icon over its name, and the other tile of its
+ * row stretches to the same height (RAPP-879).
  *
  * A tile may carry a count on its top edge, in the circle cards use for one
  * (RAPP-873): what is new in that category. When any tile has one, every tile
@@ -62,8 +64,9 @@ const CategoryTileView = memo(function CategoryTileView({
   );
   return (
     <View className="flex-1">
-      {/* A tile with a count brings its own marks; one without keeps the same room. */}
-      {hasMarks && count === null ? <EdgeMarks fill>{card}</EdgeMarks> : card}
+      {/* A tile with a count brings its own marks; one without keeps the same room.
+          The room grows from its own height like the tile does (RAPP-879). */}
+      {hasMarks && count === null ? <EdgeMarks className="grow">{card}</EdgeMarks> : card}
     </View>
   );
 });

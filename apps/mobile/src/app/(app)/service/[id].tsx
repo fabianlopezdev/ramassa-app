@@ -2,13 +2,12 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { SuccessPop } from '@/components/motion/success-pop';
 import { ServiceArticle } from '@/components/services/service-article';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { playErrorHaptic } from '@/lib/haptics/haptics';
 import { safeAsync } from '@/lib/observability';
 import {
@@ -141,27 +140,18 @@ export default function ServiceDetailScreen() {
               onOpenContact={(url) => void openContact(url)}
               contactErrorCode={contactErrorCode}
             >
-              <PressableScale
+              <AuthSubmitButton
                 testID="service-interest-toggle"
-                accessibilityLabel={
-                  service.interested
-                    ? t('playerServices:interestRemove')
-                    : t('playerServices:interestAdd')
-                }
-                onPress={toggleInterest}
-                haptic="tapLight"
-                isBusy={interest.isPending}
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-              >
-                <Text className={`text-center text-lg font-bold text-white ${languageFontClass}`}>
-                  {interest.isPending
+                label={
+                  interest.isPending
                     ? t('playerServices:interestPending')
                     : service.interested
                       ? t('playerServices:interestRemove')
-                      : t('playerServices:interestAdd')}
-                </Text>
-              </PressableScale>
+                      : t('playerServices:interestAdd')
+                }
+                onPress={toggleInterest}
+                isLoading={interest.isPending}
+              />
               {interest.isSuccess ? (
                 <SuccessPop>
                   <Text

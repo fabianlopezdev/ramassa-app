@@ -6,11 +6,12 @@
  * filter by it, a select's options and a number's minimum. The native side of
  * one entry in the web admin's schema JSON.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { fieldKey, keepsStoredLabel, type FormField } from '@/lib/service-category-form';
 import { generateDrafts } from '@/lib/translation-worker';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -109,20 +110,13 @@ export function ServiceFieldForm({
         }
       />
       {keepsStoredLabel(draft) && review === undefined ? null : (
-        <PressableScale
+        <RaisedActionButton
           testID="service-field-generate"
-          accessibilityRole="button"
+          label={isGenerating ? t('generatingTranslations') : t('fieldLabelGenerate')}
           accessibilityLabel={t('fieldLabelGenerate')}
           onPress={() => void generate()}
-          isBusy={isGenerating}
-          isDisabled={draft.label.trim().length === 0}
-          haptic="tapLight"
-          className="min-h-recommended items-center justify-center rounded-md border border-primary bg-white px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-            {isGenerating ? t('generatingTranslations') : t('fieldLabelGenerate')}
-          </Text>
-        </PressableScale>
+          isDisabled={draft.label.trim().length === 0 || isGenerating}
+        />
       )}
 
       <View className="gap-xs">
@@ -255,32 +249,16 @@ export function ServiceFieldForm({
         <FailureNotice code={errorCode} message={tErrors(getErrorMessageKey(errorCode))} />
       )}
       <View className="flex-row flex-wrap gap-sm">
-        <PressableScale
+        <AuthSubmitButton
           testID="service-field-done"
-          accessibilityRole="button"
-          accessibilityLabel={t('fieldDone')}
+          label={t('fieldDone')}
           onPress={() => onDone(draft, review)}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-            {t('fieldDone')}
-          </Text>
-        </PressableScale>
-        <PressableScale
+        />
+        <RaisedActionButton
           testID="service-field-cancel"
-          accessibilityRole="button"
-          accessibilityLabel={t('categoryCancel')}
+          label={t('categoryCancel')}
           onPress={onCancel}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-            {t('categoryCancel')}
-          </Text>
-        </PressableScale>
+        />
       </View>
     </View>
   );

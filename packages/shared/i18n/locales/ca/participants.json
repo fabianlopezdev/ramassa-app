@@ -399,9 +399,7 @@
       "player_kit": "Equipament de jugadora",
       "team_equipment": "Material d'equip"
     },
-    "kindHint": "L'equipament de jugadora es lliura a les jugadores i porta codi d'unitat. El material d'equip es compta.",
     "sizesLabel": "Talles",
-    "sizesHint": "Deixa-ho buit per a un article sense talles. Una talla que encara té estoc no es pot treure.",
     "noSizes": "Sense talles",
     "addSize": "Afegir la talla",
     "newSize": "Talla nova",
@@ -415,7 +413,6 @@
       "on": "En ús",
       "off": "Desactivat"
     },
-    "activeHint": "Un article desactivat surt de les llistes i conserva l'historial.",
     "save": "Desar l'article",
     "saving": "Desant",
     "saveFailed": "L'article no s'ha desat. Torna-ho a provar.",

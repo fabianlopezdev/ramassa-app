@@ -15,7 +15,7 @@ import {
   type SegmentedControlOption,
 } from '@/components/layout/segmented-control';
 import { TabScreenAction } from '@/components/layout/tab-screen-action';
-import { FadeSlideIn } from '@/components/motion/fade-slide-in';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { communityUnseenCounts, forumPostMarks, toUnopenedIdSet } from '@/lib/community-news';
 import { isNetworkStateOnline } from '@/lib/network-status';
@@ -61,7 +61,7 @@ const shareActions: Readonly<
   stories: { route: '/story/submit' as Href, labelKey: 'forum:shareStories' },
 };
 
-export default function CommunityScreen() {
+function CommunityScreen() {
   const { t } = useTranslation(['forum', 'errors', 'nav', 'common', 'home']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -187,7 +187,7 @@ export default function CommunityScreen() {
     void Promise.all([refetchCategories(), refetchPosts(), refetchTabNews()]);
   }, [refetchCategories, refetchPosts, refetchTabNews]);
   const renderPost = useCallback(
-    ({ item, index }: ListRenderItemInfo<ForumPostRow>) => {
+    ({ item }: ListRenderItemInfo<ForumPostRow>) => {
       const marks = forumPostMarks(unopenedPostIds, newRepliesByPostId, item.id);
       const unseenLabel = marks.isUnopened ? t('home:unseen') : null;
       // The card adds pinned and the reply count; the word goes first (RAPP-873).
@@ -200,24 +200,22 @@ export default function CommunityScreen() {
         .join('. ');
       return (
         <PageWidth className="pb-md">
-          <FadeSlideIn index={index}>
-            <ForumPostCard
-              post={item}
-              tone={toneByCategoryId[item.category_id]}
-              authorLabel={t('forum:postBy', { name: item.author_first_name })}
-              authorAvatarKey={personCards.get(item.author_id)?.avatarKey ?? null}
-              repliesLabel={t('forum:repliesCount', { count: item.reply_count })}
-              pinnedLabel={t('forum:pinned')}
-              imageAlt={t('forum:imageAlt', { name: item.author_first_name })}
-              accessibilityLabel={accessibilityLabel}
-              languageFontClass={languageFontClass}
-              accessToken={session?.access_token}
-              openLinkLabel={openLinkLabel}
-              onOpen={openPost}
-              unseenLabel={unseenLabel}
-              newRepliesCount={formatUnreadBadge(marks.newReplies)}
-            />
-          </FadeSlideIn>
+          <ForumPostCard
+            post={item}
+            tone={toneByCategoryId[item.category_id]}
+            authorLabel={t('forum:postBy', { name: item.author_first_name })}
+            authorAvatarKey={personCards.get(item.author_id)?.avatarKey ?? null}
+            repliesLabel={t('forum:repliesCount', { count: item.reply_count })}
+            pinnedLabel={t('forum:pinned')}
+            imageAlt={t('forum:imageAlt', { name: item.author_first_name })}
+            accessibilityLabel={accessibilityLabel}
+            languageFontClass={languageFontClass}
+            accessToken={session?.access_token}
+            openLinkLabel={openLinkLabel}
+            onOpen={openPost}
+            unseenLabel={unseenLabel}
+            newRepliesCount={formatUnreadBadge(marks.newReplies)}
+          />
         </PageWidth>
       );
     },
@@ -339,3 +337,5 @@ export default function CommunityScreen() {
     </>
   );
 }
+
+export default withScreenEntrance('community', CommunityScreen);

@@ -206,8 +206,12 @@ describe('native messaging UI contract', () => {
     expect(source).toContain('<MessageThreadEmptyState');
     expect(source).toContain('accessible={false}');
     expect(source).toContain('className={`min-h-recommended flex-1');
-    expect(source).toContain('className="min-h-recommended justify-center rounded-2xl');
+    // Send is the raised button at the height of a recommended tap target (RAPP-878).
+    expect(source).toMatch(/<RaisedActionButton\s+testID="message-send"\s+size="fit"/);
+    const raisedButton = await Bun.file(
+      new URL('../components/forms/raised-action-button.tsx', import.meta.url),
+    ).text();
+    expect(raisedButton).toMatch(/fitFaceStyle = \{[^}]*minHeight: RAISED_FACE_MIN_HEIGHT/);
     expect(source).not.toContain('className={`min-h-12 flex-1');
-    expect(source).not.toContain('className="min-h-12 justify-center');
   });
 });

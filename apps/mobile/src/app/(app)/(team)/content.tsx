@@ -20,6 +20,7 @@ import { ServiceReviewList } from '@/components/content/service-review-list';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { useTeamLayout } from '@/components/team/team-layout-context';
 import { contentKinds, type ContentKind } from '@/lib/team-shell';
 import { useAccountAccess } from '@/lib/use-account-access';
@@ -50,7 +51,7 @@ const DETAIL_ROUTES = {
   reviews: '/content-service-review',
 } as const satisfies Record<ContentKind, string>;
 
-export default function ContentScreen() {
+function ContentScreen() {
   const { t } = useTranslation(['announcements', 'events', 'knowledge', 'services']);
   const { t: tNav } = useTranslation('nav');
   const fontClass = useLanguageFontClass();
@@ -176,3 +177,5 @@ export default function ContentScreen() {
     </SafeAreaView>
   );
 }
+
+export default withScreenEntrance('content', ContentScreen);

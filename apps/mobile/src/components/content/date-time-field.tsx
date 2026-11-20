@@ -5,8 +5,9 @@
  * native picker draws nothing there. With `inMadridTime` (event times,
  * RAPP-342) it shows and sets the Madrid wall clock.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { DateTimePicker } from '@expo/ui/community/datetime-picker';
 import { useMemo, useState } from 'react';
@@ -77,17 +78,14 @@ export function DateTimeField({
   };
 
   const button = (mode: PickerMode, text: string) => (
-    <PressableScale
-      testID={`${testID}-${mode}`}
-      accessibilityRole="button"
-      accessibilityLabel={`${label}: ${text}`}
-      onPress={() => open(mode)}
-      haptic="tapLight"
-      style={continuousCorners}
-      className="min-h-recommended flex-1 justify-center rounded-md border border-neutral-300 bg-white px-md"
-    >
-      <Text className={`text-start text-md text-neutral-900 ${fontClass}`}>{text}</Text>
-    </PressableScale>
+    <View className="flex-1">
+      <RaisedActionButton
+        testID={`${testID}-${mode}`}
+        label={text}
+        accessibilityLabel={`${label}: ${text}`}
+        onPress={() => open(mode)}
+      />
+    </View>
   );
 
   return (
@@ -140,19 +138,14 @@ export function DateTimeField({
                   {t('mentoring:pickerCancel')}
                 </Text>
               </PressableScale>
-              <PressableScale
+              <AuthSubmitButton
                 testID={`${testID}-done`}
-                accessibilityLabel={t('mentoring:pickerDone')}
+                label={t('mentoring:pickerDone')}
                 onPress={() => {
                   commit(activePicker, draft);
                   setActivePicker(null);
                 }}
-                className="min-h-recommended items-center justify-center rounded-md bg-primary px-md"
-              >
-                <Text className={`text-md font-bold text-white ${fontClass}`}>
-                  {t('mentoring:pickerDone')}
-                </Text>
-              </PressableScale>
+              />
             </View>
           ) : null}
         </View>

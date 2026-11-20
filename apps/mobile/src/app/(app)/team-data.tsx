@@ -7,19 +7,21 @@
  * `audit.view` holders: the entries newest first, filtered by action, target
  * type and period, a page at a time.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { DateField } from '@/components/content/date-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { teamScreens } from '@/lib/account-area';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useAuditLog, useDataExport } from '@/lib/team-data';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -59,38 +61,6 @@ interface AuditFilters {
 
 const NO_FILTERS: AuditFilters = { action: '', targetType: '', start: '', end: '' };
 
-function Section({
-  testID,
-  title,
-  intro,
-  children,
-}: {
-  readonly testID?: string;
-  readonly title: string;
-  readonly intro?: string;
-  readonly children: ReactNode;
-}) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View
-      testID={testID}
-      style={continuousCorners}
-      className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-    >
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-      >
-        {title}
-      </Text>
-      {intro === undefined ? null : (
-        <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>{intro}</Text>
-      )}
-      {children}
-    </View>
-  );
-}
-
 function ActionButton({
   testID,
   label,
@@ -106,33 +76,21 @@ function ActionButton({
   readonly isDisabled?: boolean;
   readonly isPrimary?: boolean;
 }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <PressableScale
+  return isPrimary ? (
+    <AuthSubmitButton
       testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
+      label={label}
       onPress={onPress}
-      isBusy={isBusy}
-      isDisabled={isDisabled}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended items-center justify-center rounded-md px-lg ${
-        isPrimary
-          ? isDisabled
-            ? 'bg-neutral-200'
-            : 'bg-primary'
-          : 'border border-neutral-300 bg-white'
-      }`}
-    >
-      <Text
-        className={`text-center text-md font-bold ${
-          isPrimary ? (isDisabled ? 'text-neutral-500' : 'text-white') : 'text-primary-dark'
-        } ${fontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
+      isLoading={isBusy}
+      disabled={isDisabled}
+    />
+  ) : (
+    <RaisedActionButton
+      testID={testID}
+      label={label}
+      onPress={onPress}
+      isDisabled={isDisabled === true || isBusy === true}
+    />
   );
 }
 
@@ -192,7 +150,7 @@ function Exports({ permissions }: { readonly permissions: ReadonlySet<Permission
   };
 
   return (
-    <Section testID="data-exports" title={t('exportTitle')} intro={t('exportDescription')}>
+    <ScreenSection testID="data-exports" title={t('exportTitle')}>
       <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
         {t('exportDataset')}
       </Text>
@@ -295,7 +253,7 @@ function Exports({ permissions }: { readonly permissions: ReadonlySet<Permission
           {notice.text}
         </Text>
       )}
-    </Section>
+    </ScreenSection>
   );
 }
 
@@ -325,7 +283,7 @@ function AuditLog() {
   const rows = audit.data?.pages.flatMap((page) => page.rows) ?? [];
 
   return (
-    <Section testID="data-audit" title={t('auditTitle')} intro={t('auditRetention')}>
+    <ScreenSection testID="data-audit" title={t('auditTitle')} isLast>
       <AuthTextField
         testID="audit-filter-action"
         label={t('auditAction')}
@@ -412,7 +370,7 @@ function AuditLog() {
           isDisabled={audit.isFetchingNextPage}
         />
       ) : null}
-    </Section>
+    </ScreenSection>
   );
 }
 

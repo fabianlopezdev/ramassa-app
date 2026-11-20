@@ -13,13 +13,15 @@ import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { FORWARD_CHEVRON } from '@/components/icons/direction';
 import { Icon } from '@/components/icons/icon';
 import { PageWidth } from '@/components/layout/content-width';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { BarRow, MonthBars, Sparkline } from '@/components/team/impact-charts';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useEntityDashboard } from '@/lib/entity-portal';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
-import { useMemo, type ReactNode } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -30,34 +32,7 @@ const TABLET_WIDTH = 768;
 
 const percent = (value: number | null) => (value === null ? '' : `${value.toFixed(2)}%`);
 
-function Section({
-  testID,
-  title,
-  children,
-}: {
-  readonly testID?: string;
-  readonly title: string;
-  readonly children: ReactNode;
-}) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View
-      testID={testID}
-      style={continuousCorners}
-      className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-    >
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-      >
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
-}
-
-export default function EntityHomeScreen() {
+function EntityHomeScreen() {
   const { t } = useTranslation('nav');
   const { t: tEntity, i18n } = useTranslation('entity-management');
   // One status vocabulary with the Referrals tab (RAPP-804).
@@ -124,11 +99,11 @@ export default function EntityHomeScreen() {
           {hasLoadFailed(dashboard) ? <EntityLoadFailure query={dashboard} /> : null}
 
           {impact === undefined ? null : impact.suppressed ? (
-            <Section testID="entity-impact-suppressed" title={tEntity('privacyTitle')}>
+            <ScreenSection testID="entity-impact-suppressed" title={tEntity('privacyTitle')}>
               <Text className={`text-start text-md text-neutral-700 ${fontClass}`}>
                 {tEntity('privacyBody')}
               </Text>
-            </Section>
+            </ScreenSection>
           ) : (
             <>
               <View className="flex-row flex-wrap justify-between gap-y-sm">
@@ -155,7 +130,7 @@ export default function EntityHomeScreen() {
               </View>
 
               {trend.length === 0 ? null : (
-                <Section testID="entity-monthly" title={tEntity('monthlyTitle')}>
+                <ScreenSection testID="entity-monthly" title={tEntity('monthlyTitle')}>
                   <MonthBars
                     bars={trend.map((point) => ({
                       key: point.monthStart,
@@ -182,13 +157,13 @@ export default function EntityHomeScreen() {
                       </View>
                     ))}
                   </View>
-                </Section>
+                </ScreenSection>
               )}
             </>
           )}
 
           {data === undefined ? null : (
-            <Section testID="entity-tracking" title={tEntity('trackingTitle')}>
+            <ScreenSection testID="entity-tracking" title={tEntity('trackingTitle')} isLast>
               {data.tracking.length === 0 ? (
                 <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
                   {tEntity('trackingEmpty')}
@@ -237,10 +212,12 @@ export default function EntityHomeScreen() {
                   );
                 })
               )}
-            </Section>
+            </ScreenSection>
           )}
         </PageWidth>
       </ScrollView>
     </SafeAreaView>
   );
 }
+
+export default withScreenEntrance('entity-home', EntityHomeScreen);

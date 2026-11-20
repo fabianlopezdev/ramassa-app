@@ -1,10 +1,11 @@
 /**
  * Contacte, once called Xat (RAPP-789, RAPP-860): everything private between
  * her and the staff, in one tab.
- * Three large cards and nothing else: the chat with its unread count, mentoring
+ * Three cards and nothing else: the chat with its unread count, mentoring
  * with the state of the request she is waiting on, and suggestions. Each opens
- * the screen it always opened (`team-chat`, `mentoring`, `feedback`). The cards
- * are the raised card of Per fer (RAPP-842). The unread count sits in a circle
+ * the screen it always opened (`team-chat`, `mentoring`, `feedback`). The chat
+ * is the raised card of Per fer (RAPP-842); mentoring and suggestions sit under
+ * it as a pair of half-width raised cards (RAPP-874). The unread count sits in a circle
  * on the top edge near the end, and the state of her request is a badge on the
  * top edge near the start, like "Nou". Both are in the brand colour.
  * Mentoria and Suggeriments also count what the staff changed for her (RAPP-873),
@@ -13,7 +14,9 @@
  */
 import { PageWidth } from '@/components/layout/content-width';
 import type { RaisedCardBadge } from '@/components/layout/raised-card';
+import { RaisedHalfCard, RaisedHalfCardRow } from '@/components/layout/raised-half-card';
 import { RaisedIconCard } from '@/components/layout/raised-icon-card';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { useUnreadMessages } from '@/lib/messaging';
 import {
@@ -50,7 +53,7 @@ function stateBadge(label: string | null): RaisedCardBadge | null {
   return label === null ? null : { label, tone: 'brand' };
 }
 
-export default function ChatTabScreen() {
+function ChatTabScreen() {
   const { t } = useTranslation(['nav', 'messaging', 'mentoring', 'feedback', 'common']);
   const { push } = useRouter();
   const unread = useUnreadMessages().data ?? 0;
@@ -98,36 +101,40 @@ export default function ChatTabScreen() {
           languageFontClass={languageFontClass}
           onOpen={openTeamChat}
         />
-        <RaisedIconCard
-          testID="chat-open-mentoring"
-          icon={playerNavIcons.mentoring}
-          title={mentoringTitle}
-          accessibilityLabel={contactCardAccessibilityLabel(
-            mentoringTitle,
-            mentoringState,
-            news.mentoring,
-            sayNewCount,
-          )}
-          badge={stateBadge(mentoringState)}
-          count={formatUnreadBadge(news.mentoring)}
-          languageFontClass={languageFontClass}
-          onOpen={openMentoring}
-        />
-        <RaisedIconCard
-          testID="chat-open-feedback"
-          icon={playerNavIcons.feedback}
-          title={feedbackTitle}
-          accessibilityLabel={contactCardAccessibilityLabel(
-            feedbackTitle,
-            null,
-            news.feedback,
-            sayNewCount,
-          )}
-          count={formatUnreadBadge(news.feedback)}
-          languageFontClass={languageFontClass}
-          onOpen={openFeedback}
-        />
+        <RaisedHalfCardRow>
+          <RaisedHalfCard
+            testID="chat-open-mentoring"
+            icon={playerNavIcons.mentoring}
+            title={mentoringTitle}
+            accessibilityLabel={contactCardAccessibilityLabel(
+              mentoringTitle,
+              mentoringState,
+              news.mentoring,
+              sayNewCount,
+            )}
+            badge={stateBadge(mentoringState)}
+            count={formatUnreadBadge(news.mentoring)}
+            languageFontClass={languageFontClass}
+            onOpen={openMentoring}
+          />
+          <RaisedHalfCard
+            testID="chat-open-feedback"
+            icon={playerNavIcons.feedback}
+            title={feedbackTitle}
+            accessibilityLabel={contactCardAccessibilityLabel(
+              feedbackTitle,
+              null,
+              news.feedback,
+              sayNewCount,
+            )}
+            count={formatUnreadBadge(news.feedback)}
+            languageFontClass={languageFontClass}
+            onOpen={openFeedback}
+          />
+        </RaisedHalfCardRow>
       </PageWidth>
     </ScrollView>
   );
 }
+
+export default withScreenEntrance('chat', ChatTabScreen);

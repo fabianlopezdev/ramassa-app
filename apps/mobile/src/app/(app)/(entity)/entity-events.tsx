@@ -10,6 +10,7 @@ import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-loa
 import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useEntityUpcomingEvents } from '@/lib/entity-portal';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -23,7 +24,7 @@ import {
   type SupportedLanguage,
 } from '@ramassa/shared/i18n';
 
-export default function EntityEventsScreen() {
+function EntityEventsScreen() {
   const { t, i18n } = useTranslation('entity-management');
   const fontClass = useLanguageFontClass();
   const events = useEntityUpcomingEvents();
@@ -104,3 +105,5 @@ export default function EntityEventsScreen() {
     </SafeAreaView>
   );
 }
+
+export default withScreenEntrance('entity-events', EntityEventsScreen);

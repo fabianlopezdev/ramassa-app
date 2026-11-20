@@ -11,8 +11,10 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { useRefreshOrganizationBranding } from '@/components/branding/organization-branding-provider';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { teamScreens } from '@/lib/account-area';
 import type { PickedPhoto } from '@/lib/content-upload';
@@ -27,7 +29,7 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -46,24 +48,6 @@ import {
 
 const HEX = /^#[0-9A-F]{6}$/i;
 const logoStyle = { width: 160, height: 64 } as const;
-
-function Section({ title, children }: { readonly title: string; readonly children: ReactNode }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View
-      style={continuousCorners}
-      className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-    >
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-      >
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
-}
 
 function ColorField({
   testID,
@@ -252,7 +236,7 @@ export default function TeamOrganizationScreen() {
 
           {row === undefined ? null : (
             <>
-              <Section title={t('tabOrganization')}>
+              <ScreenSection title={t('tabOrganization')}>
                 <AuthTextField
                   testID="organization-name"
                   label={t('organizationName')}
@@ -281,9 +265,9 @@ export default function TeamOrganizationScreen() {
                   maxLength={254}
                   editable={canEditOrganization}
                 />
-              </Section>
+              </ScreenSection>
 
-              <Section title={t('logo')}>
+              <ScreenSection title={t('logo')}>
                 {logoSource === null ? null : (
                   <Image
                     testID="organization-logo"
@@ -293,22 +277,13 @@ export default function TeamOrganizationScreen() {
                     accessibilityLabel={row.name}
                   />
                 )}
-                <PressableScale
+                <RaisedActionButton
                   testID="organization-choose-logo"
-                  accessibilityRole="button"
-                  accessibilityLabel={t('chooseLogo')}
+                  size="compact"
+                  label={t('chooseLogo')}
                   onPress={() => void pickLogo()}
                   isDisabled={!canEditBranding}
-                  haptic="tapLight"
-                  style={continuousCorners}
-                  className="min-h-recommended items-center justify-center self-start rounded-md border border-neutral-300 bg-white px-lg"
-                >
-                  <Text
-                    className={`text-center text-md font-bold ${canEditBranding ? 'text-primary-dark' : 'text-neutral-400'} ${fontClass}`}
-                  >
-                    {t('chooseLogo')}
-                  </Text>
-                </PressableScale>
+                />
                 <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
                   {t('logoHelp')}
                 </Text>
@@ -337,9 +312,9 @@ export default function TeamOrganizationScreen() {
                 <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
                   {t('contrastHelp')}
                 </Text>
-              </Section>
+              </ScreenSection>
 
-              <Section title={t('languages')}>
+              <ScreenSection title={t('languages')}>
                 <View className="flex-row flex-wrap gap-sm">
                   {SUPPORTED_LANGUAGES.map((language) => (
                     <ChoiceOption
@@ -386,7 +361,7 @@ export default function TeamOrganizationScreen() {
                     {t('languageLocked')}
                   </Text>
                 )}
-              </Section>
+              </ScreenSection>
 
               <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
                 {t('fundingNotice')}

@@ -8,8 +8,8 @@
  */
 
 import { PendingFormPrompt } from '@/components/forms/pending-form-prompt';
-import { HomeSection } from '@/components/home/home-section';
 import { LaterFormsLink } from '@/components/home/later-forms-link';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { SurveyPromptCard } from '@/components/surveys/survey-prompt';
 import { useMyCustomFormsByPlace } from '@/lib/custom-forms';
 import type { HomeToDoItem } from '@/lib/home-to-do';
@@ -27,7 +27,7 @@ export function HomeToDo({ items, languageFontClass }: HomeToDoProps) {
   if (items.length === 0 && laterCount === 0) return null;
 
   return (
-    <HomeSection testID="home-to-do" title={t('toDo.title')} languageFontClass={languageFontClass}>
+    <ScreenSection testID="home-to-do" title={t('toDo.title')}>
       <View className="gap-md">
         {items.map((item) =>
           item.kind === 'form' ? (
@@ -38,6 +38,6 @@ export function HomeToDo({ items, languageFontClass }: HomeToDoProps) {
         )}
         <LaterFormsLink count={laterCount} languageFontClass={languageFontClass} />
       </View>
-    </HomeSection>
+    </ScreenSection>
   );
 }

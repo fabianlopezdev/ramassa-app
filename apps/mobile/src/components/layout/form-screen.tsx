@@ -2,6 +2,7 @@ import { AuthActionFooter } from '@/components/auth/auth-action-footer';
 import { FormWidth } from '@/components/layout/content-width';
 import { FormRevealContext } from '@/components/layout/form-reveal';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
+import { useOwnEntrance, type EntranceMode } from '@/lib/screen-entrance';
 import { BlurTargetView } from 'expo-blur';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
@@ -27,7 +28,8 @@ const viewportStyle = { flex: 1, overflow: 'hidden' } as const;
 const keyboardContainerStyle = { flex: 1 } as const;
 
 type FormScreenProps = {
-  readonly entrance?: 'staggered' | 'none';
+  /** Omit to follow the screen: the first visit after opening the app staggers. */
+  readonly entrance?: EntranceMode;
   readonly testID?: string;
   readonly style?: StyleProp<ViewStyle>;
   readonly accessibilityLanguage?: string;
@@ -43,20 +45,24 @@ type FormScreenProps = {
   readonly headingAnchor?: { readonly height: number };
 };
 
-/** Shared safe area, keyboard handling, scroll clearance and entrance motion for onboarding forms. */
+/** Shared safe area, keyboard handling, scroll clearance and entrance motion for forms. */
 export function FormScreen({
   navigation,
   heading,
   children,
   bottomAction,
   headingAnchor,
-  entrance = 'staggered',
+  entrance: requestedEntrance,
   testID,
   style,
   accessibilityLanguage,
   scrollEnabled = true,
   onEndReached,
 }: FormScreenProps) {
+  // Heading, fields and action arrive one after another here, so the screen
+  // does not also move as one piece (RAPP-875).
+  const screenEntrance = useOwnEntrance();
+  const entrance = requestedEntrance ?? screenEntrance;
   const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
   useEffect(() => {
     const show = Keyboard.addListener(
@@ -224,13 +230,13 @@ function FormEntrance({
   index,
   children,
 }: {
-  readonly entrance: 'staggered' | 'none';
+  readonly entrance: EntranceMode;
   readonly index: number;
   readonly children: ReactNode;
 }) {
   if (entrance === 'none') return <View>{children}</View>;
   return (
-    <FadeSlideIn preset="onboarding" index={index} composite>
+    <FadeSlideIn index={index} composite>
       {children}
     </FadeSlideIn>
   );

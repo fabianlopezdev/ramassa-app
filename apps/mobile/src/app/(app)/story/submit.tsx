@@ -1,10 +1,12 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { Icon, type IconName } from '@/components/icons/icon';
 import { StoryImagePreview } from '@/components/knowledge/story-image-preview';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { SuccessPop } from '@/components/motion/success-pop';
@@ -25,7 +27,7 @@ import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
@@ -61,25 +63,14 @@ function OutlinedIconAction({
   readonly isDisabled?: boolean;
   readonly isBusy?: boolean;
 }) {
-  const languageFontClass = useLanguageFontClass();
   return (
-    <PressableScale
+    <RaisedActionButton
       testID={testID}
-      accessibilityLabel={label}
+      icon={symbol}
+      label={label}
       onPress={onPress}
-      haptic="tapLight"
-      isDisabled={isDisabled}
-      isBusy={isBusy}
-      style={continuousCorners}
-      className="min-h-recommended flex-row items-center justify-center gap-sm rounded-md border border-primary px-lg"
-    >
-      {isBusy ? (
-        <ActivityIndicator accessible={false} color={tokens.colors.primary.DEFAULT} />
-      ) : (
-        <Icon name={symbol} size={tokens.fontSize.xl} color={tokens.colors.primary.DEFAULT} />
-      )}
-      <Text className={`text-md font-bold text-primary ${languageFontClass}`}>{label}</Text>
-    </PressableScale>
+      isDisabled={isDisabled === true || isBusy === true}
+    />
   );
 }
 
@@ -354,17 +345,7 @@ export default function StorySubmissionScreen() {
                 <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
                   {t('knowledge:submissionSuccessBody')}
                 </Text>
-                <PressableScale
-                  accessibilityLabel={t('knowledge:submitAnother')}
-                  onPress={submitAnother}
-                  haptic="tapLight"
-                  style={continuousCorners}
-                  className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-                >
-                  <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
-                    {t('knowledge:submitAnother')}
-                  </Text>
-                </PressableScale>
+                <RaisedActionButton label={t('knowledge:submitAnother')} onPress={submitAnother} />
               </View>
             </SuccessPop>
           ) : (
@@ -511,32 +492,19 @@ export default function StorySubmissionScreen() {
                     }
                   />
                   {editingStory === null ? null : (
-                    <PressableScale
+                    <RaisedActionButton
                       testID="story-edit-cancel"
-                      accessibilityLabel={t('knowledge:storyEditCancel')}
+                      label={t('knowledge:storyEditCancel')}
                       onPress={cancelEditing}
-                      haptic="tapLight"
                       isDisabled={isSendPending}
-                      style={continuousCorners}
-                      className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-                    >
-                      <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
-                        {t('knowledge:storyEditCancel')}
-                      </Text>
-                    </PressableScale>
+                    />
                   )}
                 </View>
               </ShakeOnError>
             </View>
           )}
 
-          <View className="gap-sm pt-lg">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-            >
-              {t('knowledge:myStories')}
-            </Text>
+          <ScreenSection title={t('knowledge:myStories')} isLast>
             {(statusesQuery.data ?? []).length === 0 ? (
               <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
                 {t('knowledge:myStoriesEmpty')}
@@ -589,7 +557,7 @@ export default function StorySubmissionScreen() {
                 );
               })
             )}
-          </View>
+          </ScreenSection>
         </FormWidth>
       </ScrollView>
     </>

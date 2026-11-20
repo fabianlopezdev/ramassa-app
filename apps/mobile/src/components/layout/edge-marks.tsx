@@ -10,10 +10,10 @@
  * clips what it holds. The room above keeps them clear of what comes before.
  * Their words are not read out here: the surface's own label carries them.
  *
- * A surface that fills a cell of a row, such as an Ajuda tile or an option of
- * the segmented control, takes `fill` (RAPP-873): the marks then grow with the
- * cell, so the surface inside still stretches to the row's height and the
- * cells stay level.
+ * A surface that fills a cell of a row, such as a half card (RAPP-874), an
+ * Ajuda tile or an option of the segmented control (RAPP-873), passes
+ * `className="flex-1"`: the marks then grow with the cell, so the surface
+ * inside still stretches to the row's height and the cells stay level.
  */
 import { Badge, type BadgeTone } from '@/components/layout/badge';
 import { CountBubble } from '@/components/layout/count-bubble';
@@ -29,18 +29,21 @@ export interface EdgeMarkBadge {
 export function EdgeMarks({
   badge = null,
   count = null,
-  fill = false,
+  className,
   children,
 }: {
   readonly badge?: EdgeMarkBadge | null;
   readonly count?: string | null;
-  /** Grow with the cell of a row, so the surface inside keeps the row's height. */
-  readonly fill?: boolean;
+  /**
+   * Such as `flex-1`, so a half card (RAPP-874), an Ajuda tile or an option
+   * of the segmented control (RAPP-873) fills its cell.
+   */
+  readonly className?: string;
   readonly children: ReactNode;
 }) {
   const languageFontClass = useLanguageFontClass();
   return (
-    <View className={fill ? 'relative flex-1 pt-sm' : 'relative pt-sm'}>
+    <View className={`relative pt-sm ${className ?? ''}`}>
       {children}
       {badge === null ? null : (
         <View

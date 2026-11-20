@@ -7,7 +7,7 @@
  */
 import { FailureNotice } from '@/components/error-code-line';
 import { EventDetailLine } from '@/components/events/event-card';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
@@ -105,20 +105,11 @@ function ContactAction({
   readonly url: string;
   readonly onOpen: (url: string) => void;
 }) {
-  const languageFontClass = useLanguageFontClass();
   const handlePress = useCallback(() => onOpen(url), [onOpen, url]);
   return (
-    <PressableScale
-      accessibilityLabel={label}
-      onPress={handlePress}
-      haptic="tapLight"
-      className="min-h-recommended basis-[48%] grow items-center justify-center rounded-md border border-primary px-md"
-      style={continuousCorners}
-    >
-      <Text className={`text-center text-md font-bold text-primary-dark ${languageFontClass}`}>
-        {label}
-      </Text>
-    </PressableScale>
+    <View className="basis-[48%] grow">
+      <RaisedActionButton accessibilityRole="link" label={label} onPress={handlePress} />
+    </View>
   );
 }
 

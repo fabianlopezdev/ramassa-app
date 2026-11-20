@@ -5,13 +5,13 @@
  * admin's category form, field for field.
  */
 import { useAppLock } from '@/components/auth/app-lock';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { eventCategoryColor } from '@/components/events/event-card';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { useEventCategoryActions } from '@/lib/content-events';
 import { reviewHandlers, reviewOptions } from '@/lib/content-translations';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { generateDrafts } from '@/lib/translation-worker';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -118,20 +118,12 @@ function CategoryForm({
         maxLength={MAX_EVENT_TITLE_LENGTH}
         {...reviewHandlers(nameReview, noop)}
       />
-      <PressableScale
+      <RaisedActionButton
         testID="category-generate"
-        accessibilityRole="button"
-        accessibilityLabel={isGenerating ? t('generatingTranslations') : t('categoryGenerate')}
+        label={isGenerating ? t('generatingTranslations') : t('categoryGenerate')}
         onPress={() => void generate()}
-        isBusy={isGenerating}
-        isDisabled={name.trim().length === 0}
-        haptic="tapLight"
-        className="min-h-recommended items-center justify-center rounded-md border border-primary bg-white px-lg"
-      >
-        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-          {isGenerating ? t('generatingTranslations') : t('categoryGenerate')}
-        </Text>
-      </PressableScale>
+        isDisabled={name.trim().length === 0 || isGenerating}
+      />
 
       <View className="gap-xs">
         <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
@@ -189,33 +181,17 @@ function CategoryForm({
         />
       )}
       <View className="flex-row flex-wrap gap-sm">
-        <PressableScale
+        <AuthSubmitButton
           testID="category-save"
-          accessibilityRole="button"
-          accessibilityLabel={t('categorySave')}
+          label={t('categorySave')}
           onPress={submit}
-          isBusy={save.isPending}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-            {t('categorySave')}
-          </Text>
-        </PressableScale>
-        <PressableScale
+          isLoading={save.isPending}
+        />
+        <RaisedActionButton
           testID="category-cancel"
-          accessibilityRole="button"
-          accessibilityLabel={t('categoryCancel')}
+          label={t('categoryCancel')}
           onPress={onClose}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-            {t('categoryCancel')}
-          </Text>
-        </PressableScale>
+        />
       </View>
     </ScrollView>
   );

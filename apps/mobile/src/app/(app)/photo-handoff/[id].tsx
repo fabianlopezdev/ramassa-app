@@ -5,11 +5,11 @@
  * completes the handoff; the desk sees it arrive. Anyone else, an expired code
  * or a used one gets a plain sentence and no camera.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { compressNativeStoryImage } from '@/lib/native-image-compression';
 import { mobileClientEnv, supabase } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -100,26 +100,22 @@ export default function PhotoHandoffScreen() {
     }
   };
 
-  const button = (label: string, onPress: () => void, testID: string, primary: boolean) => (
-    <PressableScale
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      isBusy={status === 'sending'}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended items-center justify-center rounded-md px-lg ${
-        primary ? 'bg-primary' : 'border border-primary'
-      }`}
-    >
-      <Text
-        className={`text-center text-md font-bold ${primary ? 'text-white' : 'text-primary-dark'} ${fontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
-  );
+  const button = (label: string, onPress: () => void, testID: string, primary: boolean) =>
+    primary ? (
+      <AuthSubmitButton
+        testID={testID}
+        label={label}
+        onPress={onPress}
+        isLoading={status === 'sending'}
+      />
+    ) : (
+      <RaisedActionButton
+        testID={testID}
+        label={label}
+        onPress={onPress}
+        isDisabled={status === 'sending'}
+      />
+    );
 
   const sentence = (text: string, testID?: string) => (
     <Text

@@ -1,11 +1,13 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { FormWidth } from '@/components/layout/content-width';
 import { EdgeMarks, type EdgeMarkBadge } from '@/components/layout/edge-marks';
+import { RaisedChip } from '@/components/layout/filter-chips';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { SuccessPop } from '@/components/motion/success-pop';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -287,31 +289,15 @@ export default function FeedbackScreen() {
                   <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
                     {t('feedback:successBody')}
                   </Text>
-                  <PressableScale
+                  <RaisedActionButton
                     testID="feedback-submit-another"
-                    accessibilityLabel={t('feedback:submitAnother')}
+                    label={t('feedback:submitAnother')}
                     onPress={submitAnother}
-                    haptic="tapLight"
-                    style={continuousCorners}
-                    className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-                  >
-                    <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
-                      {t('feedback:submitAnother')}
-                    </Text>
-                  </PressableScale>
+                  />
                 </View>
               </SuccessPop>
             ) : (
-              <View
-                className="gap-lg rounded-lg border border-neutral-200 bg-white p-lg"
-                style={continuousCorners}
-              >
-                <Text
-                  accessibilityRole="header"
-                  className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-                >
-                  {t('feedback:newSubmission')}
-                </Text>
+              <ScreenSection title={t('feedback:newSubmission')}>
                 <Text
                   className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}
                 >
@@ -323,22 +309,14 @@ export default function FeedbackScreen() {
                   className="flex-row flex-wrap gap-sm"
                 >
                   {FEEDBACK_TYPES.map((option) => (
-                    <PressableScale
+                    <RaisedChip
                       key={option}
                       testID={`feedback-type-${option}`}
-                      accessibilityRole="radio"
-                      accessibilityLabel={t(`feedback:${typeKey[option]}`)}
+                      label={t(`feedback:${typeKey[option]}`)}
                       isSelected={type === option}
                       onPress={() => setType(option)}
-                      haptic="selection"
-                      className={`min-h-recommended justify-center rounded-full border px-md ${type === option ? 'border-primary bg-primary' : 'border-neutral-300 bg-white'}`}
-                    >
-                      <Text
-                        className={`text-md font-medium ${type === option ? 'text-white' : 'text-neutral-800'} ${languageFontClass}`}
-                      >
-                        {t(`feedback:${typeKey[option]}`)}
-                      </Text>
-                    </PressableScale>
+                      languageFontClass={languageFontClass}
+                    />
                   ))}
                 </View>
                 <AuthTextField
@@ -362,34 +340,20 @@ export default function FeedbackScreen() {
                   />
                 )}
                 <View className="flex-row flex-wrap gap-sm">
-                  <PressableScale
-                    testID="feedback-pick-image"
-                    accessibilityLabel={
-                      image === null ? t('feedback:imageAdd') : t('feedback:imageChange')
-                    }
-                    onPress={() => void pickImage()}
-                    haptic="tapLight"
-                    isBusy={isSubmitting}
-                    style={continuousCorners}
-                    className="min-h-recommended grow items-center justify-center rounded-md border border-primary px-lg"
-                  >
-                    <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
-                      {image === null ? t('feedback:imageAdd') : t('feedback:imageChange')}
-                    </Text>
-                  </PressableScale>
+                  <View className="flex-1">
+                    <RaisedActionButton
+                      testID="feedback-pick-image"
+                      label={image === null ? t('feedback:imageAdd') : t('feedback:imageChange')}
+                      onPress={() => void pickImage()}
+                      isDisabled={isSubmitting}
+                    />
+                  </View>
                   {image === null ? null : (
-                    <PressableScale
-                      accessibilityLabel={t('feedback:imageRemove')}
+                    <RaisedActionButton
+                      label={t('feedback:imageRemove')}
                       onPress={() => setImage(null)}
-                      haptic="selection"
-                      isBusy={isSubmitting}
-                      style={continuousCorners}
-                      className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg"
-                    >
-                      <Text className={`text-md font-medium text-error ${languageFontClass}`}>
-                        {t('feedback:imageRemove')}
-                      </Text>
-                    </PressableScale>
+                      isDisabled={isSubmitting}
+                    />
                   )}
                 </View>
                 {errorCode === null ? null : (
@@ -401,16 +365,10 @@ export default function FeedbackScreen() {
                   onPress={() => void submit()}
                   isLoading={isSubmitting}
                 />
-              </View>
+              </ScreenSection>
             )}
 
-            <View className="gap-md">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('feedback:historyTitle')}
-              </Text>
+            <ScreenSection title={t('feedback:historyTitle')} isLast>
               {(feedbackQuery.data?.length ?? 0) > 0 ? (
                 <Text
                   testID="feedback-answer-in-chat"
@@ -441,7 +399,7 @@ export default function FeedbackScreen() {
                   {t('feedback:historyEmpty')}
                 </Text>
               ) : null}
-            </View>
+            </ScreenSection>
           </FormWidth>
         }
       />

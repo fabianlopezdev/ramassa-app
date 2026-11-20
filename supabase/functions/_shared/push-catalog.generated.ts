@@ -32,7 +32,7 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
   "en": {
     "announcementFallbackBody": "Tap to read the announcement.",
     "eventFallbackBody": "Tap to view the activity.",
-    "messageTitle": "New message from the technical team",
+    "messageTitle": "New message from the staff",
     "messageBody": "Open the AE Ramassà app to read it.",
     "forumFlagTitle": "New reported content in the forum",
     "forumFlagBody": "Open forum moderation to review it.",

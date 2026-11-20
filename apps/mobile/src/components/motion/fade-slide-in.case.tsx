@@ -58,7 +58,6 @@ test('layered cards start hidden, fade as a group, and release the cache after e
   delay.mockClear();
   const view = render(
     createElement(FadeSlideIn, {
-      preset: 'onboarding',
       index: 1,
       composite: true,
       children: 'card',
@@ -80,16 +79,28 @@ test('layered cards start hidden, fade as a group, and release the cache after e
 
 test('later rows have a visible delay, but reduced motion removes all waiting', () => {
   delay.mockClear();
-  const view = render(
-    createElement(FadeSlideIn, { preset: 'onboarding', index: 4, children: 'Farsi' }),
-  );
+  const view = render(createElement(FadeSlideIn, { index: 4, children: 'Farsi' }));
   act(() => onLayout());
   expect(delay.mock.calls[0]?.[0]).toBe(660);
   view.unmount();
   reduced = true;
   delay.mockClear();
-  render(createElement(FadeSlideIn, { preset: 'onboarding', index: 4, children: 'Farsi' }));
+  render(createElement(FadeSlideIn, { index: 4, children: 'Farsi' }));
   act(() => onLayout());
   expect(delay.mock.calls[0]?.[0]).toBe(0);
   reduced = false;
+});
+
+test('a screen she has already seen is there at once and nothing is scheduled', () => {
+  timing.mockClear();
+  delay.mockClear();
+  const view = render(
+    createElement(FadeSlideIn, { skip: true, composite: true, children: 'seen' }),
+  );
+  expect(renderedProps.style).toEqual({ opacity: 1, transform: [{ translateY: 0 }] });
+  expect(renderedProps.renderToHardwareTextureAndroid).toBe(false);
+  act(() => onLayout());
+  expect(timing).not.toHaveBeenCalled();
+  expect(delay).not.toHaveBeenCalled();
+  view.unmount();
 });

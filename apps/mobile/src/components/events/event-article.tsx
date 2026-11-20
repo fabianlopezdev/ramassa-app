@@ -6,8 +6,8 @@
  */
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { EventDetailLine } from '@/components/events/event-card';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { Badge } from '@/components/layout/badge';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useMemo, type ReactNode } from 'react';
@@ -122,18 +122,11 @@ export function EventArticle({
           languageFontClass={languageFontClass}
         />
         {event.locationUrl === null ? null : (
-          <PressableScale
+          <RaisedActionButton
             accessibilityRole="link"
-            accessibilityLabel={t('playerOpenMap')}
+            label={t('playerOpenMap')}
             onPress={onOpenMap}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-          >
-            <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
-              {t('playerOpenMap')}
-            </Text>
-          </PressableScale>
+          />
         )}
       </View>
 

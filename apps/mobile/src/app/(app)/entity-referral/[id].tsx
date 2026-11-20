@@ -10,13 +10,14 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useEntityReferral, useReferralActions } from '@/lib/entity-referrals';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useLocalSearchParams } from 'expo-router';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -31,24 +32,6 @@ import type { ReferralRecord } from '@ramassa/shared/referrals';
 import { formatSupportNeeds } from '@ramassa/shared/schemas';
 
 type UpdateType = (typeof REFERRAL_UPDATE_TYPES)[number];
-
-function Section({ title, children }: { readonly title: string; readonly children: ReactNode }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View
-      style={continuousCorners}
-      className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-    >
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-      >
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
-}
 
 function Detail({ label, value }: { readonly label: string; readonly value: string }) {
   const fontClass = useLanguageFontClass();
@@ -210,7 +193,7 @@ export default function EntityReferralScreen() {
                 </Text>
               </View>
 
-              <Section title={t('contactTitle')}>
+              <ScreenSection title={t('contactTitle')}>
                 {phone === null ? null : <Detail label={t('phone')} value={phone} />}
                 {data.referredEmail === null ? null : (
                   <Detail label={t('email')} value={data.referredEmail} />
@@ -221,18 +204,18 @@ export default function EntityReferralScreen() {
                 />
                 <Detail label={t('createdLabel')} value={dates.format(new Date(data.createdAt))} />
                 {data.notes === null ? null : <Detail label={t('notes')} value={data.notes} />}
-              </Section>
+              </ScreenSection>
 
               {/* What the entity sent, while the referral is pending (RAPP-303). */}
               {answerRows.length === 0 ? null : (
-                <Section title={t('onboarding:seasonSectionTitle')}>
+                <ScreenSection title={t('onboarding:seasonSectionTitle')}>
                   {answerRows.map((row) => (
                     <Detail key={row.label} label={row.label} value={row.value} />
                   ))}
-                </Section>
+                </ScreenSection>
               )}
 
-              <Section title={t('updatesTitle')}>
+              <ScreenSection title={t('updatesTitle')} isLast>
                 {data.referredProfileId === null ? (
                   <Text
                     testID="entity-referral-updates-locked"
@@ -347,7 +330,7 @@ export default function EntityReferralScreen() {
                     </View>
                   ))
                 )}
-              </Section>
+              </ScreenSection>
             </>
           )}
         </PageWidth>

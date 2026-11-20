@@ -12,9 +12,9 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { AppSheet } from '@/components/layout/app-sheet';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { ServiceCard } from '@/components/services/service-card';
 import { ServiceFilterPanel } from '@/components/services/service-filter-panel';
 import { NO_UNOPENED_HELP_IDS, unopenedHelpIds } from '@/lib/help-news';
@@ -125,7 +125,8 @@ export default function ServiceCategoryScreen() {
     [i18n.resolvedLanguage],
   );
   const clearFilters = useCallback(() => setFilters(EMPTY_FILTERS), []);
-  const toggleFilters = useCallback(() => setFiltersVisible((visible) => !visible), []);
+  const openFilters = useCallback(() => setFiltersVisible(true), []);
+  const closeFilters = useCallback(() => setFiltersVisible(false), []);
   const openService = useCallback(
     (id: string) => push({ pathname: '/service/[id]', params: { id } } as unknown as Href),
     [push],
@@ -139,7 +140,7 @@ export default function ServiceCategoryScreen() {
     ]);
   }, [baseServicesQuery, categoriesQuery, refetchNews, servicesQuery]);
   const renderService = useCallback(
-    ({ item, index }: ListRenderItemInfo<PlayerServiceRow>) => {
+    ({ item }: ListRenderItemInfo<PlayerServiceRow>) => {
       const serviceTitle = resolveLocalizedText(item.title, language);
       if (serviceTitle === undefined) return null;
       const firstImage = item.images[0];
@@ -153,42 +154,39 @@ export default function ServiceCategoryScreen() {
       const unseenLabel = newServiceIds.has(item.id) ? t('home:unseen') : null;
       return (
         <PageWidth className="pb-md">
-          <FadeSlideIn index={index}>
-            <ServiceCard
-              id={item.id}
-              title={serviceTitle.text}
-              provider={item.provider_name}
-              location={item.location}
-              cost={cost}
-              availability={availability}
-              interested={item.interested}
-              interestedLabel={t('playerServices:interestSaved')}
-              imageObjectKey={firstImage?.url ?? null}
-              imageAlt={imageAlt?.text ?? null}
-              unseenLabel={unseenLabel}
-              accessibilityLabel={[
-                unseenLabel,
-                t('playerServices:openService', { title: serviceTitle.text }),
-                item.provider_name,
-                item.location,
-                cost,
-                availability,
-              ]
-                .filter((value): value is string => typeof value === 'string')
-                .join('. ')}
-              languageFontClass={languageFontClass}
-              onOpen={openService}
-            />
-          </FadeSlideIn>
+          <ServiceCard
+            id={item.id}
+            title={serviceTitle.text}
+            provider={item.provider_name}
+            location={item.location}
+            cost={cost}
+            availability={availability}
+            interested={item.interested}
+            interestedLabel={t('playerServices:interestSaved')}
+            imageObjectKey={firstImage?.url ?? null}
+            imageAlt={imageAlt?.text ?? null}
+            unseenLabel={unseenLabel}
+            accessibilityLabel={[
+              unseenLabel,
+              t('playerServices:openService', { title: serviceTitle.text }),
+              item.provider_name,
+              item.location,
+              cost,
+              availability,
+            ]
+              .filter((value): value is string => typeof value === 'string')
+              .join('. ')}
+            languageFontClass={languageFontClass}
+            onOpen={openService}
+          />
         </PageWidth>
       );
     },
     [currencyFormatter, language, languageFontClass, newServiceIds, openService, t],
   );
 
-  const filterLabel = filtersVisible
-    ? t('playerServices:filterHide')
-    : selectedFilterCount > 0
+  const filterLabel =
+    selectedFilterCount > 0
       ? t('playerServices:filterShowActive', { count: selectedFilterCount })
       : t('playerServices:filterShow');
 
@@ -247,26 +245,34 @@ export default function ServiceCategoryScreen() {
         onRefresh={refresh}
         ListHeaderComponent={
           category === null ? null : (
-            <PageWidth className="gap-lg pb-lg">
+            <PageWidth className="pb-lg">
               <RaisedActionButton
                 testID="services-toggle-filters"
                 label={filterLabel}
-                onPress={toggleFilters}
+                onPress={openFilters}
               />
-              {filtersVisible ? (
-                <ServiceFilterPanel
-                  contract={category.contract}
-                  availableServices={availableServices}
-                  selection={filters}
-                  onChange={setFilters}
-                  onClear={clearFilters}
-                />
-              ) : null}
             </PageWidth>
           )
         }
         ListEmptyComponent={emptyState}
       />
+      {/* The filters rise in the app's one sheet (RAPP-878), over the list they filter. */}
+      {category === null ? null : (
+        <AppSheet
+          testID="services-filters-sheet"
+          title={t('playerServices:filterHeading')}
+          visible={filtersVisible}
+          onClose={closeFilters}
+        >
+          <ServiceFilterPanel
+            contract={category.contract}
+            availableServices={availableServices}
+            selection={filters}
+            onChange={setFilters}
+            onClear={clearFilters}
+          />
+        </AppSheet>
+      )}
     </>
   );
 }

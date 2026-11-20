@@ -12,6 +12,7 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { PreviewItemAsPlayer } from '@/components/preview/preview-as-player';
 import { useContentEvent, useContentEventOccurrences, useEventActions } from '@/lib/content-events';
@@ -150,20 +151,13 @@ export function EventDetail({
           </Text>
         </PressableScale>
         {canPublish ? (
-          <PressableScale
+          <RaisedActionButton
             testID="event-delete"
-            accessibilityRole="button"
-            accessibilityLabel={t('delete')}
+            tone="danger"
+            label={t('delete')}
             onPress={confirmDelete}
-            isBusy={remove.isPending}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-error bg-white px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-error ${fontClass}`}>
-              {t('delete')}
-            </Text>
-          </PressableScale>
+            isDisabled={remove.isPending}
+          />
         ) : null}
       </View>
       <PreviewItemAsPlayer

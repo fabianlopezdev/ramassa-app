@@ -1,4 +1,4 @@
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { ProfileSection } from '@/components/profile/profile-section';
 import { useOwnAttendanceHistory } from '@/lib/attendance-history';
@@ -38,17 +38,7 @@ export function AttendanceHistorySection() {
       ) : isError ? (
         <View className="gap-sm">
           <Text className={`text-start text-sm text-error ${fontClass}`}>{t('loadFailed')}</Text>
-          <PressableScale
-            accessibilityLabel={t('retry')}
-            isBusy={isFetching}
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-md"
-            onPress={handleRetry}
-          >
-            <Text className={`text-md font-semibold text-neutral-900 ${fontClass}`}>
-              {t('retry')}
-            </Text>
-          </PressableScale>
+          <RaisedActionButton label={t('retry')} onPress={handleRetry} isDisabled={isFetching} />
         </View>
       ) : data?.stats === null || data?.stats === undefined ? (
         <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>

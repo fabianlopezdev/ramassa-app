@@ -7,15 +7,16 @@
  * Share CSV (RAPP-402) asks for the step-up, the database records the export,
  * and the file goes to the share sheet.
  */
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useStaffSurveys, useSurveyExport, useSurveyResponses } from '@/lib/team-surveys';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useLocalSearchParams } from 'expo-router';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -53,24 +54,6 @@ function CountRow({
       <View className="h-2 overflow-hidden rounded-full bg-neutral-100">
         <View className="h-2 rounded-full bg-primary" style={{ width: `${share}%` }} />
       </View>
-    </View>
-  );
-}
-
-function Section({ title, children }: { readonly title: string; readonly children: ReactNode }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View
-      style={continuousCorners}
-      className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-    >
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-      >
-        {title}
-      </Text>
-      {children}
     </View>
   );
 }
@@ -204,10 +187,10 @@ export default function TeamSurveyResultsScreen() {
                   ].join(' · ')}
                 </Text>
               </View>
-              <PressableScale
+              <RaisedActionButton
                 testID="survey-export-csv"
-                accessibilityRole="button"
-                accessibilityLabel={tExport('admin:exportShare')}
+                size="compact"
+                label={tExport('admin:exportShare')}
                 onPress={() => {
                   setExportNotice(null);
                   exportCsv.mutate(survey, {
@@ -230,16 +213,8 @@ export default function TeamSurveyResultsScreen() {
                     },
                   });
                 }}
-                isBusy={exportCsv.isPending}
-                isDisabled={exportCsv.isPending}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center self-start rounded-md border border-neutral-300 bg-white px-lg"
-              >
-                <Text className={`text-center text-md font-semibold text-neutral-900 ${fontClass}`}>
-                  {tExport('admin:exportShare')}
-                </Text>
-              </PressableScale>
+                isDisabled={exportCsv.isPending || exportCsv.isPending}
+              />
               {exportNotice === null ? null : (
                 <Text
                   testID="survey-export-notice"
@@ -261,12 +236,12 @@ export default function TeamSurveyResultsScreen() {
                 <>
                   {questions.map((question) => (
                     <View key={question.id} testID={`survey-result-${question.id}`}>
-                      <Section title={resolveSurveyCopy(question.prompt, language)}>
+                      <ScreenSection title={resolveSurveyCopy(question.prompt, language)}>
                         {resultFor(question)}
-                      </Section>
+                      </ScreenSection>
                     </View>
                   ))}
-                  <Section title={t('individualResponses')}>
+                  <ScreenSection title={t('individualResponses')} isLast>
                     {responses.data.length === 0 ? (
                       <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
                         {t('noResponses')}
@@ -289,7 +264,7 @@ export default function TeamSurveyResultsScreen() {
                         </View>
                       ))
                     )}
-                  </Section>
+                  </ScreenSection>
                 </>
               )}
             </>

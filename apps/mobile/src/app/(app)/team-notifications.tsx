@@ -10,8 +10,10 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { MultilingualField } from '@/components/content/multilingual-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { AudiencePicker } from '@/components/team/audience-picker';
 import { NotificationGroupSheet } from '@/components/team/notification-group-sheet';
@@ -25,7 +27,7 @@ import {
 } from '@/lib/team-notifications';
 import { generateDrafts } from '@/lib/translation-worker';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -71,24 +73,6 @@ type Notice = 'sent' | 'template' | 'error' | 'translations' | null;
 function reviewedCopy(source: string, review: Parameters<typeof localizedTextFromReview>[1]) {
   const parsed = notificationContentSchema.safeParse(localizedTextFromReview(source, review));
   return parsed.success ? parsed.data : null;
-}
-
-function Section({ title, children }: { readonly title: string; readonly children: ReactNode }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View
-      style={continuousCorners}
-      className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-    >
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-      >
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
 }
 
 export default function TeamNotificationsScreen() {
@@ -238,7 +222,7 @@ export default function TeamNotificationsScreen() {
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>{t('intro')}</Text>
           </View>
 
-          <Section title={t('composeTitle')}>
+          <ScreenSection title={t('composeTitle')}>
             <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
               {t('templateLabel')}
             </Text>
@@ -356,9 +340,9 @@ export default function TeamNotificationsScreen() {
                 {noticeText}
               </Text>
             )}
-          </Section>
+          </ScreenSection>
 
-          <Section title={t('templatesTitle')}>
+          <ScreenSection title={t('templatesTitle')}>
             <AuthTextField
               testID="notification-template-name"
               label={t('templateName')}
@@ -382,38 +366,22 @@ export default function TeamNotificationsScreen() {
                 />
               ))}
             </View>
-            <PressableScale
+            <RaisedActionButton
               testID="notification-save-template"
-              accessibilityRole="button"
-              accessibilityLabel={t('saveTemplate')}
+              label={t('saveTemplate')}
               onPress={saveAsTemplate}
-              isBusy={saveTemplate.isPending}
-              isDisabled={templateName.trim().length === 0}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                {t('saveTemplate')}
-              </Text>
-            </PressableScale>
-          </Section>
+              isDisabled={templateName.trim().length === 0 || saveTemplate.isPending}
+            />
+          </ScreenSection>
 
-          <Section title={t('groupsTitle')}>
-            <PressableScale
+          <ScreenSection title={t('groupsTitle')}>
+            <RaisedActionButton
               testID="notification-group-new"
-              accessibilityRole="button"
-              accessibilityLabel={t('newGroup')}
+              size="compact"
+              label={t('newGroup')}
               onPress={() => setGroupSheet({ group: null })}
               isDisabled={options.data === undefined}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center self-start rounded-md border border-neutral-300 bg-white px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                {t('newGroup')}
-              </Text>
-            </PressableScale>
+            />
             <View className="gap-sm">
               {(groups.data ?? []).map((group) => (
                 <View
@@ -448,9 +416,9 @@ export default function TeamNotificationsScreen() {
                 </View>
               ))}
             </View>
-          </Section>
+          </ScreenSection>
 
-          <Section title={t('historyTitle')}>
+          <ScreenSection title={t('historyTitle')} isLast>
             {(history.data ?? []).length === 0 ? (
               <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
                 {t('historyEmpty')}
@@ -492,7 +460,7 @@ export default function TeamNotificationsScreen() {
                 ))}
               </View>
             )}
-          </Section>
+          </ScreenSection>
         </PageWidth>
       </ScrollView>
       <NotificationGroupSheet

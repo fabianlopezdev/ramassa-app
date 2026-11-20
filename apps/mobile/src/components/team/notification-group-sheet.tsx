@@ -5,10 +5,10 @@
  * while the search changes. Groups are not deleted here, as in the web admin.
  */
 import { useAppLock } from '@/components/auth/app-lock';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useNotificationActions } from '@/lib/team-notifications';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -158,34 +158,18 @@ function GroupForm({
         </Text>
       ) : null}
       <View className="flex-row flex-wrap gap-sm">
-        <PressableScale
+        <AuthSubmitButton
           testID="notification-group-save"
-          accessibilityRole="button"
-          accessibilityLabel={t('saveGroup')}
+          label={t('saveGroup')}
           onPress={submit}
-          isBusy={saveGroup.isPending}
-          isDisabled={!canSave}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-            {t('saveGroup')}
-          </Text>
-        </PressableScale>
-        <PressableScale
+          isLoading={saveGroup.isPending}
+          disabled={!canSave}
+        />
+        <RaisedActionButton
           testID="notification-group-cancel"
-          accessibilityRole="button"
-          accessibilityLabel={tProfile('cancelAction')}
+          label={tProfile('cancelAction')}
           onPress={onClose}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-            {tProfile('cancelAction')}
-          </Text>
-        </PressableScale>
+        />
       </View>
     </ScrollView>
   );

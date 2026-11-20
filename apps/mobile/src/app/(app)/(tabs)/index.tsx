@@ -10,9 +10,10 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { HomeNextActivity } from '@/components/home/home-next-activity';
-import { HomeSection } from '@/components/home/home-section';
 import { HomeToDo } from '@/components/home/home-to-do';
 import { PageWidth } from '@/components/layout/content-width';
+import { ScreenSection } from '@/components/layout/screen-section';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader, PlayerTabStateFrame } from '@/components/profile/player-tab-header';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
 import { useMyCustomForms } from '@/lib/custom-forms';
@@ -52,7 +53,7 @@ const styles = StyleSheet.create({
 
 const keyExtractor = (item: AnnouncementListRow) => item.id;
 
-export default function HomeScreen() {
+function HomeScreen() {
   const { t, i18n } = useTranslation(['home', 'common', 'nav']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
@@ -212,7 +213,7 @@ export default function HomeScreen() {
             languageFontClass={languageFontClass}
           />
           <HomeToDo items={toDoItems} languageFontClass={languageFontClass} />
-          <HomeSection title={t('feedTitle')} languageFontClass={languageFontClass} isLast>
+          <ScreenSection title={t('feedTitle')} isLast>
             <CategoryFilters
               selected={category}
               newCounts={newCounts}
@@ -220,7 +221,7 @@ export default function HomeScreen() {
               t={t}
               languageFontClass={languageFontClass}
             />
-          </HomeSection>
+          </ScreenSection>
         </PageWidth>
       }
       ListEmptyComponent={
@@ -235,3 +236,5 @@ export default function HomeScreen() {
     />
   );
 }
+
+export default withScreenEntrance('index', HomeScreen);

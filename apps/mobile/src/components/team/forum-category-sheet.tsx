@@ -7,12 +7,12 @@
  * follows the Catalan name until it is changed by hand.
  */
 import { useAppLock } from '@/components/auth/app-lock';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { MultilingualField } from '@/components/content/multilingual-field';
 import { FailureNotice } from '@/components/error-code-line';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { reviewHandlers, reviewOptions } from '@/lib/content-translations';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { FORUM_CATEGORY_SLUG, forumCategorySlug } from '@/lib/forum-category-slug';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useForumCategoryActions } from '@/lib/team-forum';
@@ -149,23 +149,12 @@ function CategoryForm({
         maxLength={NAME_MAX}
         {...reviewHandlers(nameReview, touch)}
       />
-      <PressableScale
+      <RaisedActionButton
         testID="forum-category-generate"
-        accessibilityRole="button"
-        accessibilityLabel={
-          isGenerating ? tEvents('generatingTranslations') : tEvents('categoryGenerate')
-        }
+        label={isGenerating ? tEvents('generatingTranslations') : tEvents('categoryGenerate')}
         onPress={() => void generate()}
-        isBusy={isGenerating}
-        isDisabled={name.trim().length === 0}
-        haptic="tapLight"
-        style={continuousCorners}
-        className="min-h-recommended items-center justify-center rounded-md border border-primary bg-white px-lg"
-      >
-        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-          {isGenerating ? tEvents('generatingTranslations') : tEvents('categoryGenerate')}
-        </Text>
-      </PressableScale>
+        isDisabled={name.trim().length === 0 || isGenerating}
+      />
       <View className="gap-xs">
         <AuthTextField
           testID="forum-category-slug"
@@ -223,34 +212,18 @@ function CategoryForm({
         />
       )}
       <View className="flex-row flex-wrap gap-sm">
-        <PressableScale
+        <AuthSubmitButton
           testID="forum-category-save"
-          accessibilityRole="button"
-          accessibilityLabel={t('categorySave')}
+          label={t('categorySave')}
           onPress={submit}
-          isBusy={save.isPending}
-          isDisabled={!canSave}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-            {t('categorySave')}
-          </Text>
-        </PressableScale>
-        <PressableScale
+          isLoading={save.isPending}
+          disabled={!canSave}
+        />
+        <RaisedActionButton
           testID="forum-category-cancel"
-          accessibilityRole="button"
-          accessibilityLabel={tEvents('categoryCancel')}
+          label={tEvents('categoryCancel')}
           onPress={onClose}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-            {tEvents('categoryCancel')}
-          </Text>
-        </PressableScale>
+        />
       </View>
     </ScrollView>
   );
