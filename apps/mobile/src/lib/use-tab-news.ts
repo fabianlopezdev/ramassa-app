@@ -201,10 +201,6 @@ export function useMarkArticleSeen(articleId: string | undefined) {
   useMarkTabItemSeen('articleIds', articleId);
 }
 
-/** The names the guide and story screens use; both are `useMarkArticleSeen`. */
-export const useMarkGuideSeen = useMarkArticleSeen;
-export const useMarkStorySeen = useMarkArticleSeen;
-
 /** Opening a service. */
 export function useMarkServiceSeen(serviceId: string | undefined) {
   useMarkTabItemSeen('serviceIds', serviceId);

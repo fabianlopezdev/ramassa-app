@@ -88,9 +88,14 @@ export default function EventsScreen() {
   const refetchMentoring = mentoringQuery.refetch;
   // New activities carry the same "Nou" mark as on Inici, one card per activity (RAPP-873).
   const { newOccurrenceIds, count: newActivitiesCount } = useActivitiesAttention();
-  // Seeing the list, as a list or as the calendar, clears the number. Each card
-  // keeps its "Nou" until she opens the activity (RAPP-873).
-  useListSeenWhen('activities', true, newActivitiesCount > 0);
+  // Seeing the whole list clears the number: loaded, as a list, with every
+  // category showing. The calendar and a chosen category show only some of the
+  // cards. Each card keeps its "Nou" until she opens the activity (RAPP-873).
+  useListSeenWhen(
+    'activities',
+    data !== undefined && view === 'list' && category === 'all',
+    newActivitiesCount > 0,
+  );
   const refetchSeen = useHomeSeen().refetch;
   const now = new Date();
   const events = useMemo(
