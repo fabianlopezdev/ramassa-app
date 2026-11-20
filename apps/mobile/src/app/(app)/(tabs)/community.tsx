@@ -84,9 +84,10 @@ export default function CommunityScreen() {
     () => communityUnseenCounts(tabNewsQuery.data),
     [tabNewsQuery.data],
   );
-  useListSeen('forum', segment === 'forum');
-  useListSeen('gallery', segment === 'gallery');
-  useListSeen('stories', segment === 'stories');
+  // A list counts as seen once its cards are on show: the forum with its posts
+  // loaded and every category showing, since a chosen category hides the rest.
+  // The gallery and the stories say it themselves, where their lists load.
+  useListSeen('forum', segment === 'forum' && categoryId === null && postsQuery.data !== undefined);
   const forumNews = tabNewsQuery.data?.forum ?? EMPTY_TAB_NEWS.forum;
   const galleryNews = tabNewsQuery.data?.gallery ?? EMPTY_TAB_NEWS.gallery;
   const storiesNews = tabNewsQuery.data?.stories ?? EMPTY_TAB_NEWS.stories;

@@ -78,8 +78,12 @@ export default function GuideCategoryScreen() {
       news === undefined ? NO_UNOPENED_HELP_IDS : unopenedHelpIds(news.guides.unopenedArticles),
     [news],
   );
-  // Opening the category clears its numbers on the tile, the switch and the tab (RAPP-873).
-  useListSeen(categoryId === undefined ? undefined : guidesListKey(categoryId), true);
+  // Seeing the category's guides clears its numbers on the tile, the switch and
+  // the tab; a list still loading has shown nothing (RAPP-873).
+  useListSeen(
+    categoryId === undefined ? undefined : guidesListKey(categoryId),
+    articlesQuery.data !== undefined,
+  );
   const refresh = useCallback(() => {
     void Promise.all([refetchArticles(), refetchNews()]);
   }, [refetchArticles, refetchNews]);

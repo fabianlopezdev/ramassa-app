@@ -8,7 +8,7 @@ import { NO_UNOPENED_IDS } from '@/lib/community-news';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { useGalleryItems } from '@/lib/player-gallery';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useTabNews } from '@/lib/use-tab-news';
+import { useListSeen, useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
@@ -48,6 +48,9 @@ export function GalleryGrid({
   const { session } = useAuth();
   const isOnline = isNetworkStateOnline(useNetworkState());
   const query = useGalleryItems();
+  // Seeing the photos clears the gallery number, from Comunitat and from the
+  // gallery's own screen alike; a grid still loading has shown nothing (RAPP-873).
+  useListSeen('gallery', query.data !== undefined);
   const refetchGallery = query.refetch;
   // Pull to refresh also asks again what is new for her (RAPP-873).
   const refetchTabNews = useTabNews().refetch;

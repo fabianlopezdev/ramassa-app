@@ -5,7 +5,7 @@ import { PressableScale } from '@/components/motion/pressable-scale';
 import { toUnopenedIdSet } from '@/lib/community-news';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useListSeen, useTabNews } from '@/lib/use-tab-news';
+import { useTabNews } from '@/lib/use-tab-news';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,9 +23,9 @@ export default function GalleryScreen() {
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const openUpload = useCallback(() => push('/gallery/upload' as Href), [push]);
-  // The same grid as Comunitat's Galeria, so it clears the gallery number and
-  // marks the photos she has not opened the same way (RAPP-873).
-  useListSeen('gallery', true);
+  // The same grid as Comunitat's Galeria: the grid clears the gallery number
+  // once its photos are on show, and the photos she has not opened keep their
+  // mark the same way (RAPP-873).
   const gallery = useTabNews().data?.gallery ?? EMPTY_TAB_NEWS.gallery;
   const unopenedItemIds = useMemo(
     () => toUnopenedIdSet(gallery.unopenedItemIds),

@@ -102,9 +102,13 @@ export default function ServiceCategoryScreen() {
       news === undefined ? NO_UNOPENED_HELP_IDS : unopenedHelpIds(news.services.unopenedServices),
     [news],
   );
-  // Opening the category clears its numbers on the tile, the switch and the
-  // tab, also while a filter hides some of its services (RAPP-873).
-  useListSeen(categoryId === undefined ? undefined : servicesListKey(categoryId), true);
+  // Seeing the category's services clears its numbers on the tile, the switch
+  // and the tab. A list still loading, or one a filter has cut down, has not
+  // shown every card, so it clears nothing yet (RAPP-873).
+  useListSeen(
+    categoryId === undefined ? undefined : servicesListKey(categoryId),
+    selectedFilterCount === 0 && servicesQuery.data !== undefined,
+  );
   const title =
     category === null ? '' : (resolveLocalizedText(category.name, language)?.text ?? '');
   const wash = category === null ? undefined : categoryWash(category.color);

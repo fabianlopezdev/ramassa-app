@@ -11,7 +11,7 @@ import { useCommunityStories } from '@/lib/community-stories';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useTabNews } from '@/lib/use-tab-news';
+import { useListSeen, useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
@@ -49,6 +49,9 @@ export function CommunityStoryList({
   const { session } = useAuth();
   const isOnline = isNetworkStateOnline(useNetworkState());
   const query = useCommunityStories();
+  // Seeing the stories clears their number; a list still loading has shown
+  // nothing (RAPP-873).
+  useListSeen('stories', query.data !== undefined);
   const authorIds = useMemo(
     () => (query.data ?? EMPTY_STORIES).map((story) => story.author_id),
     [query.data],
