@@ -52,7 +52,7 @@ function unseenAnnouncements(
   return unseen.length === 0 ? NO_IDS : new Set(unseen);
 }
 
-function isActivityUnseen(
+export function isActivityUnseen(
   occurrence: PlayerEventOccurrence | null,
   seen: HomeSeen | undefined,
 ): boolean {
