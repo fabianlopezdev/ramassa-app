@@ -1,11 +1,13 @@
 /**
  * Adding or changing an event category on the phone (RAPP-342), in a sheet:
  * the Catalan name with its four translations, which must all be approved,
- * as the database stores every language; an icon; and a colour. The web
- * admin's category form, field for field.
+ * as the database stores every language; an icon; and a colour from the
+ * shared section palette (RAPP-893). The web admin's category form, field
+ * for field.
  */
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { eventCategoryColor } from '@/components/events/event-card';
@@ -26,6 +28,7 @@ import {
   EVENT_CATEGORY_COLORS,
   EVENT_CATEGORY_ICONS,
   eventCategoryInputSchema,
+  eventCategoryPaletteColor,
   MAX_EVENT_TITLE_LENGTH,
   type EventCategoryColor,
   type EventCategoryIcon,
@@ -50,7 +53,11 @@ function CategoryForm({
   const { save } = useEventCategoryActions();
   const [name, setName] = useState(category?.name.ca ?? '');
   const [icon, setIcon] = useState<EventCategoryIcon>(category?.icon ?? 'dumbbell');
-  const [color, setColor] = useState<EventCategoryColor>(category?.color ?? 'primary');
+  const brandColor = useBrandColor();
+  // An older colour name opens as the palette colour it moves to (RAPP-893).
+  const [color, setColor] = useState<EventCategoryColor>(
+    eventCategoryPaletteColor(category?.color ?? 'primary'),
+  );
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorCode, setErrorCode] = useState<AppErrorCode | null>(null);
   const nameReview = useTranslationReview(
@@ -156,7 +163,7 @@ function CategoryForm({
               <View
                 accessible={false}
                 className="h-md w-md rounded-full"
-                style={{ backgroundColor: eventCategoryColor(candidate) }}
+                style={{ backgroundColor: eventCategoryColor(candidate, brandColor) }}
               />
               <ChoiceOption
                 testID={`category-color-${candidate}`}

@@ -99,7 +99,7 @@ insert into public.entity_referrals (
 
 insert into public.event_categories (id, org_id, name, icon, color, sort_order) values
   ('62000000-0000-4000-8600-000000000001', '62000000-0000-4000-8000-000000000001', '{"ca":"Entrenament","es":"Entrenamiento","en":"Training","ar":"تدريب","fa":"تمرین"}', 'dumbbell', 'primary', 1),
-  ('62000000-0000-4000-8600-000000000002', '62000000-0000-4000-8000-000000000001', '{"ca":"Comunitat","es":"Comunidad","en":"Community","ar":"مجتمع","fa":"جامعه"}', 'users', 'secondary', 2);
+  ('62000000-0000-4000-8600-000000000002', '62000000-0000-4000-8000-000000000001', '{"ca":"Comunitat","es":"Comunidad","en":"Community","ar":"مجتمع","fa":"جامعه"}', 'users', 'amber', 2);
 
 insert into public.events (
   id, org_id, category_id, title, location, starts_at, ends_at,

@@ -474,31 +474,31 @@ values
     '5eed0000-0000-4000-8002-000000000002',
     '5eed0000-0000-4000-8000-000000000000',
     '{"ca":"Cursos","es":"Cursos","en":"Courses","ar":"الدورات","fa":"دوره‌ها"}',
-    'graduation-cap', 'secondary', 20
+    'graduation-cap', 'sky', 20
   ),
   (
     '5eed0000-0000-4000-8002-000000000003',
     '5eed0000-0000-4000-8000-000000000000',
     '{"ca":"Activitats culturals","es":"Actividades culturales","en":"Cultural activities","ar":"الأنشطة الثقافية","fa":"فعالیت‌های فرهنگی"}',
-    'theater', 'accent', 30
+    'theater', 'amber', 30
   ),
   (
     '5eed0000-0000-4000-8002-000000000004',
     '5eed0000-0000-4000-8000-000000000000',
     '{"ca":"Inserció laboral","es":"Inserción laboral","en":"Job insertion","ar":"الإدماج المهني","fa":"ورود به بازار کار"}',
-    'briefcase-business', 'chart-1', 40
+    'briefcase-business', 'pink', 40
   ),
   (
     '5eed0000-0000-4000-8002-000000000005',
     '5eed0000-0000-4000-8000-000000000000',
     '{"ca":"Cursos d''idiomes","es":"Cursos de idiomas","en":"Language courses","ar":"دورات اللغة","fa":"دوره‌های زبان"}',
-    'languages', 'chart-2', 50
+    'languages', 'purple', 50
   ),
   (
     '5eed0000-0000-4000-8002-000000000006',
     '5eed0000-0000-4000-8000-000000000000',
     '{"ca":"Sortides","es":"Salidas","en":"Outings","ar":"الرحلات","fa":"گردش‌ها"}',
-    'footprints', 'chart-3', 60
+    'footprints', 'amber', 60
   )
 on conflict (id) do nothing;
 

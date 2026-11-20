@@ -1,6 +1,6 @@
 /**
  * Translation keys and symbols for an event's status, sign-up mode, and
- * category icon and colour (RAPP-342), as the web admin names them. The icon
+ * category icon and colour (RAPP-342, RAPP-893), as the web admin names them. The icon
  * codes are the web admin's; each has the closest icon of the app's set.
  */
 import type { IconName } from '@/components/icons/icon';
@@ -34,13 +34,18 @@ export const EVENT_ICON_KEYS = {
   users: 'iconUsers',
 } as const satisfies Record<EventCategoryIcon, string>;
 
+// The label of each palette colour (RAPP-893): the keys the service and guide
+// category pickers already use, in the services namespace.
 export const EVENT_COLOR_KEYS = {
-  primary: 'colorPrimary',
-  secondary: 'colorSecondary',
-  accent: 'colorAccent',
-  'chart-1': 'colorChart1',
-  'chart-2': 'colorChart2',
-  'chart-3': 'colorChart3',
+  primary: 'services:categoryColorPrimary',
+  sky: 'services:categoryColorSky',
+  green: 'services:categoryColorGreen',
+  purple: 'services:categoryColorPurple',
+  orange: 'services:categoryColorOrange',
+  pink: 'services:categoryColorPink',
+  teal: 'services:categoryColorTeal',
+  amber: 'services:categoryColorAmber',
+  indigo: 'services:categoryColorIndigo',
 } as const satisfies Record<EventCategoryColor, string>;
 
 export const EVENT_ICON_NAMES = {

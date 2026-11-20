@@ -3,28 +3,20 @@ import type { TFunction } from 'i18next';
 import { memo, useCallback, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import {
+  eventCategoryPaletteColor,
   MADRID_TIME_ZONE,
-  type EventCategoryColor,
   type EventSignupState,
   type PlayerEventOccurrence,
 } from '@ramassa/shared/events';
-import { tokens } from '@ramassa/shared/tokens';
+import { sectionHue } from '@ramassa/shared/section-colors';
 
-export function eventCategoryColor(color: EventCategoryColor): string {
-  switch (color) {
-    case 'primary':
-      return tokens.colors.primary.DEFAULT;
-    case 'secondary':
-      return tokens.colors.secondary.dark;
-    case 'accent':
-      return tokens.colors.info;
-    case 'chart-1':
-      return tokens.colors.success;
-    case 'chart-2':
-      return tokens.colors.warning;
-    case 'chart-3':
-      return tokens.colors.error;
-  }
+/**
+ * The shade of an activity category's stored colour (RAPP-893), from the
+ * shared section palette: `primary` is the organization's own colour, passed
+ * as `brandColor`, and an older name shows the palette colour it moves to.
+ */
+export function eventCategoryColor(color: string, brandColor: string): string {
+  return sectionHue(eventCategoryPaletteColor(color), brandColor) ?? brandColor;
 }
 
 /** Her sign-up chip on an activity card; `t` resolves the `events` namespace. */

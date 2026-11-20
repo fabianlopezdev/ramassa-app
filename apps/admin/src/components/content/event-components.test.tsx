@@ -103,7 +103,7 @@ test('the category icon and semantic color are reflected in the event editor', (
               fa: 'تمرین ها',
             },
             icon: 'dumbbell',
-            color: 'chart-2',
+            color: 'amber',
             sort_order: 10,
             created_at: '2026-08-04T12:00:00.000Z',
             updated_at: '2026-08-04T12:00:00.000Z',
@@ -117,6 +117,7 @@ test('the category icon and semantic color are reflected in the event editor', (
   const selected = screen.getByTestId('event-selected-category');
   expect(selected.textContent).toContain('Entrenaments');
   expect(selected.querySelector('[aria-label="Entrenaments"]')).toBeTruthy();
-  expect(selected.querySelector('[data-color="chart-2"]')).toBeTruthy();
+  expect(selected.querySelector('[data-color="amber"]')).toBeTruthy();
+  expect(selected.querySelector('[data-slot="category-color-swatch"]')).toBeTruthy();
   expect(screen.getByTestId('event-recurrence-one_off')).toBeTruthy();
 });
