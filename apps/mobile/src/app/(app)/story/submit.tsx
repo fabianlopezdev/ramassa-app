@@ -6,6 +6,7 @@ import { StoryImagePreview } from '@/components/knowledge/story-image-preview';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
+import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
@@ -316,12 +317,37 @@ export default function StorySubmissionScreen() {
   );
 
   return (
-    <>
+    <ActionScreen
+      className="bg-white"
+      action={
+        !isComplete ? (
+          <AuthSubmitButton
+            testID="story-submit-button"
+            label={
+              editingStory === null
+                ? isSendPending
+                  ? t('knowledge:submittingStory')
+                  : t('knowledge:submitStory')
+                : isSendPending
+                  ? t('knowledge:resendingStory')
+                  : t('knowledge:resendStory')
+            }
+            onPress={submitForm}
+            isLoading={isSendPending}
+            disabled={
+              !isOnline ||
+              isProcessingPhoto ||
+              (editingStory === null && defaultCategoryId === undefined)
+            }
+          />
+        ) : null
+      }
+    >
       <NativeScreenHeader surface="white" title={t('knowledge:submissionTitle')} />
       <ScrollView
         ref={scrollViewRef}
         testID="story-submission-screen"
-        className="flex-1 bg-white"
+        className="flex-1"
         contentContainerClassName="grow px-lg py-lg"
         contentContainerStyle={androidEdgeInsets}
         contentInsetAdjustmentBehavior="automatic"
@@ -472,25 +498,6 @@ export default function StorySubmissionScreen() {
                       {validationMessage ?? t('knowledge:submissionFailed')}
                     </Text>
                   )}
-                  <AuthSubmitButton
-                    testID="story-submit-button"
-                    label={
-                      editingStory === null
-                        ? isSendPending
-                          ? t('knowledge:submittingStory')
-                          : t('knowledge:submitStory')
-                        : isSendPending
-                          ? t('knowledge:resendingStory')
-                          : t('knowledge:resendStory')
-                    }
-                    onPress={submitForm}
-                    isLoading={isSendPending}
-                    disabled={
-                      !isOnline ||
-                      isProcessingPhoto ||
-                      (editingStory === null && defaultCategoryId === undefined)
-                    }
-                  />
                   {editingStory === null ? null : (
                     <RaisedActionButton
                       testID="story-edit-cancel"
@@ -560,6 +567,6 @@ export default function StorySubmissionScreen() {
           </ScreenSection>
         </FormWidth>
       </ScrollView>
-    </>
+    </ActionScreen>
   );
 }

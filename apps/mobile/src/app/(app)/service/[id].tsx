@@ -6,6 +6,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ActionScreen } from '@/components/layout/screen-action';
 import { SuccessPop } from '@/components/motion/success-pop';
 import { ServiceArticle } from '@/components/services/service-article';
 import { playErrorHaptic } from '@/lib/haptics/haptics';
@@ -91,11 +92,29 @@ export default function ServiceDetailScreen() {
   }
 
   return (
-    <>
+    <ActionScreen
+      className="bg-white"
+      action={
+        service !== undefined && title !== undefined ? (
+          <AuthSubmitButton
+            testID="service-interest-toggle"
+            label={
+              interest.isPending
+                ? t('playerServices:interestPending')
+                : service.interested
+                  ? t('playerServices:interestRemove')
+                  : t('playerServices:interestAdd')
+            }
+            onPress={toggleInterest}
+            isLoading={interest.isPending}
+          />
+        ) : null
+      }
+    >
       <NativeScreenHeader surface="white" />
       <ScrollView
         testID="player-service-detail"
-        className="flex-1 bg-white"
+        className="flex-1"
         contentContainerClassName="grow px-lg py-lg"
         contentContainerStyle={androidInsets}
         contentInsetAdjustmentBehavior="automatic"
@@ -138,18 +157,6 @@ export default function ServiceDetailScreen() {
               onOpenContact={(url) => void openContact(url)}
               contactErrorCode={contactErrorCode}
             >
-              <AuthSubmitButton
-                testID="service-interest-toggle"
-                label={
-                  interest.isPending
-                    ? t('playerServices:interestPending')
-                    : service.interested
-                      ? t('playerServices:interestRemove')
-                      : t('playerServices:interestAdd')
-                }
-                onPress={toggleInterest}
-                isLoading={interest.isPending}
-              />
               {interest.isSuccess ? (
                 <SuccessPop>
                   <Text
@@ -172,6 +179,6 @@ export default function ServiceDetailScreen() {
           )}
         </PageWidth>
       </ScrollView>
-    </>
+    </ActionScreen>
   );
 }

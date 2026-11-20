@@ -6,6 +6,7 @@ import { FormWidth } from '@/components/layout/content-width';
 import { RaisedChip } from '@/components/layout/filter-chips';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
+import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
 import { MentoringPreferencePickers } from '@/components/mentoring/mentoring-preference-pickers';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
@@ -132,7 +133,19 @@ export default function MentoringScreen() {
   );
 
   return (
-    <>
+    <ActionScreen
+      className="bg-neutral-50"
+      action={
+        !isComplete ? (
+          <AuthSubmitButton
+            testID="mentoring-submit"
+            label={isCreatePending ? t('mentoring:submitting') : t('mentoring:submit')}
+            isLoading={isCreatePending}
+            onPress={() => void submit()}
+          />
+        ) : null
+      }
+    >
       <NativeScreenHeader title={screenTitle} />
       <FlashList
         testID="mentoring-screen"
@@ -243,12 +256,6 @@ export default function MentoringScreen() {
                     }
                   />
                 )}
-                <AuthSubmitButton
-                  testID="mentoring-submit"
-                  label={isCreatePending ? t('mentoring:submitting') : t('mentoring:submit')}
-                  isLoading={isCreatePending}
-                  onPress={() => void submit()}
-                />
               </ScreenSection>
             )}
 
@@ -280,7 +287,7 @@ export default function MentoringScreen() {
           </FormWidth>
         }
       />
-    </>
+    </ActionScreen>
   );
 }
 

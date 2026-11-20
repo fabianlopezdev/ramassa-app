@@ -7,6 +7,7 @@ import { ForumPlainText } from '@/components/forum/forum-plain-text';
 import { ForumReplyCard } from '@/components/forum/forum-reply-card';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ActionScreen } from '@/components/layout/screen-action';
 import { SectionTitle } from '@/components/layout/screen-section';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { AuthorLine } from '@/components/people/person-avatar';
@@ -227,7 +228,20 @@ export default function ForumPostDetailScreen() {
   }
 
   return (
-    <>
+    <ActionScreen
+      className="bg-neutral-50"
+      action={
+        post.visibility !== 'deleted' ? (
+          <AuthSubmitButton
+            testID="forum-submit-reply"
+            label={createReply.isPending ? t('forum:replying') : t('forum:reply')}
+            onPress={submitReply}
+            isLoading={createReply.isPending}
+            disabled={!isOnline || postingDisabled || postingStatus.isPending}
+          />
+        ) : null
+      }
+    >
       <NativeScreenHeader title={t('forum:detailTitle')} />
       <FlashList
         testID="forum-detail-screen"
@@ -440,13 +454,6 @@ export default function ForumPostDetailScreen() {
                       {errorMessage ?? t('forum:replyFailed')}
                     </Text>
                   )}
-                  <AuthSubmitButton
-                    testID="forum-submit-reply"
-                    label={createReply.isPending ? t('forum:replying') : t('forum:reply')}
-                    onPress={submitReply}
-                    isLoading={createReply.isPending}
-                    disabled={!isOnline || postingDisabled || postingStatus.isPending}
-                  />
                 </View>
               </ShakeOnError>
             </PageWidth>
@@ -459,6 +466,6 @@ export default function ForumPostDetailScreen() {
         onClose={closeFlagDialog}
         onConfirmed={confirmFlag}
       />
-    </>
+    </ActionScreen>
   );
 }

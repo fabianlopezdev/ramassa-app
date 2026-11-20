@@ -4,6 +4,7 @@ import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ForumCategoryOption } from '@/components/forum/forum-category-tabs';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ActionScreen } from '@/components/layout/screen-action';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { compressNativeStoryImage } from '@/lib/native-image-compression';
 import type { CompressedNativeStoryImage } from '@/lib/native-image-compression-core';
@@ -156,11 +157,28 @@ export default function ForumPostComposerScreen() {
   );
 
   return (
-    <>
+    <ActionScreen
+      className="bg-white"
+      action={
+        <AuthSubmitButton
+          testID="forum-publish"
+          label={createPost.isPending ? t('forum:publishing') : t('forum:publish')}
+          onPress={submit}
+          isLoading={createPost.isPending}
+          disabled={
+            !isOnline ||
+            isProcessingPhoto ||
+            categoriesQuery.isPending ||
+            postingStatus.isPending ||
+            postingDisabled
+          }
+        />
+      }
+    >
       <NativeScreenHeader surface="white" title={t('forum:composerTitle')} />
       <ScrollView
         testID="forum-create-screen"
-        className="flex-1 bg-white"
+        className="flex-1"
         contentContainerClassName="grow px-lg py-lg"
         contentContainerStyle={contentInsets}
         contentInsetAdjustmentBehavior="automatic"
@@ -258,23 +276,10 @@ export default function ForumPostComposerScreen() {
                   {validationMessage ?? t('forum:publishFailed')}
                 </Text>
               )}
-              <AuthSubmitButton
-                testID="forum-publish"
-                label={createPost.isPending ? t('forum:publishing') : t('forum:publish')}
-                onPress={submit}
-                isLoading={createPost.isPending}
-                disabled={
-                  !isOnline ||
-                  isProcessingPhoto ||
-                  categoriesQuery.isPending ||
-                  postingStatus.isPending ||
-                  postingDisabled
-                }
-              />
             </View>
           </ShakeOnError>
         </FormWidth>
       </ScrollView>
-    </>
+    </ActionScreen>
   );
 }

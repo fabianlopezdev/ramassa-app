@@ -6,6 +6,7 @@ import { FormWidth } from '@/components/layout/content-width';
 import { RaisedChip } from '@/components/layout/filter-chips';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
+import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { SuccessPop } from '@/components/motion/success-pop';
@@ -220,7 +221,19 @@ export default function FeedbackScreen() {
   }, []);
 
   return (
-    <>
+    <ActionScreen
+      className="bg-neutral-50"
+      action={
+        !isComplete ? (
+          <AuthSubmitButton
+            testID="feedback-submit"
+            label={isSubmitting ? t('feedback:sending') : t('feedback:submit')}
+            onPress={() => void submit()}
+            isLoading={isSubmitting}
+          />
+        ) : null
+      }
+    >
       <NativeScreenHeader title={screenTitle} />
       <FlashList
         ref={feedbackListRef}
@@ -326,12 +339,6 @@ export default function FeedbackScreen() {
                 {errorCode === null ? null : (
                   <FailureNotice code={errorCode} message={t(`errors:${errorCode}`)} />
                 )}
-                <AuthSubmitButton
-                  testID="feedback-submit"
-                  label={isSubmitting ? t('feedback:sending') : t('feedback:submit')}
-                  onPress={() => void submit()}
-                  isLoading={isSubmitting}
-                />
               </ScreenSection>
             )}
 
@@ -370,6 +377,6 @@ export default function FeedbackScreen() {
           </FormWidth>
         }
       />
-    </>
+    </ActionScreen>
   );
 }

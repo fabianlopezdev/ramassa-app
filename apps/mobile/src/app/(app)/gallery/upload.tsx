@@ -3,6 +3,7 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -195,10 +196,21 @@ export default function GalleryUploadScreen() {
   }, [submit]);
 
   return (
-    <>
+    <ActionScreen
+      className="bg-white"
+      action={
+        <AuthSubmitButton
+          testID="gallery-upload-submit"
+          label={t('gallery:publish')}
+          onPress={submit}
+          isLoading={state.status === 'uploading'}
+          disabled={state.draft === null || !consent}
+        />
+      }
+    >
       <NativeScreenHeader surface="white" title={t('gallery:uploadTitle')} />
       <ScrollView
-        className="flex-1 bg-white"
+        className="flex-1"
         contentContainerClassName="grow px-lg py-lg"
         contentInsetAdjustmentBehavior="automatic"
       >
@@ -335,15 +347,8 @@ export default function GalleryUploadScreen() {
               )}
             </View>
           ) : null}
-          <AuthSubmitButton
-            testID="gallery-upload-submit"
-            label={t('gallery:publish')}
-            onPress={submit}
-            isLoading={state.status === 'uploading'}
-            disabled={state.draft === null || !consent}
-          />
         </FormWidth>
       </ScrollView>
-    </>
+    </ActionScreen>
   );
 }
