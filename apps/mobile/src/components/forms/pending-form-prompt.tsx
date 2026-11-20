@@ -92,7 +92,6 @@ export function PendingFormPrompt({ form, place = 'toDo' }: PendingFormPromptPro
         <RaisedActionButton
           testID={isLater ? 'pending-form-delete' : 'pending-form-dismiss'}
           size="compact"
-          align={isLater ? 'end' : 'start'}
           icon={isLater ? 'trash' : playerNavIcons.formsLater}
           tone={isLater ? 'danger' : 'brand'}
           label={secondLabel}
