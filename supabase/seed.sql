@@ -1909,19 +1909,19 @@ values
     '5eed0000-0000-4000-8006-000000000001',
     '5eed0000-0000-4000-8000-000000000000',
     '{"ca":"Habitatge","es":"Vivienda","en":"Housing","ar":"السكن","fa":"مسکن"}',
-    'housing', 'house', 'primary', 10
+    'housing', 'house', 'orange', 10
   ),
   (
     '5eed0000-0000-4000-8006-000000000002',
     '5eed0000-0000-4000-8000-000000000000',
     '{"ca":"Feina","es":"Empleo","en":"Jobs","ar":"العمل","fa":"کار"}',
-    'jobs', 'briefcase', 'secondary', 20
+    'jobs', 'briefcase', 'pink', 20
   ),
   (
     '5eed0000-0000-4000-8006-000000000003',
     '5eed0000-0000-4000-8000-000000000000',
     '{"ca":"Recomanacions","es":"Recomendaciones","en":"Recommendations","ar":"توصيات","fa":"پیشنهادها"}',
-    'recommendations', 'lightbulb', 'info', 30
+    'recommendations', 'lightbulb', 'teal', 30
   ),
   (
     '5eed0000-0000-4000-8006-000000000004',

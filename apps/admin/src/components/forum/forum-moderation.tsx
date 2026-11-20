@@ -1,4 +1,5 @@
 import { AuthenticatedMediaImage } from '@/components/content/authenticated-media-image';
+import { CategoryColorSelect } from '@/components/content/category-color-select';
 import { Page } from '@/components/layout/page';
 import { PersonAvatar } from '@/components/participants/person-avatar';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +27,7 @@ import {
 } from '@ramassa/shared/forum';
 import { resolveLocalizedText, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n';
 import type { LanguageCode } from '@ramassa/shared/schemas';
+import { SECTION_COLOR_CHOICES } from '@ramassa/shared/section-colors';
 import { deleteMediaItem } from '@ramassa/shared/upload-client';
 
 export interface ForumModerationProps {
@@ -279,12 +281,20 @@ function ActionButton({
   );
 }
 
+/**
+ * A forum category's colour comes from the shared section palette (RAPP-893);
+ * `neutral` is the stored name for a category with no colour. A new category
+ * starts on the first topic hue, so it never takes the club colour by chance.
+ */
+const FORUM_CATEGORY_NO_COLOR = 'neutral';
+const FORUM_CATEGORY_DEFAULT_COLOR = 'sky';
+
 const emptyCategory = (): ForumCategoryInput => ({
   id: null,
   name: { ca: '', es: '', en: '', fr: '', ar: '', fa: '' },
   slug: '',
   icon: 'message-circle',
-  color: 'primary',
+  color: FORUM_CATEGORY_DEFAULT_COLOR,
   sortOrder: 0,
 });
 
@@ -392,10 +402,12 @@ function ForumCategoryManager({
           value={draft.icon}
           onChange={(icon) => setDraft((current) => ({ ...current, icon }))}
         />
-        <CategoryField
-          label={t('categoryColor')}
+        <CategoryColorSelect
           value={draft.color}
           onChange={(color) => setDraft((current) => ({ ...current, color }))}
+          testId="forum-category-color"
+          choices={SECTION_COLOR_CHOICES}
+          noneValue={FORUM_CATEGORY_NO_COLOR}
         />
         <label className="space-y-1 text-sm font-medium">
           <span>{t('categorySortOrder')}</span>
