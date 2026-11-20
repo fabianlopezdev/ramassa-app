@@ -52,6 +52,40 @@ test('no screen draws a section title by hand', () => {
   expect(offenders).toEqual([]);
 });
 
+// Components draw section titles too (RAPP-889): the profile cards drew their
+// own, and the scan above only reads route files. These headings are not
+// section titles: a block a staff member wrote into a form, three cards of one
+// service review, a numbered heading inside an article, the title of one
+// article card, and the places left on an event.
+const componentHeadingsThatAreNotSectionTitles = new Set([
+  'components/forms/text-block.tsx',
+  'components/content/service-review-detail.tsx',
+  'components/knowledge/player-structured-content-shared.tsx',
+  'components/knowledge/knowledge-article-card.tsx',
+  'components/events/event-article.tsx',
+]);
+
+test('no component draws a section title by hand', () => {
+  const handMade =
+    /accessibilityRole="header"\s*\n\s*className=\{`text-start text-(form|lg|xl) font-(semibold|bold)/;
+  const offenders = screenFiles('components').filter(
+    (path) =>
+      !path.startsWith('components/dev/') &&
+      !path.includes('.case.') &&
+      !componentHeadingsThatAreNotSectionTitles.has(path) &&
+      handMade.test(read(path)),
+  );
+  expect(offenders).toEqual([]);
+});
+
+test('no screen or component keeps a section label helper of its own', () => {
+  const localHelper = /\nfunction Section(Header|Heading|Title)\(/;
+  const offenders = [...screenFiles('app'), ...screenFiles('components')].filter(
+    (path) => path !== 'components/layout/screen-section.tsx' && localHelper.test(read(path)),
+  );
+  expect(offenders).toEqual([]);
+});
+
 test('the five player tabs draw no heading of their own', () => {
   const tabs = screenFiles('app/(app)/(tabs)').filter((path) => !path.endsWith('_layout.tsx'));
   expect(tabs).toHaveLength(5);

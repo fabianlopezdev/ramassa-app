@@ -13,6 +13,7 @@ import {
 } from '@/components/announcements/feed-states';
 import { FailureNotice } from '@/components/error-code-line';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { SectionTitle } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { PreviewItemAsPlayer } from '@/components/preview/preview-as-player';
 import { useContentEvent, useContentEventOccurrences, useEventActions } from '@/lib/content-events';
@@ -210,21 +211,18 @@ export function EventDetail({
         </Text>
       )}
       {occurrences.data === undefined || occurrences.data.length < 2 ? null : (
-        <View className="gap-xs" testID="event-detail-sessions">
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-          >
-            {t('sessionsTitle', { count: occurrences.data.length })}
-          </Text>
-          {occurrences.data.map((occurrence) => (
-            <Text
-              key={occurrence.id}
-              className={`text-start text-md tabular-nums text-neutral-800 ${fontClass}`}
-            >
-              {format.format(new Date(occurrence.starts_at))}
-            </Text>
-          ))}
+        <View className="gap-md" testID="event-detail-sessions">
+          <SectionTitle title={t('sessionsTitle', { count: occurrences.data.length })} />
+          <View className="gap-xs">
+            {occurrences.data.map((occurrence) => (
+              <Text
+                key={occurrence.id}
+                className={`text-start text-md tabular-nums text-neutral-800 ${fontClass}`}
+              >
+                {format.format(new Date(occurrence.starts_at))}
+              </Text>
+            ))}
+          </View>
         </View>
       )}
     </ScrollView>
