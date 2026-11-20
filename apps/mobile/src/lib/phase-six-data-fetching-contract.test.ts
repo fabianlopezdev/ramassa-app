@@ -16,7 +16,7 @@ const phaseSixTargets = [
   'components/forum/forum-flag-dialog.tsx',
   'components/forum/forum-plain-text.tsx',
   'components/forum/forum-post-card.tsx',
-  'components/forum/forum-reply-card.tsx',
+  'components/forum/forum-thread-message.tsx',
   'lib/forum-write.ts',
   'lib/gallery-upload.ts',
   'lib/media-upload-policy.ts',
