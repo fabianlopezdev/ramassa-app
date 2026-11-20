@@ -10,6 +10,7 @@ import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { eventCategoryColor } from '@/components/events/event-card';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { useEventCategoryActions } from '@/lib/content-events';
 import { reviewHandlers, reviewOptions } from '@/lib/content-translations';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -216,16 +217,18 @@ export function EventCategorySheet({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-white" testID="event-category-sheet">
-        <KeyboardAvoidingView
-          className="flex-1"
-          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
-        >
-          {visible ? (
-            <CategoryForm key={category?.id ?? 'new'} category={category} onClose={onClose} />
-          ) : null}
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+      <NativeModalScope>
+        <SafeAreaView className="flex-1 bg-white" testID="event-category-sheet">
+          <KeyboardAvoidingView
+            className="flex-1"
+            behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
+          >
+            {visible ? (
+              <CategoryForm key={category?.id ?? 'new'} category={category} onClose={onClose} />
+            ) : null}
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </NativeModalScope>
     </Modal>
   );
 }

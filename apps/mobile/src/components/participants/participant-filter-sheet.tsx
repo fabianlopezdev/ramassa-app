@@ -8,6 +8,7 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import type { ParticipantListSearch } from '@/lib/participant-filters';
 import { useParticipantFilterOptions } from '@/lib/participant-lookup';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -72,92 +73,98 @@ export function ParticipantFilterSheet({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-white" testID="participant-filter-sheet">
-        <ScrollView contentContainerClassName="gap-lg p-lg">
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}
-          >
-            {t('list.filtersTitle')}
-          </Text>
-          {(options?.entities.length ?? 0) > 0 ? (
-            <Group label={t('filterEntity')}>
-              {[ALL, ...(options?.entities ?? [])].map((entity) => (
+      <NativeModalScope>
+        <SafeAreaView className="flex-1 bg-white" testID="participant-filter-sheet">
+          <ScrollView contentContainerClassName="gap-lg p-lg">
+            <Text
+              accessibilityRole="header"
+              className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}
+            >
+              {t('list.filtersTitle')}
+            </Text>
+            {(options?.entities.length ?? 0) > 0 ? (
+              <Group label={t('filterEntity')}>
+                {[ALL, ...(options?.entities ?? [])].map((entity) => (
+                  <ChoiceOption
+                    key={entity}
+                    testID={`filter-entity-${entity}`}
+                    value={entity}
+                    label={entity === ALL ? t('optionAll') : entity}
+                    selected={(search.entity ?? ALL) === entity}
+                    onSelect={(value) => set({ entity: value === ALL ? null : value })}
+                    languageFontClass={fontClass}
+                  />
+                ))}
+              </Group>
+            ) : null}
+            {(options?.nationalities.length ?? 0) > 0 ? (
+              <Group label={t('filterNationality')}>
+                {[ALL, ...(options?.nationalities ?? [])].map((nationality) => (
+                  <ChoiceOption
+                    key={nationality}
+                    testID={`filter-nationality-${nationality}`}
+                    value={nationality}
+                    label={nationality === ALL ? t('optionAll') : nationality}
+                    selected={(search.nationality ?? ALL) === nationality}
+                    onSelect={(value) => set({ nationality: value === ALL ? null : value })}
+                    languageFontClass={fontClass}
+                  />
+                ))}
+              </Group>
+            ) : null}
+            {(options?.nationalities.length ?? 0) > 0 ? (
+              <Group label={t('filterDependents')}>
+                {(['all', 'with', 'without'] as const).map((choice) => (
+                  <ChoiceOption
+                    key={choice}
+                    testID={`filter-dependents-${choice}`}
+                    value={choice}
+                    label={
+                      choice === 'all'
+                        ? t('optionAll')
+                        : t(choice === 'with' ? 'dependentsWith' : 'dependentsWithout')
+                    }
+                    selected={search.dependents === choice}
+                    onSelect={(value) => set({ dependents: value })}
+                    languageFontClass={fontClass}
+                  />
+                ))}
+              </Group>
+            ) : null}
+            <Group label={t('list.sortLabel')}>
+              {SHEET_SORTS.map((column) => (
                 <ChoiceOption
-                  key={entity}
-                  testID={`filter-entity-${entity}`}
-                  value={entity}
-                  label={entity === ALL ? t('optionAll') : entity}
-                  selected={(search.entity ?? ALL) === entity}
-                  onSelect={(value) => set({ entity: value === ALL ? null : value })}
+                  key={column}
+                  testID={`filter-sort-${column}`}
+                  value={column}
+                  label={t(SORT_LABEL_KEYS[column])}
+                  selected={search.sort === column}
+                  onSelect={(value) => set({ sort: value })}
                   languageFontClass={fontClass}
                 />
               ))}
             </Group>
-          ) : null}
-          {(options?.nationalities.length ?? 0) > 0 ? (
-            <Group label={t('filterNationality')}>
-              {[ALL, ...(options?.nationalities ?? [])].map((nationality) => (
+            <Group label={t('list.dirLabel')}>
+              {(['asc', 'desc'] as const).map((dir) => (
                 <ChoiceOption
-                  key={nationality}
-                  testID={`filter-nationality-${nationality}`}
-                  value={nationality}
-                  label={nationality === ALL ? t('optionAll') : nationality}
-                  selected={(search.nationality ?? ALL) === nationality}
-                  onSelect={(value) => set({ nationality: value === ALL ? null : value })}
+                  key={dir}
+                  testID={`filter-dir-${dir}`}
+                  value={dir}
+                  label={t(dir === 'asc' ? 'list.dirAsc' : 'list.dirDesc')}
+                  selected={search.dir === dir}
+                  onSelect={(value) => set({ dir: value })}
                   languageFontClass={fontClass}
                 />
               ))}
             </Group>
-          ) : null}
-          {(options?.nationalities.length ?? 0) > 0 ? (
-            <Group label={t('filterDependents')}>
-              {(['all', 'with', 'without'] as const).map((choice) => (
-                <ChoiceOption
-                  key={choice}
-                  testID={`filter-dependents-${choice}`}
-                  value={choice}
-                  label={
-                    choice === 'all'
-                      ? t('optionAll')
-                      : t(choice === 'with' ? 'dependentsWith' : 'dependentsWithout')
-                  }
-                  selected={search.dependents === choice}
-                  onSelect={(value) => set({ dependents: value })}
-                  languageFontClass={fontClass}
-                />
-              ))}
-            </Group>
-          ) : null}
-          <Group label={t('list.sortLabel')}>
-            {SHEET_SORTS.map((column) => (
-              <ChoiceOption
-                key={column}
-                testID={`filter-sort-${column}`}
-                value={column}
-                label={t(SORT_LABEL_KEYS[column])}
-                selected={search.sort === column}
-                onSelect={(value) => set({ sort: value })}
-                languageFontClass={fontClass}
-              />
-            ))}
-          </Group>
-          <Group label={t('list.dirLabel')}>
-            {(['asc', 'desc'] as const).map((dir) => (
-              <ChoiceOption
-                key={dir}
-                testID={`filter-dir-${dir}`}
-                value={dir}
-                label={t(dir === 'asc' ? 'list.dirAsc' : 'list.dirDesc')}
-                selected={search.dir === dir}
-                onSelect={(value) => set({ dir: value })}
-                languageFontClass={fontClass}
-              />
-            ))}
-          </Group>
-          <AuthSubmitButton testID="filter-done" label={t('list.filtersDone')} onPress={onClose} />
-        </ScrollView>
-      </SafeAreaView>
+            <AuthSubmitButton
+              testID="filter-done"
+              label={t('list.filtersDone')}
+              onPress={onClose}
+            />
+          </ScrollView>
+        </SafeAreaView>
+      </NativeModalScope>
     </Modal>
   );
 }

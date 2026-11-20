@@ -13,6 +13,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { Badge } from '@/components/layout/badge';
+import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -137,9 +138,11 @@ function ItemSheet({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-white" testID="team-gallery-sheet">
-        {item === null ? null : <ItemDetail item={item} onClose={onClose} />}
-      </SafeAreaView>
+      <NativeModalScope>
+        <SafeAreaView className="flex-1 bg-white" testID="team-gallery-sheet">
+          {item === null ? null : <ItemDetail item={item} onClose={onClose} />}
+        </SafeAreaView>
+      </NativeModalScope>
     </Modal>
   );
 }

@@ -3,12 +3,11 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ForumFlagDialog } from '@/components/forum/forum-flag-dialog';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { isNetworkStateOnline } from '@/lib/network-status';
@@ -92,22 +91,13 @@ export default function GalleryItemScreen() {
   const selectedPrivacy = item?.privacy_level;
   const renderPrivacyOption = useCallback(
     (value: MediaPrivacy) => (
-      <PressableScale
+      <SelectionChoiceCard
         key={value}
-        accessibilityRole="radio"
-        accessibilityLabel={t(`gallery:privacyLevels.${value}`)}
+        label={t(`gallery:privacyLevels.${value}`)}
+        fontClass={languageFontClass}
         isSelected={selectedPrivacy === value}
         onPress={privacyActions[value]}
-        haptic="selection"
-        style={continuousCorners}
-        className={`min-h-recommended justify-center rounded-md border px-lg ${selectedPrivacy === value ? 'border-primary bg-primary' : 'border-neutral-300'}`}
-      >
-        <Text
-          className={`${selectedPrivacy === value ? 'text-white' : 'text-neutral-800'} ${languageFontClass}`}
-        >
-          {t(`gallery:privacyLevels.${value}`)}
-        </Text>
-      </PressableScale>
+      />
     ),
     [languageFontClass, privacyActions, selectedPrivacy, t],
   );

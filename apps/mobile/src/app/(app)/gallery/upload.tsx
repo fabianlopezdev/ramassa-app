@@ -1,12 +1,11 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { uploadGalleryMedia } from '@/lib/gallery-upload';
 import { playHaptic } from '@/lib/haptics/haptics';
 import {
@@ -97,22 +96,13 @@ export default function GalleryUploadScreen() {
   );
   const renderPrivacyOption = useCallback(
     (value: MediaPrivacy) => (
-      <PressableScale
+      <SelectionChoiceCard
         key={value}
-        accessibilityRole="radio"
-        accessibilityLabel={t(`gallery:privacyLevels.${value}`)}
+        label={t(`gallery:privacyLevels.${value}`)}
+        fontClass={languageFontClass}
         isSelected={privacy === value}
         onPress={privacyActions[value]}
-        haptic="selection"
-        style={continuousCorners}
-        className={`min-h-recommended justify-center rounded-md border px-lg ${privacy === value ? 'border-primary bg-primary' : 'border-neutral-300'}`}
-      >
-        <Text
-          className={`${privacy === value ? 'text-white' : 'text-neutral-800'} ${languageFontClass}`}
-        >
-          {t(`gallery:privacyLevels.${value}`)}
-        </Text>
-      </PressableScale>
+      />
     ),
     [languageFontClass, privacy, privacyActions, t],
   );

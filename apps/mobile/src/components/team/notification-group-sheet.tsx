@@ -9,6 +9,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useNotificationActions } from '@/lib/team-notifications';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -196,21 +197,23 @@ export function NotificationGroupSheet({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-white" testID="notification-group-sheet">
-        <KeyboardAvoidingView
-          className="flex-1"
-          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
-        >
-          {visible ? (
-            <GroupForm
-              key={group?.id ?? 'new'}
-              group={group}
-              participants={participants}
-              onClose={onClose}
-            />
-          ) : null}
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+      <NativeModalScope>
+        <SafeAreaView className="flex-1 bg-white" testID="notification-group-sheet">
+          <KeyboardAvoidingView
+            className="flex-1"
+            behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
+          >
+            {visible ? (
+              <GroupForm
+                key={group?.id ?? 'new'}
+                group={group}
+                participants={participants}
+                onClose={onClose}
+              />
+            ) : null}
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </NativeModalScope>
     </Modal>
   );
 }

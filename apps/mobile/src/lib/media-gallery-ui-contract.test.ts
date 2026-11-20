@@ -64,7 +64,8 @@ test('item load failure exposes actionable feedback without technical codes, and
   expect(item).toContain("t('gallery:loadFailedHelp')");
   expect(item).not.toContain('ErrorCodeLine');
   expect(item).toContain('onPress={retryLoad}');
-  expect(item).toContain('min-h-recommended');
+  // The retry is the shared call to action, which keeps the large tap height.
+  expect(item).toMatch(/<AuthSubmitButton\s+testID="gallery-detail-retry"/);
 });
 
 test('all gallery locales cover preview, permission recovery, and load recovery copy', () => {

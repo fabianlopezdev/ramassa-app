@@ -37,12 +37,29 @@ const hasFlatButton = (source: string) =>
 // nothing may be added.
 const stillFlat = new Set(['app/(app)/profile-delete-data.tsx']);
 
+// A choice (one of several, or a tick) drawn by hand: a press control with a
+// radio or checkbox role and its own border. Choices come from the shared
+// raised pieces (`SelectionChoiceCard`, `RaisedChip`, `SelectionChoiceSurface`),
+// so a chosen one fills the same way on every screen.
+const flatChoice = /accessibilityRole="(?:radio|checkbox)"/;
+const hasFlatChoice = (source: string) =>
+  (source.match(pressTag) ?? []).some(
+    (tag) => flatChoice.test(tag) && /className=[^>]*\bborder\b/.test(tag),
+  );
+
 const withFlatButton = [...sources('app'), ...sources('components')].filter((path) =>
   hasFlatButton(read(path)),
 );
 
 test('no screen draws a new flat button by hand', () => {
   expect(withFlatButton.filter((path) => !stillFlat.has(path))).toEqual([]);
+});
+
+test('no screen draws a choice by hand', () => {
+  const withFlatChoice = [...sources('app'), ...sources('components')].filter((path) =>
+    hasFlatChoice(read(path)),
+  );
+  expect(withFlatChoice).toEqual([]);
 });
 
 test('the list of flat leftovers only shrinks', () => {
@@ -64,4 +81,8 @@ test('the shared pieces carry the relief', () => {
   // The call to action keeps its solid navy fill.
   expect(read('components/auth/auth-submit-button.tsx')).toContain("'bg-primary'");
   expect(read('components/services/service-card.tsx')).toContain('<RaisedCard');
+  // The staff choice is the raised pill, and the onboarding choice card sits
+  // on the raised surface.
+  expect(read('components/equipment/choice-option.tsx')).toContain('<RaisedChip');
+  expect(read('components/auth/selection-choice-card.tsx')).toContain('<SelectionChoiceSurface');
 });

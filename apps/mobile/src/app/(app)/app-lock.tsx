@@ -6,8 +6,8 @@
  */
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthBackButton } from '@/components/auth/auth-back-button';
+import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { PageWidth } from '@/components/layout/content-width';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { LanguageSwitcher } from '@/components/profile/language-switcher';
 import { APP_LOCK_TIMEOUTS, type AppLockTimeout } from '@/lib/app-lock';
 import { usePendingSigningCount } from '@/lib/tablet-signing';
@@ -129,26 +129,14 @@ export default function AppLockScreen() {
                 const isSelected = settings.timeoutSeconds === timeout;
                 const label = t(TIMEOUT_LABEL_KEYS[timeout]);
                 return (
-                  <PressableScale
+                  <SelectionChoiceCard
                     key={timeout}
                     testID={`app-lock-timeout-${timeout}`}
-                    accessibilityRole="radio"
-                    accessibilityLabel={label}
+                    label={label}
+                    fontClass={languageFontClass}
                     isSelected={isSelected}
                     onPress={() => saveSettings({ ...settings, timeoutSeconds: timeout })}
-                    haptic="selection"
-                    className={`min-h-recommended justify-center rounded-md border px-md ${
-                      isSelected ? 'border-primary bg-white' : 'border-neutral-200 bg-white'
-                    }`}
-                  >
-                    <Text
-                      className={`text-start text-md ${
-                        isSelected ? 'font-bold text-primary-dark' : 'text-neutral-900'
-                      } ${languageFontClass}`}
-                    >
-                      {label}
-                    </Text>
-                  </PressableScale>
+                  />
                 );
               })}
             </View>

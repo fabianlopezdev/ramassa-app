@@ -13,6 +13,7 @@ import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { BarRow, MonthBars, Sparkline } from '@/components/team/impact-charts';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -88,58 +89,60 @@ function ChartSheet({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-white" testID="impact-chart-sheet">
-        {metric === null ? null : (
-          <ScrollView contentContainerClassName="gap-md p-lg">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('impactChartMonthly', { metric: t(metric.labelKey) })}
-            </Text>
-            {rows.length === 0 ? (
-              <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-                {t('impactChartEmpty')}
+      <NativeModalScope>
+        <SafeAreaView className="flex-1 bg-white" testID="impact-chart-sheet">
+          {metric === null ? null : (
+            <ScrollView contentContainerClassName="gap-md p-lg">
+              <Text
+                accessibilityRole="header"
+                className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}
+              >
+                {t('impactChartMonthly', { metric: t(metric.labelKey) })}
               </Text>
-            ) : (
-              <>
-                <MonthBars
-                  bars={rows.map((row) => ({
-                    key: row.monthStart,
-                    label: row.short,
-                    value: row.value,
-                  }))}
-                />
-                <View accessibilityRole="list" className="gap-xs">
-                  {rows.map((row) => (
-                    <View
-                      key={row.monthStart}
-                      testID={`impact-chart-row-${row.monthStart}`}
-                      accessible
-                      accessibilityLabel={`${row.label}: ${metric.format(row.value)}`}
-                      className="flex-row justify-between gap-sm border-b border-neutral-100 py-sm"
-                    >
-                      <Text className={`text-start text-md text-neutral-800 ${fontClass}`}>
-                        {row.label}
-                      </Text>
-                      <Text
-                        className={`text-md font-semibold tabular-nums text-neutral-900 ${fontClass}`}
+              {rows.length === 0 ? (
+                <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
+                  {t('impactChartEmpty')}
+                </Text>
+              ) : (
+                <>
+                  <MonthBars
+                    bars={rows.map((row) => ({
+                      key: row.monthStart,
+                      label: row.short,
+                      value: row.value,
+                    }))}
+                  />
+                  <View accessibilityRole="list" className="gap-xs">
+                    {rows.map((row) => (
+                      <View
+                        key={row.monthStart}
+                        testID={`impact-chart-row-${row.monthStart}`}
+                        accessible
+                        accessibilityLabel={`${row.label}: ${metric.format(row.value)}`}
+                        className="flex-row justify-between gap-sm border-b border-neutral-100 py-sm"
                       >
-                        {metric.format(row.value)}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </>
-            )}
-            <RaisedActionButton
-              testID="impact-chart-close"
-              label={t('impactClose')}
-              onPress={onClose}
-            />
-          </ScrollView>
-        )}
-      </SafeAreaView>
+                        <Text className={`text-start text-md text-neutral-800 ${fontClass}`}>
+                          {row.label}
+                        </Text>
+                        <Text
+                          className={`text-md font-semibold tabular-nums text-neutral-900 ${fontClass}`}
+                        >
+                          {metric.format(row.value)}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              )}
+              <RaisedActionButton
+                testID="impact-chart-close"
+                label={t('impactClose')}
+                onPress={onClose}
+              />
+            </ScrollView>
+          )}
+        </SafeAreaView>
+      </NativeModalScope>
     </Modal>
   );
 }

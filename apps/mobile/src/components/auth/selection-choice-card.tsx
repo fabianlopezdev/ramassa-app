@@ -32,7 +32,7 @@ export function SelectionChoiceCard({
       onPress={onPress}
       className="w-full"
       rowStyle={rowStyle}
-      contentClassName="w-full flex-row items-center justify-between"
+      contentClassName="w-full flex-row items-center justify-between gap-md py-sm"
     >
       <Text
         accessibilityLanguage={language}

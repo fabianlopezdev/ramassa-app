@@ -9,6 +9,7 @@ import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { PermissionToggles } from '@/components/team/permission-toggles';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -48,20 +49,22 @@ function Sheet({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-white" testID={testID}>
-        <KeyboardAvoidingView
-          className="flex-1"
-          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
-        >
-          <ScrollView
-            contentContainerClassName="gap-md p-lg"
-            keyboardShouldPersistTaps="handled"
-            automaticallyAdjustKeyboardInsets
+      <NativeModalScope>
+        <SafeAreaView className="flex-1 bg-white" testID={testID}>
+          <KeyboardAvoidingView
+            className="flex-1"
+            behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
           >
-            {visible ? children : null}
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+            <ScrollView
+              contentContainerClassName="gap-md p-lg"
+              keyboardShouldPersistTaps="handled"
+              automaticallyAdjustKeyboardInsets
+            >
+              {visible ? children : null}
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </NativeModalScope>
     </Modal>
   );
 }

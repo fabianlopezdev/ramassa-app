@@ -1,11 +1,12 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { FailureNotice } from '@/components/error-code-line';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
 import { Icon } from '@/components/icons/icon';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import {
   useOwnSurveyResponse,
@@ -37,7 +38,6 @@ import {
 import { tokens } from '@ramassa/shared/tokens';
 
 const styles = StyleSheet.create({
-  selected: { borderColor: tokens.colors.primary.DEFAULT },
   textInput: {
     minHeight: tokens.spacing['3xl'] * 2 + tokens.spacing.md,
     textAlignVertical: 'top',
@@ -45,8 +45,6 @@ const styles = StyleSheet.create({
   },
   dynamicCopy: { writingDirection: 'auto' },
 });
-const optionStyle = continuousCorners;
-const selectedOptionStyle = [continuousCorners, styles.selected];
 const textInputStyle = [styles.textInput, continuousCorners];
 const RATING_OPTIONS = [1, 2, 3, 4, 5] as const;
 const YES_NO_OPTIONS = [true, false] as const;
@@ -84,16 +82,16 @@ function RatingQuestionControl({ question, answer, language, onChange }: Questio
       accessibilityLabel={resolveSurveyCopy(question.prompt, language)}
     >
       {RATING_OPTIONS.map((rating) => (
-        <PressableScale
+        <SelectionChoiceSurface
           key={rating}
           testID={`survey-rating-${rating}`}
-          accessibilityLabel={t('ratingLabel', { count: rating })}
+          label={t('ratingLabel', { count: rating })}
           accessibilityRole="radio"
           isSelected={answer === rating}
           onPress={() => onChange(rating)}
-          haptic="selection"
-          style={answer === rating ? selectedOptionStyle : optionStyle}
-          className={`min-h-recommended min-w-12 flex-1 items-center justify-center rounded-md border-2 border-neutral-200 ${answer === rating ? 'bg-primary/10' : 'bg-white'}`}
+          className="flex-1"
+          paddingClassName="px-xs"
+          contentClassName="items-center justify-center"
         >
           <Icon
             name="star"
@@ -101,7 +99,7 @@ function RatingQuestionControl({ question, answer, language, onChange }: Questio
             size={tokens.fontSize['3xl']}
             color={tokens.colors.secondary.dark}
           />
-        </PressableScale>
+        </SelectionChoiceSurface>
       ))}
     </View>
   );
@@ -121,24 +119,14 @@ function MultipleChoiceQuestionControl({
       accessibilityLabel={resolveSurveyCopy(question.prompt, language)}
     >
       {question.options?.map((option) => (
-        <PressableScale
+        <SelectionChoiceCard
           key={option.id}
           testID={`survey-choice-${option.id}`}
-          accessibilityLabel={resolveSurveyCopy(option.label, language)}
-          accessibilityRole="radio"
+          label={resolveSurveyCopy(option.label, language)}
+          fontClass={languageFontClass}
           isSelected={answer === option.id}
           onPress={() => onChange(option.id)}
-          haptic="selection"
-          style={answer === option.id ? selectedOptionStyle : optionStyle}
-          className={`min-h-recommended justify-center rounded-md border-2 border-neutral-200 px-lg py-md ${answer === option.id ? 'bg-primary/10' : 'bg-white'}`}
-        >
-          <Text
-            style={styles.dynamicCopy}
-            className={`text-center text-lg font-bold text-neutral-900 ${languageFontClass}`}
-          >
-            {resolveSurveyCopy(option.label, language)}
-          </Text>
-        </PressableScale>
+        />
       ))}
     </View>
   );
@@ -159,16 +147,15 @@ function YesNoQuestionControl({
       accessibilityLabel={resolveSurveyCopy(question.prompt, language)}
     >
       {YES_NO_OPTIONS.map((value) => (
-        <PressableScale
+        <SelectionChoiceSurface
           key={String(value)}
           testID={value ? 'survey-yes' : 'survey-no'}
-          accessibilityLabel={value ? t('yes') : t('no')}
+          label={value ? t('yes') : t('no')}
           accessibilityRole="radio"
           isSelected={answer === value}
           onPress={() => onChange(value)}
-          haptic="selection"
-          style={answer === value ? selectedOptionStyle : optionStyle}
-          className={`min-h-recommended flex-1 flex-row items-center justify-center gap-sm rounded-md border-2 border-neutral-200 px-lg py-xl ${answer === value ? 'bg-primary/10' : 'bg-white'}`}
+          className="flex-1"
+          contentClassName="flex-row items-center justify-center gap-sm py-lg"
         >
           <Icon
             name={value ? 'check' : 'close'}
@@ -178,7 +165,7 @@ function YesNoQuestionControl({
           <Text className={`text-2xl font-bold text-neutral-900 ${languageFontClass}`}>
             {value ? t('yes') : t('no')}
           </Text>
-        </PressableScale>
+        </SelectionChoiceSurface>
       ))}
     </View>
   );

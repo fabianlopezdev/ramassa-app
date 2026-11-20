@@ -10,6 +10,7 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { useOrganizationBranding } from '@/components/branding/organization-branding-provider';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { i18n } from '@/lib/i18n';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -74,57 +75,61 @@ export function DraftPreviewSheet({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-white" testID="draft-preview-sheet">
-        <View className="gap-sm border-b border-neutral-300 bg-neutral-100 px-lg pb-sm pt-md">
-          <View className="flex-row items-center justify-between gap-md">
-            <Text
-              accessibilityRole="header"
-              className={`flex-1 text-start text-sm font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('previewDraftTitle')}
-            </Text>
-            <PressableScale
-              testID="draft-preview-close"
-              accessibilityRole="button"
-              accessibilityLabel={t('close')}
-              onPress={onClose}
-              haptic="tapLight"
-              className="min-h-recommended justify-center rounded-full bg-primary px-lg"
-            >
-              <Text className={`text-md font-semibold text-white ${fontClass}`}>{t('close')}</Text>
-            </PressableScale>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View className="flex-row gap-sm">
-              {languages.map((candidate) => (
-                <ChoiceOption
-                  key={candidate}
-                  testID={`draft-preview-language-${candidate}`}
-                  value={candidate}
-                  label={LANGUAGE_NATIVE_NAMES[candidate]}
-                  selected={candidate === language}
-                  onSelect={setLanguage}
-                  languageFontClass={fontClass}
-                />
-              ))}
+      <NativeModalScope>
+        <SafeAreaView className="flex-1 bg-white" testID="draft-preview-sheet">
+          <View className="gap-sm border-b border-neutral-300 bg-neutral-100 px-lg pb-sm pt-md">
+            <View className="flex-row items-center justify-between gap-md">
+              <Text
+                accessibilityRole="header"
+                className={`flex-1 text-start text-sm font-bold text-neutral-900 ${fontClass}`}
+              >
+                {t('previewDraftTitle')}
+              </Text>
+              <PressableScale
+                testID="draft-preview-close"
+                accessibilityRole="button"
+                accessibilityLabel={t('close')}
+                onPress={onClose}
+                haptic="tapLight"
+                className="min-h-recommended justify-center rounded-full bg-primary px-lg"
+              >
+                <Text className={`text-md font-semibold text-white ${fontClass}`}>
+                  {t('close')}
+                </Text>
+              </PressableScale>
             </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View className="flex-row gap-sm">
+                {languages.map((candidate) => (
+                  <ChoiceOption
+                    key={candidate}
+                    testID={`draft-preview-language-${candidate}`}
+                    value={candidate}
+                    label={LANGUAGE_NATIVE_NAMES[candidate]}
+                    selected={candidate === language}
+                    onSelect={setLanguage}
+                    languageFontClass={fontClass}
+                  />
+                ))}
+              </View>
+            </ScrollView>
+            {isMissing(language) ? (
+              <Text
+                testID="draft-preview-missing"
+                accessibilityLiveRegion="polite"
+                className={`text-start text-sm text-neutral-700 ${fontClass}`}
+              >
+                {t('previewDraftMissing')}
+              </Text>
+            ) : null}
+          </View>
+          <ScrollView className="flex-1" contentContainerClassName="px-lg py-lg">
+            {visible ? (
+              <PlayerLanguageScope language={language}>{children}</PlayerLanguageScope>
+            ) : null}
           </ScrollView>
-          {isMissing(language) ? (
-            <Text
-              testID="draft-preview-missing"
-              accessibilityLiveRegion="polite"
-              className={`text-start text-sm text-neutral-700 ${fontClass}`}
-            >
-              {t('previewDraftMissing')}
-            </Text>
-          ) : null}
-        </View>
-        <ScrollView className="flex-1" contentContainerClassName="px-lg py-lg">
-          {visible ? (
-            <PlayerLanguageScope language={language}>{children}</PlayerLanguageScope>
-          ) : null}
-        </ScrollView>
-      </SafeAreaView>
+        </SafeAreaView>
+      </NativeModalScope>
     </Modal>
   );
 }

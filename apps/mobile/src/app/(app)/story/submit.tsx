@@ -1,14 +1,14 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
-import { Icon, type IconName } from '@/components/icons/icon';
+import { type IconName } from '@/components/icons/icon';
 import { StoryImagePreview } from '@/components/knowledge/story-image-preview';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
 import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { SuccessPop } from '@/components/motion/success-pop';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -441,41 +441,14 @@ export default function StorySubmissionScreen() {
                       ))}
                     </View>
                   </View>
-                  <PressableScale
+                  <SelectionChoiceCard
                     testID="story-publication-consent"
                     accessibilityRole="checkbox"
-                    accessibilityLabel={t('knowledge:publicationConsent')}
-                    onPress={toggleConsent}
-                    haptic="selection"
+                    label={t('knowledge:publicationConsent')}
+                    fontClass={languageFontClass}
                     isSelected={hasConsent}
-                    style={continuousCorners}
-                    className={`min-h-recommended flex-row items-start gap-md rounded-md border p-md ${
-                      hasConsent ? 'border-primary bg-primary/10' : 'border-neutral-300 bg-white'
-                    }`}
-                  >
-                    <View
-                      className="h-lg w-lg items-center justify-center rounded-sm border border-primary"
-                      style={continuousCorners}
-                    >
-                      {hasConsent ? (
-                        <Icon
-                          name="check"
-                          size={tokens.fontSize.md}
-                          color={tokens.colors.primary.dark}
-                        />
-                      ) : null}
-                    </View>
-                    <View className="flex-1 gap-xs">
-                      <Text
-                        className={`text-start text-md font-medium text-neutral-900 ${languageFontClass}`}
-                      >
-                        {t('knowledge:publicationConsent')}
-                      </Text>
-                      <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-                        {t('knowledge:publicationConsentHelp')}
-                      </Text>
-                    </View>
-                  </PressableScale>
+                    onPress={toggleConsent}
+                  />
                 </>
               )}
               {!isOnline ? (

@@ -10,6 +10,7 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
@@ -206,23 +207,14 @@ export default function CollectSignaturesScreen() {
                   const name = `${row.first_name} ${row.last_name}`;
                   const isSelected = player?.kind === 'player' && player.profileId === row.id;
                   return (
-                    <PressableScale
+                    <SelectionChoiceCard
                       key={row.id}
                       testID={`collect-player-${row.id}`}
-                      accessibilityRole="radio"
+                      label={name}
+                      fontClass={fontClass}
                       isSelected={isSelected}
-                      accessibilityLabel={name}
                       onPress={() => setPlayer({ kind: 'player', profileId: row.id, name })}
-                      haptic="selection"
-                      style={continuousCorners}
-                      className={`min-h-recommended justify-center rounded-md border px-md ${
-                        isSelected ? 'border-primary bg-primary/10' : 'border-neutral-200 bg-white'
-                      }`}
-                    >
-                      <Text className={`text-start text-md text-neutral-900 ${fontClass}`}>
-                        {name}
-                      </Text>
-                    </PressableScale>
+                    />
                   );
                 })}
               </View>
