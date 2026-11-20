@@ -1,36 +1,39 @@
 begin;
-select plan(36);
+select plan(54);
 
--- What is new for her on Comunitat, Ajuda and Contacte (RAPP-873).
--- She is player ...0011. Another player, ...0012, writes most of the content.
+-- What is new for her on Comunitat, Ajuda and Contacte (RAPP-873). A thing is
+-- new until she opens that thing. She is player ...0011. Another player,
+-- ...0012, writes most of the content.
 
-select has_table('public', 'section_visits', 'opened sections are recorded per person');
+select has_table('public', 'forum_post_reads', 'opened forum posts are recorded per person');
+select has_table('public', 'media_item_reads', 'opened gallery items are recorded per person');
+select has_table('public', 'knowledge_article_reads', 'opened guides and stories are recorded per person');
 select has_table('public', 'service_reads', 'opened services are recorded per person');
-select has_table('public', 'knowledge_article_reads', 'opened guides are recorded per person');
+select has_table('public', 'mentoring_request_reads', 'opened mentoring requests are recorded per person');
+select has_table('public', 'feedback_submission_reads', 'opened suggestions are recorded per person');
+
+-- Opening a section clears nothing, so there is no record of it.
+select hasnt_table('public', 'section_visits', 'opening a section is not recorded');
+select hasnt_function('public', 'mark_section_visited', 'there is no way to mark a section as visited');
+select hasnt_function('public', 'mark_help_items_seen', 'one function marks every kind of thing');
 
 select is(
-  (select disposition || ':' || participant_column from public.personal_data_disposition()
-   where table_name = 'section_visits'),
-  'purge:user_id',
-  'her opened sections are purged with her'
-);
-select is(
-  (select disposition || ':' || participant_column from public.personal_data_disposition()
-   where table_name = 'service_reads'),
-  'purge:user_id',
-  'her opened services are purged with her'
-);
-select is(
-  (select disposition || ':' || participant_column from public.personal_data_disposition()
-   where table_name = 'knowledge_article_reads'),
-  'purge:user_id',
-  'her opened guides are purged with her'
+  (select array_agg(table_name order by table_name)
+   from public.personal_data_disposition()
+   where table_name in (
+     'forum_post_reads', 'media_item_reads', 'knowledge_article_reads',
+     'service_reads', 'mentoring_request_reads', 'feedback_submission_reads')
+     and disposition = 'purge' and participant_column = 'user_id'),
+  array[
+    'feedback_submission_reads', 'forum_post_reads', 'knowledge_article_reads',
+    'media_item_reads', 'mentoring_request_reads', 'service_reads'],
+  'every record of what she opened is purged with her'
 );
 
 -- Content written before her record started counts as seen. Everything else
 -- below is written in this transaction, so after the start of her record.
 
--- Forum: an old post, a new post by another player, her own post, a hidden post.
+-- Forum: an old post, two new posts by another player, her own post, a hidden post.
 insert into public.forum_posts (id, org_id, category_id, author_id, author_first_name, content, created_at)
 values
   ('5eed0000-0000-4000-8873-000000000101', '5eed0000-0000-4000-8000-000000000000',
@@ -47,6 +50,11 @@ values
   ('5eed0000-0000-4000-8873-000000000104', '5eed0000-0000-4000-8000-000000000000',
    '5eed0000-0000-4000-8006-000000000001', '5eed0000-0000-4000-8000-000000000012', 'x',
    'A hidden post', 'hidden');
+insert into public.forum_posts (id, org_id, category_id, author_id, author_first_name, content)
+values
+  ('5eed0000-0000-4000-8873-000000000105', '5eed0000-0000-4000-8000-000000000000',
+   '5eed0000-0000-4000-8006-000000000001', '5eed0000-0000-4000-8000-000000000012', 'x',
+   'A second new post by another player');
 
 -- Replies: two by another player on her post, one of her own on her post, one
 -- on another player's post.
@@ -206,8 +214,8 @@ select ok(
 
 select is(
   (select public.my_tab_news() -> 'forum' -> 'new_post_ids'),
-  '["5eed0000-0000-4000-8873-000000000102"]'::jsonb,
-  'the new post by another player counts; the old one, her own and the hidden one do not'
+  '["5eed0000-0000-4000-8873-000000000105", "5eed0000-0000-4000-8873-000000000102"]'::jsonb,
+  'the two new posts by another player count; the old one, her own and the hidden one do not'
 );
 select is(
   (select public.my_tab_news() -> 'forum' -> 'new_replies'),
@@ -270,97 +278,205 @@ select ok(
   'nothing from another organization appears'
 );
 
--- Opening the forum empties the forum and leaves the gallery as it was.
+
+-- Opening a post removes that post only; her replies still count.
 select lives_ok(
-  $$ select public.mark_section_visited('forum') $$,
-  'she opens the forum'
+  $$ select public.mark_tab_items_seen(p_forum_post_ids => array['5eed0000-0000-4000-8873-000000000102']::uuid[]) $$,
+  'she opens a post by another player'
 );
 select is(
   (select public.my_tab_news() -> 'forum'),
-  '{"new_post_ids": [], "new_replies": []}'::jsonb,
-  'the forum has nothing new after she opened it'
+  '{"new_post_ids": ["5eed0000-0000-4000-8873-000000000105"], "new_replies": [{"post_id": "5eed0000-0000-4000-8873-000000000103", "count": 2}]}'::jsonb,
+  'only the opened post stops counting'
+);
+
+-- Opening her own post clears its replies.
+select lives_ok(
+  $$ select public.mark_tab_items_seen(p_forum_post_ids => array['5eed0000-0000-4000-8873-000000000103']::uuid[]) $$,
+  'she opens her own post'
+);
+select is(
+  (select public.my_tab_news() -> 'forum' -> 'new_replies'),
+  '[]'::jsonb,
+  'the replies on her post stop counting once she opened it'
+);
+
+-- A reply written after she opened her post counts again. The time of one
+-- transaction is fixed, so the later reply carries a time a minute ahead.
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000012", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
+insert into public.forum_replies (org_id, post_id, author_id, author_first_name, content, created_at)
+values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8873-000000000103',
+  '5eed0000-0000-4000-8000-000000000012', 'x', 'A later reply', now() + interval '1 minute');
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000011", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
+select is(
+  (select public.my_tab_news() -> 'forum' -> 'new_replies'),
+  '[{"post_id": "5eed0000-0000-4000-8873-000000000103", "count": 1}]'::jsonb,
+  'a reply written after she opened her post counts again'
+);
+
+-- Opening a gallery item, a story, a guide and a service removes exactly those.
+select lives_ok(
+  $$ select public.mark_tab_items_seen(
+       p_media_item_ids => array['5eed0000-0000-4000-8873-000000000201']::uuid[],
+       p_article_ids => array[
+         '5eed0000-0000-4000-8873-000000000301',
+         '5eed0000-0000-4000-8873-000000000401']::uuid[],
+       p_service_ids => array['5eed0000-0000-4000-8873-000000000501']::uuid[]
+     ) $$,
+  'she opens a gallery item, a story, a guide and a service'
 );
 select is(
   (select public.my_tab_news() -> 'gallery' -> 'new_item_ids'),
-  '["5eed0000-0000-4000-8873-000000000201"]'::jsonb,
-  'the gallery still has its new item'
+  '[]'::jsonb,
+  'the opened gallery item stops counting'
 );
-select lives_ok(
-  $$ select public.mark_section_visited('forum') $$,
-  'opening the forum again changes nothing'
+select is(
+  (select public.my_tab_news() -> 'stories' -> 'new_article_ids'),
+  '[]'::jsonb,
+  'the opened story stops counting'
 );
-
--- Opening one service removes exactly that service.
-select lives_ok(
-  $$ select public.mark_help_items_seen(array['5eed0000-0000-4000-8873-000000000501']::uuid[]) $$,
-  'she opens one service'
+select ok(
+  not ((select public.my_tab_news() -> 'guides' -> 'new_articles') @> '[{"id": "5eed0000-0000-4000-8873-000000000401"}]'::jsonb),
+  'the opened guide stops counting'
 );
 select ok(
   not ((select public.my_tab_news() -> 'services' -> 'new_services') @> '[{"id": "5eed0000-0000-4000-8873-000000000501"}]'::jsonb)
-    and (select public.my_tab_news() -> 'services' -> 'new_services') @> '[{"id": "5eed0000-0000-4000-8873-000000000502"}]'::jsonb
-    and (select public.my_tab_news() -> 'guides' -> 'new_articles') @> '[{"id": "5eed0000-0000-4000-8873-000000000401"}]'::jsonb,
-  'the opened service no longer counts; the other service and the guide still do'
+    and (select public.my_tab_news() -> 'services' -> 'new_services') @> '[{"id": "5eed0000-0000-4000-8873-000000000502"}]'::jsonb,
+  'the opened service stops counting and the other new service still counts'
 );
 select lives_ok(
-  $$ select public.mark_help_items_seen(
-       p_article_ids => array['5eed0000-0000-4000-8873-000000000401', '5eed0000-0000-4000-8873-000000000301']::uuid[]
-     ) $$,
-  'she opens the guide; a story id is ignored'
+  $$ select public.mark_tab_items_seen(p_media_item_ids => array['5eed0000-0000-4000-8873-000000000201']::uuid[]) $$,
+  'opening the same gallery item again changes nothing'
 );
 select is(
   (select count(*)::integer from public.knowledge_article_reads),
-  1,
-  'only the guide is recorded'
+  2,
+  'the story and the guide are both recorded'
+);
+
+-- A staff change to her request counts until she opens it.
+select lives_ok(
+  $$ select public.mark_tab_items_seen(p_mentoring_request_ids => array['5eed0000-0000-4000-8873-000000000601']::uuid[]) $$,
+  'she opens the request the staff scheduled'
+);
+select is(
+  (select public.my_tab_news() -> 'mentoring' -> 'changed_request_ids'),
+  '[]'::jsonb,
+  'the opened request stops counting'
+);
+
+-- A later staff change counts again. The staff reschedule, a minute later.
+reset role;
+insert into public.mentoring_notification_events (org_id, request_id, recipient_id, kind, created_at)
+values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8873-000000000601',
+  '5eed0000-0000-4000-8000-000000000011', 'changed', now() + interval '1 minute');
+set local role authenticated;
+select is(
+  (select public.my_tab_news() -> 'mentoring' -> 'changed_request_ids'),
+  '["5eed0000-0000-4000-8873-000000000601"]'::jsonb,
+  'a staff change after she opened the request counts again'
+);
+
+-- The same for a suggestion.
+select lives_ok(
+  $$ select public.mark_tab_items_seen(p_feedback_submission_ids => array['5eed0000-0000-4000-8873-000000000701']::uuid[]) $$,
+  'she taps the suggestion the staff read'
+);
+select is(
+  (select public.my_tab_news() -> 'feedback' -> 'changed_submission_ids'),
+  '[]'::jsonb,
+  'the opened suggestion stops counting'
+);
+
+-- The staff move it on a minute later. The time trigger would write the fixed
+-- time of this transaction, so it is paused for this one update.
+reset role;
+alter table public.feedback_submissions disable trigger feedback_submissions_set_updated_at;
+update public.feedback_submissions
+set status = 'in_progress', updated_at = now() + interval '1 minute'
+where id = '5eed0000-0000-4000-8873-000000000701';
+alter table public.feedback_submissions enable trigger feedback_submissions_set_updated_at;
+set local role authenticated;
+select is(
+  (select public.my_tab_news() -> 'feedback' -> 'changed_submission_ids'),
+  '["5eed0000-0000-4000-8873-000000000701"]'::jsonb,
+  'a status change after she opened the suggestion counts again'
 );
 
 select throws_ok(
-  $$ select public.mark_section_visited('chat') $$,
-  '22023',
-  null,
-  'an unknown section is rejected'
-);
-
-select throws_ok(
-  $$ insert into public.section_visits (org_id, user_id, section)
-     values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8000-000000000011', 'gallery') $$,
-  '42501',
-  null,
-  'a section visit is never written by a direct insert'
-);
-select throws_ok(
-  $$ insert into public.service_reads (org_id, service_id, user_id)
-     values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8873-000000000502',
+  $$ insert into public.forum_post_reads (org_id, post_id, user_id)
+     values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8873-000000000105',
        '5eed0000-0000-4000-8000-000000000011') $$,
-  '42501',
-  null,
-  'a seen service is never written by a direct insert'
+  '42501', null, 'an opened post is never written by a direct insert'
+);
+select throws_ok(
+  $$ insert into public.media_item_reads (org_id, media_item_id, user_id)
+     values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8873-000000000201',
+       '5eed0000-0000-4000-8000-000000000011') $$,
+  '42501', null, 'an opened gallery item is never written by a direct insert'
 );
 select throws_ok(
   $$ insert into public.knowledge_article_reads (org_id, article_id, user_id)
      values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8873-000000000401',
        '5eed0000-0000-4000-8000-000000000011') $$,
-  '42501',
-  null,
-  'a seen guide is never written by a direct insert'
+  '42501', null, 'an opened guide or story is never written by a direct insert'
+);
+select throws_ok(
+  $$ insert into public.service_reads (org_id, service_id, user_id)
+     values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8873-000000000502',
+       '5eed0000-0000-4000-8000-000000000011') $$,
+  '42501', null, 'an opened service is never written by a direct insert'
+);
+select throws_ok(
+  $$ insert into public.mentoring_request_reads (org_id, request_id, user_id)
+     values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8873-000000000602',
+       '5eed0000-0000-4000-8000-000000000011') $$,
+  '42501', null, 'an opened request is never written by a direct insert'
+);
+select throws_ok(
+  $$ insert into public.feedback_submission_reads (org_id, submission_id, user_id)
+     values ('5eed0000-0000-4000-8000-000000000000', '5eed0000-0000-4000-8873-000000000702',
+       '5eed0000-0000-4000-8000-000000000011') $$,
+  '42501', null, 'an opened suggestion is never written by a direct insert'
 );
 
--- Another player sees none of her rows.
+-- Another player sees none of her rows and cannot mark her request or suggestion.
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000012", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select is(
-  (select count(*) from public.section_visits)
+  (select count(*) from public.forum_post_reads)
+    + (select count(*) from public.media_item_reads)
+    + (select count(*) from public.knowledge_article_reads)
     + (select count(*) from public.service_reads)
-    + (select count(*) from public.knowledge_article_reads),
+    + (select count(*) from public.mentoring_request_reads)
+    + (select count(*) from public.feedback_submission_reads),
   0::bigint,
   'another player sees none of her rows'
 );
+select lives_ok(
+  $$ select public.mark_tab_items_seen(
+       p_mentoring_request_ids => array['5eed0000-0000-4000-8873-000000000602']::uuid[],
+       p_feedback_submission_ids => array['5eed0000-0000-4000-8873-000000000702']::uuid[]
+     ) $$,
+  'another player tries to mark her request and her suggestion'
+);
+reset role;
+select is(
+  (select count(*) from public.mentoring_request_reads
+   where user_id = '5eed0000-0000-4000-8000-000000000012')
+    + (select count(*) from public.feedback_submission_reads
+       where user_id = '5eed0000-0000-4000-8000-000000000012'),
+  0::bigint,
+  'nothing is recorded for a request or a suggestion that is not hers'
+);
+set local role authenticated;
 
 -- A signed-in role with no person behind it is turned away.
 set local request.jwt.claims = '{"role": "authenticated"}';
 select throws_ok(
-  $$ select public.mark_section_visited('forum') $$,
+  $$ select public.mark_tab_items_seen(p_service_ids => array['5eed0000-0000-4000-8873-000000000502']::uuid[]) $$,
   '42501',
   null,
-  'opening a section without a session is rejected'
+  'marking without a session is rejected'
 );
 
 -- An anonymous caller cannot reach any of it. The privilege is checked
@@ -369,8 +485,8 @@ select throws_ok(
 reset role;
 select ok(
   not has_function_privilege('anon', 'public.my_tab_news()', 'execute')
-    and not has_function_privilege('anon', 'public.mark_section_visited(text)', 'execute')
-    and not has_function_privilege('anon', 'public.mark_help_items_seen(uuid[], uuid[])', 'execute'),
+    and not has_function_privilege(
+      'anon', 'public.mark_tab_items_seen(uuid[], uuid[], uuid[], uuid[], uuid[], uuid[])', 'execute'),
   'an anonymous caller cannot read what is new or mark anything'
 );
 

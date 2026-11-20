@@ -1,9 +1,10 @@
 /**
  * What is new for her on Comunitat, Ajuda and Contacte (RAPP-873). Every new
- * thing raises a number on one tab only. A section of Comunitat, her mentoring
- * and her suggestions stop counting when she opens them; a service or a guide
- * stops counting when she opens that item. The database works out the lists in
- * `my_tab_news`; the counts and the optimistic updates are pure functions here.
+ * thing raises a number on one tab only, and stays new until she opens that
+ * thing: a post, a gallery item, a story, a guide, a service, her mentoring
+ * request or her suggestion. Opening a section or a list clears nothing. The
+ * database works out the lists in `my_tab_news`; the counts and the optimistic
+ * updates are pure functions here.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -12,8 +13,6 @@ import { AppError } from './errors';
 import type { Database } from './types/database';
 
 type Client = SupabaseClient<Database>;
-
-export type TabNewsSection = 'forum' | 'gallery' | 'stories' | 'mentoring' | 'feedback';
 
 export interface TabNewsItemInCategory {
   readonly id: string;
@@ -35,10 +34,25 @@ export interface TabNews {
   readonly feedback: { readonly changedSubmissionIds: readonly string[] };
 }
 
-export interface HelpItemsSeen {
-  readonly serviceIds: readonly string[];
+/** The things she has just opened, by kind. */
+export interface TabItemsSeen {
+  readonly forumPostIds: readonly string[];
+  readonly mediaItemIds: readonly string[];
+  /** Guides and stories. */
   readonly articleIds: readonly string[];
+  readonly serviceIds: readonly string[];
+  readonly mentoringRequestIds: readonly string[];
+  readonly feedbackSubmissionIds: readonly string[];
 }
+
+export const NO_TAB_ITEMS_SEEN: TabItemsSeen = {
+  forumPostIds: [],
+  mediaItemIds: [],
+  articleIds: [],
+  serviceIds: [],
+  mentoringRequestIds: [],
+  feedbackSubmissionIds: [],
+};
 
 export const EMPTY_TAB_NEWS: TabNews = {
   since: new Date(0).toISOString(),
@@ -96,149 +110,76 @@ export async function fetchTabNews(client: Client, signal?: AbortSignal): Promis
   };
 }
 
-const tabNewsSectionSchema = z.enum(['forum', 'gallery', 'stories', 'mentoring', 'feedback']);
+const uuidListSchema = z.array(z.uuid());
 
-export async function markSectionVisited(client: Client, section: TabNewsSection): Promise<void> {
-  const { error } = await client.rpc('mark_section_visited', {
-    p_section: tabNewsSectionSchema.parse(section),
+export async function markTabItemsSeen(client: Client, items: TabItemsSeen): Promise<void> {
+  const { error } = await client.rpc('mark_tab_items_seen', {
+    p_forum_post_ids: uuidListSchema.parse(items.forumPostIds),
+    p_media_item_ids: uuidListSchema.parse(items.mediaItemIds),
+    p_article_ids: uuidListSchema.parse(items.articleIds),
+    p_service_ids: uuidListSchema.parse(items.serviceIds),
+    p_mentoring_request_ids: uuidListSchema.parse(items.mentoringRequestIds),
+    p_feedback_submission_ids: uuidListSchema.parse(items.feedbackSubmissionIds),
   });
   if (error) throw new AppError('DB-1', { message: error.message });
 }
 
-export async function markHelpItemsSeen(client: Client, items: HelpItemsSeen): Promise<void> {
-  const { error } = await client.rpc('mark_help_items_seen', {
-    p_service_ids: z.array(z.uuid()).parse(items.serviceIds),
-    p_article_ids: z.array(z.uuid()).parse(items.articleIds),
-  });
-  if (error) throw new AppError('DB-1', { message: error.message });
-}
-
-/** The news with one section emptied, as it is once she has opened that section. */
-export function withSectionVisited(news: TabNews, section: TabNewsSection): TabNews {
-  switch (section) {
-    case 'forum':
-      return { ...news, forum: EMPTY_TAB_NEWS.forum };
-    case 'gallery':
-      return { ...news, gallery: EMPTY_TAB_NEWS.gallery };
-    case 'stories':
-      return { ...news, stories: EMPTY_TAB_NEWS.stories };
-    case 'mentoring':
-      return { ...news, mentoring: EMPTY_TAB_NEWS.mentoring };
-    case 'feedback':
-      return { ...news, feedback: EMPTY_TAB_NEWS.feedback };
-  }
-}
-
-/** The news without the services and guides she has just opened. */
-export function withHelpItemsSeen(news: TabNews, items: HelpItemsSeen): TabNews {
-  const seenServices = new Set(items.serviceIds);
-  const seenArticles = new Set(items.articleIds);
+/**
+ * The news without the things she has just opened. Opening her own post also
+ * clears the count of its new replies.
+ */
+export function withTabItemsSeen(news: TabNews, items: TabItemsSeen): TabNews {
+  const posts = new Set(items.forumPostIds);
+  const mediaItems = new Set(items.mediaItemIds);
+  const articles = new Set(items.articleIds);
+  const services = new Set(items.serviceIds);
+  const requests = new Set(items.mentoringRequestIds);
+  const submissions = new Set(items.feedbackSubmissionIds);
   return {
-    ...news,
+    since: news.since,
+    forum: {
+      newPostIds: news.forum.newPostIds.filter((id) => !posts.has(id)),
+      newRepliesByPostId: Object.fromEntries(
+        Object.entries(news.forum.newRepliesByPostId).filter(([postId]) => !posts.has(postId)),
+      ),
+    },
+    gallery: { newItemIds: news.gallery.newItemIds.filter((id) => !mediaItems.has(id)) },
+    stories: { newArticleIds: news.stories.newArticleIds.filter((id) => !articles.has(id)) },
     guides: {
-      newArticles: news.guides.newArticles.filter((article) => !seenArticles.has(article.id)),
+      newArticles: news.guides.newArticles.filter((article) => !articles.has(article.id)),
     },
     services: {
-      newServices: news.services.newServices.filter((service) => !seenServices.has(service.id)),
+      newServices: news.services.newServices.filter((service) => !services.has(service.id)),
+    },
+    mentoring: {
+      changedRequestIds: news.mentoring.changedRequestIds.filter((id) => !requests.has(id)),
+    },
+    feedback: {
+      changedSubmissionIds: news.feedback.changedSubmissionIds.filter((id) => !submissions.has(id)),
     },
   };
 }
 
-/** Ids that arrived later go first, the newest-first order the database uses. */
-function mergeIds(earlier: readonly string[], later: readonly string[]): readonly string[] {
-  return [...new Set([...later, ...earlier])];
-}
-
-interface SectionNewsRules<S extends TabNewsSection> {
-  readonly isEmpty: (news: TabNews[S]) => boolean;
-  readonly merge: (earlier: TabNews[S], later: TabNews[S]) => TabNews[S];
-}
-
-const sectionNewsRules: { readonly [S in TabNewsSection]: SectionNewsRules<S> } = {
-  forum: {
-    isEmpty: (news) =>
-      news.newPostIds.length === 0 && Object.keys(news.newRepliesByPostId).length === 0,
-    merge: (earlier, later) => {
-      const replies: Record<string, number> = { ...earlier.newRepliesByPostId };
-      for (const [postId, count] of Object.entries(later.newRepliesByPostId)) {
-        replies[postId] = (replies[postId] ?? 0) + count;
-      }
-      return {
-        newPostIds: mergeIds(earlier.newPostIds, later.newPostIds),
-        newRepliesByPostId: replies,
-      };
-    },
-  },
-  gallery: {
-    isEmpty: (news) => news.newItemIds.length === 0,
-    merge: (earlier, later) => ({ newItemIds: mergeIds(earlier.newItemIds, later.newItemIds) }),
-  },
-  stories: {
-    isEmpty: (news) => news.newArticleIds.length === 0,
-    merge: (earlier, later) => ({
-      newArticleIds: mergeIds(earlier.newArticleIds, later.newArticleIds),
-    }),
-  },
-  mentoring: {
-    isEmpty: (news) => news.changedRequestIds.length === 0,
-    merge: (earlier, later) => ({
-      changedRequestIds: mergeIds(earlier.changedRequestIds, later.changedRequestIds),
-    }),
-  },
-  feedback: {
-    isEmpty: (news) => news.changedSubmissionIds.length === 0,
-    merge: (earlier, later) => ({
-      changedSubmissionIds: mergeIds(earlier.changedSubmissionIds, later.changedSubmissionIds),
-    }),
-  },
-};
-
-/** True when a section has nothing new. */
-export function isSectionNewsEmpty<S extends TabNewsSection>(
-  section: S,
-  news: TabNews[S],
-): boolean {
-  return sectionNewsRules[section].isEmpty(news);
-}
-
-function sortedIds(ids: readonly string[]): string {
-  return [...ids].sort().join(',');
-}
-
-const sectionNewsKey: { readonly [S in TabNewsSection]: (news: TabNews[S]) => string } = {
-  forum: (news) =>
-    `${sortedIds(news.newPostIds)}|${Object.entries(news.newRepliesByPostId)
-      .map(([postId, count]) => `${postId}:${count}`)
-      .sort()
-      .join(',')}`,
-  gallery: (news) => sortedIds(news.newItemIds),
-  stories: (news) => sortedIds(news.newArticleIds),
-  mentoring: (news) => sortedIds(news.changedRequestIds),
-  feedback: (news) => sortedIds(news.changedSubmissionIds),
-};
-
-/** True when two slices hold the same news, in any order, with the same reply counts. */
-export function isSameSectionNews<S extends TabNewsSection>(
-  section: S,
-  first: TabNews[S],
-  second: TabNews[S],
-): boolean {
-  const key = sectionNewsKey[section];
-  return key(first) === key(second);
-}
-
-/**
- * What she has been shown as new during one visit to a section, plus what
- * arrived while she was looking. A reply count adds up because the database
- * counts only replies after her last visit, and the visit started then.
- */
-export function mergeSectionNews<S extends TabNewsSection>(
-  section: S,
-  earlier: TabNews[S],
-  later: TabNews[S],
-): TabNews[S] {
-  const rules = sectionNewsRules[section];
-  return rules.isEmpty(later) ? earlier : rules.merge(earlier, later);
+/** True when any of the given things is new: as a new item, or as her post with new replies. */
+export function isTabItemNew(news: TabNews, items: TabItemsSeen): boolean {
+  const includesAny = (list: readonly string[], ids: readonly string[]) =>
+    ids.some((id) => list.includes(id));
+  return (
+    includesAny(news.forum.newPostIds, items.forumPostIds) ||
+    items.forumPostIds.some((id) => (news.forum.newRepliesByPostId[id] ?? 0) > 0) ||
+    includesAny(news.gallery.newItemIds, items.mediaItemIds) ||
+    includesAny(news.stories.newArticleIds, items.articleIds) ||
+    includesAny(
+      news.guides.newArticles.map((article) => article.id),
+      items.articleIds,
+    ) ||
+    includesAny(
+      news.services.newServices.map((service) => service.id),
+      items.serviceIds,
+    ) ||
+    includesAny(news.mentoring.changedRequestIds, items.mentoringRequestIds) ||
+    includesAny(news.feedback.changedSubmissionIds, items.feedbackSubmissionIds)
+  );
 }
 
 /** New posts by others plus every new reply on her posts. */

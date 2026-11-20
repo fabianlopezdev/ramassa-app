@@ -3,22 +3,52 @@
 -- Two rules from the owner: nothing new goes unseen, because every new thing
 -- raises a number on some tab, and one thing counts in one place only. Inici
 -- keeps its own count (RAPP-821, RAPP-848). Comunitat counts new forum posts,
--- new replies on her posts, new gallery items and new stories by others; a
--- section stops counting when she opens it. Ajuda counts new services and new
--- guides; each stops counting when she opens it. Contacte adds a change the
--- staff made to her mentoring request or to her suggestion; each screen stops
--- counting when she opens it.
+-- new replies on her posts, new gallery items and new stories by others. Ajuda
+-- counts new services and new guides. Contacte adds a change the staff made to
+-- her mentoring request or to her suggestion.
+--
+-- A thing is new until she opens that thing, the rule announcements follow
+-- since RAPP-848. Opening a section, a tab or a list clears nothing. Her own
+-- post, her mentoring request and her suggestion count again when something
+-- happens after she last opened them.
 
--- 1. The three records ---------------------------------------------------------------------------------------
+-- 1. The records ---------------------------------------------------------------------------------------------
 
-create table public.section_visits (
+create table public.forum_post_reads (
   org_id uuid not null references public.organizations (id) on delete cascade,
+  post_id uuid not null,
   user_id uuid not null,
-  section text not null
-    check (section in ('forum', 'gallery', 'stories', 'mentoring', 'feedback')),
-  visited_at timestamptz not null default now(),
-  primary key (user_id, section),
-  constraint section_visits_user_tenant_fkey
+  seen_at timestamptz not null default now(),
+  primary key (post_id, user_id),
+  constraint forum_post_reads_post_tenant_fkey
+    foreign key (org_id, post_id)
+    references public.forum_posts (org_id, id) on delete cascade,
+  constraint forum_post_reads_user_tenant_fkey
+    foreign key (org_id, user_id)
+    references public.profiles (org_id, id) on delete cascade
+);
+
+create table public.media_item_reads (
+  org_id uuid not null references public.organizations (id) on delete cascade,
+  media_item_id uuid not null,
+  user_id uuid not null,
+  seen_at timestamptz not null default now(),
+  primary key (media_item_id, user_id),
+  constraint media_item_reads_item_tenant_fkey
+    foreign key (org_id, media_item_id)
+    references public.media_items (org_id, id) on delete cascade,
+  constraint media_item_reads_user_tenant_fkey
+    foreign key (org_id, user_id)
+    references public.profiles (org_id, id) on delete cascade
+);
+
+create table public.knowledge_article_reads (
+  org_id uuid not null references public.organizations (id) on delete cascade,
+  article_id uuid not null references public.knowledge_articles (id) on delete cascade,
+  user_id uuid not null,
+  seen_at timestamptz not null default now(),
+  primary key (article_id, user_id),
+  constraint knowledge_article_reads_user_tenant_fkey
     foreign key (org_id, user_id)
     references public.profiles (org_id, id) on delete cascade
 );
@@ -37,53 +67,104 @@ create table public.service_reads (
     references public.profiles (org_id, id) on delete cascade
 );
 
-create table public.knowledge_article_reads (
+create table public.mentoring_request_reads (
   org_id uuid not null references public.organizations (id) on delete cascade,
-  article_id uuid not null references public.knowledge_articles (id) on delete cascade,
+  request_id uuid not null,
   user_id uuid not null,
   seen_at timestamptz not null default now(),
-  primary key (article_id, user_id),
-  constraint knowledge_article_reads_user_tenant_fkey
+  primary key (request_id, user_id),
+  constraint mentoring_request_reads_request_tenant_fkey
+    foreign key (org_id, request_id)
+    references public.mentoring_requests (org_id, id) on delete cascade,
+  constraint mentoring_request_reads_user_tenant_fkey
     foreign key (org_id, user_id)
     references public.profiles (org_id, id) on delete cascade
 );
 
-comment on table public.section_visits is
-  'When a person last opened the forum, the gallery, the stories, her mentoring or her suggestions (RAPP-873).';
+create table public.feedback_submission_reads (
+  org_id uuid not null references public.organizations (id) on delete cascade,
+  submission_id uuid not null,
+  user_id uuid not null,
+  seen_at timestamptz not null default now(),
+  primary key (submission_id, user_id),
+  constraint feedback_submission_reads_submission_tenant_fkey
+    foreign key (org_id, submission_id)
+    references public.feedback_submissions (org_id, id) on delete cascade,
+  constraint feedback_submission_reads_user_tenant_fkey
+    foreign key (org_id, user_id)
+    references public.profiles (org_id, id) on delete cascade
+);
+
+comment on table public.forum_post_reads is
+  'One row per forum post a person has opened; on her own post, when she last opened it (RAPP-873).';
+comment on table public.media_item_reads is
+  'One row per gallery item a person has opened (RAPP-873).';
+comment on table public.knowledge_article_reads is
+  'One row per guide or story a person has opened (RAPP-873).';
 comment on table public.service_reads is
   'One row per service a person has opened (RAPP-873).';
-comment on table public.knowledge_article_reads is
-  'One row per guide a person has opened (RAPP-873).';
+comment on table public.mentoring_request_reads is
+  'When a person last opened each of her mentoring requests (RAPP-873).';
+comment on table public.feedback_submission_reads is
+  'When a person last opened each of her suggestions (RAPP-873).';
 
-create index section_visits_org_user_idx
-  on public.section_visits (org_id, user_id);
+create index forum_post_reads_user_idx
+  on public.forum_post_reads (user_id, post_id);
+create index forum_post_reads_org_user_idx
+  on public.forum_post_reads (org_id, user_id);
+create index forum_post_reads_org_post_idx
+  on public.forum_post_reads (org_id, post_id);
+create index media_item_reads_user_idx
+  on public.media_item_reads (user_id, media_item_id);
+create index media_item_reads_org_user_idx
+  on public.media_item_reads (org_id, user_id);
+create index media_item_reads_org_item_idx
+  on public.media_item_reads (org_id, media_item_id);
+create index knowledge_article_reads_user_idx
+  on public.knowledge_article_reads (user_id, article_id);
+create index knowledge_article_reads_org_user_idx
+  on public.knowledge_article_reads (org_id, user_id);
 create index service_reads_user_idx
   on public.service_reads (user_id, service_id);
 create index service_reads_org_user_idx
   on public.service_reads (org_id, user_id);
 create index service_reads_org_service_idx
   on public.service_reads (org_id, service_id);
-create index knowledge_article_reads_user_idx
-  on public.knowledge_article_reads (user_id, article_id);
-create index knowledge_article_reads_org_user_idx
-  on public.knowledge_article_reads (org_id, user_id);
+create index mentoring_request_reads_user_idx
+  on public.mentoring_request_reads (user_id, request_id);
+create index mentoring_request_reads_org_user_idx
+  on public.mentoring_request_reads (org_id, user_id);
+create index mentoring_request_reads_org_request_idx
+  on public.mentoring_request_reads (org_id, request_id);
+create index feedback_submission_reads_user_idx
+  on public.feedback_submission_reads (user_id, submission_id);
+create index feedback_submission_reads_org_user_idx
+  on public.feedback_submission_reads (org_id, user_id);
+create index feedback_submission_reads_org_submission_idx
+  on public.feedback_submission_reads (org_id, submission_id);
 
-alter table public.section_visits enable row level security;
-alter table public.section_visits force row level security;
-alter table public.service_reads enable row level security;
-alter table public.service_reads force row level security;
+alter table public.forum_post_reads enable row level security;
+alter table public.forum_post_reads force row level security;
+alter table public.media_item_reads enable row level security;
+alter table public.media_item_reads force row level security;
 alter table public.knowledge_article_reads enable row level security;
 alter table public.knowledge_article_reads force row level security;
+alter table public.service_reads enable row level security;
+alter table public.service_reads force row level security;
+alter table public.mentoring_request_reads enable row level security;
+alter table public.mentoring_request_reads force row level security;
+alter table public.feedback_submission_reads enable row level security;
+alter table public.feedback_submission_reads force row level security;
 
-create policy section_visits_select_self
-  on public.section_visits for select to authenticated
+create policy forum_post_reads_select_self
+  on public.forum_post_reads for select to authenticated
   using (
     user_id = (select auth.uid())
     and org_id = (select public.current_org_id())
   );
 
-create policy service_reads_select_self
-  on public.service_reads for select to authenticated
+create policy media_item_reads_select_self
+  on public.media_item_reads for select to authenticated
   using (
     user_id = (select auth.uid())
     and org_id = (select public.current_org_id())
@@ -96,14 +177,40 @@ create policy knowledge_article_reads_select_self
     and org_id = (select public.current_org_id())
   );
 
--- Rows are written only by `mark_section_visited` and `mark_help_items_seen`,
--- never by a direct insert.
-revoke all on table public.section_visits from public, anon, authenticated;
-revoke all on table public.service_reads from public, anon, authenticated;
+create policy service_reads_select_self
+  on public.service_reads for select to authenticated
+  using (
+    user_id = (select auth.uid())
+    and org_id = (select public.current_org_id())
+  );
+
+create policy mentoring_request_reads_select_self
+  on public.mentoring_request_reads for select to authenticated
+  using (
+    user_id = (select auth.uid())
+    and org_id = (select public.current_org_id())
+  );
+
+create policy feedback_submission_reads_select_self
+  on public.feedback_submission_reads for select to authenticated
+  using (
+    user_id = (select auth.uid())
+    and org_id = (select public.current_org_id())
+  );
+
+-- Rows are written only by `mark_tab_items_seen`, never by a direct insert.
+revoke all on table public.forum_post_reads from public, anon, authenticated;
+revoke all on table public.media_item_reads from public, anon, authenticated;
 revoke all on table public.knowledge_article_reads from public, anon, authenticated;
-grant select on table public.section_visits to authenticated;
-grant select on table public.service_reads to authenticated;
+revoke all on table public.service_reads from public, anon, authenticated;
+revoke all on table public.mentoring_request_reads from public, anon, authenticated;
+revoke all on table public.feedback_submission_reads from public, anon, authenticated;
+grant select on table public.forum_post_reads to authenticated;
+grant select on table public.media_item_reads to authenticated;
 grant select on table public.knowledge_article_reads to authenticated;
+grant select on table public.service_reads to authenticated;
+grant select on table public.mentoring_request_reads to authenticated;
+grant select on table public.feedback_submission_reads to authenticated;
 
 -- 2. When the record starts ----------------------------------------------------------------------------------
 
@@ -147,48 +254,40 @@ as $$
     where profile.id = (select auth.uid())
       and profile.org_id = (select public.current_org_id())
   ),
-  -- A section counts from the later of `since` and the last time she opened it.
-  baseline as (
-    select
-      actor.*,
-      greatest(actor.since, (select visit.visited_at from public.section_visits as visit
-        where visit.user_id = actor.user_id and visit.section = 'forum')) as forum_since,
-      greatest(actor.since, (select visit.visited_at from public.section_visits as visit
-        where visit.user_id = actor.user_id and visit.section = 'gallery')) as gallery_since,
-      greatest(actor.since, (select visit.visited_at from public.section_visits as visit
-        where visit.user_id = actor.user_id and visit.section = 'stories')) as stories_since,
-      greatest(actor.since, (select visit.visited_at from public.section_visits as visit
-        where visit.user_id = actor.user_id and visit.section = 'mentoring')) as mentoring_since,
-      greatest(actor.since, (select visit.visited_at from public.section_visits as visit
-        where visit.user_id = actor.user_id and visit.section = 'feedback')) as feedback_since
-    from actor
-  ),
   new_posts as (
     select post.id, post.created_at
-    from baseline
-    join public.forum_posts as post on post.org_id = baseline.org_id
+    from actor
+    join public.forum_posts as post on post.org_id = actor.org_id
     where post.visibility = 'visible'
-      and post.author_id <> baseline.user_id
-      and post.created_at > baseline.forum_since
-      and (not baseline.sees_only_test_players
+      and post.author_id <> actor.user_id
+      and post.created_at > actor.since
+      and (not actor.sees_only_test_players
         or private.authored_by_test_or_team(post.author_id))
+      and not exists (
+        select 1 from public.forum_post_reads as seen
+        where seen.post_id = post.id and seen.user_id = actor.user_id
+      )
     order by post.created_at desc, post.id desc
     limit 200
   ),
+  -- Replies count from the last time she opened her post.
   new_replies as (
     select reply.post_id, count(*)::integer as reply_count, max(reply.created_at) as latest_at
-    from baseline
+    from actor
     join public.forum_posts as post
-      on post.org_id = baseline.org_id
-     and post.author_id = baseline.user_id
+      on post.org_id = actor.org_id
+     and post.author_id = actor.user_id
      and post.visibility = 'visible'
+    left join public.forum_post_reads as seen
+      on seen.post_id = post.id
+     and seen.user_id = actor.user_id
     join public.forum_replies as reply
       on reply.org_id = post.org_id
      and reply.post_id = post.id
     where reply.visibility = 'visible'
-      and reply.author_id <> baseline.user_id
-      and reply.created_at > baseline.forum_since
-      and (not baseline.sees_only_test_players
+      and reply.author_id <> actor.user_id
+      and reply.created_at > greatest(actor.since, seen.seen_at)
+      and (not actor.sees_only_test_players
         or private.authored_by_test_or_team(reply.author_id))
     group by reply.post_id
     order by latest_at desc, reply.post_id desc
@@ -199,14 +298,18 @@ as $$
   -- `created_at` is the moment it became visible.
   new_gallery_items as (
     select item.id, item.created_at
-    from baseline
-    join public.media_items as item on item.org_id = baseline.org_id
+    from actor
+    join public.media_items as item on item.org_id = actor.org_id
     where item.moderation_state = 'visible'
       and item.privacy_level = 'community'
-      and item.uploaded_by <> baseline.user_id
-      and item.created_at > baseline.gallery_since
-      and (not baseline.sees_only_test_players
+      and item.uploaded_by <> actor.user_id
+      and item.created_at > actor.since
+      and (not actor.sees_only_test_players
         or private.authored_by_test_or_team(item.uploaded_by))
+      and not exists (
+        select 1 from public.media_item_reads as seen
+        where seen.media_item_id = item.id and seen.user_id = actor.user_id
+      )
     order by item.created_at desc, item.id desc
     limit 200
   ),
@@ -214,31 +317,35 @@ as $$
   -- approves the story.
   new_stories as (
     select article.id, article.published_at
-    from baseline
-    join public.knowledge_articles as article on article.org_id = baseline.org_id
+    from actor
+    join public.knowledge_articles as article on article.org_id = actor.org_id
     where article.content_type = 'participant_story'
       and article.is_published
       and article.published_at <= now()
       and (article.expires_at is null or article.expires_at > now())
-      and article.author_id is distinct from baseline.user_id
-      and article.published_at > baseline.stories_since
-      and (not baseline.sees_only_test_players
+      and article.author_id is distinct from actor.user_id
+      and article.published_at > actor.since
+      and (not actor.sees_only_test_players
         or private.authored_by_test_or_team(article.author_id))
+      and not exists (
+        select 1 from public.knowledge_article_reads as seen
+        where seen.article_id = article.id and seen.user_id = actor.user_id
+      )
     order by article.published_at desc, article.id desc
     limit 200
   ),
   new_guides as (
     select article.id, article.category_id, article.published_at
-    from baseline
-    join public.knowledge_articles as article on article.org_id = baseline.org_id
+    from actor
+    join public.knowledge_articles as article on article.org_id = actor.org_id
     where article.content_type <> 'participant_story'
       and article.is_published
       and article.published_at <= now()
       and (article.expires_at is null or article.expires_at > now())
-      and article.published_at > baseline.since
+      and article.published_at > actor.since
       and not exists (
         select 1 from public.knowledge_article_reads as seen
-        where seen.article_id = article.id and seen.user_id = baseline.user_id
+        where seen.article_id = article.id and seen.user_id = actor.user_id
       )
     order by article.published_at desc, article.id desc
     limit 200
@@ -247,13 +354,13 @@ as $$
   -- publication time the team sets or schedules).
   new_services as (
     select service.id, service.category_id, service.published_at
-    from baseline
-    join public.services as service on service.org_id = baseline.org_id
+    from actor
+    join public.services as service on service.org_id = actor.org_id
     where public.is_content_visible(service.status, service.published_at, service.expires_at)
-      and service.published_at > baseline.since
+      and service.published_at > actor.since
       and not exists (
         select 1 from public.service_reads as seen
-        where seen.service_id = service.id and seen.user_id = baseline.user_id
+        where seen.service_id = service.id and seen.user_id = actor.user_id
       )
     order by service.published_at desc, service.id desc
     limit 200
@@ -261,45 +368,52 @@ as $$
   -- She can only create a mentoring request; every later change is the staff's.
   -- Scheduling and rescheduling write a `mentoring_notification_events` row
   -- addressed to her, and completing sets `completed_at`. Her own creation
-  -- writes neither, so it never counts.
+  -- writes neither, so it never counts. A change counts from the last time she
+  -- opened the request.
   changed_requests as (
     select request.id, change.changed_at
-    from baseline
+    from actor
     join public.mentoring_requests as request
-      on request.org_id = baseline.org_id
-     and request.player_id = baseline.user_id
+      on request.org_id = actor.org_id
+     and request.player_id = actor.user_id
+    left join public.mentoring_request_reads as seen
+      on seen.request_id = request.id
+     and seen.user_id = actor.user_id
     cross join lateral (
       select greatest(
         (select max(event.created_at)
          from public.mentoring_notification_events as event
          where event.org_id = request.org_id
            and event.request_id = request.id
-           and event.recipient_id = baseline.user_id),
+           and event.recipient_id = actor.user_id),
         request.completed_at
       ) as changed_at
     ) as change
-    where change.changed_at > baseline.mentoring_since
+    where change.changed_at > greatest(actor.since, seen.seen_at)
     order by change.changed_at desc, request.id desc
     limit 200
   ),
   -- Only the staff change the status of a suggestion
   -- (`transition_feedback_submission`), and nothing else updates the row, so
   -- `updated_at` on a suggestion that left `new` is the moment of the staff's
-  -- last change.
+  -- last change. It counts from the last time she opened the suggestion.
   changed_submissions as (
     select submission.id, submission.updated_at
-    from baseline
+    from actor
     join public.feedback_submissions as submission
-      on submission.org_id = baseline.org_id
-     and submission.author_id = baseline.user_id
+      on submission.org_id = actor.org_id
+     and submission.author_id = actor.user_id
+    left join public.feedback_submission_reads as seen
+      on seen.submission_id = submission.id
+     and seen.user_id = actor.user_id
     where submission.status <> 'new'
-      and submission.updated_at > baseline.feedback_since
+      and submission.updated_at > greatest(actor.since, seen.seen_at)
     order by submission.updated_at desc, submission.id desc
     limit 200
   )
   select jsonb_build_object(
     'since', coalesce(
-      (select baseline.since from baseline),
+      (select actor.since from actor),
       private.tab_news_started_at()
     ),
     'forum', jsonb_build_object(
@@ -382,51 +496,20 @@ $$;
 comment on function public.my_tab_news() is
   'What is new for the signed-in person on Comunitat, Ajuda and Contacte (RAPP-873).';
 
--- 4. Opening a section ---------------------------------------------------------------------------------------
+-- 4. Opening a thing -----------------------------------------------------------------------------------------
 
-create function private.mark_section_visited(p_section text)
-returns void
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  actor uuid := (select auth.uid());
-  actor_org uuid := (select public.current_org_id());
-begin
-  if actor is null or actor_org is null then
-    raise exception 'tab news access denied' using errcode = 'insufficient_privilege';
-  end if;
-
-  if p_section is null
-    or p_section not in ('forum', 'gallery', 'stories', 'mentoring', 'feedback') then
-    raise invalid_parameter_value using message = 'unknown section';
-  end if;
-
-  insert into public.section_visits (org_id, user_id, section, visited_at)
-  values (actor_org, actor, p_section, now())
-  on conflict (user_id, section) do update
-    set visited_at = excluded.visited_at, org_id = excluded.org_id;
-end;
-$$;
-
-create function public.mark_section_visited(p_section text)
-returns void
-language sql
-security invoker
-set search_path = ''
-as $$
-  select private.mark_section_visited(p_section);
-$$;
-
-comment on function public.mark_section_visited(text) is
-  'Records that the signed-in person opened a section, so what was new there counts as seen (RAPP-873).';
-
--- 5. Opening a service or a guide ----------------------------------------------------------------------------
-
-create function private.mark_help_items_seen(
+-- A thing is recorded only when she can see it: content of her organization
+-- under the same conditions as the player lists, and only her own mentoring
+-- requests and suggestions. A forum post, a mentoring request and a suggestion
+-- keep the moment she last opened them, so a reply or a staff change after it
+-- counts again. The other three are seen once and seen for good.
+create function private.mark_tab_items_seen(
+  p_forum_post_ids uuid[],
+  p_media_item_ids uuid[],
+  p_article_ids uuid[],
   p_service_ids uuid[],
-  p_article_ids uuid[]
+  p_mentoring_request_ids uuid[],
+  p_feedback_submission_ids uuid[]
 )
 returns void
 language plpgsql
@@ -436,18 +519,56 @@ as $$
 declare
   actor uuid := (select auth.uid());
   actor_org uuid := (select public.current_org_id());
+  sees_only_test_players boolean;
   max_items constant integer := 200;
 begin
   if actor is null or actor_org is null then
     raise exception 'tab news access denied' using errcode = 'insufficient_privilege';
   end if;
 
-  if coalesce(cardinality(p_service_ids), 0) > max_items
-    or coalesce(cardinality(p_article_ids), 0) > max_items then
+  if coalesce(cardinality(p_forum_post_ids), 0) > max_items
+    or coalesce(cardinality(p_media_item_ids), 0) > max_items
+    or coalesce(cardinality(p_article_ids), 0) > max_items
+    or coalesce(cardinality(p_service_ids), 0) > max_items
+    or coalesce(cardinality(p_mentoring_request_ids), 0) > max_items
+    or coalesce(cardinality(p_feedback_submission_ids), 0) > max_items then
     raise exception 'too many items marked as seen' using errcode = 'program_limit_exceeded';
   end if;
 
-  -- Only what she can see is recorded: visible content of her organization.
+  sees_only_test_players := (select private.sees_only_test_players());
+
+  insert into public.forum_post_reads (org_id, post_id, user_id, seen_at)
+  select actor_org, post.id, actor, now()
+  from public.forum_posts as post
+  where post.id = any (coalesce(p_forum_post_ids, '{}'::uuid[]))
+    and post.org_id = actor_org
+    and post.visibility in ('visible', 'deleted')
+    and (not sees_only_test_players or private.authored_by_test_or_team(post.author_id))
+  on conflict (post_id, user_id) do update set seen_at = excluded.seen_at;
+
+  insert into public.media_item_reads (org_id, media_item_id, user_id)
+  select actor_org, item.id, actor
+  from public.media_items as item
+  where item.id = any (coalesce(p_media_item_ids, '{}'::uuid[]))
+    and item.org_id = actor_org
+    and item.moderation_state = 'visible'
+    and (item.uploaded_by = actor or item.privacy_level = 'community')
+    and (not sees_only_test_players or private.authored_by_test_or_team(item.uploaded_by))
+  on conflict (media_item_id, user_id) do nothing;
+
+  insert into public.knowledge_article_reads (org_id, article_id, user_id)
+  select actor_org, article.id, actor
+  from public.knowledge_articles as article
+  where article.id = any (coalesce(p_article_ids, '{}'::uuid[]))
+    and article.org_id = actor_org
+    and article.is_published
+    and article.published_at <= now()
+    and (article.expires_at is null or article.expires_at > now())
+    and (article.content_type <> 'participant_story'
+      or not sees_only_test_players
+      or private.authored_by_test_or_team(article.author_id))
+  on conflict (article_id, user_id) do nothing;
+
   insert into public.service_reads (org_id, service_id, user_id)
   select actor_org, service.id, actor
   from public.services as service
@@ -456,52 +577,68 @@ begin
     and public.is_content_visible(service.status, service.published_at, service.expires_at)
   on conflict (service_id, user_id) do nothing;
 
-  insert into public.knowledge_article_reads (org_id, article_id, user_id)
-  select actor_org, article.id, actor
-  from public.knowledge_articles as article
-  where article.id = any (coalesce(p_article_ids, '{}'::uuid[]))
-    and article.org_id = actor_org
-    and article.content_type <> 'participant_story'
-    and article.is_published
-    and article.published_at <= now()
-    and (article.expires_at is null or article.expires_at > now())
-  on conflict (article_id, user_id) do nothing;
+  insert into public.mentoring_request_reads (org_id, request_id, user_id, seen_at)
+  select actor_org, request.id, actor, now()
+  from public.mentoring_requests as request
+  where request.id = any (coalesce(p_mentoring_request_ids, '{}'::uuid[]))
+    and request.org_id = actor_org
+    and request.player_id = actor
+  on conflict (request_id, user_id) do update set seen_at = excluded.seen_at;
+
+  insert into public.feedback_submission_reads (org_id, submission_id, user_id, seen_at)
+  select actor_org, submission.id, actor, now()
+  from public.feedback_submissions as submission
+  where submission.id = any (coalesce(p_feedback_submission_ids, '{}'::uuid[]))
+    and submission.org_id = actor_org
+    and submission.author_id = actor
+  on conflict (submission_id, user_id) do update set seen_at = excluded.seen_at;
 end;
 $$;
 
-create function public.mark_help_items_seen(
+create function public.mark_tab_items_seen(
+  p_forum_post_ids uuid[] default '{}'::uuid[],
+  p_media_item_ids uuid[] default '{}'::uuid[],
+  p_article_ids uuid[] default '{}'::uuid[],
   p_service_ids uuid[] default '{}'::uuid[],
-  p_article_ids uuid[] default '{}'::uuid[]
+  p_mentoring_request_ids uuid[] default '{}'::uuid[],
+  p_feedback_submission_ids uuid[] default '{}'::uuid[]
 )
 returns void
 language sql
 security invoker
 set search_path = ''
 as $$
-  select private.mark_help_items_seen(p_service_ids, p_article_ids);
+  select private.mark_tab_items_seen(
+    p_forum_post_ids,
+    p_media_item_ids,
+    p_article_ids,
+    p_service_ids,
+    p_mentoring_request_ids,
+    p_feedback_submission_ids
+  );
 $$;
 
-comment on function public.mark_help_items_seen(uuid[], uuid[]) is
-  'Records services and guides the signed-in person has opened (RAPP-873). Seen once is seen for good.';
+comment on function public.mark_tab_items_seen(uuid[], uuid[], uuid[], uuid[], uuid[], uuid[]) is
+  'Records the posts, gallery items, guides, stories, services, mentoring requests and suggestions the signed-in person has opened (RAPP-873).';
 
 revoke all on function private.my_tab_news() from public, anon, authenticated;
 revoke all on function public.my_tab_news() from public, anon, authenticated;
-revoke all on function private.mark_section_visited(text) from public, anon, authenticated;
-revoke all on function public.mark_section_visited(text) from public, anon, authenticated;
-revoke all on function private.mark_help_items_seen(uuid[], uuid[]) from public, anon, authenticated;
-revoke all on function public.mark_help_items_seen(uuid[], uuid[]) from public, anon, authenticated;
+revoke all on function private.mark_tab_items_seen(uuid[], uuid[], uuid[], uuid[], uuid[], uuid[])
+  from public, anon, authenticated;
+revoke all on function public.mark_tab_items_seen(uuid[], uuid[], uuid[], uuid[], uuid[], uuid[])
+  from public, anon, authenticated;
 revoke all on function private.tab_news_started_at() from public, anon, authenticated;
 grant usage on schema private to authenticated;
 grant execute on function private.my_tab_news() to authenticated;
 grant execute on function public.my_tab_news() to authenticated;
-grant execute on function private.mark_section_visited(text) to authenticated;
-grant execute on function public.mark_section_visited(text) to authenticated;
-grant execute on function private.mark_help_items_seen(uuid[], uuid[]) to authenticated;
-grant execute on function public.mark_help_items_seen(uuid[], uuid[]) to authenticated;
+grant execute on function private.mark_tab_items_seen(uuid[], uuid[], uuid[], uuid[], uuid[], uuid[])
+  to authenticated;
+grant execute on function public.mark_tab_items_seen(uuid[], uuid[], uuid[], uuid[], uuid[], uuid[])
+  to authenticated;
 
--- 6. What happens to these rows when she asks to be erased -------------------------------------------------
+-- 5. What happens to these rows when she asks to be erased -------------------------------------------------
 
--- The body of `20261118130000_onboarding_form_chains_in_erasure_registry.sql`, plus the three new tables.
+-- The body of `20261118130000_onboarding_form_chains_in_erasure_registry.sql`, plus the six new tables.
 CREATE OR REPLACE FUNCTION public.personal_data_disposition()
  RETURNS TABLE(table_name text, participant_column text, disposition text, reason text)
  LANGUAGE sql
@@ -612,8 +749,11 @@ AS $function$
     ('announcement_reads', 'user_id', 'purge', 'The announcements she has seen.'),
     ('event_reads', 'user_id', 'purge', 'The activities she has opened.'),
     ('onboarding_form_chains', null, 'not_personal', 'The order of the forms after Onboarding, set by the team.'),
-    ('section_visits', 'user_id', 'purge', 'When she last opened the forum, the gallery, the stories, her mentoring or her suggestions.'),
+    ('forum_post_reads', 'user_id', 'purge', 'The forum posts she has opened, and when she last opened her own.'),
+    ('media_item_reads', 'user_id', 'purge', 'The gallery items she has opened.'),
+    ('knowledge_article_reads', 'user_id', 'purge', 'The guides and stories she has opened.'),
     ('service_reads', 'user_id', 'purge', 'The services she has opened.'),
-    ('knowledge_article_reads', 'user_id', 'purge', 'The guides she has opened.')
+    ('mentoring_request_reads', 'user_id', 'purge', 'When she last opened each of her mentoring requests.'),
+    ('feedback_submission_reads', 'user_id', 'purge', 'When she last opened each of her suggestions.')
   ) as disposition(table_name, participant_column, disposition, reason);
 $function$;

@@ -2301,6 +2301,49 @@ export type Database = {
           },
         ];
       };
+      feedback_submission_reads: {
+        Row: {
+          org_id: string;
+          seen_at: string;
+          submission_id: string;
+          user_id: string;
+        };
+        Insert: {
+          org_id: string;
+          seen_at?: string;
+          submission_id: string;
+          user_id: string;
+        };
+        Update: {
+          org_id?: string;
+          seen_at?: string;
+          submission_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'feedback_submission_reads_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'feedback_submission_reads_submission_tenant_fkey';
+            columns: ['org_id', 'submission_id'];
+            isOneToOne: false;
+            referencedRelation: 'feedback_submissions';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'feedback_submission_reads_user_tenant_fkey';
+            columns: ['org_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       feedback_submissions: {
         Row: {
           author_id: string;
@@ -2740,6 +2783,49 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'profiles';
             referencedColumns: ['id'];
+          },
+        ];
+      };
+      forum_post_reads: {
+        Row: {
+          org_id: string;
+          post_id: string;
+          seen_at: string;
+          user_id: string;
+        };
+        Insert: {
+          org_id: string;
+          post_id: string;
+          seen_at?: string;
+          user_id: string;
+        };
+        Update: {
+          org_id?: string;
+          post_id?: string;
+          seen_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'forum_post_reads_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'forum_post_reads_post_tenant_fkey';
+            columns: ['org_id', 'post_id'];
+            isOneToOne: false;
+            referencedRelation: 'forum_posts';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'forum_post_reads_user_tenant_fkey';
+            columns: ['org_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
           },
         ];
       };
@@ -3388,6 +3474,49 @@ export type Database = {
           },
         ];
       };
+      media_item_reads: {
+        Row: {
+          media_item_id: string;
+          org_id: string;
+          seen_at: string;
+          user_id: string;
+        };
+        Insert: {
+          media_item_id: string;
+          org_id: string;
+          seen_at?: string;
+          user_id: string;
+        };
+        Update: {
+          media_item_id?: string;
+          org_id?: string;
+          seen_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'media_item_reads_item_tenant_fkey';
+            columns: ['org_id', 'media_item_id'];
+            isOneToOne: false;
+            referencedRelation: 'media_items';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'media_item_reads_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'media_item_reads_user_tenant_fkey';
+            columns: ['org_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       media_items: {
         Row: {
           caption: string | null;
@@ -3505,6 +3634,49 @@ export type Database = {
             columns: ['org_id', 'request_id'];
             isOneToOne: false;
             referencedRelation: 'mentoring_requests';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
+      mentoring_request_reads: {
+        Row: {
+          org_id: string;
+          request_id: string;
+          seen_at: string;
+          user_id: string;
+        };
+        Insert: {
+          org_id: string;
+          request_id: string;
+          seen_at?: string;
+          user_id: string;
+        };
+        Update: {
+          org_id?: string;
+          request_id?: string;
+          seen_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'mentoring_request_reads_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'mentoring_request_reads_request_tenant_fkey';
+            columns: ['org_id', 'request_id'];
+            isOneToOne: false;
+            referencedRelation: 'mentoring_requests';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'mentoring_request_reads_user_tenant_fkey';
+            columns: ['org_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
             referencedColumns: ['org_id', 'id'];
           },
         ];
@@ -4593,42 +4765,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'organizations';
             referencedColumns: ['id'];
-          },
-        ];
-      };
-      section_visits: {
-        Row: {
-          org_id: string;
-          section: string;
-          user_id: string;
-          visited_at: string;
-        };
-        Insert: {
-          org_id: string;
-          section: string;
-          user_id: string;
-          visited_at?: string;
-        };
-        Update: {
-          org_id?: string;
-          section?: string;
-          user_id?: string;
-          visited_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'section_visits_org_id_fkey';
-            columns: ['org_id'];
-            isOneToOne: false;
-            referencedRelation: 'organizations';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'section_visits_user_tenant_fkey';
-            columns: ['org_id', 'user_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['org_id', 'id'];
           },
         ];
       };
@@ -7423,11 +7559,17 @@ export type Database = {
         Args: { p_conversation_id: string; p_message_id: string };
         Returns: undefined;
       };
-      mark_help_items_seen: {
-        Args: { p_article_ids?: string[]; p_service_ids?: string[] };
+      mark_tab_items_seen: {
+        Args: {
+          p_article_ids?: string[];
+          p_feedback_submission_ids?: string[];
+          p_forum_post_ids?: string[];
+          p_media_item_ids?: string[];
+          p_mentoring_request_ids?: string[];
+          p_service_ids?: string[];
+        };
         Returns: undefined;
       };
-      mark_section_visited: { Args: { p_section: string }; Returns: undefined };
       mark_staff_notification_read: {
         Args: { p_id: string };
         Returns: undefined;
