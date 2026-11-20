@@ -8,11 +8,12 @@
  */
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { SwitchCard } from '@/components/forms/switch-card';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import type { SupportedLanguage } from '@ramassa/shared/i18n';
 import type { ServiceMetadataFieldDefinition } from '@ramassa/shared/services';
 import { DateField } from './date-field';
@@ -78,9 +79,7 @@ function MetadataField({
           : [];
     return (
       <View className="gap-xs" testID={testID}>
-        <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-          {label}
-        </Text>
+        <FieldLabel>{label}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {(field.options ?? []).map((option) => (
             <ChoiceOption

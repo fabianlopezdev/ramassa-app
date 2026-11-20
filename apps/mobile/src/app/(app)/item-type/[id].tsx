@@ -14,6 +14,7 @@ import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { readValue } from '@/lib/arrival-form';
 import { useHandoverItemTypes } from '@/lib/handover';
 import { useItemLabel } from '@/lib/item-label';
@@ -128,7 +129,7 @@ export default function ItemTypeScreen() {
           contentInsetAdjustmentBehavior="automatic"
           contentContainerClassName="pb-3xl"
         >
-          <PageWidth className="gap-lg p-lg">
+          <PageWidth className={screenContentClassName}>
             {isBuiltin ? (
               <Text className={`text-start text-md text-neutral-700 ${fontClass}`}>
                 {t('items.builtin')}

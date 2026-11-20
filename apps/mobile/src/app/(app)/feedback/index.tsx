@@ -1,6 +1,7 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { FormWidth } from '@/components/layout/content-width';
 import { RaisedChip } from '@/components/layout/filter-chips';
@@ -8,7 +9,6 @@ import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
 import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
-import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { SuccessPop } from '@/components/motion/success-pop';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { uploadFeedbackImage, type FeedbackImageDraft } from '@/lib/feedback-upload';
@@ -16,14 +16,13 @@ import { isNetworkStateOnline } from '@/lib/network-status';
 import { useCreateFeedback, usePlayerFeedback } from '@/lib/player-feedback';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
@@ -60,7 +59,6 @@ const statusKey: Readonly<Record<FeedbackStatus, string>> = {
   in_progress: 'statusInProgress',
   resolved: 'statusResolved',
 };
-const feedbackKeyExtractor = (submission: FeedbackSubmission) => submission.id;
 
 interface FeedbackHistoryCardProps {
   readonly id: string;
@@ -123,7 +121,7 @@ export default function FeedbackScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localErrorCode, setLocalErrorCode] = useState<AppErrorCode | null>(null);
   const submissionInFlight = useRef(false);
-  const feedbackListRef = useRef<FlashListRef<FeedbackSubmission>>(null);
+  const feedbackScrollRef = useRef<ScrollView>(null);
   const dateFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, { dateStyle: 'medium' }),
@@ -197,25 +195,15 @@ export default function FeedbackScreen() {
       setIsSubmitting(false);
     }
   }, [content, createFeedbackAsync, image, isOnline, session, type]);
-  const renderFeedback = useCallback(
-    ({ item }: ListRenderItemInfo<FeedbackSubmission>) => (
-      <FeedbackHistoryCard
-        id={item.id}
-        content={item.content}
-        typeLabel={t(`feedback:${typeKey[item.type]}`)}
-        statusAndDate={`${t(`feedback:${statusKey[item.status]}`)} · ${dateFormatter.format(
-          new Date(item.createdAt),
-        )}`}
-        languageFontClass={languageFontClass}
-        onOpenChat={openChat}
-      />
-    ),
-    [dateFormatter, languageFontClass, openChat, t],
-  );
+  const submissions = feedbackQuery.data ?? EMPTY_FEEDBACK;
+  // Her suggestions come first, and only when she has some (RAPP-900): their
+  // answers matter before a new one, and a first visit opens on the form.
+  const hasSubmissions = submissions.length > 0;
+  const submissionsFailed = feedbackQuery.isError && feedbackQuery.data === undefined;
   const submitAnother = useCallback(() => {
     setIsComplete(false);
     requestAnimationFrame(() => {
-      feedbackListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      feedbackScrollRef.current?.scrollTo({ y: 0, animated: true });
     });
   }, []);
 
@@ -234,148 +222,142 @@ export default function FeedbackScreen() {
       }
     >
       <NativeScreenHeader title={screenTitle} />
-      <FlashList
-        ref={feedbackListRef}
+      <ScrollView
+        ref={feedbackScrollRef}
         testID="feedback-screen"
-        data={feedbackQuery.data ?? EMPTY_FEEDBACK}
-        renderItem={renderFeedback}
-        keyExtractor={feedbackKeyExtractor}
         style={styles.screen}
         contentContainerStyle={contentContainerStyle}
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
-        ListHeaderComponent={
-          <FormWidth className="gap-lg pb-md">
-            <View className="gap-xs">
-              <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-                {t('feedback:intro')}
-              </Text>
-            </View>
-
-            {isComplete ? (
-              <SuccessPop>
-                <View
-                  testID="feedback-confirmation"
-                  accessibilityRole="alert"
-                  className="gap-md rounded-lg border border-success bg-white p-lg"
-                  style={continuousCorners}
-                >
-                  <Text
-                    className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-                  >
-                    {t('feedback:successTitle')}
-                  </Text>
-                  <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
-                    {t('feedback:successBody')}
-                  </Text>
-                  <RaisedActionButton
-                    testID="feedback-submit-another"
-                    label={t('feedback:submitAnother')}
-                    onPress={submitAnother}
-                  />
-                </View>
-              </SuccessPop>
-            ) : (
-              <ScreenSection title={t('feedback:newSubmission')}>
-                <Text
-                  className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}
-                >
-                  {t('feedback:typeLabel')}
-                </Text>
-                <View
-                  accessibilityRole="radiogroup"
-                  accessibilityLabel={t('feedback:typeLabel')}
-                  className="flex-row flex-wrap gap-sm"
-                >
-                  {FEEDBACK_TYPES.map((option) => (
-                    <RaisedChip
-                      key={option}
-                      testID={`feedback-type-${option}`}
-                      label={t(`feedback:${typeKey[option]}`)}
-                      isSelected={type === option}
-                      onPress={() => setType(option)}
-                      languageFontClass={languageFontClass}
-                    />
-                  ))}
-                </View>
-                <AuthTextField
-                  testID="feedback-content"
-                  label={t('feedback:contentLabel')}
-                  placeholder={t('feedback:contentPlaceholder')}
-                  value={content}
-                  onChangeText={setContent}
-                  multiline
-                  textAlignVertical="top"
-                  maxLength={FEEDBACK_CONTENT_MAX_LENGTH}
-                  style={styles.message}
-                />
-                {image === null ? null : (
-                  <Image
-                    source={{ uri: image.uri }}
-                    accessibilityRole="image"
-                    accessibilityLabel={t('feedback:imageAdd')}
-                    style={styles.preview}
-                    contentFit="cover"
-                  />
-                )}
-                <View className="flex-row flex-wrap gap-sm">
-                  <View className="flex-1">
-                    <RaisedActionButton
-                      testID="feedback-pick-image"
-                      label={image === null ? t('feedback:imageAdd') : t('feedback:imageChange')}
-                      onPress={() => void pickImage()}
-                      isDisabled={isSubmitting}
-                    />
-                  </View>
-                  {image === null ? null : (
-                    <RaisedActionButton
-                      label={t('feedback:imageRemove')}
-                      onPress={() => setImage(null)}
-                      isDisabled={isSubmitting}
-                    />
-                  )}
-                </View>
-                {errorCode === null ? null : (
-                  <FailureNotice code={errorCode} message={t(`errors:${errorCode}`)} />
-                )}
-              </ScreenSection>
-            )}
-
-            <ScreenSection title={t('feedback:historyTitle')} isLast>
-              {(feedbackQuery.data?.length ?? 0) > 0 ? (
-                <Text
-                  testID="feedback-answer-in-chat"
-                  className={`text-start text-md text-neutral-600 ${languageFontClass}`}
-                >
-                  {t('feedback:answerInChat')}
-                </Text>
-              ) : null}
-              {feedbackQuery.isPending ? (
-                <View
-                  accessible
-                  accessibilityLabel={t('common:loading')}
-                  accessibilityState={{ busy: true }}
-                  className="gap-sm"
-                >
-                  <SkeletonPulse className="h-lg w-1/3 rounded-md" />
-                  <SkeletonPulse className="h-3xl w-full rounded-md" />
-                </View>
-              ) : null}
-              {feedbackQuery.isError ? (
+      >
+        <FormWidth className="gap-lg">
+          {hasSubmissions || submissionsFailed ? (
+            <ScreenSection title={t('feedback:historyTitle')}>
+              {submissionsFailed ? (
                 <FailureNotice
                   code={toAppError(feedbackQuery.error).code}
                   message={t('feedback:loadFailed')}
                 />
-              ) : null}
-              {feedbackQuery.data?.length === 0 ? (
-                <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-                  {t('feedback:historyEmpty')}
-                </Text>
-              ) : null}
+              ) : (
+                <>
+                  <Text
+                    testID="feedback-answer-in-chat"
+                    className={`text-start text-md text-neutral-600 ${languageFontClass}`}
+                  >
+                    {t('feedback:answerInChat')}
+                  </Text>
+                  <View className="gap-md">
+                    {submissions.map((item) => (
+                      <FeedbackHistoryCard
+                        key={item.id}
+                        id={item.id}
+                        content={item.content}
+                        typeLabel={t(`feedback:${typeKey[item.type]}`)}
+                        statusAndDate={`${t(`feedback:${statusKey[item.status]}`)} · ${dateFormatter.format(
+                          new Date(item.createdAt),
+                        )}`}
+                        languageFontClass={languageFontClass}
+                        onOpenChat={openChat}
+                      />
+                    ))}
+                  </View>
+                </>
+              )}
             </ScreenSection>
-          </FormWidth>
-        }
-      />
+          ) : null}
+
+          <View className="gap-xs">
+            <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
+              {t('feedback:intro')}
+            </Text>
+          </View>
+
+          {isComplete ? (
+            <SuccessPop>
+              <View
+                testID="feedback-confirmation"
+                accessibilityRole="alert"
+                className="gap-md rounded-lg border border-success bg-white p-lg"
+                style={continuousCorners}
+              >
+                <Text
+                  className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
+                >
+                  {t('feedback:successTitle')}
+                </Text>
+                <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
+                  {t('feedback:successBody')}
+                </Text>
+                <RaisedActionButton
+                  testID="feedback-submit-another"
+                  label={t('feedback:submitAnother')}
+                  onPress={submitAnother}
+                />
+              </View>
+            </SuccessPop>
+          ) : (
+            <ScreenSection title={t('feedback:newSubmission')} isLast>
+              <FieldLabel>{t('feedback:typeLabel')}</FieldLabel>
+              <View
+                accessibilityRole="radiogroup"
+                accessibilityLabel={t('feedback:typeLabel')}
+                className="flex-row flex-wrap gap-sm"
+              >
+                {FEEDBACK_TYPES.map((option) => (
+                  <RaisedChip
+                    key={option}
+                    testID={`feedback-type-${option}`}
+                    label={t(`feedback:${typeKey[option]}`)}
+                    isSelected={type === option}
+                    onPress={() => setType(option)}
+                    languageFontClass={languageFontClass}
+                  />
+                ))}
+              </View>
+              <AuthTextField
+                testID="feedback-content"
+                label={t('feedback:contentLabel')}
+                placeholder={t('feedback:contentPlaceholder')}
+                value={content}
+                onChangeText={setContent}
+                multiline
+                textAlignVertical="top"
+                maxLength={FEEDBACK_CONTENT_MAX_LENGTH}
+                style={styles.message}
+              />
+              {image === null ? null : (
+                <Image
+                  source={{ uri: image.uri }}
+                  accessibilityRole="image"
+                  accessibilityLabel={t('feedback:imageAdd')}
+                  style={styles.preview}
+                  contentFit="cover"
+                />
+              )}
+              <View className="flex-row flex-wrap gap-sm">
+                <View className="flex-1">
+                  <RaisedActionButton
+                    testID="feedback-pick-image"
+                    label={image === null ? t('feedback:imageAdd') : t('feedback:imageChange')}
+                    onPress={() => void pickImage()}
+                    isDisabled={isSubmitting}
+                  />
+                </View>
+                {image === null ? null : (
+                  <RaisedActionButton
+                    label={t('feedback:imageRemove')}
+                    onPress={() => setImage(null)}
+                    isDisabled={isSubmitting}
+                  />
+                )}
+              </View>
+              {errorCode === null ? null : (
+                <FailureNotice code={errorCode} message={t(`errors:${errorCode}`)} />
+              )}
+            </ScreenSection>
+          )}
+        </FormWidth>
+      </ScrollView>
     </ActionScreen>
   );
 }

@@ -10,6 +10,7 @@ import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-loa
 import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { PageWidth } from '@/components/layout/content-width';
 import { RaisedCard } from '@/components/layout/raised-card';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { TabScreenAction } from '@/components/layout/tab-screen-action';
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { useEntityReferrals } from '@/lib/entity-referrals';
@@ -59,7 +60,7 @@ function EntityReferralsScreen() {
         contentContainerStyle={actionRoom}
         keyboardShouldPersistTaps="handled"
       >
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <EntityScreenHeader title={t('title')} intro={t('intro')} />
 
           {hasLoadFailed(referrals) ? (

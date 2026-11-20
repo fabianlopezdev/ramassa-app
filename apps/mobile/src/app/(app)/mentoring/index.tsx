@@ -1,6 +1,7 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { FormWidth } from '@/components/layout/content-width';
 import { RaisedChip } from '@/components/layout/filter-chips';
@@ -9,17 +10,15 @@ import { OpenableCard } from '@/components/layout/openable-card';
 import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
 import { MentoringPreferencePickers } from '@/components/mentoring/mentoring-preference-pickers';
-import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { SuccessPop } from '@/components/motion/success-pop';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { MENTORING_STATUS_KEYS, MENTORING_TOPIC_KEYS } from '@/lib/mentoring-labels';
 import { useCreateMentoringRequest, usePlayerMentoringRequests } from '@/lib/player-mentoring';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
@@ -44,7 +43,6 @@ const styles = StyleSheet.create({
 
 const topicKey = MENTORING_TOPIC_KEYS;
 const statusKey = MENTORING_STATUS_KEYS;
-const mentoringKeyExtractor = (request: MentoringRequest) => request.id;
 
 export default function MentoringScreen() {
   const { t, i18n } = useTranslation(['mentoring', 'common']);
@@ -118,20 +116,12 @@ export default function MentoringScreen() {
   );
   const screenTitle = t('mentoring:title');
   const retryRequests = useCallback(() => void refetchRequests(), [refetchRequests]);
-  const renderRequest = useCallback(
-    ({ item }: ListRenderItemInfo<MentoringRequest>) => (
-      <FormWidth className="pb-md">
-        <RequestStatusCard
-          request={item}
-          dateTimeFormatter={dateTimeFormatter}
-          dateFormatter={dateFormatter}
-          languageFontClass={languageFontClass}
-        />
-      </FormWidth>
-    ),
-    [dateFormatter, dateTimeFormatter, languageFontClass],
-  );
-
+  const requests = requestsQuery.data ?? EMPTY_MENTORING_REQUESTS;
+  // Her requests come first, and only when she has some (RAPP-900): what she
+  // is waiting on matters before a new request, and a first visit opens on
+  // the form.
+  const hasRequests = requests.length > 0;
+  const requestsFailed = requestsQuery.isError && requestsQuery.data === undefined;
   return (
     <ActionScreen
       className="bg-neutral-50"
@@ -147,130 +137,18 @@ export default function MentoringScreen() {
       }
     >
       <NativeScreenHeader title={screenTitle} />
-      <FlashList
+      <ScrollView
         testID="mentoring-screen"
-        data={requestsQuery.data ?? EMPTY_MENTORING_REQUESTS}
-        renderItem={renderRequest}
-        keyExtractor={mentoringKeyExtractor}
         style={styles.screen}
         contentContainerStyle={contentContainerStyle}
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
-        ListHeaderComponent={
-          <FormWidth className="gap-lg pb-md">
-            <View className="gap-xs">
-              <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-                {t('mentoring:intro')}
-              </Text>
-            </View>
-
-            <View
-              accessibilityRole="summary"
-              className="gap-xs rounded-lg border border-primary/30 bg-primary/5 p-lg"
-              style={continuousCorners}
-            >
-              <Text
-                className={`text-start text-lg font-bold text-primary-dark ${languageFontClass}`}
-              >
-                {t('mentoring:privacyTitle')}
-              </Text>
-              <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
-                {t('mentoring:privacyBody')}
-              </Text>
-            </View>
-
-            {isComplete ? (
-              <SuccessPop>
-                <View
-                  accessibilityRole="alert"
-                  testID="mentoring-request-confirmation"
-                  className="gap-md rounded-lg border border-success bg-white p-lg"
-                  style={continuousCorners}
-                >
-                  <Text
-                    accessibilityRole="header"
-                    className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-                  >
-                    {t('mentoring:successTitle')}
-                  </Text>
-                  <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
-                    {t('mentoring:successBody')}
-                  </Text>
-                  <RaisedActionButton
-                    label={t('mentoring:submitAnother')}
-                    onPress={() => setIsComplete(false)}
-                  />
-                </View>
-              </SuccessPop>
-            ) : (
-              <ScreenSection title={t('mentoring:newRequestTitle')}>
-                <View className="gap-sm">
-                  <Text
-                    className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}
-                  >
-                    {t('mentoring:topicLabel')}
-                  </Text>
-                  <View
-                    accessibilityRole="radiogroup"
-                    accessibilityLabel={t('mentoring:topicLabel')}
-                    className="flex-row flex-wrap gap-sm"
-                  >
-                    {MENTORING_TOPICS.map((option) => (
-                      <RaisedChip
-                        key={option}
-                        testID={`mentoring-topic-${option}`}
-                        label={t(`mentoring:${topicKey[option]}`)}
-                        isSelected={topic === option}
-                        onPress={() => setTopic(option)}
-                        languageFontClass={languageFontClass}
-                      />
-                    ))}
-                  </View>
-                </View>
-                <AuthTextField
-                  testID="mentoring-detail"
-                  label={t('mentoring:detailLabel')}
-                  placeholder={t('mentoring:detailPlaceholder')}
-                  value={topicDetail}
-                  maxLength={MENTORING_DETAIL_MAX_LENGTH}
-                  multiline
-                  numberOfLines={DETAIL_INPUT_VISIBLE_LINES}
-                  textAlignVertical="top"
-                  style={styles.detailInput}
-                  onChangeText={setTopicDetail}
-                />
-                <MentoringPreferencePickers
-                  preferredDate={preferredDate}
-                  preferredTime={preferredTime}
-                  onPreferredDateChange={setPreferredDate}
-                  onPreferredTimeChange={setPreferredTime}
-                />
-                {errorCode === null ? null : (
-                  <FailureNotice
-                    code={errorCode}
-                    message={
-                      localErrorCode === 'VALIDATION-1'
-                        ? t('mentoring:invalidRequest')
-                        : t('mentoring:submitFailed')
-                    }
-                  />
-                )}
-              </ScreenSection>
-            )}
-
-            <ScreenSection title={t('mentoring:statusTitle')} isLast>
-              {requestsQuery.isPending && requestsQuery.data === undefined ? (
-                <View
-                  accessible
-                  accessibilityLabel={t('mentoring:statusTitle')}
-                  accessibilityState={{ busy: true }}
-                  className="gap-sm"
-                >
-                  <SkeletonPulse className="h-lg w-1/3 rounded-md" />
-                  <SkeletonPulse className="h-3xl w-full rounded-md" />
-                </View>
-              ) : requestsQuery.isError && requestsQuery.data === undefined ? (
+      >
+        <FormWidth className="gap-lg">
+          {hasRequests || requestsFailed ? (
+            <ScreenSection title={t('mentoring:statusTitle')}>
+              {requestsFailed ? (
                 <View className="gap-sm">
                   <FailureNotice
                     code={toAppError(requestsQuery.error).code}
@@ -278,15 +156,117 @@ export default function MentoringScreen() {
                   />
                   <RaisedActionButton label={t('mentoring:retry')} onPress={retryRequests} />
                 </View>
-              ) : (requestsQuery.data?.length ?? 0) === 0 ? (
-                <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-                  {t('mentoring:noRequests')}
-                </Text>
-              ) : null}
+              ) : (
+                <View className="gap-md">
+                  {requests.map((request) => (
+                    <RequestStatusCard
+                      key={request.id}
+                      request={request}
+                      dateTimeFormatter={dateTimeFormatter}
+                      dateFormatter={dateFormatter}
+                      languageFontClass={languageFontClass}
+                    />
+                  ))}
+                </View>
+              )}
             </ScreenSection>
-          </FormWidth>
-        }
-      />
+          ) : null}
+
+          <View className="gap-xs">
+            <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
+              {t('mentoring:intro')}
+            </Text>
+          </View>
+
+          <View
+            accessibilityRole="summary"
+            className="gap-xs rounded-lg border border-primary/30 bg-primary/5 p-lg"
+            style={continuousCorners}
+          >
+            <Text className={`text-start text-lg font-bold text-primary-dark ${languageFontClass}`}>
+              {t('mentoring:privacyTitle')}
+            </Text>
+            <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
+              {t('mentoring:privacyBody')}
+            </Text>
+          </View>
+
+          {isComplete ? (
+            <SuccessPop>
+              <View
+                accessibilityRole="alert"
+                testID="mentoring-request-confirmation"
+                className="gap-md rounded-lg border border-success bg-white p-lg"
+                style={continuousCorners}
+              >
+                <Text
+                  accessibilityRole="header"
+                  className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
+                >
+                  {t('mentoring:successTitle')}
+                </Text>
+                <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
+                  {t('mentoring:successBody')}
+                </Text>
+                <RaisedActionButton
+                  label={t('mentoring:submitAnother')}
+                  onPress={() => setIsComplete(false)}
+                />
+              </View>
+            </SuccessPop>
+          ) : (
+            <ScreenSection title={t('mentoring:newRequestTitle')} isLast>
+              <View className="gap-sm">
+                <FieldLabel>{t('mentoring:topicLabel')}</FieldLabel>
+                <View
+                  accessibilityRole="radiogroup"
+                  accessibilityLabel={t('mentoring:topicLabel')}
+                  className="flex-row flex-wrap gap-sm"
+                >
+                  {MENTORING_TOPICS.map((option) => (
+                    <RaisedChip
+                      key={option}
+                      testID={`mentoring-topic-${option}`}
+                      label={t(`mentoring:${topicKey[option]}`)}
+                      isSelected={topic === option}
+                      onPress={() => setTopic(option)}
+                      languageFontClass={languageFontClass}
+                    />
+                  ))}
+                </View>
+              </View>
+              <AuthTextField
+                testID="mentoring-detail"
+                label={t('mentoring:detailLabel')}
+                placeholder={t('mentoring:detailPlaceholder')}
+                value={topicDetail}
+                maxLength={MENTORING_DETAIL_MAX_LENGTH}
+                multiline
+                numberOfLines={DETAIL_INPUT_VISIBLE_LINES}
+                textAlignVertical="top"
+                style={styles.detailInput}
+                onChangeText={setTopicDetail}
+              />
+              <MentoringPreferencePickers
+                preferredDate={preferredDate}
+                preferredTime={preferredTime}
+                onPreferredDateChange={setPreferredDate}
+                onPreferredTimeChange={setPreferredTime}
+              />
+              {errorCode === null ? null : (
+                <FailureNotice
+                  code={errorCode}
+                  message={
+                    localErrorCode === 'VALIDATION-1'
+                      ? t('mentoring:invalidRequest')
+                      : t('mentoring:submitFailed')
+                  }
+                />
+              )}
+            </ScreenSection>
+          )}
+        </FormWidth>
+      </ScrollView>
     </ActionScreen>
   );
 }

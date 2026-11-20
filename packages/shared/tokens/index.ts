@@ -139,7 +139,9 @@ export const tokens = {
   // Conversation bubbles stay comfortably readable without spanning the full
   // thread width. A percentage keeps the measure responsive at large text and
   // across phone widths while leaving sender alignment visually obvious.
-  messaging: { messageBubbleMaxWidth: '84%' },
+  // A chat bubble (RAPP-899): round corners, and one small corner on the side
+  // of the person who wrote it, the bubble's tail.
+  messaging: { messageBubbleMaxWidth: '84%', bubbleRadius: 20, bubbleTailRadius: 4 },
 
   // Client-side upload ceilings, enforced before the R2 upload (ADR-013).
   upload: {

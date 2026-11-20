@@ -116,7 +116,6 @@
   "submissionSuccessBody": "El equipo técnico la revisará antes de que alguien más pueda verla. Puedes consultar el estado aquí.",
   "submitAnother": "Enviar otra historia",
   "myStories": "Estado de mis historias",
-  "myStoriesEmpty": "Todavía no has enviado ninguna historia.",
   "storyStatusSubmitted": "Enviada",
   "storyStatusInReview": "En revisión",
   "storyStatusChangesRequested": "Necesita cambios",

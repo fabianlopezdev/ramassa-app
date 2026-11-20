@@ -3,12 +3,11 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { type IconName } from '@/components/icons/icon';
+import { StoryTeamNote } from '@/components/knowledge/own-story-statuses';
 import { StoryImagePreview } from '@/components/knowledge/story-image-preview';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { OpenableCard } from '@/components/layout/openable-card';
 import { ActionScreen } from '@/components/layout/screen-action';
-import { ScreenSection } from '@/components/layout/screen-section';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { SuccessPop } from '@/components/motion/success-pop';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -25,17 +24,16 @@ import { useStorySubmissionScrollReset } from '@/lib/story-submission-scroll';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import * as ImagePicker from 'expo-image-picker';
 import { useNetworkState } from 'expo-network';
-import { useRouter, type Href } from 'expo-router';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
-import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
+import { useLanguage } from '@ramassa/shared/i18n';
 import {
   participantStoryEditableDraft,
   type ParticipantStoryStatusRow,
-  type StoryStatus,
 } from '@ramassa/shared/knowledge';
 import { MAX_STORY_IMAGES, participantStoryDraftSchema } from '@ramassa/shared/story-submission';
 import { tokens } from '@ramassa/shared/tokens';
@@ -75,32 +73,11 @@ function OutlinedIconAction({
   );
 }
 
-function StoryTeamNote({ testID, note }: { readonly testID: string; readonly note: string }) {
-  const { t } = useTranslation('knowledge');
-  const languageFontClass = useLanguageFontClass();
-  return (
-    <View testID={testID} className="gap-xs rounded-md bg-white p-sm" style={continuousCorners}>
-      <Text className={`text-start text-sm font-bold text-neutral-800 ${languageFontClass}`}>
-        {t('knowledge:storyTeamNote')}
-      </Text>
-      <Text selectable className={`text-start text-md text-neutral-800 ${languageFontClass}`}>
-        {note}
-      </Text>
-    </View>
-  );
-}
-
-function statusTranslationKey(status: StoryStatus) {
-  if (status === 'in_review') return 'knowledge:storyStatusInReview' as const;
-  if (status === 'changes_requested') return 'knowledge:storyStatusChangesRequested' as const;
-  if (status === 'published') return 'knowledge:storyStatusPublished' as const;
-  if (status === 'rejected') return 'knowledge:storyStatusRejected' as const;
-  return 'knowledge:storyStatusSubmitted' as const;
-}
-
 export default function StorySubmissionScreen() {
-  const { t, i18n } = useTranslation(['knowledge', 'common']);
-  const { push } = useRouter();
+  const { t } = useTranslation(['knowledge', 'common']);
+  const { back } = useRouter();
+  // Comunitat's "Edita la història" opens the form on that story (RAPP-890).
+  const { edit: editStoryId } = useLocalSearchParams<{ edit?: string }>();
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const networkState = useNetworkState();
@@ -130,10 +107,6 @@ export default function StorySubmissionScreen() {
   const defaultCategoryId =
     categoriesQuery.data?.find((category) => category.slug === 'general-resources')?.id ??
     categoriesQuery.data?.[0]?.id;
-  const dateFormatter = useMemo(
-    () => new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'ca', { dateStyle: 'medium' }),
-    [i18n.resolvedLanguage],
-  );
   const mutationError = editingStory === null ? submitStoryError : resendStoryError;
   const mutationErrorCode = mutationError === null ? null : toAppError(mutationError).code;
   const isSendPending = editingStory === null ? isSubmitPending : isResendPending;
@@ -291,13 +264,16 @@ export default function StorySubmissionScreen() {
     },
     [resetScroll],
   );
-  const cancelEditing = useCallback(() => {
-    setEditingStory(null);
-    setTitle('');
-    setStory('');
-    setValidationMessage(null);
-    setLocalErrorCode(null);
-  }, []);
+  const hasOpenedEditStory = useRef(false);
+  useEffect(() => {
+    if (hasOpenedEditStory.current || editStoryId === undefined) return;
+    const row = statusesQuery.data?.find((status) => status.id === editStoryId);
+    if (row === undefined) return;
+    hasOpenedEditStory.current = true;
+    startEditing(row);
+  }, [editStoryId, startEditing, statusesQuery.data]);
+  // Cancel takes her back to Comunitat, where she chose the story to edit.
+  const cancelEditing = useCallback(() => back(), [back]);
 
   const addPhotos = useCallback(() => void choosePhotos(), [choosePhotos]);
   const submitForm = useCallback(() => void submit(), [submit]);
@@ -489,60 +465,6 @@ export default function StorySubmissionScreen() {
               </ShakeOnError>
             </View>
           )}
-
-          <ScreenSection title={t('knowledge:myStories')} isLast>
-            {(statusesQuery.data ?? []).length === 0 ? (
-              <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-                {t('knowledge:myStoriesEmpty')}
-              </Text>
-            ) : (
-              (statusesQuery.data ?? []).map((status) => {
-                const storyTitle = resolveLocalizedText(status.title, language)?.text ?? '';
-                const statusLabel = t(statusTranslationKey(status.story_status));
-                const note = status.reviewer_note?.trim() ?? '';
-                const isEditable = participantStoryEditableDraft(status) !== null;
-                return (
-                  <View key={status.id} className="gap-xs">
-                    <OpenableCard
-                      testID={`story-status-${status.story_status}`}
-                      accessibilityLabel={[storyTitle, statusLabel, note]
-                        .filter(Boolean)
-                        .join('. ')}
-                      onOpen={() => push(`/knowledge/${status.id}` as Href)}
-                    >
-                      <Text
-                        className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}
-                      >
-                        {storyTitle}
-                      </Text>
-                      <Text
-                        className={`text-start text-sm font-medium text-primary ${languageFontClass}`}
-                      >
-                        {statusLabel}
-                      </Text>
-                      <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-                        {t('knowledge:storySubmittedDate', {
-                          date: dateFormatter.format(new Date(status.created_at)),
-                        })}
-                      </Text>
-                      {note.length === 0 ? null : (
-                        <StoryTeamNote testID={`story-team-note-${status.id}`} note={note} />
-                      )}
-                    </OpenableCard>
-                    {isEditable ? (
-                      <OutlinedIconAction
-                        testID={`story-edit-${status.id}`}
-                        label={t('knowledge:editStory')}
-                        symbol="pen"
-                        onPress={() => startEditing(status)}
-                        isDisabled={editingStory?.id === status.id}
-                      />
-                    ) : null}
-                  </View>
-                );
-              })
-            )}
-          </ScreenSection>
         </FormWidth>
       </ScrollView>
     </ActionScreen>

@@ -8,10 +8,13 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { ChoiceGroup } from '@/components/forms/choice-group';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { clampQuantity } from '@/lib/arrival-form';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverItemTypes } from '@/lib/handover';
@@ -22,7 +25,7 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { randomUUID } from 'expo-crypto';
 import { useNetworkState } from 'expo-network';
 import { useRouter } from 'expo-router';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -30,22 +33,6 @@ import { RETURN_IN_DAYS, returnDateIn } from '@ramassa/shared/equipment';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
-
-function Group({ label, children }: { readonly label: string; readonly children: ReactNode }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View className="gap-sm">
-      <Text className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}>{label}</Text>
-      <View
-        accessibilityRole="radiogroup"
-        accessibilityLabel={label}
-        className="flex-row flex-wrap gap-sm"
-      >
-        {children}
-      </View>
-    </View>
-  );
-}
 
 function StepButton({
   label,
@@ -148,14 +135,14 @@ export default function NewCheckoutScreen() {
           contentInsetAdjustmentBehavior="automatic"
           contentContainerClassName="pb-3xl"
         >
-          <PageWidth className="gap-lg p-lg">
+          <PageWidth className={screenContentClassName}>
             <View className="gap-xs">
               <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
                 {t('checkout.intro')}
               </Text>
             </View>
 
-            <Group label={t('arrival.itemLabel')}>
+            <ChoiceGroup label={t('arrival.itemLabel')}>
               {types.map((type) => (
                 <ChoiceOption
                   key={type.id}
@@ -170,9 +157,9 @@ export default function NewCheckoutScreen() {
                   languageFontClass={fontClass}
                 />
               ))}
-            </Group>
+            </ChoiceGroup>
             {needsSize ? (
-              <Group label={t('arrival.sizeLabel')}>
+              <ChoiceGroup label={t('arrival.sizeLabel')}>
                 {itemType.sizes.map((candidate) => (
                   <ChoiceOption
                     key={candidate}
@@ -184,13 +171,11 @@ export default function NewCheckoutScreen() {
                     languageFontClass={fontClass}
                   />
                 ))}
-              </Group>
+              </ChoiceGroup>
             ) : null}
 
             <View className="gap-sm">
-              <Text className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}>
-                {t('arrival.quantityLabel')}
-              </Text>
+              <FieldLabel>{t('arrival.quantityLabel')}</FieldLabel>
               <View className="flex-row items-center gap-sm">
                 <StepButton
                   testID="checkout-quantity-less"
@@ -220,7 +205,7 @@ export default function NewCheckoutScreen() {
               </View>
             </View>
 
-            <Group label={t('checkout.staffLabel')}>
+            <ChoiceGroup label={t('checkout.staffLabel')}>
               {(recipients.data ?? []).map((person) => (
                 <ChoiceOption
                   key={person.id}
@@ -232,10 +217,10 @@ export default function NewCheckoutScreen() {
                   languageFontClass={fontClass}
                 />
               ))}
-            </Group>
+            </ChoiceGroup>
 
             <View className="gap-sm">
-              <Group label={t('checkout.returnLabel')}>
+              <ChoiceGroup label={t('checkout.returnLabel')}>
                 {RETURN_IN_DAYS.map((days) => (
                   <ChoiceOption
                     key={days}
@@ -247,7 +232,7 @@ export default function NewCheckoutScreen() {
                     languageFontClass={fontClass}
                   />
                 ))}
-              </Group>
+              </ChoiceGroup>
               <Text
                 testID="checkout-return-date"
                 className={`text-start text-md text-neutral-700 ${fontClass}`}

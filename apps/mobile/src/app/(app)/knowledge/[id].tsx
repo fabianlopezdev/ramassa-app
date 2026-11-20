@@ -116,7 +116,8 @@ export default function PlayerKnowledgeDetailScreen() {
             <KnowledgeArticle
               article={{
                 title: article.title,
-                categoryName: article.category.name,
+                categoryName:
+                  article.content_type === 'participant_story' ? null : article.category.name,
                 authorFirstName: article.author_first_name ?? staffAuthor?.firstName ?? null,
                 authorAvatarKey: staffAuthor?.avatarKey ?? null,
                 body: article.body,

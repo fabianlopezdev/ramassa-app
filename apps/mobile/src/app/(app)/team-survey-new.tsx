@@ -10,11 +10,13 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { DateTimeField } from '@/components/content/date-time-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { AudiencePicker } from '@/components/team/audience-picker';
 import { ReviewedField, type ReviewedText } from '@/components/team/reviewed-field';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -250,7 +252,7 @@ export default function TeamSurveyNewScreen() {
           contentContainerClassName="pb-3xl"
           keyboardShouldPersistTaps="handled"
         >
-          <PageWidth className="gap-lg p-lg">
+          <PageWidth className={screenContentClassName}>
             <ScreenSection title={t('newSurvey')}>
               <ReviewedField
                 reviewKey={TITLE_KEY}
@@ -262,9 +264,7 @@ export default function TeamSurveyNewScreen() {
                 onReport={report}
                 maxLength={TITLE_MAX}
               />
-              <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-                {t('eventLabel')}
-              </Text>
+              <FieldLabel>{t('eventLabel')}</FieldLabel>
               <View className="flex-row flex-wrap gap-sm">
                 {[{ id: NO_EVENT, title: t('noEvent') }, ...(options.data?.events ?? [])].map(
                   (event) => (
@@ -326,9 +326,7 @@ export default function TeamSurveyNewScreen() {
                   style={continuousCorners}
                   className="gap-md rounded-md bg-neutral-50 p-md"
                 >
-                  <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-                    {t('questionType')}
-                  </Text>
+                  <FieldLabel>{t('questionType')}</FieldLabel>
                   <View className="flex-row flex-wrap gap-sm">
                     {QUESTION_TYPES.map((type) => (
                       <ChoiceOption
@@ -361,11 +359,7 @@ export default function TeamSurveyNewScreen() {
                   />
                   {question.type === 'multiple_choice' ? (
                     <View className="gap-md">
-                      <Text
-                        className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}
-                      >
-                        {t('choices')}
-                      </Text>
+                      <FieldLabel>{t('choices')}</FieldLabel>
                       {question.choices.map((choice, choiceIndex) => (
                         <View key={choice.id} className="gap-sm">
                           <ReviewedField

@@ -5,6 +5,10 @@
  * the gaps live here only, so every screen changes together.
  */
 import { Divider } from '@/components/layout/divider';
+import {
+  screenBlockGapClassName,
+  titleToContentGapClassName,
+} from '@/components/layout/screen-spacing';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
@@ -36,8 +40,8 @@ interface ScreenSectionProps {
 
 export function ScreenSection({ testID, title, isLast = false, children }: ScreenSectionProps) {
   return (
-    <View testID={testID} className="gap-lg">
-      <View className="gap-md">
+    <View testID={testID} className={screenBlockGapClassName}>
+      <View className={titleToContentGapClassName}>
         <SectionTitle title={title} />
         {children}
       </View>

@@ -5,6 +5,7 @@
  * (`date-field.web.tsx`), because the native picker draws nothing there.
  */
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -46,9 +47,7 @@ export function DateField({ testID, label, value, onChange }: DateFieldProps) {
 
   return (
     <View className="gap-xs">
-      <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-        {label}
-      </Text>
+      <FieldLabel>{label}</FieldLabel>
       <RaisedActionButton
         testID={testID}
         label={current === null ? t('announcements:none') : format.format(current)}

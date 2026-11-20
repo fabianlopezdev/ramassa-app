@@ -14,6 +14,7 @@ import { GalleryModeration } from '@/components/gallery/gallery-moderation';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { SegmentedControl } from '@/components/layout/segmented-control';
 import { useForumModerationCategories, useForumModerationQueue } from '@/lib/team-forum';
 import {
@@ -116,7 +117,7 @@ export default function ForumModerationScreen() {
     >
       <NativeScreenHeader title={t('moderationScreenTitle')} />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           {header}
           {queue.isSuccess ? (
             <Text

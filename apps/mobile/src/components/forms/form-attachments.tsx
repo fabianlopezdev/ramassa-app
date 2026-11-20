@@ -3,6 +3,7 @@
  * RAPP-773): each a link she opens, under one heading, in her language.
  */
 
+import { SectionTitle } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTranslation } from 'react-i18next';
@@ -21,29 +22,29 @@ export function FormAttachments({
   const fontClass = useLanguageFontClass();
   if (attachments.length === 0) return null;
   return (
-    <View className="gap-sm" testID="form-attachments">
-      <Text className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}>
-        {t('authorizationDocumentsTitle')}
-      </Text>
-      {attachments.map((attachment) => {
-        const label = teamTextIn(attachment.label, language, false);
-        return (
-          <PressableScale
-            key={attachment.url}
-            accessibilityRole="link"
-            accessibilityLabel={label}
-            onPress={() => void Linking.openURL(attachment.url)}
-            haptic="tapLight"
-            className="min-h-recommended justify-center"
-          >
-            <Text
-              className={`text-start text-form font-semibold text-primary-dark underline ${fontClass}`}
+    <View className="gap-md" testID="form-attachments">
+      <SectionTitle title={t('authorizationDocumentsTitle')} />
+      <View className="gap-sm">
+        {attachments.map((attachment) => {
+          const label = teamTextIn(attachment.label, language, false);
+          return (
+            <PressableScale
+              key={attachment.url}
+              accessibilityRole="link"
+              accessibilityLabel={label}
+              onPress={() => void Linking.openURL(attachment.url)}
+              haptic="tapLight"
+              className="min-h-recommended justify-center"
             >
-              {label}
-            </Text>
-          </PressableScale>
-        );
-      })}
+              <Text
+                className={`text-start text-form font-semibold text-primary-dark underline ${fontClass}`}
+              >
+                {label}
+              </Text>
+            </PressableScale>
+          );
+        })}
+      </View>
     </View>
   );
 }

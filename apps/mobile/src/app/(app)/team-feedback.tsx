@@ -8,11 +8,13 @@
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { Badge } from '@/components/layout/badge';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { nextFeedbackStatuses } from '@/lib/feedback-status';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -208,7 +210,7 @@ export default function TeamFeedbackScreen() {
     <SafeAreaView testID="team-feedback" className="flex-1 bg-neutral-50" edges={['left', 'right']}>
       <NativeScreenHeader title={t('inboxTitle')} />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <View className="gap-xs">
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
               {t('inboxIntro')}
@@ -242,9 +244,7 @@ export default function TeamFeedbackScreen() {
             </ScreenSection>
           )}
           <View className="gap-sm">
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('filterType')}
-            </Text>
+            <FieldLabel>{t('filterType')}</FieldLabel>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View className="flex-row gap-sm">
                 {(['all', ...FEEDBACK_TYPES] as const).map((candidate) => (
@@ -260,9 +260,7 @@ export default function TeamFeedbackScreen() {
                 ))}
               </View>
             </ScrollView>
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('filterStatus')}
-            </Text>
+            <FieldLabel>{t('filterStatus')}</FieldLabel>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View className="flex-row gap-sm">
                 {(['all', ...FEEDBACK_STATUSES] as const).map((candidate) => (

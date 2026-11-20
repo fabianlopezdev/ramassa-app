@@ -1,6 +1,7 @@
 import { AuthActionFooter } from '@/components/auth/auth-action-footer';
 import { FormWidth } from '@/components/layout/content-width';
 import { FormRevealContext } from '@/components/layout/form-reveal';
+import { screenBlockGapClassName } from '@/components/layout/screen-spacing';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { useOwnEntrance, type EntranceMode } from '@/lib/screen-entrance';
 import { BlurTargetView } from 'expo-blur';
@@ -199,7 +200,7 @@ export function FormScreen({
               onContentSizeChange={(_width, height) => setContentHeight(height)}
               keyboardShouldPersistTaps="handled"
             >
-              <FormWidth className="gap-xl">
+              <FormWidth className={screenBlockGapClassName}>
                 <FormEntrance entrance={entrance} index={0}>
                   {heading}
                 </FormEntrance>

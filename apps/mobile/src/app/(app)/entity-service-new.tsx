@@ -6,6 +6,7 @@
 import { EntityServiceForm } from '@/components/entity/entity-service-form';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { useEntityServiceCategories, useOwnServiceContacts } from '@/lib/entity-services';
 import { useRouter, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -31,7 +32,7 @@ export default function EntityServiceNewScreen() {
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
       >
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           {categories.data === undefined || contacts.data === undefined ? null : (
             <EntityServiceForm
               categories={categories.data}

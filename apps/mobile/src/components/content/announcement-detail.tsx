@@ -12,6 +12,7 @@ import {
 } from '@/components/announcements/feed-states';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PreviewItemAsPlayer } from '@/components/preview/preview-as-player';
 import { useAnnouncementActions, useContentAnnouncement } from '@/lib/content-announcements';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -107,7 +108,7 @@ export function AnnouncementDetail({
   };
 
   return (
-    <ScrollView contentContainerClassName="gap-md p-lg" testID="announcement-detail">
+    <ScrollView contentContainerClassName={screenContentClassName} testID="announcement-detail">
       <View className="gap-xs">
         <Text
           accessibilityRole="header"

@@ -6,6 +6,7 @@
  * RAPP-342) it shows and sets the Madrid wall clock.
  */
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -90,9 +91,7 @@ export function DateTimeField({
 
   return (
     <View className="gap-xs">
-      <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-        {label}
-      </Text>
+      <FieldLabel>{label}</FieldLabel>
       <View className="flex-row gap-sm">
         {button('date', current === null ? (emptyLabel ?? '') : formats.date.format(current))}
         {current === null ? null : button('time', formats.time.format(current))}

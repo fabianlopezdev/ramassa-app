@@ -14,6 +14,7 @@ import { ChoiceOption } from '@/components/equipment/choice-option';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
 import { Badge } from '@/components/layout/badge';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -193,7 +194,7 @@ function ItemDetail({
   };
 
   return (
-    <ScrollView contentContainerClassName="gap-md p-lg">
+    <ScrollView contentContainerClassName={screenContentClassName}>
       <PressableScale
         testID="team-gallery-sheet-close"
         accessibilityRole="button"

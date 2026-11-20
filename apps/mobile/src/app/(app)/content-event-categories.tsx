@@ -16,6 +16,7 @@ import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useContentEventCategories, useEventCategoryActions } from '@/lib/content-events';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -107,7 +108,7 @@ export default function EventCategoriesScreen() {
       >
         <NativeScreenHeader title={t('categoriesTitle')} />
         <PageWidth className="flex-1">
-          <ScrollView contentContainerClassName="gap-md p-lg" testID="event-categories">
+          <ScrollView contentContainerClassName={screenContentClassName} testID="event-categories">
             <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
               {t('categoriesHelpPhone')}
             </Text>

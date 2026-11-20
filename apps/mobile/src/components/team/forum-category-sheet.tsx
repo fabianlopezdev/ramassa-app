@@ -12,6 +12,7 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { MultilingualField } from '@/components/content/multilingual-field';
 import { FailureNotice } from '@/components/error-code-line';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { reviewHandlers, reviewOptions } from '@/lib/content-translations';
 import { FORUM_CATEGORY_SLUG, forumCategorySlug } from '@/lib/forum-category-slug';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -125,7 +126,7 @@ function CategoryForm({
 
   return (
     <ScrollView
-      contentContainerClassName="gap-md p-lg"
+      contentContainerClassName={screenContentClassName}
       keyboardShouldPersistTaps="handled"
       // The page sheet does not move with the keyboard, so the scroll view does.
       automaticallyAdjustKeyboardInsets

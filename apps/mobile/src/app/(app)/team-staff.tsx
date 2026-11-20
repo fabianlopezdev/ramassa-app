@@ -10,10 +10,12 @@
  */
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ApplyPresetSheet, MemberAccessSheet, PresetSheet } from '@/components/team/access-sheets';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -205,7 +207,7 @@ export default function TeamStaffScreen() {
         contentContainerClassName="pb-3xl"
         keyboardShouldPersistTaps="handled"
       >
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <View className="gap-xs">
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
               {t('team.intro')}
@@ -248,9 +250,7 @@ export default function TeamStaffScreen() {
               autoComplete="off"
               maxLength={254}
             />
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('team.presetLabel')}
-            </Text>
+            <FieldLabel>{t('team.presetLabel')}</FieldLabel>
             <View className="flex-row flex-wrap gap-sm">
               {presets.map((preset) => (
                 <ChoiceOption

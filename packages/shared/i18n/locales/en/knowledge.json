@@ -116,7 +116,6 @@
   "submissionSuccessBody": "The staff will review it before anyone else can see it. You can check its status here.",
   "submitAnother": "Send another story",
   "myStories": "My story status",
-  "myStoriesEmpty": "You have not sent a story yet.",
   "storyStatusSubmitted": "Submitted",
   "storyStatusInReview": "In review",
   "storyStatusChangesRequested": "Changes needed",

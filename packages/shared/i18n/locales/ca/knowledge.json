@@ -116,7 +116,6 @@
   "submissionSuccessBody": "L'equip tècnic la revisarà abans que ningú més la pugui veure. Pots consultar l'estat aquí.",
   "submitAnother": "Envia una altra història",
   "myStories": "Estat de les meves històries",
-  "myStoriesEmpty": "Encara no has enviat cap història.",
   "storyStatusSubmitted": "Enviada",
   "storyStatusInReview": "En revisió",
   "storyStatusChangesRequested": "Calen canvis",

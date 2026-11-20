@@ -18,6 +18,7 @@ import {
 } from '@/components/content/service-labels';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { Icon } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -75,15 +76,6 @@ type FormError =
 /** The fixed choices, plus a stored value outside them, so an edit never changes it unseen. */
 function withStored<T extends string>(choices: readonly T[], stored: string): readonly string[] {
   return (choices as readonly string[]).includes(stored) ? choices : [...choices, stored];
-}
-
-function SectionLabel({ children }: { readonly children: string }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-      {children}
-    </Text>
-  );
 }
 
 function CategoryEditor({ category }: { readonly category: AdminServiceCategory | undefined }) {
@@ -205,7 +197,7 @@ function CategoryEditor({ category }: { readonly category: AdminServiceCategory 
       />
 
       <View className="gap-xs">
-        <SectionLabel>{t('categoryIcon')}</SectionLabel>
+        <FieldLabel>{t('categoryIcon')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {withStored(SERVICE_CATEGORY_ICONS, form.icon).map((icon) => {
             const symbol = SERVICE_ICON_NAMES[icon as keyof typeof SERVICE_ICON_NAMES];
@@ -234,7 +226,7 @@ function CategoryEditor({ category }: { readonly category: AdminServiceCategory 
         </View>
       </View>
       <View className="gap-xs">
-        <SectionLabel>{t('categoryColor')}</SectionLabel>
+        <FieldLabel>{t('categoryColor')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {withStored(CATEGORY_COLORS, form.color).map((color) => {
             const key = isCategoryColor(color) ? COLOR_KEYS[color] : undefined;
@@ -263,7 +255,7 @@ function CategoryEditor({ category }: { readonly category: AdminServiceCategory 
       </View>
 
       <View className="gap-sm" testID="service-category-fields">
-        <SectionLabel>{t('fieldsTitle')}</SectionLabel>
+        <FieldLabel>{t('fieldsTitle')}</FieldLabel>
         <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
           {t('fieldsHelp')}
         </Text>

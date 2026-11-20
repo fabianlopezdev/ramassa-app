@@ -1,4 +1,5 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -93,9 +94,7 @@ export function MentoringPreferencePickers({
     <View className="gap-md">
       <View className="gap-md sm:flex-row">
         <View className="flex-1 gap-sm">
-          <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-            {t('mentoring:preferredDateLabel')}
-          </Text>
+          <FieldLabel>{t('mentoring:preferredDateLabel')}</FieldLabel>
           <RaisedActionButton
             testID="mentoring-preferred-date"
             label={displayedDate}
@@ -118,9 +117,7 @@ export function MentoringPreferencePickers({
         </View>
 
         <View className="flex-1 gap-sm">
-          <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-            {t('mentoring:preferredTimeLabel')}
-          </Text>
+          <FieldLabel>{t('mentoring:preferredTimeLabel')}</FieldLabel>
           <PressableScale
             testID="mentoring-preferred-time"
             accessibilityLabel={`${t('mentoring:preferredTimeLabel')}: ${displayedTime}`}

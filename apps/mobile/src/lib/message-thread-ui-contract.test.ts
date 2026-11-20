@@ -23,11 +23,16 @@ describe('native messaging UI contract', () => {
     ).toHaveLength(3);
   });
 
-  test('uses logical bubble corners and a shared width token for RTL layouts', async () => {
+  // The tail corner is a plain start/end style (RAPP-899): the logical corner
+  // classes never reached the phone, and start/end still mirror in RTL.
+  test('draws the bubble tail with start/end corners and shared tokens for RTL layouts', async () => {
     const source = await Bun.file(threadPath).text();
 
-    expect(source).toContain('rounded-ee-sm');
-    expect(source).toContain('rounded-es-sm');
+    expect(source).toContain('borderBottomEndRadius: tokens.messaging.bubbleTailRadius');
+    expect(source).toContain('borderBottomStartRadius: tokens.messaging.bubbleTailRadius');
+    expect(source).toContain('borderRadius: tokens.messaging.bubbleRadius');
+    expect(source).not.toContain('borderBottomRightRadius');
+    expect(source).not.toContain('borderBottomLeftRadius');
     expect(source).not.toContain('rounded-br-sm');
     expect(source).not.toContain('rounded-bl-sm');
     expect(source).toContain('tokens.messaging.messageBubbleMaxWidth');
