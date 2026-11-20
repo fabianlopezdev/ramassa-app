@@ -36,5 +36,11 @@
   "previewDraftTitle": "المسودة كما ستراها اللاعبات. لا أحد يراها بعد.",
   "previewDraftMissing": "لا يوجد نص بهذه اللغة بعد. ستراه اللاعبات بلغة أخرى.",
   "previewOpening": "جارٍ فتح عرض اللاعبة.",
-  "characterCount": "{{count}} / {{limit}} حرف"
+  "characterCount": "{{count}} / {{limit}} حرف",
+  "newCount_zero": "{{label}}، لا عناصر جديدة",
+  "newCount_one": "{{label}}، عنصر جديد واحد",
+  "newCount_two": "{{label}}، عنصران جديدان",
+  "newCount_few": "{{label}}، {{count}} عناصر جديدة",
+  "newCount_many": "{{label}}، {{count}} عنصرًا جديدًا",
+  "newCount_other": "{{label}}، {{count}} عنصر جديد"
 }

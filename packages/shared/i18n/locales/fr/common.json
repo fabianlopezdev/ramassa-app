@@ -36,5 +36,7 @@
   "previewDraftTitle": "Brouillon tel que les joueuses le verront. Personne ne le voit encore.",
   "previewDraftMissing": "Il manque le texte dans cette langue. Les joueuses le verront dans une autre langue.",
   "previewOpening": "Ouverture de la vue joueuse.",
-  "characterCount": "{{count}} / {{limit}} caractères"
+  "characterCount": "{{count}} / {{limit}} caractères",
+  "newCount_one": "{{label}}, {{count}} nouveau",
+  "newCount_other": "{{label}}, {{count}} nouveaux"
 }

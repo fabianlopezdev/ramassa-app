@@ -36,5 +36,7 @@
   "previewDraftTitle": "پیش‌نویس همان‌طور که بازیکنان خواهند دید. هنوز کسی آن را نمی‌بیند.",
   "previewDraftMissing": "هنوز متنی به این زبان نیست. بازیکنان آن را به زبان دیگری خواهند دید.",
   "previewOpening": "در حال باز کردن نمای بازیکن.",
-  "characterCount": "{{count}} / {{limit}} نویسه"
+  "characterCount": "{{count}} / {{limit}} نویسه",
+  "newCount_one": "{{label}}، {{count}} مورد جدید",
+  "newCount_other": "{{label}}، {{count}} مورد جدید"
 }
