@@ -10,10 +10,8 @@ import { PressableDepth } from '@/components/motion/pressable-depth';
 import { SelectionTransition } from '@/components/motion/selection-transition';
 import { continuousCorners } from '@/lib/continuous-corners';
 import type { ReactNode } from 'react';
-import { type AccessibilityRole, type StyleProp, type ViewStyle } from 'react-native';
+import { type AccessibilityRole, type Insets, type StyleProp, type ViewStyle } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
-
-const FACE_CLASS = `relative overflow-hidden ${outlinedSurfaceClassName()}`;
 
 interface SelectionChoiceSurfaceProps {
   readonly children: ReactNode;
@@ -31,6 +29,10 @@ interface SelectionChoiceSurfaceProps {
   readonly rowStyle?: StyleProp<ViewStyle>;
   /** A colour for the face (RAPP-845), as a pale wash. */
   readonly tone?: RaisedTone;
+  /** The corners of face and edge; a small icon button takes smaller ones (RAPP-884). */
+  readonly shapeClassName?: string;
+  /** How far past its edges a touch still counts, for a small button. */
+  readonly hitSlop?: Insets;
 }
 
 /** One raised picker surface for full-width cards and compact option buttons. */
@@ -48,6 +50,8 @@ export function SelectionChoiceSurface({
   contentClassName,
   rowStyle,
   tone,
+  shapeClassName,
+  hitSlop,
 }: SelectionChoiceSurfaceProps) {
   const defaultRowStyle = useRaisedChoiceFaceStyle();
   return (
@@ -63,10 +67,11 @@ export function SelectionChoiceSurface({
       style={raisedSurfaceWrapperStyle}
       className={`relative ${className ?? ''}`}
       faceStyle={rowStyle ?? defaultRowStyle}
-      faceClassName={`${FACE_CLASS} ${paddingClassName} ${contentClassName}`}
+      faceClassName={`relative overflow-hidden ${outlinedSurfaceClassName(shapeClassName)} ${paddingClassName} ${contentClassName}`}
       inlineOffset={tokens.languageChoice.shadowInlineOffset}
       blockOffset={tokens.languageChoice.shadowBlockOffset}
-      shadow={<RaisedSurfaceEdge />}
+      hitSlop={hitSlop}
+      shadow={<RaisedSurfaceEdge shapeClassName={shapeClassName} />}
     >
       <RaisedToneWash tone={tone} />
       <SelectionTransition

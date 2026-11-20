@@ -13,7 +13,8 @@
  *
  * An icon is a picture and makes no touch target; the control around it does.
  */
-import Svg, { Path } from 'react-native-svg';
+import { I18nManager } from 'react-native';
+import Svg, { G, Path } from 'react-native-svg';
 import { tokens } from '@ramassa/shared/tokens';
 import { ICON_GRID, iconPaths, type IconName, type IconWeight } from './icon-set';
 
@@ -24,6 +25,13 @@ const VIEW_BOX = `0 0 ${ICON_GRID} ${ICON_GRID}`;
  * live area), so an icon carries that empty margin on every side.
  */
 const ICON_ARTWORK_MARGIN = 2;
+
+/**
+ * Pictures that point along the reading direction, so they turn round in
+ * Arabic and Farsi (RAPP-884): the reply arrow points back to the start.
+ */
+const MIRRORED_IN_RIGHT_TO_LEFT: ReadonlySet<IconName> = new Set<IconName>(['reply']);
+const MIRROR_TRANSFORM = `scale(-1, 1) translate(-${ICON_GRID}, 0)`;
 
 /** The empty margin around an icon's artwork at a size, in points (RAPP-852). */
 export function iconArtworkMargin(size: number): number {
@@ -50,6 +58,20 @@ export function Icon({
   label,
 }: IconProps) {
   const isAnnounced = label !== undefined;
+  const paths = iconPaths(name, weight).map((path) => (
+    <Path
+      key={path.d}
+      d={path.d}
+      fill={path.mode === 'fill' ? color : 'none'}
+      fillRule={path.mode === 'fill' ? path.fillRule : undefined}
+      opacity={path.opacity}
+      stroke={path.mode === 'stroke' ? color : undefined}
+      strokeLinecap={path.cap}
+      strokeLinejoin={path.join}
+      // Drawn on the 24-point grid and scaled with it, so the line keeps its weight at any size.
+      strokeWidth={path.width}
+    />
+  ));
   return (
     <Svg
       accessible={isAnnounced}
@@ -61,20 +83,11 @@ export function Icon({
       height={size}
       viewBox={VIEW_BOX}
     >
-      {iconPaths(name, weight).map((path) => (
-        <Path
-          key={path.d}
-          d={path.d}
-          fill={path.mode === 'fill' ? color : 'none'}
-          fillRule={path.mode === 'fill' ? path.fillRule : undefined}
-          opacity={path.opacity}
-          stroke={path.mode === 'stroke' ? color : undefined}
-          strokeLinecap={path.cap}
-          strokeLinejoin={path.join}
-          // Drawn on the 24-point grid and scaled with it, so the line keeps its weight at any size.
-          strokeWidth={path.width}
-        />
-      ))}
+      {I18nManager.isRTL && MIRRORED_IN_RIGHT_TO_LEFT.has(name) ? (
+        <G transform={MIRROR_TRANSFORM}>{paths}</G>
+      ) : (
+        paths
+      )}
     </Svg>
   );
 }

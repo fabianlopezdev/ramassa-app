@@ -71,6 +71,8 @@ export interface ForumReplyRow {
   readonly id: string;
   readonly org_id: string;
   readonly post_id: string;
+  /** Null for an answer to the post; otherwise the answer this one answers (RAPP-884). */
+  readonly parent_reply_id: string | null;
   readonly author_id: string;
   readonly author_first_name: string;
   readonly content: string | null;
@@ -107,6 +109,7 @@ const forumReplyDatabaseRowSchema = z.object({
   id: z.uuid(),
   org_id: z.uuid(),
   post_id: z.uuid(),
+  parent_reply_id: z.uuid().nullable(),
   author_id: z.uuid(),
   author_first_name: z.string().min(1),
   content: z.string().nullable(),
@@ -139,7 +142,7 @@ const FORUM_CATEGORY_COLUMNS = 'id, name, slug, icon, color, sort_order';
 const FORUM_POST_COLUMNS =
   'id, org_id, category_id, author_id, author_first_name, content, image_url, visibility, is_pinned, reply_count, created_at, updated_at';
 const FORUM_REPLY_COLUMNS =
-  'id, org_id, post_id, author_id, author_first_name, content, visibility, created_at, updated_at';
+  'id, org_id, post_id, parent_reply_id, author_id, author_first_name, content, visibility, created_at, updated_at';
 
 export async function fetchForumCategories(
   client: SupabaseClient<Database>,
@@ -252,10 +255,19 @@ export async function createForumReply(
 ): Promise<string> {
   const input = forumReplyInputSchema.parse(rawInput);
   return z.uuid().parse(
-    await callForumRpc(client, 'create_forum_reply', {
-      p_post_id: input.postId,
-      p_content: input.content,
-    }),
+    // The parent travels only when there is one, so an answer to the post
+    // still works on a database without the nested-answer migration.
+    await callForumRpc(
+      client,
+      'create_forum_reply',
+      input.parentReplyId === null
+        ? { p_post_id: input.postId, p_content: input.content }
+        : {
+            p_post_id: input.postId,
+            p_content: input.content,
+            p_parent_reply_id: input.parentReplyId,
+          },
+    ),
   );
 }
 

@@ -22,15 +22,25 @@ test('forum composer enforces limits, single compressed image, and online-only s
 
 test('forum detail exposes replies and owner-only edit and delete controls', async () => {
   const source = await readMobileSource('app/(app)/forum/[id].tsx');
-  const replyCard = await readMobileSource('components/forum/forum-reply-card.tsx');
-  expect(source).toContain('FORUM_REPLY_MAX_LENGTH');
+  const threadMessage = await readMobileSource('components/forum/forum-thread-message.tsx');
+  const replyComposer = await readMobileSource('components/forum/forum-reply-composer.tsx');
+  const ownPostActions = await readMobileSource('components/forum/forum-own-post-actions.tsx');
+  // The reply field and her own post's actions are components of the screen (RAPP-884).
+  expect(replyComposer).toContain('FORUM_REPLY_MAX_LENGTH');
+  expect(source).toContain('<ForumReplyComposer');
+  expect(source).toContain('<ForumOwnPostActions');
+  expect(ownPostActions).toContain('forum-confirm-delete');
   expect(source).toContain('post.author_id === user?.id');
   expect(source).toContain('useEditForumPost');
   expect(source).toContain('useDeleteForumPost');
   expect(source).toContain('ForumPlainText');
   expect(source).toContain('ForumFlagDialog');
-  expect(source).toContain('forum-flag-post');
-  expect(replyCard).toContain('forum-flag-reply-');
+  // The post and the answers are one thread message (RAPP-884), with the
+  // report and reply buttons in it.
+  expect(threadMessage).toContain('forum-flag-post');
+  expect(threadMessage).toContain('forum-flag-reply-');
+  expect(threadMessage).toContain('forum-reply-post');
+  expect(source).toContain('<ForumThreadMessage');
 });
 
 test('forum flagging is a reason-first one-tap flow with optional context', async () => {

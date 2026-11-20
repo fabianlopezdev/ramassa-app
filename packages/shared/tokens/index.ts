@@ -152,7 +152,8 @@ export const tokens = {
   },
 
   // Number of flags that auto-hides a forum post pending moderation (ADR-014).
-  forum: { autoHideFlagThreshold: 3 },
+  // `threadLineWidth` (RAPP-884): the line that joins a forum post to its answers.
+  forum: { autoHideFlagThreshold: 3, threadLineWidth: 2 },
 } as const;
 
 export type Tokens = typeof tokens;

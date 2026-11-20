@@ -147,6 +147,8 @@ describe('Phase 6 accessibility and i18n contract', () => {
       'app/(app)/forum/create.tsx',
       'app/(app)/gallery/upload.tsx',
       'components/forum/forum-flag-dialog.tsx',
+      'components/forum/forum-own-post-actions.tsx',
+      'components/forum/forum-reply-composer.tsx',
     ] as const;
 
     for (const path of paths) {

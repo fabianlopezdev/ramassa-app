@@ -19,7 +19,7 @@ select ok(
   'forum reply RLS is enabled and forced'
 );
 select has_function('public', 'create_forum_post', array['uuid', 'text', 'text'], 'post creation crosses one validated boundary');
-select has_function('public', 'create_forum_reply', array['uuid', 'text'], 'reply creation crosses one validated boundary');
+select has_function('public', 'create_forum_reply', array['uuid', 'text', 'uuid'], 'reply creation crosses one validated boundary');
 select has_function('public', 'edit_own_forum_post', array['uuid', 'text'], 'post editing has one ownership boundary');
 select has_function('public', 'delete_own_forum_post', array['uuid'], 'post deletion has one tombstone boundary');
 select is((select count(*) from public.forum_categories)::integer, 4, 'four board categories are seeded');

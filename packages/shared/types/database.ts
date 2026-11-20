@@ -2823,6 +2823,7 @@ export type Database = {
           id: string;
           image_url: string | null;
           org_id: string;
+          parent_reply_id: string | null;
           post_id: string;
           updated_at: string;
           visibility: string;
@@ -2836,6 +2837,7 @@ export type Database = {
           id?: string;
           image_url?: string | null;
           org_id: string;
+          parent_reply_id?: string | null;
           post_id: string;
           updated_at?: string;
           visibility?: string;
@@ -2849,6 +2851,7 @@ export type Database = {
           id?: string;
           image_url?: string | null;
           org_id?: string;
+          parent_reply_id?: string | null;
           post_id?: string;
           updated_at?: string;
           visibility?: string;
@@ -2867,6 +2870,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'organizations';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'forum_replies_parent_tenant_fkey';
+            columns: ['org_id', 'post_id', 'parent_reply_id'];
+            isOneToOne: false;
+            referencedRelation: 'forum_replies';
+            referencedColumns: ['org_id', 'post_id', 'id'];
           },
           {
             foreignKeyName: 'forum_replies_post_tenant_fkey';
@@ -6431,7 +6441,7 @@ export type Database = {
         Returns: string;
       };
       create_forum_reply: {
-        Args: { p_content: string; p_post_id: string };
+        Args: { p_content: string; p_parent_reply_id?: string; p_post_id: string };
         Returns: string;
       };
       create_media_item: {

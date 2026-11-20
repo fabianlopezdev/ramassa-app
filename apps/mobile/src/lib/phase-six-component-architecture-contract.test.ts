@@ -9,13 +9,20 @@ describe('Phase 6 component architecture contract', () => {
   test('passes named zero-argument actions directly instead of wrapping them', async () => {
     const forumDetail = await readMobileSource('app/(app)/forum/[id].tsx');
     const forumComposer = await readMobileSource('app/(app)/forum/create.tsx');
+    const forumReplyComposer = await readMobileSource('components/forum/forum-reply-composer.tsx');
+    const forumOwnPostActions = await readMobileSource(
+      'components/forum/forum-own-post-actions.tsx',
+    );
     const gallery = await readMobileSource('components/gallery/gallery-grid.tsx');
     const galleryItem = await readMobileSource('app/(app)/gallery/[id].tsx');
     const galleryUpload = await readMobileSource('app/(app)/gallery/upload.tsx');
 
     expect(forumDetail).toContain('onPress={saveEdit}');
-    expect(forumDetail).toContain('onPress={performDelete}');
-    expect(forumDetail).toContain('onPress={submitReply}');
+    // Delete and send pass through the components that draw them (RAPP-884).
+    expect(forumDetail).toContain('onConfirmDelete={performDelete}');
+    expect(forumOwnPostActions).toContain('onPress={onConfirmDelete}');
+    expect(forumDetail).toContain('onSubmit={submitReply}');
+    expect(forumReplyComposer).toContain('onPress={onSubmit}');
     expect(forumComposer).toContain('onPress={choosePhoto}');
     expect(forumComposer).toContain('onPress={submit}');
     expect(gallery).toContain('onRefresh={refresh}');
