@@ -4,6 +4,7 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { KnowledgeArticleCard } from '@/components/knowledge/knowledge-article-card';
+import { OwnStoryStatuses } from '@/components/knowledge/own-story-statuses';
 import { PageWidth } from '@/components/layout/content-width';
 import { useCommunityStories } from '@/lib/community-stories';
 import { isNetworkStateOnline } from '@/lib/network-status';
@@ -14,7 +15,7 @@ import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import type { KnowledgeArticleListRow } from '@ramassa/shared/knowledge';
@@ -28,7 +29,8 @@ const keyExtractor = (story: KnowledgeArticleListRow) => story.id;
 
 /**
  * Published participant stories, the Històries segment of Comunitat
- * (RAPP-792). Each story opens the shared reader `knowledge/[id]`.
+ * (RAPP-792). Each story opens the shared reader `knowledge/[id]`. Her own
+ * stories still waiting for the team sit above them (RAPP-890).
  */
 export function CommunityStoryList({
   header,
@@ -55,6 +57,14 @@ export function CommunityStoryList({
     [push],
   );
   const refresh = useCallback(() => void refetchStories(), [refetchStories]);
+  const listHeader = (
+    <View>
+      {header}
+      <PageWidth className="pb-lg">
+        <OwnStoryStatuses />
+      </PageWidth>
+    </View>
+  );
   const renderStory = useCallback(
     ({ item }: ListRenderItemInfo<KnowledgeArticleListRow>) => (
       <PageWidth className="pb-md">
@@ -106,7 +116,7 @@ export function CommunityStoryList({
       style={styles.screen}
       contentContainerStyle={contentContainerStyle}
       contentInsetAdjustmentBehavior="automatic"
-      ListHeaderComponent={header}
+      ListHeaderComponent={listHeader}
       ListEmptyComponent={emptyState}
       refreshing={query.isRefetching && isOnline}
       onRefresh={refresh}

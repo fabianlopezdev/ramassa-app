@@ -31,7 +31,8 @@ const imageFrameStyle = composeContinuousViewStyle(styles.imageFrame);
 
 export interface KnowledgeArticleContent {
   readonly title: LocalizedContent;
-  readonly categoryName: LocalizedContent;
+  /** Null for a story: Històries holds only stories, so a category says nothing. */
+  readonly categoryName: LocalizedContent | null;
   readonly authorFirstName: string | null;
   /** The team author's photo (RAPP-639); a story's author shows her initial. */
   readonly authorAvatarKey?: string | null;
@@ -55,7 +56,10 @@ export function KnowledgeArticle({
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const title = resolveLocalizedText(article.title, language)?.text ?? '';
-  const category = resolveLocalizedText(article.categoryName, language)?.text ?? '';
+  const category =
+    article.categoryName === null
+      ? ''
+      : (resolveLocalizedText(article.categoryName, language)?.text ?? '');
   const body = resolveLocalizedKnowledgeBlocks(article.body, language);
   const coverSource = useMemo(
     () =>
@@ -82,9 +86,13 @@ export function KnowledgeArticle({
   return (
     <View className="gap-lg">
       <View className="gap-sm">
-        <Text className={`text-start text-sm font-semibold text-primary-dark ${languageFontClass}`}>
-          {category}
-        </Text>
+        {category.length === 0 ? null : (
+          <Text
+            className={`text-start text-sm font-semibold text-primary-dark ${languageFontClass}`}
+          >
+            {category}
+          </Text>
+        )}
         <Text
           accessibilityRole="header"
           className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
