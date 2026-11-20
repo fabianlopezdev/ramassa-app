@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { ForumReplyRow } from '@ramassa/shared/forum';
-import { buildReplyThread } from './forum-reply-thread';
+import { buildReplyThread, threadRows } from './forum-reply-thread';
 
 const POST_ID = '5eed0000-0000-4000-8010-000000000001';
 
@@ -85,5 +85,42 @@ describe('buildReplyThread (RAPP-884)', () => {
       reply('a-grandchild', '2026-11-20T09:20:00Z', 'a-child'),
     ];
     expect(ids(buildReplyThread(rows))).toEqual([['a', ['a-child']]]);
+  });
+});
+
+const rowShape = (rows: ReturnType<typeof threadRows>) =>
+  rows.map((row) => [row.reply.id, row.level, row.rails, row.hasAnswersBelow, row.answersTo]);
+
+describe('threadRows (RAPP-884)', () => {
+  test('no answers, no rows', () => {
+    expect(threadRows([])).toEqual([]);
+  });
+
+  test('each answer is one row, with the lines of the messages above it beside it', () => {
+    const thread = buildReplyThread([
+      reply('a', '2026-11-20T09:00:00Z', null, { author_first_name: 'Amina' }),
+      reply('a-1', '2026-11-20T09:10:00Z', 'a'),
+      reply('a-2', '2026-11-20T09:20:00Z', 'a'),
+      reply('b', '2026-11-20T09:30:00Z', null, { author_first_name: 'Laia' }),
+      reply('b-1', '2026-11-20T09:40:00Z', 'b'),
+    ]);
+    expect(rowShape(threadRows(thread))).toEqual([
+      ['a', 1, ['through'], true, null],
+      ['a-1', 2, ['through', 'through'], false, 'Amina'],
+      ['a-2', 2, ['through', 'end'], false, 'Amina'],
+      ['b', 1, ['end'], true, null],
+      ['b-1', 2, ['none', 'end'], false, 'Laia'],
+    ]);
+  });
+
+  test('the last answer to the post ends the post line at its avatar', () => {
+    const thread = buildReplyThread([
+      reply('a', '2026-11-20T09:00:00Z'),
+      reply('b', '2026-11-20T09:30:00Z'),
+    ]);
+    expect(rowShape(threadRows(thread))).toEqual([
+      ['a', 1, ['through'], false, null],
+      ['b', 1, ['end'], false, null],
+    ]);
   });
 });

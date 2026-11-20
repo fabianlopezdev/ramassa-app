@@ -45,3 +45,51 @@ export function buildReplyThread(
   }
   return thread;
 }
+
+/**
+ * How the line of a message above passes beside a row: down the whole row,
+ * down to the row's avatar and no further (its last answer), or not at all
+ * (its answers ended in an earlier row).
+ */
+export type ForumThreadRail = 'through' | 'end' | 'none';
+
+/** One answer as one row of the post screen's list (RAPP-884). */
+export interface ForumThreadRow {
+  readonly reply: ForumReplyRow;
+  readonly level: 1 | 2;
+  /** The lines of the messages above it that pass beside it, the post's first. */
+  readonly rails: readonly ForumThreadRail[];
+  /** Whether a line runs down from under its own avatar to its answers. */
+  readonly hasAnswersBelow: boolean;
+  /** For an answer to an answer, the name of the person it answers. */
+  readonly answersTo: string | null;
+}
+
+/**
+ * The thread as rows, one per message, so the list recycles small rows and can
+ * scroll to any one answer. Each row carries the pieces of the lines above it,
+ * so the lines join from row to row into one continuous line.
+ */
+export function threadRows(thread: readonly ForumReplyThreadEntry[]): readonly ForumThreadRow[] {
+  return thread.flatMap(({ reply, children }, index) => {
+    const isLastAnswer = index === thread.length - 1;
+    const answerRow: ForumThreadRow = {
+      reply,
+      level: 1,
+      rails: [isLastAnswer ? 'end' : 'through'],
+      hasAnswersBelow: children.length > 0,
+      answersTo: null,
+    };
+    const childRows = children.map((child, childIndex): ForumThreadRow => ({
+      reply: child,
+      level: 2,
+      rails: [
+        isLastAnswer ? 'none' : 'through',
+        childIndex === children.length - 1 ? 'end' : 'through',
+      ],
+      hasAnswersBelow: false,
+      answersTo: reply.author_first_name,
+    }));
+    return [answerRow, ...childRows];
+  });
+}

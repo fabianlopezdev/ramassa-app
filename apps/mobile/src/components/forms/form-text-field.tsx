@@ -34,6 +34,12 @@ export interface FormTextFieldProps extends TextInputProps {
   readonly hint?: string | null;
   /** Marks the border without repeating a field-level error sentence. */
   readonly isInvalid?: boolean;
+  /**
+   * False only where a visible line right above the field already names it,
+   * such as "Responent a Amina" over the forum reply (RAPP-884). The screen
+   * reader still reads the label on the field.
+   */
+  readonly isLabelVisible?: boolean;
   readonly ref?: Ref<TextInput>;
 }
 
@@ -42,6 +48,7 @@ export function FormTextField({
   errorMessage,
   hint,
   isInvalid,
+  isLabelVisible = true,
   inputWidth = 'full',
   ref,
   style,
@@ -127,9 +134,11 @@ export function FormTextField({
 
   return (
     <View className="gap-xs">
-      <Text className={`text-start text-form font-medium text-neutral-800 ${languageFontClass}`}>
-        {label}
-      </Text>
+      {isLabelVisible ? (
+        <Text className={`text-start text-form font-medium text-neutral-800 ${languageFontClass}`}>
+          {label}
+        </Text>
+      ) : null}
       <View className="relative" style={frameStyle}>
         <TextInput
           ref={ref}
