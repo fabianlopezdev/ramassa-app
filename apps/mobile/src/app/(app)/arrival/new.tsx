@@ -15,6 +15,7 @@ import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import {
   addArrivalLine,
@@ -282,7 +283,7 @@ export default function NewArrivalScreen() {
           contentInsetAdjustmentBehavior="automatic"
           contentContainerClassName="pb-3xl"
         >
-          <PageWidth className="gap-lg p-lg">
+          <PageWidth className={screenContentClassName}>
             <ScreenSection title={t('arrival.sourceLabel')}>
               <View
                 accessibilityRole="radiogroup"

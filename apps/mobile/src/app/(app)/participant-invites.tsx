@@ -5,6 +5,7 @@
  */
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { ParticipantInvitesPanel } from '@/components/participants/participant-invites-panel';
 import { useTranslation } from 'react-i18next';
 import { ScrollView } from 'react-native';
@@ -16,7 +17,7 @@ export default function ParticipantInvitesScreen() {
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right']}>
       <NativeScreenHeader title={t('invitesTitle')} />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <ParticipantInvitesPanel />
         </PageWidth>
       </ScrollView>

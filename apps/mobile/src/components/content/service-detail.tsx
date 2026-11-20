@@ -13,6 +13,7 @@ import {
 } from '@/components/announcements/feed-states';
 import { FailureNotice } from '@/components/error-code-line';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { PreviewItemAsPlayer } from '@/components/preview/preview-as-player';
 import {
@@ -239,7 +240,7 @@ export function ServiceDetail({
   };
 
   return (
-    <ScrollView contentContainerClassName="gap-md p-lg" testID="service-detail">
+    <ScrollView contentContainerClassName={screenContentClassName} testID="service-detail">
       <View className="gap-xs">
         <Text
           accessibilityRole="header"

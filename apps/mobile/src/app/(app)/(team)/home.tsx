@@ -7,6 +7,7 @@
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { RaisedCard } from '@/components/layout/raised-card';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { useUnreadMessages } from '@/lib/messaging';
@@ -63,7 +64,7 @@ function TeamHomeButtonsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-neutral-50" testID="team-home-buttons">
       <PageWidth className="flex-1">
-        <ScrollView contentContainerClassName="gap-lg p-lg">
+        <ScrollView contentContainerClassName={screenContentClassName}>
           <Text
             accessibilityRole="header"
             className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}

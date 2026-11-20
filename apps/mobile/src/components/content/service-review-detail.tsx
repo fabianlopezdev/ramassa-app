@@ -22,6 +22,7 @@ import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useServiceReview, useServiceReviewActions } from '@/lib/content-service-reviews';
 import { useContentServiceCategories } from '@/lib/content-services';
@@ -282,7 +283,7 @@ export function ServiceReviewDetail({
 
   return (
     <ScrollView
-      contentContainerClassName="gap-md p-lg"
+      contentContainerClassName={screenContentClassName}
       keyboardShouldPersistTaps="handled"
       automaticallyAdjustKeyboardInsets
       testID="service-review-detail"

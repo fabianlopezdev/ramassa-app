@@ -15,6 +15,7 @@ import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { RaisedCard } from '@/components/layout/raised-card';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { BarRow, MonthBars, Sparkline } from '@/components/team/impact-charts';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -93,7 +94,7 @@ function ChartSheet({
       <NativeModalScope>
         <SafeAreaView className="flex-1 bg-white" testID="impact-chart-sheet">
           {metric === null ? null : (
-            <ScrollView contentContainerClassName="gap-md p-lg">
+            <ScrollView contentContainerClassName={screenContentClassName}>
               <Text
                 accessibilityRole="header"
                 className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}
@@ -245,7 +246,7 @@ export default function TeamImpactScreen() {
     <SafeAreaView testID="team-impact" className="flex-1 bg-neutral-50" edges={['left', 'right']}>
       <NativeScreenHeader title={t('impactReportTitle')} />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <View className="gap-xs">
             <Text
               testID="impact-period-range"

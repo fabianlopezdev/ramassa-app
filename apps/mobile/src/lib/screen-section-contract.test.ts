@@ -19,8 +19,12 @@ test('the shared section keeps the Inici title, gaps and divider', () => {
   const section = read('components/layout/screen-section.tsx');
   expect(section).toContain('accessibilityRole="header"');
   expect(section).toContain('text-start text-2xl font-bold text-neutral-900');
-  expect(section).toContain('className="gap-lg"');
-  expect(section).toContain('className="gap-md"');
+  expect(section).toContain('className={screenBlockGapClassName}');
+  expect(section).toContain('className={titleToContentGapClassName}');
+  const spacing = read('components/layout/screen-spacing.ts');
+  expect(spacing).toContain("screenBlockGapClassName = 'gap-lg'");
+  expect(spacing).toContain("titleToContentGapClassName = 'gap-md'");
+  expect(spacing).toContain("screenContentClassName = 'gap-lg p-lg'");
   expect(section).toContain('<Divider />');
 });
 
@@ -107,6 +111,20 @@ test('no screen or component keeps a choice or field label helper of its own', (
       path !== 'components/forms/choice-group.tsx' &&
       path !== 'components/forms/field-label.tsx' &&
       localHelper.test(read(path)),
+  );
+  expect(offenders).toEqual([]);
+});
+
+// Every screen spaces itself like Inici (RAPP-889): its padding and block gap
+// come from screen-spacing, so no screen or sheet sets its own.
+test('no screen or sheet sets its own page spacing', () => {
+  const ownSpacing =
+    /(contentContainerClassName="[^"]*\bgap-(sm|md|lg|xl|2xl)\b[^"]*\bp-(md|lg|xl)\b|<(PageWidth|FormWidth) className="[^"]*\bgap-(md|xl|2xl)\b)/;
+  const offenders = [...screenFiles('app'), ...screenFiles('components')].filter(
+    (path) =>
+      !path.startsWith('components/dev/') &&
+      path !== 'app/(app)/forum/[id].tsx' &&
+      ownSpacing.test(read(path)),
   );
   expect(offenders).toEqual([]);
 });

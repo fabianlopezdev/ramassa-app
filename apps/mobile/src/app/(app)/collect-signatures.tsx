@@ -14,6 +14,7 @@ import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -102,7 +103,7 @@ export default function CollectSignaturesScreen() {
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
         >
-          <PageWidth className="gap-lg p-lg">
+          <PageWidth className={screenContentClassName}>
             {/* After signing mode the screen may have nothing under it (RAPP-530),
                 so the native header has no back arrow: this leads to More. */}
             {router.canGoBack() ? null : (

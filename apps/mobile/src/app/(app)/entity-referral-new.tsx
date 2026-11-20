@@ -19,6 +19,7 @@ import { FieldLabel } from '@/components/forms/field-label';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import {
   CustomQuestionField,
   type CustomAnswerDraft,
@@ -339,7 +340,7 @@ export default function EntityReferralNewScreen() {
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
         >
-          <PageWidth className="gap-lg p-lg">
+          <PageWidth className={screenContentClassName}>
             <View className="gap-xs">
               <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
                 {t('formIntro')}

@@ -6,6 +6,7 @@ import { PlayerGuideList } from '@/components/knowledge/player-guide-list';
 import { PageWidth } from '@/components/layout/content-width';
 import { Divider } from '@/components/layout/divider';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenBlockGapClassName } from '@/components/layout/screen-spacing';
 import {
   SegmentedControl,
   type SegmentedControlOption,
@@ -70,9 +71,8 @@ function ServicesScreen() {
   // One header for both segments, so the switch stays in place while either loads.
   // The line under the switch is Inici's section divider (RAPP-854).
   const tabHeader = (
-    <View className="gap-lg">
-      <View className="gap-md">
-        <PlayerTabHeader title={t('nav:tabs.services')} />
+    <View className={screenBlockGapClassName}>
+      <PlayerTabHeader title={t('nav:tabs.services')}>
         <SegmentedControl
           testID="ajuda-segments"
           options={segmentOptions}
@@ -81,7 +81,7 @@ function ServicesScreen() {
           accessibilityLabel={t('playerServices:segmentsLabel')}
           languageFontClass={languageFontClass}
         />
-      </View>
+      </PlayerTabHeader>
       <Divider />
     </View>
   );

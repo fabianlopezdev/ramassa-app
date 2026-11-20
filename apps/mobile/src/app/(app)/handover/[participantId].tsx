@@ -12,6 +12,7 @@ import { SignaturePad } from '@/components/equipment/signature-pad';
 import { FailureNotice } from '@/components/error-code-line';
 import { FieldLabel } from '@/components/forms/field-label';
 import { PageWidth } from '@/components/layout/content-width';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverItemTypes, useHandoverOutbox, type HandoverOutcome } from '@/lib/handover';
@@ -263,7 +264,7 @@ export default function HandoverScreen() {
         contentInsetAdjustmentBehavior="automatic"
         contentContainerClassName="pb-3xl"
       >
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           {step === 'done' ? null : (
             <PressableScale
               testID="handover-back"

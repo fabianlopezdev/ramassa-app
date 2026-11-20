@@ -9,6 +9,7 @@
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PreviewStartFailed, useStartPreview } from '@/components/preview/preview-as-player';
 import { useTeamLayout } from '@/components/team/team-layout-context';
@@ -156,7 +157,7 @@ function TeamMoreScreen() {
         {/* The inset keeps the last entry, sign-out, clear of the floating tab bar. */}
         <ScrollView
           contentInsetAdjustmentBehavior="automatic"
-          contentContainerClassName="gap-lg p-lg pb-3xl"
+          contentContainerClassName={`${screenContentClassName} pb-3xl`}
         >
           <Text
             accessibilityRole="header"

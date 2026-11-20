@@ -10,6 +10,7 @@ import { FailureNotice } from '@/components/error-code-line';
 import { FieldLabel } from '@/components/forms/field-label';
 import { PageWidth } from '@/components/layout/content-width';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverItemTypes } from '@/lib/handover';
@@ -158,7 +159,7 @@ export default function StockCountScreen() {
         contentInsetAdjustmentBehavior="automatic"
         contentContainerClassName="pb-3xl"
       >
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <PressableScale
             testID="count-back"
             accessibilityLabel={step === 'review' ? t('count.back') : tCommon('back')}

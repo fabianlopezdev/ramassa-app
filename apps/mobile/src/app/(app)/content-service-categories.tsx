@@ -17,6 +17,7 @@ import { Icon } from '@/components/icons/icon';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useContentServiceCategories, useServiceCategoryActions } from '@/lib/content-services';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -111,7 +112,10 @@ export default function ServiceCategoriesScreen() {
       >
         <NativeScreenHeader title={t('categoriesTitle')} />
         <PageWidth className="flex-1">
-          <ScrollView contentContainerClassName="gap-md p-lg" testID="service-categories">
+          <ScrollView
+            contentContainerClassName={screenContentClassName}
+            testID="service-categories"
+          >
             <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
               {t('categoriesHelpPhone')}
             </Text>

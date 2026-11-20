@@ -283,17 +283,18 @@ function EventsScreen() {
       onLoad={onListLoad}
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
-          <PlayerTabHeader title={t('nav:tabs.events')} />
-          <EventViewToggle
-            selected={view}
-            listLabel={t('playerListView')}
-            calendarLabel={t('playerCalendarView')}
-            listAccessibilityLabel={t('playerListViewAction')}
-            calendarAccessibilityLabel={t('playerCalendarViewAction')}
-            accessibilityLabel={t('playerViewLabel')}
-            languageFontClass={languageFontClass}
-            onSelect={setView}
-          />
+          <PlayerTabHeader title={t('nav:tabs.events')}>
+            <EventViewToggle
+              selected={view}
+              listLabel={t('playerListView')}
+              calendarLabel={t('playerCalendarView')}
+              listAccessibilityLabel={t('playerListViewAction')}
+              calendarAccessibilityLabel={t('playerCalendarViewAction')}
+              accessibilityLabel={t('playerViewLabel')}
+              languageFontClass={languageFontClass}
+              onSelect={setView}
+            />
+          </PlayerTabHeader>
           <EventCategoryFilters
             categories={categories}
             selected={category}

@@ -7,6 +7,10 @@ import { Icon } from '@/components/icons/icon';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
+import {
+  screenBlockGapClassName,
+  screenContentClassName,
+} from '@/components/layout/screen-spacing';
 import { continuousCorners } from '@/lib/continuous-corners';
 import {
   useOwnSurveyResponse,
@@ -384,7 +388,7 @@ export default function SurveyScreen() {
       <SurveyScreenFrame
         screenTitle={screenTitle}
         contentInsets={contentInsets}
-        contentContainerClassName="grow items-center justify-center gap-lg p-xl"
+        contentContainerClassName={`grow items-center justify-center ${screenContentClassName}`}
         action={<AuthSubmitButton label={t('back')} onPress={back} />}
       >
         <View testID="survey-completion" className="w-full items-center gap-lg">
@@ -443,8 +447,8 @@ export default function SurveyScreen() {
         </>
       }
     >
-      <FormWidth className="gap-xl">
-        <View className="gap-xl">
+      <FormWidth className={screenBlockGapClassName}>
+        <View className={screenBlockGapClassName}>
           <View className="gap-sm">
             <Text
               style={styles.dynamicCopy}

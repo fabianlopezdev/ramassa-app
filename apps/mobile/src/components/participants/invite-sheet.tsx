@@ -18,6 +18,7 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { InviteQuestionsStep } from '@/components/participants/invite-questions-step';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -187,7 +188,7 @@ export function InviteSheet({
             behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
           >
             <ScrollView
-              contentContainerClassName="gap-md p-lg"
+              contentContainerClassName={screenContentClassName}
               keyboardShouldPersistTaps="handled"
               // The page sheet does not move with the keyboard, so the scroll view does.
               automaticallyAdjustKeyboardInsets

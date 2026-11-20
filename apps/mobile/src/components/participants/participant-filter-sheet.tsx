@@ -9,6 +9,7 @@ import { useAppLock } from '@/components/auth/app-lock';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { ChoiceGroup } from '@/components/forms/choice-group';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import type { ParticipantListSearch } from '@/lib/participant-filters';
 import { useParticipantFilterOptions } from '@/lib/participant-lookup';
@@ -59,7 +60,7 @@ export function ParticipantFilterSheet({
     >
       <NativeModalScope>
         <SafeAreaView className="flex-1 bg-white" testID="participant-filter-sheet">
-          <ScrollView contentContainerClassName="gap-lg p-lg">
+          <ScrollView contentContainerClassName={screenContentClassName}>
             <Text
               accessibilityRole="header"
               className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}

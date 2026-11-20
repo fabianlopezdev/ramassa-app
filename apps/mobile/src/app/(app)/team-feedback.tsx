@@ -14,6 +14,7 @@ import { Badge } from '@/components/layout/badge';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { nextFeedbackStatuses } from '@/lib/feedback-status';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -209,7 +210,7 @@ export default function TeamFeedbackScreen() {
     <SafeAreaView testID="team-feedback" className="flex-1 bg-neutral-50" edges={['left', 'right']}>
       <NativeScreenHeader title={t('inboxTitle')} />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <View className="gap-xs">
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
               {t('inboxIntro')}

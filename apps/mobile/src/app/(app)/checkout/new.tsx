@@ -14,6 +14,7 @@ import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { clampQuantity } from '@/lib/arrival-form';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverItemTypes } from '@/lib/handover';
@@ -134,7 +135,7 @@ export default function NewCheckoutScreen() {
           contentInsetAdjustmentBehavior="automatic"
           contentContainerClassName="pb-3xl"
         >
-          <PageWidth className="gap-lg p-lg">
+          <PageWidth className={screenContentClassName}>
             <View className="gap-xs">
               <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
                 {t('checkout.intro')}

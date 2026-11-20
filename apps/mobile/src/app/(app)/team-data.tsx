@@ -16,6 +16,7 @@ import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { teamScreens } from '@/lib/account-area';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -384,7 +385,7 @@ export default function TeamDataScreen() {
         contentContainerClassName="pb-3xl"
         keyboardShouldPersistTaps="handled"
       >
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           {team.dataExports ? <Exports permissions={permissions} /> : null}
           {team.auditLog ? <AuditLog /> : null}
         </PageWidth>

@@ -14,6 +14,7 @@ import {
 import { FailureNotice } from '@/components/error-code-line';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { SectionTitle } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { PreviewItemAsPlayer } from '@/components/preview/preview-as-player';
 import { useContentEvent, useContentEventOccurrences, useEventActions } from '@/lib/content-events';
@@ -121,7 +122,7 @@ export function EventDetail({
   const locationUrl = data.location_url;
 
   return (
-    <ScrollView contentContainerClassName="gap-md p-lg" testID="event-detail">
+    <ScrollView contentContainerClassName={screenContentClassName} testID="event-detail">
       <View className="gap-xs">
         <Text
           accessibilityRole="header"

@@ -14,6 +14,7 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useParticipantDeletionRequest, useParticipantRgpdActions } from '@/lib/rgpd';
@@ -106,7 +107,7 @@ function DestructiveSheet({
           behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
         >
           <ScrollView
-            contentContainerClassName="gap-md p-lg"
+            contentContainerClassName={screenContentClassName}
             keyboardShouldPersistTaps="handled"
             // The page sheet does not move with the keyboard, so the scroll view does.
             automaticallyAdjustKeyboardInsets

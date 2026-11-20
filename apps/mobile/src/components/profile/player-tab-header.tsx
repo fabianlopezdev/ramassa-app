@@ -8,6 +8,7 @@
  * states, so her photo never disappears while a tab waits for its data.
  */
 import { PageWidth } from '@/components/layout/content-width';
+import { titleToContentGapClassName } from '@/components/layout/screen-spacing';
 import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { PLAYER_TAB_TOP_GAP } from '@/lib/use-player-tab-content-insets';
@@ -21,9 +22,19 @@ const styles = StyleSheet.create({
   frame: { flex: 1, backgroundColor: tokens.colors.surface.page },
 });
 
-export function PlayerTabHeader({ title }: { readonly title: string }) {
+/**
+ * `children` is the tab's switch between its views (RAPP-889): it sits under the
+ * title at the gap a section title keeps from its content.
+ */
+export function PlayerTabHeader({
+  title,
+  children,
+}: {
+  readonly title: string;
+  readonly children?: ReactNode;
+}) {
   const languageFontClass = useLanguageFontClass();
-  return (
+  const titleRow = (
     <View testID="player-tab-header" className="flex-row items-center gap-md">
       <Text
         accessibilityRole="header"
@@ -32,6 +43,13 @@ export function PlayerTabHeader({ title }: { readonly title: string }) {
         {title}
       </Text>
       <ProfilePhotoButton />
+    </View>
+  );
+  if (children === undefined) return titleRow;
+  return (
+    <View className={titleToContentGapClassName}>
+      {titleRow}
+      {children}
     </View>
   );
 }

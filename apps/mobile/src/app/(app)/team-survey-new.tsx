@@ -16,6 +16,7 @@ import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { AudiencePicker } from '@/components/team/audience-picker';
 import { ReviewedField, type ReviewedText } from '@/components/team/reviewed-field';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -251,7 +252,7 @@ export default function TeamSurveyNewScreen() {
           contentContainerClassName="pb-3xl"
           keyboardShouldPersistTaps="handled"
         >
-          <PageWidth className="gap-lg p-lg">
+          <PageWidth className={screenContentClassName}>
             <ScreenSection title={t('newSurvey')}>
               <ReviewedField
                 reviewKey={TITLE_KEY}

@@ -9,6 +9,7 @@ import { AuthBackButton } from '@/components/auth/auth-back-button';
 import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { FieldLabel } from '@/components/forms/field-label';
 import { PageWidth } from '@/components/layout/content-width';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { LanguageSwitcher } from '@/components/profile/language-switcher';
 import { APP_LOCK_TIMEOUTS, type AppLockTimeout } from '@/lib/app-lock';
 import { usePendingSigningCount } from '@/lib/tablet-signing';
@@ -54,7 +55,7 @@ export default function AppLockScreen() {
   return (
     <SafeAreaView className="flex-1 bg-neutral-50" testID="app-lock-settings">
       <PageWidth>
-        <ScrollView contentContainerClassName="gap-lg p-lg">
+        <ScrollView contentContainerClassName={screenContentClassName}>
           <AuthBackButton onPress={() => router.back()} />
           {isStaffSide ? (
             // Team members and entity contacts have no profile tab: their

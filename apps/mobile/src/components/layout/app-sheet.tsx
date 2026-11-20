@@ -16,6 +16,7 @@
  */
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useCallback, useEffect, useRef, type ReactNode } from 'react';
@@ -112,7 +113,7 @@ export function AppSheet({
               style={fillStyle}
               onScroll={rememberScrollOffset}
               scrollEventThrottle={16}
-              contentContainerClassName="gap-lg p-lg"
+              contentContainerClassName={screenContentClassName}
               contentInsetAdjustmentBehavior="automatic"
               keyboardDismissMode="on-drag"
               keyboardShouldPersistTaps="handled"

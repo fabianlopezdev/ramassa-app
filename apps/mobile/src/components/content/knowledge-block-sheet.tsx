@@ -10,6 +10,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import type { PickedPhoto } from '@/lib/content-upload';
 import type { FormBlock } from '@/lib/knowledge-draft';
@@ -65,7 +66,7 @@ function BlockForm({
 
   return (
     <ScrollView
-      contentContainerClassName="gap-md p-lg"
+      contentContainerClassName={screenContentClassName}
       keyboardShouldPersistTaps="handled"
       // The page sheet does not move with the keyboard, so the scroll view does.
       automaticallyAdjustKeyboardInsets

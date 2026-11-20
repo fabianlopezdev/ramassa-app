@@ -15,6 +15,7 @@ import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -58,7 +59,7 @@ function DeletionConfirmation({
         <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
           <ScrollView
             contentInsetAdjustmentBehavior="automatic"
-            contentContainerClassName="grow justify-center gap-xl p-lg sm:self-center sm:w-full sm:max-w-form"
+            contentContainerClassName={`grow justify-center ${screenContentClassName} sm:self-center sm:w-full sm:max-w-form`}
           >
             <View className="gap-sm">
               <Text
