@@ -9,7 +9,6 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { ProfileNameBox } from '@/components/profile/profile-name-box';
-import { ProfilePhotoEditor } from '@/components/profile/profile-photo-editor';
 import { ProfileScreenFrame } from '@/components/profile/profile-screen-frame';
 import { ProfileRow, ProfileSection } from '@/components/profile/profile-section';
 import { SeasonAnswerRows } from '@/components/profile/season-answer-rows';
@@ -114,8 +113,7 @@ export default function ProfileDataScreen() {
         </ShakeOnError>
       ) : (
         <>
-          <ProfileNameBox firstName={profile.first_name} lastName={profile.last_name} />
-          <ProfilePhotoEditor profile={profile} />
+          <ProfileNameBox profile={profile} />
           <ProfileSection title={t('sectionIdentity')}>
             <ProfileRow label={t('onboarding:firstNameLabel')} value={profile.first_name} />
             <ProfileRow label={t('onboarding:lastNameLabel')} value={profile.last_name} />

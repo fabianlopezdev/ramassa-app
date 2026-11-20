@@ -5,12 +5,15 @@
  */
 import { View } from 'react-native';
 
+/** The colour of every separating line, for a line drawn as a border of its own row. */
+export const DIVIDER_COLOR_CLASS_NAME = 'border-neutral-200';
+
 export function Divider({ className }: { readonly className?: string }) {
   return (
     <View
       accessible={false}
       importantForAccessibility="no"
-      className={`border-b border-neutral-200 ${className ?? ''}`}
+      className={`border-b ${DIVIDER_COLOR_CLASS_NAME} ${className ?? ''}`}
     />
   );
 }

@@ -3,13 +3,13 @@ import { FailureNotice } from '@/components/error-code-line';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SuccessPop } from '@/components/motion/success-pop';
-import { PersonAvatar } from '@/components/people/person-avatar';
+import { PERSON_AVATAR_SIZE, PersonAvatar } from '@/components/people/person-avatar';
 import { safeAsync } from '@/lib/observability';
 import { saveProfilePhoto } from '@/lib/profile-photo';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Linking, Text, View } from 'react-native';
 import { AppError, type AppErrorCode } from '@ramassa/shared/errors';
@@ -24,7 +24,18 @@ const PHOTO_OPTIONS: ImagePicker.ImagePickerOptions = {
   exif: false,
 };
 
-export function ProfilePhotoEditor({ profile }: { readonly profile: ProfileRecordWithFields }) {
+/**
+ * Her photo with the button that changes it underneath. `beside` sits to the
+ * end of them, such as her name on Les meves dades (RAPP-888); the camera and
+ * library choices open under the whole row.
+ */
+export function ProfilePhotoEditor({
+  profile,
+  beside,
+}: {
+  readonly profile: ProfileRecordWithFields;
+  readonly beside?: ReactNode;
+}) {
   const { t } = useTranslation('profile');
   const font = useLanguageFontClass();
   const queryClient = useQueryClient();
@@ -93,9 +104,11 @@ export function ProfilePhotoEditor({ profile }: { readonly profile: ProfileRecor
   );
   return (
     <View className="gap-md">
-      <View className="flex-row items-center gap-lg">
-        {saved > 0 ? <SuccessPop key={saved}>{portrait}</SuccessPop> : portrait}
-        <View className="flex-1">
+      <View className="flex-row items-center gap-md">
+        <View className="gap-sm" style={{ width: PERSON_AVATAR_SIZE.profile }}>
+          <View className="items-center">
+            {saved > 0 ? <SuccessPop key={saved}>{portrait}</SuccessPop> : portrait}
+          </View>
           <RaisedActionButton
             testID="profile-photo-edit"
             label={profile.avatar_url ? t('photo.change') : t('photo.add')}
@@ -103,6 +116,7 @@ export function ProfilePhotoEditor({ profile }: { readonly profile: ProfileRecor
             isDisabled={busy}
           />
         </View>
+        {beside === undefined ? null : <View className="flex-1">{beside}</View>}
       </View>
       {expanded ? (
         <View className="gap-sm">
