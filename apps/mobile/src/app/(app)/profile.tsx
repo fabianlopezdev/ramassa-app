@@ -46,7 +46,7 @@ export default function ProfileScreen() {
   const signOut = useCallback(() => void logout(), []);
 
   return (
-    <ProfileScreenFrame title={t('title')} testID="profile-menu">
+    <ProfileScreenFrame title={t('title')} testID="profile-menu" flushBottom>
       <RaisedHalfCardRow>
         <RaisedHalfCard
           testID="profile-open-data"
