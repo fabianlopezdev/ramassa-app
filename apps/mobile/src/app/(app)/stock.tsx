@@ -13,6 +13,7 @@ import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverItemTypes } from '@/lib/handover';
@@ -199,7 +200,7 @@ export default function StockScreen() {
       >
         <NativeScreenHeader title={t('stock.title')} />
         <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-          <PageWidth className="gap-lg p-lg">
+          <PageWidth className={screenContentClassName}>
             <View className="gap-xs">
               <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
                 {t('stock.intro')}

@@ -10,6 +10,7 @@ import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-loa
 import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { PageWidth } from '@/components/layout/content-width';
 import { RaisedCard } from '@/components/layout/raised-card';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { useEntityUpcomingEvents } from '@/lib/entity-portal';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -39,7 +40,7 @@ function EntityEventsScreen() {
       edges={['top', 'left', 'right']}
     >
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <EntityScreenHeader title={t('eventsTitle')} intro={t('eventsIntro')} />
           {hasLoadFailed(events) ? (
             <EntityLoadFailure query={events} />

@@ -4,6 +4,7 @@
  * review, Move up and Move down, and Remove. A chosen photo is uploaded when
  * the service is saved.
  */
+import { FieldLabel } from '@/components/forms/field-label';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import type { PickedPhoto } from '@/lib/content-upload';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -97,9 +98,7 @@ export function ServiceImagesField({
 
   return (
     <View className="gap-sm" testID="service-images">
-      <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-        {t('fieldImage')}
-      </Text>
+      <FieldLabel>{t('fieldImage')}</FieldLabel>
       {images.map((image, index) => {
         const isPending = pendingPhotos.has(image.key);
         return (

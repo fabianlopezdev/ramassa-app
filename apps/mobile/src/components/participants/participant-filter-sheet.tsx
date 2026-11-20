@@ -8,13 +8,14 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { ChoiceGroup } from '@/components/forms/choice-group';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import type { ParticipantListSearch } from '@/lib/participant-filters';
 import { useParticipantFilterOptions } from '@/lib/participant-lookup';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, ScrollView, Text, View } from 'react-native';
+import { Modal, ScrollView, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PARTICIPANT_SORT_COLUMNS, type ParticipantSortColumn } from '@ramassa/shared/participants';
 
@@ -31,22 +32,6 @@ export const SORT_LABEL_KEYS: Readonly<Record<ParticipantSortColumn, string>> = 
 
 // First name and last name read the same in a picker; the list sorts by surname.
 const SHEET_SORTS = PARTICIPANT_SORT_COLUMNS.filter((column) => column !== 'first_name');
-
-function Group({ label, children }: { readonly label: string; readonly children: ReactNode }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View className="gap-sm">
-      <Text className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}>{label}</Text>
-      <View
-        accessibilityRole="radiogroup"
-        accessibilityLabel={label}
-        className="flex-row flex-wrap gap-sm"
-      >
-        {children}
-      </View>
-    </View>
-  );
-}
 
 export function ParticipantFilterSheet({
   visible,
@@ -75,7 +60,7 @@ export function ParticipantFilterSheet({
     >
       <NativeModalScope>
         <SafeAreaView className="flex-1 bg-white" testID="participant-filter-sheet">
-          <ScrollView contentContainerClassName="gap-lg p-lg">
+          <ScrollView contentContainerClassName={screenContentClassName}>
             <Text
               accessibilityRole="header"
               className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}
@@ -83,7 +68,7 @@ export function ParticipantFilterSheet({
               {t('list.filtersTitle')}
             </Text>
             {(options?.entities.length ?? 0) > 0 ? (
-              <Group label={t('filterEntity')}>
+              <ChoiceGroup label={t('filterEntity')}>
                 {[ALL, ...(options?.entities ?? [])].map((entity) => (
                   <ChoiceOption
                     key={entity}
@@ -95,10 +80,10 @@ export function ParticipantFilterSheet({
                     languageFontClass={fontClass}
                   />
                 ))}
-              </Group>
+              </ChoiceGroup>
             ) : null}
             {(options?.nationalities.length ?? 0) > 0 ? (
-              <Group label={t('filterNationality')}>
+              <ChoiceGroup label={t('filterNationality')}>
                 {[ALL, ...(options?.nationalities ?? [])].map((nationality) => (
                   <ChoiceOption
                     key={nationality}
@@ -110,10 +95,10 @@ export function ParticipantFilterSheet({
                     languageFontClass={fontClass}
                   />
                 ))}
-              </Group>
+              </ChoiceGroup>
             ) : null}
             {(options?.nationalities.length ?? 0) > 0 ? (
-              <Group label={t('filterDependents')}>
+              <ChoiceGroup label={t('filterDependents')}>
                 {(['all', 'with', 'without'] as const).map((choice) => (
                   <ChoiceOption
                     key={choice}
@@ -129,9 +114,9 @@ export function ParticipantFilterSheet({
                     languageFontClass={fontClass}
                   />
                 ))}
-              </Group>
+              </ChoiceGroup>
             ) : null}
-            <Group label={t('list.sortLabel')}>
+            <ChoiceGroup label={t('list.sortLabel')}>
               {SHEET_SORTS.map((column) => (
                 <ChoiceOption
                   key={column}
@@ -143,8 +128,8 @@ export function ParticipantFilterSheet({
                   languageFontClass={fontClass}
                 />
               ))}
-            </Group>
-            <Group label={t('list.dirLabel')}>
+            </ChoiceGroup>
+            <ChoiceGroup label={t('list.dirLabel')}>
               {(['asc', 'desc'] as const).map((dir) => (
                 <ChoiceOption
                   key={dir}
@@ -156,7 +141,7 @@ export function ParticipantFilterSheet({
                   languageFontClass={fontClass}
                 />
               ))}
-            </Group>
+            </ChoiceGroup>
             <AuthSubmitButton
               testID="filter-done"
               label={t('list.filtersDone')}

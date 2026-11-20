@@ -10,6 +10,7 @@ import { GalleryGrid } from '@/components/gallery/gallery-grid';
 import { CommunityStoryList } from '@/components/knowledge/community-story-list';
 import { PageWidth } from '@/components/layout/content-width';
 import { raisedToneFromColorName, type RaisedTone } from '@/components/layout/raised-surface';
+import { screenBlockGapClassName } from '@/components/layout/screen-spacing';
 import {
   SegmentedControl,
   type SegmentedControlOption,
@@ -198,16 +199,17 @@ function CommunityScreen() {
   // Fòrum segment, so the screen never stacks two filter rows (plan P4).
   const header = (
     <View className="gap-lg pb-lg">
-      <PageWidth className="gap-md">
-        <PlayerTabHeader title={t('nav:tabs.community')} />
-        <SegmentedControl
-          testID="community-segments"
-          options={segmentOptions}
-          selected={segment}
-          onSelect={setSegment}
-          accessibilityLabel={t('forum:segmentsLabel')}
-          languageFontClass={languageFontClass}
-        />
+      <PageWidth className={screenBlockGapClassName}>
+        <PlayerTabHeader title={t('nav:tabs.community')}>
+          <SegmentedControl
+            testID="community-segments"
+            options={segmentOptions}
+            selected={segment}
+            onSelect={setSegment}
+            accessibilityLabel={t('forum:segmentsLabel')}
+            languageFontClass={languageFontClass}
+          />
+        </PlayerTabHeader>
         {segment === 'forum' ? (
           <ForumCategoryFilters
             categories={categoriesQuery.data ?? EMPTY_CATEGORIES}

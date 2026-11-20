@@ -15,6 +15,7 @@ import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ForumCategorySheet } from '@/components/team/forum-category-sheet';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -117,7 +118,7 @@ export default function ForumCategoriesScreen() {
       >
         <NativeScreenHeader title={t('categoryManagerTitle')} />
         <PageWidth className="flex-1">
-          <ScrollView contentContainerClassName="gap-md p-lg" testID="forum-categories">
+          <ScrollView contentContainerClassName={screenContentClassName} testID="forum-categories">
             <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
               {tEvents('categoriesHelpPhone')}
             </Text>

@@ -13,6 +13,7 @@ import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { PageWidth } from '@/components/layout/content-width';
 import { RaisedCard } from '@/components/layout/raised-card';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { BarRow, MonthBars, Sparkline } from '@/components/team/impact-charts';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -91,7 +92,7 @@ function EntityHomeScreen() {
       edges={['top', 'left', 'right']}
     >
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <EntityScreenHeader title={t('entity.dashboard')} intro={tEntity('dashboardIntro')} />
           {hasLoadFailed(dashboard) ? <EntityLoadFailure query={dashboard} /> : null}
 

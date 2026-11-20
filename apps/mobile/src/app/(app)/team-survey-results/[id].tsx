@@ -11,6 +11,7 @@ import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useStaffSurveys, useSurveyExport, useSurveyResponses } from '@/lib/team-surveys';
@@ -169,7 +170,7 @@ export default function TeamSurveyResultsScreen() {
         title={survey === undefined ? undefined : resolveSurveyCopy(survey.title, language)}
       />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           {survey === undefined ? (
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
               {surveys.isError ? t('loadError') : t('loadingResponses')}

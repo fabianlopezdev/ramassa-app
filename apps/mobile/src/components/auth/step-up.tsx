@@ -15,6 +15,7 @@ import { useAppLock } from '@/components/auth/app-lock';
 import { AuthFormError } from '@/components/auth/auth-form-error';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { supabase } from '@/lib/supabase';
@@ -155,7 +156,7 @@ function StepUpSheet({
           behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
         >
           <ScrollView
-            contentContainerClassName="gap-md p-lg"
+            contentContainerClassName={screenContentClassName}
             keyboardShouldPersistTaps="handled"
             // The page sheet does not move with the keyboard, so the scroll view does.
             automaticallyAdjustKeyboardInsets

@@ -9,10 +9,11 @@
  */
 
 import { SignatureSection } from '@/components/authorization/signature-section';
+import { FieldLabel } from '@/components/forms/field-label';
 import { FieldErrorText } from '@/components/onboarding/field-error-text';
 import { fontClassForLanguage } from '@/lib/language-font-class';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useLanguage, type SupportedLanguage } from '@ramassa/shared/i18n';
 import { staffTextIn } from '@ramassa/shared/i18n/localized-content';
 import {
@@ -55,9 +56,7 @@ export function SignatureBlockField({
     staffTextIn(block.texts?.[field], language, isOptional) ?? undefined;
   return (
     <View className="gap-sm" testID={`signature-block-${block.id}`}>
-      <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
-        {formBlockText(block, language).text}
-      </Text>
+      <FieldLabel fontClass={fontClass}>{formBlockText(block, language).text}</FieldLabel>
       <SignatureSection
         strokes={given === null || isUnable ? null : given}
         onChange={onChange}

@@ -1,6 +1,7 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { FormWidth } from '@/components/layout/content-width';
 import { RaisedChip } from '@/components/layout/filter-chips';
@@ -277,11 +278,7 @@ export default function FeedbackScreen() {
               </SuccessPop>
             ) : (
               <ScreenSection title={t('feedback:newSubmission')}>
-                <Text
-                  className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}
-                >
-                  {t('feedback:typeLabel')}
-                </Text>
+                <FieldLabel>{t('feedback:typeLabel')}</FieldLabel>
                 <View
                   accessibilityRole="radiogroup"
                   accessibilityLabel={t('feedback:typeLabel')}

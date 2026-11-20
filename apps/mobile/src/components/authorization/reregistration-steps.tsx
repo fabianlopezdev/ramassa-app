@@ -13,6 +13,7 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import {
   CustomQuestionList,
   type CustomAnswerDraft,
@@ -200,7 +201,7 @@ export function ReregistrationSteps({
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
       >
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <View className="gap-xs">
             <Text
               accessibilityRole="header"

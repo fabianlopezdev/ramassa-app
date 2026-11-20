@@ -8,9 +8,11 @@
  */
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useEntityReferral, useReferralActions } from '@/lib/entity-referrals';
@@ -175,7 +177,7 @@ export default function EntityReferralScreen() {
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
       >
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           {data === undefined ? null : (
             <>
               <View className="gap-xs">
@@ -225,11 +227,7 @@ export default function EntityReferralScreen() {
                   </Text>
                 ) : (
                   <>
-                    <Text
-                      className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}
-                    >
-                      {t('updateType')}
-                    </Text>
+                    <FieldLabel>{t('updateType')}</FieldLabel>
                     <View className="flex-row flex-wrap gap-sm">
                       {REFERRAL_UPDATE_TYPES.map((type) => (
                         <ChoiceOption

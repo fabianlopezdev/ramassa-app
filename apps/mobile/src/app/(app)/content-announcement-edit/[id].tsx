@@ -17,6 +17,7 @@ import { DateTimeField } from '@/components/content/date-time-field';
 import { MultilingualField } from '@/components/content/multilingual-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { SwitchCard } from '@/components/forms/switch-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -292,9 +293,7 @@ function AnnouncementForm({
         </Text>
       )}
       <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-          {t('fieldCategory')}
-        </Text>
+        <FieldLabel>{t('fieldCategory')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {ANNOUNCEMENT_CATEGORIES.map((category) => (
             <ChoiceOption
@@ -328,9 +327,7 @@ function AnnouncementForm({
       />
 
       <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-          {t('fieldImage')}
-        </Text>
+        <FieldLabel>{t('fieldImage')}</FieldLabel>
         {hasImage ? (
           <Text
             testID="announcement-image-state"
@@ -399,9 +396,7 @@ function AnnouncementForm({
       />
 
       <View className="gap-sm">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-          {t('modeLabel')}
-        </Text>
+        <FieldLabel>{t('modeLabel')}</FieldLabel>
         {canPublish ? (
           <>
             <View className="flex-row flex-wrap gap-sm">

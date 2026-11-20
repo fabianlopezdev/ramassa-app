@@ -14,6 +14,7 @@
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
+import { FieldLabel } from '@/components/forms/field-label';
 import { FieldErrorText } from '@/components/onboarding/field-error-text';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { ChoiceGrid } from '@/components/onboarding/option-grid';
@@ -97,12 +98,9 @@ function Question({
   readonly help?: string | null;
   readonly children: React.ReactNode;
 }) {
-  const fontClass = useLanguageFontClass();
   return (
     <View className="gap-sm">
-      <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
-        {label}
-      </Text>
+      <FieldLabel>{label}</FieldLabel>
       <QuestionHelp text={help} />
       <View className="flex-row flex-wrap gap-sm">{children}</View>
     </View>
@@ -179,9 +177,9 @@ export function SeasonAnswerFields({
         >
           {applicantStatusPresentation === 'picker' ? null : (
             <>
-              <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
+              <FieldLabel>
                 {label('applicant_status', t('onboarding:applicantStatusLabel'))}
-              </Text>
+              </FieldLabel>
               <QuestionHelp text={help('applicant_status')} />
             </>
           )}

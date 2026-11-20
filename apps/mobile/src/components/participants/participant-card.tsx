@@ -18,6 +18,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ParticipantMaterial } from '@/components/equipment/participant-material';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { ParticipantActivity } from '@/components/participants/participant-activity';
 import { ParticipantNotes } from '@/components/participants/participant-notes';
 import { ParticipantRgpd } from '@/components/participants/participant-rgpd';
@@ -328,7 +329,7 @@ export function ParticipantCard({
   };
 
   return (
-    <ScrollView contentContainerClassName="gap-md p-lg" testID="participant-card">
+    <ScrollView contentContainerClassName={screenContentClassName} testID="participant-card">
       <View className="gap-xs">
         <Text
           accessibilityRole="header"

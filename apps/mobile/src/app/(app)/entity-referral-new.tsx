@@ -15,9 +15,11 @@ import {
   type ReferralCheckedField,
 } from '@/components/entity/referral-builtin-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import {
   CustomQuestionField,
   type CustomAnswerDraft,
@@ -338,7 +340,7 @@ export default function EntityReferralNewScreen() {
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
         >
-          <PageWidth className="gap-lg p-lg">
+          <PageWidth className={screenContentClassName}>
             <View className="gap-xs">
               <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
                 {t('formIntro')}
@@ -387,9 +389,7 @@ export default function EntityReferralNewScreen() {
               maxLength={254}
             />
             <View className="gap-sm">
-              <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
-                {t('documentationLabel')}
-              </Text>
+              <FieldLabel>{t('documentationLabel')}</FieldLabel>
               <View className="flex-row flex-wrap gap-sm">
                 {DOCUMENTATION_STATUSES.map((status) => (
                   <ChoiceOption

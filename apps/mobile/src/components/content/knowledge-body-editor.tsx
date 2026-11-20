@@ -15,6 +15,7 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import type { FormBlock, FormBlockType } from '@/lib/knowledge-draft';
@@ -98,9 +99,7 @@ export function KnowledgeSourceBlocks({
   const fontClass = useLanguageFontClass();
   return (
     <View className="gap-sm" testID="knowledge-source-blocks">
-      <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-        {t('fieldBody')}
-      </Text>
+      <FieldLabel>{t('fieldBody')}</FieldLabel>
       {blocks.map((block, index) => {
         const label = block.type === 'paragraph' ? t('paragraphText') : t('blockStep');
         const hasPhoto =
@@ -277,9 +276,7 @@ export function KnowledgeTranslatedBodies({
           ))}
         </View>
       </ScrollView>
-      <Text className={`text-start text-md font-semibold text-neutral-800 ${fontClass}`}>
-        {t('translationBody', { language: LANGUAGE_NATIVE_NAMES[open] })}
-      </Text>
+      <FieldLabel>{t('translationBody', { language: LANGUAGE_NATIVE_NAMES[open] })}</FieldLabel>
       {blocks.map((block, index) => (
         <TranslatedBlockFields
           key={`${open}-${index}`}

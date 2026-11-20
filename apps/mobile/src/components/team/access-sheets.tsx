@@ -8,7 +8,9 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { PermissionToggles } from '@/components/team/permission-toggles';
@@ -56,7 +58,7 @@ function Sheet({
             behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
           >
             <ScrollView
-              contentContainerClassName="gap-md p-lg"
+              contentContainerClassName={screenContentClassName}
               keyboardShouldPersistTaps="handled"
               automaticallyAdjustKeyboardInsets
             >
@@ -179,9 +181,7 @@ function MemberAccessForm({
         title={t('team.editAccessTitle', { name: `${member.first_name} ${member.last_name}` })}
         intro={t('team.editAccessIntro')}
       />
-      <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-        {t('team.presetLabel')}
-      </Text>
+      <FieldLabel>{t('team.presetLabel')}</FieldLabel>
       <View className="flex-row flex-wrap gap-sm">
         {presets.map((preset) => (
           <ChoiceOption

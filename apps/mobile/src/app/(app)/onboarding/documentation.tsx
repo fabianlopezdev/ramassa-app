@@ -5,6 +5,7 @@
  * on it.
  */
 import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
+import { FieldLabel } from '@/components/forms/field-label';
 import { QuestionHelp } from '@/components/onboarding/question-help';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
@@ -22,7 +23,7 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, useWindowDimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 import { documentDetailScreen, offersSkipAnswer } from '@ramassa/shared/intake';
 import { DOCUMENT_TYPES, type DocumentationStep } from '@ramassa/shared/schemas';
 import { tokens } from '@ramassa/shared/tokens';
@@ -126,9 +127,7 @@ export default function DocumentationStepScreen() {
           accessibilityLabel={wording.label('document', t('documentTypeLabel'))}
           className="gap-sm"
         >
-          <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
-            {wording.label('document', t('documentTypeLabel'))}
-          </Text>
+          <FieldLabel>{wording.label('document', t('documentTypeLabel'))}</FieldLabel>
           <QuestionHelp text={wording.help('document')} />
           {options.map((option) => (
             <SelectionChoiceCard

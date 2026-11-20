@@ -11,6 +11,7 @@ import { EntityServiceStatus } from '@/components/entity/entity-service-status';
 import { PageWidth } from '@/components/layout/content-width';
 import { RaisedCard } from '@/components/layout/raised-card';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { confirmDelete } from '@/lib/confirm-delete';
@@ -106,7 +107,7 @@ function EntityServicesScreen() {
       edges={['top', 'left', 'right']}
     >
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <EntityScreenHeader title={t('title')} intro={t('intro')} />
           <View className="self-start">
             <CardButton

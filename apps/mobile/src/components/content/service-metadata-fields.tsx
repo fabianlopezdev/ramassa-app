@@ -8,6 +8,7 @@
  */
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { SwitchCard } from '@/components/forms/switch-card';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
@@ -78,9 +79,7 @@ function MetadataField({
           : [];
     return (
       <View className="gap-xs" testID={testID}>
-        <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-          {label}
-        </Text>
+        <FieldLabel>{label}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {(field.options ?? []).map((option) => (
             <ChoiceOption

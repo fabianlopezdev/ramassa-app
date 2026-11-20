@@ -22,7 +22,7 @@ export default function GalleryScreen() {
   const openUpload = useCallback(() => push('/gallery/upload' as Href), [push]);
   const header = useMemo(
     () => (
-      <PageWidth className="gap-md pb-lg">
+      <PageWidth className="pb-lg">
         <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
           {t('intro')}
         </Text>

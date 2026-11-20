@@ -11,6 +11,7 @@ import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { compressNativeStoryImage } from '@/lib/native-image-compression';
 import { mobileClientEnv, supabase } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -155,7 +156,7 @@ export default function PhotoHandoffScreen() {
       >
         <NativeScreenHeader title={t('handoff.pageTitle')} />
         <ScrollView contentContainerClassName="pb-3xl">
-          <PageWidth className="gap-lg p-lg">
+          <PageWidth className={screenContentClassName}>
             {handoff.isPending ? <ActivityIndicator color={tokens.colors.primary.DEFAULT} /> : null}
             {state === 'missing' ? sentence(t('handoff.notFound')) : null}
             {state === 'expired' ? sentence(t('handoff.pageExpired')) : null}

@@ -10,6 +10,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { SwitchCard } from '@/components/forms/switch-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -101,9 +102,7 @@ export function ServiceFieldForm({
             testID="service-field-key-stored"
             className="gap-xs"
           >
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('fieldKey')}
-            </Text>
+            <FieldLabel>{t('fieldKey')}</FieldLabel>
             <Text selectable className={`text-start text-md text-neutral-900 ${fontClass}`}>
               {draft.key}
             </Text>
@@ -125,9 +124,7 @@ export function ServiceFieldForm({
       </View>
 
       <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-          {t('fieldType')}
-        </Text>
+        <FieldLabel>{t('fieldType')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {SERVICE_METADATA_FIELD_TYPES.map((type) => (
             <ChoiceOption
@@ -157,9 +154,7 @@ export function ServiceFieldForm({
 
       {usesOptions ? (
         <View className="gap-sm" testID="service-field-options">
-          <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-            {t('fieldOptions')}
-          </Text>
+          <FieldLabel>{t('fieldOptions')}</FieldLabel>
           <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
             {t('fieldOptionsHelp')}
           </Text>

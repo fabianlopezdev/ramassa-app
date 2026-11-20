@@ -25,6 +25,7 @@ import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { ConsentRow } from '@/components/authorization/consent-row';
 import { FormWalker } from '@/components/forms/form-walker';
 import { PageWidth } from '@/components/layout/content-width';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SignatureBlockField } from '@/components/onboarding/signature-block-field';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -196,7 +197,7 @@ function SigningMode() {
     return (
       <SafeAreaView testID="signing-language" className="flex-1 bg-neutral-50">
         <ScrollView contentContainerClassName="pb-3xl">
-          <PageWidth className="gap-lg p-lg">
+          <PageWidth className={screenContentClassName}>
             <ReturnToCoach onPress={() => void leave()} />
             {/* She may read none of the coach's languages: the question is asked in all five. */}
             <View className="gap-xs">
@@ -308,7 +309,7 @@ function SigningMode() {
     return (
       <SafeAreaView testID="signing-blocks" style={direction} className="flex-1 bg-neutral-50">
         <ScrollView scrollEnabled={!isDrawing} contentContainerClassName="pb-3xl">
-          <PageWidth className="gap-lg p-lg">
+          <PageWidth className={screenContentClassName}>
             <ReturnToCoach onPress={() => void leave()} />
             <Text className={`text-start text-md text-neutral-700 ${fontClass}`}>
               {t('signingFor', { name })}

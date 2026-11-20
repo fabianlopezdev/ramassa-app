@@ -10,11 +10,13 @@ import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { DateTimeField } from '@/components/content/date-time-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { Badge } from '@/components/layout/badge';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -138,9 +140,7 @@ function RequestCard({
             inMadridTime
           />
           <View className="gap-xs">
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('adminAssignee')}
-            </Text>
+            <FieldLabel>{t('adminAssignee')}</FieldLabel>
             <View className="flex-row flex-wrap gap-sm">
               {staff.map((member) => (
                 <ChoiceOption
@@ -234,7 +234,7 @@ export default function TeamMentoringScreen() {
     >
       <NativeScreenHeader title={t('adminTitle')} />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <View className="gap-xs">
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
               {t('adminIntro')}
