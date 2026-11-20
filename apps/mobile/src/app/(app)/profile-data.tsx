@@ -115,8 +115,8 @@ export default function ProfileDataScreen() {
         <>
           <ProfileNameBox profile={profile} />
           <ProfileSection title={t('sectionIdentity')}>
-            <ProfileRow label={t('onboarding:firstNameLabel')} value={profile.first_name} />
-            <ProfileRow label={t('onboarding:lastNameLabel')} value={profile.last_name} />
+            {/* Her name is not repeated here: it heads the screen in the box
+                above (RAPP-888). */}
             <ProfileRow
               label={t('onboarding:dateOfBirthLabel')}
               value={formatDate(answers.dateOfBirth || null)}

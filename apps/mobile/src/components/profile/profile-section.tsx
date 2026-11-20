@@ -16,13 +16,15 @@ import { SectionTitle } from '@/components/layout/screen-section';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 /**
  * A titled card of the profile (RAPP-888): the title is the one every tab uses,
  * and the card wears the brand border, like the other outlined surfaces.
  */
-const FIRST_ROW_LINE_HIDDEN = { marginTop: -StyleSheet.hairlineWidth } as const;
+/** A full point, so the line between two rows reads at a glance (RAPP-888). */
+const ROW_LINE_WIDTH = 1;
+const FIRST_ROW_LINE_HIDDEN = { marginTop: -ROW_LINE_WIDTH } as const;
 
 export function ProfileSection({
   title,
@@ -65,7 +67,7 @@ export interface ProfileRowProps {
     | 'support';
 }
 
-const ROW_LINE = { borderTopWidth: StyleSheet.hairlineWidth } as const;
+const ROW_LINE = { borderTopWidth: ROW_LINE_WIDTH } as const;
 
 export function ProfileRow({ label, value }: ProfileRowProps) {
   const languageFontClass = useLanguageFontClass();

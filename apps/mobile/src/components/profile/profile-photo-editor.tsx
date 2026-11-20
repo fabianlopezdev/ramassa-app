@@ -1,9 +1,10 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { FailureNotice } from '@/components/error-code-line';
-import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { Icon } from '@/components/icons/icon';
+import { AppSheet } from '@/components/layout/app-sheet';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SuccessPop } from '@/components/motion/success-pop';
-import { PERSON_AVATAR_SIZE, PersonAvatar } from '@/components/people/person-avatar';
+import { PersonAvatar } from '@/components/people/person-avatar';
 import { safeAsync } from '@/lib/observability';
 import { saveProfilePhoto } from '@/lib/profile-photo';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -15,6 +16,17 @@ import { Alert, Linking, Text, View } from 'react-native';
 import { AppError, type AppErrorCode } from '@ramassa/shared/errors';
 import { ownProfileQueryKey } from '@ramassa/shared/profile';
 import type { ProfileRecordWithFields } from '@ramassa/shared/schemas';
+import { tokens } from '@ramassa/shared/tokens';
+
+/** The pencil circle: as wide as the minimum tap target, over the photo's lower end corner. */
+const EDIT_BADGE_SIZE = tokens.tapTarget.min;
+const EDIT_ICON_SIZE = tokens.fontSize.xl;
+const EDIT_BADGE_STYLE = {
+  width: EDIT_BADGE_SIZE,
+  height: EDIT_BADGE_SIZE,
+  bottom: -tokens.spacing.xs,
+  end: -tokens.spacing.xs,
+} as const;
 
 const PHOTO_OPTIONS: ImagePicker.ImagePickerOptions = {
   mediaTypes: ['images'],
@@ -102,62 +114,8 @@ export function ProfilePhotoEditor({
       fallback="person"
     />
   );
-  return (
-    <View className="gap-md">
-      <View className="flex-row items-center gap-md">
-        <View className="gap-sm" style={{ width: PERSON_AVATAR_SIZE.profile }}>
-          <View className="items-center">
-            {saved > 0 ? <SuccessPop key={saved}>{portrait}</SuccessPop> : portrait}
-          </View>
-          <RaisedActionButton
-            testID="profile-photo-edit"
-            label={profile.avatar_url ? t('photo.change') : t('photo.add')}
-            onPress={() => setExpanded((value) => !value)}
-            isDisabled={busy}
-          />
-        </View>
-        {beside === undefined ? null : <View className="flex-1">{beside}</View>}
-      </View>
-      {expanded ? (
-        <View className="gap-sm">
-          <AuthSubmitButton
-            label={t('photo.camera')}
-            testID="profile-photo-camera"
-            disabled={busy}
-            onPress={() => void change('camera')}
-          />
-          <AuthSubmitButton
-            label={t('photo.library')}
-            testID="profile-photo-library"
-            disabled={busy}
-            onPress={() => void change('library')}
-          />
-          {profile.avatar_url ? (
-            <PressableScale
-              accessibilityLabel={t('photo.remove')}
-              isDisabled={busy}
-              onPress={confirmRemove}
-              haptic="tapLight"
-              className="min-h-recommended justify-center"
-            >
-              <Text className={`text-center text-form text-error ${font}`}>
-                {t('photo.remove')}
-              </Text>
-            </PressableScale>
-          ) : null}
-          <PressableScale
-            accessibilityLabel={t('photo.cancel')}
-            isDisabled={busy}
-            onPress={() => setExpanded(false)}
-            haptic="tapLight"
-            className="min-h-recommended justify-center"
-          >
-            <Text className={`text-center text-form text-neutral-600 ${font}`}>
-              {t('photo.cancel')}
-            </Text>
-          </PressableScale>
-        </View>
-      ) : null}
+  const status = (
+    <>
       {busy ? (
         <Text
           accessibilityLiveRegion="polite"
@@ -185,6 +143,67 @@ export function ProfilePhotoEditor({
         </View>
       ) : null}
       {failure ? <FailureNotice code={failure} message={t('photo.failed')} /> : null}
+    </>
+  );
+  const editLabel = profile.avatar_url ? t('photo.change') : t('photo.add');
+  return (
+    <View className="gap-md">
+      <View className="flex-row items-center gap-md">
+        <View>
+          {saved > 0 ? <SuccessPop key={saved}>{portrait}</SuccessPop> : portrait}
+          {/* The way to change the photo (RAPP-888): a small pencil circle on
+              the photo's lower corner, a full minimum tap target, named for
+              screen readers by what it does. */}
+          <PressableScale
+            testID="profile-photo-edit"
+            accessibilityLabel={editLabel}
+            isDisabled={busy}
+            onPress={() => setExpanded(true)}
+            haptic="tapLight"
+            className="absolute items-center justify-center rounded-full border-2 border-white bg-primary"
+            style={EDIT_BADGE_STYLE}
+          >
+            <Icon name="pen" weight="linear" size={EDIT_ICON_SIZE} color={tokens.colors.white} />
+          </PressableScale>
+        </View>
+        {beside === undefined ? null : <View className="flex-1">{beside}</View>}
+      </View>
+      {expanded ? null : status}
+      <AppSheet
+        testID="profile-photo-sheet"
+        title={editLabel}
+        visible={expanded}
+        onClose={() => setExpanded(false)}
+      >
+        <View className="gap-sm">
+          <AuthSubmitButton
+            label={t('photo.camera')}
+            testID="profile-photo-camera"
+            disabled={busy}
+            onPress={() => void change('camera')}
+          />
+          <AuthSubmitButton
+            label={t('photo.library')}
+            testID="profile-photo-library"
+            disabled={busy}
+            onPress={() => void change('library')}
+          />
+          {profile.avatar_url ? (
+            <PressableScale
+              accessibilityLabel={t('photo.remove')}
+              isDisabled={busy}
+              onPress={confirmRemove}
+              haptic="tapLight"
+              className="min-h-recommended justify-center"
+            >
+              <Text className={`text-center text-form text-error ${font}`}>
+                {t('photo.remove')}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {status}
+        </View>
+      </AppSheet>
     </View>
   );
 }
