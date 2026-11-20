@@ -13,12 +13,12 @@ import { KnowledgeArticleCard } from '@/components/knowledge/knowledge-article-c
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
-import { NO_HELP_NEWS, summarizeHelpNews } from '@/lib/help-news';
+import { NO_UNOPENED_HELP_IDS, unopenedHelpIds } from '@/lib/help-news';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { filterPlayerGuides, selectPlayerGuides } from '@/lib/player-guides';
 import { usePlayerKnowledgeArticles, usePlayerKnowledgeCategories } from '@/lib/player-knowledge';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useTabNews } from '@/lib/use-tab-news';
+import { useListSeen, useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
@@ -30,6 +30,7 @@ import { categoryWash } from '@ramassa/shared/category-colors';
 import { toAppError } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import type { KnowledgeArticleListRow } from '@ramassa/shared/knowledge';
+import { guidesListKey } from '@ramassa/shared/tab-news';
 import { tokens } from '@ramassa/shared/tokens';
 
 const styles = StyleSheet.create({
@@ -74,9 +75,11 @@ export default function GuideCategoryScreen() {
   const { data: news, refetch: refetchNews } = useTabNews();
   const newGuideIds = useMemo(
     () =>
-      (news === undefined ? NO_HELP_NEWS : summarizeHelpNews(news.guides.unopenedArticles)).newIds,
+      news === undefined ? NO_UNOPENED_HELP_IDS : unopenedHelpIds(news.guides.unopenedArticles),
     [news],
   );
+  // Opening the category clears its numbers on the tile, the switch and the tab (RAPP-873).
+  useListSeen(categoryId === undefined ? undefined : guidesListKey(categoryId), true);
   const refresh = useCallback(() => {
     void Promise.all([refetchArticles(), refetchNews()]);
   }, [refetchArticles, refetchNews]);

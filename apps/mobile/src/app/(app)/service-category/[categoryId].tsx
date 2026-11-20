@@ -17,7 +17,7 @@ import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { ServiceCard } from '@/components/services/service-card';
 import { ServiceFilterPanel } from '@/components/services/service-filter-panel';
-import { NO_HELP_NEWS, summarizeHelpNews } from '@/lib/help-news';
+import { NO_UNOPENED_HELP_IDS, unopenedHelpIds } from '@/lib/help-news';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import {
   usePlayerServiceCategories,
@@ -25,7 +25,7 @@ import {
   type PlayerServiceFilterSelection,
 } from '@/lib/player-services';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useTabNews } from '@/lib/use-tab-news';
+import { useListSeen, useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
@@ -36,6 +36,7 @@ import { categoryWash } from '@ramassa/shared/category-colors';
 import { toAppError } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { type PlayerServiceRow } from '@ramassa/shared/services';
+import { servicesListKey } from '@ramassa/shared/tab-news';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_FILTERS: PlayerServiceFilterSelection = {};
@@ -98,10 +99,12 @@ export default function ServiceCategoryScreen() {
   const { data: news, refetch: refetchNews } = useTabNews();
   const newServiceIds = useMemo(
     () =>
-      (news === undefined ? NO_HELP_NEWS : summarizeHelpNews(news.services.unopenedServices))
-        .newIds,
+      news === undefined ? NO_UNOPENED_HELP_IDS : unopenedHelpIds(news.services.unopenedServices),
     [news],
   );
+  // Opening the category clears its numbers on the tile, the switch and the
+  // tab, also while a filter hides some of its services (RAPP-873).
+  useListSeen(categoryId === undefined ? undefined : servicesListKey(categoryId), true);
   const title =
     category === null ? '' : (resolveLocalizedText(category.name, language)?.text ?? '');
   const wash = category === null ? undefined : categoryWash(category.color);
