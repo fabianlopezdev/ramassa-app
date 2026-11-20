@@ -25,8 +25,8 @@ const scrollableSources = [
   'app/(app)/gallery/upload.tsx',
   'components/gallery/gallery-grid.tsx',
   'components/knowledge/community-story-list.tsx',
+  // The report sheet scrolls inside this shared sheet (RAPP-881).
   'components/layout/app-sheet.tsx',
-  'components/forum/forum-flag-dialog.tsx',
 ] as const;
 
 describe('Phase 6 structural polish contract', () => {

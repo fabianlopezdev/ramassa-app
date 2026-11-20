@@ -42,14 +42,23 @@ test('forum flagging is a reason-first one-tap flow with optional context', asyn
   expect(source).toContain('flagConfirmation');
 });
 
-test('forum flag modal uses native pressables that remain interactive on Android', async () => {
+test('the forum report sheet sits in the shared sheet, whose controls answer on Android', async () => {
+  // A native Modal owns a separate Android root. The shared sheet opens the
+  // scope in which the app's press controls render the platform Pressable
+  // (RAPP-812), so the report uses the same choice cards and call to action as
+  // onboarding (RAPP-881) and no hand-made Modal.
   const source = await readMobileSource('components/forum/forum-flag-dialog.tsx');
-  expect(source).toContain('ActivityIndicator,');
-  expect(source).toContain('Pressable,');
-  expect(source).toContain('A native Modal owns a separate Android root');
-  expect(source).not.toContain('<PressableScale');
-  expect(source).not.toContain('<AuthSubmitButton');
-  expect(source).toContain('keyboardDismissMode="on-drag"');
+  expect(source).toContain('<AppSheet');
+  expect(source).not.toContain('<Modal');
+  expect(source).toContain('<SelectionChoiceCard');
+  expect(source).toContain('<AuthSubmitButton');
+  // She leaves by dragging the sheet down: no cancel button.
+  expect(source).not.toContain("t('cancel')");
+  // The privacy line sits above the action, in the sheet's bottom area.
+  expect(source).toMatch(/action=\{[\s\S]*flagPrivacy[\s\S]*<AuthSubmitButton/);
+  const sheet = await readMobileSource('components/layout/app-sheet.tsx');
+  expect(sheet).toContain('<NativeModalScope>');
+  expect(sheet).toContain('keyboardDismissMode="on-drag"');
 });
 
 test('the posting soft ban disables both post and reply composers with non-shaming copy', async () => {

@@ -130,7 +130,9 @@ export function EventArticle({
         )}
       </View>
 
-      <View className="gap-md rounded-lg border border-neutral-200 p-lg" style={continuousCorners}>
+      {/* The places left, then what the screen says about her sign-up. The
+          action itself sits at the bottom of the screen (RAPP-881). */}
+      <View className="gap-md">
         <Text
           accessibilityRole="header"
           className={`text-start text-lg font-bold tabular-nums text-neutral-900 ${languageFontClass}`}

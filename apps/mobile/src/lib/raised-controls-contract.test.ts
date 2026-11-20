@@ -31,14 +31,11 @@ const flatLook =
 const hasFlatButton = (source: string) =>
   (source.match(pressTag) ?? []).some((tag) => flatLook.test(tag));
 
-// Two dialogs that open their own native Modal, where the app's press control
-// does not answer on Android (see `NativeModalScope`); they use the platform
-// `Pressable`. They leave this list when they move into the shared sheet;
+// One dialog that opens its own native Modal, where the app's press control
+// does not answer on Android (see `NativeModalScope`); it uses the platform
+// `Pressable`. It leaves this list when it moves into the shared sheet;
 // nothing may be added.
-const stillFlat = new Set([
-  'app/(app)/profile-delete-data.tsx',
-  'components/forum/forum-flag-dialog.tsx',
-]);
+const stillFlat = new Set(['app/(app)/profile-delete-data.tsx']);
 
 const withFlatButton = [...sources('app'), ...sources('components')].filter((path) =>
   hasFlatButton(read(path)),
@@ -62,7 +59,8 @@ test('the shared pieces carry the relief', () => {
   ]) {
     expect(read(piece)).toContain('<SelectionChoiceSurface');
   }
-  expect(read('components/layout/app-sheet.tsx')).toContain('<RaisedActionButton');
+  // A sheet closes with the call to action, at its bottom edge (RAPP-881).
+  expect(read('components/layout/app-sheet.tsx')).toContain('<AuthSubmitButton');
   // The call to action keeps its solid navy fill.
   expect(read('components/auth/auth-submit-button.tsx')).toContain("'bg-primary'");
   expect(read('components/services/service-card.tsx')).toContain('<RaisedCard');
