@@ -101,13 +101,15 @@ export default function ProfileScreen() {
         tone="danger"
         onOpen={signOut}
       />
+      {DevMenuEntry === null ? null : <DevMenuEntry />}
       {/*
-        The credits, together and centred under the menu (RAPP-877): the
-        funding the grant terms ask to mention (RAPP-64), then the icon set's
-        licence credit (RAPP-834). Small type takes a tight line height, so a
-        wrapped line stays close to the one above.
+        The credits, together and centred at the very bottom of the screen
+        (RAPP-877), under everything else: the funding the grant terms ask to
+        mention (RAPP-64), then the icon set's licence credit (RAPP-834). Small
+        type takes a tight line height, so a wrapped line stays close to the
+        one above.
       */}
-      <View className="items-center gap-xs">
+      <View className="mt-auto items-center gap-xs">
         <Text
           testID="generalitat-credit"
           className={`text-center text-xs leading-5 text-neutral-600 ${languageFontClass}`}
@@ -121,7 +123,6 @@ export default function ProfileScreen() {
           {ICON_LICENCE.credit}
         </Text>
       </View>
-      {DevMenuEntry === null ? null : <DevMenuEntry />}
     </ProfileScreenFrame>
   );
 }

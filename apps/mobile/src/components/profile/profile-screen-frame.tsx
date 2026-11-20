@@ -3,6 +3,9 @@
  * title and back control, which mirrors by itself in right-to-left languages,
  * over one scrolling column. The profile menu and each screen it opens share
  * it, so moving between them never changes the shape of the page.
+ *
+ * The column fills at least the screen's height, so a screen can keep a last
+ * block at the bottom with `mt-auto`, such as the credits of the menu (RAPP-877).
  */
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
@@ -36,7 +39,7 @@ export function ProfileScreenFrame({
         contentContainerStyle={androidBottomInset}
         contentInsetAdjustmentBehavior="automatic"
       >
-        <PageWidth className="gap-lg">{children}</PageWidth>
+        <PageWidth className="grow gap-lg">{children}</PageWidth>
       </ScrollView>
     </>
   );
