@@ -5,7 +5,9 @@
  * change to the raised surface reaches it with the rest.
  *
  * Half cards go two to a row in `RaisedHalfCardRow`, and the two cards of a
- * row share one height: the taller one sets it.
+ * row share one height: the taller one sets it. The icon keeps to the top and
+ * the name to the bottom, so the names of a pair start on one line at the
+ * bottom and a name that wraps grows upward.
  *
  * The badge and the count sit on the top edge like on every other card
  * (`EdgeMarks`). The room above them is kept even when a card has neither, so
@@ -59,7 +61,7 @@ export function RaisedHalfCard({
         accessibilityRole="link"
         onPress={onOpen}
         className="flex-1"
-        contentClassName="flex-1 items-start gap-sm py-md"
+        contentClassName="flex-1 items-start justify-between gap-sm py-md"
       >
         <RaisedCardSymbol name={icon} size={HALF_CARD_ICON_SIZE} />
         <View className="gap-xs">
