@@ -5,5 +5,15 @@
 
 import type { GroundModule } from '../lib/ground';
 import accounts from './accounts';
+import activitats from './activitats';
+import comunitat from './comunitat';
+import contacte from './contacte';
+import inici from './inici';
 
-export const MODULES: readonly GroundModule[] = [accounts];
+export const MODULES: readonly GroundModule[] = [
+  accounts,
+  inici,
+  activitats,
+  comunitat,
+  contacte,
+];

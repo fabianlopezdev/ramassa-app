@@ -28,6 +28,7 @@ import {
   img,
   lit,
   ORG,
+  sqlGid,
   TEAM,
   TESTERS,
   type Account,
@@ -126,7 +127,7 @@ on conflict (id) do nothing;
 insert into auth.identities (
   id, provider_id, user_id, identity_data, provider, created_at, updated_at
 )
-select md5('tg:accounts:identity:' || u.id::text)::uuid, u.id::text, u.id,
+select ${sqlGid("'accounts:identity:' || u.id::text")}, u.id::text, u.id,
        jsonb_build_object('sub', u.id::text, 'email', u.email, 'email_verified', true),
        'email', ${JOINED}, ${JOINED}
   from auth.users u
@@ -173,7 +174,7 @@ function termsAcceptances(people: readonly Person[]): string {
 insert into public.terms_acceptances (
   id, profile_id, terms_version, locale_shown, accepted_at, version_id
 )
-select md5('tg:accounts:terms:' || p.id::text || ':' || v.id::text)::uuid, p.id,
+select ${sqlGid("'accounts:terms:' || p.id::text || ':' || v.id::text")}, p.id,
        coalesce(v.version_number::text, 'draft'), 'ca',
        greatest(${JOINED}, v.published_at), v.id
   from public.profiles p
@@ -188,7 +189,7 @@ select t.id, t.profile_id, p.org_id, null, true, true, 'tester-ground'
   from public.terms_acceptances t
   join public.profiles p on p.id = t.profile_id
  where t.profile_id = any (${ids})
-   and t.id = md5('tg:accounts:terms:' || t.profile_id::text || ':' || t.version_id::text)::uuid
+   and t.id = ${sqlGid("'accounts:terms:' || t.profile_id::text || ':' || t.version_id::text")}
 on conflict (acceptance_id) do nothing;
 `;
 }

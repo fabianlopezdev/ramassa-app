@@ -73,7 +73,7 @@ function chat(tester: Account, index: number): readonly Message[] {
     {
       from: 'team',
       at: daysFromNow(-14, '20:02'),
-      text: 'Sí, en tenim al material del club. Quin número calces?',
+      text: "Sí, en tenim al material de l'equip. Quin número calces?",
     },
     { from: 'her', at: daysFromNow(-14, '20:10'), text: `Un ${size}.` },
     {

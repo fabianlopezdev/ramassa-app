@@ -23,12 +23,15 @@ export type Lang = (typeof LANGS)[number];
 export type Translated = Readonly<Record<Lang, string>>;
 
 /**
- * A stable uuid for a named row. The same value in SQL is
- * `md5('tg:' || slug)::uuid`. Start the slug with the module name
- * (`'forum:post:welcome'`) so two modules never share an id.
+ * A stable uuid for a named row: the md5 of `tg:<slug>` with the version digit
+ * set to 8 and the variant digit set to `a`, so it is a valid RFC 9562 uuid.
+ * The app checks ids with zod's `z.uuid()`, which refuses a bare md5. Start the
+ * slug with the module name (`'forum:post:welcome'`) so two modules never
+ * share an id. For an id built inside SQL from other columns, use `sqlGid()`.
  */
 export function gid(slug: string): string {
-  const hex = createHash('md5').update(`tg:${slug}`).digest('hex');
+  const md5 = createHash('md5').update(`tg:${slug}`).digest('hex');
+  const hex = `${md5.slice(0, 12)}8${md5.slice(13, 16)}a${md5.slice(17)}`;
   return [
     hex.slice(0, 8),
     hex.slice(8, 12),
@@ -36,6 +39,14 @@ export function gid(slug: string): string {
     hex.slice(16, 20),
     hex.slice(20),
   ].join('-');
+}
+
+/**
+ * The same id as `gid()`, computed by Postgres from a SQL text expression that
+ * yields the slug: `sqlGid("'accounts:terms:' || p.id::text")`.
+ */
+export function sqlGid(slugExpression: string): string {
+  return `overlay(overlay(md5('tg:' || ${slugExpression}) placing '8' from 13) placing 'a' from 17)::uuid`;
 }
 
 export interface Account {
