@@ -11,9 +11,14 @@
  * phone with no bar keeps no such space, and the footer stays where it is.
  * The column itself is left alone, since it is the part that rises when the
  * screen arrives (RAPP-875).
+ *
+ * A screen may pass an `action`, its call to action, such as "Edita" on Les
+ * meves dades (RAPP-881). It sits at the bottom of the screen, under the
+ * column, like every screen's call to action.
  */
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ActionScreen } from '@/components/layout/screen-action';
 import { useMemo, type ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,12 +28,15 @@ export function ProfileScreenFrame({
   title,
   testID,
   footer,
+  action,
   children,
 }: {
   readonly title: string;
   readonly testID: string;
   /** A last block kept at the very bottom of the phone, under everything else. */
   readonly footer?: ReactNode;
+  /** The screen's call to action, at the bottom of the screen. */
+  readonly action?: ReactNode;
   readonly children: ReactNode;
 }) {
   // Android only: the header already clears the status bar, and on iOS the
@@ -44,7 +52,7 @@ export function ProfileScreenFrame({
       hasFooter ? { marginBottom: -Math.max(0, insets.bottom - tokens.spacing.md) } : undefined,
     [hasFooter, insets.bottom],
   );
-  return (
+  const page = (
     <>
       <NativeScreenHeader title={title} />
       <ScrollView
@@ -62,5 +70,13 @@ export function ProfileScreenFrame({
         </View>
       </ScrollView>
     </>
+  );
+  // With an action, the page shares the screen with it; without one the frame
+  // stays as it was, so screens that only read keep their layout.
+  if (action === undefined || action === null) return page;
+  return (
+    <ActionScreen className="bg-neutral-50" action={action}>
+      {page}
+    </ActionScreen>
   );
 }

@@ -4,6 +4,7 @@ import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { Icon } from '@/components/icons/icon';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ActionScreen } from '@/components/layout/screen-action';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import {
@@ -212,6 +213,8 @@ interface SurveyScreenFrameProps {
   readonly contentContainerClassName: string;
   readonly contentInsets: StyleProp<ViewStyle>;
   readonly screenTitle: string;
+  /** The screen's call to action, at the bottom of the screen (RAPP-881). */
+  readonly action?: ReactNode;
 }
 
 function SurveyScreenFrame({
@@ -219,12 +222,13 @@ function SurveyScreenFrame({
   contentContainerClassName,
   contentInsets,
   screenTitle,
+  action,
 }: SurveyScreenFrameProps) {
   return (
-    <>
+    <ActionScreen className="bg-white" action={action}>
       <NativeScreenHeader surface="white" title={screenTitle} />
       <ScrollView
-        className="flex-1 bg-white"
+        className="flex-1"
         contentContainerClassName={contentContainerClassName}
         contentContainerStyle={contentInsets}
         keyboardShouldPersistTaps="handled"
@@ -233,7 +237,7 @@ function SurveyScreenFrame({
       >
         {children}
       </ScrollView>
-    </>
+    </ActionScreen>
   );
 }
 
@@ -394,6 +398,7 @@ export default function SurveyScreen() {
         screenTitle={screenTitle}
         contentInsets={contentInsets}
         contentContainerClassName="grow items-center justify-center gap-lg p-xl"
+        action={<AuthSubmitButton label={t('back')} onPress={back} />}
       >
         <View testID="survey-completion" className="w-full items-center gap-lg">
           <Icon
@@ -411,9 +416,6 @@ export default function SurveyScreen() {
           <Text className={`text-center text-lg text-neutral-600 ${languageFontClass}`}>
             {t('thankBody')}
           </Text>
-          <View className="w-full max-w-form">
-            <AuthSubmitButton label={t('back')} onPress={back} />
-          </View>
         </View>
       </SurveyScreenFrame>
     );
@@ -437,8 +439,24 @@ export default function SurveyScreen() {
       screenTitle={screenTitle}
       contentInsets={contentInsets}
       contentContainerClassName="grow px-lg py-lg"
+      action={
+        <>
+          <AuthSubmitButton
+            label={isAtEnd ? t('submit') : t('next')}
+            onPress={() => void next()}
+            isLoading={isSavePending}
+            disabled={!canContinue}
+            testID="survey-next"
+          />
+          <RaisedActionButton
+            label={t('saveExit')}
+            onPress={() => void saveAndExit()}
+            isDisabled={isSavePending}
+          />
+        </>
+      }
     >
-      <FormWidth className="grow justify-between gap-xl">
+      <FormWidth className="gap-xl">
         <View className="gap-xl">
           <View className="gap-sm">
             <Text
@@ -492,21 +510,7 @@ export default function SurveyScreen() {
             />
           </View>
         </View>
-        <View className="gap-md">
-          {saveError === null ? null : <FailureNotice code={saveError.code} message={t('error')} />}
-          <AuthSubmitButton
-            label={isAtEnd ? t('submit') : t('next')}
-            onPress={() => void next()}
-            isLoading={isSavePending}
-            disabled={!canContinue}
-            testID="survey-next"
-          />
-          <RaisedActionButton
-            label={t('saveExit')}
-            onPress={() => void saveAndExit()}
-            isDisabled={isSavePending}
-          />
-        </View>
+        {saveError === null ? null : <FailureNotice code={saveError.code} message={t('error')} />}
       </FormWidth>
     </SurveyScreenFrame>
   );

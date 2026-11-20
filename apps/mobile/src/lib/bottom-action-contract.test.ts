@@ -16,22 +16,20 @@ function screens(directory: string): string[] {
   });
 }
 
-const bottomPiece = /<ActionScreen|<ScreenAction|<FormScreen|<TabScreenAction|FormWalk/;
+// `AuthActionFooter` is the footer of the sign-in screens; the profile and
+// survey frames take the action and place it through `ActionScreen`.
+const bottomPiece =
+  /<ActionScreen|<ScreenAction|<FormScreen|<TabScreenAction|<AuthActionFooter|FormWalk|<(?:ProfileScreenFrame|SurveyScreenFrame)\b[^>]*\baction=/;
 
-// Screens that still show the call to action inside their content on
-// 2026-11-20: a retry in an error state, an action per list row, a profile
-// frame with its own footer, or a tab of the entity shell. Each leaves this
-// list when its action moves to the bottom; nothing may be added.
+// Screens where the navy button is not the screen's call to action: a retry
+// inside an error state, or one action per row or per section. They keep it
+// where it acts. A screen leaves this list when it no longer has one; nothing
+// may be added without that reason.
 const stillInContent = new Set([
-  'app/(app)/(entity)/entity-referrals.tsx',
   'app/(app)/gallery/[id].tsx',
-  'app/(app)/photo-handoff/[id].tsx',
-  'app/(app)/profile-data.tsx',
   'app/(app)/profile-privacy.tsx',
-  'app/(app)/survey/[id].tsx',
   'app/(app)/team-data.tsx',
   'app/(app)/team-feedback.tsx',
-  'app/(auth)/index.tsx',
 ]);
 
 const withActionInContent = screens('app').filter((path) => {
@@ -43,7 +41,7 @@ test('a screen with a call to action places it at the bottom', () => {
   expect(withActionInContent.filter((path) => !stillInContent.has(path))).toEqual([]);
 });
 
-test('the list of screens with the action in their content only shrinks', () => {
+test('the list of exceptions only shrinks', () => {
   expect([...stillInContent].filter((path) => !withActionInContent.includes(path))).toEqual([]);
 });
 

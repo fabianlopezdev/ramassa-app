@@ -60,9 +60,24 @@ export default function ProfileDataScreen() {
   const loadFailureCode = isError ? toAppError(error).code : 'DB-2';
   const handleRetry = useCallback(() => void refetch(), [refetch]);
   const handleEdit = useCallback(() => push('/profile-edit' as Href), [push]);
+  // What she holds is on the screen: only then is there something to edit.
+  const hasProfile =
+    !isLoading && !isError && profile !== null && profile !== undefined && answers !== null;
 
   return (
-    <ProfileScreenFrame title={t('menu.data')} testID="profile-data">
+    <ProfileScreenFrame
+      title={t('menu.data')}
+      testID="profile-data"
+      action={
+        hasProfile ? (
+          <AuthSubmitButton
+            testID="profile-open-edit"
+            label={t('editAction')}
+            onPress={handleEdit}
+          />
+        ) : undefined
+      }
+    >
       {isLoading ? (
         // One node that says it is LOADING: a screen reader announcing the
         // title over a skeleton is indistinguishable from an empty profile.
@@ -81,7 +96,7 @@ export default function ProfileDataScreen() {
             </View>
           ))}
         </View>
-      ) : isError || profile === null || profile === undefined || answers === null ? (
+      ) : !hasProfile || profile === null || profile === undefined || answers === null ? (
         // A failed read says so and offers a retry. It must never render as an
         // empty profile: "we hold nothing about you" is a false statement.
         <ShakeOnError errorCode={loadFailureCode}>
@@ -147,12 +162,6 @@ export default function ProfileDataScreen() {
           <ProfileSection title={t('onboarding:seasonSectionTitle')}>
             <SeasonAnswerRows answers={answers} emptyLabel={t('notProvided')} />
           </ProfileSection>
-
-          <AuthSubmitButton
-            testID="profile-open-edit"
-            label={t('editAction')}
-            onPress={handleEdit}
-          />
         </>
       )}
     </ProfileScreenFrame>
