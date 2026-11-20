@@ -11,9 +11,11 @@ import {
 } from '@/components/layout/segmented-control';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { ServiceCategoryGrid } from '@/components/services/service-category-grid';
+import { NO_HELP_NEWS, summarizeHelpNews } from '@/lib/help-news';
 import { usePlayerServiceCategories } from '@/lib/player-services';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
+import { useTabNews } from '@/lib/use-tab-news';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -32,11 +34,18 @@ const styles = StyleSheet.create({
 type AjudaSegment = 'services' | 'guides';
 
 export default function ServicesScreen() {
-  const { t } = useTranslation(['playerServices', 'errors', 'nav']);
+  const { t } = useTranslation(['playerServices', 'errors', 'nav', 'common']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const categoriesQuery = usePlayerServiceCategories();
   const [segment, setSegment] = useState<AjudaSegment>('services');
+  // What is new stays new until she opens that service or guide (RAPP-873).
+  const { data: news } = useTabNews();
+  const serviceNews = useMemo(
+    () => (news === undefined ? NO_HELP_NEWS : summarizeHelpNews(news.services.newServices)),
+    [news],
+  );
+  const guideNewsCount = news?.guides.newArticles.length ?? 0;
   const tabInsets = usePlayerTabContentInsets();
   const contentContainerStyle = useMemo(() => [styles.listContent, tabInsets], [tabInsets]);
   const selectCategory = useCallback(
@@ -54,15 +63,31 @@ export default function ServicesScreen() {
         label: t('playerServices:segmentServices'),
         symbol: 'grid',
         testID: 'ajuda-segment-services',
+        count: serviceNews.total,
+        accessibilityLabel:
+          serviceNews.total > 0
+            ? t('common:newCount', {
+                label: t('playerServices:segmentServices'),
+                count: serviceNews.total,
+              })
+            : undefined,
       },
       {
         key: 'guides',
         label: t('playerServices:segmentGuides'),
         symbol: 'book',
         testID: 'ajuda-segment-guides',
+        count: guideNewsCount,
+        accessibilityLabel:
+          guideNewsCount > 0
+            ? t('common:newCount', {
+                label: t('playerServices:segmentGuides'),
+                count: guideNewsCount,
+              })
+            : undefined,
       },
     ],
-    [t],
+    [guideNewsCount, serviceNews.total, t],
   );
 
   // One header for both segments, so the switch stays in place while either loads.
@@ -138,7 +163,11 @@ export default function ServicesScreen() {
             {t('playerServices:categoryHint')}
           </Text>
         </View>
-        <ServiceCategoryGrid categories={categoriesQuery.data ?? []} onSelect={selectCategory} />
+        <ServiceCategoryGrid
+          categories={categoriesQuery.data ?? []}
+          newCounts={serviceNews.countsByCategoryId}
+          onSelect={selectCategory}
+        />
       </View>
     </PageWidth>,
     'player-services-categories',

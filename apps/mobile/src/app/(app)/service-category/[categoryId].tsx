@@ -17,6 +17,7 @@ import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { ServiceCard } from '@/components/services/service-card';
 import { ServiceFilterPanel } from '@/components/services/service-filter-panel';
+import { NO_HELP_NEWS, summarizeHelpNews } from '@/lib/help-news';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import {
   usePlayerServiceCategories,
@@ -24,6 +25,7 @@ import {
   type PlayerServiceFilterSelection,
 } from '@/lib/player-services';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
@@ -78,7 +80,7 @@ function availabilityKey(value: PlayerServiceRow['availability']): string {
 
 export default function ServiceCategoryScreen() {
   const { categoryId } = useLocalSearchParams<{ categoryId: string }>();
-  const { t, i18n } = useTranslation(['playerServices', 'errors']);
+  const { t, i18n } = useTranslation(['playerServices', 'errors', 'home']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -92,6 +94,12 @@ export default function ServiceCategoryScreen() {
   const services = servicesQuery.data ?? EMPTY_SERVICES;
   const availableServices = baseServicesQuery.data ?? EMPTY_SERVICES;
   const selectedFilterCount = activeFilterCount(filters);
+  // A service keeps "Nou" until she opens it, also after she comes back (RAPP-873).
+  const { data: news, refetch: refetchNews } = useTabNews();
+  const newServiceIds = useMemo(
+    () => (news === undefined ? NO_HELP_NEWS : summarizeHelpNews(news.services.newServices)).newIds,
+    [news],
+  );
   const title =
     category === null ? '' : (resolveLocalizedText(category.name, language)?.text ?? '');
   const wash = category === null ? undefined : categoryWash(category.color);
@@ -118,8 +126,9 @@ export default function ServiceCategoryScreen() {
       categoriesQuery.refetch(),
       baseServicesQuery.refetch(),
       servicesQuery.refetch(),
+      refetchNews(),
     ]);
-  }, [baseServicesQuery, categoriesQuery, servicesQuery]);
+  }, [baseServicesQuery, categoriesQuery, refetchNews, servicesQuery]);
   const renderService = useCallback(
     ({ item, index }: ListRenderItemInfo<PlayerServiceRow>) => {
       const serviceTitle = resolveLocalizedText(item.title, language);
@@ -132,6 +141,7 @@ export default function ServiceCategoryScreen() {
           ? t(`playerServices:cost${capitalize(item.cost_type)}`)
           : currencyFormatter.format(item.cost_amount);
       const availability = t(`playerServices:availability${availabilityKey(item.availability)}`);
+      const unseenLabel = newServiceIds.has(item.id) ? t('home:unseen') : null;
       return (
         <PageWidth className="pb-md">
           <FadeSlideIn index={index}>
@@ -146,7 +156,9 @@ export default function ServiceCategoryScreen() {
               interestedLabel={t('playerServices:interestSaved')}
               imageObjectKey={firstImage?.url ?? null}
               imageAlt={imageAlt?.text ?? null}
+              unseenLabel={unseenLabel}
               accessibilityLabel={[
+                unseenLabel,
                 t('playerServices:openService', { title: serviceTitle.text }),
                 item.provider_name,
                 item.location,
@@ -162,7 +174,7 @@ export default function ServiceCategoryScreen() {
         </PageWidth>
       );
     },
-    [currencyFormatter, language, languageFontClass, openService, t],
+    [currencyFormatter, language, languageFontClass, newServiceIds, openService, t],
   );
 
   const filterLabel = filtersVisible
@@ -218,6 +230,7 @@ export default function ServiceCategoryScreen() {
         data={services}
         renderItem={renderService}
         keyExtractor={keyExtractor}
+        extraData={newServiceIds}
         style={screenStyle}
         contentContainerStyle={styles.content}
         contentInsetAdjustmentBehavior="automatic"
