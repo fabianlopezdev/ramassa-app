@@ -10,6 +10,7 @@ import { EntityServiceForm } from '@/components/entity/entity-service-form';
 import { EntityServiceStatus } from '@/components/entity/entity-service-status';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import {
@@ -164,17 +165,7 @@ export default function EntityServiceScreen() {
           )}
 
           {data === undefined ? null : (
-            <View
-              testID="entity-service-comments"
-              style={continuousCorners}
-              className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-            >
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-              >
-                {t('commentsTitle')}
-              </Text>
+            <ScreenSection testID="entity-service-comments" title={t('commentsTitle')} isLast>
               {(comments.data ?? []).length === 0 ? (
                 <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
                   {t('commentsEmpty')}
@@ -254,7 +245,7 @@ export default function EntityServiceScreen() {
                   {comment.isPending ? t('commentsSending') : t('commentsSend')}
                 </Text>
               </PressableScale>
-            </View>
+            </ScreenSection>
           )}
         </PageWidth>
       </ScrollView>

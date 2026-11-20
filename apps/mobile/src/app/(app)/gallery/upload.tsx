@@ -1,6 +1,7 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { uploadGalleryMedia } from '@/lib/gallery-upload';
@@ -214,13 +215,10 @@ export default function GalleryUploadScreen() {
               </Text>
             </PressableScale>
           ) : (
-            <View testID="gallery-selected-media-preview" className="gap-sm">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('gallery:selectedMediaPreview')}
-              </Text>
+            <ScreenSection
+              testID="gallery-selected-media-preview"
+              title={t('gallery:selectedMediaPreview')}
+            >
               {selectedDraft.sourceKind === 'video' ? (
                 <VideoView
                   player={previewVideoPlayer}
@@ -264,7 +262,7 @@ export default function GalleryUploadScreen() {
                   </Text>
                 </PressableScale>
               </View>
-            </View>
+            </ScreenSection>
           )}
           {permissionDenied ? (
             <View testID="gallery-media-permission-error" className="gap-sm">

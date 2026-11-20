@@ -3,7 +3,6 @@
   "segmentServices": "الخدمات",
   "segmentGuides": "الأدلة",
   "chooseCategory": "ماذا تحتاجين؟",
-  "categoryHint": "اضغطي على فئة لرؤية خدماتها.",
   "backCategories": "العودة إلى الفئات",
   "filterShow": "تصفية الخدمات",
   "filterShowActive": "عوامل التصفية النشطة: {{count}}",

@@ -11,6 +11,7 @@
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { CountryPicker } from '@/components/onboarding/country-picker';
 import { MunicipalityPicker } from '@/components/onboarding/municipality-picker';
 import { OptionChip } from '@/components/onboarding/option-chip';
@@ -204,7 +205,6 @@ function SeasonAnswerControllers({
   readonly shows: (question: SeasonQuestion) => boolean;
 }) {
   const { t } = useTranslation(['onboarding']);
-  const languageFontClass = useLanguageFontClass();
   const entityNames = useSupportingEntityNames();
   const applicantStatus = useController({ control, name: 'applicantStatus' });
   const supportingEntities = useController({ control, name: 'supportingEntities' });
@@ -219,13 +219,7 @@ function SeasonAnswerControllers({
     specificNeeds: (specificNeeds.field.value as string | undefined) ?? '',
   };
   return (
-    <View className="gap-md">
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-      >
-        {t('onboarding:seasonSectionTitle')}
-      </Text>
+    <ScreenSection title={t('onboarding:seasonSectionTitle')}>
       <SeasonAnswerFields
         testIDPrefix={testIDPrefix}
         value={value}
@@ -243,7 +237,7 @@ function SeasonAnswerControllers({
           if ('specificNeeds' in patch) specificNeeds.field.onChange(patch.specificNeeds);
         }}
       />
-    </View>
+    </ScreenSection>
   );
 }
 

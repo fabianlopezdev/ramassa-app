@@ -67,7 +67,8 @@ describe('Phase 6 structural polish contract', () => {
     const forumDetail = await readMobileSource('app/(app)/forum/[id].tsx');
     const galleryUpload = await readMobileSource('app/(app)/gallery/upload.tsx');
 
-    expect(forumDetail).toContain('text-xl font-bold tabular-nums');
+    // The reply count is a section title (RAPP-872); the shared title takes the class.
+    expect(forumDetail).toMatch(/<SectionTitle\s+className="tabular-nums"/);
     expect(galleryUpload).toContain('text-sm tabular-nums text-neutral-700');
   });
 

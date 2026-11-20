@@ -4,6 +4,7 @@ import { FailureNotice } from '@/components/error-code-line';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { MentoringPreferencePickers } from '@/components/mentoring/mentoring-preference-pickers';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
@@ -196,16 +197,7 @@ export default function MentoringScreen() {
                 </View>
               </SuccessPop>
             ) : (
-              <View
-                className="gap-lg rounded-lg border border-neutral-200 bg-white p-lg"
-                style={continuousCorners}
-              >
-                <Text
-                  accessibilityRole="header"
-                  className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-                >
-                  {t('mentoring:newRequestTitle')}
-                </Text>
+              <ScreenSection title={t('mentoring:newRequestTitle')}>
                 <View className="gap-sm">
                   <Text
                     className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}
@@ -277,16 +269,10 @@ export default function MentoringScreen() {
                   isLoading={isCreatePending}
                   onPress={() => void submit()}
                 />
-              </View>
+              </ScreenSection>
             )}
 
-            <View className="gap-md">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('mentoring:statusTitle')}
-              </Text>
+            <ScreenSection title={t('mentoring:statusTitle')} isLast>
               {requestsQuery.isPending && requestsQuery.data === undefined ? (
                 <View
                   accessible
@@ -320,7 +306,7 @@ export default function MentoringScreen() {
                   {t('mentoring:noRequests')}
                 </Text>
               ) : null}
-            </View>
+            </ScreenSection>
           </FormWidth>
         }
       />

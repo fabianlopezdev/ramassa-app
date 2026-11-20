@@ -12,13 +12,14 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ApplyPresetSheet, MemberAccessSheet, PresetSheet } from '@/components/team/access-sheets';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useStaffActions, useTeamStaff } from '@/lib/team-staff';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Platform, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -33,35 +34,6 @@ import {
 } from '@ramassa/shared/permissions';
 
 type Notice = { readonly ok: boolean; readonly text: string } | null;
-
-function Section({
-  title,
-  intro,
-  children,
-}: {
-  readonly title: string;
-  readonly intro?: string;
-  readonly children: ReactNode;
-}) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View
-      style={continuousCorners}
-      className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-    >
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-      >
-        {title}
-      </Text>
-      {intro === undefined ? null : (
-        <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>{intro}</Text>
-      )}
-      {children}
-    </View>
-  );
-}
 
 function RowAction({
   testID,
@@ -249,7 +221,7 @@ export default function TeamStaffScreen() {
             </Text>
           )}
 
-          <Section title={t('invite')}>
+          <ScreenSection title={t('invite')}>
             <AuthTextField
               testID="staff-invite-first-name"
               label={t('firstName')}
@@ -310,7 +282,7 @@ export default function TeamStaffScreen() {
                 {invite.isPending ? t('working') : t('invite')}
               </Text>
             </PressableScale>
-          </Section>
+          </ScreenSection>
 
           <View className="gap-sm">
             {teamMembers.map((member) => {
@@ -404,7 +376,10 @@ export default function TeamStaffScreen() {
             })}
           </View>
 
-          <Section title={t('team.presetsTitle')} intro={t('team.presetsIntro')}>
+          <ScreenSection title={t('team.presetsTitle')} isLast>
+            <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+              {t('team.presetsIntro')}
+            </Text>
             <PressableScale
               testID="preset-new"
               accessibilityRole="button"
@@ -475,7 +450,7 @@ export default function TeamStaffScreen() {
                 </View>
               );
             })}
-          </Section>
+          </ScreenSection>
         </PageWidth>
       </ScrollView>
       <MemberAccessSheet

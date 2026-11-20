@@ -13,6 +13,7 @@ import { ChoiceOption } from '@/components/equipment/choice-option';
 import { Badge } from '@/components/layout/badge';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -256,13 +257,7 @@ export default function TeamMentoringScreen() {
             ) : null}
           </View>
           {topics.length === 0 ? null : (
-            <View className="gap-sm">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-              >
-                {t('adminTopicBreakdown')}
-              </Text>
+            <ScreenSection title={t('adminTopicBreakdown')}>
               <View className="flex-row flex-wrap gap-sm">
                 {topics.map((item) => (
                   <View
@@ -281,7 +276,7 @@ export default function TeamMentoringScreen() {
                   </View>
                 ))}
               </View>
-            </View>
+            </ScreenSection>
           )}
           {requests.isPending ? (
             <AnnouncementFeedSkeleton accessibilityLabel={t('adminTitle')} />

@@ -4,6 +4,7 @@ import { FailureNotice } from '@/components/error-code-line';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { SuccessPop } from '@/components/motion/success-pop';
@@ -269,16 +270,7 @@ export default function FeedbackScreen() {
                 </View>
               </SuccessPop>
             ) : (
-              <View
-                className="gap-lg rounded-lg border border-neutral-200 bg-white p-lg"
-                style={continuousCorners}
-              >
-                <Text
-                  accessibilityRole="header"
-                  className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-                >
-                  {t('feedback:newSubmission')}
-                </Text>
+              <ScreenSection title={t('feedback:newSubmission')}>
                 <Text
                   className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}
                 >
@@ -368,16 +360,10 @@ export default function FeedbackScreen() {
                   onPress={() => void submit()}
                   isLoading={isSubmitting}
                 />
-              </View>
+              </ScreenSection>
             )}
 
-            <View className="gap-md">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('feedback:historyTitle')}
-              </Text>
+            <ScreenSection title={t('feedback:historyTitle')} isLast>
               {(feedbackQuery.data?.length ?? 0) > 0 ? (
                 <Text
                   testID="feedback-answer-in-chat"
@@ -408,7 +394,7 @@ export default function FeedbackScreen() {
                   {t('feedback:historyEmpty')}
                 </Text>
               ) : null}
-            </View>
+            </ScreenSection>
           </FormWidth>
         }
       />

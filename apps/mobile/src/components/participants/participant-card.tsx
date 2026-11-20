@@ -15,6 +15,7 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { ParticipantMaterial } from '@/components/equipment/participant-material';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ParticipantActivity } from '@/components/participants/participant-activity';
 import { ParticipantNotes } from '@/components/participants/participant-notes';
@@ -423,18 +424,12 @@ export function ParticipantCard({
         </Text>
       ) : null}
 
-      <View className="gap-xs">
-        <Text
-          accessibilityRole="header"
-          className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-        >
-          {t('sectionProfile')}
-        </Text>
+      <ScreenSection title={t('sectionProfile')}>
         {/* Said out loud: opening this card wrote an audit row with her name. */}
         <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
           {t('accessLogged')}
         </Text>
-      </View>
+      </ScreenSection>
       <View
         testID="participant-profile"
         style={continuousCorners}

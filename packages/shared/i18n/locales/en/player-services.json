@@ -3,7 +3,6 @@
   "segmentServices": "Services",
   "segmentGuides": "Guides",
   "chooseCategory": "What do you need?",
-  "categoryHint": "Tap a category to see its services.",
   "backCategories": "Back to categories",
   "filterShow": "Filter services",
   "filterShowActive": "Active filters: {{count}}",

@@ -12,6 +12,7 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -216,13 +217,7 @@ export function ParticipantRgpd({
     request.data === null || request.data === undefined ? undefined : request.data.reason;
 
   return (
-    <View className="gap-sm" testID="participant-rgpd">
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-      >
-        {t('rgpdSectionTitle')}
-      </Text>
+    <ScreenSection testID="participant-rgpd" title={t('rgpdSectionTitle')}>
       <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
         {t('rgpdSectionHint')}
       </Text>
@@ -288,6 +283,6 @@ export function ParticipantRgpd({
           if (done === 'erase') onErased();
         }}
       />
-    </View>
+    </ScreenSection>
   );
 }

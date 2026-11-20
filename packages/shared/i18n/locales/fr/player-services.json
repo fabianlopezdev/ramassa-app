@@ -3,7 +3,6 @@
   "segmentServices": "Services",
   "segmentGuides": "Guides",
   "chooseCategory": "De quoi as-tu besoin ?",
-  "categoryHint": "Touche une catégorie pour voir les services.",
   "backCategories": "Reviens aux catégories",
   "filterShow": "Filtre les services",
   "filterShowActive": "Filtres actifs : {{count}}",

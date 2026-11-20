@@ -10,9 +10,9 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { HomeNextActivity } from '@/components/home/home-next-activity';
-import { HomeSection } from '@/components/home/home-section';
 import { HomeToDo } from '@/components/home/home-to-do';
 import { PageWidth } from '@/components/layout/content-width';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PlayerTabHeader, PlayerTabStateFrame } from '@/components/profile/player-tab-header';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
 import { useMyCustomForms } from '@/lib/custom-forms';
@@ -203,7 +203,7 @@ export default function HomeScreen() {
             languageFontClass={languageFontClass}
           />
           <HomeToDo items={toDoItems} languageFontClass={languageFontClass} />
-          <HomeSection title={t('feedTitle')} languageFontClass={languageFontClass} isLast>
+          <ScreenSection title={t('feedTitle')} isLast>
             <CategoryFilters
               selected={category}
               newCounts={newCounts}
@@ -211,7 +211,7 @@ export default function HomeScreen() {
               t={t}
               languageFontClass={languageFontClass}
             />
-          </HomeSection>
+          </ScreenSection>
         </PageWidth>
       }
       ListEmptyComponent={

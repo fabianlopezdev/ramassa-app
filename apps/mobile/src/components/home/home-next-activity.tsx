@@ -9,7 +9,7 @@ import {
   playerEventCapacityLabel,
   playerEventSignupLabel,
 } from '@/components/events/event-card';
-import { HomeSection } from '@/components/home/home-section';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -68,11 +68,7 @@ export function HomeNextActivity({
   const unseenLabel = isUnseen ? t('home:unseen') : null;
 
   return (
-    <HomeSection
-      testID="home-next-activity"
-      title={t('nextActivity.title')}
-      languageFontClass={languageFontClass}
-    >
+    <ScreenSection testID="home-next-activity" title={t('nextActivity.title')}>
       <EventCard
         eventId={occurrence.event.id}
         occurrenceId={occurrence.occurrence_id}
@@ -97,6 +93,6 @@ export function HomeNextActivity({
         languageFontClass={languageFontClass}
         onOpen={openOccurrence}
       />
-    </HomeSection>
+    </ScreenSection>
   );
 }

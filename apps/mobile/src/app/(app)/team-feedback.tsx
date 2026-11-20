@@ -10,6 +10,7 @@ import { ChoiceOption } from '@/components/equipment/choice-option';
 import { Badge } from '@/components/layout/badge';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { nextFeedbackStatuses } from '@/lib/feedback-status';
@@ -229,13 +230,7 @@ export default function TeamFeedbackScreen() {
             </Text>
           </View>
           {(monthly.data ?? []).length === 0 ? null : (
-            <View className="gap-sm">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-              >
-                {t('monthlyTitle')}
-              </Text>
+            <ScreenSection title={t('monthlyTitle')}>
               <View testID="team-feedback-monthly" className="flex-row flex-wrap gap-sm">
                 {(monthly.data ?? []).slice(0, MONTHS_SHOWN).map((item) => (
                   <View
@@ -259,7 +254,7 @@ export default function TeamFeedbackScreen() {
                   </View>
                 ))}
               </View>
-            </View>
+            </ScreenSection>
           )}
           <View className="gap-sm">
             <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>

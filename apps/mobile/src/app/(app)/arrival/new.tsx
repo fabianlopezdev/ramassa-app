@@ -10,6 +10,7 @@ import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import {
   addArrivalLine,
@@ -30,7 +31,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useNetworkState } from 'expo-network';
 import { useRouter } from 'expo-router';
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -55,21 +56,6 @@ interface PhotoDraft {
   readonly uri: string;
   readonly objectKey: string | null;
   readonly failed: boolean;
-}
-
-function Section({ title, children }: { readonly title: string; readonly children: ReactNode }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View className="gap-sm">
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-      >
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
 }
 
 function OutlineButton({
@@ -293,7 +279,7 @@ export default function NewArrivalScreen() {
         contentContainerClassName="pb-3xl"
       >
         <PageWidth className="gap-lg p-lg">
-          <Section title={t('arrival.sourceLabel')}>
+          <ScreenSection title={t('arrival.sourceLabel')}>
             <View
               accessibilityRole="radiogroup"
               accessibilityLabel={t('arrival.sourceLabel')}
@@ -318,9 +304,9 @@ export default function NewArrivalScreen() {
               onChangeText={setSourceName}
               maxLength={200}
             />
-          </Section>
+          </ScreenSection>
 
-          <Section title={t('arrival.linesLabel')}>
+          <ScreenSection title={t('arrival.linesLabel')}>
             {lines.map((line, index) => {
               const item =
                 line.size === null
@@ -470,7 +456,7 @@ export default function NewArrivalScreen() {
                 disabled={!canAddLine}
               />
             </View>
-          </Section>
+          </ScreenSection>
 
           {source === 'purchase' ? (
             <AuthTextField
@@ -493,7 +479,7 @@ export default function NewArrivalScreen() {
             textAlignVertical="top"
           />
 
-          <Section title={t('arrival.photosLabel')}>
+          <ScreenSection title={t('arrival.photosLabel')}>
             <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
               {t('arrival.photosHint')}
             </Text>
@@ -559,7 +545,7 @@ export default function NewArrivalScreen() {
                 {photoError}
               </Text>
             )}
-          </Section>
+          </ScreenSection>
 
           {saveError === null ? null : (
             <FailureNotice code={saveError} message={t('arrival.saveFailed')} />

@@ -5,6 +5,7 @@ import {
 } from '@/components/announcements/feed-states';
 import { GuideCategoryGrid } from '@/components/knowledge/guide-category-grid';
 import { PageWidth } from '@/components/layout/content-width';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import {
   countPlayerGuidesByCategory,
@@ -21,7 +22,6 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
   View,
   type StyleProp,
   type ViewStyle,
@@ -103,14 +103,10 @@ export function PlayerGuideList({
     );
   } else {
     body = (
-      <PageWidth className="gap-md">
-        <Text
-          accessibilityRole="header"
-          className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-        >
-          {t('categoriesHeading')}
-        </Text>
-        <GuideCategoryGrid categories={guideCategories} onSelect={openCategory} />
+      <PageWidth>
+        <ScreenSection title={t('categoriesHeading')} isLast>
+          <GuideCategoryGrid categories={guideCategories} onSelect={openCategory} />
+        </ScreenSection>
       </PageWidth>
     );
   }

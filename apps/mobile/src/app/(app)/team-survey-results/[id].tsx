@@ -9,13 +9,14 @@
  */
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useStaffSurveys, useSurveyExport, useSurveyResponses } from '@/lib/team-surveys';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useLocalSearchParams } from 'expo-router';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -53,24 +54,6 @@ function CountRow({
       <View className="h-2 overflow-hidden rounded-full bg-neutral-100">
         <View className="h-2 rounded-full bg-primary" style={{ width: `${share}%` }} />
       </View>
-    </View>
-  );
-}
-
-function Section({ title, children }: { readonly title: string; readonly children: ReactNode }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View
-      style={continuousCorners}
-      className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-    >
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-      >
-        {title}
-      </Text>
-      {children}
     </View>
   );
 }
@@ -261,12 +244,12 @@ export default function TeamSurveyResultsScreen() {
                 <>
                   {questions.map((question) => (
                     <View key={question.id} testID={`survey-result-${question.id}`}>
-                      <Section title={resolveSurveyCopy(question.prompt, language)}>
+                      <ScreenSection title={resolveSurveyCopy(question.prompt, language)}>
                         {resultFor(question)}
-                      </Section>
+                      </ScreenSection>
                     </View>
                   ))}
-                  <Section title={t('individualResponses')}>
+                  <ScreenSection title={t('individualResponses')} isLast>
                     {responses.data.length === 0 ? (
                       <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
                         {t('noResponses')}
@@ -289,7 +272,7 @@ export default function TeamSurveyResultsScreen() {
                         </View>
                       ))
                     )}
-                  </Section>
+                  </ScreenSection>
                 </>
               )}
             </>

@@ -5,6 +5,7 @@ import { StoryImagePreview } from '@/components/knowledge/story-image-preview';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { SuccessPop } from '@/components/motion/success-pop';
@@ -530,13 +531,7 @@ export default function StorySubmissionScreen() {
             </View>
           )}
 
-          <View className="gap-sm pt-lg">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-            >
-              {t('knowledge:myStories')}
-            </Text>
+          <ScreenSection title={t('knowledge:myStories')} isLast>
             {(statusesQuery.data ?? []).length === 0 ? (
               <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
                 {t('knowledge:myStoriesEmpty')}
@@ -589,7 +584,7 @@ export default function StorySubmissionScreen() {
                 );
               })
             )}
-          </View>
+          </ScreenSection>
         </FormWidth>
       </ScrollView>
     </>

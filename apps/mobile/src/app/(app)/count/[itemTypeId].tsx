@@ -8,6 +8,7 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverItemTypes } from '@/lib/handover';
@@ -217,13 +218,7 @@ export default function StockCountScreen() {
           ) : (
             <>
               {needsReason ? (
-                <View className="gap-sm" testID="count-differences">
-                  <Text
-                    accessibilityRole="header"
-                    className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-                  >
-                    {t('count.differencesTitle')}
-                  </Text>
+                <ScreenSection testID="count-differences" title={t('count.differencesTitle')}>
                   {differences.map((difference) => (
                     <Text
                       key={difference.size ?? ''}
@@ -263,7 +258,7 @@ export default function StockCountScreen() {
                     onChangeText={setNote}
                     maxLength={500}
                   />
-                </View>
+                </ScreenSection>
               ) : (
                 <Text
                   testID="count-matches"

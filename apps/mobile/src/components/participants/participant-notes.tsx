@@ -10,6 +10,7 @@
  */
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -175,13 +176,7 @@ export function ParticipantNotes({ participantId }: { readonly participantId: st
   );
 
   return (
-    <View className="gap-sm" testID="participant-notes">
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-      >
-        {t('sectionNotes')}
-      </Text>
+    <ScreenSection testID="participant-notes" title={t('sectionNotes')}>
       <PressableScale
         testID="participant-note-open"
         accessibilityRole="button"
@@ -238,6 +233,6 @@ export function ParticipantNotes({ participantId }: { readonly participantId: st
         </View>
       )}
       <NoteSheet visible={isSheetOpen} onClose={() => setIsSheetOpen(false)} addNote={addNote} />
-    </View>
+    </ScreenSection>
   );
 }

@@ -12,6 +12,7 @@ import { ModerationReports } from '@/components/forum/moderation-reports';
 import { GalleryModeration } from '@/components/gallery/gallery-moderation';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { SegmentedControl } from '@/components/layout/segmented-control';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -97,15 +98,9 @@ export default function ForumModerationScreen() {
               {header}
               {queueState}
               {gallery.length === 0 ? null : (
-                <View className="gap-sm" testID="gallery-reports">
-                  <Text
-                    accessibilityRole="header"
-                    className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-                  >
-                    {t('moderationReportedTitle')}
-                  </Text>
+                <ScreenSection testID="gallery-reports" title={t('moderationReportedTitle')} isLast>
                   <ModerationReports rows={gallery} categories={categories.data ?? []} />
-                </View>
+                </ScreenSection>
               )}
             </View>
           }

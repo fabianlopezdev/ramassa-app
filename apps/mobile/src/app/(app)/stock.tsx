@@ -9,6 +9,7 @@ import { StaffCheckouts } from '@/components/equipment/staff-checkouts';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverItemTypes } from '@/lib/handover';
@@ -238,13 +239,7 @@ export default function StockScreen() {
             </PressableScale>
           ) : null}
 
-          <View className="gap-sm" testID="stock-levels">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('stock.levelsTitle')}
-            </Text>
+          <ScreenSection testID="stock-levels" title={t('stock.levelsTitle')}>
             {levels.isPending ? <ActivityIndicator color={tokens.colors.primary.DEFAULT} /> : null}
             {levels.isError ? (
               <FailureNotice code={toAppError(levels.error).code} message={t('stock.loadFailed')} />
@@ -321,17 +316,11 @@ export default function StockScreen() {
                 </View>
               </View>
             ))}
-          </View>
+          </ScreenSection>
 
           <StaffCheckouts canCheckIn={canCheckOut} />
 
-          <View className="gap-sm" testID="stock-arrivals">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('stock.arrivalsTitle')}
-            </Text>
+          <ScreenSection testID="stock-arrivals" title={t('stock.arrivalsTitle')} isLast>
             {arrivals.isSuccess && arrivals.data.length === 0 ? (
               <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
                 {t('stock.arrivalsEmpty')}
@@ -346,7 +335,7 @@ export default function StockScreen() {
             {(arrivals.data ?? []).map((arrival) => (
               <ArrivalCard key={arrival.id} arrival={arrival} />
             ))}
-          </View>
+          </ScreenSection>
         </PageWidth>
       </ScrollView>
     </SafeAreaView>

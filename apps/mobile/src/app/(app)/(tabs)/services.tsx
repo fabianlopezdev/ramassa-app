@@ -5,6 +5,7 @@ import {
 import { PlayerGuideList } from '@/components/knowledge/player-guide-list';
 import { PageWidth } from '@/components/layout/content-width';
 import { Divider } from '@/components/layout/divider';
+import { ScreenSection } from '@/components/layout/screen-section';
 import {
   SegmentedControl,
   type SegmentedControlOption,
@@ -17,7 +18,7 @@ import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { toAppError } from '@ramassa/shared/errors';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -126,20 +127,9 @@ export default function ServicesScreen() {
 
   return stateScreen(
     <PageWidth>
-      <View className="gap-sm">
-        <View className="gap-xs">
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-          >
-            {t('playerServices:chooseCategory')}
-          </Text>
-          <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-            {t('playerServices:categoryHint')}
-          </Text>
-        </View>
+      <ScreenSection title={t('playerServices:chooseCategory')} isLast>
         <ServiceCategoryGrid categories={categoriesQuery.data ?? []} onSelect={selectCategory} />
-      </View>
+      </ScreenSection>
     </PageWidth>,
     'player-services-categories',
   );

@@ -9,6 +9,7 @@ import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-loa
 import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { EntityServiceStatus } from '@/components/entity/entity-service-status';
 import { PageWidth } from '@/components/layout/content-width';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { confirmDelete } from '@/lib/confirm-delete';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -125,17 +126,7 @@ export default function EntityServicesScreen() {
           )}
 
           {notifications.length === 0 ? null : (
-            <View
-              testID="entity-service-decisions"
-              style={continuousCorners}
-              className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-            >
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-              >
-                {t('decisionTitle')}
-              </Text>
+            <ScreenSection testID="entity-service-decisions" title={t('decisionTitle')}>
               {notifications.map((notification) => (
                 <PressableScale
                   key={notification.id}
@@ -171,7 +162,7 @@ export default function EntityServicesScreen() {
                   )}
                 </PressableScale>
               ))}
-            </View>
+            </ScreenSection>
           )}
 
           {hasLoadFailed(services) ? (

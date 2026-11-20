@@ -10,6 +10,7 @@ import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { readValue } from '@/lib/arrival-form';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -18,7 +19,7 @@ import { useItemLabel } from '@/lib/item-label';
 import { useSaveItemType } from '@/lib/stock';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -32,27 +33,6 @@ import { toAppError, type AppError } from '@ramassa/shared/errors';
 import { LANGUAGE_NATIVE_NAMES } from '@ramassa/shared/i18n';
 
 type Kind = 'player_kit' | 'team_equipment';
-
-function Section({
-  title,
-  hint,
-  children,
-}: {
-  readonly title: string;
-  readonly hint?: string;
-  readonly children: ReactNode;
-}) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View className="gap-sm">
-      <Text className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}>{title}</Text>
-      {children}
-      {hint === undefined ? null : (
-        <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>{hint}</Text>
-      )}
-    </View>
-  );
-}
 
 export default function ItemTypeScreen() {
   const { id = 'new' } = useLocalSearchParams<{ id: string }>();
@@ -162,7 +142,7 @@ export default function ItemTypeScreen() {
           )}
 
           {isBuiltin ? null : (
-            <Section title={t('items.kindLabel')} hint={t('items.kindHint')}>
+            <ScreenSection title={t('items.kindLabel')}>
               <View
                 accessibilityRole="radiogroup"
                 accessibilityLabel={t('items.kindLabel')}
@@ -180,10 +160,13 @@ export default function ItemTypeScreen() {
                   />
                 ))}
               </View>
-            </Section>
+              <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+                {t('items.kindHint')}
+              </Text>
+            </ScreenSection>
           )}
 
-          <Section title={t('items.sizesLabel')} hint={t('items.sizesHint')}>
+          <ScreenSection title={t('items.sizesLabel')}>
             <View className="flex-row flex-wrap gap-sm">
               {sizes.length === 0 ? (
                 <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
@@ -235,7 +218,10 @@ export default function ItemTypeScreen() {
                 </Text>
               </PressableScale>
             </View>
-          </Section>
+            <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+              {t('items.sizesHint')}
+            </Text>
+          </ScreenSection>
 
           <AuthTextField
             testID="item-value"
@@ -272,7 +258,7 @@ export default function ItemTypeScreen() {
             </Text>
           ) : null}
 
-          <Section title={t('items.activeLabel')} hint={t('items.activeHint')}>
+          <ScreenSection title={t('items.activeLabel')}>
             <View
               accessibilityRole="radiogroup"
               accessibilityLabel={t('items.activeLabel')}
@@ -290,7 +276,10 @@ export default function ItemTypeScreen() {
                 />
               ))}
             </View>
-          </Section>
+            <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+              {t('items.activeHint')}
+            </Text>
+          </ScreenSection>
 
           {error === null || errorMessage === null ? null : (
             <FailureNotice code={error.code} message={errorMessage} />

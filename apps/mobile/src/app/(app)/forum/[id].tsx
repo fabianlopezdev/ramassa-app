@@ -6,6 +6,7 @@ import { ForumPlainText } from '@/components/forum/forum-plain-text';
 import { ForumReplyCard } from '@/components/forum/forum-reply-card';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { SectionTitle } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { AuthorLine } from '@/components/people/person-avatar';
@@ -418,12 +419,10 @@ export default function ForumPostDetailScreen() {
                 {t('forum:offlineWrite')}
               </Text>
             ) : null}
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-xl font-bold tabular-nums text-neutral-900 ${languageFontClass}`}
-            >
-              {t('forum:repliesCount', { count: post.reply_count })}
-            </Text>
+            <SectionTitle
+              className="tabular-nums"
+              title={t('forum:repliesCount', { count: post.reply_count })}
+            />
           </PageWidth>
         }
         ListEmptyComponent={

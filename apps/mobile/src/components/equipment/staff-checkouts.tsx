@@ -5,6 +5,7 @@
  */
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useItemLabel } from '@/lib/item-label';
@@ -167,13 +168,7 @@ export function StaffCheckouts({ canCheckIn }: { readonly canCheckIn: boolean })
   const rows = checkouts.data ?? [];
 
   return (
-    <View className="gap-sm" testID="stock-checkouts">
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-      >
-        {t('checkout.listTitle')}
-      </Text>
+    <ScreenSection testID="stock-checkouts" title={t('checkout.listTitle')}>
       {checkouts.isSuccess && rows.length === 0 ? (
         <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
           {t('checkout.listEmpty')}
@@ -220,6 +215,6 @@ export function StaffCheckouts({ canCheckIn }: { readonly canCheckIn: boolean })
           </View>
         );
       })}
-    </View>
+    </ScreenSection>
   );
 }
