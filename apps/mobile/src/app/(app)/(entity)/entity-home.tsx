@@ -15,6 +15,7 @@ import { Icon } from '@/components/icons/icon';
 import { PageWidth } from '@/components/layout/content-width';
 import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { BarRow, MonthBars, Sparkline } from '@/components/team/impact-charts';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useEntityDashboard } from '@/lib/entity-portal';
@@ -31,7 +32,7 @@ const TABLET_WIDTH = 768;
 
 const percent = (value: number | null) => (value === null ? '' : `${value.toFixed(2)}%`);
 
-export default function EntityHomeScreen() {
+function EntityHomeScreen() {
   const { t } = useTranslation('nav');
   const { t: tEntity, i18n } = useTranslation('entity-management');
   // One status vocabulary with the Referrals tab (RAPP-804).
@@ -218,3 +219,5 @@ export default function EntityHomeScreen() {
     </SafeAreaView>
   );
 }
+
+export default withScreenEntrance('entity-home', EntityHomeScreen);

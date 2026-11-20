@@ -18,6 +18,7 @@ import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { SegmentedControl } from '@/components/layout/segmented-control';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { DeletionRequestsPanel } from '@/components/participants/deletion-requests-panel';
 import { ParticipantCard } from '@/components/participants/participant-card';
 import {
@@ -216,7 +217,7 @@ function TableRow({
   );
 }
 
-export default function ParticipantListScreen() {
+function ParticipantListScreen() {
   const { t, i18n } = useTranslation('participants');
   const { t: tNav } = useTranslation('nav');
   const { t: tErrors } = useTranslation('errors');
@@ -597,3 +598,5 @@ export default function ParticipantListScreen() {
 function RowSeparator() {
   return <View className="h-sm" />;
 }
+
+export default withScreenEntrance('participants', ParticipantListScreen);

@@ -6,7 +6,6 @@
  */
 
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
-import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { ProfilePhotoEditor } from '@/components/profile/profile-photo-editor';
@@ -100,62 +99,54 @@ export default function ProfileDataScreen() {
       ) : (
         <>
           <ProfilePhotoEditor profile={profile} />
-          <FadeSlideIn index={0}>
-            <ProfileSection title={t('sectionIdentity')}>
-              <ProfileRow label={t('onboarding:firstNameLabel')} value={profile.first_name} />
-              <ProfileRow label={t('onboarding:lastNameLabel')} value={profile.last_name} />
-              <ProfileRow
-                label={t('onboarding:dateOfBirthLabel')}
-                value={formatDate(answers.dateOfBirth || null)}
-              />
-              <ProfileRow
-                label={t('onboarding:placeOfBirthLabel')}
-                value={shown(answers.placeOfBirth)}
-              />
-              <ProfileRow
-                label={t('onboarding:nationalityLabel')}
-                value={shown(answers.nationality)}
-              />
-            </ProfileSection>
-          </FadeSlideIn>
+          <ProfileSection title={t('sectionIdentity')}>
+            <ProfileRow label={t('onboarding:firstNameLabel')} value={profile.first_name} />
+            <ProfileRow label={t('onboarding:lastNameLabel')} value={profile.last_name} />
+            <ProfileRow
+              label={t('onboarding:dateOfBirthLabel')}
+              value={formatDate(answers.dateOfBirth || null)}
+            />
+            <ProfileRow
+              label={t('onboarding:placeOfBirthLabel')}
+              value={shown(answers.placeOfBirth)}
+            />
+            <ProfileRow
+              label={t('onboarding:nationalityLabel')}
+              value={shown(answers.nationality)}
+            />
+          </ProfileSection>
 
-          <FadeSlideIn index={1}>
-            <ProfileSection title={t('sectionDocumentation')}>
-              <ProfileRow
-                label={t('onboarding:documentTypeLabel')}
-                value={
-                  answers.documentType === 'other' && answers.documentName
-                    ? answers.documentName
-                    : documentTypeLabel(answers.documentType ?? null, t)
-                }
-              />
-              <ProfileRow
-                label={t('onboarding:documentNumberLabel')}
-                value={shown(answers.documentNumber)}
-              />
-            </ProfileSection>
-          </FadeSlideIn>
+          <ProfileSection title={t('sectionDocumentation')}>
+            <ProfileRow
+              label={t('onboarding:documentTypeLabel')}
+              value={
+                answers.documentType === 'other' && answers.documentName
+                  ? answers.documentName
+                  : documentTypeLabel(answers.documentType ?? null, t)
+              }
+            />
+            <ProfileRow
+              label={t('onboarding:documentNumberLabel')}
+              value={shown(answers.documentNumber)}
+            />
+          </ProfileSection>
 
-          <FadeSlideIn index={2}>
-            <ProfileSection title={t('sectionContact')}>
-              <ProfileRow label={t('fieldPhone')} value={shown(answers.phone)} />
-              <ProfileRow label={t('fieldAddress')} value={shown(answers.address)} />
-              <ProfileRow label={t('fieldCity')} value={shown(answers.city)} />
-              <ProfileRow label={t('fieldPostalCode')} value={shown(answers.postalCode)} />
-              <ProfileRow
-                label={t('onboarding:clothingSizeLabel')}
-                value={shown(answers.clothingSize)}
-              />
-              <ProfileRow label={t('onboarding:shoeSizeLabel')} value={shown(answers.shoeSize)} />
-            </ProfileSection>
-          </FadeSlideIn>
+          <ProfileSection title={t('sectionContact')}>
+            <ProfileRow label={t('fieldPhone')} value={shown(answers.phone)} />
+            <ProfileRow label={t('fieldAddress')} value={shown(answers.address)} />
+            <ProfileRow label={t('fieldCity')} value={shown(answers.city)} />
+            <ProfileRow label={t('fieldPostalCode')} value={shown(answers.postalCode)} />
+            <ProfileRow
+              label={t('onboarding:clothingSizeLabel')}
+              value={shown(answers.clothingSize)}
+            />
+            <ProfileRow label={t('onboarding:shoeSizeLabel')} value={shown(answers.shoeSize)} />
+          </ProfileSection>
 
-          <FadeSlideIn index={3}>
-            {/* The season registration answers (RAPP-303): hers to see and correct. */}
-            <ProfileSection title={t('onboarding:seasonSectionTitle')}>
-              <SeasonAnswerRows answers={answers} emptyLabel={t('notProvided')} />
-            </ProfileSection>
-          </FadeSlideIn>
+          {/* The season registration answers (RAPP-303): hers to see and correct. */}
+          <ProfileSection title={t('onboarding:seasonSectionTitle')}>
+            <SeasonAnswerRows answers={answers} emptyLabel={t('notProvided')} />
+          </ProfileSection>
 
           <AuthSubmitButton
             testID="profile-open-edit"

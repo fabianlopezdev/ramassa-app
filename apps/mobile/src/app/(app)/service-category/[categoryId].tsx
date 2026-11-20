@@ -14,7 +14,6 @@ import {
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { ServiceCard } from '@/components/services/service-card';
 import { ServiceFilterPanel } from '@/components/services/service-filter-panel';
 import { isNetworkStateOnline } from '@/lib/network-status';
@@ -121,7 +120,7 @@ export default function ServiceCategoryScreen() {
     ]);
   }, [baseServicesQuery, categoriesQuery, servicesQuery]);
   const renderService = useCallback(
-    ({ item, index }: ListRenderItemInfo<PlayerServiceRow>) => {
+    ({ item }: ListRenderItemInfo<PlayerServiceRow>) => {
       const serviceTitle = resolveLocalizedText(item.title, language);
       if (serviceTitle === undefined) return null;
       const firstImage = item.images[0];
@@ -134,31 +133,29 @@ export default function ServiceCategoryScreen() {
       const availability = t(`playerServices:availability${availabilityKey(item.availability)}`);
       return (
         <PageWidth className="pb-md">
-          <FadeSlideIn index={index}>
-            <ServiceCard
-              id={item.id}
-              title={serviceTitle.text}
-              provider={item.provider_name}
-              location={item.location}
-              cost={cost}
-              availability={availability}
-              interested={item.interested}
-              interestedLabel={t('playerServices:interestSaved')}
-              imageObjectKey={firstImage?.url ?? null}
-              imageAlt={imageAlt?.text ?? null}
-              accessibilityLabel={[
-                t('playerServices:openService', { title: serviceTitle.text }),
-                item.provider_name,
-                item.location,
-                cost,
-                availability,
-              ]
-                .filter((value): value is string => typeof value === 'string')
-                .join('. ')}
-              languageFontClass={languageFontClass}
-              onOpen={openService}
-            />
-          </FadeSlideIn>
+          <ServiceCard
+            id={item.id}
+            title={serviceTitle.text}
+            provider={item.provider_name}
+            location={item.location}
+            cost={cost}
+            availability={availability}
+            interested={item.interested}
+            interestedLabel={t('playerServices:interestSaved')}
+            imageObjectKey={firstImage?.url ?? null}
+            imageAlt={imageAlt?.text ?? null}
+            accessibilityLabel={[
+              t('playerServices:openService', { title: serviceTitle.text }),
+              item.provider_name,
+              item.location,
+              cost,
+              availability,
+            ]
+              .filter((value): value is string => typeof value === 'string')
+              .join('. ')}
+            languageFontClass={languageFontClass}
+            onOpen={openService}
+          />
         </PageWidth>
       );
     },

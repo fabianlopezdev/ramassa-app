@@ -9,6 +9,7 @@ import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-loa
 import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useEntityReferrals } from '@/lib/entity-referrals';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -21,7 +22,7 @@ import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
 import { filterReferrals } from '@ramassa/shared/referrals';
 
-export default function EntityReferralsScreen() {
+function EntityReferralsScreen() {
   const { t, i18n } = useTranslation('referrals');
   const fontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -132,3 +133,5 @@ export default function EntityReferralsScreen() {
     </SafeAreaView>
   );
 }
+
+export default withScreenEntrance('entity-referrals', EntityReferralsScreen);

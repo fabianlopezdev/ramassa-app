@@ -69,7 +69,7 @@ export function LanguageChoiceList({ selectedLanguage, onChoose }: LanguageChoic
       className="w-full gap-sm"
     >
       {SUPPORTED_LANGUAGES.map((language, index) => (
-        <FadeSlideIn key={language} index={index} preset="onboarding" composite>
+        <FadeSlideIn key={language} index={index} composite>
           <LanguageChoiceOption
             language={language}
             isSelected={language === selectedLanguage}

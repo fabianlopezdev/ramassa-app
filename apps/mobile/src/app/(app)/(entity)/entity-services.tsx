@@ -11,6 +11,7 @@ import { EntityServiceStatus } from '@/components/entity/entity-service-status';
 import { PageWidth } from '@/components/layout/content-width';
 import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { confirmDelete } from '@/lib/confirm-delete';
 import { continuousCorners } from '@/lib/continuous-corners';
 import {
@@ -69,7 +70,7 @@ function CardButton({
   );
 }
 
-export default function EntityServicesScreen() {
+function EntityServicesScreen() {
   const { t, i18n } = useTranslation('entity-services');
   const { t: tErrors } = useTranslation('errors');
   const { t: tProfile } = useTranslation('profile');
@@ -256,3 +257,5 @@ export default function EntityServicesScreen() {
     </SafeAreaView>
   );
 }
+
+export default withScreenEntrance('entity-services', EntityServicesScreen);

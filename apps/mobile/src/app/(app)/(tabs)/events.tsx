@@ -18,6 +18,7 @@ import { EventMonthCalendar } from '@/components/events/event-month-calendar';
 import { PageWidth } from '@/components/layout/content-width';
 import { NavRow } from '@/components/layout/nav-row';
 import { ScreenSection, SectionTitle } from '@/components/layout/screen-section';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader, PlayerTabStateFrame } from '@/components/profile/player-tab-header';
 import {
   addPrivateMentoringMarkedDates,
@@ -64,7 +65,7 @@ const getItemType = (item: PlayerEventOccurrence) =>
     ? 'signed-up-event'
     : 'event';
 
-export default function EventsScreen() {
+function EventsScreen() {
   const { t, i18n } = useTranslation(['events', 'common', 'mentoring', 'nav']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
@@ -357,3 +358,5 @@ export default function EventsScreen() {
     />
   );
 }
+
+export default withScreenEntrance('events', EventsScreen);

@@ -7,9 +7,12 @@
  */
 import { EntityAccountButton } from '@/components/entity/entity-account-menu';
 import { PlayerMessageThread } from '@/components/messaging/message-thread';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { useTranslation } from 'react-i18next';
 
-export default function EntityMessagesScreen() {
+function EntityMessagesScreen() {
   const { t } = useTranslation('messaging');
   return <PlayerMessageThread title={t('entityTitle')} headerAccessory={<EntityAccountButton />} />;
 }
+
+export default withScreenEntrance('entity-messages', EntityMessagesScreen);

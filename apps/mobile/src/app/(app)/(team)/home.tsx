@@ -6,6 +6,7 @@
  */
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useUnreadMessages } from '@/lib/messaging';
 import { useGuardedLogout } from '@/lib/sign-out-guard';
@@ -49,7 +50,7 @@ function HomeButton({
   );
 }
 
-export default function TeamHomeButtonsScreen() {
+function TeamHomeButtonsScreen() {
   const signOut = useGuardedLogout();
   const { t } = useTranslation('nav');
   const { t: tMessaging } = useTranslation('messaging');
@@ -147,3 +148,5 @@ export default function TeamHomeButtonsScreen() {
     </SafeAreaView>
   );
 }
+
+export default withScreenEntrance('home', TeamHomeButtonsScreen);

@@ -11,6 +11,7 @@
 import { PageWidth } from '@/components/layout/content-width';
 import type { RaisedCardBadge } from '@/components/layout/raised-card';
 import { RaisedIconCard } from '@/components/layout/raised-icon-card';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { useUnreadMessages } from '@/lib/messaging';
 import { latestOpenMentoringRequest } from '@/lib/player-chat-tab';
@@ -42,7 +43,7 @@ function stateBadge(label: string | null): RaisedCardBadge | null {
   return label === null ? null : { label, tone: 'brand' };
 }
 
-export default function ChatTabScreen() {
+function ChatTabScreen() {
   const { t } = useTranslation(['nav', 'messaging', 'mentoring', 'feedback']);
   const { push } = useRouter();
   const unread = useUnreadMessages().data ?? 0;
@@ -108,3 +109,5 @@ export default function ChatTabScreen() {
     </ScrollView>
   );
 }
+
+export default withScreenEntrance('chat', ChatTabScreen);

@@ -15,7 +15,7 @@ import {
   type SegmentedControlOption,
 } from '@/components/layout/segmented-control';
 import { TabScreenAction } from '@/components/layout/tab-screen-action';
-import { FadeSlideIn } from '@/components/motion/fade-slide-in';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
@@ -57,7 +57,7 @@ const shareActions: Readonly<
   stories: { route: '/story/submit' as Href, labelKey: 'forum:shareStories' },
 };
 
-export default function CommunityScreen() {
+function CommunityScreen() {
   const { t } = useTranslation(['forum', 'errors', 'nav']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -139,24 +139,22 @@ export default function CommunityScreen() {
     void Promise.all([refetchCategories(), refetchPosts()]);
   }, [refetchCategories, refetchPosts]);
   const renderPost = useCallback(
-    ({ item, index }: ListRenderItemInfo<ForumPostRow>) => (
+    ({ item }: ListRenderItemInfo<ForumPostRow>) => (
       <PageWidth className="pb-md">
-        <FadeSlideIn index={index}>
-          <ForumPostCard
-            post={item}
-            tone={toneByCategoryId[item.category_id]}
-            authorLabel={t('forum:postBy', { name: item.author_first_name })}
-            authorAvatarKey={personCards.get(item.author_id)?.avatarKey ?? null}
-            repliesLabel={t('forum:repliesCount', { count: item.reply_count })}
-            pinnedLabel={t('forum:pinned')}
-            imageAlt={t('forum:imageAlt', { name: item.author_first_name })}
-            accessibilityLabel={t('forum:openPost', { name: item.author_first_name })}
-            languageFontClass={languageFontClass}
-            accessToken={session?.access_token}
-            openLinkLabel={openLinkLabel}
-            onOpen={openPost}
-          />
-        </FadeSlideIn>
+        <ForumPostCard
+          post={item}
+          tone={toneByCategoryId[item.category_id]}
+          authorLabel={t('forum:postBy', { name: item.author_first_name })}
+          authorAvatarKey={personCards.get(item.author_id)?.avatarKey ?? null}
+          repliesLabel={t('forum:repliesCount', { count: item.reply_count })}
+          pinnedLabel={t('forum:pinned')}
+          imageAlt={t('forum:imageAlt', { name: item.author_first_name })}
+          accessibilityLabel={t('forum:openPost', { name: item.author_first_name })}
+          languageFontClass={languageFontClass}
+          accessToken={session?.access_token}
+          openLinkLabel={openLinkLabel}
+          onOpen={openPost}
+        />
       </PageWidth>
     ),
     [
@@ -262,3 +260,5 @@ export default function CommunityScreen() {
     </>
   );
 }
+
+export default withScreenEntrance('community', CommunityScreen);

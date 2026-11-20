@@ -10,6 +10,7 @@ import {
   SegmentedControl,
   type SegmentedControlOption,
 } from '@/components/layout/segmented-control';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { ServiceCategoryGrid } from '@/components/services/service-category-grid';
 import { usePlayerServiceCategories } from '@/lib/player-services';
@@ -32,7 +33,7 @@ const styles = StyleSheet.create({
 /** The two views of Ajuda (RAPP-851): services by category, and the guides. */
 type AjudaSegment = 'services' | 'guides';
 
-export default function ServicesScreen() {
+function ServicesScreen() {
   const { t } = useTranslation(['playerServices', 'errors', 'nav']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -134,3 +135,5 @@ export default function ServicesScreen() {
     'player-services-categories',
   );
 }
+
+export default withScreenEntrance('services', ServicesScreen);

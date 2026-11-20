@@ -5,7 +5,6 @@ import {
 } from '@/components/announcements/feed-states';
 import { KnowledgeArticleCard } from '@/components/knowledge/knowledge-article-card';
 import { PageWidth } from '@/components/layout/content-width';
-import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { useCommunityStories } from '@/lib/community-stories';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
@@ -57,18 +56,16 @@ export function CommunityStoryList({
   );
   const refresh = useCallback(() => void refetchStories(), [refetchStories]);
   const renderStory = useCallback(
-    ({ item, index }: ListRenderItemInfo<KnowledgeArticleListRow>) => (
+    ({ item }: ListRenderItemInfo<KnowledgeArticleListRow>) => (
       <PageWidth className="pb-md">
-        <FadeSlideIn index={index}>
-          <KnowledgeArticleCard
-            article={item}
-            accessToken={accessToken}
-            onOpen={openStory}
-            authorAvatarKey={
-              item.author_id === null ? null : (personCards.get(item.author_id)?.avatarKey ?? null)
-            }
-          />
-        </FadeSlideIn>
+        <KnowledgeArticleCard
+          article={item}
+          accessToken={accessToken}
+          onOpen={openStory}
+          authorAvatarKey={
+            item.author_id === null ? null : (personCards.get(item.author_id)?.avatarKey ?? null)
+          }
+        />
       </PageWidth>
     ),
     [accessToken, openStory, personCards],

@@ -6,14 +6,15 @@ import { useStaffLanguage } from '@/components/auth/staff-language-gate';
 import { SigningSyncWorker } from '@/components/authorization/signing-sync-worker';
 import { HandoverSyncWorker } from '@/components/equipment/handover-sync-worker';
 import { ShellOfflineFrame } from '@/components/layout/shell-offline-banner';
+import { screenEntranceLayout } from '@/components/motion/screen-entrance';
 import { PushPermissionRationale } from '@/components/push-permission-rationale';
 import { areaHome, awaitsSecondFactor, teamScreens } from '@/lib/account-area';
 import { useAuthorizationStatus } from '@/lib/authorization';
 import { useMyCustomForms } from '@/lib/custom-forms';
 import { isWaitingForNetwork, retryAfterNetworkCheck } from '@/lib/network-status';
 import { useFinishOnboardingChain, useMyOnboardingChain } from '@/lib/onboarding-chain';
-import { OnboardingEntranceProvider } from '@/lib/onboarding-entrance';
 import { canPromptForPush } from '@/lib/push-prompt-eligibility';
+import { ScreenEntranceProvider } from '@/lib/screen-entrance';
 import { useSigningSession } from '@/lib/tablet-signing';
 import { hasTeamAppScreen } from '@/lib/team-shell';
 import { useAccountAccess } from '@/lib/use-account-access';
@@ -42,9 +43,9 @@ const noSwipeBackOptions = { gestureEnabled: false, fullScreenGestureEnabled: fa
 export default function AppLayout() {
   const { user } = useAuth();
   return (
-    <OnboardingEntranceProvider key={user?.id}>
+    <ScreenEntranceProvider key={user?.id}>
       <AppNavigator />
-    </OnboardingEntranceProvider>
+    </ScreenEntranceProvider>
   );
 }
 
@@ -265,7 +266,8 @@ function AppNavigator() {
           wizard. */}
       {/* One offline banner for every role, above the navigator (RAPP-807). */}
       <ShellOfflineFrame>
-        <Stack screenOptions={hiddenHeaderScreenOptions}>
+        {/* Every screen arrives with the shared entrance, once per use of the app (RAPP-875). */}
+        <Stack screenOptions={hiddenHeaderScreenOptions} screenLayout={screenEntranceLayout}>
           {/* Signing mode (RAPP-305): the only screen while a player signs on a
             staff tablet. Her signature is a drag, which iOS would read as
             swipe back. */}

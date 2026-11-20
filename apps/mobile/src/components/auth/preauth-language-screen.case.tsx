@@ -98,6 +98,9 @@ mock.module('@/components/motion/pressable-depth', () => ({
 mock.module('@/components/motion/drawn-checkmark', () => ({ DrawnCheckmark: () => null }));
 mock.module('@/components/error-fallback', () => ({ ErrorFallback: () => null }));
 mock.module('expo-router/stack', () => ({ Stack: () => null }));
+mock.module('@/components/motion/screen-entrance', () => ({
+  EntranceColumn: ({ children }: { children: ReactNode }) => children,
+}));
 mock.module('@/components/motion/fade-slide-in', () => ({
   FadeSlideIn: ({ children }: { children: ReactNode }) => createElement('div', null, children),
 }));
