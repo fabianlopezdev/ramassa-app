@@ -255,11 +255,19 @@ export async function createForumReply(
 ): Promise<string> {
   const input = forumReplyInputSchema.parse(rawInput);
   return z.uuid().parse(
-    await callForumRpc(client, 'create_forum_reply', {
-      p_post_id: input.postId,
-      p_content: input.content,
-      p_parent_reply_id: input.parentReplyId,
-    }),
+    // The parent travels only when there is one, so an answer to the post
+    // still works on a database without the nested-answer migration.
+    await callForumRpc(
+      client,
+      'create_forum_reply',
+      input.parentReplyId === null
+        ? { p_post_id: input.postId, p_content: input.content }
+        : {
+            p_post_id: input.postId,
+            p_content: input.content,
+            p_parent_reply_id: input.parentReplyId,
+          },
+    ),
   );
 }
 

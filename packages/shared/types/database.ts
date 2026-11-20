@@ -2837,7 +2837,7 @@ export type Database = {
           id?: string;
           image_url?: string | null;
           org_id: string;
-          parent_reply_id: string | null;
+          parent_reply_id?: string | null;
           post_id: string;
           updated_at?: string;
           visibility?: string;

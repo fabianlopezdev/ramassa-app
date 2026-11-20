@@ -197,10 +197,7 @@ describe('forum category board', () => {
           p_image_url: null,
         },
       ],
-      [
-        'create_forum_reply',
-        { p_post_id: postId, p_content: 'Jo en conec una', p_parent_reply_id: null },
-      ],
+      ['create_forum_reply', { p_post_id: postId, p_content: 'Jo en conec una' }],
       [
         'create_forum_reply',
         {

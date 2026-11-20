@@ -2015,7 +2015,7 @@ values
     '5eed0000-0000-4000-8010-000000000011',
     '5eed0000-0000-4000-8000-000000000015',
     'pending',
-    'Jo hi vaig treballar l estiu passat. Tracten bé la gent.',
+    'Jo hi vaig treballar l''estiu passat. Tracten bé la gent.',
     now() - interval '12 hours'
   )
 on conflict (id) do nothing;
