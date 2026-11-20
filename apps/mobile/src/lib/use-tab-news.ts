@@ -14,6 +14,7 @@ import {
   EMPTY_TAB_NEWS,
   fetchTabNews,
   helpNewsCount,
+  isSameSectionNews,
   isSectionNewsEmpty,
   markHelpItemsSeen,
   markSectionVisited,
@@ -73,7 +74,9 @@ function useMarkSectionVisited() {
   return useMutation({
     mutationKey: ['tab-news-section-visit', user?.id ?? 'signed-out'],
     mutationFn: (section: TabNewsSection) => markSectionVisited(supabase, section),
-    onMutate: (section) => {
+    onMutate: async (section) => {
+      // A fetch started before the mark must not put back what was just cleared.
+      await queryClient.cancelQueries({ queryKey });
       queryClient.setQueryData<TabNews>(queryKey, (current) =>
         current === undefined ? current : withSectionVisited(current, section),
       );
@@ -90,7 +93,9 @@ function useMarkHelpItemsSeen() {
   return useMutation({
     mutationKey: ['tab-news-help-seen', user?.id ?? 'signed-out'],
     mutationFn: (items: HelpItemsSeen) => markHelpItemsSeen(supabase, items),
-    onMutate: (items) => {
+    onMutate: async (items) => {
+      // A fetch started before the mark must not put back what was just seen.
+      await queryClient.cancelQueries({ queryKey });
       queryClient.setQueryData<TabNews>(queryKey, (current) =>
         current === undefined ? current : withHelpItemsSeen(current, items),
       );
@@ -115,6 +120,7 @@ export function useSectionVisit<S extends TabNewsSection>(
   const [isFocused, setIsFocused] = useState(false);
   const [snapshot, setSnapshot] = useState<TabNews[S]>(EMPTY_TAB_NEWS[section]);
   const markedThisVisit = useRef(false);
+  const lastHandledThisVisit = useRef<TabNews[S] | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -129,12 +135,22 @@ export function useSectionVisit<S extends TabNewsSection>(
   useEffect(() => {
     if (!isVisiting) {
       markedThisVisit.current = false;
+      lastHandledThisVisit.current = null;
       setSnapshot(EMPTY_TAB_NEWS[section]);
       return;
     }
     if (arriving === undefined) return;
     const hasNews = !isSectionNewsEmpty(section, arriving);
-    if (hasNews) setSnapshot((current) => mergeSectionNews(section, current, arriving));
+    // The same news delivered twice in one visit, by a fetch already under way or
+    // the refetch after a failed mark, is shown once and marked once (RAPP-873).
+    const lastHandled = lastHandledThisVisit.current;
+    if (hasNews && lastHandled !== null && isSameSectionNews(section, lastHandled, arriving)) {
+      return;
+    }
+    if (hasNews) {
+      lastHandledThisVisit.current = arriving;
+      setSnapshot((current) => mergeSectionNews(section, current, arriving));
+    }
     // The visit itself is recorded once even with nothing new, and again
     // whenever something new arrives while she is looking.
     if (hasNews || !markedThisVisit.current) {

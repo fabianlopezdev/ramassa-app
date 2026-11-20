@@ -201,6 +201,32 @@ export function isSectionNewsEmpty<S extends TabNewsSection>(
   return sectionNewsRules[section].isEmpty(news);
 }
 
+function sortedIds(ids: readonly string[]): string {
+  return [...ids].sort().join(',');
+}
+
+const sectionNewsKey: { readonly [S in TabNewsSection]: (news: TabNews[S]) => string } = {
+  forum: (news) =>
+    `${sortedIds(news.newPostIds)}|${Object.entries(news.newRepliesByPostId)
+      .map(([postId, count]) => `${postId}:${count}`)
+      .sort()
+      .join(',')}`,
+  gallery: (news) => sortedIds(news.newItemIds),
+  stories: (news) => sortedIds(news.newArticleIds),
+  mentoring: (news) => sortedIds(news.changedRequestIds),
+  feedback: (news) => sortedIds(news.changedSubmissionIds),
+};
+
+/** True when two slices hold the same news, in any order, with the same reply counts. */
+export function isSameSectionNews<S extends TabNewsSection>(
+  section: S,
+  first: TabNews[S],
+  second: TabNews[S],
+): boolean {
+  const key = sectionNewsKey[section];
+  return key(first) === key(second);
+}
+
 /**
  * What she has been shown as new during one visit to a section, plus what
  * arrived while she was looking. A reply count adds up because the database
