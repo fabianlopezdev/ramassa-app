@@ -1,4 +1,4 @@
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
@@ -40,26 +40,30 @@ export const GalleryTile = memo(function GalleryTile({
 
   return (
     <View className="p-xs">
-      <PressableScale
+      <SelectionChoiceSurface
         testID={`gallery-item-${id}`}
-        accessibilityLabel={accessibilityLabel}
+        label={accessibilityLabel}
+        accessibilityRole="link"
         onPress={open}
-        haptic="tapLight"
-        style={continuousCorners}
-        className="overflow-hidden rounded-md bg-neutral-200"
+        paddingClassName=""
+        contentClassName=""
+        rowStyle={continuousCorners}
       >
-        {source === null ? null : (
-          <Image
-            recyclingKey={id}
-            source={source}
-            accessibilityLabel={imageAlt}
-            cachePolicy="memory-disk"
-            contentFit="cover"
-            transition={motionTokens.duration.fast}
-            style={styles.tile}
-          />
-        )}
-      </PressableScale>
+        {/* Grey while the photo loads, or when it has no source. */}
+        <View className="bg-neutral-200" style={styles.tile}>
+          {source === null ? null : (
+            <Image
+              recyclingKey={id}
+              source={source}
+              accessibilityLabel={imageAlt}
+              cachePolicy="memory-disk"
+              contentFit="cover"
+              transition={motionTokens.duration.fast}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
+        </View>
+      </SelectionChoiceSurface>
     </View>
   );
 });

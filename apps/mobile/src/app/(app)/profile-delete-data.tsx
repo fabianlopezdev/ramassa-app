@@ -14,8 +14,9 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { submitDeletionRequest } from '@/lib/profile';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -23,14 +24,10 @@ import { useRouter } from 'expo-router';
 import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Modal, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import type { AppErrorCode } from '@ramassa/shared/errors';
-import { tokens } from '@ramassa/shared/tokens';
-
-const enabledAccessibilityState = { busy: false, disabled: false } as const;
-const busyAccessibilityState = { busy: true, disabled: true } as const;
 
 interface DeletionConfirmationProps {
   readonly isBusy: boolean;
@@ -57,72 +54,42 @@ function DeletionConfirmation({
       visible={isVisible && !isCovered}
       onRequestClose={onCancel}
     >
-      <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          contentContainerClassName="grow justify-center gap-xl p-lg sm:self-center sm:w-full sm:max-w-form"
-        >
-          <View className="gap-sm">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
-            >
-              {t('deleteConfirmTitle')}
-            </Text>
-            <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-              {t('deleteConfirmBody')}
-            </Text>
-          </View>
-
-          <View className="gap-sm">
-            {/* A native Modal owns a separate Android root outside the app's
-                gesture root. Native pressables keep both actions interactive
-                without nesting another GestureHandlerRootView. */}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('deleteConfirmAction')}
-              accessibilityState={isBusy ? busyAccessibilityState : enabledAccessibilityState}
-              disabled={isBusy}
-              onPress={() => {
-                playHaptic('tapLight');
-                onConfirm();
-              }}
-              testID="profile-delete-confirm"
-              style={continuousCorners}
-              className={`min-h-recommended items-center justify-center rounded-md bg-error px-lg active:opacity-90 ${
-                isBusy ? 'opacity-60' : ''
-              }`}
-            >
-              <View className="flex-row items-center justify-center gap-sm">
-                {isBusy ? <ActivityIndicator color={tokens.colors.white} /> : null}
-                <Text className={`text-lg font-bold text-white ${languageFontClass}`}>
-                  {t('deleteConfirmAction')}
-                </Text>
-              </View>
-            </Pressable>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('deleteConfirmCancel')}
-              accessibilityState={isBusy ? busyAccessibilityState : enabledAccessibilityState}
-              disabled={isBusy}
-              onPress={() => {
-                playHaptic('selection');
-                onCancel();
-              }}
-              testID="profile-delete-confirm-cancel"
-              style={continuousCorners}
-              className={`min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg active:opacity-70 ${
-                isBusy ? 'opacity-60' : ''
-              }`}
-            >
-              <Text className={`text-md font-medium text-neutral-800 ${languageFontClass}`}>
-                {t('deleteConfirmCancel')}
+      <NativeModalScope>
+        <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
+          <ScrollView
+            contentInsetAdjustmentBehavior="automatic"
+            contentContainerClassName="grow justify-center gap-xl p-lg sm:self-center sm:w-full sm:max-w-form"
+          >
+            <View className="gap-sm">
+              <Text
+                accessibilityRole="header"
+                className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
+              >
+                {t('deleteConfirmTitle')}
               </Text>
-            </Pressable>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+              <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
+                {t('deleteConfirmBody')}
+              </Text>
+            </View>
+
+            <View className="gap-sm">
+              <RaisedActionButton
+                testID="profile-delete-confirm"
+                tone="danger"
+                label={t('deleteConfirmAction')}
+                onPress={onConfirm}
+                isDisabled={isBusy}
+              />
+              <RaisedActionButton
+                testID="profile-delete-confirm-cancel"
+                label={t('deleteConfirmCancel')}
+                onPress={onCancel}
+                isDisabled={isBusy}
+              />
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </NativeModalScope>
     </Modal>
   );
 }

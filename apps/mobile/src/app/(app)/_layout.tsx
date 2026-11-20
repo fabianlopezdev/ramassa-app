@@ -6,6 +6,7 @@ import { useStaffLanguage } from '@/components/auth/staff-language-gate';
 import { SigningSyncWorker } from '@/components/authorization/signing-sync-worker';
 import { HandoverSyncWorker } from '@/components/equipment/handover-sync-worker';
 import { ShellOfflineFrame } from '@/components/layout/shell-offline-banner';
+import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { screenEntranceLayout } from '@/components/motion/screen-entrance';
 import { PushPermissionRationale } from '@/components/push-permission-rationale';
 import { areaHome, awaitsSecondFactor, teamScreens } from '@/lib/account-area';
@@ -513,7 +514,9 @@ function AppNavigator() {
           accessibilityViewIsModal
           className="flex-1 items-center justify-center bg-black/50 px-lg"
         >
-          <PushPermissionRationale onAccept={acceptRationale} onDecline={declineRationale} />
+          <NativeModalScope>
+            <PushPermissionRationale onAccept={acceptRationale} onDecline={declineRationale} />
+          </NativeModalScope>
         </View>
       </Modal>
     </>

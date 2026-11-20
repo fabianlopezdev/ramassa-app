@@ -45,7 +45,7 @@ describe('Phase 6 structural polish contract', () => {
       // their own haptics and corners, or a PressableScale checked below.
       const sharedPressControls =
         source.match(
-          /<(PressableScale|RaisedActionButton|AuthSubmitButton|RaisedCard|RaisedChip|FilterChips)\b/g,
+          /<(PressableScale|RaisedActionButton|AuthSubmitButton|RaisedCard|RaisedChip|FilterChips|SelectionChoiceCard|SelectionChoiceSurface)\b/g,
         ) ?? [];
       expect(sharedPressControls.length, path).toBeGreaterThan(0);
 

@@ -1,4 +1,5 @@
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
 import { Icon, type IconName, type IconWeight } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import type { AttendanceSyncState } from '@/lib/attendance';
@@ -101,16 +102,14 @@ export const AttendanceRow = memo(function AttendanceRow({
   const visualStatus = status ?? 'unmarked';
 
   return (
-    <View>
-      <View className="flex-row items-center border-b border-neutral-200 bg-white">
-        <PressableScale
+    <View className="gap-sm px-lg pb-md">
+      <View className="flex-row items-stretch gap-sm">
+        <SelectionChoiceSurface
           testID={`attendance-player-${playerId}`}
-          accessibilityLabel={accessibilityLabel}
+          label={accessibilityLabel}
           onPress={handlePress}
-          haptic="selection"
-          className={`min-h-3xl flex-1 flex-row items-center gap-md py-md ps-lg ${
-            onOpenCard === undefined ? 'pe-lg' : 'pe-sm'
-          }`}
+          className="flex-1"
+          contentClassName="grow flex-row items-center gap-md py-md"
         >
           <Icon
             name={statusIcons[visualStatus].name}
@@ -147,16 +146,15 @@ export const AttendanceRow = memo(function AttendanceRow({
               </Text>
             ) : null}
           </View>
-        </PressableScale>
+        </SelectionChoiceSurface>
         {onOpenCard === undefined ? null : (
           // Beside the row, outside its pressable: a tap on the row still cycles the mark.
-          <PressableScale
+          <SelectionChoiceSurface
             testID={`attendance-open-card-${playerId}`}
-            accessibilityRole="button"
-            accessibilityLabel={openCardLabel}
+            label={openCardLabel}
             onPress={handleOpenCard}
-            haptic="tapLight"
-            className="me-sm min-h-recommended min-w-recommended items-center justify-center"
+            paddingClassName="px-md"
+            contentClassName="grow items-center justify-center"
           >
             <Icon
               name="id-card"
@@ -164,7 +162,7 @@ export const AttendanceRow = memo(function AttendanceRow({
               size={tokens.fontSize['2xl']}
               color={tokens.colors.primary.dark}
             />
-          </PressableScale>
+          </SelectionChoiceSurface>
         )}
       </View>
       {syncState === 'rejected' ? (
@@ -172,7 +170,7 @@ export const AttendanceRow = memo(function AttendanceRow({
         // these two act on the refused change itself.
         <View
           testID={`attendance-rejected-${playerId}`}
-          className="flex-row flex-wrap items-center gap-sm border-b border-neutral-200 bg-white px-lg pb-md"
+          className="flex-row flex-wrap items-center gap-sm"
         >
           <RaisedActionButton
             testID={`attendance-retry-${playerId}`}

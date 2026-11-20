@@ -49,6 +49,33 @@ mock.module('@/components/motion/pressable-scale', () => ({
     ),
 }));
 
+// The confirmation's two actions are the shared raised button (RAPP-878).
+mock.module('@/components/forms/raised-action-button', () => ({
+  RaisedActionButton: ({
+    label,
+    onPress,
+    tone,
+    isDisabled,
+    testID,
+  }: {
+    readonly label: string;
+    readonly onPress: () => void;
+    readonly tone?: string;
+    readonly isDisabled?: boolean;
+    readonly testID?: string;
+  }) =>
+    createElement(
+      'button',
+      {
+        type: 'button',
+        'data-testid': testID,
+        'data-tone': tone ?? 'brand',
+        disabled: isDisabled,
+        onClick: onPress,
+      },
+      label,
+    ),
+}));
 mock.module('@/components/onboarding/wizard-frame', () => ({
   WizardFrame: ({
     children,
@@ -160,7 +187,7 @@ test('only the destructive confirmation action files the request', async () => {
   fireEvent.click(view.getByRole('button', { name: 'deleteAction' }));
   const confirm = view.getByRole('button', { name: 'deleteConfirmAction' });
 
-  expect(confirm.className).toContain('bg-error');
+  expect(confirm.dataset.tone).toBe('danger');
   fireEvent.click(confirm);
 
   await waitFor(() => expect(submitDeletionRequest).toHaveBeenCalledTimes(1));

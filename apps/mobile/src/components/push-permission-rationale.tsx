@@ -1,8 +1,9 @@
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { continuousCorners } from '@/lib/continuous-corners';
-import { playHaptic } from '@/lib/haptics/haptics';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 /**
  * The explanation shown BEFORE the OS notification prompt (RAPP-17).
@@ -43,38 +44,21 @@ export function PushPermissionRationale({
         {t('push:rationaleBody')}
       </Text>
 
-      {/* A native Modal has its own Android root, outside the app-level gesture
-          root. Use the platform pressable here so both actions remain tappable
-          without nesting a second GestureHandlerRootView, which crashes Fabric. */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t('push:rationaleAccept')}
-        onPress={() => {
-          playHaptic('tapLight');
-          onAccept();
-        }}
-        style={continuousCorners}
-        className="mt-sm min-h-recommended items-center justify-center rounded-md bg-primary px-lg active:opacity-90"
-      >
-        <Text className={`text-base font-semibold text-white ${languageFontClass}`}>
-          {t('push:rationaleAccept')}
-        </Text>
-      </Pressable>
-
-      {/* Equal tap target, quieter styling: a real choice, not a dead end. */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t('push:rationaleDecline')}
-        onPress={() => {
-          playHaptic('selection');
-          onDecline();
-        }}
-        className="min-h-recommended items-center justify-center rounded-md px-lg active:opacity-70"
-      >
-        <Text className={`text-base font-medium text-neutral-600 ${languageFontClass}`}>
-          {t('push:rationaleDecline')}
-        </Text>
-      </Pressable>
+      {/* Both are real, full-size choices: the call to action, and a raised
+          "not now" under it. The Modal that shows this opens
+          `NativeModalScope`, so both answer on Android. */}
+      <View className="mt-sm gap-sm">
+        <AuthSubmitButton
+          testID="push-rationale-accept"
+          label={t('push:rationaleAccept')}
+          onPress={onAccept}
+        />
+        <RaisedActionButton
+          testID="push-rationale-decline"
+          label={t('push:rationaleDecline')}
+          onPress={onDecline}
+        />
+      </View>
     </View>
   );
 }

@@ -12,6 +12,7 @@ import { useAppLock } from '@/components/auth/app-lock';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
 import { Badge } from '@/components/layout/badge';
 import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -57,6 +58,7 @@ const styles = StyleSheet.create({
   tile: { aspectRatio: 1 },
   large: { width: '100%', aspectRatio: 4 / 3 },
 });
+const tileFaceStyle = [styles.tile, continuousCorners];
 const keyExtractor = (item: MediaItemRow) => item.id;
 const listContentStyle = {
   paddingHorizontal: tokens.spacing.md,
@@ -92,34 +94,34 @@ function Tile({ item, onOpen }: { readonly item: MediaItemRow; readonly onOpen: 
   const source = useItemSource(item, false);
   const state = stateKey(item);
   return (
-    <PressableScale
-      testID={`team-gallery-item-${item.id}`}
-      accessibilityRole="button"
-      accessibilityLabel={[
-        t('openItem', { name: item.uploader_first_name }),
-        state === null ? null : t(state),
-      ]
-        .filter(Boolean)
-        .join(', ')}
-      onPress={onOpen}
-      haptic="selection"
-      style={[styles.tile, continuousCorners]}
-      className="m-xs flex-1 overflow-hidden rounded-md bg-neutral-200"
-    >
-      {source === null ? null : (
-        <Image source={source} contentFit="cover" style={StyleSheet.absoluteFill} />
-      )}
-      {state === null && item.file_type === 'image' ? null : (
-        <View className="absolute bottom-xs start-xs flex-row gap-xs">
-          {item.file_type === 'video' ? (
-            <Badge label={t('moderationVideo')} tone="overlay" languageFontClass={fontClass} />
-          ) : null}
-          {state === null ? null : (
-            <Badge label={t(state)} tone="danger" languageFontClass={fontClass} />
-          )}
-        </View>
-      )}
-    </PressableScale>
+    <View className="m-xs flex-1">
+      <SelectionChoiceSurface
+        testID={`team-gallery-item-${item.id}`}
+        label={[t('openItem', { name: item.uploader_first_name }), state === null ? null : t(state)]
+          .filter(Boolean)
+          .join(', ')}
+        onPress={onOpen}
+        paddingClassName=""
+        contentClassName=""
+        rowStyle={tileFaceStyle}
+      >
+        {/* Grey while the photo loads. */}
+        <View className="bg-neutral-200" style={StyleSheet.absoluteFill} />
+        {source === null ? null : (
+          <Image source={source} contentFit="cover" style={StyleSheet.absoluteFill} />
+        )}
+        {state === null && item.file_type === 'image' ? null : (
+          <View className="absolute bottom-xs start-xs flex-row gap-xs">
+            {item.file_type === 'video' ? (
+              <Badge label={t('moderationVideo')} tone="overlay" languageFontClass={fontClass} />
+            ) : null}
+            {state === null ? null : (
+              <Badge label={t(state)} tone="danger" languageFontClass={fontClass} />
+            )}
+          </View>
+        )}
+      </SelectionChoiceSurface>
+    </View>
   );
 }
 

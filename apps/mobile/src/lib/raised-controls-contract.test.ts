@@ -31,11 +31,10 @@ const flatLook =
 const hasFlatButton = (source: string) =>
   (source.match(pressTag) ?? []).some((tag) => flatLook.test(tag));
 
-// One dialog that opens its own native Modal, where the app's press control
-// does not answer on Android (see `NativeModalScope`); it uses the platform
-// `Pressable`. It leaves this list when it moves into the shared sheet;
-// nothing may be added.
-const stillFlat = new Set(['app/(app)/profile-delete-data.tsx']);
+// Nothing is left on this list: the last dialog with flat buttons (delete my
+// data) uses the shared raised button inside `NativeModalScope`. Nothing may
+// be added.
+const stillFlat = new Set<string>();
 
 // A choice (one of several, or a tick) drawn by hand: a press control with a
 // radio or checkbox role and its own border. Choices come from the shared
@@ -65,14 +64,12 @@ test('no screen draws a choice by hand', () => {
 // A card, row or button that presses and draws its own border has no edge
 // under it, so it looks flat. Tappable cards and rows come from `RaisedCard`
 // (through `OpenableCard`, `RaisedIconCard` and the staff lists), and buttons
-// from `RaisedActionButton`. Three places keep a border, each for a reason,
+// from `RaisedActionButton`. Two places keep a border, each for a reason,
 // and the list only shrinks.
 const ownBorder = /className=[^>]*\bborder(?:-[a-z0-9-]+)?\b/;
 const hasOwnBorder = (source: string) =>
   (source.match(pressTag) ?? []).some((tag) => ownBorder.test(tag));
 const keepsABorder = new Set([
-  // Its own native Modal, on the platform `Pressable` (see `stillFlat`).
-  'app/(app)/profile-delete-data.tsx',
   // The rows of the wide participant table, with a line under each.
   'app/(app)/(team)/participants.tsx',
   // The time field of a mentoring request, drawn as a form field.
@@ -113,6 +110,12 @@ test('the shared pieces carry the relief', () => {
   expect(read('components/layout/openable-card.tsx')).toContain('<RaisedCard');
   expect(read('components/messaging/staff-conversation-card.tsx')).toContain('<RaisedCard');
   expect(read('components/attendance/attendance-occurrence-row.tsx')).toContain('<RaisedIconCard');
+  // A row that marks attendance and a photo that opens are raised surfaces,
+  // and the two dialogs answer with the shared buttons.
+  expect(read('components/attendance/attendance-row.tsx')).toContain('<SelectionChoiceSurface');
+  expect(read('components/gallery/gallery-tile.tsx')).toContain('<SelectionChoiceSurface');
+  expect(read('components/push-permission-rationale.tsx')).toContain('<RaisedActionButton');
+  expect(read('app/(app)/profile-delete-data.tsx')).toContain('<RaisedActionButton');
   expect(read('components/equipment/choice-option.tsx')).toContain('<RaisedChip');
   expect(read('components/auth/selection-choice-card.tsx')).toContain('<SelectionChoiceSurface');
 });
