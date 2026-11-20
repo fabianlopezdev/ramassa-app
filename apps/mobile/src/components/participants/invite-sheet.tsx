@@ -16,6 +16,7 @@ import { useAppLock } from '@/components/auth/app-lock';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { InviteQuestionsStep } from '@/components/participants/invite-questions-step';
@@ -276,11 +277,7 @@ export function InviteSheet({
                     {t('inviteNoEmailHint')}
                   </Text>
                   <View className="gap-xs">
-                    <Text
-                      className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}
-                    >
-                      {t('entityOptionalLabel')}
-                    </Text>
+                    <FieldLabel>{t('entityOptionalLabel')}</FieldLabel>
                     <View className="flex-row flex-wrap gap-sm">
                       {[NONE, ...entities, OTHER].map((candidate) => (
                         <ChoiceOption

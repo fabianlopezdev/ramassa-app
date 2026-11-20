@@ -7,6 +7,7 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { FieldLabel } from '@/components/forms/field-label';
 import { PageWidth } from '@/components/layout/content-width';
 import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -229,11 +230,7 @@ export default function StockCountScreen() {
                         : t('count.difference', { ...difference })}
                     </Text>
                   ))}
-                  <Text
-                    className={`pt-sm text-start text-md font-semibold text-neutral-900 ${fontClass}`}
-                  >
-                    {t('count.reasonLabel')}
-                  </Text>
+                  <FieldLabel className="pt-sm">{t('count.reasonLabel')}</FieldLabel>
                   <View
                     accessibilityRole="radiogroup"
                     accessibilityLabel={t('count.reasonLabel')}

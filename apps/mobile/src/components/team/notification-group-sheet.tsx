@@ -8,6 +8,7 @@ import { useAppLock } from '@/components/auth/app-lock';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -117,9 +118,7 @@ function GroupForm({
       />
       <View className="gap-sm">
         <View className="flex-row flex-wrap items-center justify-between gap-sm">
-          <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-            {t('groupMembers')}
-          </Text>
+          <FieldLabel>{t('groupMembers')}</FieldLabel>
           <Text
             testID="notification-group-selected"
             className={`text-sm font-semibold tabular-nums text-neutral-700 ${fontClass}`}

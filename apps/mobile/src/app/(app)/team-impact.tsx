@@ -9,6 +9,7 @@
  */
 import { useAppLock } from '@/components/auth/app-lock';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
@@ -255,9 +256,7 @@ export default function TeamImpactScreen() {
           </View>
 
           <View className="gap-sm">
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('impactPeriod')}
-            </Text>
+            <FieldLabel>{t('impactPeriod')}</FieldLabel>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -277,9 +276,7 @@ export default function TeamImpactScreen() {
             </ScrollView>
             {data === undefined ? null : (
               <>
-                <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-                  {t('filterCategory')}
-                </Text>
+                <FieldLabel>{t('filterCategory')}</FieldLabel>
                 {filterRow(
                   'impact-category',
                   t('filterAllCategories'),
@@ -292,11 +289,7 @@ export default function TeamImpactScreen() {
                 )}
                 {data.availableFilters.entities.length === 0 ? null : (
                   <>
-                    <Text
-                      className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}
-                    >
-                      {t('filterEntity')}
-                    </Text>
+                    <FieldLabel>{t('filterEntity')}</FieldLabel>
                     {filterRow(
                       'impact-entity',
                       t('filterAllEntities'),

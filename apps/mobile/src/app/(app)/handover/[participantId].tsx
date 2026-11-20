@@ -10,6 +10,7 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { SignaturePad } from '@/components/equipment/signature-pad';
 import { FailureNotice } from '@/components/error-code-line';
+import { FieldLabel } from '@/components/forms/field-label';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -47,18 +48,6 @@ type Step = 'item' | 'signature' | 'done';
 // Her statement runs in her script's direction, whatever the staff app's is.
 const rtlText = { writingDirection: 'rtl' } as const;
 const ltrText = { writingDirection: 'ltr' } as const;
-
-function SectionLabel({
-  children,
-  fontClass,
-}: {
-  readonly children: string;
-  readonly fontClass: string;
-}) {
-  return (
-    <Text className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}>{children}</Text>
-  );
-}
 
 function PrimaryButton({
   label,
@@ -305,7 +294,7 @@ export default function HandoverScreen() {
           {step === 'item' ? (
             <>
               <View className="gap-sm">
-                <SectionLabel fontClass={fontClass}>{t('material.itemLabel')}</SectionLabel>
+                <FieldLabel>{t('material.itemLabel')}</FieldLabel>
                 <View
                   accessibilityRole="radiogroup"
                   accessibilityLabel={t('material.itemLabel')}
@@ -326,7 +315,7 @@ export default function HandoverScreen() {
               </View>
               {needsSize ? (
                 <View className="gap-sm">
-                  <SectionLabel fontClass={fontClass}>{t('material.sizeLabel')}</SectionLabel>
+                  <FieldLabel>{t('material.sizeLabel')}</FieldLabel>
                   <View
                     accessibilityRole="radiogroup"
                     accessibilityLabel={t('material.sizeLabel')}
@@ -347,7 +336,7 @@ export default function HandoverScreen() {
                 </View>
               ) : null}
               <View className="gap-sm">
-                <SectionLabel fontClass={fontClass}>{t('material.modeLabel')}</SectionLabel>
+                <FieldLabel>{t('material.modeLabel')}</FieldLabel>
                 <View
                   accessibilityRole="radiogroup"
                   accessibilityLabel={t('material.modeLabel')}
@@ -384,9 +373,7 @@ export default function HandoverScreen() {
           {step === 'signature' ? (
             <>
               <View className="gap-sm">
-                <SectionLabel fontClass={fontClass}>
-                  {t('material.statementLanguageLabel')}
-                </SectionLabel>
+                <FieldLabel>{t('material.statementLanguageLabel')}</FieldLabel>
                 <View
                   accessibilityRole="radiogroup"
                   accessibilityLabel={t('material.statementLanguageLabel')}
@@ -421,9 +408,7 @@ export default function HandoverScreen() {
                 <View className="gap-sm">
                   {/* A fixed height, so Clear appearing does not move the pad under her finger. */}
                   <View className="min-h-recommended flex-row items-center justify-between">
-                    <SectionLabel fontClass={fontClass}>
-                      {t('material.signatureLabel')}
-                    </SectionLabel>
+                    <FieldLabel>{t('material.signatureLabel')}</FieldLabel>
                     {strokes === null ? null : (
                       <SecondaryButton
                         testID="handover-clear-signature"
@@ -447,7 +432,7 @@ export default function HandoverScreen() {
                 </View>
               ) : null}
               <View className="gap-sm">
-                <SectionLabel fontClass={fontClass}>{t('material.doesNotSign')}</SectionLabel>
+                <FieldLabel>{t('material.doesNotSign')}</FieldLabel>
                 <View
                   accessibilityRole="radiogroup"
                   accessibilityLabel={t('material.doesNotSign')}

@@ -7,6 +7,7 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthBackButton } from '@/components/auth/auth-back-button';
 import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
+import { FieldLabel } from '@/components/forms/field-label';
 import { PageWidth } from '@/components/layout/content-width';
 import { LanguageSwitcher } from '@/components/profile/language-switcher';
 import { APP_LOCK_TIMEOUTS, type AppLockTimeout } from '@/lib/app-lock';
@@ -119,12 +120,7 @@ export default function AppLockScreen() {
 
           {settings?.enabled === true && isAvailable ? (
             <View className="gap-sm" accessibilityRole="radiogroup">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-lg font-semibold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('appLockAfterLabel')}
-              </Text>
+              <FieldLabel>{t('appLockAfterLabel')}</FieldLabel>
               {APP_LOCK_TIMEOUTS.map((timeout) => {
                 const isSelected = settings.timeoutSeconds === timeout;
                 const label = t(TIMEOUT_LABEL_KEYS[timeout]);

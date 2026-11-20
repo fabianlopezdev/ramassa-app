@@ -8,6 +8,7 @@
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { FieldLabel } from '@/components/forms/field-label';
 import { CountryPicker } from '@/components/onboarding/country-picker';
 import { FieldErrorText } from '@/components/onboarding/field-error-text';
 import { MunicipalityPicker } from '@/components/onboarding/municipality-picker';
@@ -20,10 +21,9 @@ import {
   type SeasonQuestion,
 } from '@/components/profile/season-answer-fields';
 import type { BuiltinWording } from '@/lib/onboarding-intake-context';
-import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import {
   placementWordingIn,
   type EntityFormBuiltin,
@@ -95,7 +95,6 @@ export function ReferralBuiltinField({
   entityNames,
 }: ReferralBuiltinFieldProps) {
   const { t } = useTranslation(['referrals', 'onboarding']);
-  const fontClass = useLanguageFontClass();
   const wording = placementWordingIn(item.placement, item.field, language);
   const isRequired = item.placement.required;
   const label = `${wording.label === '' ? t(APP_LABEL_KEYS[item.key]) : wording.label}${
@@ -190,9 +189,7 @@ export function ReferralBuiltinField({
       return (
         <View className="gap-lg">
           <View className="gap-sm">
-            <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
-              {label}
-            </Text>
+            <FieldLabel>{label}</FieldLabel>
             <QuestionHelp text={hint} />
             <View className="flex-row flex-wrap gap-sm">
               {DOCUMENT_TYPES.map((type) => (

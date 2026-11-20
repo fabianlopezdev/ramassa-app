@@ -86,6 +86,31 @@ test('no screen or component keeps a section label helper of its own', () => {
   expect(offenders).toEqual([]);
 });
 
+// The label over a field or a set of choices is one piece too (RAPP-889): it
+// came in two sizes and eight local helpers, so one form showed both.
+test('no screen or component draws a field label by hand', () => {
+  const handMade =
+    /className=\{`text-start text-(md|form) font-medium text-neutral-800 \$\{\w+\}`\}/;
+  const offenders = [...screenFiles('app'), ...screenFiles('components')].filter(
+    (path) =>
+      !path.startsWith('components/dev/') &&
+      path !== 'components/forms/field-label.tsx' &&
+      handMade.test(read(path)),
+  );
+  expect(offenders).toEqual([]);
+});
+
+test('no screen or component keeps a choice or field label helper of its own', () => {
+  const localHelper = /\nfunction (SectionLabel|Group|ChoiceGroup|FieldLabel)\(/;
+  const offenders = [...screenFiles('app'), ...screenFiles('components')].filter(
+    (path) =>
+      path !== 'components/forms/choice-group.tsx' &&
+      path !== 'components/forms/field-label.tsx' &&
+      localHelper.test(read(path)),
+  );
+  expect(offenders).toEqual([]);
+});
+
 test('the five player tabs draw no heading of their own', () => {
   const tabs = screenFiles('app/(app)/(tabs)').filter((path) => !path.endsWith('_layout.tsx'));
   expect(tabs).toHaveLength(5);

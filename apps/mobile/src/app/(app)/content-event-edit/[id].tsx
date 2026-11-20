@@ -20,6 +20,7 @@ import { MultilingualField } from '@/components/content/multilingual-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { EventArticle, EventSignupPreview } from '@/components/events/event-article';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { DraftPreviewSheet } from '@/components/preview/draft-preview-sheet';
@@ -81,15 +82,6 @@ const RECURRENCE_KEYS = { one_off: 'recurrenceOneOff', weekly: 'recurrenceWeekly
 const INTERVALS = Array.from({ length: MAX_EVENT_RECURRENCE_INTERVAL }, (_unused, i) => i + 1);
 
 type FormError = AppErrorCode | 'invalid';
-
-function SectionLabel({ children }: { readonly children: string }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-      {children}
-    </Text>
-  );
-}
 
 function EventForm({
   eventId,
@@ -240,7 +232,7 @@ function EventForm({
       )}
 
       <View className="gap-xs">
-        <SectionLabel>{t('fieldCategory')}</SectionLabel>
+        <FieldLabel>{t('fieldCategory')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {categories.map((category) => (
             <View key={category.id} className="flex-row items-center gap-xs">
@@ -309,7 +301,7 @@ function EventForm({
       />
 
       <View className="gap-xs">
-        <SectionLabel>{t('fieldRecurrence')}</SectionLabel>
+        <FieldLabel>{t('fieldRecurrence')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {EVENT_RECURRENCES.map((recurrence) => (
             <ChoiceOption
@@ -342,7 +334,7 @@ function EventForm({
       {form.recurrence === 'weekly' ? (
         <>
           <View className="gap-xs">
-            <SectionLabel>{t('fieldInterval')}</SectionLabel>
+            <FieldLabel>{t('fieldInterval')}</FieldLabel>
             <View className="flex-row flex-wrap gap-sm">
               {INTERVALS.map((interval) => (
                 <ChoiceOption
@@ -377,7 +369,7 @@ function EventForm({
         maxLength={5}
       />
       <View className="gap-xs">
-        <SectionLabel>{t('fieldSignup')}</SectionLabel>
+        <FieldLabel>{t('fieldSignup')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {EVENT_SIGNUP_MODES.map((signupMode) => (
             <ChoiceOption
@@ -394,7 +386,7 @@ function EventForm({
       </View>
 
       <View className="gap-sm">
-        <SectionLabel>{tAnnouncements('modeLabel')}</SectionLabel>
+        <FieldLabel>{tAnnouncements('modeLabel')}</FieldLabel>
         {canPublish ? (
           <>
             <View className="flex-row flex-wrap gap-sm">

@@ -9,6 +9,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
@@ -356,9 +357,7 @@ export default function NewArrivalScreen() {
                 style={continuousCorners}
                 className="gap-md rounded-md border border-neutral-200 bg-white p-md"
               >
-                <Text className={`text-start text-md font-semibold text-neutral-800 ${fontClass}`}>
-                  {t('arrival.itemLabel')}
-                </Text>
+                <FieldLabel>{t('arrival.itemLabel')}</FieldLabel>
                 {itemTypes.isPending ? (
                   <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
                 ) : null}
@@ -381,11 +380,7 @@ export default function NewArrivalScreen() {
                 </View>
                 {needsSize ? (
                   <>
-                    <Text
-                      className={`text-start text-md font-semibold text-neutral-800 ${fontClass}`}
-                    >
-                      {t('arrival.sizeLabel')}
-                    </Text>
+                    <FieldLabel>{t('arrival.sizeLabel')}</FieldLabel>
                     <View
                       accessibilityRole="radiogroup"
                       accessibilityLabel={t('arrival.sizeLabel')}
@@ -407,11 +402,7 @@ export default function NewArrivalScreen() {
                 ) : null}
                 {itemType === null ? null : (
                   <>
-                    <Text
-                      className={`text-start text-md font-semibold text-neutral-800 ${fontClass}`}
-                    >
-                      {t('arrival.quantityLabel')}
-                    </Text>
+                    <FieldLabel>{t('arrival.quantityLabel')}</FieldLabel>
                     <View className="flex-row items-center gap-sm">
                       <OutlineButton
                         testID="arrival-quantity-less"

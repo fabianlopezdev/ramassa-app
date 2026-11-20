@@ -12,6 +12,7 @@ import { DateTimeField } from '@/components/content/date-time-field';
 import { SERVICE_AVAILABILITY_KEYS, SERVICE_COST_KEYS } from '@/components/content/service-labels';
 import { ServiceMetadataFields } from '@/components/content/service-metadata-fields';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedCard } from '@/components/layout/raised-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -76,15 +77,6 @@ function blankToNull(value: string): string | null {
 
 function searchable(value: string): string {
   return value.normalize('NFKD').replaceAll(/\p{M}/gu, '').toLocaleLowerCase();
-}
-
-function SectionLabel({ children }: { readonly children: string }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-      {children}
-    </Text>
-  );
 }
 
 export function EntityServiceForm({
@@ -247,7 +239,7 @@ export function EntityServiceForm({
       ) : null}
 
       <View className="gap-xs">
-        <SectionLabel>{t('fieldCategory')}</SectionLabel>
+        <FieldLabel>{t('fieldCategory')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {categories.map((candidate) => (
             <ChoiceOption
@@ -292,7 +284,7 @@ export function EntityServiceForm({
       {PLACE_FIELDS.map(textField)}
 
       <View className="gap-xs">
-        <SectionLabel>{t('fieldCostType')}</SectionLabel>
+        <FieldLabel>{t('fieldCostType')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {SERVICE_COST_TYPES.map((candidate) => (
             <ChoiceOption
@@ -365,7 +357,7 @@ export function EntityServiceForm({
       {CONTACT_FIELDS.map(textField)}
 
       <View className="gap-xs">
-        <SectionLabel>{t('fieldAvailability')}</SectionLabel>
+        <FieldLabel>{t('fieldAvailability')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {SERVICE_AVAILABILITIES.map((candidate) => (
             <ChoiceOption

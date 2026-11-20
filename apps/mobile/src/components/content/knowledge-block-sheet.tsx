@@ -8,6 +8,7 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import type { PickedPhoto } from '@/lib/content-upload';
@@ -107,9 +108,7 @@ function BlockForm({
             style={direction}
           />
           <View className="gap-xs">
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('stepImage')}
-            </Text>
+            <FieldLabel>{t('stepImage')}</FieldLabel>
             {hasPhoto ? (
               <Text
                 testID="knowledge-block-image-state"

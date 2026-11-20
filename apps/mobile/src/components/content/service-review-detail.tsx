@@ -20,6 +20,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useServiceReview, useServiceReviewActions } from '@/lib/content-service-reviews';
@@ -184,9 +185,7 @@ function Thread({
           </View>
         ))
       )}
-      <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-        {t('reviewCommentVisibility')}
-      </Text>
+      <FieldLabel>{t('reviewCommentVisibility')}</FieldLabel>
       <View className="flex-row flex-wrap gap-sm">
         {VISIBILITIES.map((candidate) => (
           <ChoiceOption

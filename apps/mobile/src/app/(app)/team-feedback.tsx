@@ -8,6 +8,7 @@
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { Badge } from '@/components/layout/badge';
 import { PageWidth } from '@/components/layout/content-width';
@@ -242,9 +243,7 @@ export default function TeamFeedbackScreen() {
             </ScreenSection>
           )}
           <View className="gap-sm">
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('filterType')}
-            </Text>
+            <FieldLabel>{t('filterType')}</FieldLabel>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View className="flex-row gap-sm">
                 {(['all', ...FEEDBACK_TYPES] as const).map((candidate) => (
@@ -260,9 +259,7 @@ export default function TeamFeedbackScreen() {
                 ))}
               </View>
             </ScrollView>
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('filterStatus')}
-            </Text>
+            <FieldLabel>{t('filterStatus')}</FieldLabel>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View className="flex-row gap-sm">
                 {(['all', ...FEEDBACK_STATUSES] as const).map((candidate) => (

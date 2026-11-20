@@ -10,6 +10,7 @@
  */
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
@@ -248,9 +249,7 @@ export default function TeamStaffScreen() {
               autoComplete="off"
               maxLength={254}
             />
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('team.presetLabel')}
-            </Text>
+            <FieldLabel>{t('team.presetLabel')}</FieldLabel>
             <View className="flex-row flex-wrap gap-sm">
               {presets.map((preset) => (
                 <ChoiceOption

@@ -10,6 +10,7 @@ import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { DateTimeField } from '@/components/content/date-time-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { Badge } from '@/components/layout/badge';
 import { PageWidth } from '@/components/layout/content-width';
@@ -138,9 +139,7 @@ function RequestCard({
             inMadridTime
           />
           <View className="gap-xs">
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('adminAssignee')}
-            </Text>
+            <FieldLabel>{t('adminAssignee')}</FieldLabel>
             <View className="flex-row flex-wrap gap-sm">
               {staff.map((member) => (
                 <ChoiceOption

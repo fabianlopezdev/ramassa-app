@@ -8,6 +8,7 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -179,9 +180,7 @@ function MemberAccessForm({
         title={t('team.editAccessTitle', { name: `${member.first_name} ${member.last_name}` })}
         intro={t('team.editAccessIntro')}
       />
-      <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-        {t('team.presetLabel')}
-      </Text>
+      <FieldLabel>{t('team.presetLabel')}</FieldLabel>
       <View className="flex-row flex-wrap gap-sm">
         {presets.map((preset) => (
           <ChoiceOption

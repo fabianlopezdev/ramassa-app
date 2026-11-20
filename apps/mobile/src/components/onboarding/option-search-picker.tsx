@@ -9,6 +9,7 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { useFormFieldAppearance } from '@/components/forms/field-appearance';
+import { FieldLabel } from '@/components/forms/field-label';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -152,9 +153,7 @@ export function OptionSearchPicker({
 
   return (
     <View className="gap-xs" testID={testID}>
-      <Text className={`text-start text-form font-medium text-neutral-800 ${languageFontClass}`}>
-        {label}
-      </Text>
+      <FieldLabel>{label}</FieldLabel>
       {help}
       <PressableScale
         testID={`${testID}-open`}

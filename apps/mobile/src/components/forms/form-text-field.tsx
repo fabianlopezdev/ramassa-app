@@ -9,6 +9,7 @@
 import { useFormFieldAppearance } from '@/components/forms/field-appearance';
 import { fieldFocusOwner } from '@/components/forms/field-focus-owner';
 import { FieldFocusRing } from '@/components/forms/field-focus-ring';
+import { FieldLabel } from '@/components/forms/field-label';
 import { composeContinuousTextStyle } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useCallback, useEffect, useId, useMemo, type Ref } from 'react';
@@ -127,9 +128,7 @@ export function FormTextField({
 
   return (
     <View className="gap-xs">
-      <Text className={`text-start text-form font-medium text-neutral-800 ${languageFontClass}`}>
-        {label}
-      </Text>
+      <FieldLabel>{label}</FieldLabel>
       <View className="relative" style={frameStyle}>
         <TextInput
           ref={ref}

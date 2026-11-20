@@ -19,6 +19,7 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { useLanguageRestart } from '@/components/auth/use-language-restart';
 import { useOrganizationBranding } from '@/components/branding/organization-branding-provider';
+import { FieldLabel } from '@/components/forms/field-label';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { OptionChip } from '@/components/onboarding/option-chip';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -49,9 +50,7 @@ export function LanguageSwitcher({
 
   return (
     <View className="gap-sm">
-      <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-        {t('languageLabel')}
-      </Text>
+      <FieldLabel>{t('languageLabel')}</FieldLabel>
 
       <View className="flex-row flex-wrap gap-sm">
         {availableLanguages.map((code) => (

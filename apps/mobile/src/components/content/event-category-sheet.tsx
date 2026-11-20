@@ -9,6 +9,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { eventCategoryColor } from '@/components/events/event-card';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { useEventCategoryActions } from '@/lib/content-events';
@@ -127,9 +128,7 @@ function CategoryForm({
       />
 
       <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-          {t('categoryIcon')}
-        </Text>
+        <FieldLabel>{t('categoryIcon')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {EVENT_CATEGORY_ICONS.map((candidate) => (
             <View key={candidate} className="flex-row items-center gap-xs">
@@ -147,9 +146,7 @@ function CategoryForm({
         </View>
       </View>
       <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-          {t('categoryColor')}
-        </Text>
+        <FieldLabel>{t('categoryColor')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {EVENT_CATEGORY_COLORS.map((candidate) => (
             <View key={candidate} className="flex-row items-center gap-xs">

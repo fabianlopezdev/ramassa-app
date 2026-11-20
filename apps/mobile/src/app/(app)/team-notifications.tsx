@@ -10,6 +10,7 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { MultilingualField } from '@/components/content/multilingual-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
@@ -223,9 +224,7 @@ export default function TeamNotificationsScreen() {
           </View>
 
           <ScreenSection title={t('composeTitle')}>
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('templateLabel')}
-            </Text>
+            <FieldLabel>{t('templateLabel')}</FieldLabel>
             <View className="flex-row flex-wrap gap-sm">
               {[{ id: BLANK_TEMPLATE, name: t('customMessage') }, ...(templates.data ?? [])].map(
                 (template) => (
@@ -335,9 +334,7 @@ export default function TeamNotificationsScreen() {
               onChangeText={setTemplateName}
               maxLength={80}
             />
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('templateCategory')}
-            </Text>
+            <FieldLabel>{t('templateCategory')}</FieldLabel>
             <View className="flex-row flex-wrap gap-sm">
               {NOTIFICATION_TEMPLATE_CATEGORIES.map((category) => (
                 <ChoiceOption

@@ -11,6 +11,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { DateField } from '@/components/content/date-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
@@ -151,9 +152,7 @@ function Exports({ permissions }: { readonly permissions: ReadonlySet<Permission
 
   return (
     <ScreenSection testID="data-exports" title={t('exportTitle')}>
-      <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-        {t('exportDataset')}
-      </Text>
+      <FieldLabel>{t('exportDataset')}</FieldLabel>
       <View className="flex-row flex-wrap gap-sm">
         {datasets.map((candidate) => (
           <ChoiceOption
@@ -170,9 +169,7 @@ function Exports({ permissions }: { readonly permissions: ReadonlySet<Permission
           />
         ))}
       </View>
-      <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-        {t('exportPeriod')}
-      </Text>
+      <FieldLabel>{t('exportPeriod')}</FieldLabel>
       <DateField
         testID="data-export-start"
         label={t('filterStartDate')}

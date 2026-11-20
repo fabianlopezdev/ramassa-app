@@ -12,6 +12,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { useRefreshOrganizationBranding } from '@/components/branding/organization-branding-provider';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
@@ -352,9 +353,7 @@ export default function TeamOrganizationScreen() {
                       />
                     ))}
                   </View>
-                  <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-                    {t('defaultLanguage')}
-                  </Text>
+                  <FieldLabel>{t('defaultLanguage')}</FieldLabel>
                   <View className="flex-row flex-wrap gap-sm">
                     {languages.available.map((language) => (
                       <ChoiceOption

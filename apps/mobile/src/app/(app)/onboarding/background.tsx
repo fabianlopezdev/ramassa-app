@@ -5,6 +5,7 @@
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { FieldLabel } from '@/components/forms/field-label';
 import { CountryPicker } from '@/components/onboarding/country-picker';
 import { QuestionBlock } from '@/components/onboarding/question-block';
 import { QuestionHelp } from '@/components/onboarding/question-help';
@@ -138,11 +139,7 @@ export default function BackgroundStepScreen() {
       <WizardValidationSummary isVisible={hasSubmitErrors} message={t('errorSummary')} />
       {step.shouldAsk('date_of_birth') ? (
         <View className="gap-xs">
-          <Text
-            className={`text-start text-form font-medium text-neutral-800 ${languageFontClass}`}
-          >
-            {wording.field('date_of_birth', t('dateOfBirthLabel'))}
-          </Text>
+          <FieldLabel>{wording.field('date_of_birth', t('dateOfBirthLabel'))}</FieldLabel>
           <QuestionHelp text={wording.help('date_of_birth')} />
           <View className={isLargeText ? 'gap-sm' : 'flex-row gap-sm'}>
             <View className={isLargeText ? '' : 'flex-1'}>

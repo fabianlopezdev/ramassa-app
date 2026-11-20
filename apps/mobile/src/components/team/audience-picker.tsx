@@ -6,10 +6,11 @@
  * group. Shared by notifications and surveys.
  */
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import {
   NOTIFICATION_AUDIENCE_KINDS,
   type CustomNotificationGroup,
@@ -77,9 +78,7 @@ export function AudiencePicker({
 
   return (
     <View className="gap-sm">
-      <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-        {t('audienceKind')}
-      </Text>
+      <FieldLabel>{t('audienceKind')}</FieldLabel>
       <View className="flex-row flex-wrap gap-sm">
         {NOTIFICATION_AUDIENCE_KINDS.map((candidate) => (
           <ChoiceOption
@@ -98,9 +97,7 @@ export function AudiencePicker({
       </View>
       {kind === null || kind === 'all' ? null : (
         <View className="gap-sm">
-          <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-            {t('audienceTitle')}
-          </Text>
+          <FieldLabel>{t('audienceTitle')}</FieldLabel>
           <View className="flex-row flex-wrap gap-sm">
             {choices.map(([choiceValue, label]) => (
               <ChoiceOption
