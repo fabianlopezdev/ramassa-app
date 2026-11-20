@@ -8,6 +8,7 @@ import { useMyCustomFormsByPlace } from '@/lib/custom-forms';
 import { buildHomeAttention, type HomeAttention } from '@/lib/home-attention';
 import { usePlayerEvents } from '@/lib/player-events';
 import { usePlayerSurveys } from '@/lib/player-surveys';
+import { useTabNews } from '@/lib/use-tab-news';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 import { useAuth } from '@ramassa/shared/auth';
@@ -84,8 +85,11 @@ export function useHomeAttention(): HomeAttention {
   const { data: events } = usePlayerEvents();
   const { data: announcements } = usePlayerAnnouncements();
   const { data: seen } = useHomeSeen();
+  // When she last saw Inici: the new activity adds to the number only until then (RAPP-873).
+  const { data: news } = useTabNews();
+  const homeSeenAt = news === undefined ? undefined : (news.listSeenAt.home ?? null);
   return useMemo(
-    () => buildHomeAttention({ forms, surveys, events, announcements, seen }),
-    [announcements, events, forms, seen, surveys],
+    () => buildHomeAttention({ forms, surveys, events, announcements, seen, homeSeenAt }),
+    [announcements, events, forms, homeSeenAt, seen, surveys],
   );
 }

@@ -120,6 +120,20 @@ export function useMarkListsSeen(): (keys: readonly TabListKey[]) => void {
  */
 export function useListSeen(key: TabListKey | undefined, isActive: boolean): void {
   const { data: news } = useTabNews();
+  const hasUnseen = key !== undefined && news !== undefined && hasUnseenInList(news, key);
+  useListSeenWhen(key, isActive, hasUnseen);
+}
+
+/**
+ * `useListSeen` for a list whose number the app works out itself, such as
+ * Activitats and Inici (RAPP-873): the caller says whether the list has
+ * things that raise a number.
+ */
+export function useListSeenWhen(
+  key: TabListKey | undefined,
+  isActive: boolean,
+  hasUnseen: boolean,
+): void {
   const { mutate } = useMarkListsSeenMutation();
   const [isFocused, setIsFocused] = useState(false);
   // A key is held from the moment it is sent. A success lets it go, so things
@@ -138,7 +152,6 @@ export function useListSeen(key: TabListKey | undefined, isActive: boolean): voi
     }, []),
   );
 
-  const hasUnseen = key !== undefined && news !== undefined && hasUnseenInList(news, key);
   useEffect(() => {
     if (!isFocused || !isActive || !hasUnseen || key === undefined) return;
     if (heldThisFocus.current.has(key)) return;

@@ -23,6 +23,7 @@ import { usePlayerSurveys } from '@/lib/player-surveys';
 import { useHomeAttention, useHomeSeen } from '@/lib/use-home-attention';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
+import { useListSeenWhen } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
@@ -69,8 +70,16 @@ export default function HomeScreen() {
   const refetchSeen = useHomeSeen().refetch;
 
   // The same count the Inici tab shows as its badge (RAPP-821).
-  const { toDoItems, nextActivity, isNextActivityUnseen, unseenAnnouncementIds } =
-    useHomeAttention();
+  const {
+    toDoItems,
+    nextActivity,
+    isNextActivityUnseen,
+    isNextActivityCounted,
+    unseenAnnouncementIds,
+  } = useHomeAttention();
+  // Seeing Inici clears the number for its new activity. The card keeps "Nou"
+  // until she opens the activity (RAPP-873).
+  useListSeenWhen('home', true, isNextActivityCounted);
   // An announcement stays new, with its mark and in the counts, until she
   // opens it (RAPP-848); scrolling past it no longer counts.
   const newCounts = useMemo(
