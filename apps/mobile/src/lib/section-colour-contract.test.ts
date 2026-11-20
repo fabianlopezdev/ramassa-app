@@ -18,7 +18,21 @@ function sources(directory: string): string[] {
   });
 }
 
-// Each coloured card and the screen it opens. A new coloured card is one line.
+// Each coloured card and the screen it opens. A new coloured card is one
+// entry. A screen that finds its colour name first, such as a post's category,
+// names the small hook it reads through; that hook must call the one reader.
+interface ColouredPair {
+  readonly card: string;
+  readonly screen: string;
+  readonly reader?: { readonly hook: string; readonly file: string };
+}
+
+function readsTheShade(pair: ColouredPair): boolean {
+  const screen = read(pair.screen);
+  if (pair.reader === undefined) return screen.includes('useSectionWash(');
+  return screen.includes(pair.reader.hook) && read(pair.reader.file).includes('useSectionWash(');
+}
+
 const colouredPairs = [
   {
     card: 'components/services/service-category-grid.tsx',
@@ -31,12 +45,14 @@ const colouredPairs = [
   {
     card: 'components/announcements/announcement-card.tsx',
     screen: 'app/(app)/announcement/[id].tsx',
+    reader: { hook: 'useAnnouncementWash(', file: 'components/announcements/category-filters.tsx' },
   },
   {
     card: 'components/forum/forum-post-card.tsx',
     screen: 'app/(app)/forum/[id].tsx',
+    reader: { hook: 'useForumPostWash(', file: 'lib/use-forum-post-wash.ts' },
   },
-] as const;
+] as const satisfies readonly ColouredPair[];
 
 const headerTag = /<NativeScreenHeader\b[\s\S]*?\/>/g;
 
@@ -55,7 +71,9 @@ test('every coloured card and the screen it opens exist', () => {
 });
 
 test('every coloured screen reads its shade through useSectionWash', () => {
-  expect(colouredScreens.filter((path) => !read(path).includes('useSectionWash('))).toEqual([]);
+  expect(colouredPairs.filter((pair) => !readsTheShade(pair)).map(({ screen }) => screen)).toEqual(
+    [],
+  );
 });
 
 test('the header of every coloured screen takes the shade once loaded', () => {

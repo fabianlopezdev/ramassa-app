@@ -7,7 +7,7 @@
  * The wrapper keeps room for the edge, the edge sits absolute behind the face,
  * and the face holds the content. Face and edge share one shape class.
  */
-import { useBrandColor } from '@/components/branding/organization-branding-provider';
+import { useBrandColor } from '@/components/branding/organization-branding-context';
 import { PressableDepth } from '@/components/motion/pressable-depth';
 import { continuousCorners } from '@/lib/continuous-corners';
 import type { HapticFeedback } from '@/lib/haptics/haptic-policy';

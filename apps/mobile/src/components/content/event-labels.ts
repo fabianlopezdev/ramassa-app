@@ -5,11 +5,7 @@
  */
 import type { IconName } from '@/components/icons/icon';
 import type { AnnouncementLifecycle } from '@ramassa/shared/announcements';
-import type {
-  EventCategoryColor,
-  EventCategoryIcon,
-  EventSignupMode,
-} from '@ramassa/shared/events';
+import type { EventCategoryIcon, EventSignupMode } from '@ramassa/shared/events';
 
 export const EVENT_STATUS_KEYS = {
   draft: 'statusDraft',
@@ -33,20 +29,6 @@ export const EVENT_ICON_KEYS = {
   footprints: 'iconFootprints',
   users: 'iconUsers',
 } as const satisfies Record<EventCategoryIcon, string>;
-
-// The label of each palette colour (RAPP-893): the keys the service and guide
-// category pickers already use, in the services namespace.
-export const EVENT_COLOR_KEYS = {
-  primary: 'services:categoryColorPrimary',
-  sky: 'services:categoryColorSky',
-  green: 'services:categoryColorGreen',
-  purple: 'services:categoryColorPurple',
-  orange: 'services:categoryColorOrange',
-  pink: 'services:categoryColorPink',
-  teal: 'services:categoryColorTeal',
-  amber: 'services:categoryColorAmber',
-  indigo: 'services:categoryColorIndigo',
-} as const satisfies Record<EventCategoryColor, string>;
 
 export const EVENT_ICON_NAMES = {
   dumbbell: 'dumbbell',

@@ -7,10 +7,8 @@
  */
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
-import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
-import { eventCategoryColor } from '@/components/events/event-card';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { useEventCategoryActions } from '@/lib/content-events';
@@ -18,7 +16,7 @@ import { reviewHandlers, reviewOptions } from '@/lib/content-translations';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { generateDrafts } from '@/lib/translation-worker';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Modal, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -37,8 +35,9 @@ import {
 import { isTranslationReviewPublishable } from '@ramassa/shared/translation';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 import { EventCategoryGlyph } from './event-category-badge';
-import { EVENT_COLOR_KEYS, EVENT_ICON_KEYS } from './event-labels';
+import { EVENT_ICON_KEYS } from './event-labels';
 import { MultilingualField } from './multilingual-field';
+import { SectionColorPicker } from './section-color-picker';
 
 function CategoryForm({
   category,
@@ -49,14 +48,19 @@ function CategoryForm({
 }) {
   const { t } = useTranslation('events');
   const { t: tErrors } = useTranslation('errors');
+  const { t: tServices } = useTranslation('services');
   const fontClass = useLanguageFontClass();
   const { save } = useEventCategoryActions();
   const [name, setName] = useState(category?.name.ca ?? '');
   const [icon, setIcon] = useState<EventCategoryIcon>(category?.icon ?? 'dumbbell');
-  const brandColor = useBrandColor();
   // An older colour name opens as the palette colour it moves to (RAPP-893).
   const [color, setColor] = useState<EventCategoryColor>(
     eventCategoryPaletteColor(category?.color ?? 'primary'),
+  );
+  // The shared picker hands back a stored name; the sheet keeps a palette colour.
+  const selectColor = useCallback(
+    (value: string) => setColor(eventCategoryPaletteColor(value)),
+    [],
   );
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorCode, setErrorCode] = useState<AppErrorCode | null>(null);
@@ -153,30 +157,13 @@ function CategoryForm({
           ))}
         </View>
       </View>
-      <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-          {t('categoryColor')}
-        </Text>
-        <View className="flex-row flex-wrap gap-sm">
-          {EVENT_CATEGORY_COLORS.map((candidate) => (
-            <View key={candidate} className="flex-row items-center gap-xs">
-              <View
-                accessible={false}
-                className="h-md w-md rounded-full"
-                style={{ backgroundColor: eventCategoryColor(candidate, brandColor) }}
-              />
-              <ChoiceOption
-                testID={`category-color-${candidate}`}
-                value={candidate}
-                label={t(EVENT_COLOR_KEYS[candidate])}
-                selected={candidate === color}
-                onSelect={setColor}
-                languageFontClass={fontClass}
-              />
-            </View>
-          ))}
-        </View>
-      </View>
+      <SectionColorPicker
+        label={tServices('categoryColor')}
+        choices={EVENT_CATEGORY_COLORS}
+        value={color}
+        onChange={selectColor}
+        testIDPrefix="category-color"
+      />
 
       {shownError === null ? null : (
         <FailureNotice

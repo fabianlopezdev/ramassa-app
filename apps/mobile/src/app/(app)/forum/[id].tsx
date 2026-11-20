@@ -233,6 +233,7 @@ export default function ForumPostDetailScreen() {
   return (
     <ActionScreen
       className="bg-neutral-50"
+      backgroundColor={wash}
       action={
         post.visibility !== 'deleted' ? (
           <AuthSubmitButton

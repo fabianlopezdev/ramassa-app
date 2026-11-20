@@ -283,18 +283,17 @@ function ActionButton({
 
 /**
  * A forum category's colour comes from the shared section palette (RAPP-893);
- * `neutral` is the stored name for a category with no colour. A new category
- * starts on the first topic hue, so it never takes the club colour by chance.
+ * `neutral` is the stored name for a category with no colour, where a new
+ * category starts, as it does in the staff app.
  */
 const FORUM_CATEGORY_NO_COLOR = 'neutral';
-const FORUM_CATEGORY_DEFAULT_COLOR = 'sky';
 
 const emptyCategory = (): ForumCategoryInput => ({
   id: null,
   name: { ca: '', es: '', en: '', fr: '', ar: '', fa: '' },
   slug: '',
   icon: 'message-circle',
-  color: FORUM_CATEGORY_DEFAULT_COLOR,
+  color: FORUM_CATEGORY_NO_COLOR,
   sortOrder: 0,
 });
 

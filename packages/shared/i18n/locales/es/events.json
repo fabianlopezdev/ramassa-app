@@ -97,7 +97,6 @@
   "editCategory": "Editar la categoría",
   "categoryName": "Nombre en catalán",
   "categoryIcon": "Icono",
-  "categoryColor": "Color semántico",
   "categorySave": "Guardar la categoría",
   "categoryCancel": "Cancelar",
   "categoryDeleteConfirm": "¿Quieres eliminar esta categoría? Solo se puede eliminar si no tiene actividades.",

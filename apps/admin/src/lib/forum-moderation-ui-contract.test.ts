@@ -30,7 +30,7 @@ test('a forum category picks its colour from the shared section palette (RAPP-89
   expect(source).toContain('choices={SECTION_COLOR_CHOICES}');
   expect(source).toContain("const FORUM_CATEGORY_NO_COLOR = 'neutral'");
   expect(source).toContain('noneValue={FORUM_CATEGORY_NO_COLOR}');
-  expect(source).toContain("const FORUM_CATEGORY_DEFAULT_COLOR = 'sky'");
+  expect(source).toContain('color: FORUM_CATEGORY_NO_COLOR,');
   expect(source).not.toContain("label={t('categoryColor')}");
 });
 

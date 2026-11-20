@@ -97,7 +97,6 @@
   "editCategory": "تعديل الفئة",
   "categoryName": "الاسم بالكتالانية",
   "categoryIcon": "الأيقونة",
-  "categoryColor": "اللون الدلالي",
   "categorySave": "حفظ الفئة",
   "categoryCancel": "إلغاء",
   "categoryDeleteConfirm": "هل تريد حذف هذه الفئة؟ لا يمكن حذفها إلا إذا لم تكن بها أنشطة.",

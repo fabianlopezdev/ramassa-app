@@ -3,8 +3,9 @@
  * the web admin's category form: the name in five languages, the identifier,
  * the icon and the colour, chosen from the shared section colours
  * (RAPP-893). The name is written in Catalan and its four translations
- * are generated and approved, as for event categories, where the web form asks for the five names by hand. A new category's identifier
- * follows the Catalan name until it is changed by hand.
+ * are generated and approved, as for event categories, where the web form
+ * asks for the five names by hand. A new category's identifier follows the
+ * Catalan name until it is changed by hand.
  */
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
