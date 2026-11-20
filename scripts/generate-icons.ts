@@ -94,6 +94,7 @@ const ICONS: Readonly<Record<string, string>> = {
   // script does not read; `home-smile` is paths only.
   home: 'home-smile',
   'id-card': 'user-id',
+  'info-circle': 'info-circle',
   lightbulb: 'lightbulb',
   list: 'list',
   lock: 'lock-keyhole',

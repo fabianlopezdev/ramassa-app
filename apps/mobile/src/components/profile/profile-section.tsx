@@ -28,13 +28,28 @@ const FIRST_ROW_LINE_HIDDEN = { marginTop: -ROW_LINE_WIDTH } as const;
 
 export function ProfileSection({
   title,
+  isOpen = false,
   children,
 }: {
   readonly title: string;
+  /**
+   * Content that is already made of its own cards, such as the consent
+   * checks (RAPP-898): it sits under the title with no card around it.
+   */
+  readonly isOpen?: boolean;
   readonly children: ReactNode;
 }) {
+  // The space under the title is the tabs' own (`ScreenSection`, RAPP-898).
+  if (isOpen) {
+    return (
+      <View className="gap-md">
+        <SectionTitle title={title} />
+        {children}
+      </View>
+    );
+  }
   return (
-    <View className="gap-sm">
+    <View className="gap-md">
       <SectionTitle title={title} />
       <View style={continuousCorners} className={`px-md py-xs ${outlinedSurfaceClassName()}`}>
         {/* Every row draws a line above itself (RAPP-888). Pulled up by that

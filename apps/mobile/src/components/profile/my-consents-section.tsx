@@ -23,7 +23,7 @@ import { playHaptic } from '@/lib/haptics/haptics';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text } from 'react-native';
+import { Text, View } from 'react-native';
 import { IMAGE_RIGHTS_CONSENT, orderedConsents } from '@ramassa/shared/authorization';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import { resolveLocalizedText } from '@ramassa/shared/i18n/localized-content';
@@ -97,44 +97,47 @@ export function MyConsentsSection({ profile }: { readonly profile: ProfileRecord
   }
 
   return (
-    <ProfileSection title={t('consentsTitle')}>
-      <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+    <ProfileSection title={t('consentsTitle')} isOpen>
+      <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
         {t('consentsIntro')}
       </Text>
-      {showsMediaConsentRow ? (
-        <ConsentRow
-          testID="profile-consent-media"
-          label={t('fieldMediaConsent')}
-          required={false}
-          requiredMark=""
-          checked={mediaConsent}
-          onToggle={toggleMediaConsent}
-        />
-      ) : null}
-      {mediaFailure === null ? null : (
-        <FailureNotice code={mediaFailure} message={t('saveFailed')} />
-      )}
-      {rows.map((consent) => {
-        const granted =
-          consents.data?.[consent.key]?.granted ??
-          (consent.key === IMAGE_RIGHTS_CONSENT ? mediaConsent : false);
-        return (
+      {/* The cards stand apart as on the Onboarding (RAPP-898). */}
+      <View className="gap-lg">
+        {showsMediaConsentRow ? (
           <ConsentRow
-            key={consent.key}
-            testID={`profile-consent-${consent.key}`}
-            label={consent.label}
+            testID="profile-consent-media"
+            label={t('fieldMediaConsent')}
             required={false}
             requiredMark=""
-            checked={granted}
-            onToggle={() =>
-              change.mutate(
-                { key: consent.key, granted: !granted, language },
-                { onError: () => playHaptic('error') },
-              )
-            }
+            checked={mediaConsent}
+            onToggle={toggleMediaConsent}
           />
-        );
-      })}
+        ) : null}
+        {mediaFailure === null ? null : (
+          <FailureNotice code={mediaFailure} message={t('saveFailed')} />
+        )}
+        {rows.map((consent) => {
+          const granted =
+            consents.data?.[consent.key]?.granted ??
+            (consent.key === IMAGE_RIGHTS_CONSENT ? mediaConsent : false);
+          return (
+            <ConsentRow
+              key={consent.key}
+              testID={`profile-consent-${consent.key}`}
+              label={consent.label}
+              required={false}
+              requiredMark=""
+              checked={granted}
+              onToggle={() =>
+                change.mutate(
+                  { key: consent.key, granted: !granted, language },
+                  { onError: () => playHaptic('error') },
+                )
+              }
+            />
+          );
+        })}
+      </View>
     </ProfileSection>
   );
 }
