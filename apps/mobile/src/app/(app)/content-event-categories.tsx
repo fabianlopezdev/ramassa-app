@@ -15,6 +15,7 @@ import { EventCategorySheet } from '@/components/content/event-category-sheet';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ActionScreen } from '@/components/layout/screen-action';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useContentEventCategories, useEventCategoryActions } from '@/lib/content-events';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -95,80 +96,85 @@ export default function EventCategoriesScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right']}>
-      <NativeScreenHeader title={t('categoriesTitle')} />
-      <PageWidth className="flex-1">
-        <ScrollView contentContainerClassName="gap-md p-lg" testID="event-categories">
-          <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-            {t('categoriesHelpPhone')}
-          </Text>
+      <ActionScreen
+        action={
           <AuthSubmitButton
             testID="event-category-new"
             label={t('newCategory')}
             onPress={() => setSheet({ category: null })}
           />
-          {failure === null ? null : (
-            <FailureNotice
-              code={toAppError(failure).code}
-              message={tErrors(getErrorMessageKey(toAppError(failure).code))}
-            />
-          )}
-          {categories.isPending ? (
-            <AnnouncementFeedSkeleton accessibilityLabel={t('categoriesTitle')} />
-          ) : categories.isError ? (
-            <AnnouncementFeedError
-              message={t('playerLoadFailed')}
-              retryLabel={tErrors('retry')}
-              code={toAppError(categories.error).code}
-              languageFontClass={fontClass}
-              onRetry={() => void categories.refetch()}
-              isLoading={categories.isFetching}
-            />
-          ) : (
-            <View className="gap-sm" accessibilityRole="list">
-              {rows.map((category, index) => (
-                <View
-                  key={category.id}
-                  testID={`event-category-row-${category.id}`}
-                  style={continuousCorners}
-                  className="gap-xs rounded-md border border-neutral-200 bg-white px-md py-sm"
-                >
-                  <EventCategoryBadge category={category} />
-                  <View className="flex-row flex-wrap gap-sm">
-                    <RowAction
-                      testID={`event-category-up-${category.id}`}
-                      label={t('categoryMoveUp')}
-                      onPress={() => move(index, -1)}
-                      isDisabled={index === 0 || reorder.isPending}
-                    />
-                    <RowAction
-                      testID={`event-category-down-${category.id}`}
-                      label={t('categoryMoveDown')}
-                      onPress={() => move(index, 1)}
-                      isDisabled={index === rows.length - 1 || reorder.isPending}
-                    />
-                    <RowAction
-                      testID={`event-category-edit-${category.id}`}
-                      label={t('categoryEdit')}
-                      onPress={() => setSheet({ category })}
-                    />
-                    <RowAction
-                      testID={`event-category-delete-${category.id}`}
-                      label={t('categoryDelete')}
-                      onPress={() => confirmDelete(category)}
-                      isDestructive
-                    />
+        }
+      >
+        <NativeScreenHeader title={t('categoriesTitle')} />
+        <PageWidth className="flex-1">
+          <ScrollView contentContainerClassName="gap-md p-lg" testID="event-categories">
+            <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+              {t('categoriesHelpPhone')}
+            </Text>
+            {failure === null ? null : (
+              <FailureNotice
+                code={toAppError(failure).code}
+                message={tErrors(getErrorMessageKey(toAppError(failure).code))}
+              />
+            )}
+            {categories.isPending ? (
+              <AnnouncementFeedSkeleton accessibilityLabel={t('categoriesTitle')} />
+            ) : categories.isError ? (
+              <AnnouncementFeedError
+                message={t('playerLoadFailed')}
+                retryLabel={tErrors('retry')}
+                code={toAppError(categories.error).code}
+                languageFontClass={fontClass}
+                onRetry={() => void categories.refetch()}
+                isLoading={categories.isFetching}
+              />
+            ) : (
+              <View className="gap-sm" accessibilityRole="list">
+                {rows.map((category, index) => (
+                  <View
+                    key={category.id}
+                    testID={`event-category-row-${category.id}`}
+                    style={continuousCorners}
+                    className="gap-xs rounded-md border border-neutral-200 bg-white px-md py-sm"
+                  >
+                    <EventCategoryBadge category={category} />
+                    <View className="flex-row flex-wrap gap-sm">
+                      <RowAction
+                        testID={`event-category-up-${category.id}`}
+                        label={t('categoryMoveUp')}
+                        onPress={() => move(index, -1)}
+                        isDisabled={index === 0 || reorder.isPending}
+                      />
+                      <RowAction
+                        testID={`event-category-down-${category.id}`}
+                        label={t('categoryMoveDown')}
+                        onPress={() => move(index, 1)}
+                        isDisabled={index === rows.length - 1 || reorder.isPending}
+                      />
+                      <RowAction
+                        testID={`event-category-edit-${category.id}`}
+                        label={t('categoryEdit')}
+                        onPress={() => setSheet({ category })}
+                      />
+                      <RowAction
+                        testID={`event-category-delete-${category.id}`}
+                        label={t('categoryDelete')}
+                        onPress={() => confirmDelete(category)}
+                        isDestructive
+                      />
+                    </View>
                   </View>
-                </View>
-              ))}
-            </View>
-          )}
-        </ScrollView>
-      </PageWidth>
-      <EventCategorySheet
-        visible={sheet !== null}
-        category={sheet?.category ?? null}
-        onClose={() => setSheet(null)}
-      />
+                ))}
+              </View>
+            )}
+          </ScrollView>
+        </PageWidth>
+        <EventCategorySheet
+          visible={sheet !== null}
+          category={sheet?.category ?? null}
+          onClose={() => setSheet(null)}
+        />
+      </ActionScreen>
     </SafeAreaView>
   );
 }

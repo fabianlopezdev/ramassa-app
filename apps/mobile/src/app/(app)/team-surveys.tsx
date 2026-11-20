@@ -7,6 +7,7 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ActionScreen } from '@/components/layout/screen-action';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { teamScreens } from '@/lib/account-area';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -107,39 +108,46 @@ export default function TeamSurveysScreen() {
 
   return (
     <SafeAreaView testID="team-surveys" className="flex-1 bg-neutral-50" edges={['left', 'right']}>
-      <NativeScreenHeader title={t('title')} />
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
-          <View className="gap-xs">
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>{t('intro')}</Text>
-          </View>
-          {team.surveyEditor ? (
+      <ActionScreen
+        action={
+          team.surveyEditor ? (
             <AuthSubmitButton
               testID="team-surveys-new"
               label={t('newSurvey')}
               onPress={() => push('/team-survey-new' as Href)}
             />
-          ) : null}
-          {surveys.isError ? (
-            <Text className={`text-start text-md text-error ${fontClass}`}>{t('loadError')}</Text>
-          ) : surveys.data !== undefined && surveys.data.length === 0 ? (
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-              {t('noSurveys')}
-            </Text>
-          ) : (
-            <View className="gap-sm">
-              {(surveys.data ?? []).map((survey) => (
-                <SurveyRow
-                  key={survey.id}
-                  survey={survey}
-                  canOpen={team.surveyResults}
-                  format={format}
-                />
-              ))}
+          ) : null
+        }
+      >
+        <NativeScreenHeader title={t('title')} />
+        <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
+          <PageWidth className="gap-lg p-lg">
+            <View className="gap-xs">
+              <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
+                {t('intro')}
+              </Text>
             </View>
-          )}
-        </PageWidth>
-      </ScrollView>
+            {surveys.isError ? (
+              <Text className={`text-start text-md text-error ${fontClass}`}>{t('loadError')}</Text>
+            ) : surveys.data !== undefined && surveys.data.length === 0 ? (
+              <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
+                {t('noSurveys')}
+              </Text>
+            ) : (
+              <View className="gap-sm">
+                {(surveys.data ?? []).map((survey) => (
+                  <SurveyRow
+                    key={survey.id}
+                    survey={survey}
+                    canOpen={team.surveyResults}
+                    format={format}
+                  />
+                ))}
+              </View>
+            )}
+          </PageWidth>
+        </ScrollView>
+      </ActionScreen>
     </SafeAreaView>
   );
 }
