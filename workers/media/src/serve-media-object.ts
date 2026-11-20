@@ -5,6 +5,10 @@
  * endpoint verifies the caller with the same identity boundary used by uploads,
  * checks that the key begins with her organization, and streams the R2 body.
  * A cross-organization key and an absent key deliberately look identical.
+ *
+ * Byte ranges (RAPP-895): a single `Range: bytes=...` is answered with 206 and
+ * only those bytes, because the iOS video player reads a file in ranges and
+ * refuses a source that answers a ranged request with the whole file.
  */
 
 import { isAppError, type AppErrorCode } from '@ramassa/shared/errors';
@@ -24,6 +28,23 @@ export interface MediaObjectBucket {
   get(key: string): Promise<MediaObject | null>;
 }
 
+/** The slice of an object a ranged read asks storage for. */
+interface StoredByteRange {
+  readonly offset: number;
+  readonly length: number;
+}
+
+interface MediaObjectSummary {
+  readonly size: number;
+  readonly httpEtag: string;
+}
+
+/** The private object bucket: whole reads, and ranged reads once the size is known. */
+export interface RangedMediaObjectBucket {
+  head(key: string): Promise<MediaObjectSummary | null>;
+  get(key: string, options?: { readonly range?: StoredByteRange }): Promise<MediaObject | null>;
+}
+
 export interface ServeMediaObjectDependencies {
   readonly resolveIdentity: (request: Request) => Promise<CallerIdentity>;
   readonly authorizeGalleryObject: (objectKey: string) => Promise<boolean>;
@@ -37,9 +58,53 @@ export interface ServeMediaObjectDependencies {
    * the organization for a team member's current photo.
    */
   readonly authorizeProfilePhotoObject: (objectKey: string) => Promise<boolean>;
-  readonly bucket: MediaObjectBucket;
+  readonly bucket: RangedMediaObjectBucket;
   readonly corsHeaders?: Record<string, string>;
   readonly onError?: (error: unknown, context: Record<string, unknown>) => void;
+}
+
+/** What a `Range` header asks for, before the object size is known. */
+type RequestedByteRange =
+  | { readonly kind: 'from'; readonly start: number; readonly end: number | null }
+  | { readonly kind: 'suffix'; readonly length: number };
+
+/**
+ * Reads one `bytes` range. Anything else (another unit, several ranges, a
+ * malformed value) returns null, and the caller sends the whole object, which
+ * is what HTTP allows for a range header a server does not serve.
+ */
+function readRequestedByteRange(header: string | null): RequestedByteRange | null {
+  if (header === null) return null;
+  const match = /^bytes=(\d*)-(\d*)$/.exec(header.trim());
+  if (match === null) return null;
+  const [, startDigits = '', endDigits = ''] = match;
+
+  if (startDigits === '') {
+    if (endDigits === '') return null;
+    const length = Number(endDigits);
+    return Number.isSafeInteger(length) ? { kind: 'suffix', length } : null;
+  }
+
+  const start = Number(startDigits);
+  const end = endDigits === '' ? null : Number(endDigits);
+  if (!Number.isSafeInteger(start) || (end !== null && !Number.isSafeInteger(end))) return null;
+  if (end !== null && end < start) return null;
+  return { kind: 'from', start, end };
+}
+
+/** The bytes to read for a request, or null when the object has none of them. */
+function resolveStoredByteRange(
+  requested: RequestedByteRange,
+  objectSize: number,
+): StoredByteRange | null {
+  if (requested.kind === 'suffix') {
+    if (requested.length === 0 || objectSize === 0) return null;
+    const length = Math.min(requested.length, objectSize);
+    return { offset: objectSize - length, length };
+  }
+  if (requested.start >= objectSize) return null;
+  const lastByte = Math.min(requested.end ?? objectSize - 1, objectSize - 1);
+  return { offset: requested.start, length: lastByte - requested.start + 1 };
 }
 
 function readObjectKey(request: Request): string | null {
@@ -162,9 +227,40 @@ export async function handleServeMediaObject(
     }
   }
 
+  // A ranged read needs the object size first: it decides between 206 and 416,
+  // and it turns an open-ended or suffix range into exact bytes.
+  let storedRange: StoredByteRange | undefined;
+  const requestedRange = readRequestedByteRange(request.headers.get('Range'));
+  if (requestedRange !== null) {
+    let summary: MediaObjectSummary | null;
+    try {
+      summary = await dependencies.bucket.head(objectKey);
+    } catch (thrown) {
+      dependencies.onError?.(thrown, { stage: 'head-object' });
+      return fail('UPLOAD-6');
+    }
+    if (summary === null) return notFound(corsHeaders);
+
+    // If-Range: the range holds only for the version the caller already has.
+    const validator = request.headers.get('If-Range');
+    if (validator === null || validator === summary.httpEtag) {
+      const resolved = resolveStoredByteRange(requestedRange, summary.size);
+      if (resolved === null) {
+        const headers = new Headers(corsHeaders);
+        headers.set('Content-Range', `bytes */${summary.size}`);
+        headers.set('Accept-Ranges', 'bytes');
+        return new Response(null, { status: 416, headers });
+      }
+      storedRange = resolved;
+    }
+  }
+
   let object: MediaObject | null;
   try {
-    object = await dependencies.bucket.get(objectKey);
+    object = await dependencies.bucket.get(
+      objectKey,
+      storedRange === undefined ? undefined : { range: storedRange },
+    );
   } catch (thrown) {
     dependencies.onError?.(thrown, { stage: 'get-object' });
     return fail('UPLOAD-6');
@@ -173,9 +269,18 @@ export async function handleServeMediaObject(
 
   const headers = new Headers(corsHeaders);
   object.writeHttpMetadata(headers);
-  headers.set('Content-Length', String(object.size));
+  headers.set('Accept-Ranges', 'bytes');
   headers.set('ETag', object.httpEtag);
   headers.set('Cache-Control', 'private, max-age=3600');
   headers.set('X-Content-Type-Options', 'nosniff');
-  return new Response(object.body, { status: 200, headers });
+
+  if (storedRange === undefined) {
+    headers.set('Content-Length', String(object.size));
+    return new Response(object.body, { status: 200, headers });
+  }
+
+  const lastByte = storedRange.offset + storedRange.length - 1;
+  headers.set('Content-Range', `bytes ${storedRange.offset}-${lastByte}/${object.size}`);
+  headers.set('Content-Length', String(storedRange.length));
+  return new Response(object.body, { status: 206, headers });
 }
