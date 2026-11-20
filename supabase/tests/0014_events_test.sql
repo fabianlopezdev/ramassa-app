@@ -246,7 +246,7 @@ values (
   '5eed0000-0000-4000-8000-999999999998',
   '{"ca":"Altra categoria","es":"Otra categoría","en":"Other category","ar":"فئة أخرى","fa":"دسته دیگر"}',
   'theater',
-  'chart-2',
+  'amber',
   1
 );
 
@@ -273,7 +273,7 @@ select lives_ok(
      values (
        '{"ca":"Categoria d''equip","es":"Categoría de equipo","en":"Team category","ar":"فئة الفريق","fa":"دسته تیم"}',
        'users',
-       'chart-3',
+       'pink',
        91
      ) $$,
   'staff can create a category in their organization'
