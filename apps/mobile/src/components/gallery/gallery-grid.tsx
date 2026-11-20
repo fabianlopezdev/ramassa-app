@@ -4,9 +4,11 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { GalleryTile } from '@/components/gallery/gallery-tile';
+import { NO_NEW_IDS } from '@/lib/community-news';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { useGalleryItems } from '@/lib/player-gallery';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
@@ -33,35 +35,48 @@ const keyExtractor = (item: MediaItemRow) => item.id;
 export function GalleryGrid({
   header,
   contentContainerStyle,
+  newItemIds = NO_NEW_IDS,
 }: {
   readonly header: ReactElement;
   readonly contentContainerStyle: StyleProp<ViewStyle>;
+  /** Photos new to her when she opened the section, marked "Nou" (RAPP-873). */
+  readonly newItemIds?: ReadonlySet<string>;
 }) {
-  const { t } = useTranslation('gallery');
+  const { t } = useTranslation(['gallery', 'home']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const { session } = useAuth();
   const isOnline = isNetworkStateOnline(useNetworkState());
   const query = useGalleryItems();
   const refetchGallery = query.refetch;
+  // Pull to refresh also asks again what is new for her (RAPP-873).
+  const refetchTabNews = useTabNews().refetch;
   const accessToken = session?.access_token;
   const openItem = useCallback(
     (id: string) => push({ pathname: '/gallery/[id]', params: { id } } as unknown as Href),
     [push],
   );
-  const refresh = useCallback(() => void refetchGallery(), [refetchGallery]);
+  const refresh = useCallback(() => {
+    void Promise.all([refetchGallery(), refetchTabNews()]);
+  }, [refetchGallery, refetchTabNews]);
   const renderItem = useCallback(
-    ({ item }: ListRenderItemInfo<MediaItemRow>) => (
-      <GalleryTile
-        id={item.id}
-        objectKeyOrUrl={item.thumbnail_url ?? item.file_url}
-        accessToken={accessToken}
-        accessibilityLabel={t('openItem', { name: item.uploader_first_name })}
-        imageAlt={item.caption ?? t('mediaBy', { name: item.uploader_first_name })}
-        onOpen={openItem}
-      />
-    ),
-    [accessToken, openItem, t],
+    ({ item }: ListRenderItemInfo<MediaItemRow>) => {
+      const unseenLabel = newItemIds.has(item.id) ? t('home:unseen') : null;
+      // The tile does not read its mark aloud, so its label says the word first.
+      const openLabel = t('openItem', { name: item.uploader_first_name });
+      return (
+        <GalleryTile
+          id={item.id}
+          objectKeyOrUrl={item.thumbnail_url ?? item.file_url}
+          accessToken={accessToken}
+          accessibilityLabel={unseenLabel === null ? openLabel : `${unseenLabel}. ${openLabel}`}
+          imageAlt={item.caption ?? t('mediaBy', { name: item.uploader_first_name })}
+          onOpen={openItem}
+          unseenLabel={unseenLabel}
+        />
+      );
+    },
+    [accessToken, newItemIds, openItem, t],
   );
 
   const hasNoData = query.data === undefined && isOnline;
@@ -95,6 +110,7 @@ export function GalleryGrid({
       data={query.data ?? EMPTY_GALLERY_ITEMS}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
+      extraData={newItemIds}
       numColumns={GALLERY_COLUMN_COUNT}
       style={styles.screen}
       contentContainerStyle={contentContainerStyle}

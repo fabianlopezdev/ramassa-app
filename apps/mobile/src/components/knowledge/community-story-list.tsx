@@ -6,10 +6,12 @@ import {
 import { KnowledgeArticleCard } from '@/components/knowledge/knowledge-article-card';
 import { PageWidth } from '@/components/layout/content-width';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
+import { NO_NEW_IDS } from '@/lib/community-news';
 import { useCommunityStories } from '@/lib/community-stories';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
@@ -34,11 +36,14 @@ const keyExtractor = (story: KnowledgeArticleListRow) => story.id;
 export function CommunityStoryList({
   header,
   contentContainerStyle,
+  newArticleIds = NO_NEW_IDS,
 }: {
   readonly header: ReactElement;
   readonly contentContainerStyle: StyleProp<ViewStyle>;
+  /** Stories new to her when she opened the section, marked "Nou" (RAPP-873). */
+  readonly newArticleIds?: ReadonlySet<string>;
 }) {
-  const { t } = useTranslation('knowledge');
+  const { t } = useTranslation(['knowledge', 'home']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const { session } = useAuth();
@@ -50,12 +55,16 @@ export function CommunityStoryList({
   );
   const personCards = usePersonCards(authorIds);
   const refetchStories = query.refetch;
+  // Pull to refresh also asks again what is new for her (RAPP-873).
+  const refetchTabNews = useTabNews().refetch;
   const accessToken = session?.access_token;
   const openStory = useCallback(
     (id: string) => push({ pathname: '/knowledge/[id]', params: { id } } as unknown as Href),
     [push],
   );
-  const refresh = useCallback(() => void refetchStories(), [refetchStories]);
+  const refresh = useCallback(() => {
+    void Promise.all([refetchStories(), refetchTabNews()]);
+  }, [refetchStories, refetchTabNews]);
   const renderStory = useCallback(
     ({ item, index }: ListRenderItemInfo<KnowledgeArticleListRow>) => (
       <PageWidth className="pb-md">
@@ -67,11 +76,12 @@ export function CommunityStoryList({
             authorAvatarKey={
               item.author_id === null ? null : (personCards.get(item.author_id)?.avatarKey ?? null)
             }
+            unseenLabel={newArticleIds.has(item.id) ? t('home:unseen') : null}
           />
         </FadeSlideIn>
       </PageWidth>
     ),
-    [accessToken, openStory, personCards],
+    [accessToken, newArticleIds, openStory, personCards, t],
   );
 
   let emptyState: ReactElement;
@@ -106,6 +116,7 @@ export function CommunityStoryList({
       data={query.data ?? EMPTY_STORIES}
       renderItem={renderStory}
       keyExtractor={keyExtractor}
+      extraData={newArticleIds}
       style={styles.screen}
       contentContainerStyle={contentContainerStyle}
       contentInsetAdjustmentBehavior="automatic"
