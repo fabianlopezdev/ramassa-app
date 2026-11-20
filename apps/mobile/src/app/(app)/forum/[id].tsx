@@ -167,7 +167,7 @@ export default function ForumPostDetailScreen() {
     setLocalErrorCode(null);
     setErrorMessage(null);
     try {
-      await createReplyAsync(reply);
+      await createReplyAsync({ content: reply });
       setReply('');
     } catch {
       setErrorMessage(t('forum:replyFailed'));

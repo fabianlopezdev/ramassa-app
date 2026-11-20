@@ -53,12 +53,30 @@ describe('forum writing contracts', () => {
     ).toEqual({
       postId: '5eed0000-0000-4000-8006-000000000011',
       content,
+      parentReplyId: null,
     });
     expect(
       forumReplyInputSchema.safeParse({
         postId: '5eed0000-0000-4000-8006-000000000011',
         content: 'x'.repeat(FORUM_REPLY_MAX_LENGTH + 1),
       }).success,
+    ).toBe(false);
+  });
+
+  test('an answer to an answer names its parent, and only by id (RAPP-884)', () => {
+    const postId = '5eed0000-0000-4000-8006-000000000011';
+    const parentReplyId = '5eed0000-0000-4000-8010-000000000011';
+    expect(forumReplyInputSchema.parse({ postId, content: 'Hola', parentReplyId })).toEqual({
+      postId,
+      content: 'Hola',
+      parentReplyId,
+    });
+    expect(
+      forumReplyInputSchema.parse({ postId, content: 'Hola', parentReplyId: null }).parentReplyId,
+    ).toBeNull();
+    expect(
+      forumReplyInputSchema.safeParse({ postId, content: 'Hola', parentReplyId: 'not-an-id' })
+        .success,
     ).toBe(false);
   });
 });

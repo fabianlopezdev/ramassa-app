@@ -431,6 +431,7 @@ export function buildForumReply(overrides: Partial<ForumReplyRow> = {}): ForumRe
     id: '5eed0000-0000-4000-8010-000000000199',
     org_id: SEED_ORGANIZATION_ID,
     post_id: buildForumPost().id,
+    parent_reply_id: null,
     author_id: seedUserId(author.ordinal),
     author_first_name: author.firstName,
     content: 'أعرف una feina a Vic.',

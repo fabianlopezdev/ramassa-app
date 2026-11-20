@@ -34,6 +34,12 @@ export type ForumPostInput = z.infer<typeof forumPostInputSchema>;
 export const forumReplyInputSchema = z.object({
   postId: z.uuid(),
   content: forumText(FORUM_REPLY_MAX_LENGTH),
+  // The answer this one answers, when it is an answer to an answer (RAPP-884).
+  // Left out or null, the answer is to the post.
+  parentReplyId: z
+    .uuid()
+    .nullish()
+    .transform((value) => value ?? null),
 });
 export type ForumReplyInput = z.infer<typeof forumReplyInputSchema>;
 

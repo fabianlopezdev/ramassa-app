@@ -155,6 +155,12 @@ export function useCreateForumPost() {
   });
 }
 
+export interface CreateForumReplyVariables {
+  readonly content: string;
+  /** The answer this one answers; left out or null, the answer is to the post (RAPP-884). */
+  readonly parentReplyId?: string | null;
+}
+
 export function useCreateForumReply(postId: string | undefined) {
   const { user } = useAuth();
   const networkState = useNetworkState();
@@ -164,10 +170,10 @@ export function useCreateForumReply(postId: string | undefined) {
   return useMutation({
     mutationKey: ['create-forum-reply', userId, postId],
     networkMode: 'always',
-    mutationFn: async (content: string) => {
+    mutationFn: async ({ content, parentReplyId = null }: CreateForumReplyVariables) => {
       requireForumWriteOnline(isOnline);
       if (user === null || postId === undefined) throw new AppError('AUTH-2');
-      return createForumReply(supabase, { postId, content });
+      return createForumReply(supabase, { postId, content, parentReplyId });
     },
     onSuccess: () =>
       Promise.all([

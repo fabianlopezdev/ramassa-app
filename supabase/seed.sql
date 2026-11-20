@@ -1981,6 +1981,45 @@ values
   )
 on conflict (id) do nothing;
 
+-- Answers to an answer (RAPP-884). The pinned jobs post gets a second answer to
+-- the post, and the first answer gets two answers from two other players, so
+-- the thread shows both levels after every reset.
+insert into public.forum_replies (
+  id, org_id, post_id, parent_reply_id, author_id, author_first_name, content, created_at
+)
+values
+  (
+    '5eed0000-0000-4000-8010-000000000013',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8010-000000000001',
+    null,
+    '5eed0000-0000-4000-8000-000000000014',
+    'pending',
+    'A la cooperativa del barri també busquen gent per la cuina.',
+    now() - interval '20 hours'
+  ),
+  (
+    '5eed0000-0000-4000-8010-000000000014',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8010-000000000001',
+    '5eed0000-0000-4000-8010-000000000011',
+    '5eed0000-0000-4000-8000-000000000011',
+    'pending',
+    'Moltes gràcies! Quin restaurant és?',
+    now() - interval '18 hours'
+  ),
+  (
+    '5eed0000-0000-4000-8010-000000000015',
+    '5eed0000-0000-4000-8000-000000000000',
+    '5eed0000-0000-4000-8010-000000000001',
+    '5eed0000-0000-4000-8010-000000000011',
+    '5eed0000-0000-4000-8000-000000000015',
+    'pending',
+    'Jo hi vaig treballar l estiu passat. Tracten bé la gent.',
+    now() - interval '12 hours'
+  )
+on conflict (id) do nothing;
+
 -- Forum moderation (RAPP-51) ----------------------------------------------------
 -- One pending flag makes the staff queue and notification path reachable after
 -- every reset without hiding the post from the player board.

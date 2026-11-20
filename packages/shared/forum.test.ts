@@ -176,7 +176,16 @@ describe('forum category board', () => {
       content: '  Busco feina  ',
       imageObjectKey: null,
     });
-    await createForumReply(client as never, { postId, content: '  Jo en conec una  ' });
+    await createForumReply(client as never, {
+      postId,
+      content: '  Jo en conec una  ',
+      parentReplyId: null,
+    });
+    await createForumReply(client as never, {
+      postId,
+      content: '  Quin?  ',
+      parentReplyId: '5eed0000-0000-4000-8010-000000000011',
+    });
     await editOwnForumPost(client as never, { postId, content: '  Busco feina a Vic  ' });
     await deleteOwnForumPost(client as never, postId);
     expect(calls).toEqual([
@@ -188,7 +197,18 @@ describe('forum category board', () => {
           p_image_url: null,
         },
       ],
-      ['create_forum_reply', { p_post_id: postId, p_content: 'Jo en conec una' }],
+      [
+        'create_forum_reply',
+        { p_post_id: postId, p_content: 'Jo en conec una', p_parent_reply_id: null },
+      ],
+      [
+        'create_forum_reply',
+        {
+          p_post_id: postId,
+          p_content: 'Quin?',
+          p_parent_reply_id: '5eed0000-0000-4000-8010-000000000011',
+        },
+      ],
       ['edit_own_forum_post', { p_post_id: postId, p_content: 'Busco feina a Vic' }],
       ['delete_own_forum_post', { p_post_id: postId }],
     ]);
