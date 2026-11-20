@@ -2,12 +2,15 @@ import { GalleryGrid } from '@/components/gallery/gallery-grid';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { toUnopenedIdSet } from '@/lib/community-news';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useListSeen, useTabNews } from '@/lib/use-tab-news';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text } from 'react-native';
+import { EMPTY_TAB_NEWS } from '@ramassa/shared/tab-news';
 import { tokens } from '@ramassa/shared/tokens';
 
 const styles = StyleSheet.create({
@@ -20,6 +23,14 @@ export default function GalleryScreen() {
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const openUpload = useCallback(() => push('/gallery/upload' as Href), [push]);
+  // The same grid as Comunitat's Galeria, so it clears the gallery number and
+  // marks the photos she has not opened the same way (RAPP-873).
+  useListSeen('gallery', true);
+  const gallery = useTabNews().data?.gallery ?? EMPTY_TAB_NEWS.gallery;
+  const unopenedItemIds = useMemo(
+    () => toUnopenedIdSet(gallery.unopenedItemIds),
+    [gallery.unopenedItemIds],
+  );
   const header = useMemo(
     () => (
       <PageWidth className="gap-md pb-lg">
@@ -44,7 +55,11 @@ export default function GalleryScreen() {
   return (
     <>
       <NativeScreenHeader title={t('title')} />
-      <GalleryGrid header={header} contentContainerStyle={styles.content} />
+      <GalleryGrid
+        header={header}
+        contentContainerStyle={styles.content}
+        unopenedItemIds={unopenedItemIds}
+      />
     </>
   );
 }

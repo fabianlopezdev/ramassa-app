@@ -13,6 +13,7 @@ import { isNetworkStateOnline } from '@/lib/network-status';
 import { useDeleteGalleryItem, useGalleryItem, useSetGalleryPrivacy } from '@/lib/player-gallery';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useMarkGalleryItemSeen } from '@/lib/use-tab-news';
 import { Image } from 'expo-image';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -56,6 +57,7 @@ export default function GalleryItemScreen() {
     'targetType' | 'targetId'
   > | null>(null);
   const item = query.data;
+  useMarkGalleryItemSeen(item?.id);
   const accessToken = session?.access_token;
   const canManage =
     item !== undefined && (item.uploaded_by === user?.id || role === 'staff' || role === 'admin');

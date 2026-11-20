@@ -17,7 +17,7 @@ import {
 import { TabScreenAction } from '@/components/layout/tab-screen-action';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
-import { communitySegmentCounts, forumPostNews, toNewIdSet } from '@/lib/community-news';
+import { communityUnseenCounts, forumPostMarks, toUnopenedIdSet } from '@/lib/community-news';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
 import { useForumCategories, useForumPosts } from '@/lib/player-forum';
@@ -74,25 +74,38 @@ export default function CommunityScreen() {
   const refetchPosts = postsQuery.refetch;
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [segment, setSegment] = useState<CommunitySegment>('forum');
-  // The live news gives the numbers on the switch, from what she has not seen in
-  // each list, and the "Nou" on each card, from what she has not opened. Seeing
-  // a section's list clears its number (RAPP-873).
+  // Two levels, both live (RAPP-873). The number on each switch option counts
+  // what she has not seen in that list, and seeing the list on show clears it.
+  // "Nou" stays on a post, photo or story until she opens it. The new replies
+  // on her own post stay in the number and on its card until she opens it.
   const tabNewsQuery = useTabNews();
   const refetchTabNews = tabNewsQuery.refetch;
   const segmentCounts = useMemo(
-    () => communitySegmentCounts(tabNewsQuery.data),
+    () => communityUnseenCounts(tabNewsQuery.data),
     [tabNewsQuery.data],
   );
   useListSeen('forum', segment === 'forum');
   useListSeen('gallery', segment === 'gallery');
   useListSeen('stories', segment === 'stories');
-  const forumVisit = tabNewsQuery.data?.forum ?? EMPTY_TAB_NEWS.forum;
-  const galleryVisit = tabNewsQuery.data?.gallery ?? EMPTY_TAB_NEWS.gallery;
-  const storiesVisit = tabNewsQuery.data?.stories ?? EMPTY_TAB_NEWS.stories;
-  const galleryNewItemIds = useMemo(() => toNewIdSet(galleryVisit.unopenedItemIds), [galleryVisit]);
-  const storiesNewArticleIds = useMemo(
-    () => toNewIdSet(storiesVisit.unopenedArticleIds),
-    [storiesVisit],
+  const forumNews = tabNewsQuery.data?.forum ?? EMPTY_TAB_NEWS.forum;
+  const galleryNews = tabNewsQuery.data?.gallery ?? EMPTY_TAB_NEWS.gallery;
+  const storiesNews = tabNewsQuery.data?.stories ?? EMPTY_TAB_NEWS.stories;
+  const unopenedPostIds = useMemo(
+    () => toUnopenedIdSet(forumNews.unopenedPostIds),
+    [forumNews.unopenedPostIds],
+  );
+  const newRepliesByPostId = forumNews.newRepliesByPostId;
+  const unopenedGalleryItemIds = useMemo(
+    () => toUnopenedIdSet(galleryNews.unopenedItemIds),
+    [galleryNews.unopenedItemIds],
+  );
+  const unopenedStoryIds = useMemo(
+    () => toUnopenedIdSet(storiesNews.unopenedArticleIds),
+    [storiesNews.unopenedArticleIds],
+  );
+  const forumListMarks = useMemo(
+    () => ({ unopenedPostIds, newRepliesByPostId }),
+    [newRepliesByPostId, unopenedPostIds],
   );
   const posts = useMemo(
     () => filterForumPostsByCategory(postsQuery.data ?? EMPTY_POSTS, categoryId),
@@ -174,13 +187,13 @@ export default function CommunityScreen() {
   }, [refetchCategories, refetchPosts, refetchTabNews]);
   const renderPost = useCallback(
     ({ item, index }: ListRenderItemInfo<ForumPostRow>) => {
-      const news = forumPostNews(forumVisit, item.id);
-      const unseenLabel = news.isNew ? t('home:unseen') : null;
+      const marks = forumPostMarks(unopenedPostIds, newRepliesByPostId, item.id);
+      const unseenLabel = marks.isUnopened ? t('home:unseen') : null;
       // The card adds pinned and the reply count; the word goes first (RAPP-873).
       const accessibilityLabel = [
         unseenLabel,
         t('forum:openPost', { name: item.author_first_name }),
-        news.newReplies > 0 ? t('forum:newReplies', { count: news.newReplies }) : null,
+        marks.newReplies > 0 ? t('forum:newReplies', { count: marks.newReplies }) : null,
       ]
         .filter((part): part is string => part !== null)
         .join('. ');
@@ -201,21 +214,22 @@ export default function CommunityScreen() {
               openLinkLabel={openLinkLabel}
               onOpen={openPost}
               unseenLabel={unseenLabel}
-              newRepliesCount={formatUnreadBadge(news.newReplies)}
+              newRepliesCount={formatUnreadBadge(marks.newReplies)}
             />
           </FadeSlideIn>
         </PageWidth>
       );
     },
     [
-      forumVisit,
       languageFontClass,
+      newRepliesByPostId,
       openLinkLabel,
       openPost,
       session?.access_token,
       personCards,
       t,
       toneByCategoryId,
+      unopenedPostIds,
     ],
   );
 
@@ -278,7 +292,7 @@ export default function CommunityScreen() {
       <GalleryGrid
         header={header}
         contentContainerStyle={contentStyle}
-        newItemIds={galleryNewItemIds}
+        unopenedItemIds={unopenedGalleryItemIds}
       />
     );
   } else if (segment === 'stories') {
@@ -286,7 +300,7 @@ export default function CommunityScreen() {
       <CommunityStoryList
         header={header}
         contentContainerStyle={contentStyle}
-        newArticleIds={storiesNewArticleIds}
+        unopenedArticleIds={unopenedStoryIds}
       />
     );
   } else {
@@ -296,7 +310,7 @@ export default function CommunityScreen() {
         data={posts}
         renderItem={renderPost}
         keyExtractor={postKeyExtractor}
-        extraData={forumVisit}
+        extraData={forumListMarks}
         style={styles.screen}
         contentContainerStyle={contentStyle}
         contentInsetAdjustmentBehavior="automatic"
