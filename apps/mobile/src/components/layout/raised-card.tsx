@@ -26,7 +26,7 @@
  * A card may be a tile in a grid (RAPP-854), such as an Ajuda category: the
  * same face, block and divider with tighter padding and gaps, no arrow, and
  * it fills its cell so the tiles in a row share a height. A tile may stack
- * (RAPP-879): icon on top, divider across, name under it; the other tile of
+ * (RAPP-879): icon on top, name under it, no divider; the other tile of
  * its row then takes the stacked tile's height.
  */
 import { useBrandColor } from '@/components/branding/organization-branding-provider';
@@ -46,8 +46,8 @@ const ROW_CLASS_NAME = 'flex-row items-stretch gap-md';
 /** A tile is half the width of a card, so its row keeps a smaller gap. */
 const TILE_ROW_CLASS_NAME = 'grow flex-row items-stretch gap-sm';
 /**
- * A stacked tile (RAPP-879): the icon on top, the divider across, the name
- * under it, all on the start edge. The name keeps to the bottom, so when the
+ * A stacked tile (RAPP-879): the icon on top and the name under it, both on
+ * the start edge, with no divider. The name keeps to the bottom, so when the
  * other tile of the row is taller the name still sits at its foot.
  */
 const TILE_STACK_CLASS_NAME = 'grow items-stretch gap-sm';
@@ -119,12 +119,7 @@ export function RaisedCard({
   const isStackedTile = tile && stacked && !hasMedia;
   const stackedContent = (
     <>
-      {leading === undefined ? null : (
-        <>
-          <View className="items-start">{leading}</View>
-          <View accessible={false} className="border-t-2 border-neutral-300" />
-        </>
-      )}
+      {leading === undefined ? null : <View className="items-start">{leading}</View>}
       <View className="grow justify-end gap-xs">{children}</View>
     </>
   );
