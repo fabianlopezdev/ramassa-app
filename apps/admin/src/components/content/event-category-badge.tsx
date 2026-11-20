@@ -9,11 +9,12 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import type {
-  EventCategoryColor,
-  EventCategoryIcon,
-  EventCategoryRow,
+import {
+  eventCategoryPaletteColor,
+  type EventCategoryIcon,
+  type EventCategoryRow,
 } from '@ramassa/shared/events';
+import { CategoryColorSwatch } from './category-color-select';
 
 const ICONS: Readonly<Record<EventCategoryIcon, LucideIcon>> = {
   dumbbell: Dumbbell,
@@ -23,15 +24,6 @@ const ICONS: Readonly<Record<EventCategoryIcon, LucideIcon>> = {
   languages: Languages,
   footprints: Footprints,
   users: Users,
-};
-
-const COLORS: Readonly<Record<EventCategoryColor, string>> = {
-  primary: 'border-primary/30 bg-primary/10 text-primary',
-  secondary: 'border-secondary bg-secondary text-secondary-foreground',
-  accent: 'border-accent bg-accent text-accent-foreground',
-  'chart-1': 'border-chart-1/50 bg-chart-1/20 text-foreground',
-  'chart-2': 'border-chart-2/50 bg-chart-2/20 text-foreground',
-  'chart-3': 'border-chart-3/50 bg-chart-3/20 text-foreground',
 };
 
 export function EventCategoryGlyph({
@@ -45,13 +37,16 @@ export function EventCategoryGlyph({
   return <Icon role="img" aria-label={label} className="size-4 shrink-0 text-foreground" />;
 }
 
+/**
+ * An activity category with its swatch from the shared section palette
+ * (RAPP-893), the same swatch the other category managers show. An older
+ * colour name shows the palette colour it moves to.
+ */
 export function EventCategoryBadge({ category }: { readonly category: EventCategoryRow }) {
+  const color = eventCategoryPaletteColor(category.color);
   return (
-    <Badge
-      variant="outline"
-      className={`gap-1.5 ${COLORS[category.color]}`}
-      data-color={category.color}
-    >
+    <Badge variant="outline" className="gap-1.5" data-color={color}>
+      <CategoryColorSwatch color={color} />
       <EventCategoryGlyph icon={category.icon} label={category.name.ca} />
       <span className="text-foreground">{category.name.ca}</span>
     </Badge>

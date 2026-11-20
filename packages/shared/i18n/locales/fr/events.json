@@ -114,12 +114,6 @@
   "iconLanguages": "Langues",
   "iconFootprints": "Empreintes de pas",
   "iconUsers": "Groupe de personnes",
-  "colorPrimary": "Principale",
-  "colorSecondary": "Secondaire",
-  "colorAccent": "Accent",
-  "colorChart1": "Graphique 1",
-  "colorChart2": "Graphique 2",
-  "colorChart3": "Graphique 3",
   "categoriesHelpPhone": "Utilise Monte et Descends pour classer les catégories. Les participantes les voient dans cet ordre.",
   "sessionsTitle": "Séances ({{count}})",
   "recurrenceEveryWeekSummary": "Chaque semaine, {{count}} séances"

@@ -13,6 +13,7 @@ import {
   EVENT_CATEGORY_COLORS,
   EVENT_CATEGORY_ICONS,
   eventCategoryInputSchema,
+  eventCategoryPaletteColor,
   moveCategory,
   reorderEventCategories,
   updateEventCategory,
@@ -20,9 +21,11 @@ import {
   type EventCategoryIcon,
   type EventCategoryRow,
 } from '@ramassa/shared/events';
+import { isSectionColorChoice } from '@ramassa/shared/section-colors';
 import { isTranslationReviewPublishable } from '@ramassa/shared/translation';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 import { approveAll, reviewOptions, startGeneratedReview } from './announcement-editor';
+import { CategoryColorSelect } from './category-color-select';
 import { EventCategoryBadge, EventCategoryGlyph } from './event-category-badge';
 import { MultilingualEditor } from './multilingual-editor';
 import { TranslationReviewPanel } from './translation-review-panel';
@@ -58,7 +61,8 @@ export function EventCategoryManager({
     setEditingId(category.id);
     setName(category.name.ca);
     setIcon(category.icon);
-    setColor(category.color);
+    // An older colour name opens as the palette colour it moves to (RAPP-893).
+    setColor(eventCategoryPaletteColor(category.color));
     setReviewRequired(false);
     const options = reviewOptions(category.name.ca, category.name);
     if (options !== undefined) nameReview.start(options);
@@ -295,21 +299,14 @@ export function EventCategoryManager({
             {t(`events:icon${pascalCase(icon)}`)}
           </span>
         </label>
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium">{t('events:categoryColor')}</span>
-          <select
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-            value={color}
-            data-testid="event-category-color"
-            onChange={(changeEvent) => setColor(changeEvent.target.value as EventCategoryColor)}
-          >
-            {EVENT_CATEGORY_COLORS.map((value) => (
-              <option key={value} value={value}>
-                {t(`events:color${pascalCase(value)}`)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <CategoryColorSelect
+          value={color}
+          onChange={(value) => {
+            if (isSectionColorChoice(value)) setColor(value);
+          }}
+          testId="event-category-color"
+          choices={EVENT_CATEGORY_COLORS}
+        />
         {reviewRequired ? (
           <p role="alert" className="text-sm text-destructive">
             {t('events:categoryTranslationRequired')}
