@@ -12,7 +12,8 @@ import { EventSurveyPrompt } from '@/components/surveys/survey-prompt';
 import { isEventSignupActionDisabled } from '@/lib/event-signup-policy';
 import { playErrorHaptic } from '@/lib/haptics/haptics';
 import { isNetworkStateOnline } from '@/lib/network-status';
-import { useEventSignup, usePlayerEvents } from '@/lib/player-events';
+import { useEventSignup } from '@/lib/player-events';
+import { useFreshPlayerEvents } from '@/lib/use-fresh-player-events';
 import { useMarkEventSeen } from '@/lib/use-home-attention';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import * as Linking from 'expo-linking';
@@ -40,7 +41,8 @@ export default function EventDetailScreen() {
   const languageFontClass = useLanguageFontClass();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
-  const { data, error, isError, isPending, refetch } = usePlayerEvents();
+  // The places decide what she can do here, so they are kept current (RAPP-883).
+  const { data, error, isError, isPending, refetch } = useFreshPlayerEvents();
   const {
     data: signupData,
     error: signupMutationError,

@@ -8,12 +8,15 @@ export interface EventSignupActionAvailability {
 }
 
 /**
- * Capacity is authoritative only at the database boundary. A full-looking event
- * remains actionable so the player receives the typed server result if a place
- * changed between the read and the tap.
+ * A full activity turns the action off for a player who has not joined
+ * (RAPP-883), so she is not invited to tap and then refused. One who has
+ * joined keeps it, to cancel. The screen keeps its places fresh
+ * (`useFreshPlayerEvents`); the database still has the last word when two
+ * players tap in the same seconds, and answers `EVENTS-1`.
  */
 export function isEventSignupActionDisabled(availability: EventSignupActionAvailability): boolean {
-  return !availability.hasEvent || !availability.hasNextState;
+  if (!availability.hasEvent || !availability.hasNextState) return true;
+  return availability.isFull && !availability.hasActiveSignup;
 }
 
 /** Signup changes are never queued because capacity can change while offline. */
