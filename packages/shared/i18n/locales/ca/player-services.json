@@ -6,7 +6,6 @@
   "backCategories": "Torna a les categories",
   "filterShow": "Filtra els serveis",
   "filterShowActive": "Filtres actius: {{count}}",
-  "filterHide": "Amaga els filtres",
   "filterHeading": "Filtres",
   "filterClear": "Esborra els filtres",
   "filterZone": "Zona",

@@ -6,7 +6,6 @@
   "backCategories": "Back to categories",
   "filterShow": "Filter services",
   "filterShowActive": "Active filters: {{count}}",
-  "filterHide": "Hide filters",
   "filterHeading": "Filters",
   "filterClear": "Clear filters",
   "filterZone": "Zone",

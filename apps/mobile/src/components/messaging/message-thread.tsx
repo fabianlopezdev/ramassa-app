@@ -1,4 +1,5 @@
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -175,18 +176,12 @@ const MessageBubble = memo(function MessageBubble({
       ) : null}
       {isOwn && isRejected ? (
         <View className="flex-row items-center justify-end gap-sm">
-          <PressableScale
+          <RaisedActionButton
             testID={`message-retry-${id}`}
-            accessibilityRole="button"
-            accessibilityLabel={retryLabel}
+            size="compact"
+            label={retryLabel}
             onPress={handleRetry}
-            haptic="tapLight"
-            className="min-h-recommended justify-center rounded-md border border-primary px-md"
-          >
-            <Text className={`text-sm font-semibold text-primary-dark ${languageClass}`}>
-              {retryLabel}
-            </Text>
-          </PressableScale>
+          />
           <PressableScale
             testID={`message-discard-${id}`}
             accessibilityRole="button"
@@ -282,17 +277,13 @@ const MessageComposer = memo(function MessageComposer({
         style={continuousCorners}
         className={`min-h-recommended flex-1 rounded-2xl border border-neutral-300 bg-neutral-50 px-md py-sm text-neutral-900 ${languageClass}`}
       />
-      <PressableScale
+      <RaisedActionButton
         testID="message-send"
-        accessibilityLabel={sendLabel}
-        onPress={submit}
+        size="fit"
+        label={sendLabel}
         isDisabled={draft.trim().length === 0}
-        haptic="selection"
-        style={continuousCorners}
-        className="min-h-recommended justify-center rounded-2xl bg-primary-dark px-lg"
-      >
-        <Text className={`font-semibold text-white ${languageClass}`}>{sendLabel}</Text>
-      </PressableScale>
+        onPress={submit}
+      />
     </View>
   );
 });

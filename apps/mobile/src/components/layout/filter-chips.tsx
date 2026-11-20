@@ -59,6 +59,56 @@ interface FilterChipProps<Id extends string> extends FilterChipOption<Id> {
   readonly onSelect: (id: Id) => void;
 }
 
+/**
+ * One raised pill (RAPP-878): the face every filter chip in the app shares,
+ * in a sideways row here or wrapped in a sheet, such as the Serveis filters.
+ */
+export function RaisedChip({
+  label,
+  isSelected,
+  onPress,
+  accessibilityRole = 'radio',
+  accessibilityLabel,
+  accessibilityHint,
+  testID,
+  tone,
+  languageFontClass,
+}: {
+  readonly label: string;
+  readonly isSelected: boolean;
+  readonly onPress: () => void;
+  readonly accessibilityRole?: 'radio' | 'checkbox';
+  readonly accessibilityLabel?: string;
+  /** Read after the label, such as the group a chip belongs to. */
+  readonly accessibilityHint?: string;
+  readonly testID?: string;
+  readonly tone?: RaisedTone;
+  readonly languageFontClass: string;
+}) {
+  return (
+    <SelectionChoiceSurface
+      testID={testID}
+      label={accessibilityLabel ?? label}
+      accessibilityHint={accessibilityHint}
+      accessibilityRole={accessibilityRole}
+      isSelected={isSelected}
+      onPress={onPress}
+      contentClassName="justify-center"
+      rowStyle={chipStyle}
+      tone={tone}
+    >
+      <Text
+        className={`text-center text-md font-bold ${chipTextClassName(
+          tone,
+          isSelected,
+        )} ${languageFontClass}`}
+      >
+        {label}
+      </Text>
+    </SelectionChoiceSurface>
+  );
+}
+
 function FilterChipInner<Id extends string>({
   id,
   label,
@@ -73,25 +123,15 @@ function FilterChipInner<Id extends string>({
 }: FilterChipProps<Id>) {
   const handlePress = useCallback(() => onSelect(id), [id, onSelect]);
   const chip = (
-    <SelectionChoiceSurface
+    <RaisedChip
       testID={testID}
-      label={accessibilityLabel ?? label}
-      accessibilityRole="radio"
+      label={label}
+      accessibilityLabel={accessibilityLabel}
       isSelected={isSelected}
       onPress={handlePress}
-      contentClassName="justify-center"
-      rowStyle={chipStyle}
       tone={tone}
-    >
-      <Text
-        className={`text-center text-md font-bold ${chipTextClassName(
-          tone,
-          isSelected,
-        )} ${languageFontClass}`}
-      >
-        {label}
-      </Text>
-    </SelectionChoiceSurface>
+      languageFontClass={languageFontClass}
+    />
   );
   if (!hasMarks) return chip;
   return <EdgeMarks count={count}>{chip}</EdgeMarks>;

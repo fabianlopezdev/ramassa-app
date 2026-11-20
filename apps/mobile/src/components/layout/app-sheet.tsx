@@ -9,11 +9,12 @@
  *   root. The content sits in `NativeModalScope`, where `PressableScale` and
  *   `PressableDepth` render the platform `Pressable`, so content uses the
  *   shared press controls like any screen and they answer on Android.
+ *
+ * The close action is the raised button every screen uses (RAPP-878).
  */
 import { useAppLock } from '@/components/auth/app-lock';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { NativeModalScope } from '@/components/motion/native-modal-scope';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -63,19 +64,7 @@ export function AppSheet({
               {title}
             </Text>
             {children}
-            <PressableScale
-              testID={closeTestID}
-              accessibilityRole="button"
-              accessibilityLabel={t('close')}
-              onPress={onClose}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-            >
-              <Text className={`text-center text-md font-semibold text-neutral-900 ${fontClass}`}>
-                {t('close')}
-              </Text>
-            </PressableScale>
+            <RaisedActionButton testID={closeTestID} label={t('close')} onPress={onClose} />
           </ScrollView>
         </SafeAreaView>
       </NativeModalScope>
