@@ -121,6 +121,8 @@ export default function GalleryItemScreen() {
     item?.file_type === 'video' && mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL !== undefined
       ? buildMediaObjectUrl(mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL, item.file_url)
       : null;
+  const isPlayableVideo =
+    item?.file_type === 'video' && videoUri !== null && accessToken !== undefined;
   const videoSource = useMemo(
     () =>
       videoUri === null || accessToken === undefined
@@ -215,29 +217,16 @@ export default function GalleryItemScreen() {
             </View>
           ) : (
             <View className="gap-lg">
-              {item.file_type === 'video' && videoUri !== null && accessToken !== undefined ? (
-                <View className="gap-sm">
-                  <VideoView
-                    player={videoPlayer}
-                    nativeControls
-                    accessibilityLabel={
-                      item.caption ?? t('gallery:mediaBy', { name: item.uploader_first_name })
-                    }
-                    contentFit="contain"
-                    style={styles.media}
-                  />
-                  {/* The player's own controls cover the bottom of the video, so
-                      the flag sits under it, at its end (RAPP-892). */}
-                  {canManage ? null : (
-                    <View className="self-end">
-                      <ForumFlagButton
-                        testID="gallery-flag"
-                        accessibilityLabel={t('gallery:flag')}
-                        onPress={flagMedia}
-                      />
-                    </View>
-                  )}
-                </View>
+              {isPlayableVideo ? (
+                <VideoView
+                  player={videoPlayer}
+                  nativeControls
+                  accessibilityLabel={
+                    item.caption ?? t('gallery:mediaBy', { name: item.uploader_first_name })
+                  }
+                  contentFit="contain"
+                  style={styles.media}
+                />
               ) : imageSource === null ? null : (
                 <View onLayout={measureMediaFrame}>
                   <Image
@@ -262,9 +251,26 @@ export default function GalleryItemScreen() {
                   )}
                 </View>
               )}
-              <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-                {t('gallery:mediaBy', { name: item.uploader_first_name })}
-              </Text>
+              {/* The player's own controls cover the bottom of a video, so its
+                  flag ends the line of who shared it, under the video (RAPP-892). */}
+              {isPlayableVideo && !canManage ? (
+                <View className="flex-row items-center gap-sm">
+                  <Text
+                    className={`flex-1 text-start text-sm text-neutral-600 ${languageFontClass}`}
+                  >
+                    {t('gallery:mediaBy', { name: item.uploader_first_name })}
+                  </Text>
+                  <ForumFlagButton
+                    testID="gallery-flag"
+                    accessibilityLabel={t('gallery:flag')}
+                    onPress={flagMedia}
+                  />
+                </View>
+              ) : (
+                <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+                  {t('gallery:mediaBy', { name: item.uploader_first_name })}
+                </Text>
+              )}
               {item.caption === null ? null : (
                 <Text
                   style={styles.caption}
