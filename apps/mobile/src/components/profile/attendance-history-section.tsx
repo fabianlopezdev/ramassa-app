@@ -76,7 +76,7 @@ export function AttendanceHistorySection() {
       <View className="gap-md">
         <View
           style={continuousCorners}
-          className={`${RAISED_SHAPE_CLASS_NAME} flex-row bg-primary px-lg py-md`}
+          className={`${RAISED_SHAPE_CLASS_NAME} flex-row bg-primary px-lg py-xl`}
         >
           <TotalHalf
             testID="attendance-history-attended"
@@ -182,11 +182,16 @@ const TotalHalf = memo(function TotalHalf({
   readonly fontClass: string;
 }) {
   return (
-    <View testID={testID} accessible accessibilityLabel={`${label}: ${count}`} className="flex-1">
-      <Text className={`text-start text-4xl font-extrabold tabular-nums text-white ${fontClass}`}>
+    <View
+      testID={testID}
+      accessible
+      accessibilityLabel={`${label}: ${count}`}
+      className="flex-1 items-center"
+    >
+      <Text className={`text-center text-4xl font-extrabold tabular-nums text-white ${fontClass}`}>
         {count}
       </Text>
-      <Text className={`text-start text-form text-white ${fontClass}`}>{label}</Text>
+      <Text className={`text-center text-form text-white ${fontClass}`}>{label}</Text>
     </View>
   );
 });
