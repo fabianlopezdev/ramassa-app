@@ -10,7 +10,8 @@ import type { AppErrorCode } from '@ramassa/shared/errors';
 import { tokens } from '@ramassa/shared/tokens';
 
 // An empty ring while nobody is marked; a filled two-tone mark once she is.
-const statusIcons: Record<
+// Shared with her own history on La meva assistència (RAPP-896).
+export const attendanceStatusIcons: Record<
   AttendanceStatus | 'unmarked',
   { readonly name: IconName; readonly weight: IconWeight }
 > = {
@@ -22,7 +23,7 @@ const statusIcons: Record<
 
 // Her card, from a separate control beside the row (RAPP-799).
 
-const statusColors: Record<AttendanceStatus | 'unmarked', string> = {
+export const attendanceStatusColors: Record<AttendanceStatus | 'unmarked', string> = {
   unmarked: tokens.colors.neutral[500],
   present: tokens.colors.success,
   absent: tokens.colors.error,
@@ -112,10 +113,10 @@ export const AttendanceRow = memo(function AttendanceRow({
           contentClassName="grow flex-row items-center gap-md py-md"
         >
           <Icon
-            name={statusIcons[visualStatus].name}
-            weight={statusIcons[visualStatus].weight}
+            name={attendanceStatusIcons[visualStatus].name}
+            weight={attendanceStatusIcons[visualStatus].weight}
             size={tokens.fontSize['3xl']}
-            color={statusColors[visualStatus]}
+            color={attendanceStatusColors[visualStatus]}
           />
           <View className="flex-1 gap-xs">
             <Text className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}>
