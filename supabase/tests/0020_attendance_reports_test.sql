@@ -44,7 +44,7 @@ values
     '93000000-0000-4000-8000-000000000002',
     '5eed0000-0000-4000-8000-000000000000',
     '{"ca":"Informes B","es":"Informes B","en":"Reports B","ar":"تقارير ب","fa":"گزارش ب"}',
-    'users', 'secondary', 901
+    'users', 'sky', 901
   );
 
 insert into public.events (
