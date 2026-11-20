@@ -4,6 +4,7 @@
  * newest first, a search over names, phone, email and entity that ignores
  * case and accents, New referral, and a tap that opens one referral.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-load-failure';
 import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
@@ -52,19 +53,11 @@ function EntityReferralsScreen() {
       >
         <PageWidth className="gap-lg p-lg">
           <EntityScreenHeader title={t('title')} intro={t('intro')} />
-          <PressableScale
+          <AuthSubmitButton
             testID="entity-referral-new"
-            accessibilityRole="button"
-            accessibilityLabel={t('newAction')}
+            label={t('newAction')}
             onPress={() => push('/entity-referral-new' as Href)}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center self-start rounded-md bg-primary px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-              {t('newAction')}
-            </Text>
-          </PressableScale>
+          />
 
           {hasLoadFailed(referrals) ? (
             <EntityLoadFailure query={referrals} />

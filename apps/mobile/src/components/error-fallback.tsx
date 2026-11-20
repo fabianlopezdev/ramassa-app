@@ -1,7 +1,6 @@
 /** Accessible recovery screen with internal logging and a friendly retry message. */
 
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { logger } from '@/lib/observability';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useEffect } from 'react';
@@ -40,15 +39,7 @@ export function ErrorFallback({ error, retry }: ErrorFallbackProps) {
       <Text selectable className={`text-center text-lg text-neutral-700 ${languageFontClass}`}>
         {friendlyMessage}
       </Text>
-      <PressableScale
-        accessibilityLabel={t('retry')}
-        onPress={retry}
-        haptic="tapLight"
-        style={continuousCorners}
-        className="min-h-recommended items-center justify-center rounded-md bg-primary px-xl py-sm"
-      >
-        <Text className={`text-lg font-bold text-white ${languageFontClass}`}>{t('retry')}</Text>
-      </PressableScale>
+      <AuthSubmitButton label={t('retry')} onPress={retry} />
     </View>
   );
 }

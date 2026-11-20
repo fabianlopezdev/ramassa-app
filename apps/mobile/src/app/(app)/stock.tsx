@@ -5,8 +5,10 @@
  * Holders of `equipment.items` add items here and open each item's editor from
  * its card (RAPP-800), so no separate item list sits between.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { StaffCheckouts } from '@/components/equipment/staff-checkouts';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
@@ -192,51 +194,27 @@ export default function StockScreen() {
             </Text>
           </View>
           {canReceive ? (
-            <PressableScale
+            <AuthSubmitButton
               testID="stock-record-arrival"
-              accessibilityRole="button"
-              accessibilityLabel={t('stock.recordArrival')}
+              label={t('stock.recordArrival')}
               onPress={() => push('/arrival/new' as Href)}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-                {t('stock.recordArrival')}
-              </Text>
-            </PressableScale>
+            />
           ) : null}
 
           {canCheckOut ? (
-            <PressableScale
+            <RaisedActionButton
               testID="stock-check-out"
-              accessibilityRole="button"
-              accessibilityLabel={t('checkout.action')}
+              label={t('checkout.action')}
               onPress={() => push('/checkout/new' as Href)}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                {t('checkout.action')}
-              </Text>
-            </PressableScale>
+            />
           ) : null}
 
           {canEditItems ? (
-            <PressableScale
+            <RaisedActionButton
               testID="items-add"
-              accessibilityRole="button"
-              accessibilityLabel={t('items.add')}
+              label={t('items.add')}
               onPress={() => push('/item-type/new' as Href)}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                {t('items.add')}
-              </Text>
-            </PressableScale>
+            />
           ) : null}
 
           <ScreenSection testID="stock-levels" title={t('stock.levelsTitle')}>

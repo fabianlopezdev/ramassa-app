@@ -16,6 +16,7 @@
  * a name in a language she does not read.
  */
 
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { useLanguageRestart } from '@/components/auth/use-language-restart';
 import { useOrganizationBranding } from '@/components/branding/organization-branding-provider';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -81,17 +82,7 @@ export function LanguageSwitcher({
             {t('languageRestartBody')}
           </Text>
           <View className="flex-row flex-wrap gap-sm">
-            <PressableScale
-              accessibilityLabel={t('languageRestartAction')}
-              onPress={() => void restart()}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended justify-center rounded-md bg-primary px-lg"
-            >
-              <Text className={`text-md font-medium text-white ${languageFontClass}`}>
-                {t('languageRestartAction')}
-              </Text>
-            </PressableScale>
+            <AuthSubmitButton label={t('languageRestartAction')} onPress={() => void restart()} />
             {/* Postponing is a real choice, not a nag to dismiss: the app is
                 perfectly usable with the text already switched. */}
             <PressableScale

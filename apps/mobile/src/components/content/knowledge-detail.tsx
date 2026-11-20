@@ -13,6 +13,7 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PlayerStructuredContent } from '@/components/knowledge/player-structured-content';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { PreviewItemAsPlayer } from '@/components/preview/preview-as-player';
@@ -153,20 +154,13 @@ export function KnowledgeDetail({
           </Text>
         </PressableScale>
         {canPublish ? (
-          <PressableScale
+          <RaisedActionButton
             testID="knowledge-delete"
-            accessibilityRole="button"
-            accessibilityLabel={t('delete')}
+            tone="danger"
+            label={t('delete')}
             onPress={confirmDelete}
-            isBusy={remove.isPending}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-error bg-white px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-error ${fontClass}`}>
-              {t('delete')}
-            </Text>
-          </PressableScale>
+            isDisabled={remove.isPending}
+          />
         ) : null}
       </View>
       <StoryReviewActions key={`${data.id}-${data.story_status ?? ''}`} article={data} />

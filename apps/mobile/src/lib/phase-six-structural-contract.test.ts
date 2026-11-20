@@ -41,7 +41,13 @@ describe('Phase 6 structural polish contract', () => {
     for (const path of playerFacingSources) {
       const source = await readMobileSource(path);
       const openingTags = source.match(/<PressableScale\b[\s\S]*?\n\s*>/g) ?? [];
-      expect(openingTags.length, path).toBeGreaterThan(0);
+      // Its buttons and cards are the shared raised ones (RAPP-878), which carry
+      // their own haptics and corners, or a PressableScale checked below.
+      const sharedPressControls =
+        source.match(
+          /<(PressableScale|RaisedActionButton|AuthSubmitButton|RaisedCard|RaisedChip|FilterChips)\b/g,
+        ) ?? [];
+      expect(sharedPressControls.length, path).toBeGreaterThan(0);
 
       for (const openingTag of openingTags) {
         expect(openingTag, path).toContain('haptic=');

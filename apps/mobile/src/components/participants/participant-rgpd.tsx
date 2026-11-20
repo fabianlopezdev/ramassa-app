@@ -12,6 +12,7 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -174,19 +175,11 @@ function DestructiveSheet({
                     : t(isErase ? 'eraseAction' : 'anonymizeAction')}
                 </Text>
               </PressableScale>
-              <PressableScale
+              <RaisedActionButton
                 testID="rgpd-cancel"
-                accessibilityRole="button"
-                accessibilityLabel={t('profile:cancelAction')}
+                label={t('profile:cancelAction')}
                 onPress={close}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-              >
-                <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                  {t('profile:cancelAction')}
-                </Text>
-              </PressableScale>
+              />
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -237,34 +230,22 @@ export function ParticipantRgpd({
           {t('alreadyAnonymized')}
         </Text>
       ) : (
-        <PressableScale
+        <RaisedActionButton
           testID="rgpd-anonymize"
-          accessibilityRole="button"
-          accessibilityLabel={t('anonymizeAction')}
+          size="compact"
+          tone="danger"
+          label={t('anonymizeAction')}
           onPress={() => setGesture('anonymize')}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center self-start rounded-md border border-error bg-white px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-error ${fontClass}`}>
-            {t('anonymizeAction')}
-          </Text>
-        </PressableScale>
+        />
       )}
       {canErase ? (
-        <PressableScale
+        <RaisedActionButton
           testID="rgpd-erase"
-          accessibilityRole="button"
-          accessibilityLabel={t('eraseAction')}
+          size="compact"
+          tone="danger"
+          label={t('eraseAction')}
           onPress={() => setGesture('erase')}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center self-start rounded-md bg-error px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-            {t('eraseAction')}
-          </Text>
-        </PressableScale>
+        />
       ) : (
         <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
           {t('eraseAdminOnly')}

@@ -10,6 +10,7 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { MultilingualField } from '@/components/content/multilingual-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
@@ -365,38 +366,22 @@ export default function TeamNotificationsScreen() {
                 />
               ))}
             </View>
-            <PressableScale
+            <RaisedActionButton
               testID="notification-save-template"
-              accessibilityRole="button"
-              accessibilityLabel={t('saveTemplate')}
+              label={t('saveTemplate')}
               onPress={saveAsTemplate}
-              isBusy={saveTemplate.isPending}
-              isDisabled={templateName.trim().length === 0}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                {t('saveTemplate')}
-              </Text>
-            </PressableScale>
+              isDisabled={templateName.trim().length === 0 || saveTemplate.isPending}
+            />
           </ScreenSection>
 
           <ScreenSection title={t('groupsTitle')}>
-            <PressableScale
+            <RaisedActionButton
               testID="notification-group-new"
-              accessibilityRole="button"
-              accessibilityLabel={t('newGroup')}
+              size="compact"
+              label={t('newGroup')}
               onPress={() => setGroupSheet({ group: null })}
               isDisabled={options.data === undefined}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center self-start rounded-md border border-neutral-300 bg-white px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                {t('newGroup')}
-              </Text>
-            </PressableScale>
+            />
             <View className="gap-sm">
               {(groups.data ?? []).map((group) => (
                 <View

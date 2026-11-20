@@ -11,6 +11,7 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { useRefreshOrganizationBranding } from '@/components/branding/organization-branding-provider';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
@@ -276,22 +277,13 @@ export default function TeamOrganizationScreen() {
                     accessibilityLabel={row.name}
                   />
                 )}
-                <PressableScale
+                <RaisedActionButton
                   testID="organization-choose-logo"
-                  accessibilityRole="button"
-                  accessibilityLabel={t('chooseLogo')}
+                  size="compact"
+                  label={t('chooseLogo')}
                   onPress={() => void pickLogo()}
                   isDisabled={!canEditBranding}
-                  haptic="tapLight"
-                  style={continuousCorners}
-                  className="min-h-recommended items-center justify-center self-start rounded-md border border-neutral-300 bg-white px-lg"
-                >
-                  <Text
-                    className={`text-center text-md font-bold ${canEditBranding ? 'text-primary-dark' : 'text-neutral-400'} ${fontClass}`}
-                  >
-                    {t('chooseLogo')}
-                  </Text>
-                </PressableScale>
+                />
                 <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
                   {t('logoHelp')}
                 </Text>

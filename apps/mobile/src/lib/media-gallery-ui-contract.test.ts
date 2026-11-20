@@ -34,7 +34,7 @@ test('upload requires consent and exposes determinate progress plus retry', () =
   expect(sharedMedia).toContain('export const MEDIA_CAPTION_MAX_LENGTH = 500');
   expect(sharedMedia).toContain('.max(MEDIA_CAPTION_MAX_LENGTH)');
   expect(upload).toMatch(
-    /state\.draft === null \? null : \(\s*<PressableScale\s*testID="gallery-upload-retry"/s,
+    /state\.draft === null \? null : \(\s*<RaisedActionButton\s*testID="gallery-upload-retry"/s,
   );
 });
 

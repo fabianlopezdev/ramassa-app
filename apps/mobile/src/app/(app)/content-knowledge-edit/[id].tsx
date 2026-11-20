@@ -28,6 +28,7 @@ import { KNOWLEDGE_TYPE_KEYS } from '@/components/content/knowledge-labels';
 import { MultilingualField } from '@/components/content/multilingual-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { KnowledgeArticle } from '@/components/knowledge/knowledge-article';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
@@ -493,19 +494,12 @@ function KnowledgeForm({
         )}
       </View>
 
-      <PressableScale
+      <RaisedActionButton
         testID="knowledge-preview"
-        accessibilityRole="button"
-        accessibilityLabel={tCommon('previewAction')}
+        label={tCommon('previewAction')}
         onPress={() => setIsPreviewOpen(true)}
         isDisabled={form.title.trim().length === 0}
-        haptic="tapLight"
-        className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-      >
-        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-          {tCommon('previewAction')}
-        </Text>
-      </PressableScale>
+      />
       <DraftPreviewSheet
         visible={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}

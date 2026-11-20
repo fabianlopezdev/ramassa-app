@@ -8,14 +8,13 @@
  * `?segment=gallery` opens on Galeria.
  */
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ModerationReports } from '@/components/forum/moderation-reports';
 import { GalleryModeration } from '@/components/gallery/gallery-moderation';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
 import { SegmentedControl } from '@/components/layout/segmented-control';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { useForumModerationCategories, useForumModerationQueue } from '@/lib/team-forum';
 import {
   moderationSegments,
@@ -127,19 +126,12 @@ export default function ForumModerationScreen() {
               {t('moderationCount', { count: forum.length })}
             </Text>
           ) : null}
-          <PressableScale
+          <RaisedActionButton
             testID="forum-moderation-categories"
-            accessibilityRole="button"
-            accessibilityLabel={t('categoryManagerTitle')}
+            size="compact"
+            label={t('categoryManagerTitle')}
             onPress={() => push('/forum-categories' as Href)}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center self-start rounded-md border border-neutral-300 bg-white px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-              {t('categoryManagerTitle')}
-            </Text>
-          </PressableScale>
+          />
           {queueState}
           {queue.isSuccess && forum.length === 0 ? (
             <View className="gap-xs py-xl">

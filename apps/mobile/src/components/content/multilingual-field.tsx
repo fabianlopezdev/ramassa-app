@@ -6,8 +6,10 @@
  * draft to correct, right to left for Arabic and Farsi, with Approve and
  * Reject. "Approve all" accepts every draft at once.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -102,32 +104,16 @@ export function MultilingualField({
             style={getLanguageDirection(open.language) === 'rtl' ? rtlStyle : ltrStyle}
           />
           <View className="flex-row flex-wrap gap-sm">
-            <PressableScale
+            <AuthSubmitButton
               testID={`${testIDPrefix}-approve-${open.language}`}
-              accessibilityRole="button"
-              accessibilityLabel={t('approve')}
+              label={t('approve')}
               onPress={() => onApprove(open.language)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-                {t('approve')}
-              </Text>
-            </PressableScale>
-            <PressableScale
+            />
+            <RaisedActionButton
               testID={`${testIDPrefix}-reject-${open.language}`}
-              accessibilityRole="button"
-              accessibilityLabel={t('reject')}
+              label={t('reject')}
               onPress={() => onReject(open.language)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                {t('reject')}
-              </Text>
-            </PressableScale>
+            />
             <PressableScale
               testID={`${testIDPrefix}-approve-all`}
               accessibilityRole="button"

@@ -1,12 +1,13 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { FormWidth } from '@/components/layout/content-width';
+import { RaisedChip } from '@/components/layout/filter-chips';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
 import { ScreenSection } from '@/components/layout/screen-section';
 import { MentoringPreferencePickers } from '@/components/mentoring/mentoring-preference-pickers';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { SuccessPop } from '@/components/motion/success-pop';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -183,17 +184,10 @@ export default function MentoringScreen() {
                   <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
                     {t('mentoring:successBody')}
                   </Text>
-                  <PressableScale
-                    accessibilityLabel={t('mentoring:submitAnother')}
+                  <RaisedActionButton
+                    label={t('mentoring:submitAnother')}
                     onPress={() => setIsComplete(false)}
-                    haptic="tapLight"
-                    style={continuousCorners}
-                    className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-                  >
-                    <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
-                      {t('mentoring:submitAnother')}
-                    </Text>
-                  </PressableScale>
+                  />
                 </View>
               </SuccessPop>
             ) : (
@@ -210,28 +204,14 @@ export default function MentoringScreen() {
                     className="flex-row flex-wrap gap-sm"
                   >
                     {MENTORING_TOPICS.map((option) => (
-                      <PressableScale
+                      <RaisedChip
                         key={option}
                         testID={`mentoring-topic-${option}`}
-                        accessibilityLabel={t(`mentoring:${topicKey[option]}`)}
-                        accessibilityRole="radio"
+                        label={t(`mentoring:${topicKey[option]}`)}
                         isSelected={topic === option}
                         onPress={() => setTopic(option)}
-                        haptic="selection"
-                        className={`min-h-recommended justify-center rounded-full border px-md ${
-                          topic === option
-                            ? 'border-primary bg-primary'
-                            : 'border-neutral-300 bg-white'
-                        }`}
-                      >
-                        <Text
-                          className={`text-md font-medium ${
-                            topic === option ? 'text-white' : 'text-neutral-800'
-                          } ${languageFontClass}`}
-                        >
-                          {t(`mentoring:${topicKey[option]}`)}
-                        </Text>
-                      </PressableScale>
+                        languageFontClass={languageFontClass}
+                      />
                     ))}
                   </View>
                 </View>
@@ -289,17 +269,7 @@ export default function MentoringScreen() {
                     code={toAppError(requestsQuery.error).code}
                     message={t('mentoring:loadFailed')}
                   />
-                  <PressableScale
-                    accessibilityLabel={t('mentoring:retry')}
-                    onPress={retryRequests}
-                    haptic="tapLight"
-                    style={continuousCorners}
-                    className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-                  >
-                    <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
-                      {t('mentoring:retry')}
-                    </Text>
-                  </PressableScale>
+                  <RaisedActionButton label={t('mentoring:retry')} onPress={retryRequests} />
                 </View>
               ) : (requestsQuery.data?.length ?? 0) === 0 ? (
                 <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>

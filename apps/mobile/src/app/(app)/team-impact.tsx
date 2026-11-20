@@ -9,6 +9,7 @@
  */
 import { useAppLock } from '@/components/auth/app-lock';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
@@ -131,19 +132,11 @@ function ChartSheet({
                 </View>
               </>
             )}
-            <PressableScale
+            <RaisedActionButton
               testID="impact-chart-close"
-              accessibilityRole="button"
-              accessibilityLabel={t('impactClose')}
+              label={t('impactClose')}
               onPress={onClose}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                {t('impactClose')}
-              </Text>
-            </PressableScale>
+            />
           </ScrollView>
         )}
       </SafeAreaView>

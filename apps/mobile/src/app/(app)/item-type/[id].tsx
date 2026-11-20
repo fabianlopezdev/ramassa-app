@@ -8,6 +8,7 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
@@ -200,20 +201,12 @@ export default function ItemTypeScreen() {
                   onSubmitEditing={addSize}
                 />
               </View>
-              <PressableScale
+              <RaisedActionButton
                 testID="item-add-size"
-                accessibilityRole="button"
-                accessibilityLabel={t('items.addSize')}
+                label={t('items.addSize')}
                 onPress={addSize}
                 isDisabled={newSize.trim() === ''}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md border border-primary px-md"
-              >
-                <Text className={`font-bold text-primary-dark ${fontClass}`}>
-                  {t('items.addSize')}
-                </Text>
-              </PressableScale>
+              />
             </View>
           </ScreenSection>
 

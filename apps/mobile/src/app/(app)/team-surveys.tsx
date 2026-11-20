@@ -4,6 +4,7 @@
  * when it closes and how many answered. Managers start a new survey here;
  * results holders open a survey's attributed answers.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -113,19 +114,11 @@ export default function TeamSurveysScreen() {
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>{t('intro')}</Text>
           </View>
           {team.surveyEditor ? (
-            <PressableScale
+            <AuthSubmitButton
               testID="team-surveys-new"
-              accessibilityRole="button"
-              accessibilityLabel={t('newSurvey')}
+              label={t('newSurvey')}
               onPress={() => push('/team-survey-new' as Href)}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-                {t('newSurvey')}
-              </Text>
-            </PressableScale>
+            />
           ) : null}
           {surveys.isError ? (
             <Text className={`text-start text-md text-error ${fontClass}`}>{t('loadError')}</Text>

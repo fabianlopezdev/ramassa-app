@@ -6,9 +6,8 @@
  * and the database ignores them for a caller who may not read them.
  */
 import { useAppLock } from '@/components/auth/app-lock';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ChoiceOption } from '@/components/equipment/choice-option';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
 import type { ParticipantListSearch } from '@/lib/participant-filters';
 import { useParticipantFilterOptions } from '@/lib/participant-lookup';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -156,19 +155,7 @@ export function ParticipantFilterSheet({
               />
             ))}
           </Group>
-          <PressableScale
-            testID="filter-done"
-            accessibilityRole="button"
-            accessibilityLabel={t('list.filtersDone')}
-            onPress={onClose}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-              {t('list.filtersDone')}
-            </Text>
-          </PressableScale>
+          <AuthSubmitButton testID="filter-done" label={t('list.filtersDone')} onPress={onClose} />
         </ScrollView>
       </SafeAreaView>
     </Modal>

@@ -7,10 +7,10 @@
  * Share CSV (RAPP-402) asks for the step-up, the database records the export,
  * and the file goes to the share sheet.
  */
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useStaffSurveys, useSurveyExport, useSurveyResponses } from '@/lib/team-surveys';
@@ -187,10 +187,10 @@ export default function TeamSurveyResultsScreen() {
                   ].join(' · ')}
                 </Text>
               </View>
-              <PressableScale
+              <RaisedActionButton
                 testID="survey-export-csv"
-                accessibilityRole="button"
-                accessibilityLabel={tExport('admin:exportShare')}
+                size="compact"
+                label={tExport('admin:exportShare')}
                 onPress={() => {
                   setExportNotice(null);
                   exportCsv.mutate(survey, {
@@ -213,16 +213,8 @@ export default function TeamSurveyResultsScreen() {
                     },
                   });
                 }}
-                isBusy={exportCsv.isPending}
-                isDisabled={exportCsv.isPending}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center self-start rounded-md border border-neutral-300 bg-white px-lg"
-              >
-                <Text className={`text-center text-md font-semibold text-neutral-900 ${fontClass}`}>
-                  {tExport('admin:exportShare')}
-                </Text>
-              </PressableScale>
+                isDisabled={exportCsv.isPending || exportCsv.isPending}
+              />
               {exportNotice === null ? null : (
                 <Text
                   testID="survey-export-notice"

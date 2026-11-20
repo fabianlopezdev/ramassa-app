@@ -18,6 +18,7 @@ import {
 } from '@/components/content/service-labels';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { Icon } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
@@ -26,12 +27,12 @@ import { reviewHandlers, reviewOptions } from '@/lib/content-translations';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import {
+  CATEGORY_COLORS,
   emptyField,
   fieldKey,
   isCategoryInputValid,
   isFieldValid,
   moveField,
-  CATEGORY_COLORS,
   SERVICE_CATEGORY_ICONS,
   slugFromName,
   startingCategoryForm,
@@ -46,8 +47,8 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { categoryHue, isCategoryColor, type CategoryColor } from '@ramassa/shared/category-colors';
 import { getErrorMessageKey, toAppError, type AppErrorCode } from '@ramassa/shared/errors';
-import { isCategoryColor, categoryHue, type CategoryColor } from '@ramassa/shared/category-colors';
 import { type AdminServiceCategory } from '@ramassa/shared/services';
 import { tokens } from '@ramassa/shared/tokens';
 import {
@@ -184,20 +185,13 @@ function CategoryEditor({ category }: { readonly category: AdminServiceCategory 
         maxLength={200}
         {...reviewHandlers(nameReview, () => undefined)}
       />
-      <PressableScale
+      <RaisedActionButton
         testID="service-category-generate"
-        accessibilityRole="button"
+        label={isGenerating ? t('generatingTranslations') : t('generateTranslations')}
         accessibilityLabel={t('generateTranslations')}
         onPress={() => void generate()}
-        isBusy={isGenerating}
-        isDisabled={form.name.trim().length === 0}
-        haptic="tapLight"
-        className="min-h-recommended items-center justify-center rounded-md border border-primary bg-white px-lg"
-      >
-        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-          {isGenerating ? t('generatingTranslations') : t('generateTranslations')}
-        </Text>
-      </PressableScale>
+        isDisabled={form.name.trim().length === 0 || isGenerating}
+      />
       <AuthTextField
         testID="service-category-slug"
         label={t('categorySlug')}

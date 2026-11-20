@@ -20,6 +20,7 @@
  * draw: the coach confirms she agreed.
  */
 import { useAppLock } from '@/components/auth/app-lock';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ConsentRow } from '@/components/authorization/consent-row';
 import { FormWalker } from '@/components/forms/form-walker';
 import { PageWidth } from '@/components/layout/content-width';
@@ -367,20 +368,12 @@ function SigningMode() {
                 {t('authorizationSignFailed')}
               </Text>
             ) : null}
-            <PressableScale
+            <AuthSubmitButton
               testID="signing-blocks-submit"
-              accessibilityRole="button"
-              accessibilityLabel={t('signingBlocksAction')}
-              isDisabled={isSaving}
+              label={t('signingBlocksAction')}
               onPress={() => void signBlocks()}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-            >
-              <Text className={`text-center text-lg font-bold text-white ${fontClass}`}>
-                {t('signingBlocksAction')}
-              </Text>
-            </PressableScale>
+              disabled={isSaving}
+            />
           </PageWidth>
         </ScrollView>
       </SafeAreaView>

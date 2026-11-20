@@ -10,6 +10,7 @@
  */
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
@@ -377,23 +378,16 @@ export default function TeamStaffScreen() {
           </View>
 
           <ScreenSection title={t('team.presetsTitle')} isLast>
-            <PressableScale
+            <RaisedActionButton
               testID="preset-new"
-              accessibilityRole="button"
-              accessibilityLabel={t('team.newPreset')}
+              size="compact"
+              label={t('team.newPreset')}
               onPress={() => {
                 setSheetError(null);
                 setPresetSheet({ preset: null });
               }}
               isDisabled={isBusy}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center self-start rounded-md border border-neutral-300 bg-white px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                {t('team.newPreset')}
-              </Text>
-            </PressableScale>
+            />
             {presets.map((preset) => {
               const people = membersUsingPreset(preset.id, access.data?.members ?? []).length;
               return (

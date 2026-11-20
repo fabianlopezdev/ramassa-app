@@ -8,6 +8,7 @@
  * checks every required field again. A field the form refuses says why until
  * it changes; once sent, the referral opens.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import {
   ReferralBuiltinField,
@@ -16,7 +17,6 @@ import {
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import {
   CustomQuestionField,
   type CustomAnswerDraft,
@@ -27,7 +27,6 @@ import {
   SeasonAnswerFields,
   type SeasonAnswers,
 } from '@/components/profile/season-answer-fields';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
 import {
   useReferralActions,
@@ -438,21 +437,13 @@ export default function EntityReferralNewScreen() {
               {t('saveError')}
             </Text>
           ) : null}
-          <PressableScale
+          <AuthSubmitButton
             testID="entity-referral-save"
-            accessibilityRole="button"
-            accessibilityLabel={t('save')}
+            label={t('save')}
             onPress={submit}
-            isBusy={create.isPending}
-            isDisabled={create.isPending}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-              {t('save')}
-            </Text>
-          </PressableScale>
+            isLoading={create.isPending}
+            disabled={create.isPending}
+          />
         </PageWidth>
       </ScrollView>
     </SafeAreaView>

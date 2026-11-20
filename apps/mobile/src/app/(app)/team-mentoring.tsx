@@ -10,6 +10,7 @@ import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { DateTimeField } from '@/components/content/date-time-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { Badge } from '@/components/layout/badge';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
@@ -194,21 +195,12 @@ function RequestCard({
               </Text>
             </PressableScale>
             {request.status === 'scheduled' ? (
-              <PressableScale
+              <RaisedActionButton
                 testID={`mentoring-complete-${request.id}`}
-                accessibilityRole="button"
-                accessibilityLabel={t('adminCompleteAction')}
+                label={t('adminCompleteAction')}
                 onPress={() => complete.mutate(request.id, onDone)}
-                isBusy={complete.isPending}
-                isDisabled={isSaving}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-              >
-                <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                  {t('adminCompleteAction')}
-                </Text>
-              </PressableScale>
+                isDisabled={isSaving || complete.isPending}
+              />
             ) : null}
           </View>
           {errorCode === null ? null : (

@@ -1,5 +1,6 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SuccessPop } from '@/components/motion/success-pop';
 import { PersonAvatar } from '@/components/people/person-avatar';
@@ -95,18 +96,12 @@ export function ProfilePhotoEditor({ profile }: { readonly profile: ProfileRecor
       <View className="flex-row items-center gap-lg">
         {saved > 0 ? <SuccessPop key={saved}>{portrait}</SuccessPop> : portrait}
         <View className="flex-1">
-          <PressableScale
+          <RaisedActionButton
             testID="profile-photo-edit"
-            accessibilityLabel={profile.avatar_url ? t('photo.change') : t('photo.add')}
-            haptic="tapLight"
-            isDisabled={busy}
+            label={profile.avatar_url ? t('photo.change') : t('photo.add')}
             onPress={() => setExpanded((value) => !value)}
-            className="min-h-recommended justify-center rounded-md border border-primary px-md"
-          >
-            <Text className={`text-center text-form font-bold text-primary ${font}`}>
-              {profile.avatar_url ? t('photo.change') : t('photo.add')}
-            </Text>
-          </PressableScale>
+            isDisabled={busy}
+          />
         </View>
       </View>
       {expanded ? (

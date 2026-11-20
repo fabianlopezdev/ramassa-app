@@ -5,8 +5,8 @@
  * from the row the Events list already loaded.
  */
 import { EventDetailLine } from '@/components/events/event-card';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { AppSheet } from '@/components/layout/app-sheet';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTranslation } from 'react-i18next';
@@ -84,19 +84,12 @@ export function EntityEventSheet({
           languageFontClass={fontClass}
         />
         {locationUrl === null ? null : (
-          <PressableScale
+          <RaisedActionButton
             testID="entity-events-detail-map"
             accessibilityRole="link"
-            accessibilityLabel={t('playerOpenMap')}
+            label={t('playerOpenMap')}
             onPress={() => void Linking.openURL(locationUrl)}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-          >
-            <Text className={`text-md font-bold text-primary ${fontClass}`}>
-              {t('playerOpenMap')}
-            </Text>
-          </PressableScale>
+          />
         )}
       </View>
     </AppSheet>

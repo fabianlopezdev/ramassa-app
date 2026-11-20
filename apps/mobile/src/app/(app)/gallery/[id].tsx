@@ -2,6 +2,8 @@ import {
   AnnouncementEmptyState,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ForumFlagDialog } from '@/components/forum/forum-flag-dialog';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
@@ -167,18 +169,11 @@ export default function GalleryItemScreen() {
               <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
                 {t('gallery:loadFailedHelp')}
               </Text>
-              <PressableScale
+              <AuthSubmitButton
                 testID="gallery-detail-retry"
-                accessibilityLabel={t('gallery:retry')}
+                label={t('gallery:retry')}
                 onPress={retryLoad}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-              >
-                <Text className={`text-lg font-bold text-white ${languageFontClass}`}>
-                  {t('gallery:retry')}
-                </Text>
-              </PressableScale>
+              />
             </View>
           ) : (
             <View className="gap-lg">
@@ -225,32 +220,19 @@ export default function GalleryItemScreen() {
                 </View>
               ) : null}
               {canManage ? (
-                <PressableScale
+                <RaisedActionButton
                   testID="gallery-delete"
-                  accessibilityLabel={t('gallery:delete')}
+                  tone="danger"
+                  label={t('gallery:delete')}
                   onPress={confirmDelete}
-                  haptic="warning"
-                  isBusy={deleteMutation.isPending}
-                  style={continuousCorners}
-                  className="min-h-recommended items-center justify-center rounded-md border border-error px-lg"
-                >
-                  <Text className={`font-bold text-error ${languageFontClass}`}>
-                    {t('gallery:delete')}
-                  </Text>
-                </PressableScale>
+                  isDisabled={deleteMutation.isPending}
+                />
               ) : (
-                <PressableScale
+                <RaisedActionButton
                   testID="gallery-flag"
-                  accessibilityLabel={t('gallery:flag')}
+                  label={t('gallery:flag')}
                   onPress={flagMedia}
-                  haptic="warning"
-                  style={continuousCorners}
-                  className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg"
-                >
-                  <Text className={`font-bold text-neutral-700 ${languageFontClass}`}>
-                    {t('gallery:flag')}
-                  </Text>
-                </PressableScale>
+                />
               )}
             </View>
           )}

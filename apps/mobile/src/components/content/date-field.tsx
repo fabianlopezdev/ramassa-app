@@ -4,8 +4,9 @@
  * phone's own calendar. Empty means no date. The web build has its own file
  * (`date-field.web.tsx`), because the native picker draws nothing there.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { DateTimePicker } from '@expo/ui/community/datetime-picker';
 import { useMemo, useState } from 'react';
@@ -48,22 +49,15 @@ export function DateField({ testID, label, value, onChange }: DateFieldProps) {
       <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
         {label}
       </Text>
-      <PressableScale
+      <RaisedActionButton
         testID={testID}
-        accessibilityRole="button"
+        label={current === null ? t('announcements:none') : format.format(current)}
         accessibilityLabel={`${label}: ${current === null ? t('announcements:none') : format.format(current)}`}
         onPress={() => {
           setDraft(fromIsoDate(value) ?? new Date());
           setIsOpen(true);
         }}
-        haptic="tapLight"
-        style={continuousCorners}
-        className="min-h-recommended justify-center rounded-md border border-neutral-300 bg-white px-md"
-      >
-        <Text className={`text-start text-md text-neutral-900 ${fontClass}`}>
-          {current === null ? t('announcements:none') : format.format(current)}
-        </Text>
-      </PressableScale>
+      />
       {current === null ? null : (
         <PressableScale
           testID={`${testID}-clear`}
@@ -104,19 +98,14 @@ export function DateField({ testID, label, value, onChange }: DateFieldProps) {
                   {t('mentoring:pickerCancel')}
                 </Text>
               </PressableScale>
-              <PressableScale
+              <AuthSubmitButton
                 testID={`${testID}-done`}
-                accessibilityLabel={t('mentoring:pickerDone')}
+                label={t('mentoring:pickerDone')}
                 onPress={() => {
                   onChange(toIsoDate(draft));
                   setIsOpen(false);
                 }}
-                className="min-h-recommended items-center justify-center rounded-md bg-primary px-md"
-              >
-                <Text className={`text-md font-bold text-white ${fontClass}`}>
-                  {t('mentoring:pickerDone')}
-                </Text>
-              </PressableScale>
+              />
             </View>
           ) : null}
         </View>

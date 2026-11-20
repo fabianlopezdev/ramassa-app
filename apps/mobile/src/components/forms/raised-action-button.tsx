@@ -42,6 +42,7 @@ export function RaisedActionButton({
   onPress,
   testID,
   accessibilityLabel,
+  accessibilityRole = 'button',
   size = 'full',
   icon,
   tone = 'brand',
@@ -51,6 +52,8 @@ export function RaisedActionButton({
   readonly onPress: () => void;
   readonly testID?: string;
   readonly accessibilityLabel?: string;
+  /** `link` when it opens something outside the screen, such as a map. */
+  readonly accessibilityRole?: 'button' | 'link';
   readonly size?: 'full' | 'compact' | 'fit';
   /** An icon before the words. */
   readonly icon?: IconName;
@@ -67,6 +70,7 @@ export function RaisedActionButton({
   return (
     <SelectionChoiceSurface
       label={accessibilityLabel ?? label}
+      accessibilityRole={accessibilityRole}
       onPress={handlePress}
       testID={testID}
       className={isWordSized ? 'self-end' : undefined}

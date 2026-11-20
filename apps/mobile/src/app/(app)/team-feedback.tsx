@@ -6,6 +6,7 @@
  * inbox answers in the chat it opened.
  */
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { Badge } from '@/components/layout/badge';
 import { PageWidth } from '@/components/layout/content-width';
@@ -156,19 +157,11 @@ function SubmissionCard({
           </PressableScale>
         ))}
         {canChat ? (
-          <PressableScale
+          <AuthSubmitButton
             testID={`feedback-chat-${submission.id}`}
-            accessibilityRole="button"
-            accessibilityLabel={t('respondChat')}
+            label={t('respondChat')}
             onPress={() => push(`/messages/${submission.conversationId}` as Href)}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md bg-primary px-md"
-          >
-            <Text className={`text-center text-md font-semibold text-white ${fontClass}`}>
-              {t('respondChat')}
-            </Text>
-          </PressableScale>
+          />
         ) : null}
       </View>
       {errorCode === null ? null : (

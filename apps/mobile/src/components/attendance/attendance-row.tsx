@@ -1,3 +1,4 @@
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { Icon, type IconName, type IconWeight } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import type { AttendanceSyncState } from '@/lib/attendance';
@@ -173,18 +174,12 @@ export const AttendanceRow = memo(function AttendanceRow({
           testID={`attendance-rejected-${playerId}`}
           className="flex-row flex-wrap items-center gap-sm border-b border-neutral-200 bg-white px-lg pb-md"
         >
-          <PressableScale
+          <RaisedActionButton
             testID={`attendance-retry-${playerId}`}
-            accessibilityRole="button"
+            label={retryLabel}
             accessibilityLabel={`${retryLabel}: ${name}`}
             onPress={handleRetry}
-            haptic="tapLight"
-            className="min-h-recommended justify-center rounded-md border border-primary px-md"
-          >
-            <Text className={`text-sm font-semibold text-primary-dark ${languageFontClass}`}>
-              {retryLabel}
-            </Text>
-          </PressableScale>
+          />
           <PressableScale
             testID={`attendance-discard-${playerId}`}
             accessibilityRole="button"

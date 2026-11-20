@@ -1,13 +1,13 @@
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ForumFlagDialog } from '@/components/forum/forum-flag-dialog';
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
 import { ForumReplyCard } from '@/components/forum/forum-reply-card';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { SectionTitle } from '@/components/layout/screen-section';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { AuthorLine } from '@/components/people/person-avatar';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -220,15 +220,7 @@ export default function ForumPostDetailScreen() {
           >
             {t('forum:loadFailed')}
           </Text>
-          <PressableScale
-            accessibilityLabel={t('forum:retry')}
-            onPress={retryPost}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended justify-center rounded-md bg-primary px-lg"
-          >
-            <Text className={`font-bold text-white ${languageFontClass}`}>{t('forum:retry')}</Text>
-          </PressableScale>
+          <AuthSubmitButton label={t('forum:retry')} onPress={retryPost} />
         </View>
       </SafeAreaView>
     );
@@ -287,31 +279,18 @@ export default function ForumPostDetailScreen() {
                   style={styles.mixedDirectionInput}
                 />
                 <View className="flex-row gap-sm">
-                  <PressableScale
-                    accessibilityLabel={t('forum:cancel')}
-                    onPress={cancelEdit}
-                    haptic="tapLight"
-                    style={continuousCorners}
-                    className="min-h-recommended grow items-center justify-center rounded-md border border-neutral-300 px-lg"
-                  >
-                    <Text className={`font-bold text-neutral-700 ${languageFontClass}`}>
-                      {t('forum:cancel')}
-                    </Text>
-                  </PressableScale>
-                  <PressableScale
-                    testID="forum-save-edit"
-                    accessibilityLabel={t('forum:save')}
-                    onPress={saveEdit}
-                    haptic="tapLight"
-                    isBusy={editPost.isPending}
-                    isDisabled={!isOnline}
-                    style={continuousCorners}
-                    className="min-h-recommended grow items-center justify-center rounded-md bg-primary px-lg"
-                  >
-                    <Text className={`font-bold text-white ${languageFontClass}`}>
-                      {editPost.isPending ? t('forum:saving') : t('forum:save')}
-                    </Text>
-                  </PressableScale>
+                  <View className="flex-1">
+                    <RaisedActionButton label={t('forum:cancel')} onPress={cancelEdit} />
+                  </View>
+                  <View className="flex-1">
+                    <AuthSubmitButton
+                      testID="forum-save-edit"
+                      label={editPost.isPending ? t('forum:saving') : t('forum:save')}
+                      onPress={saveEdit}
+                      isLoading={editPost.isPending}
+                      disabled={!isOnline}
+                    />
+                  </View>
                 </View>
               </View>
             ) : (
@@ -323,49 +302,34 @@ export default function ForumPostDetailScreen() {
             )}
             {isOwnPost && !isEditing && !isConfirmingDelete ? (
               <View className="flex-row gap-sm">
-                <PressableScale
-                  testID="forum-edit"
-                  accessibilityLabel={t('forum:edit')}
-                  onPress={beginEdit}
-                  haptic="tapLight"
-                  isDisabled={!isOnline}
-                  style={continuousCorners}
-                  className="min-h-recommended grow items-center justify-center rounded-md border border-primary px-lg"
-                >
-                  <Text className={`font-bold text-primary ${languageFontClass}`}>
-                    {t('forum:edit')}
-                  </Text>
-                </PressableScale>
-                <PressableScale
-                  testID="forum-delete"
-                  accessibilityLabel={t('forum:delete')}
-                  onPress={confirmDelete}
-                  haptic="warning"
-                  isDisabled={!isOnline}
-                  isBusy={deletePost.isPending}
-                  style={continuousCorners}
-                  className="min-h-recommended grow items-center justify-center rounded-md border border-error px-lg"
-                >
-                  <Text className={`font-bold text-error ${languageFontClass}`}>
-                    {t('forum:delete')}
-                  </Text>
-                </PressableScale>
+                <View className="flex-1">
+                  <RaisedActionButton
+                    testID="forum-edit"
+                    label={t('forum:edit')}
+                    onPress={beginEdit}
+                    isDisabled={!isOnline}
+                  />
+                </View>
+                <View className="flex-1">
+                  <RaisedActionButton
+                    testID="forum-delete"
+                    tone="danger"
+                    label={t('forum:delete')}
+                    onPress={confirmDelete}
+                    isDisabled={!isOnline || deletePost.isPending}
+                  />
+                </View>
               </View>
             ) : null}
             {isOwnPost || post.visibility !== 'visible' ? null : (
-              <PressableScale
+              <RaisedActionButton
                 testID="forum-flag-post"
+                size="compact"
+                label={t('forum:flag')}
                 accessibilityLabel={t('forum:flagPost')}
                 onPress={flagPost}
-                haptic="warning"
                 isDisabled={!isOnline}
-                style={continuousCorners}
-                className="min-h-recommended self-start justify-center rounded-md border border-neutral-300 px-lg"
-              >
-                <Text className={`font-semibold text-neutral-700 ${languageFontClass}`}>
-                  {t('forum:flag')}
-                </Text>
-              </PressableScale>
+              />
             )}
             {!isConfirmingDelete ? null : (
               <View
@@ -383,30 +347,18 @@ export default function ForumPostDetailScreen() {
                   {t('forum:deleteConfirmBody')}
                 </Text>
                 <View className="flex-row gap-sm">
-                  <PressableScale
-                    accessibilityLabel={t('forum:cancel')}
-                    onPress={cancelDelete}
-                    haptic="tapLight"
-                    style={continuousCorners}
-                    className="min-h-recommended grow items-center justify-center rounded-md border border-neutral-300 px-lg"
-                  >
-                    <Text className={`font-bold text-neutral-700 ${languageFontClass}`}>
-                      {t('forum:cancel')}
-                    </Text>
-                  </PressableScale>
-                  <PressableScale
-                    testID="forum-confirm-delete"
-                    accessibilityLabel={t('forum:deleteConfirm')}
-                    onPress={performDelete}
-                    haptic="warning"
-                    isBusy={deletePost.isPending}
-                    style={continuousCorners}
-                    className="min-h-recommended grow items-center justify-center rounded-md bg-error px-lg"
-                  >
-                    <Text className={`font-bold text-white ${languageFontClass}`}>
-                      {t('forum:deleteConfirm')}
-                    </Text>
-                  </PressableScale>
+                  <View className="flex-1">
+                    <RaisedActionButton label={t('forum:cancel')} onPress={cancelDelete} />
+                  </View>
+                  <View className="flex-1">
+                    <RaisedActionButton
+                      testID="forum-confirm-delete"
+                      tone="danger"
+                      label={t('forum:deleteConfirm')}
+                      onPress={performDelete}
+                      isDisabled={deletePost.isPending}
+                    />
+                  </View>
                 </View>
               </View>
             )}
@@ -437,17 +389,7 @@ export default function ForumPostDetailScreen() {
               >
                 {t('forum:loadFailed')}
               </Text>
-              <PressableScale
-                accessibilityLabel={t('forum:retry')}
-                onPress={() => void refetchReplies()}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended justify-center rounded-md bg-primary px-lg"
-              >
-                <Text className={`font-bold text-white ${languageFontClass}`}>
-                  {t('forum:retry')}
-                </Text>
-              </PressableScale>
+              <AuthSubmitButton label={t('forum:retry')} onPress={() => void refetchReplies()} />
             </PageWidth>
           ) : (
             <PageWidth>

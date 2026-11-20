@@ -1,4 +1,6 @@
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
@@ -202,18 +204,11 @@ export default function GalleryUploadScreen() {
       >
         <FormWidth className="gap-lg">
           {selectedDraft === null ? (
-            <PressableScale
+            <RaisedActionButton
               testID="gallery-pick-media"
-              accessibilityLabel={t('gallery:pickMedia')}
+              label={t('gallery:pickMedia')}
               onPress={pick}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-            >
-              <Text className={`font-bold text-primary ${languageFontClass}`}>
-                {t('gallery:pickMedia')}
-              </Text>
-            </PressableScale>
+            />
           ) : (
             <ScreenSection
               testID="gallery-selected-media-preview"
@@ -237,30 +232,21 @@ export default function GalleryUploadScreen() {
                 />
               )}
               <View className="flex-row gap-sm">
-                <PressableScale
-                  testID="gallery-change-media"
-                  accessibilityLabel={t('gallery:changeMedia')}
-                  onPress={pick}
-                  haptic="tapLight"
-                  style={continuousCorners}
-                  className="min-h-recommended grow items-center justify-center rounded-md border border-primary px-md"
-                >
-                  <Text className={`font-bold text-primary ${languageFontClass}`}>
-                    {t('gallery:changeMedia')}
-                  </Text>
-                </PressableScale>
-                <PressableScale
-                  testID="gallery-remove-media"
-                  accessibilityLabel={t('gallery:removeMedia')}
-                  onPress={removeSelectedMedia}
-                  haptic="warning"
-                  style={continuousCorners}
-                  className="min-h-recommended grow items-center justify-center rounded-md border border-error px-md"
-                >
-                  <Text className={`font-bold text-error ${languageFontClass}`}>
-                    {t('gallery:removeMedia')}
-                  </Text>
-                </PressableScale>
+                <View className="flex-1">
+                  <RaisedActionButton
+                    testID="gallery-change-media"
+                    label={t('gallery:changeMedia')}
+                    onPress={pick}
+                  />
+                </View>
+                <View className="flex-1">
+                  <RaisedActionButton
+                    testID="gallery-remove-media"
+                    tone="danger"
+                    label={t('gallery:removeMedia')}
+                    onPress={removeSelectedMedia}
+                  />
+                </View>
               </View>
             </ScreenSection>
           )}
@@ -273,18 +259,11 @@ export default function GalleryUploadScreen() {
               >
                 {t('gallery:mediaPermissionDenied')}
               </Text>
-              <PressableScale
+              <AuthSubmitButton
                 testID="gallery-open-settings"
-                accessibilityLabel={t('gallery:openSettings')}
+                label={t('gallery:openSettings')}
                 onPress={openSettings}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-              >
-                <Text className={`font-bold text-white ${languageFontClass}`}>
-                  {t('gallery:openSettings')}
-                </Text>
-              </PressableScale>
+              />
             </View>
           ) : null}
           <AuthTextField
@@ -348,35 +327,21 @@ export default function GalleryUploadScreen() {
                   : t('gallery:uploadFailed')}
               </Text>
               {state.draft === null ? null : (
-                <PressableScale
+                <RaisedActionButton
                   testID="gallery-upload-retry"
-                  accessibilityLabel={t('gallery:retry')}
+                  label={t('gallery:retry')}
                   onPress={retry}
-                  haptic="tapLight"
-                  style={continuousCorners}
-                  className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-                >
-                  <Text className={`font-bold text-primary ${languageFontClass}`}>
-                    {t('gallery:retry')}
-                  </Text>
-                </PressableScale>
+                />
               )}
             </View>
           ) : null}
-          <PressableScale
+          <AuthSubmitButton
             testID="gallery-upload-submit"
-            accessibilityLabel={t('gallery:publish')}
+            label={t('gallery:publish')}
             onPress={submit}
-            haptic="tapLight"
-            isBusy={state.status === 'uploading'}
-            isDisabled={state.draft === null || !consent}
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-          >
-            <Text className={`font-bold text-white ${languageFontClass}`}>
-              {t('gallery:publish')}
-            </Text>
-          </PressableScale>
+            isLoading={state.status === 'uploading'}
+            disabled={state.draft === null || !consent}
+          />
         </FormWidth>
       </ScrollView>
     </>

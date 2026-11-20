@@ -4,6 +4,7 @@
  * of its tools (RAPP-797), then Settings and sign-out. Easier than a tab bar
  * for a coach whose whole job in the app is taking attendance.
  */
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
@@ -117,19 +118,11 @@ function TeamHomeButtonsScreen() {
             />
           ) : null}
           <View className="gap-sm pt-md">
-            <PressableScale
+            <RaisedActionButton
               testID="team-home-settings"
-              accessibilityRole="button"
-              accessibilityLabel={tAuth('teamSettingsTitle')}
+              label={tAuth('teamSettingsTitle')}
               onPress={() => push('/app-lock' as Href)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-            >
-              <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
-                {tAuth('teamSettingsTitle')}
-              </Text>
-            </PressableScale>
+            />
             <PressableScale
               testID="team-home-sign-out"
               accessibilityRole="button"

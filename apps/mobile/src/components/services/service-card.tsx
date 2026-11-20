@@ -1,25 +1,15 @@
-import { Badge } from '@/components/layout/badge';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { composeContinuousViewStyle } from '@/lib/continuous-corners';
+import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { Image } from 'expo-image';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { tokens } from '@ramassa/shared/tokens';
 
 const styles = StyleSheet.create({
-  card: {
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: tokens.colors.neutral[200],
-    borderRadius: tokens.radius.lg,
-    backgroundColor: tokens.colors.white,
-  },
   image: { width: '100%', height: tokens.spacing['3xl'] * 3 },
 });
-const cardStyle = composeContinuousViewStyle(styles.card);
 
 export interface ServiceCardProps {
   readonly id: string;
@@ -59,34 +49,31 @@ export const ServiceCard = memo(function ServiceCard({
     accessToken: session?.access_token,
   });
   const handlePress = useCallback(() => onOpen(id), [id, onOpen]);
+  // Her saved interest sits on the card's edge, like her sign-up on an activity card.
+  const badge = useMemo<RaisedCardBadge | null>(
+    () => (interested ? { label: interestedLabel, tone: 'accent' } : null),
+    [interested, interestedLabel],
+  );
   return (
-    <PressableScale
+    <RaisedCard
       testID={`service-card-${id}`}
       accessibilityLabel={accessibilityLabel}
-      onPress={handlePress}
-      haptic="tapLight"
-      style={cardStyle}
-      className="overflow-hidden rounded-lg border border-neutral-200 bg-white"
-    >
-      {imageSource === null ? null : (
-        <Image
-          source={imageSource}
-          accessibilityLabel={imageAlt ?? title}
-          contentFit="cover"
-          cachePolicy="memory-disk"
-          recyclingKey={imageObjectKey ?? id}
-          style={styles.image}
-        />
-      )}
-      <View className="gap-sm p-md">
-        {interested ? (
-          <Badge
-            label={interestedLabel}
-            tone="accent"
-            languageFontClass={languageFontClass}
-            className="self-start"
+      onOpen={handlePress}
+      badge={badge}
+      media={
+        imageSource === null ? undefined : (
+          <Image
+            source={imageSource}
+            accessibilityLabel={imageAlt ?? title}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            recyclingKey={imageObjectKey ?? id}
+            style={styles.image}
           />
-        ) : null}
+        )
+      }
+    >
+      <View className="gap-sm">
         <Text
           className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
           numberOfLines={2}
@@ -117,6 +104,6 @@ export const ServiceCard = memo(function ServiceCard({
           </Text>
         </View>
       </View>
-    </PressableScale>
+    </RaisedCard>
   );
 });

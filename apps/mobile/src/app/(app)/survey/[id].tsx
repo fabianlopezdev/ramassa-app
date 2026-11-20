@@ -1,5 +1,6 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { Icon } from '@/components/icons/icon';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
@@ -500,18 +501,11 @@ export default function SurveyScreen() {
             disabled={!canContinue}
             testID="survey-next"
           />
-          <PressableScale
-            accessibilityLabel={t('saveExit')}
+          <RaisedActionButton
+            label={t('saveExit')}
             onPress={() => void saveAndExit()}
-            haptic="tapLight"
-            isBusy={isSavePending}
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg"
-          >
-            <Text className={`font-bold text-neutral-700 ${languageFontClass}`}>
-              {t('saveExit')}
-            </Text>
-          </PressableScale>
+            isDisabled={isSavePending}
+          />
         </View>
       </FormWidth>
     </SurveyScreenFrame>

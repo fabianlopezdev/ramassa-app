@@ -9,6 +9,7 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { EventCategoryBadge } from '@/components/content/event-category-badge';
 import { EventCategorySheet } from '@/components/content/event-category-sheet';
 import { FailureNotice } from '@/components/error-code-line';
@@ -100,19 +101,11 @@ export default function EventCategoriesScreen() {
           <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
             {t('categoriesHelpPhone')}
           </Text>
-          <PressableScale
+          <AuthSubmitButton
             testID="event-category-new"
-            accessibilityRole="button"
-            accessibilityLabel={t('newCategory')}
+            label={t('newCategory')}
             onPress={() => setSheet({ category: null })}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center self-start rounded-md bg-primary px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-              {t('newCategory')}
-            </Text>
-          </PressableScale>
+          />
           {failure === null ? null : (
             <FailureNotice
               code={toAppError(failure).code}

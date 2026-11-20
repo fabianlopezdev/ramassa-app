@@ -12,6 +12,7 @@
  * and types, with their text to correct (right to left for Arabic and Farsi),
  * and an Approve button. A correction needs approving again.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -301,19 +302,11 @@ export function KnowledgeTranslatedBodies({
           {t('bodyApproved')}
         </Text>
       ) : (
-        <PressableScale
+        <AuthSubmitButton
           testID={`knowledge-body-approve-${open}`}
-          accessibilityRole="button"
-          accessibilityLabel={t('approveBody', { language: LANGUAGE_NATIVE_NAMES[open] })}
+          label={t('approveBody', { language: LANGUAGE_NATIVE_NAMES[open] })}
           onPress={() => onApprove(open)}
-          haptic="selection"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center self-start rounded-md bg-primary px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-            {t('approveBody', { language: LANGUAGE_NATIVE_NAMES[open] })}
-          </Text>
-        </PressableScale>
+        />
       )}
     </View>
   );

@@ -77,7 +77,7 @@ export function RaisedChip({
   readonly label: string;
   readonly isSelected: boolean;
   readonly onPress: () => void;
-  readonly accessibilityRole?: 'radio' | 'checkbox';
+  readonly accessibilityRole?: 'radio' | 'checkbox' | 'tab';
   readonly accessibilityLabel?: string;
   /** Read after the label, such as the group a chip belongs to. */
   readonly accessibilityHint?: string;
