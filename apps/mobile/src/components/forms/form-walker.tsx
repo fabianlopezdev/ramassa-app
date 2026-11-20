@@ -9,8 +9,11 @@
  *
  * `FormWalker` keeps the walk itself: her answers stay on the form until the
  * last screen her answers open sends them (`onSubmit`, the caller's writer).
- * `FormWalkStep` is one screen; her Onboarding walks the terms with it one
- * route per screen, as every wizard step.
+ * A caller that keeps a half-answered form (RAPP-886) opens the walk at the
+ * screen she left (`startScreenId`) and hears her answers so far and her
+ * screen each time she moves between screens and when she leaves the walk
+ * (`onProgress`). `FormWalkStep` is one screen; her Onboarding walks the terms
+ * with it one route per screen, as every wizard step.
  *
  * A screen that depends on an answer (RAPP-715) shows right after the screen
  * asking it, only while her answers so far open it (`@ramassa/shared`'s
@@ -29,7 +32,7 @@ import { WizardFrame, type WizardFrameProps } from '@/components/onboarding/wiza
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
 import { playHaptic } from '@/lib/haptics/haptics';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import type { AppErrorCode } from '@ramassa/shared/errors';
@@ -42,6 +45,7 @@ import {
   formWalkScreens,
   isCustomQuestionVisible,
   updateCustomAnswer,
+  type CustomAnswers,
   type CustomForm,
   type CustomFormScreen,
   type FormWalkDraft,
@@ -59,6 +63,14 @@ export interface FormWalkerProps {
   readonly form: Pick<CustomForm, 'screens'>;
   /** Her saved answers by field, to confirm or change. */
   readonly saved: CustomAnswerDraft;
+  /** The screen she left a half-answered form on; the first when it no longer shows. */
+  readonly startScreenId?: string;
+  /**
+   * Her answers so far and the screen she is on, as she moves and when she
+   * leaves (RAPP-886). Read when the walk opens: a walk that opened without it
+   * never reports, so it never replaces answers it did not start from.
+   */
+  readonly onProgress?: (answers: CustomAnswers, screenId: string) => void;
   /** Her ticks as she gave them before (her photo choice on the terms), by consent key. */
   readonly savedConsents?: Readonly<Record<string, boolean>>;
   /** Sends what she gave on the screens she saw; the code of a failure, else null. */
@@ -84,6 +96,8 @@ export function FormWalker({
   catalog,
   form,
   saved,
+  startScreenId,
+  onProgress,
   savedConsents = {},
   onSubmit,
   failureMessage,
@@ -99,9 +113,29 @@ export function FormWalker({
     signatures: {},
     consents: savedConsents,
   });
-  const [currentId, setCurrentId] = useState(() => shownFor(saved)[0]?.id);
+  const [currentId, setCurrentId] = useState(() => {
+    const shown = shownFor(saved);
+    return (shown.find((each) => each.id === startScreenId) ?? shown[0])?.id;
+  });
   const [isSending, setIsSending] = useState(false);
   const [failureCode, setFailureCode] = useState<AppErrorCode | null>(null);
+  // Where she is and what she gave, the screen she is on included, for when she leaves.
+  const latest = useRef<{ answers: CustomAnswers; screenId: string } | null>(null);
+  const isSent = useRef(false);
+  const [reportsProgress] = useState(() => onProgress !== undefined);
+  const report = reportsProgress ? onProgress : undefined;
+  const reportProgress = useRef(report);
+  useEffect(() => {
+    reportProgress.current = report;
+  }, [report]);
+  useEffect(
+    () => () => {
+      if (!isSent.current && latest.current !== null) {
+        reportProgress.current?.(latest.current.answers, latest.current.screenId);
+      }
+    },
+    [],
+  );
   const screens = shownFor(draft.answers);
   const index = screens.findIndex((each) => each.id === currentId);
   const screen = screens[index];
@@ -110,9 +144,12 @@ export function FormWalker({
   async function send(final: FormWalkDraft, shown: readonly CustomFormScreen[]) {
     setIsSending(true);
     setFailureCode(null);
+    // Sending: leaving now keeps nothing half answered; a failed send keeps it again.
+    isSent.current = true;
     const code = await onSubmit(final, shown);
     setIsSending(false);
     if (code !== null) {
+      isSent.current = false;
       setFailureCode(code);
       playHaptic('warning');
       return;
@@ -137,19 +174,23 @@ export function FormWalker({
       footer={footer?.(screen, isSending)}
       header={header}
       fillText={fillText}
+      onAnswersChange={(answers) => {
+        latest.current = { answers: { ...draft.answers, ...answers }, screenId: screen.id };
+      }}
       onBack={
         index > 0
           ? (next) => {
               setDraft(next);
               const shown = shownFor(next.answers);
-              setCurrentId(
+              const previousId =
                 shown[
                   Math.max(
                     shown.findIndex((each) => each.id === screen.id),
                     1,
                   ) - 1
-                ]?.id,
-              );
+                ]?.id;
+              setCurrentId(previousId);
+              if (previousId !== undefined) report?.(next.answers, previousId);
             }
           : onLeave === undefined
             ? undefined
@@ -162,6 +203,7 @@ export function FormWalker({
         const following = shown[shown.findIndex((each) => each.id === screen.id) + 1];
         if (following !== undefined) {
           setCurrentId(following.id);
+          report?.(next.answers, following.id);
           return;
         }
         void send(next, shown);
@@ -190,6 +232,8 @@ export interface FormWalkStepProps {
   readonly header?: ReactNode;
   /** A text staff wrote, filled in (`{{season}}`). */
   readonly fillText?: (text: string) => string;
+  /** Her answers on this screen as she gives them, checked or not. */
+  readonly onAnswersChange?: (answers: CustomAnswerDraft) => void;
 }
 
 export function FormWalkStep({
@@ -206,11 +250,15 @@ export function FormWalkStep({
   footer,
   header,
   fillText = (text: string) => text,
+  onAnswersChange,
 }: FormWalkStepProps) {
   const { t } = useTranslation('onboarding');
   const { language } = useLanguage();
   const questions = customFormScreenQuestions(catalog, screen.id);
   const [answers, setAnswers] = useState<CustomAnswerDraft>(draft.answers);
+  useEffect(() => {
+    onAnswersChange?.(answers);
+  }, [answers, onAnswersChange]);
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({});
   const [isDrawing, setIsDrawing] = useState(false);
   const source = { catalog, signatures: draft.signatures, consents: draft.consents };

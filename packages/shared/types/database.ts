@@ -1060,6 +1060,55 @@ export type Database = {
           },
         ];
       };
+      custom_form_progress: {
+        Row: {
+          answers_encrypted: string;
+          org_id: string;
+          profile_id: string;
+          response_id: string;
+          saved_at: string;
+          screen_id: string | null;
+        };
+        Insert: {
+          answers_encrypted: string;
+          org_id: string;
+          profile_id: string;
+          response_id: string;
+          saved_at?: string;
+          screen_id?: string | null;
+        };
+        Update: {
+          answers_encrypted?: string;
+          org_id?: string;
+          profile_id?: string;
+          response_id?: string;
+          saved_at?: string;
+          screen_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_form_progress_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_progress_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'custom_form_progress_response_id_fkey';
+            columns: ['response_id'];
+            isOneToOne: true;
+            referencedRelation: 'custom_form_responses';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       custom_form_recipients: {
         Row: {
           added_at: string;
@@ -7010,9 +7059,18 @@ export type Database = {
         Returns: undefined;
       };
       my_home_seen: { Args: never; Returns: Json };
+      my_custom_form_progress: {
+        Args: { p_response_id: string };
+        Returns: Json;
+      };
       my_put_off_custom_forms: { Args: never; Returns: string[] };
+      my_started_custom_forms: { Args: never; Returns: string[] };
       put_off_custom_form: {
         Args: { p_response_id: string };
+        Returns: undefined;
+      };
+      save_custom_form_progress: {
+        Args: { p_response_id: string; p_answers: Json; p_screen_id?: string };
         Returns: undefined;
       };
       set_player_profile_banner: {
