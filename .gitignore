@@ -58,3 +58,6 @@ excalidraw-diagram
 test-results/
 playwright-report/
 .qa-supabase/
+
+# Tester ground stock images (RAPP-885): a download cache, never committed
+scripts/tester-ground/images/.cache/
