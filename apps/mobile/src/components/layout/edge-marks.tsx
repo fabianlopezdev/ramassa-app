@@ -24,15 +24,18 @@ export interface EdgeMarkBadge {
 export function EdgeMarks({
   badge = null,
   count = null,
+  className,
   children,
 }: {
   readonly badge?: EdgeMarkBadge | null;
   readonly count?: string | null;
+  /** Such as `flex-1`, so a card in a row fills its cell (RAPP-874). */
+  readonly className?: string;
   readonly children: ReactNode;
 }) {
   const languageFontClass = useLanguageFontClass();
   return (
-    <View className="relative pt-sm">
+    <View className={`relative pt-sm ${className ?? ''}`}>
       {children}
       {badge === null ? null : (
         <View

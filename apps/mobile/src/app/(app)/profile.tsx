@@ -1,7 +1,9 @@
 /**
  * El meu perfil (RAPP-22, RAPP-794): opened from her photo at the top of every
- * tab, as a short menu of six rows on the shared raised icon card (RAPP-863).
- * Each row opens one screen, except the last, which signs her out.
+ * tab, as a short menu on the shared raised cards (RAPP-863). Her data and her
+ * attendance come first, as a pair of square raised cards (RAPP-874); the
+ * other rows follow on the raised icon card. Each opens one screen, except the
+ * last, which signs her out.
  *
  * It stays the RGPD self-service surface. She sees and corrects her data under
  * "Les meves dades", and gives or withdraws her consents and asks for erasure
@@ -15,6 +17,7 @@
 
 import { ICON_LICENCE } from '@/components/icons/icon';
 import { RaisedIconCard } from '@/components/layout/raised-icon-card';
+import { RaisedSquareCard, RaisedSquareCardRow } from '@/components/layout/raised-square-card';
 import { ProfileScreenFrame } from '@/components/profile/profile-screen-frame';
 import { logout } from '@/lib/auth';
 import { playerNavIcons } from '@/lib/player-nav-icons';
@@ -44,22 +47,24 @@ export default function ProfileScreen() {
 
   return (
     <ProfileScreenFrame title={t('title')} testID="profile-menu">
-      <RaisedIconCard
-        testID="profile-open-data"
-        icon={playerNavIcons.myData}
-        title={t('menu.data')}
-        accessibilityLabel={t('menu.data')}
-        languageFontClass={languageFontClass}
-        onOpen={openData}
-      />
-      <RaisedIconCard
-        testID="profile-open-attendance"
-        icon={playerNavIcons.attendance}
-        title={t('menu.attendance')}
-        accessibilityLabel={t('menu.attendance')}
-        languageFontClass={languageFontClass}
-        onOpen={openAttendance}
-      />
+      <RaisedSquareCardRow>
+        <RaisedSquareCard
+          testID="profile-open-data"
+          icon={playerNavIcons.myData}
+          title={t('menu.data')}
+          accessibilityLabel={t('menu.data')}
+          languageFontClass={languageFontClass}
+          onOpen={openData}
+        />
+        <RaisedSquareCard
+          testID="profile-open-attendance"
+          icon={playerNavIcons.attendance}
+          title={t('menu.attendance')}
+          accessibilityLabel={t('menu.attendance')}
+          languageFontClass={languageFontClass}
+          onOpen={openAttendance}
+        />
+      </RaisedSquareCardRow>
       <RaisedIconCard
         testID="profile-open-language"
         icon={playerNavIcons.language}

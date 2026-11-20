@@ -1,16 +1,18 @@
 /**
  * Contacte, once called Xat (RAPP-789, RAPP-860): everything private between
  * her and the staff, in one tab.
- * Three large cards and nothing else: the chat with its unread count, mentoring
+ * Three cards and nothing else: the chat with its unread count, mentoring
  * with the state of the request she is waiting on, and suggestions. Each opens
- * the screen it always opened (`team-chat`, `mentoring`, `feedback`). The cards
- * are the raised card of Per fer (RAPP-842). The unread count sits in a circle
+ * the screen it always opened (`team-chat`, `mentoring`, `feedback`). The chat
+ * is the raised card of Per fer (RAPP-842); mentoring and suggestions sit under
+ * it as a pair of square raised cards (RAPP-874). The unread count sits in a circle
  * on the top edge near the end, and the state of her request is a badge on the
  * top edge near the start, like "Nou". Both are in the brand colour.
  */
 import { PageWidth } from '@/components/layout/content-width';
 import type { RaisedCardBadge } from '@/components/layout/raised-card';
 import { RaisedIconCard } from '@/components/layout/raised-icon-card';
+import { RaisedSquareCard, RaisedSquareCardRow } from '@/components/layout/raised-square-card';
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { useUnreadMessages } from '@/lib/messaging';
@@ -86,25 +88,27 @@ function ChatTabScreen() {
           languageFontClass={languageFontClass}
           onOpen={openTeamChat}
         />
-        <RaisedIconCard
-          testID="chat-open-mentoring"
-          icon={playerNavIcons.mentoring}
-          title={mentoringTitle}
-          accessibilityLabel={
-            mentoringState === null ? mentoringTitle : `${mentoringTitle}, ${mentoringState}`
-          }
-          badge={stateBadge(mentoringState)}
-          languageFontClass={languageFontClass}
-          onOpen={openMentoring}
-        />
-        <RaisedIconCard
-          testID="chat-open-feedback"
-          icon={playerNavIcons.feedback}
-          title={feedbackTitle}
-          accessibilityLabel={feedbackTitle}
-          languageFontClass={languageFontClass}
-          onOpen={openFeedback}
-        />
+        <RaisedSquareCardRow>
+          <RaisedSquareCard
+            testID="chat-open-mentoring"
+            icon={playerNavIcons.mentoring}
+            title={mentoringTitle}
+            accessibilityLabel={
+              mentoringState === null ? mentoringTitle : `${mentoringTitle}, ${mentoringState}`
+            }
+            badge={stateBadge(mentoringState)}
+            languageFontClass={languageFontClass}
+            onOpen={openMentoring}
+          />
+          <RaisedSquareCard
+            testID="chat-open-feedback"
+            icon={playerNavIcons.feedback}
+            title={feedbackTitle}
+            accessibilityLabel={feedbackTitle}
+            languageFontClass={languageFontClass}
+            onOpen={openFeedback}
+          />
+        </RaisedSquareCardRow>
       </PageWidth>
     </ScrollView>
   );
