@@ -1,8 +1,9 @@
 import { FilterChips } from '@/components/layout/filter-chips';
-import type { RaisedTone } from '@/components/layout/raised-surface';
+import { useSectionWash, type RaisedTone } from '@/components/layout/raised-surface';
 import type { TFunction } from 'i18next';
 import { useMemo } from 'react';
 import {
+  announcementCategoryColor,
   PLAYER_ANNOUNCEMENT_CATEGORY_ORDER,
   type AnnouncementCategory,
   type PlayerAnnouncementCategoryFilter,
@@ -41,18 +42,23 @@ export function announcementCategoryLabel(category: AnnouncementCategory, t: TFu
   return t(`category.${category}`);
 }
 
-/** The colour of each kind, the one its dot had before the raised style (RAPP-845). */
+/**
+ * The colour of each kind (RAPP-845), from the shared map both apps read
+ * (RAPP-893), so a pill, a card and the open avís share one shade.
+ */
 export function announcementCategoryTone(category: AnnouncementCategory): RaisedTone {
-  switch (category) {
-    case 'training':
-      return 'primary';
-    case 'social':
-      return 'secondary';
-    case 'urgent':
-      return 'error';
-    case 'info':
-      return 'info';
-  }
+  return announcementCategoryColor(category);
+}
+
+/**
+ * The wash an open avís sits on (RAPP-893): the shade of its card on Inici,
+ * shared by the player's page and the team's preview of a draft. `undefined`
+ * while there is no avís, so the screen keeps its own background.
+ */
+export function useAnnouncementWash(
+  category: AnnouncementCategory | undefined,
+): string | undefined {
+  return useSectionWash(category === undefined ? undefined : announcementCategoryColor(category));
 }
 
 export interface CategoryFiltersProps {

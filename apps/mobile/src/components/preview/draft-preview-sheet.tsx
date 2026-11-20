@@ -49,12 +49,18 @@ export function DraftPreviewSheet({
   visible,
   onClose,
   isMissing,
+  backgroundColor,
   children,
 }: {
   readonly visible: boolean;
   readonly onClose: () => void;
   /** True when the draft has no text of its own in this language yet. */
   readonly isMissing: (language: SupportedLanguage) => boolean;
+  /**
+   * The colour of the screen the player sees the item on, such as an avís on
+   * the wash of its kind (RAPP-893). Without it the preview stays white.
+   */
+  readonly backgroundColor?: string;
   readonly children: ReactNode;
 }) {
   const { t } = useTranslation('common');
@@ -67,6 +73,10 @@ export function DraftPreviewSheet({
     return offered.length > 0 ? offered : SUPPORTED_LANGUAGES;
   }, [organization?.available_languages]);
   const [language, setLanguage] = useState<SupportedLanguage>('ca');
+  const contentStyle = useMemo(
+    () => (backgroundColor === undefined ? undefined : { backgroundColor }),
+    [backgroundColor],
+  );
 
   return (
     <Modal
@@ -123,7 +133,11 @@ export function DraftPreviewSheet({
               </Text>
             ) : null}
           </View>
-          <ScrollView className="flex-1" contentContainerClassName="px-lg py-lg">
+          <ScrollView
+            className="flex-1"
+            style={contentStyle}
+            contentContainerClassName="px-lg py-lg"
+          >
             {visible ? (
               <PlayerLanguageScope language={language}>{children}</PlayerLanguageScope>
             ) : null}
