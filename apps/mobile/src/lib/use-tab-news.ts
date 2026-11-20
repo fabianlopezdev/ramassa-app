@@ -107,12 +107,6 @@ function useMarkListsSeenMutation() {
   });
 }
 
-/** A stable callback for screens that mark several lists at once. */
-export function useMarkListsSeen(): (keys: readonly TabListKey[]) => void {
-  const { mutate } = useMarkListsSeenMutation();
-  return useCallback((keys: readonly TabListKey[]) => mutate(keys), [mutate]);
-}
-
 /**
  * Seeing a list clears its number. While the screen is focused, `isActive` is
  * true and the list has unseen things, the list is marked seen. The cards read

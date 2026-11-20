@@ -29,7 +29,7 @@ const BRAND_SWATCH_COLOR = 'rgb(var(--ramassa-primary-rgb))';
  * The label of a stored colour; an older value outside the palette shows as it
  * is stored. `noneValue` is the stored name that stands for no colour.
  */
-export function useCategoryColorLabel(noneValue?: string) {
+function useCategoryColorLabel(noneValue?: string) {
   const { t } = useTranslation('services');
   return (value: string) => {
     if (value === noneValue) return t('categoryColorNone');

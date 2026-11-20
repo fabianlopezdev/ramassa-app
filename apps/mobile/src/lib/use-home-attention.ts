@@ -36,7 +36,7 @@ export function useHomeSeen() {
  * Records items as seen. The phone shows them as seen at once; without
  * connection the request waits and is sent when the connection returns.
  */
-export function useMarkHomeItemsSeen() {
+function useMarkHomeItemsSeen() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const queryKey = useMemo(() => homeSeenQueryKey(user?.id ?? 'signed-out'), [user?.id]);

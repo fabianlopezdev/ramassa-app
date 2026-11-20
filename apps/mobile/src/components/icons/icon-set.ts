@@ -32,7 +32,7 @@ export interface IconPath {
   readonly fillRule?: 'evenodd' | 'nonzero';
 }
 
-export const ICONS = {
+const ICONS = {
   book: {
     linear: [
       {
@@ -2417,71 +2417,6 @@ export type IconName = keyof typeof ICONS;
 
 /** `linear` is the working weight; `boldDuotone` is for an icon that is the subject. */
 export type IconWeight = 'boldDuotone' | 'linear';
-
-export const ICON_NAMES = [
-  'book',
-  'briefcase',
-  'buildings',
-  'calendar',
-  'calendar-check',
-  'chart',
-  'chat',
-  'chat-text',
-  'chats',
-  'check',
-  'check-circle',
-  'chevron-down',
-  'chevron-left',
-  'chevron-right',
-  'chevron-up',
-  'circle',
-  'clipboard',
-  'clock',
-  'close',
-  'close-circle',
-  'document',
-  'dumbbell',
-  'flag',
-  'football',
-  'gallery',
-  'gallery-add',
-  'globe',
-  'graduation-cap',
-  'grid',
-  'heart',
-  'heart-pulse',
-  'home',
-  'id-card',
-  'info-circle',
-  'lightbulb',
-  'list',
-  'lock',
-  'logout',
-  'map-point',
-  'masks',
-  'more',
-  'pen',
-  'pencil',
-  'phone',
-  'plus',
-  'question-circle',
-  'reply',
-  'scale',
-  'shield',
-  'shirt',
-  'smartphone',
-  'star',
-  'sun',
-  'ticket',
-  'translate',
-  'trash',
-  'user',
-  'user-circle',
-  'user-plus',
-  'users',
-  'walking',
-  'wifi-off',
-] as const satisfies readonly IconName[];
 
 /** One icon as a plain list of paths, whatever fields that icon happens to use. */
 export function iconPaths(name: IconName, weight: IconWeight): readonly IconPath[] {

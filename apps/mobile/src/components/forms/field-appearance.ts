@@ -4,7 +4,7 @@ import { useWindowDimensions } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 /** Shared with the language/document choices; fields omit their fill and depth layer. */
-export const FIELD_SHAPE_CLASS_NAME = 'rounded-lg border';
+const FIELD_SHAPE_CLASS_NAME = 'rounded-lg border';
 const FIELD_CLASS_NAME = `${FIELD_SHAPE_CLASS_NAME} border-primary px-md py-sm`;
 const INVALID_FIELD_CLASS_NAME = `${FIELD_SHAPE_CLASS_NAME} border-error px-md py-sm`;
 

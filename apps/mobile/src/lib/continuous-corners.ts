@@ -21,7 +21,7 @@ import { StyleSheet, type StyleProp, type TextStyle, type ViewStyle } from 'reac
 // The literal is structurally assignable to both without widening either one.
 export const continuousCorners = { borderCurve: 'continuous' } as const;
 
-export function composeViewStyles(
+function composeViewStyles(
   first: StyleProp<ViewStyle>,
   second: StyleProp<ViewStyle>,
 ): StyleProp<ViewStyle> {

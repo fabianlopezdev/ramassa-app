@@ -41,7 +41,7 @@ interface ScreenEntranceProps {
   readonly children: ReactNode;
 }
 
-export function ScreenEntrance({ screenId, children }: ScreenEntranceProps) {
+function ScreenEntrance({ screenId, children }: ScreenEntranceProps) {
   // A screen inside a group: the group stands still and this screen moves.
   useOwnEntrance();
   const mode = useScreenEntrance(`route:${screenId}`, true);

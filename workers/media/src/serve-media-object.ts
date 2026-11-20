@@ -40,7 +40,7 @@ interface MediaObjectSummary {
 }
 
 /** The private object bucket: whole reads, and ranged reads once the size is known. */
-export interface RangedMediaObjectBucket {
+interface RangedMediaObjectBucket {
   head(key: string): Promise<MediaObjectSummary | null>;
   get(key: string, options?: { readonly range?: StoredByteRange }): Promise<MediaObject | null>;
 }

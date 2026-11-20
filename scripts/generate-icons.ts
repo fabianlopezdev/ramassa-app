@@ -302,7 +302,6 @@ function build(): Record<string, Record<string, IconPath[]>> {
 }
 
 function moduleSource(icons: Record<string, Record<string, IconPath[]>>): string {
-  const names = Object.keys(icons).sort();
   const weights = Object.keys(WEIGHTS).sort();
   return `// GENERATED from docs/design/icons/svg by scripts/generate-icons.ts.
 // Do not edit by hand: run \`bun run icons:gen\`.
@@ -331,7 +330,7 @@ export interface IconPath {
   readonly fillRule?: 'evenodd' | 'nonzero';
 }
 
-export const ICONS = ${JSON.stringify(icons, null, 2)} as const satisfies Record<
+const ICONS = ${JSON.stringify(icons, null, 2)} as const satisfies Record<
   string,
   Record<string, readonly IconPath[]>
 >;
@@ -341,8 +340,6 @@ export type IconName = keyof typeof ICONS;
 
 /** \`linear\` is the working weight; \`boldDuotone\` is for an icon that is the subject. */
 export type IconWeight = ${weights.map((weight) => `'${weight}'`).join(' | ')};
-
-export const ICON_NAMES = ${JSON.stringify(names)} as const satisfies readonly IconName[];
 
 /** One icon as a plain list of paths, whatever fields that icon happens to use. */
 export function iconPaths(name: IconName, weight: IconWeight): readonly IconPath[] {
