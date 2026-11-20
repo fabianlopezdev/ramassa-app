@@ -3474,6 +3474,42 @@ export type Database = {
           },
         ];
       };
+      list_visits: {
+        Row: {
+          list_key: string;
+          org_id: string;
+          user_id: string;
+          visited_at: string;
+        };
+        Insert: {
+          list_key: string;
+          org_id: string;
+          user_id: string;
+          visited_at?: string;
+        };
+        Update: {
+          list_key?: string;
+          org_id?: string;
+          user_id?: string;
+          visited_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'list_visits_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'list_visits_user_tenant_fkey';
+            columns: ['org_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       media_item_reads: {
         Row: {
           media_item_id: string;
@@ -7559,6 +7595,7 @@ export type Database = {
         Args: { p_conversation_id: string; p_message_id: string };
         Returns: undefined;
       };
+      mark_lists_seen: { Args: { p_list_keys: string[] }; Returns: undefined };
       mark_tab_items_seen: {
         Args: {
           p_article_ids?: string[];

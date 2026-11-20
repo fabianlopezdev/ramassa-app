@@ -7,10 +7,13 @@
 -- counts new services and new guides. Contacte adds a change the staff made to
 -- her mentoring request or to her suggestion.
 --
--- A thing is new until she opens that thing, the rule announcements follow
--- since RAPP-848. Opening a section, a tab or a list clears nothing. Her own
--- post, her mentoring request and her suggestion count again when something
--- happens after she last opened them.
+-- Two levels. What is published for everyone (posts, gallery items, stories,
+-- guides and services) raises a number until she has seen the list that shows
+-- its card, and keeps the word "Nou" on the card until she opens the thing.
+-- What is addressed to her (replies on her post, a staff change to her
+-- mentoring request or to her suggestion) keeps the number and the mark until
+-- she opens that thing, the rule announcements follow since RAPP-848; a later
+-- reply or change counts again.
 
 -- 1. The records ---------------------------------------------------------------------------------------------
 
@@ -95,6 +98,28 @@ create table public.feedback_submission_reads (
     references public.profiles (org_id, id) on delete cascade
 );
 
+-- The lists she has seen. A key names the list that shows a card: the forum,
+-- the gallery, the stories, the activities, Inici, or the services or guides
+-- of one category. `activities` and `home` are recorded for the app, which
+-- works their counts out itself.
+create table public.list_visits (
+  org_id uuid not null references public.organizations (id) on delete cascade,
+  user_id uuid not null,
+  list_key text not null,
+  visited_at timestamptz not null default now(),
+  primary key (user_id, list_key),
+  constraint list_visits_list_key_check check (
+    list_key in ('forum', 'gallery', 'stories', 'activities', 'home')
+    or list_key ~ '^(services|guides):[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+  ),
+  constraint list_visits_user_tenant_fkey
+    foreign key (org_id, user_id)
+    references public.profiles (org_id, id) on delete cascade
+);
+
+comment on table public.list_visits is
+  'When a person last saw each list that shows new things (RAPP-873).';
+
 comment on table public.forum_post_reads is
   'One row per forum post a person has opened; on her own post, when she last opened it (RAPP-873).';
 comment on table public.media_item_reads is
@@ -108,6 +133,8 @@ comment on table public.mentoring_request_reads is
 comment on table public.feedback_submission_reads is
   'When a person last opened each of her suggestions (RAPP-873).';
 
+create index list_visits_org_user_idx
+  on public.list_visits (org_id, user_id);
 create index forum_post_reads_user_idx
   on public.forum_post_reads (user_id, post_id);
 create index forum_post_reads_org_user_idx
@@ -143,6 +170,8 @@ create index feedback_submission_reads_org_user_idx
 create index feedback_submission_reads_org_submission_idx
   on public.feedback_submission_reads (org_id, submission_id);
 
+alter table public.list_visits enable row level security;
+alter table public.list_visits force row level security;
 alter table public.forum_post_reads enable row level security;
 alter table public.forum_post_reads force row level security;
 alter table public.media_item_reads enable row level security;
@@ -155,6 +184,13 @@ alter table public.mentoring_request_reads enable row level security;
 alter table public.mentoring_request_reads force row level security;
 alter table public.feedback_submission_reads enable row level security;
 alter table public.feedback_submission_reads force row level security;
+
+create policy list_visits_select_self
+  on public.list_visits for select to authenticated
+  using (
+    user_id = (select auth.uid())
+    and org_id = (select public.current_org_id())
+  );
 
 create policy forum_post_reads_select_self
   on public.forum_post_reads for select to authenticated
@@ -198,13 +234,16 @@ create policy feedback_submission_reads_select_self
     and org_id = (select public.current_org_id())
   );
 
--- Rows are written only by `mark_tab_items_seen`, never by a direct insert.
+-- Rows are written only by `mark_lists_seen` and `mark_tab_items_seen`, never
+-- by a direct insert.
+revoke all on table public.list_visits from public, anon, authenticated;
 revoke all on table public.forum_post_reads from public, anon, authenticated;
 revoke all on table public.media_item_reads from public, anon, authenticated;
 revoke all on table public.knowledge_article_reads from public, anon, authenticated;
 revoke all on table public.service_reads from public, anon, authenticated;
 revoke all on table public.mentoring_request_reads from public, anon, authenticated;
 revoke all on table public.feedback_submission_reads from public, anon, authenticated;
+grant select on table public.list_visits to authenticated;
 grant select on table public.forum_post_reads to authenticated;
 grant select on table public.media_item_reads to authenticated;
 grant select on table public.knowledge_article_reads to authenticated;
@@ -254,8 +293,10 @@ as $$
     where profile.id = (select auth.uid())
       and profile.org_id = (select public.current_org_id())
   ),
-  new_posts as (
-    select post.id, post.created_at
+  unopened_posts as (
+    select post.id, post.created_at,
+      (select visit.visited_at from public.list_visits as visit
+       where visit.user_id = actor.user_id and visit.list_key = 'forum') as list_seen_at
     from actor
     join public.forum_posts as post on post.org_id = actor.org_id
     where post.visibility = 'visible'
@@ -296,8 +337,10 @@ as $$
   -- A gallery item has no approval or publication time: it is visible to the
   -- other players from the moment it is uploaded, unless the team hides it, so
   -- `created_at` is the moment it became visible.
-  new_gallery_items as (
-    select item.id, item.created_at
+  unopened_gallery_items as (
+    select item.id, item.created_at,
+      (select visit.visited_at from public.list_visits as visit
+       where visit.user_id = actor.user_id and visit.list_key = 'gallery') as list_seen_at
     from actor
     join public.media_items as item on item.org_id = actor.org_id
     where item.moderation_state = 'visible'
@@ -315,8 +358,10 @@ as $$
   ),
   -- A story becomes visible at `published_at`, which the team sets when it
   -- approves the story.
-  new_stories as (
-    select article.id, article.published_at
+  unopened_stories as (
+    select article.id, article.published_at,
+      (select visit.visited_at from public.list_visits as visit
+       where visit.user_id = actor.user_id and visit.list_key = 'stories') as list_seen_at
     from actor
     join public.knowledge_articles as article on article.org_id = actor.org_id
     where article.content_type = 'participant_story'
@@ -334,8 +379,10 @@ as $$
     order by article.published_at desc, article.id desc
     limit 200
   ),
-  new_guides as (
-    select article.id, article.category_id, article.published_at
+  unopened_guides as (
+    select article.id, article.category_id, article.published_at,
+      (select visit.visited_at from public.list_visits as visit
+       where visit.user_id = actor.user_id and visit.list_key = 'guides:' || article.category_id::text) as list_seen_at
     from actor
     join public.knowledge_articles as article on article.org_id = actor.org_id
     where article.content_type <> 'participant_story'
@@ -352,8 +399,10 @@ as $$
   ),
   -- A service becomes visible at `published_at` (RAPP-360 made it the
   -- publication time the team sets or schedules).
-  new_services as (
-    select service.id, service.category_id, service.published_at
+  unopened_services as (
+    select service.id, service.category_id, service.published_at,
+      (select visit.visited_at from public.list_visits as visit
+       where visit.user_id = actor.user_id and visit.list_key = 'services:' || service.category_id::text) as list_seen_at
     from actor
     join public.services as service on service.org_id = actor.org_id
     where public.is_content_visible(service.status, service.published_at, service.expires_at)
@@ -411,15 +460,34 @@ as $$
     order by submission.updated_at desc, submission.id desc
     limit 200
   )
+  -- `unopened` drives the word "Nou" on a card: published for everyone, not
+  -- hers, and she has not opened it. `unseen` drives the numbers: the unopened
+  -- things that became visible after she last saw the list that shows their
+  -- card. Replies on her post, her mentoring and her suggestions count until
+  -- she opens them, whatever list she has seen.
   select jsonb_build_object(
     'since', coalesce(
       (select actor.since from actor),
       private.tab_news_started_at()
     ),
+    'list_seen_at', coalesce(
+      (select jsonb_object_agg(visit.list_key, visit.visited_at)
+       from actor
+       join public.list_visits as visit on visit.user_id = actor.user_id),
+      '{}'::jsonb
+    ),
     'forum', jsonb_build_object(
-      'new_post_ids', coalesce(
-        (select jsonb_agg(new_posts.id order by new_posts.created_at desc, new_posts.id desc)
-         from new_posts),
+      'unseen_post_ids', coalesce(
+        (select jsonb_agg(unopened_posts.id
+           order by unopened_posts.created_at desc, unopened_posts.id desc)
+         from unopened_posts
+         where unopened_posts.created_at > coalesce(unopened_posts.list_seen_at, '-infinity'::timestamptz)),
+        '[]'::jsonb
+      ),
+      'unopened_post_ids', coalesce(
+        (select jsonb_agg(unopened_posts.id
+           order by unopened_posts.created_at desc, unopened_posts.id desc)
+         from unopened_posts),
         '[]'::jsonb
       ),
       'new_replies', coalesce(
@@ -431,36 +499,66 @@ as $$
       )
     ),
     'gallery', jsonb_build_object(
-      'new_item_ids', coalesce(
-        (select jsonb_agg(new_gallery_items.id
-           order by new_gallery_items.created_at desc, new_gallery_items.id desc)
-         from new_gallery_items),
+      'unseen_item_ids', coalesce(
+        (select jsonb_agg(unopened_gallery_items.id
+           order by unopened_gallery_items.created_at desc, unopened_gallery_items.id desc)
+         from unopened_gallery_items
+         where unopened_gallery_items.created_at > coalesce(unopened_gallery_items.list_seen_at, '-infinity'::timestamptz)),
+        '[]'::jsonb
+      ),
+      'unopened_item_ids', coalesce(
+        (select jsonb_agg(unopened_gallery_items.id
+           order by unopened_gallery_items.created_at desc, unopened_gallery_items.id desc)
+         from unopened_gallery_items),
         '[]'::jsonb
       )
     ),
     'stories', jsonb_build_object(
-      'new_article_ids', coalesce(
-        (select jsonb_agg(new_stories.id
-           order by new_stories.published_at desc, new_stories.id desc)
-         from new_stories),
+      'unseen_article_ids', coalesce(
+        (select jsonb_agg(unopened_stories.id
+           order by unopened_stories.published_at desc, unopened_stories.id desc)
+         from unopened_stories
+         where unopened_stories.published_at > coalesce(unopened_stories.list_seen_at, '-infinity'::timestamptz)),
+        '[]'::jsonb
+      ),
+      'unopened_article_ids', coalesce(
+        (select jsonb_agg(unopened_stories.id
+           order by unopened_stories.published_at desc, unopened_stories.id desc)
+         from unopened_stories),
         '[]'::jsonb
       )
     ),
     'guides', jsonb_build_object(
-      'new_articles', coalesce(
+      'unseen_articles', coalesce(
         (select jsonb_agg(
-           jsonb_build_object('id', new_guides.id, 'category_id', new_guides.category_id)
-           order by new_guides.published_at desc, new_guides.id desc)
-         from new_guides),
+           jsonb_build_object('id', unopened_guides.id, 'category_id', unopened_guides.category_id)
+           order by unopened_guides.published_at desc, unopened_guides.id desc)
+         from unopened_guides
+         where unopened_guides.published_at > coalesce(unopened_guides.list_seen_at, '-infinity'::timestamptz)),
+        '[]'::jsonb
+      ),
+      'unopened_articles', coalesce(
+        (select jsonb_agg(
+           jsonb_build_object('id', unopened_guides.id, 'category_id', unopened_guides.category_id)
+           order by unopened_guides.published_at desc, unopened_guides.id desc)
+         from unopened_guides),
         '[]'::jsonb
       )
     ),
     'services', jsonb_build_object(
-      'new_services', coalesce(
+      'unseen_services', coalesce(
         (select jsonb_agg(
-           jsonb_build_object('id', new_services.id, 'category_id', new_services.category_id)
-           order by new_services.published_at desc, new_services.id desc)
-         from new_services),
+           jsonb_build_object('id', unopened_services.id, 'category_id', unopened_services.category_id)
+           order by unopened_services.published_at desc, unopened_services.id desc)
+         from unopened_services
+         where unopened_services.published_at > coalesce(unopened_services.list_seen_at, '-infinity'::timestamptz)),
+        '[]'::jsonb
+      ),
+      'unopened_services', coalesce(
+        (select jsonb_agg(
+           jsonb_build_object('id', unopened_services.id, 'category_id', unopened_services.category_id)
+           order by unopened_services.published_at desc, unopened_services.id desc)
+         from unopened_services),
         '[]'::jsonb
       )
     ),
@@ -636,9 +734,84 @@ grant execute on function private.mark_tab_items_seen(uuid[], uuid[], uuid[], uu
 grant execute on function public.mark_tab_items_seen(uuid[], uuid[], uuid[], uuid[], uuid[], uuid[])
   to authenticated;
 
--- 5. What happens to these rows when she asks to be erased -------------------------------------------------
+-- 5. Seeing a list ------------------------------------------------------------------------------------------
 
--- The body of `20261118130000_onboarding_form_chains_in_erasure_registry.sql`, plus the six new tables.
+-- A list of services or guides is one category of her organization; any
+-- other key is rejected.
+create function private.mark_lists_seen(p_list_keys text[])
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  actor uuid := (select auth.uid());
+  actor_org uuid := (select public.current_org_id());
+  max_keys constant integer := 50;
+  key_to_mark text;
+  list_category_id uuid;
+begin
+  if actor is null or actor_org is null then
+    raise exception 'tab news access denied' using errcode = 'insufficient_privilege';
+  end if;
+
+  if coalesce(cardinality(p_list_keys), 0) > max_keys then
+    raise exception 'too many lists marked as seen' using errcode = 'program_limit_exceeded';
+  end if;
+
+  foreach key_to_mark in array coalesce(p_list_keys, '{}'::text[]) loop
+    if key_to_mark is null then
+      raise invalid_parameter_value using message = 'unknown list';
+    elsif key_to_mark in ('forum', 'gallery', 'stories', 'activities', 'home') then
+      null;
+    elsif key_to_mark ~ '^services:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then
+      list_category_id := substr(key_to_mark, length('services:') + 1)::uuid;
+      if not exists (
+        select 1 from public.service_categories as category
+        where category.id = list_category_id and category.org_id = actor_org
+      ) then
+        raise invalid_parameter_value using message = 'unknown list';
+      end if;
+    elsif key_to_mark ~ '^guides:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then
+      list_category_id := substr(key_to_mark, length('guides:') + 1)::uuid;
+      if not exists (
+        select 1 from public.knowledge_categories as category
+        where category.id = list_category_id and category.org_id = actor_org
+      ) then
+        raise invalid_parameter_value using message = 'unknown list';
+      end if;
+    else
+      raise invalid_parameter_value using message = 'unknown list';
+    end if;
+
+    insert into public.list_visits (org_id, user_id, list_key, visited_at)
+    values (actor_org, actor, key_to_mark, now())
+    on conflict (user_id, list_key) do update
+      set visited_at = excluded.visited_at, org_id = excluded.org_id;
+  end loop;
+end;
+$$;
+
+create function public.mark_lists_seen(p_list_keys text[])
+returns void
+language sql
+security invoker
+set search_path = ''
+as $$
+  select private.mark_lists_seen(p_list_keys);
+$$;
+
+comment on function public.mark_lists_seen(text[]) is
+  'Records that the signed-in person has seen these lists, so their numbers clear; the cards keep "Nou" until she opens them (RAPP-873).';
+
+revoke all on function private.mark_lists_seen(text[]) from public, anon, authenticated;
+revoke all on function public.mark_lists_seen(text[]) from public, anon, authenticated;
+grant execute on function private.mark_lists_seen(text[]) to authenticated;
+grant execute on function public.mark_lists_seen(text[]) to authenticated;
+
+-- 6. What happens to these rows when she asks to be erased -------------------------------------------------
+
+-- The body of `20261118130000_onboarding_form_chains_in_erasure_registry.sql`, plus the seven new tables.
 CREATE OR REPLACE FUNCTION public.personal_data_disposition()
  RETURNS TABLE(table_name text, participant_column text, disposition text, reason text)
  LANGUAGE sql
@@ -749,6 +922,7 @@ AS $function$
     ('announcement_reads', 'user_id', 'purge', 'The announcements she has seen.'),
     ('event_reads', 'user_id', 'purge', 'The activities she has opened.'),
     ('onboarding_form_chains', null, 'not_personal', 'The order of the forms after Onboarding, set by the team.'),
+    ('list_visits', 'user_id', 'purge', 'When she last saw each list of posts, photos, stories, activities, services or guides.'),
     ('forum_post_reads', 'user_id', 'purge', 'The forum posts she has opened, and when she last opened her own.'),
     ('media_item_reads', 'user_id', 'purge', 'The gallery items she has opened.'),
     ('knowledge_article_reads', 'user_id', 'purge', 'The guides and stories she has opened.'),
