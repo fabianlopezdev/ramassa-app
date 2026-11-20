@@ -36,11 +36,12 @@ import { tokens } from '@ramassa/shared/tokens';
  * lines keeps the row edge to edge with equal heights.
  *
  * An option's count is the circle cards and filter chips use for one
- * (RAPP-873), on the option's top edge near the end, from `EdgeMarks`. While
- * any option has one, every option keeps the room above it and so does the
- * edge under the bar, so the faces stay level and sit on their edge; the bar
- * also keeps room above itself, so the circle is never cut off by what holds
- * it.
+ * (RAPP-873), on the option's top edge near the end, from `EdgeMarks`. The
+ * circles are drawn in a row laid over the bar, one cell per option, so the
+ * options keep the layout they have without a count: wrapping each option
+ * made the bar lose the height of an icon above its label. While any option
+ * has a count, the bar keeps room above itself, so the circle is never cut
+ * off by what holds it.
  */
 export interface SegmentedControlOption<Key extends string> {
   readonly key: Key;
@@ -81,8 +82,6 @@ interface SegmentedControlOptionViewProps<Key extends string> extends SegmentedC
   readonly isLast: boolean;
   /** The icon above the label, for a bar of three or more options. */
   readonly isStacked: boolean;
-  /** Some option has a count, so this one keeps the room above too. */
-  readonly hasMarks: boolean;
   /** The height of a raised choice, with the bar's outer corners where this option has them. */
   readonly faceStyle: StyleProp<ViewStyle>;
   /** Those outer corners alone, so the yellow fill keeps inside the border. */
@@ -95,23 +94,20 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
   optionKey,
   label,
   accessibilityLabel,
-  count,
   symbol,
   testID,
   isSelected,
   isLast,
   isStacked,
-  hasMarks,
   faceStyle,
   cornerStyle,
   languageFontClass,
   onSelect,
 }: Omit<SegmentedControlOptionViewProps<Key>, 'key'> & { readonly optionKey: Key }) {
   const handlePress = useCallback(() => onSelect(optionKey), [onSelect, optionKey]);
-  const countLabel = count === undefined ? null : formatUnreadBadge(count);
   const contentColor = isSelected ? tokens.colors.neutral[900] : tokens.colors.primary.dark;
   const labelTrim = useCapToBaselineTrim();
-  const option = (
+  return (
     <PressableDepth
       testID={testID}
       accessibilityRole="radio"
@@ -157,12 +153,6 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
         </Text>
       </View>
     </PressableDepth>
-  );
-  if (!hasMarks) return option;
-  return (
-    <EdgeMarks count={countLabel} fill>
-      {option}
-    </EdgeMarks>
   );
 }) as <Key extends string>(
   props: Omit<SegmentedControlOptionViewProps<Key>, 'key'> & { readonly optionKey: Key },
@@ -242,32 +232,18 @@ export function SegmentedControl<Key extends string>({
       style={raisedSurfaceWrapperStyle}
       className="relative flex-row"
     >
-      {hasMarks ? (
-        // The faces sit lower by the room `EdgeMarks` keeps above them, so the
-        // edge under the bar starts lower by the same room.
-        <View
-          pointerEvents="none"
-          accessible={false}
-          className="absolute inset-x-0 bottom-0 top-sm"
-        >
-          <RaisedSurfaceEdge />
-        </View>
-      ) : (
-        <RaisedSurfaceEdge />
-      )}
+      <RaisedSurfaceEdge />
       {options.map((option, index) => (
         <SegmentedControlOptionView
           key={option.key}
           optionKey={option.key}
           label={option.label}
           accessibilityLabel={option.accessibilityLabel}
-          count={option.count}
           symbol={option.symbol}
           testID={option.testID}
           isSelected={selected === option.key}
           isLast={index === lastIndex}
           isStacked={isStacked}
-          hasMarks={hasMarks}
           {...positionStyles[optionPosition(index, lastIndex)]}
           languageFontClass={languageFontClass}
           onSelect={onSelect}
@@ -278,6 +254,29 @@ export function SegmentedControl<Key extends string>({
   if (!hasMarks) return bar;
   // The circle rises above the room `EdgeMarks` keeps, and a scroll view or
   // the screen above would cut it, so the bar keeps the rest, as the filter
-  // chips do.
-  return <View className="pt-sm">{bar}</View>;
+  // chips do. The inner room is the one `EdgeMarks` keeps in each cell, so a
+  // cell's top edge line is the bar's top edge.
+  return (
+    <View className="pt-sm">
+      <View className="relative pt-sm">
+        {bar}
+        <View
+          pointerEvents="none"
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          className="absolute inset-0 flex-row"
+        >
+          {options.map((option) => (
+            <EdgeMarks
+              key={option.key}
+              count={option.count === undefined ? null : formatUnreadBadge(option.count)}
+              fill
+            >
+              <View className="flex-1" />
+            </EdgeMarks>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
 }
