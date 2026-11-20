@@ -28,6 +28,10 @@ const PRESS_IN_TIMING = { duration: motionTokens.depthPress.inMs } as const;
 const PRESS_OUT_TIMING = { duration: motionTokens.depthPress.outMs } as const;
 const REDUCED_MOTION_TIMING = { duration: 0 } as const;
 
+/** The roles a browser reads a checked state for; a switch is one (RAPP-891). */
+const hasCheckedState = (role: AccessibilityRole) =>
+  role === 'radio' || role === 'checkbox' || role === 'switch';
+
 interface PressableDepthProps {
   readonly children: ReactNode;
   readonly shadow: ReactNode;
@@ -117,9 +121,7 @@ function ModalPressableDepth({
       accessibilityState={
         isSelected === undefined ? undefined : { selected: isSelected, checked: isSelected }
       }
-      aria-checked={
-        accessibilityRole === 'radio' || accessibilityRole === 'checkbox' ? isSelected : undefined
-      }
+      aria-checked={hasCheckedState(accessibilityRole) ? isSelected : undefined}
       onPress={handlePress}
       className={`${className ?? ''} active:opacity-90`}
       style={style}
@@ -214,9 +216,7 @@ function GesturePressableDepth({
         accessibilityState={
           isSelected === undefined ? undefined : { selected: isSelected, checked: isSelected }
         }
-        aria-checked={
-          accessibilityRole === 'radio' || accessibilityRole === 'checkbox' ? isSelected : undefined
-        }
+        aria-checked={hasCheckedState(accessibilityRole) ? isSelected : undefined}
         className={className}
         style={style}
       >

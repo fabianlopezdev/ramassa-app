@@ -52,14 +52,18 @@ describe('Phase 6 accessibility and i18n contract', () => {
     const upload = await readMobileSource('app/(app)/gallery/upload.tsx');
     const composer = await readMobileSource('app/(app)/forum/create.tsx');
 
+    // The consent is the shared switch card (RAPP-891): the card is the
+    // switch and the tap target, and the drawn switch is hidden from readers.
+    const switchCard = await readMobileSource('components/forms/switch-card.tsx');
     expect(upload).toMatch(
-      /<Switch[\s\S]*?testID="gallery-consent-acknowledgment"[\s\S]*?style=\{styles\.consentSwitch\}[\s\S]*?accessibilityRole=\{consentSwitchRole\}[\s\S]*?accessibilityLabel=\{t\('gallery:consentReminder'\)\}[\s\S]*?accessibilityState=/,
+      /<SwitchCard[\s\S]*?testID="gallery-consent-acknowledgment"[\s\S]*?label=\{t\('gallery:consentReminder'\)\}[\s\S]*?value=\{consent\}/,
     );
-    expect(upload).toContain('IOS_SWITCH_SCALE');
-    expect(upload).toContain("Platform.OS === 'web' ? 'none' : 'switch'");
-    expect(upload).toContain('style={styles.consentSwitch}');
-    expect(upload).toContain('minHeight: tokens.tapTarget.min');
-    expect(upload).toContain('minWidth: tokens.tapTarget.min');
+    expect(upload).not.toContain('IOS_SWITCH_SCALE');
+    expect(switchCard).toContain('accessibilityRole="switch"');
+    expect(switchCard).toContain('isSelected={value}');
+    expect(switchCard).toMatch(
+      /pointerEvents="none"[\s\S]*?accessibilityElementsHidden[\s\S]*?<Switch/,
+    );
     expect(upload).toMatch(
       /accessibilityRole="progressbar"[\s\S]*?accessibilityLabel=\{uploadProgressLabel\}/,
     );

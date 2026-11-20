@@ -2,12 +2,12 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { SwitchCard } from '@/components/forms/switch-card';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
 import { uploadGalleryMedia } from '@/lib/gallery-upload';
-import { playHaptic } from '@/lib/haptics/haptics';
 import {
   initialMediaUploadState,
   mediaUploadReducer,
@@ -26,33 +26,20 @@ import { useRouter, type Href } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useCallback, useMemo, useReducer, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, ScrollView, StyleSheet, Switch, Text, View, type TextStyle } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, type TextStyle } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import { MEDIA_CAPTION_MAX_LENGTH, type MediaPrivacy } from '@ramassa/shared/media';
 import { uploadContentTypeSchema } from '@ramassa/shared/schemas';
-import { tokens } from '@ramassa/shared/tokens';
 
 const IMAGE_PICKER_ORIGINAL_QUALITY = 1;
 const PROGRESS_PERCENT_MIN = 0;
 const PROGRESS_PERCENT_MAX = 100;
 const GALLERY_UPLOAD_PREVIEW_ASPECT_RATIO = 4 / 3;
 const MEDIA_PRIVACY_OPTIONS: readonly MediaPrivacy[] = ['community', 'staff_only'];
-const IOS_SWITCH_VISUAL_HEIGHT = 28;
-const IOS_SWITCH_SCALE = tokens.tapTarget.min / IOS_SWITCH_VISUAL_HEIGHT;
-const uncheckedSwitchAccessibilityState = { checked: false } as const;
-const checkedSwitchAccessibilityState = { checked: true } as const;
-const consentSwitchRole = Platform.OS === 'web' ? 'none' : 'switch';
 const mixedDirectionInputStyle: TextStyle = { writingDirection: 'auto' };
 const styles = StyleSheet.create({
   preview: { width: '100%', aspectRatio: GALLERY_UPLOAD_PREVIEW_ASPECT_RATIO },
-  consentSwitch: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: tokens.tapTarget.min,
-    minWidth: tokens.tapTarget.min,
-    transform: Platform.OS === 'ios' ? [{ scale: IOS_SWITCH_SCALE }] : undefined,
-  },
 });
 
 export default function GalleryUploadScreen() {
@@ -107,10 +94,7 @@ export default function GalleryUploadScreen() {
     [languageFontClass, privacy, privacyActions, t],
   );
 
-  const toggleConsent = useCallback(() => {
-    playHaptic('selection');
-    setConsent((current) => !current);
-  }, []);
+  const toggleConsent = useCallback(() => setConsent((current) => !current), []);
 
   const pick = useCallback(async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -283,22 +267,12 @@ export default function GalleryUploadScreen() {
           >
             {MEDIA_PRIVACY_OPTIONS.map(renderPrivacyOption)}
           </View>
-          <View className="flex-row items-center gap-md">
-            <Switch
-              testID="gallery-consent-acknowledgment"
-              style={styles.consentSwitch}
-              value={consent}
-              onValueChange={toggleConsent}
-              accessibilityRole={consentSwitchRole}
-              accessibilityLabel={t('gallery:consentReminder')}
-              accessibilityState={
-                consent ? checkedSwitchAccessibilityState : uncheckedSwitchAccessibilityState
-              }
-            />
-            <Text className={`flex-1 text-start text-md text-neutral-700 ${languageFontClass}`}>
-              {t('gallery:consentReminder')}
-            </Text>
-          </View>
+          <SwitchCard
+            testID="gallery-consent-acknowledgment"
+            label={t('gallery:consentReminder')}
+            value={consent}
+            onToggle={toggleConsent}
+          />
           {state.status === 'uploading' ? (
             <View
               testID="gallery-upload-progress"
