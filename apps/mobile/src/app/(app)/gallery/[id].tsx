@@ -7,64 +7,30 @@ import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ForumFlagButton } from '@/components/forum/forum-flag-button';
 import { ForumFlagDialog } from '@/components/forum/forum-flag-dialog';
+import { GalleryPhotoStage, GalleryVideoStage } from '@/components/gallery/gallery-media-stage';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { containedPictureCornerOffsets } from '@/lib/contained-picture-corner';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { useDeleteGalleryItem, useGalleryItem, useSetGalleryPrivacy } from '@/lib/player-gallery';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { Image, type ImageLoadEventData } from 'expo-image';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useVideoPlayer, VideoView } from 'expo-video';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  type LayoutChangeEvent,
-  type ViewStyle,
-} from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import type { ForumFlagInput } from '@ramassa/shared/forum';
 import type { MediaPrivacy } from '@ramassa/shared/media';
-import { tokens } from '@ramassa/shared/tokens';
 import { buildMediaObjectUrl } from '@ramassa/shared/upload-client';
 
-const GALLERY_MEDIA_ASPECT_RATIO = 4 / 3;
-// The report flag sits on the photo, this far in from its bottom-end corner, so
-// its whole raised edge stays inside the picture (RAPP-892).
-const FLAG_INSET_ON_PICTURE = tokens.spacing.sm;
 const MEDIA_PRIVACY_OPTIONS: readonly MediaPrivacy[] = ['community', 'staff_only'];
 const styles = StyleSheet.create({
-  media: {
-    width: '100%',
-    aspectRatio: GALLERY_MEDIA_ASPECT_RATIO,
-    backgroundColor: tokens.colors.neutral[900],
-  },
   caption: { writingDirection: 'auto' },
 });
-
-/** The flag's place on the photo, once the frame's width and the photo's shape are known. */
-function flagOnPictureStyle(
-  frameWidth: number | null,
-  pictureAspectRatio: number | null,
-): ViewStyle | null {
-  if (frameWidth === null || pictureAspectRatio === null) return null;
-  const { end, bottom } = containedPictureCornerOffsets({
-    frameWidth,
-    frameAspectRatio: GALLERY_MEDIA_ASPECT_RATIO,
-    pictureAspectRatio,
-    inset: FLAG_INSET_ON_PICTURE,
-  });
-  return { position: 'absolute', end, bottom };
-}
 
 export default function GalleryItemScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -84,26 +50,17 @@ export default function GalleryItemScreen() {
     ForumFlagInput,
     'targetType' | 'targetId'
   > | null>(null);
-  // The photo is contained in a fixed frame, so the flag waits for the frame's
-  // width and the photo's own shape to find the photo's corner. A photo that
-  // fails to load is taken as filling the frame.
-  const [mediaFrameWidth, setMediaFrameWidth] = useState<number | null>(null);
-  const [pictureAspectRatio, setPictureAspectRatio] = useState<number | null>(null);
-  const measureMediaFrame = useCallback(
-    (event: LayoutChangeEvent) => setMediaFrameWidth(event.nativeEvent.layout.width),
+  // The media may be as tall as the part of the screen the page scrolls in,
+  // short of the home indicator, so a title at its bottom edge stays clear of it.
+  const [pageHeight, setPageHeight] = useState<number | null>(null);
+  const measurePage = useCallback(
+    (event: LayoutChangeEvent) => setPageHeight(event.nativeEvent.layout.height),
     [],
   );
-  const recordPictureShape = useCallback(({ source }: ImageLoadEventData) => {
-    if (source.width > 0 && source.height > 0) setPictureAspectRatio(source.width / source.height);
-  }, []);
-  const fillFrameOnPictureError = useCallback(
-    () => setPictureAspectRatio(GALLERY_MEDIA_ASPECT_RATIO),
-    [],
-  );
-  const flagOnPicture = useMemo(
-    () => flagOnPictureStyle(mediaFrameWidth, pictureAspectRatio),
-    [mediaFrameWidth, pictureAspectRatio],
-  );
+  const { bottom: homeIndicatorHeight } = useSafeAreaInsets();
+  const mediaMaxHeight = pageHeight === null ? null : pageHeight - homeIndicatorHeight;
+  // A long title shows three lines on the media; the whole text then goes under it.
+  const [isTitleCut, setIsTitleCut] = useState(false);
   const item = query.data;
   const accessToken = session?.access_token;
   const canManage =
@@ -130,7 +87,6 @@ export default function GalleryItemScreen() {
         : { uri: videoUri, headers: { authorization: `Bearer ${accessToken}` } },
     [accessToken, videoUri],
   );
-  const videoPlayer = useVideoPlayer(videoSource);
   const privacyActions = useMemo<Record<MediaPrivacy, () => void>>(
     () => ({
       community: () => mutatePrivacy('community'),
@@ -187,18 +143,21 @@ export default function GalleryItemScreen() {
       <NativeScreenHeader surface="white" />
       <ScrollView
         className="flex-1 bg-white"
-        contentContainerClassName="grow px-lg py-lg"
+        contentContainerClassName="grow pb-lg"
         contentInsetAdjustmentBehavior="automatic"
+        onLayout={measurePage}
       >
         <PageWidth className="gap-lg">
           {item === undefined && !isOnline ? (
-            <AnnouncementEmptyState
-              title={t('gallery:offlineEmptyTitle')}
-              body={t('gallery:offlineEmptyBody')}
-              languageFontClass={languageFontClass}
-            />
+            <View className="px-lg pt-lg">
+              <AnnouncementEmptyState
+                title={t('gallery:offlineEmptyTitle')}
+                body={t('gallery:offlineEmptyBody')}
+                languageFontClass={languageFontClass}
+              />
+            </View>
           ) : item === undefined ? (
-            <View testID="gallery-detail-load-error" className="gap-md py-xl">
+            <View testID="gallery-detail-load-error" className="gap-md px-lg py-xl">
               <Text
                 selectable
                 accessibilityRole="alert"
@@ -216,89 +175,85 @@ export default function GalleryItemScreen() {
               />
             </View>
           ) : (
-            <View className="gap-lg">
-              {isPlayableVideo ? (
-                <VideoView
-                  player={videoPlayer}
-                  nativeControls
+            <>
+              {/* The photo or video runs from edge to edge; the text under it
+                  keeps the screen's side margins (RAPP-897). */}
+              {isPlayableVideo && videoSource !== null ? (
+                <GalleryVideoStage
+                  source={videoSource}
                   accessibilityLabel={
                     item.caption ?? t('gallery:mediaBy', { name: item.uploader_first_name })
                   }
-                  contentFit="contain"
-                  style={styles.media}
+                  title={item.caption}
+                  fontClass={languageFontClass}
+                  maxHeight={mediaMaxHeight}
+                  onTitleCutChange={setIsTitleCut}
                 />
               ) : imageSource === null ? null : (
-                <View onLayout={measureMediaFrame}>
-                  <Image
-                    source={imageSource}
-                    accessibilityLabel={
-                      item.caption ?? t('gallery:mediaBy', { name: item.uploader_first_name })
-                    }
-                    cachePolicy="memory-disk"
-                    contentFit="contain"
-                    style={styles.media}
-                    onLoad={recordPictureShape}
-                    onError={fillFrameOnPictureError}
-                  />
-                  {canManage || flagOnPicture === null ? null : (
-                    <View style={flagOnPicture}>
-                      <ForumFlagButton
-                        testID="gallery-flag"
-                        accessibilityLabel={t('gallery:flag')}
-                        onPress={flagMedia}
-                      />
-                    </View>
-                  )}
-                </View>
+                <GalleryPhotoStage
+                  source={imageSource}
+                  accessibilityLabel={
+                    item.caption ?? t('gallery:mediaBy', { name: item.uploader_first_name })
+                  }
+                  title={item.caption}
+                  fontClass={languageFontClass}
+                  maxHeight={mediaMaxHeight}
+                  onTitleCutChange={setIsTitleCut}
+                  flagAccessibilityLabel={canManage ? null : t('gallery:flag')}
+                  onFlag={flagMedia}
+                />
               )}
-              {/* The player's own controls cover the bottom of a video, so its
+              <View className="gap-lg px-lg">
+                {/* The player's own controls cover the bottom of a video, so its
                   flag ends the line of who shared it, under the video (RAPP-892). */}
-              {isPlayableVideo && !canManage ? (
-                <View className="flex-row items-center gap-sm">
-                  <Text
-                    className={`flex-1 text-start text-sm text-neutral-600 ${languageFontClass}`}
-                  >
+                {isPlayableVideo && !canManage ? (
+                  <View className="flex-row items-center gap-sm">
+                    <Text
+                      className={`flex-1 text-start text-sm text-neutral-600 ${languageFontClass}`}
+                    >
+                      {t('gallery:mediaBy', { name: item.uploader_first_name })}
+                    </Text>
+                    <ForumFlagButton
+                      testID="gallery-flag"
+                      accessibilityLabel={t('gallery:flag')}
+                      onPress={flagMedia}
+                    />
+                  </View>
+                ) : (
+                  <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
                     {t('gallery:mediaBy', { name: item.uploader_first_name })}
                   </Text>
-                  <ForumFlagButton
-                    testID="gallery-flag"
-                    accessibilityLabel={t('gallery:flag')}
-                    onPress={flagMedia}
+                )}
+                {item.caption === null || !isTitleCut ? null : (
+                  <Text
+                    testID="gallery-full-title"
+                    style={styles.caption}
+                    className={`text-start text-lg text-neutral-900 ${languageFontClass}`}
+                  >
+                    {item.caption}
+                  </Text>
+                )}
+                {canManage ? (
+                  <View
+                    testID="gallery-privacy-picker"
+                    accessibilityRole="radiogroup"
+                    accessibilityLabel={t('gallery:privacy')}
+                    className="gap-sm"
+                  >
+                    {MEDIA_PRIVACY_OPTIONS.map(renderPrivacyOption)}
+                  </View>
+                ) : null}
+                {canManage ? (
+                  <RaisedActionButton
+                    testID="gallery-delete"
+                    tone="danger"
+                    label={t('gallery:delete')}
+                    onPress={confirmDelete}
+                    isDisabled={deleteMutation.isPending}
                   />
-                </View>
-              ) : (
-                <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-                  {t('gallery:mediaBy', { name: item.uploader_first_name })}
-                </Text>
-              )}
-              {item.caption === null ? null : (
-                <Text
-                  style={styles.caption}
-                  className={`text-start text-lg text-neutral-900 ${languageFontClass}`}
-                >
-                  {item.caption}
-                </Text>
-              )}
-              {canManage ? (
-                <View
-                  testID="gallery-privacy-picker"
-                  accessibilityRole="radiogroup"
-                  accessibilityLabel={t('gallery:privacy')}
-                  className="gap-sm"
-                >
-                  {MEDIA_PRIVACY_OPTIONS.map(renderPrivacyOption)}
-                </View>
-              ) : null}
-              {canManage ? (
-                <RaisedActionButton
-                  testID="gallery-delete"
-                  tone="danger"
-                  label={t('gallery:delete')}
-                  onPress={confirmDelete}
-                  isDisabled={deleteMutation.isPending}
-                />
-              ) : null}
-            </View>
+                ) : null}
+              </View>
+            </>
           )}
         </PageWidth>
         <ForumFlagDialog target={flagTarget} onClose={closeFlagDialog} onConfirmed={confirmFlag} />
