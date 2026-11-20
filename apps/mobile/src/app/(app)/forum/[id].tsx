@@ -24,6 +24,7 @@ import {
   useOwnForumPostingStatus,
 } from '@/lib/player-forum';
 import { mobileClientEnv } from '@/lib/supabase';
+import { useForumPostWash } from '@/lib/use-forum-post-wash';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { Image } from 'expo-image';
@@ -91,6 +92,8 @@ export default function ForumPostDetailScreen() {
   } | null>(null);
   const insets = useSafeAreaInsets();
   const post = postQuery.data;
+  // The post opens onto the wash of its category's colour (RAPP-893).
+  const { wash, screenStyle } = useForumPostWash(post?.category_id, styles.screen);
   const isOwnPost =
     post !== undefined && post.author_id === user?.id && post.visibility === 'visible';
   const mutationError = createReply.error ?? editPost.error ?? deletePost.error;
@@ -242,13 +245,13 @@ export default function ForumPostDetailScreen() {
         ) : null
       }
     >
-      <NativeScreenHeader title={t('forum:detailTitle')} />
+      <NativeScreenHeader title={t('forum:detailTitle')} backgroundColor={wash} />
       <FlashList
         testID="forum-detail-screen"
         data={repliesQuery.data ?? EMPTY_REPLIES}
         renderItem={renderReply}
         keyExtractor={replyKeyExtractor}
-        style={styles.screen}
+        style={screenStyle}
         contentContainerStyle={contentStyle}
         contentInsetAdjustmentBehavior="automatic"
         keyboardDismissMode="on-drag"
