@@ -15,10 +15,10 @@ const styles = StyleSheet.create({
 });
 
 /**
- * The word on a photo new to her (RAPP-873), at its top start corner, the way
- * the team's gallery marks a video over its photo. It is not read out and
- * takes no touch: the tile's own label carries the word. Its own component,
- * so a tile without the word looks up no font.
+ * The word on a photo new to her (RAPP-873), at its top start corner, where
+ * the team's gallery places its mark over a photo, in the colour every "Nou"
+ * has. It is not read out and takes no touch: the tile's own label carries
+ * the word. Its own component, so a tile without the word looks up no font.
  */
 function GalleryTileUnseenMark({ label }: { readonly label: string }) {
   const languageFontClass = useLanguageFontClass();
@@ -29,7 +29,7 @@ function GalleryTileUnseenMark({ label }: { readonly label: string }) {
       importantForAccessibility="no-hide-descendants"
       className="absolute start-xs top-xs"
     >
-      <Badge label={label} tone="overlay" languageFontClass={languageFontClass} />
+      <Badge label={label} tone="brand" languageFontClass={languageFontClass} />
     </View>
   );
 }
