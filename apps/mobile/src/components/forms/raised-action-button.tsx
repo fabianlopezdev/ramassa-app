@@ -58,7 +58,7 @@ export function RaisedActionButton({
   /** An icon before the words. */
   readonly icon?: IconName;
   readonly tone?: keyof typeof toneStyles;
-  /** While its action runs, a press does nothing. */
+  /** While its action runs, or until it may run, a press does nothing and the button dims. */
   readonly isDisabled?: boolean;
 }) {
   const fontClass = useLanguageFontClass();
@@ -73,7 +73,7 @@ export function RaisedActionButton({
       accessibilityRole={accessibilityRole}
       onPress={handlePress}
       testID={testID}
-      className={isWordSized ? 'self-end' : undefined}
+      className={`${isWordSized ? 'self-end' : ''} ${isDisabled ? 'opacity-50' : ''}`}
       paddingClassName={isWordSized ? 'px-md' : undefined}
       rowStyle={size === 'full' ? undefined : wordSizedFaceStyles[size]}
       contentClassName="flex-row items-center justify-center gap-sm"

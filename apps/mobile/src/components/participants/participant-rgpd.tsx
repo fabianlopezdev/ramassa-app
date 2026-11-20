@@ -14,7 +14,6 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ScreenSection } from '@/components/layout/screen-section';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useParticipantDeletionRequest, useParticipantRgpdActions } from '@/lib/rgpd';
@@ -152,29 +151,17 @@ function DestructiveSheet({
               <FailureNotice code={failure} message={t(getErrorMessageKey(failure))} />
             )}
             <View className="flex-row flex-wrap gap-sm">
-              <PressableScale
+              <RaisedActionButton
                 testID="rgpd-confirm"
-                accessibilityRole="button"
-                accessibilityLabel={t(isErase ? 'eraseAction' : 'anonymizeAction')}
-                onPress={confirm}
-                isBusy={mutation.isPending}
-                isDisabled={!isTyped}
-                haptic="tapLight"
-                style={continuousCorners}
-                className={`min-h-recommended items-center justify-center rounded-md px-lg ${
-                  isTyped ? 'bg-error' : 'bg-neutral-300'
-                }`}
-              >
-                <Text
-                  className={`text-center text-md font-bold ${
-                    isTyped ? 'text-white' : 'text-neutral-700'
-                  } ${fontClass}`}
-                >
-                  {mutation.isPending
+                tone="danger"
+                label={
+                  mutation.isPending
                     ? t('workingLabel')
-                    : t(isErase ? 'eraseAction' : 'anonymizeAction')}
-                </Text>
-              </PressableScale>
+                    : t(isErase ? 'eraseAction' : 'anonymizeAction')
+                }
+                onPress={confirm}
+                isDisabled={!isTyped || mutation.isPending}
+              />
               <RaisedActionButton
                 testID="rgpd-cancel"
                 label={t('profile:cancelAction')}

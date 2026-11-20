@@ -8,11 +8,11 @@
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { Badge } from '@/components/layout/badge';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { nextFeedbackStatuses } from '@/lib/feedback-status';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -125,11 +125,11 @@ function SubmissionCard({
       )}
       <View className="flex-row flex-wrap gap-sm">
         {nextFeedbackStatuses(submission.status).map((status) => (
-          <PressableScale
+          <RaisedActionButton
             key={status}
             testID={`feedback-${status}-${submission.id}`}
-            accessibilityRole="button"
-            accessibilityLabel={t(ACTION_KEYS[status])}
+            size="compact"
+            label={t(ACTION_KEYS[status])}
             onPress={() =>
               transition.mutate(
                 { submissionId: submission.id, status },
@@ -145,16 +145,8 @@ function SubmissionCard({
                 },
               )
             }
-            isBusy={transition.isPending && transition.variables?.status === status}
             isDisabled={transition.isPending}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-md"
-          >
-            <Text className={`text-center text-md font-semibold text-primary-dark ${fontClass}`}>
-              {t(ACTION_KEYS[status])}
-            </Text>
-          </PressableScale>
+          />
         ))}
         {canChat ? (
           <AuthSubmitButton

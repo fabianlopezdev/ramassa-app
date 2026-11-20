@@ -13,11 +13,11 @@
  * registration will ask, and staff confirm or change it (RAPP-618).
  */
 import { useAppLock } from '@/components/auth/app-lock';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { InviteQuestionsStep } from '@/components/participants/invite-questions-step';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useInviteIntakeCatalog, type useParticipantInvites } from '@/lib/participant-invites';
 import { useParticipantFilterOptions } from '@/lib/participant-lookup';
@@ -62,26 +62,15 @@ function SheetButton({
   readonly isPrimary?: boolean;
   readonly isBusy?: boolean;
 }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <PressableScale
+  return isPrimary ? (
+    <AuthSubmitButton testID={testID} label={label} onPress={onPress} isLoading={isBusy} />
+  ) : (
+    <RaisedActionButton
       testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
+      label={label}
       onPress={onPress}
-      isBusy={isBusy}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended items-center justify-center rounded-md px-lg ${
-        isPrimary ? 'bg-primary' : 'border border-neutral-300 bg-white'
-      }`}
-    >
-      <Text
-        className={`text-center text-md font-bold ${isPrimary ? 'text-white' : 'text-primary-dark'} ${fontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
+      isDisabled={isBusy === true}
+    />
   );
 }
 

@@ -5,8 +5,9 @@
  * stuck on a shared phone.
  */
 import { AppLockLink } from '@/components/auth/app-lock-link';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { logout } from '@/lib/auth';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useTranslation } from 'react-i18next';
@@ -42,32 +43,18 @@ export function AccountNoticeScreen({
           </Text>
           <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>{body}</Text>
           {action === undefined ? null : (
-            <PressableScale
+            <AuthSubmitButton
               testID={`${testID}-action`}
-              accessibilityRole="button"
-              accessibilityLabel={action.label}
+              label={action.label}
               onPress={action.onPress}
-              haptic="selection"
-              className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-            >
-              <Text className={`text-md font-semibold text-white ${languageFontClass}`}>
-                {action.label}
-              </Text>
-            </PressableScale>
+            />
           )}
           {showAppLock ? <AppLockLink variant="button" /> : null}
-          <PressableScale
+          <RaisedActionButton
             testID={`${testID}-sign-out`}
-            accessibilityRole="button"
-            accessibilityLabel={t('signOutAction')}
+            label={t('signOutAction')}
             onPress={() => void logout()}
-            haptic="tapLight"
-            className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg"
-          >
-            <Text className={`text-md font-semibold text-primary-dark ${languageFontClass}`}>
-              {t('signOutAction')}
-            </Text>
-          </PressableScale>
+          />
         </View>
       </PageWidth>
     </SafeAreaView>

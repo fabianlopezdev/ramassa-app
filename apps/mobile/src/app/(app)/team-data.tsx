@@ -7,13 +7,14 @@
  * `audit.view` holders: the entries newest first, filtered by action, target
  * type and period, a page at a time.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { DateField } from '@/components/content/date-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ScreenSection } from '@/components/layout/screen-section';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { teamScreens } from '@/lib/account-area';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -75,33 +76,21 @@ function ActionButton({
   readonly isDisabled?: boolean;
   readonly isPrimary?: boolean;
 }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <PressableScale
+  return isPrimary ? (
+    <AuthSubmitButton
       testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
+      label={label}
       onPress={onPress}
-      isBusy={isBusy}
-      isDisabled={isDisabled}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended items-center justify-center rounded-md px-lg ${
-        isPrimary
-          ? isDisabled
-            ? 'bg-neutral-200'
-            : 'bg-primary'
-          : 'border border-neutral-300 bg-white'
-      }`}
-    >
-      <Text
-        className={`text-center text-md font-bold ${
-          isPrimary ? (isDisabled ? 'text-neutral-500' : 'text-white') : 'text-primary-dark'
-        } ${fontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
+      isLoading={isBusy}
+      disabled={isDisabled}
+    />
+  ) : (
+    <RaisedActionButton
+      testID={testID}
+      label={label}
+      onPress={onPress}
+      isDisabled={isDisabled === true || isBusy === true}
+    />
   );
 }
 

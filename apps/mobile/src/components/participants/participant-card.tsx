@@ -14,9 +14,10 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ParticipantMaterial } from '@/components/equipment/participant-material';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ScreenSection } from '@/components/layout/screen-section';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { ParticipantActivity } from '@/components/participants/participant-activity';
 import { ParticipantNotes } from '@/components/participants/participant-notes';
 import { ParticipantRgpd } from '@/components/participants/participant-rgpd';
@@ -70,28 +71,15 @@ function CardAction({
   readonly isPrimary?: boolean;
   readonly isBusy?: boolean;
 }) {
-  const languageFontClass = useLanguageFontClass();
-  return (
-    <PressableScale
+  return isPrimary ? (
+    <AuthSubmitButton testID={testID} label={label} onPress={onPress} isLoading={isBusy} />
+  ) : (
+    <RaisedActionButton
       testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      isBusy={isBusy}
+      label={label}
       onPress={onPress}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended items-center justify-center rounded-md px-lg ${
-        isPrimary ? 'bg-primary' : 'border border-neutral-300 bg-white'
-      } ${isBusy ? 'opacity-60' : ''}`}
-    >
-      <Text
-        className={`text-center text-md font-bold ${
-          isPrimary ? 'text-white' : 'text-primary-dark'
-        } ${languageFontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
+      isDisabled={isBusy === true}
+    />
   );
 }
 

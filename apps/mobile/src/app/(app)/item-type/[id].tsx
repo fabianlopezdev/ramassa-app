@@ -172,21 +172,17 @@ export default function ItemTypeScreen() {
                 </Text>
               ) : null}
               {sizes.map((size) => (
-                <PressableScale
+                <RaisedActionButton
                   key={size}
                   testID={`item-size-remove-${size}`}
-                  accessibilityRole="button"
+                  size="compact"
+                  icon="close"
+                  label={size}
                   accessibilityLabel={t('items.removeSize', { size })}
                   onPress={() =>
                     setSizes((current) => current.filter((candidate) => candidate !== size))
                   }
-                  haptic="selection"
-                  style={continuousCorners}
-                  className="min-h-recommended min-w-recommended flex-row items-center justify-center gap-xs rounded-md border border-neutral-300 bg-white px-md"
-                >
-                  <Text className={`font-semibold text-neutral-900 ${fontClass}`}>{size}</Text>
-                  <Text className="text-neutral-500">×</Text>
-                </PressableScale>
+                />
               ))}
             </View>
             <View className="flex-row items-end gap-sm">

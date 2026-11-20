@@ -21,12 +21,12 @@
  */
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { ConsentRow } from '@/components/authorization/consent-row';
 import { FormWalker } from '@/components/forms/form-walker';
 import { PageWidth } from '@/components/layout/content-width';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SignatureBlockField } from '@/components/onboarding/signature-block-field';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { fontClassForLanguage } from '@/lib/language-font-class';
 import {
@@ -212,27 +212,19 @@ function SigningMode() {
               ))}
             </View>
             {SUPPORTED_LANGUAGES.map((candidate) => (
-              <PressableScale
+              <SelectionChoiceCard
                 key={candidate}
                 testID={`signing-language-${candidate}`}
-                accessibilityRole="button"
-                accessibilityLabel={LANGUAGE_NATIVE_NAMES[candidate]}
-                accessibilityLanguage={candidate}
+                label={LANGUAGE_NATIVE_NAMES[candidate]}
+                language={candidate}
+                fontClass={fontClassForLanguage(candidate)}
+                isSelected={false}
                 onPress={() => {
                   setLanguage(candidate);
                   keptLanguage = { startedAt: session.startedAt, language: candidate };
                   setStep('form');
                 }}
-                haptic="selection"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md border border-primary bg-white px-lg"
-              >
-                <Text
-                  className={`text-center text-lg font-bold text-primary-dark ${fontClassForLanguage(candidate)}`}
-                >
-                  {LANGUAGE_NATIVE_NAMES[candidate]}
-                </Text>
-              </PressableScale>
+              />
             ))}
           </PageWidth>
         </ScrollView>

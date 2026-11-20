@@ -7,8 +7,9 @@
  * The lock needs the phone's own lock: on a phone with no passcode, and on the
  * web, it never engages, and the settings screen says why.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import {
   effectiveAppLockSettings,
   readAppLockSettings,
@@ -261,33 +262,19 @@ function LockScreen({
             </Text>
             {canUnlock ? (
               <>
-                <PressableScale
+                <AuthSubmitButton
                   testID="app-lock-unlock"
-                  accessibilityRole="button"
-                  accessibilityLabel={t('appLockUnlockAction')}
+                  label={t('appLockUnlockAction')}
                   onPress={onUnlock}
-                  haptic="tapLight"
-                  className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-                >
-                  <Text className={`text-lg font-bold text-white ${languageFontClass}`}>
-                    {t('appLockUnlockAction')}
-                  </Text>
-                </PressableScale>
+                />
                 {/* Somebody else's phone, or a forgotten passcode: signing out is
                   always possible, and the next person signs in with her own
                   account. */}
-                <PressableScale
+                <RaisedActionButton
                   testID="app-lock-sign-out"
-                  accessibilityRole="button"
-                  accessibilityLabel={tProfile('signOutAction')}
+                  label={tProfile('signOutAction')}
                   onPress={signOut}
-                  haptic="tapLight"
-                  className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg"
-                >
-                  <Text className={`text-md font-semibold text-primary-dark ${languageFontClass}`}>
-                    {tProfile('signOutAction')}
-                  </Text>
-                </PressableScale>
+                />
               </>
             ) : null}
           </View>

@@ -31,25 +31,13 @@ const flatLook =
 const hasFlatButton = (source: string) =>
   (source.match(pressTag) ?? []).some((tag) => flatLook.test(tag));
 
-// Still drawn by hand on 2026-11-20. Each one leaves this list when it moves to
-// a shared raised piece; nothing may be added.
+// Two dialogs that open their own native Modal, where the app's press control
+// does not answer on Android (see `NativeModalScope`); they use the platform
+// `Pressable`. They leave this list when they move into the shared sheet;
+// nothing may be added.
 const stillFlat = new Set([
-  'app/(app)/item-type/[id].tsx',
-  'app/(app)/photo-handoff/[id].tsx',
   'app/(app)/profile-delete-data.tsx',
-  'app/(app)/signing-mode.tsx',
-  'app/(app)/team-data.tsx',
-  'app/(app)/team-feedback.tsx',
-  'components/auth/account-notice-screen.tsx',
-  'components/auth/app-lock-link.tsx',
-  'components/auth/app-lock.tsx',
-  'components/auth/second-factor-screen.tsx',
-  'components/auth/step-up.tsx',
-  'components/authorization/reregistration-steps.tsx',
   'components/forum/forum-flag-dialog.tsx',
-  'components/participants/invite-sheet.tsx',
-  'components/participants/participant-card.tsx',
-  'components/participants/participant-rgpd.tsx',
 ]);
 
 const withFlatButton = [...sources('app'), ...sources('components')].filter((path) =>
