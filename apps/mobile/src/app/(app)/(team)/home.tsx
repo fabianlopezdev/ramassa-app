@@ -6,9 +6,9 @@
  */
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
+import { RaisedCard } from '@/components/layout/raised-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { useUnreadMessages } from '@/lib/messaging';
 import { useGuardedLogout } from '@/lib/sign-out-guard';
 import { hasMoreEntries, showsToday, teamAreas } from '@/lib/team-shell';
@@ -32,22 +32,18 @@ function HomeButton({
 }) {
   const languageFontClass = useLanguageFontClass();
   return (
-    <PressableScale
+    <RaisedCard
       testID={testID}
-      accessibilityRole="button"
       accessibilityLabel={detail === undefined ? label : `${label}, ${detail}`}
-      onPress={onPress}
-      haptic="tapLight"
-      style={continuousCorners}
-      className="min-h-3xl justify-center gap-xs rounded-md bg-primary px-lg py-md"
+      onOpen={onPress}
     >
-      <Text className={`text-start text-xl font-bold text-white ${languageFontClass}`}>
+      <Text className={`text-start text-xl font-bold text-primary-dark ${languageFontClass}`}>
         {label}
       </Text>
       {detail === undefined ? null : (
-        <Text className={`text-start text-md text-white ${languageFontClass}`}>{detail}</Text>
+        <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>{detail}</Text>
       )}
-    </PressableScale>
+    </RaisedCard>
   );
 }
 

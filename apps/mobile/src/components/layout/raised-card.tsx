@@ -95,6 +95,13 @@ interface RaisedCardProps {
    * too long to fit beside the icon (RAPP-879).
    */
   readonly stacked?: boolean;
+  /**
+   * The row that is open beside the list, on a screen wide enough to show
+   * both: its face fills like a chosen choice.
+   */
+  readonly isSelected?: boolean;
+  /** Read after the label, such as how many messages are unread. */
+  readonly accessibilityHint?: string;
   readonly children: ReactNode;
 }
 
@@ -112,6 +119,8 @@ export function RaisedCard({
   media,
   tile = false,
   stacked = false,
+  isSelected,
+  accessibilityHint,
   children,
 }: RaisedCardProps) {
   const brandColor = useBrandColor();
@@ -148,7 +157,9 @@ export function RaisedCard({
     <SelectionChoiceSurface
       testID={testID}
       label={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
       accessibilityRole="link"
+      isSelected={isSelected}
       onPress={onOpen}
       contentClassName={
         hasMedia

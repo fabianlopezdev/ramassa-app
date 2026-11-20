@@ -8,10 +8,10 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { clampQuantity } from '@/lib/arrival-form';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverItemTypes } from '@/lib/handover';
@@ -61,22 +61,14 @@ function StepButton({
   readonly testID: string;
 }) {
   return (
-    <PressableScale
+    <RaisedActionButton
       testID={testID}
-      accessibilityRole="button"
+      size="fit"
+      label={label}
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
       isDisabled={disabled}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended min-w-recommended items-center justify-center rounded-md border ${
-        disabled ? 'border-neutral-300' : 'border-primary'
-      }`}
-    >
-      <Text className={`text-lg font-bold ${disabled ? 'text-neutral-500' : 'text-primary-dark'}`}>
-        {label}
-      </Text>
-    </PressableScale>
+    />
   );
 }
 

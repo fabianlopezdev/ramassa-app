@@ -5,8 +5,8 @@
  * forum posting off or on (RAPP-802), with the participant card's own write.
  */
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { Badge } from '@/components/layout/badge';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { confirmDelete } from '@/lib/confirm-delete';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -46,28 +46,14 @@ function ActionButton({
   readonly isBusy: boolean;
   readonly isDestructive?: boolean;
 }) {
-  const fontClass = useLanguageFontClass();
   return (
-    <PressableScale
+    <RaisedActionButton
       testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
+      tone={isDestructive ? 'danger' : 'brand'}
+      label={label}
       onPress={onPress}
-      isBusy={isBusy}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended items-center justify-center rounded-md border bg-white px-md ${
-        isDestructive ? 'border-error' : 'border-neutral-300'
-      }`}
-    >
-      <Text
-        className={`text-center text-md font-semibold ${
-          isDestructive ? 'text-error' : 'text-primary-dark'
-        } ${fontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
+      isDisabled={isBusy}
+    />
   );
 }
 

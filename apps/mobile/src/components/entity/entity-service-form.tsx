@@ -12,6 +12,7 @@ import { DateTimeField } from '@/components/content/date-time-field';
 import { SERVICE_AVAILABILITY_KEYS, SERVICE_COST_KEYS } from '@/components/content/service-labels';
 import { ServiceMetadataFields } from '@/components/content/service-metadata-fields';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedCard } from '@/components/layout/raised-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useEntityServiceActions } from '@/lib/entity-services';
@@ -347,18 +348,15 @@ export function EntityServiceForm({
             {contactMatches.map((contact, index) => {
               const name = contact.name ?? contact.email ?? contact.phone ?? '';
               return (
-                <PressableScale
+                <RaisedCard
                   key={`${contact.email ?? contact.phone ?? contact.name}-${index}`}
                   testID={`entity-service-contact-option-${index}`}
-                  accessibilityRole="button"
                   accessibilityLabel={name}
-                  onPress={() => chooseContact(contact)}
-                  haptic="selection"
-                  style={continuousCorners}
-                  className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
+                  onOpen={() => chooseContact(contact)}
+                  showsArrow={false}
                 >
                   <Text className="text-start text-md text-neutral-900">{name}</Text>
-                </PressableScale>
+                </RaisedCard>
               );
             })}
           </View>

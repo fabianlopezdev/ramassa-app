@@ -16,7 +16,7 @@ import {
 } from '@/components/events/event-filters';
 import { EventMonthCalendar } from '@/components/events/event-month-calendar';
 import { PageWidth } from '@/components/layout/content-width';
-import { NavRow } from '@/components/layout/nav-row';
+import { RaisedIconCard } from '@/components/layout/raised-icon-card';
 import { ScreenSection, SectionTitle } from '@/components/layout/screen-section';
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader, PlayerTabStateFrame } from '@/components/profile/player-tab-header';
@@ -178,6 +178,11 @@ function EventsScreen() {
     [push],
   );
   const openMentoring = useCallback(() => push('/mentoring' as Href), [push]);
+  const mentoringWhen = useCallback(
+    (scheduledAt: string) =>
+      `${dateFormatter.format(new Date(scheduledAt))} · ${timeFormatter.format(new Date(scheduledAt))}`,
+    [dateFormatter, timeFormatter],
+  );
 
   const renderEvent = useCallback(
     ({ item }: ListRenderItemInfo<PlayerEventOccurrence>) => {
@@ -302,15 +307,15 @@ function EventsScreen() {
           {visibleMentoringEntries.length === 0 ? null : (
             <View className="gap-sm">
               {visibleMentoringEntries.map((entry) => (
-                <NavRow
+                <RaisedIconCard
                   key={entry.id}
                   testID={`private-mentoring-calendar-${entry.id}`}
                   icon={playerNavIcons.mentoring}
-                  label={t('mentoring:title')}
-                  detail={`${dateFormatter.format(new Date(entry.scheduledAt))} · ${timeFormatter.format(
-                    new Date(entry.scheduledAt),
-                  )}`}
-                  onPress={openMentoring}
+                  title={t('mentoring:title')}
+                  detail={mentoringWhen(entry.scheduledAt)}
+                  accessibilityLabel={`${t('mentoring:title')}, ${mentoringWhen(entry.scheduledAt)}`}
+                  languageFontClass={languageFontClass}
+                  onOpen={openMentoring}
                 />
               ))}
             </View>

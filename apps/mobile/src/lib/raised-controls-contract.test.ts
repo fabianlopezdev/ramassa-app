@@ -62,6 +62,31 @@ test('no screen draws a choice by hand', () => {
   expect(withFlatChoice).toEqual([]);
 });
 
+// A card, row or button that presses and draws its own border has no edge
+// under it, so it looks flat. Tappable cards and rows come from `RaisedCard`
+// (through `OpenableCard`, `RaisedIconCard` and the staff lists), and buttons
+// from `RaisedActionButton`. Three places keep a border, each for a reason,
+// and the list only shrinks.
+const ownBorder = /className=[^>]*\bborder(?:-[a-z0-9-]+)?\b/;
+const hasOwnBorder = (source: string) =>
+  (source.match(pressTag) ?? []).some((tag) => ownBorder.test(tag));
+const keepsABorder = new Set([
+  // Its own native Modal, on the platform `Pressable` (see `stillFlat`).
+  'app/(app)/profile-delete-data.tsx',
+  // The rows of the wide participant table, with a line under each.
+  'app/(app)/(team)/participants.tsx',
+  // The time field of a mentoring request, drawn as a form field.
+  'components/mentoring/mentoring-preference-pickers.tsx',
+]);
+const withOwnBorder = [...sources('app'), ...sources('components')].filter(
+  (path) => !path.startsWith('components/motion/') && hasOwnBorder(read(path)),
+);
+
+test('no card, row or button that presses draws its own border', () => {
+  expect(withOwnBorder.filter((path) => !keepsABorder.has(path))).toEqual([]);
+  expect([...keepsABorder].filter((path) => !withOwnBorder.includes(path))).toEqual([]);
+});
+
 test('the list of flat leftovers only shrinks', () => {
   expect([...stillFlat].filter((path) => !withFlatButton.includes(path))).toEqual([]);
 });
@@ -83,6 +108,11 @@ test('the shared pieces carry the relief', () => {
   expect(read('components/services/service-card.tsx')).toContain('<RaisedCard');
   // The staff choice is the raised pill, and the onboarding choice card sits
   // on the raised surface.
+  // A row that opens something is the raised card, and the staff inbox and
+  // attendance rows come from the same pieces.
+  expect(read('components/layout/openable-card.tsx')).toContain('<RaisedCard');
+  expect(read('components/messaging/staff-conversation-card.tsx')).toContain('<RaisedCard');
+  expect(read('components/attendance/attendance-occurrence-row.tsx')).toContain('<RaisedIconCard');
   expect(read('components/equipment/choice-option.tsx')).toContain('<RaisedChip');
   expect(read('components/auth/selection-choice-card.tsx')).toContain('<SelectionChoiceSurface');
 });

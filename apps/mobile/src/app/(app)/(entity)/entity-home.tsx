@@ -10,11 +10,9 @@
  */
 import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-load-failure';
 import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
-import { FORWARD_CHEVRON } from '@/components/icons/direction';
-import { Icon } from '@/components/icons/icon';
 import { PageWidth } from '@/components/layout/content-width';
+import { RaisedCard } from '@/components/layout/raised-card';
 import { ScreenSection } from '@/components/layout/screen-section';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { BarRow, MonthBars, Sparkline } from '@/components/team/impact-charts';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -26,7 +24,6 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
-import { tokens } from '@ramassa/shared/tokens';
 
 const TABLET_WIDTH = 768;
 
@@ -172,43 +169,32 @@ function EntityHomeScreen() {
                 data.tracking.map((row) => {
                   const name = `${row.referredFirstName} ${row.referredLastName}`.trim();
                   return (
-                    <PressableScale
+                    <RaisedCard
                       key={row.referralId}
                       testID={`entity-tracking-${row.referralId}`}
-                      accessibilityRole="button"
                       accessibilityLabel={`${tReferrals('open')}: ${name}`}
-                      onPress={() => push(`/entity-referral/${row.referralId}` as Href)}
-                      haptic="selection"
-                      style={continuousCorners}
-                      className="min-h-recommended flex-row items-center gap-md rounded-md py-sm"
+                      onOpen={() => push(`/entity-referral/${row.referralId}` as Href)}
                     >
-                      <View className="flex-1 gap-xs">
-                        <View className="flex-row flex-wrap items-center justify-between gap-sm">
-                          <Text
-                            className={`flex-1 text-start text-md font-bold text-neutral-900 ${fontClass}`}
-                          >
-                            {name}
-                          </Text>
-                          <Text className={`text-sm font-semibold text-neutral-700 ${fontClass}`}>
-                            {tReferrals(`status.${row.status}`)}
-                          </Text>
-                        </View>
-                        <BarRow
-                          label={[
-                            `${tEntity('present')}: ${row.attendancePresentCount}`,
-                            `${tEntity('absent')}: ${row.attendanceAbsentCount}`,
-                            `${tEntity('excused')}: ${row.attendanceExcusedCount}`,
-                          ].join(' · ')}
-                          value={percent(row.attendanceRate)}
-                          share={row.attendanceRate / 100}
-                        />
+                      <View className="flex-row flex-wrap items-center justify-between gap-sm">
+                        <Text
+                          className={`flex-1 text-start text-md font-bold text-neutral-900 ${fontClass}`}
+                        >
+                          {name}
+                        </Text>
+                        <Text className={`text-sm font-semibold text-neutral-700 ${fontClass}`}>
+                          {tReferrals(`status.${row.status}`)}
+                        </Text>
                       </View>
-                      <Icon
-                        name={FORWARD_CHEVRON}
-                        size={tokens.fontSize.lg}
-                        color={tokens.colors.neutral[500]}
+                      <BarRow
+                        label={[
+                          `${tEntity('present')}: ${row.attendancePresentCount}`,
+                          `${tEntity('absent')}: ${row.attendanceAbsentCount}`,
+                          `${tEntity('excused')}: ${row.attendanceExcusedCount}`,
+                        ].join(' · ')}
+                        value={percent(row.attendanceRate)}
+                        share={row.attendanceRate / 100}
                       />
-                    </PressableScale>
+                    </RaisedCard>
                   );
                 })
               )}

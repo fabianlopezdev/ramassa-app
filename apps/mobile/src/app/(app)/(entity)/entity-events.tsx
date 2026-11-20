@@ -9,9 +9,8 @@ import { EntityEventSheet } from '@/components/entity/entity-event-sheet';
 import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-load-failure';
 import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { PageWidth } from '@/components/layout/content-width';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { RaisedCard } from '@/components/layout/raised-card';
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { useEntityUpcomingEvents } from '@/lib/entity-portal';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
@@ -62,15 +61,11 @@ function EntityEventsScreen() {
                   timeZone: event.timeZone,
                 }).format(new Date(event.startsAt));
                 return (
-                  <PressableScale
+                  <RaisedCard
                     key={event.id}
                     testID={`entity-event-${event.id}`}
-                    accessibilityRole="button"
                     accessibilityLabel={`${title}, ${when}`}
-                    onPress={() => setOpenEventId(event.id)}
-                    haptic="selection"
-                    style={continuousCorners}
-                    className="gap-xs rounded-md border border-neutral-200 bg-white p-md"
+                    onOpen={() => setOpenEventId(event.id)}
                   >
                     <Text className={`text-start text-md font-bold text-neutral-900 ${fontClass}`}>
                       {title}
@@ -94,7 +89,7 @@ function EntityEventsScreen() {
                         {description}
                       </Text>
                     ) : null}
-                  </PressableScale>
+                  </RaisedCard>
                 );
               })}
             </View>

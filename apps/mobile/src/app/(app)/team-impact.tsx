@@ -12,9 +12,9 @@ import { ChoiceOption } from '@/components/equipment/choice-option';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { RaisedCard } from '@/components/layout/raised-card';
 import { ScreenSection } from '@/components/layout/screen-section';
 import { NativeModalScope } from '@/components/motion/native-modal-scope';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { BarRow, MonthBars, Sparkline } from '@/components/team/impact-charts';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { IMPACT_PERIODS, impactPeriodRange, type ImpactPeriod } from '@/lib/impact-period';
@@ -358,19 +358,16 @@ export default function TeamImpactScreen() {
                       {content}
                     </View>
                   ) : (
-                    <PressableScale
-                      key={metric.key}
-                      testID={`impact-card-${metric.key}`}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${t(metric.labelKey)}: ${metric.value}`}
-                      accessibilityHint={t('impactShowChart')}
-                      onPress={() => setOpenMetric(metric.key)}
-                      haptic="tapLight"
-                      style={[continuousCorners, { width: cardWidth }]}
-                      className={frame}
-                    >
-                      {content}
-                    </PressableScale>
+                    <View key={metric.key} style={{ width: cardWidth }}>
+                      <RaisedCard
+                        testID={`impact-card-${metric.key}`}
+                        accessibilityLabel={`${t(metric.labelKey)}: ${metric.value}`}
+                        accessibilityHint={t('impactShowChart')}
+                        onOpen={() => setOpenMetric(metric.key)}
+                      >
+                        {content}
+                      </RaisedCard>
+                    </View>
                   );
                 })}
               </View>

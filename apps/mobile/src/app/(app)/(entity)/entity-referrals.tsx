@@ -9,10 +9,9 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-load-failure';
 import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { PageWidth } from '@/components/layout/content-width';
+import { RaisedCard } from '@/components/layout/raised-card';
 import { TabScreenAction } from '@/components/layout/tab-screen-action';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { useEntityReferrals } from '@/lib/entity-referrals';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
@@ -95,15 +94,11 @@ function EntityReferralsScreen() {
                     const name =
                       `${referral.referredFirstName} ${referral.referredLastName}`.trim();
                     return (
-                      <PressableScale
+                      <RaisedCard
                         key={referral.id}
                         testID={`entity-referral-${referral.id}`}
-                        accessibilityRole="button"
                         accessibilityLabel={`${t('open')}: ${name}`}
-                        onPress={() => push(`/entity-referral/${referral.id}` as Href)}
-                        haptic="selection"
-                        style={continuousCorners}
-                        className="gap-xs rounded-md border border-neutral-200 bg-white p-md"
+                        onOpen={() => push(`/entity-referral/${referral.id}` as Href)}
                       >
                         <View className="flex-row flex-wrap items-center justify-between gap-sm">
                           <Text
@@ -118,7 +113,7 @@ function EntityReferralsScreen() {
                         <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
                           {`${t('createdLabel')}: ${dates.format(new Date(referral.createdAt))}`}
                         </Text>
-                      </PressableScale>
+                      </RaisedCard>
                     );
                   })}
                 </View>

@@ -9,6 +9,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
@@ -74,26 +75,15 @@ function OutlineButton({
   readonly testID: string;
   readonly disabled?: boolean;
 }) {
-  const fontClass = useLanguageFontClass();
   return (
-    <PressableScale
+    <RaisedActionButton
       testID={testID}
-      accessibilityRole="button"
+      size="fit"
+      label={label}
       accessibilityLabel={accessibilityLabel ?? label}
       onPress={onPress}
       isDisabled={disabled}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended items-center justify-center rounded-md border px-md ${
-        disabled ? 'border-neutral-300' : 'border-primary'
-      }`}
-    >
-      <Text
-        className={`text-center font-bold ${disabled ? 'text-neutral-500' : 'text-primary-dark'} ${fontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
+    />
   );
 }
 

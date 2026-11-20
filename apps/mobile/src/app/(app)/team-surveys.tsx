@@ -7,8 +7,8 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { RaisedCard } from '@/components/layout/raised-card';
 import { ActionScreen } from '@/components/layout/screen-action';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { teamScreens } from '@/lib/account-area';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { surveyPhase, type SurveyPhase } from '@/lib/survey-phase';
@@ -75,17 +75,13 @@ function SurveyRow({
     );
   }
   return (
-    <PressableScale
+    <RaisedCard
       testID={`team-survey-${survey.id}`}
-      accessibilityRole="button"
       accessibilityLabel={`${title}, ${t('results')}`}
-      onPress={() => push(`/team-survey-results/${survey.id}` as Href)}
-      haptic="selection"
-      style={continuousCorners}
-      className={frame}
+      onOpen={() => push(`/team-survey-results/${survey.id}` as Href)}
     >
       {content}
-    </PressableScale>
+    </RaisedCard>
   );
 }
 

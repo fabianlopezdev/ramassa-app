@@ -503,7 +503,6 @@ export default function StorySubmissionScreen() {
                         .filter(Boolean)
                         .join('. ')}
                       onOpen={() => push(`/knowledge/${status.id}` as Href)}
-                      className="rounded-md border border-neutral-200 bg-neutral-50 p-md"
                     >
                       <Text
                         className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}

@@ -85,7 +85,6 @@ function FeedbackHistoryCard({
         testID={`feedback-history-${id}`}
         accessibilityLabel={[typeLabel, content, statusAndDate].join('. ')}
         onOpen={onOpenChat}
-        className="rounded-lg border border-neutral-200 bg-white p-lg"
       >
         <Text className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}>
           {typeLabel}

@@ -316,7 +316,6 @@ function RequestStatusCard({
       testID={`mentoring-request-${request.id}`}
       accessibilityLabel={[status, topicLabel, requestedOn].join('. ')}
       onOpen={openDetail}
-      className="rounded-lg border border-neutral-200 bg-white p-lg"
     >
       <Text className={`text-start text-md font-bold text-primary ${languageFontClass}`}>
         {status}

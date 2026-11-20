@@ -1,10 +1,8 @@
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { RaisedCard } from '@/components/layout/raised-card';
 import { memo, useCallback } from 'react';
-import { Text, View, type TextStyle } from 'react-native';
+import { Text } from 'react-native';
 
-const tabularNumerals: TextStyle = { fontVariant: ['tabular-nums'] };
-
+/** One conversation in the staff inbox: the raised card, with the unread count on its edge. */
 export const StaffConversationCard = memo(function StaffConversationCard({
   conversationId,
   participantName,
@@ -29,40 +27,22 @@ export const StaffConversationCard = memo(function StaffConversationCard({
   const handleOpen = useCallback(() => onOpen(conversationId), [conversationId, onOpen]);
 
   return (
-    <PressableScale
+    <RaisedCard
       testID={`staff-conversation-${conversationId}`}
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
-      onPress={handleOpen}
-      haptic="selection"
-      style={continuousCorners}
-      className="rounded-2xl border border-neutral-200 bg-white p-lg"
+      count={unreadBadge}
+      onOpen={handleOpen}
     >
-      <View className="flex-row items-start justify-between gap-md">
-        <View className="flex-1 gap-xs">
-          <Text selectable className={`text-lg font-semibold text-neutral-900 ${languageClass}`}>
-            {participantName}
-          </Text>
-          <Text className={`text-sm text-neutral-600 ${languageClass}`}>{participantRole}</Text>
-          <Text
-            selectable
-            className={`text-sm text-neutral-600 ${languageClass}`}
-            numberOfLines={1}
-          >
-            {messagePreview}
-          </Text>
-        </View>
-        {unreadBadge === null ? null : (
-          <View
-            accessible={false}
-            className="min-h-8 min-w-8 items-center justify-center rounded-full bg-primary-dark px-sm"
-          >
-            <Text style={tabularNumerals} className={`font-bold text-white ${languageClass}`}>
-              {unreadBadge}
-            </Text>
-          </View>
-        )}
-      </View>
-    </PressableScale>
+      <Text className={`text-start text-lg font-semibold text-neutral-900 ${languageClass}`}>
+        {participantName}
+      </Text>
+      <Text className={`text-start text-sm text-neutral-600 ${languageClass}`}>
+        {participantRole}
+      </Text>
+      <Text className={`text-start text-sm text-neutral-600 ${languageClass}`} numberOfLines={1}>
+        {messagePreview}
+      </Text>
+    </RaisedCard>
   );
 });

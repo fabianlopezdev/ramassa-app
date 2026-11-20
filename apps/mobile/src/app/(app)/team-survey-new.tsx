@@ -10,11 +10,11 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { DateTimeField } from '@/components/content/date-time-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { AudiencePicker } from '@/components/team/audience-picker';
 import { ReviewedField, type ReviewedText } from '@/components/team/reviewed-field';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -97,26 +97,8 @@ function OutlineButton({
   readonly onPress: () => void;
   readonly isDisabled?: boolean;
 }) {
-  const fontClass = useLanguageFontClass();
   return (
-    <PressableScale
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      isDisabled={isDisabled}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended items-center justify-center rounded-md border px-lg ${
-        isDisabled ? 'border-neutral-200 bg-neutral-100' : 'border-neutral-300 bg-white'
-      }`}
-    >
-      <Text
-        className={`text-center text-md font-bold ${isDisabled ? 'text-neutral-500' : 'text-primary-dark'} ${fontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
+    <RaisedActionButton testID={testID} label={label} onPress={onPress} isDisabled={isDisabled} />
   );
 }
 
@@ -462,25 +444,12 @@ export default function TeamSurveyNewScreen() {
             </ScreenSection>
 
             <View className="gap-sm">
-              <PressableScale
+              <RaisedActionButton
                 testID="survey-generate"
-                accessibilityRole="button"
-                accessibilityLabel={isGenerating ? t('generating') : t('generateTranslations')}
+                label={isGenerating ? t('generating') : t('generateTranslations')}
                 onPress={() => void generate()}
-                isBusy={isGenerating}
-                isDisabled={!canGenerate}
-                haptic="tapLight"
-                style={continuousCorners}
-                className={`min-h-recommended items-center justify-center rounded-md border px-lg ${
-                  canGenerate ? 'border-primary bg-white' : 'border-neutral-200 bg-neutral-100'
-                }`}
-              >
-                <Text
-                  className={`text-center text-md font-bold ${canGenerate ? 'text-primary-dark' : 'text-neutral-500'} ${fontClass}`}
-                >
-                  {isGenerating ? t('generating') : t('generateTranslations')}
-                </Text>
-              </PressableScale>
+                isDisabled={!canGenerate || isGenerating}
+              />
               <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
                 {t('translationHelp')}
               </Text>

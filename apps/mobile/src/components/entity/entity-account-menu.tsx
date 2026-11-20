@@ -7,9 +7,9 @@
 import { GlassIconSurface } from '@/components/forms/glass-icon-surface';
 import { Icon } from '@/components/icons/icon';
 import { AppSheet } from '@/components/layout/app-sheet';
+import { RaisedCard } from '@/components/layout/raised-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { LanguageSwitcher } from '@/components/profile/language-switcher';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { useGuardedLogout } from '@/lib/sign-out-guard';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
@@ -52,39 +52,31 @@ export function EntityAccountButton() {
         <LanguageSwitcher languages={STAFF_LANGUAGES} />
         {/* The lock does not exist on the web. */}
         {Platform.OS === 'web' ? null : (
-          <PressableScale
+          <RaisedCard
             testID="open-app-lock"
-            accessibilityRole="button"
             accessibilityLabel={t('appLockTitle')}
-            onPress={() => {
+            onOpen={() => {
               close();
               push('/app-lock' as Href);
             }}
-            haptic="selection"
-            style={continuousCorners}
-            className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
           >
             <Text className={`text-start text-md text-neutral-900 ${fontClass}`}>
               {t('appLockTitle')}
             </Text>
-          </PressableScale>
+          </RaisedCard>
         )}
-        <PressableScale
+        <RaisedCard
           testID="entity-sign-out"
-          accessibilityRole="button"
           accessibilityLabel={tProfile('signOutAction')}
-          onPress={() => {
+          onOpen={() => {
             close();
             signOut();
           }}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended justify-center rounded-md border border-neutral-200 bg-white px-md"
         >
           <Text className={`text-start text-md font-semibold text-primary-dark ${fontClass}`}>
             {tProfile('signOutAction')}
           </Text>
-        </PressableScale>
+        </RaisedCard>
       </AppSheet>
     </>
   );

@@ -264,27 +264,12 @@ export default function TeamNotificationsScreen() {
               multiline
               {...reviewHandlers(bodyReview, touch)}
             />
-            <PressableScale
+            <RaisedActionButton
               testID="notification-generate"
-              accessibilityRole="button"
-              accessibilityLabel={
-                isGenerating ? t('generatingTranslations') : t('generateTranslations')
-              }
+              label={isGenerating ? t('generatingTranslations') : t('generateTranslations')}
               onPress={() => void generate()}
-              isBusy={isGenerating}
-              isDisabled={!canGenerate}
-              haptic="tapLight"
-              style={continuousCorners}
-              className={`min-h-recommended items-center justify-center rounded-md border px-lg ${
-                canGenerate ? 'border-primary bg-white' : 'border-neutral-200 bg-neutral-100'
-              }`}
-            >
-              <Text
-                className={`text-center text-md font-bold ${canGenerate ? 'text-primary-dark' : 'text-neutral-500'} ${fontClass}`}
-              >
-                {isGenerating ? t('generatingTranslations') : t('generateTranslations')}
-              </Text>
-            </PressableScale>
+              isDisabled={!canGenerate || isGenerating}
+            />
             <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
               {t('translationHelp')}
             </Text>

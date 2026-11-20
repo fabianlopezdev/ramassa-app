@@ -5,6 +5,7 @@
  */
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -50,22 +51,14 @@ function CheckInPanel({
   const canSave = returned === 0 || condition !== null;
 
   const step = (label: string, a11y: string, change: number, disabled: boolean, testID: string) => (
-    <PressableScale
+    <RaisedActionButton
       testID={testID}
-      accessibilityRole="button"
+      size="fit"
+      label={label}
       accessibilityLabel={a11y}
       onPress={() => setReturned((current) => current + change)}
       isDisabled={disabled}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended min-w-recommended items-center justify-center rounded-md border ${
-        disabled ? 'border-neutral-300' : 'border-primary'
-      }`}
-    >
-      <Text className={`text-lg font-bold ${disabled ? 'text-neutral-500' : 'text-primary-dark'}`}>
-        {label}
-      </Text>
-    </PressableScale>
+    />
   );
 
   return (

@@ -21,7 +21,6 @@ import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { EventArticle, EventSignupPreview } from '@/components/events/event-article';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { DraftPreviewSheet } from '@/components/preview/draft-preview-sheet';
 import { PUBLISH_MODES } from '@/lib/announcement-draft';
@@ -282,24 +281,12 @@ function EventForm({
         multiline
         {...reviewHandlers(descriptionReview, touch)}
       />
-      <PressableScale
+      <RaisedActionButton
         testID="event-generate"
-        accessibilityRole="button"
-        accessibilityLabel={isGenerating ? t('generatingTranslations') : t('generateTranslations')}
+        label={isGenerating ? t('generatingTranslations') : t('generateTranslations')}
         onPress={() => void generate()}
-        isBusy={isGenerating}
-        isDisabled={!canGenerate}
-        haptic="tapLight"
-        className={`min-h-recommended items-center justify-center rounded-md border px-lg ${
-          canGenerate ? 'border-primary bg-white' : 'border-neutral-200 bg-neutral-100'
-        }`}
-      >
-        <Text
-          className={`text-center text-md font-bold ${canGenerate ? 'text-primary-dark' : 'text-neutral-500'} ${fontClass}`}
-        >
-          {isGenerating ? t('generatingTranslations') : t('generateTranslations')}
-        </Text>
-      </PressableScale>
+        isDisabled={!canGenerate || isGenerating}
+      />
       <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
         {tAnnouncements('translationHelp')}
       </Text>

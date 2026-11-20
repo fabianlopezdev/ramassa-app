@@ -9,6 +9,7 @@ import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-loa
 import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { EntityServiceStatus } from '@/components/entity/entity-service-status';
 import { PageWidth } from '@/components/layout/content-width';
+import { RaisedCard } from '@/components/layout/raised-card';
 import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
@@ -129,17 +130,13 @@ function EntityServicesScreen() {
           {notifications.length === 0 ? null : (
             <ScreenSection testID="entity-service-decisions" title={t('decisionTitle')}>
               {notifications.map((notification) => (
-                <PressableScale
+                <RaisedCard
                   key={notification.id}
                   testID={`entity-service-decision-${notification.id}`}
-                  accessibilityRole="button"
                   accessibilityLabel={`${t('decisionOpen')}: ${
                     notification.serviceTitle[language] ?? notification.serviceTitle.ca
                   }`}
-                  onPress={() => open(notification.serviceId)}
-                  haptic="selection"
-                  style={continuousCorners}
-                  className="gap-xs rounded-md bg-neutral-50 p-md"
+                  onOpen={() => open(notification.serviceId)}
                 >
                   <View className="flex-row flex-wrap items-center justify-between gap-sm">
                     <Text
@@ -161,7 +158,7 @@ function EntityServicesScreen() {
                       {notification.comment}
                     </Text>
                   )}
-                </PressableScale>
+                </RaisedCard>
               ))}
             </ScreenSection>
           )}
