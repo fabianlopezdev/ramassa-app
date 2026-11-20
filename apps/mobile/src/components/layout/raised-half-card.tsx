@@ -5,7 +5,8 @@
  * change to the raised surface reaches it with the rest.
  *
  * Half cards go two to a row in `RaisedHalfCardRow`, and the two cards of a
- * row share one height: the taller one sets it. The icon keeps to the top and
+ * row share one height: the taller one sets it. The face grows from its own
+ * height (`grow`), so a squeezed page never folds it flat. The icon keeps to the top and
  * the name to the bottom, so the names of a pair start on one line at the
  * bottom and a name that wraps grows upward.
  *
@@ -60,8 +61,8 @@ export function RaisedHalfCard({
         label={accessibilityLabel}
         accessibilityRole="link"
         onPress={onOpen}
-        className="flex-1"
-        contentClassName="flex-1 items-start justify-between gap-sm py-md"
+        className="grow"
+        contentClassName="grow items-start justify-between gap-sm py-md"
       >
         <RaisedCardSymbol name={icon} size={HALF_CARD_ICON_SIZE} />
         <View className="gap-xs">

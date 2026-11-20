@@ -45,8 +45,32 @@ export default function ProfileScreen() {
   const openPrivacy = useCallback(() => push('/profile-privacy' as Href), [push]);
   const signOut = useCallback(() => void logout(), []);
 
+  /*
+    The credits, together and centred in the frame's footer, at the very
+    bottom of the phone (RAPP-877): the funding the grant terms ask to
+    mention (RAPP-64), then the icon set's licence credit (RAPP-834). Small
+    type takes a tight line height, so a wrapped line stays close to the
+    one above.
+  */
+  const credits = (
+    <View className="items-center gap-xs">
+      <Text
+        testID="generalitat-credit"
+        className={`text-center text-xs leading-5 text-neutral-600 ${languageFontClass}`}
+      >
+        {t('common:fundingAcknowledgment')}
+      </Text>
+      <Text
+        testID="icon-credit"
+        className={`text-center text-xs leading-5 text-neutral-600 ${languageFontClass}`}
+      >
+        {ICON_LICENCE.credit}
+      </Text>
+    </View>
+  );
+
   return (
-    <ProfileScreenFrame title={t('title')} testID="profile-menu" flushBottom>
+    <ProfileScreenFrame title={t('title')} testID="profile-menu" footer={credits}>
       <RaisedHalfCardRow>
         <RaisedHalfCard
           testID="profile-open-data"
@@ -102,27 +126,6 @@ export default function ProfileScreen() {
         onOpen={signOut}
       />
       {DevMenuEntry === null ? null : <DevMenuEntry />}
-      {/*
-        The credits, together and centred at the very bottom of the screen
-        (RAPP-877), under everything else: the funding the grant terms ask to
-        mention (RAPP-64), then the icon set's licence credit (RAPP-834). Small
-        type takes a tight line height, so a wrapped line stays close to the
-        one above.
-      */}
-      <View className="mt-auto items-center gap-xs">
-        <Text
-          testID="generalitat-credit"
-          className={`text-center text-xs leading-5 text-neutral-600 ${languageFontClass}`}
-        >
-          {t('common:fundingAcknowledgment')}
-        </Text>
-        <Text
-          testID="icon-credit"
-          className={`text-center text-xs leading-5 text-neutral-600 ${languageFontClass}`}
-        >
-          {ICON_LICENCE.credit}
-        </Text>
-      </View>
     </ProfileScreenFrame>
   );
 }
