@@ -495,7 +495,7 @@ export const GUIDES: readonly GuideSeed[] = [
     body: [
       p(
         t(
-          'Ningú no té dret a fer-te mal, a controlar-te ni a fer-te por, tampoco la teva parella o algú de la teva família. Si et passa, no és culpa teva.',
+          'Ningú no té dret a fer-te mal, a controlar-te ni a fer-te por, tampoc la teva parella o algú de la teva família. Si et passa, no és culpa teva.',
           'Nadie tiene derecho a hacerte daño, a controlarte ni a darte miedo, tampoco tu pareja o alguien de tu familia. Si te pasa, no es culpa tuya.',
           'Nobody has the right to hurt you, control you or frighten you, including your partner or someone in your family. If it happens to you, it is not your fault.',
           "Personne n'a le droit de te faire du mal, de te contrôler ou de te faire peur, ni ton partenaire ni quelqu'un de ta famille. Si cela t'arrive, ce n'est pas ta faute.",

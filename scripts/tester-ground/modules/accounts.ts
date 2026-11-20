@@ -125,6 +125,8 @@ function idArray(accounts: readonly Account[]): string {
 
 const EVERYONE = [...TESTERS, ...FINISHED.map((person) => person.account)];
 const ALL_IDS = idArray(EVERYONE);
+const ALL_ID_TEXTS = `array[${EVERYONE.map((account) => lit(account.id)).join(', ')}]::text[]`;
+const ALL_EMAILS = `array[${EVERYONE.map((account) => lit(account.email)).join(', ')}]::text[]`;
 const TESTER_IDS = idArray(TESTERS);
 
 const inviteId = (tester: Account) => uid(`accounts:invite:${tester.key}`);
@@ -382,6 +384,11 @@ delete from public.invites
 
 delete from public.audit_log
  where actor_id = any (${ALL_IDS}) or target_id = any (${ALL_IDS});
+
+-- The sign-in service keeps its own log of each sign-in of these accounts.
+delete from auth.audit_log_entries
+ where payload ->> 'actor_id' = any (${ALL_ID_TEXTS})
+    or payload ->> 'actor_username' = any (${ALL_EMAILS});
 
 delete from auth.users where id = any (${ALL_IDS});
 `;
