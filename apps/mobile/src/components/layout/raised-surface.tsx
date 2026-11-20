@@ -96,6 +96,9 @@ export const RAISED_COMPACT_FACE_MIN_HEIGHT = tokens.tapTarget.min - shadowBlock
 export const RAISED_ICON_FACE_SIZE =
   tokens.tapTarget.min - Math.min(shadowInlineOffset, shadowBlockOffset);
 
+/** The whole height of that button, its edge included. */
+export const RAISED_ICON_BUTTON_HEIGHT = RAISED_ICON_FACE_SIZE + shadowBlockOffset;
+
 /**
  * The face of a raised choice (a picker card, the segmented control): as tall
  * as a form field once its edge is added, and taller with larger text.

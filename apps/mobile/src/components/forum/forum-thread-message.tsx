@@ -17,7 +17,7 @@
  */
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
-import { RAISED_ICON_FACE_SIZE } from '@/components/layout/raised-surface';
+import { RAISED_ICON_BUTTON_HEIGHT } from '@/components/layout/raised-surface';
 import { PERSON_AVATAR_SIZE, PersonAvatar } from '@/components/people/person-avatar';
 import type { ForumThreadRail } from '@/lib/forum-reply-thread';
 import { memo, useCallback, type ReactNode } from 'react';
@@ -26,18 +26,21 @@ import { tokens } from '@ramassa/shared/tokens';
 
 // The author row is as tall as the report button beside the name, and the
 // avatar sits centred in a box of the same height, so avatar and name line up.
-const AUTHOR_ROW_HEIGHT = RAISED_ICON_FACE_SIZE + tokens.languageChoice.shadowBlockOffset;
+const AUTHOR_ROW_HEIGHT = RAISED_ICON_BUTTON_HEIGHT;
+// The same room above a message's content as below it, inside the row, so a
+// highlighted row sits evenly in its band. The lines run through this room.
+const ROW_PADDING = tokens.spacing.sm;
 const AVATAR_SIZE = PERSON_AVATAR_SIZE.small;
 const LINE_WIDTH = tokens.forum.threadLineWidth;
 const LINE_COLOR = tokens.colors.neutral[300];
 // The line runs down the middle of the rail, under the middle of the avatar.
 const LINE_START = (AVATAR_SIZE - LINE_WIDTH) / 2;
-const AVATAR_MIDDLE = AUTHOR_ROW_HEIGHT / 2;
+const AVATAR_MIDDLE = ROW_PADDING + AUTHOR_ROW_HEIGHT / 2;
 // The rail and the avatar of the answer are this far apart (`gap-sm`).
 const RAIL_GAP = tokens.spacing.sm;
 const styles = StyleSheet.create({
   rail: { width: AVATAR_SIZE },
-  avatarBox: { height: AUTHOR_ROW_HEIGHT, justifyContent: 'center' },
+  avatarBox: { marginTop: ROW_PADDING, height: AUTHOR_ROW_HEIGHT, justifyContent: 'center' },
   authorRow: { minHeight: AUTHOR_ROW_HEIGHT },
   // Straight down the whole row.
   straight: {
@@ -152,7 +155,7 @@ export const ForumThreadMessage = memo(function ForumThreadMessage({
           <PersonAvatar name={name} avatarKey={avatarKey} size="small" />
         </View>
       </View>
-      <View className="flex-1 gap-sm pb-md">
+      <View className="flex-1 gap-sm py-sm">
         <View className="flex-row items-center gap-sm" style={styles.authorRow}>
           <Text
             accessibilityLabel={authorLabel}

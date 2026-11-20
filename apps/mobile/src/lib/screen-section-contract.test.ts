@@ -35,10 +35,9 @@ test('no screen defines its own Section component', () => {
   expect(offenders).toEqual([]);
 });
 
-// Headings that are not section titles: a confirm card, a notice card, and the
-// title of one request. Anything else at these sizes is a section title.
+// Headings that are not section titles: a notice card and the title of one
+// request. Anything else at these sizes is a section title.
 const notSectionTitles = new Set([
-  'app/(app)/forum/[id].tsx',
   'app/(app)/mentoring/[id].tsx',
   'app/(app)/mentoring/index.tsx',
 ]);
