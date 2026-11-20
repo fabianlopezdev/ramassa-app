@@ -1,27 +1,29 @@
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
+import { Icon, type IconName, type IconWeight } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import type { AttendanceSyncState } from '@/lib/attendance';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { memo, useCallback } from 'react';
 import { Text, View } from 'react-native';
 import type { AttendanceStatus } from '@ramassa/shared/attendance';
 import type { AppErrorCode } from '@ramassa/shared/errors';
 import { tokens } from '@ramassa/shared/tokens';
 
-const statusSymbols: Record<AttendanceStatus | 'unmarked', SymbolViewProps['name']> = {
-  unmarked: { ios: 'circle', android: 'radio_button_unchecked', web: 'circle' },
-  present: { ios: 'checkmark.circle.fill', android: 'check_circle', web: 'check_circle' },
-  absent: { ios: 'xmark.circle.fill', android: 'cancel', web: 'cancel' },
-  excused: { ios: 'questionmark.circle.fill', android: 'help', web: 'help' },
+// An empty ring while nobody is marked; a filled two-tone mark once she is.
+// Shared with her own history on La meva assistència (RAPP-896).
+export const attendanceStatusIcons: Record<
+  AttendanceStatus | 'unmarked',
+  { readonly name: IconName; readonly weight: IconWeight }
+> = {
+  unmarked: { name: 'circle', weight: 'linear' },
+  present: { name: 'check-circle', weight: 'boldDuotone' },
+  absent: { name: 'close-circle', weight: 'boldDuotone' },
+  excused: { name: 'question-circle', weight: 'boldDuotone' },
 };
 
 // Her card, from a separate control beside the row (RAPP-799).
-const openCardSymbol: SymbolViewProps['name'] = {
-  ios: 'person.text.rectangle',
-  android: 'badge',
-  web: 'badge',
-};
 
-const statusColors: Record<AttendanceStatus | 'unmarked', string> = {
+export const attendanceStatusColors: Record<AttendanceStatus | 'unmarked', string> = {
   unmarked: tokens.colors.neutral[500],
   present: tokens.colors.success,
   absent: tokens.colors.error,
@@ -101,22 +103,20 @@ export const AttendanceRow = memo(function AttendanceRow({
   const visualStatus = status ?? 'unmarked';
 
   return (
-    <View>
-      <View className="flex-row items-center border-b border-neutral-200 bg-white">
-        <PressableScale
+    <View className="gap-sm px-lg pb-md">
+      <View className="flex-row items-stretch gap-sm">
+        <SelectionChoiceSurface
           testID={`attendance-player-${playerId}`}
-          accessibilityLabel={accessibilityLabel}
+          label={accessibilityLabel}
           onPress={handlePress}
-          haptic="selection"
-          className={`min-h-3xl flex-1 flex-row items-center gap-md py-md ps-lg ${
-            onOpenCard === undefined ? 'pe-lg' : 'pe-sm'
-          }`}
+          className="flex-1"
+          contentClassName="grow flex-row items-center gap-md py-md"
         >
-          <SymbolView
-            accessible={false}
-            name={statusSymbols[visualStatus]}
+          <Icon
+            name={attendanceStatusIcons[visualStatus].name}
+            weight={attendanceStatusIcons[visualStatus].weight}
             size={tokens.fontSize['3xl']}
-            tintColor={statusColors[visualStatus]}
+            color={attendanceStatusColors[visualStatus]}
           />
           <View className="flex-1 gap-xs">
             <Text className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}>
@@ -147,24 +147,23 @@ export const AttendanceRow = memo(function AttendanceRow({
               </Text>
             ) : null}
           </View>
-        </PressableScale>
+        </SelectionChoiceSurface>
         {onOpenCard === undefined ? null : (
           // Beside the row, outside its pressable: a tap on the row still cycles the mark.
-          <PressableScale
+          <SelectionChoiceSurface
             testID={`attendance-open-card-${playerId}`}
-            accessibilityRole="button"
-            accessibilityLabel={openCardLabel}
+            label={openCardLabel}
             onPress={handleOpenCard}
-            haptic="tapLight"
-            className="me-sm min-h-recommended min-w-recommended items-center justify-center"
+            paddingClassName="px-md"
+            contentClassName="grow items-center justify-center"
           >
-            <SymbolView
-              accessible={false}
-              name={openCardSymbol}
+            <Icon
+              name="id-card"
+              weight="boldDuotone"
               size={tokens.fontSize['2xl']}
-              tintColor={tokens.colors.primary.dark}
+              color={tokens.colors.primary.dark}
             />
-          </PressableScale>
+          </SelectionChoiceSurface>
         )}
       </View>
       {syncState === 'rejected' ? (
@@ -172,20 +171,14 @@ export const AttendanceRow = memo(function AttendanceRow({
         // these two act on the refused change itself.
         <View
           testID={`attendance-rejected-${playerId}`}
-          className="flex-row flex-wrap items-center gap-sm border-b border-neutral-200 bg-white px-lg pb-md"
+          className="flex-row flex-wrap items-center gap-sm"
         >
-          <PressableScale
+          <RaisedActionButton
             testID={`attendance-retry-${playerId}`}
-            accessibilityRole="button"
+            label={retryLabel}
             accessibilityLabel={`${retryLabel}: ${name}`}
             onPress={handleRetry}
-            haptic="tapLight"
-            className="min-h-recommended justify-center rounded-md border border-primary px-md"
-          >
-            <Text className={`text-sm font-semibold text-primary-dark ${languageFontClass}`}>
-              {retryLabel}
-            </Text>
-          </PressableScale>
+          />
           <PressableScale
             testID={`attendance-discard-${playerId}`}
             accessibilityRole="button"

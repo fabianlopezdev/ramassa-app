@@ -2,27 +2,31 @@ import { render } from '@testing-library/react';
 import { afterAll, expect, mock, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
 
-mock.module('@/components/motion/pressable-scale', () => ({
-  PressableScale: ({
-    accessibilityLabel,
+// The raised pill and the raised button (RAPP-878), as plain buttons.
+mock.module('@/components/layout/filter-chips', () => ({
+  RaisedChip: ({
+    label,
     accessibilityHint,
-    children,
     onPress,
   }: {
-    readonly accessibilityLabel: string;
+    readonly label: string;
     readonly accessibilityHint?: string;
-    readonly children: ReactNode;
     readonly onPress: () => void;
   }) =>
     createElement(
       'button',
-      {
-        'aria-label': accessibilityLabel,
-        'aria-description': accessibilityHint,
-        onClick: onPress,
-      },
-      children,
+      { 'aria-label': label, 'aria-description': accessibilityHint, onClick: onPress },
+      label,
     ),
+}));
+mock.module('@/components/forms/raised-action-button', () => ({
+  RaisedActionButton: ({
+    label,
+    onPress,
+  }: {
+    readonly label: string;
+    readonly onPress: () => void;
+  }) => createElement('button', { 'aria-label': label, onClick: onPress }, label),
 }));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
 mock.module('react-i18next', () => ({

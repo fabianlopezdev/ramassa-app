@@ -14,10 +14,13 @@ import {
   AnnouncementFeedError,
 } from '@/components/announcements/feed-states';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { RaisedCard } from '@/components/layout/raised-card';
 import { SegmentedControl } from '@/components/layout/segmented-control';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { DeletionRequestsPanel } from '@/components/participants/deletion-requests-panel';
 import { ParticipantCard } from '@/components/participants/participant-card';
 import {
@@ -135,17 +138,11 @@ function ParticipantRow({
   const status = rowStatusLabel(row, t);
   const label = [name, detail, status].filter(Boolean).join(', ');
   return (
-    <PressableScale
+    <RaisedCard
       testID={`participant-result-${row.id}`}
-      accessibilityRole="button"
       accessibilityLabel={label}
-      onPress={() => onOpen(row.id)}
-      haptic="selection"
+      onOpen={() => onOpen(row.id)}
       isSelected={isSelected}
-      style={continuousCorners}
-      className={`min-h-recommended justify-center gap-xs rounded-md border bg-white px-md py-sm ${
-        isSelected ? 'border-primary' : 'border-neutral-200'
-      }`}
     >
       <View className="flex-row flex-wrap items-baseline justify-between gap-sm">
         <Text className={`text-start text-md font-bold text-neutral-900 ${fontClass}`}>{name}</Text>
@@ -156,7 +153,7 @@ function ParticipantRow({
       {detail.length > 0 ? (
         <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>{detail}</Text>
       ) : null}
-    </PressableScale>
+    </RaisedCard>
   );
 }
 
@@ -216,7 +213,7 @@ function TableRow({
   );
 }
 
-export default function ParticipantListScreen() {
+function ParticipantListScreen() {
   const { t, i18n } = useTranslation('participants');
   const { t: tNav } = useTranslation('nav');
   const { t: tErrors } = useTranslation('errors');
@@ -416,29 +413,16 @@ export default function ParticipantListScreen() {
             />
           ))}
         </View>
-        <PressableScale
+        <RaisedActionButton
           testID="participant-filters"
-          accessibilityRole="button"
-          accessibilityLabel={
+          size="fit"
+          label={
             sheetCount > 0
               ? t('list.filtersActionCount', { count: sheetCount })
               : t('list.filtersAction')
           }
           onPress={() => setSheetOpen(true)}
-          haptic="selection"
-          style={continuousCorners}
-          className={`min-h-recommended items-center justify-center rounded-md border px-md ${
-            sheetCount > 0 ? 'border-primary bg-primary' : 'border-neutral-300 bg-white'
-          }`}
-        >
-          <Text
-            className={`font-semibold ${sheetCount > 0 ? 'text-white' : 'text-neutral-800'} ${fontClass}`}
-          >
-            {sheetCount > 0
-              ? t('list.filtersActionCount', { count: sheetCount })
-              : t('list.filtersAction')}
-          </Text>
-        </PressableScale>
+        />
       </ScrollView>
       <View className="flex-row flex-wrap items-center justify-between gap-sm">
         <Text
@@ -597,3 +581,5 @@ export default function ParticipantListScreen() {
 function RowSeparator() {
   return <View className="h-sm" />;
 }
+
+export default withScreenEntrance('participants', ParticipantListScreen);

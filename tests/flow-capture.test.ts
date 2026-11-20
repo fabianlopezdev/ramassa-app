@@ -196,7 +196,8 @@ describe('locale-aware selectors', () => {
   test('tokens are replaced everywhere in a spec, not only at the top level', async () => {
     const ca = await loadTranslator('ca');
     expect(interpolate({ steps: [{ waitFor: 'text={{nav:tabs.chat}}' }] }, ca)).toEqual({
-      steps: [{ waitFor: 'text=Xat' }],
+      // The chat tab is called Contacte (RAPP-860).
+      steps: [{ waitFor: 'text=Contacte' }],
     });
   });
 });

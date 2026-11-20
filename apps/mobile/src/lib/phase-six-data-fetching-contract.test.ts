@@ -16,7 +16,9 @@ const phaseSixTargets = [
   'components/forum/forum-flag-dialog.tsx',
   'components/forum/forum-plain-text.tsx',
   'components/forum/forum-post-card.tsx',
-  'components/forum/forum-reply-card.tsx',
+  'components/forum/forum-own-post-actions.tsx',
+  'components/forum/forum-reply-composer.tsx',
+  'components/forum/forum-thread-message.tsx',
   'lib/forum-write.ts',
   'lib/gallery-upload.ts',
   'lib/media-upload-policy.ts',
@@ -26,7 +28,6 @@ const phaseSixTargets = [
   'lib/query-persistence.ts',
   'components/gallery/gallery-grid.tsx',
   'components/knowledge/community-story-list.tsx',
-  'components/community/community-share-sheet.tsx',
   'lib/community-stories.ts',
 ] as const;
 

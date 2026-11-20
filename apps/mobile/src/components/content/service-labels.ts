@@ -3,8 +3,8 @@
  * as the web admin names them, and the way an extra field's value reads. An
  * option of a select or a list field reads through `services:option.<value>`.
  */
+import type { IconName } from '@/components/icons/icon';
 import type { SERVICE_CATEGORY_ICONS } from '@/lib/service-category-form';
-import type { SymbolViewProps } from 'expo-symbols';
 import type { SupportedLanguage } from '@ramassa/shared/i18n';
 import type {
   ServiceAvailability,
@@ -60,18 +60,18 @@ export function fieldLabel(field: ServiceMetadataFieldDefinition, language: Supp
   return field.label[language] ?? field.label.ca;
 }
 
-/** A service category's icon codes (the web admin's lucide names) as system symbols (RAPP-347). */
-export const SERVICE_ICON_SYMBOLS = {
-  house: { ios: 'house.fill', android: 'home', web: 'home' },
-  languages: { ios: 'character.bubble.fill', android: 'translate', web: 'translate' },
-  'briefcase-business': { ios: 'briefcase.fill', android: 'work', web: 'work' },
-  scale: { ios: 'building.columns.fill', android: 'gavel', web: 'gavel' },
-  'heart-pulse': { ios: 'heart.text.square.fill', android: 'monitor_heart', web: 'monitor_heart' },
-  'graduation-cap': { ios: 'graduationcap.fill', android: 'school', web: 'school' },
-  tickets: { ios: 'ticket.fill', android: 'confirmation_number', web: 'confirmation_number' },
-  'file-text': { ios: 'doc.text.fill', android: 'description', web: 'description' },
-  circle: { ios: 'circle.fill', android: 'circle', web: 'circle' },
-} as const satisfies Record<(typeof SERVICE_CATEGORY_ICONS)[number], SymbolViewProps['name']>;
+/** A service category's icon codes (the web admin's lucide names) as the app's icons (RAPP-347). */
+export const SERVICE_ICON_NAMES = {
+  house: 'home',
+  languages: 'translate',
+  'briefcase-business': 'briefcase',
+  scale: 'scale',
+  'heart-pulse': 'heart-pulse',
+  'graduation-cap': 'graduation-cap',
+  tickets: 'ticket',
+  'file-text': 'document',
+  circle: 'circle',
+} as const satisfies Record<(typeof SERVICE_CATEGORY_ICONS)[number], IconName>;
 
 export const SERVICE_ICON_KEYS = {
   house: 'iconHouse',

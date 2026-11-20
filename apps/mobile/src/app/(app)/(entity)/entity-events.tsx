@@ -9,8 +9,9 @@ import { EntityEventSheet } from '@/components/entity/entity-event-sheet';
 import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-load-failure';
 import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { PageWidth } from '@/components/layout/content-width';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { RaisedCard } from '@/components/layout/raised-card';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { useEntityUpcomingEvents } from '@/lib/entity-portal';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
@@ -23,7 +24,7 @@ import {
   type SupportedLanguage,
 } from '@ramassa/shared/i18n';
 
-export default function EntityEventsScreen() {
+function EntityEventsScreen() {
   const { t, i18n } = useTranslation('entity-management');
   const fontClass = useLanguageFontClass();
   const events = useEntityUpcomingEvents();
@@ -39,7 +40,7 @@ export default function EntityEventsScreen() {
       edges={['top', 'left', 'right']}
     >
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <EntityScreenHeader title={t('eventsTitle')} intro={t('eventsIntro')} />
           {hasLoadFailed(events) ? (
             <EntityLoadFailure query={events} />
@@ -61,15 +62,11 @@ export default function EntityEventsScreen() {
                   timeZone: event.timeZone,
                 }).format(new Date(event.startsAt));
                 return (
-                  <PressableScale
+                  <RaisedCard
                     key={event.id}
                     testID={`entity-event-${event.id}`}
-                    accessibilityRole="button"
                     accessibilityLabel={`${title}, ${when}`}
-                    onPress={() => setOpenEventId(event.id)}
-                    haptic="selection"
-                    style={continuousCorners}
-                    className="gap-xs rounded-md border border-neutral-200 bg-white p-md"
+                    onOpen={() => setOpenEventId(event.id)}
                   >
                     <Text className={`text-start text-md font-bold text-neutral-900 ${fontClass}`}>
                       {title}
@@ -93,7 +90,7 @@ export default function EntityEventsScreen() {
                         {description}
                       </Text>
                     ) : null}
-                  </PressableScale>
+                  </RaisedCard>
                 );
               })}
             </View>
@@ -104,3 +101,5 @@ export default function EntityEventsScreen() {
     </SafeAreaView>
   );
 }
+
+export default withScreenEntrance('entity-events', EntityEventsScreen);

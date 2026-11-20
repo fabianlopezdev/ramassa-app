@@ -112,6 +112,21 @@ mock.module('@/components/motion/pressable-scale', () => ({
   PressableScale: ({ testID, onPress }: { testID: string; onPress: () => void }) =>
     createElement('button', { 'data-testid': testID, onClick: onPress }, testID),
 }));
+// The shared buttons (RAPP-878), as plain buttons that keep their label and testID.
+const sharedButton = ({
+  label,
+  onPress,
+  testID,
+}: {
+  label: string;
+  onPress: () => void;
+  testID?: string;
+}) =>
+  createElement('button', { onClick: onPress, 'aria-label': label, 'data-testid': testID }, label);
+mock.module('@/components/forms/raised-action-button', () => ({
+  RaisedActionButton: sharedButton,
+}));
+mock.module('@/components/auth/auth-submit-button', () => ({ AuthSubmitButton: sharedButton }));
 mock.module('@/components/profile/profile-section', () => ({
   ProfileSection: ({ children }: { children: ReactNode }) =>
     createElement('section', null, children),

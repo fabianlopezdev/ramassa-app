@@ -5,6 +5,8 @@
  */
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useItemLabel } from '@/lib/item-label';
@@ -49,22 +51,14 @@ function CheckInPanel({
   const canSave = returned === 0 || condition !== null;
 
   const step = (label: string, a11y: string, change: number, disabled: boolean, testID: string) => (
-    <PressableScale
+    <RaisedActionButton
       testID={testID}
-      accessibilityRole="button"
+      size="fit"
+      label={label}
       accessibilityLabel={a11y}
       onPress={() => setReturned((current) => current + change)}
       isDisabled={disabled}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended min-w-recommended items-center justify-center rounded-md border ${
-        disabled ? 'border-neutral-300' : 'border-primary'
-      }`}
-    >
-      <Text className={`text-lg font-bold ${disabled ? 'text-neutral-500' : 'text-primary-dark'}`}>
-        {label}
-      </Text>
-    </PressableScale>
+    />
   );
 
   return (
@@ -167,13 +161,7 @@ export function StaffCheckouts({ canCheckIn }: { readonly canCheckIn: boolean })
   const rows = checkouts.data ?? [];
 
   return (
-    <View className="gap-sm" testID="stock-checkouts">
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-      >
-        {t('checkout.listTitle')}
-      </Text>
+    <ScreenSection testID="stock-checkouts" title={t('checkout.listTitle')}>
       {checkouts.isSuccess && rows.length === 0 ? (
         <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
           {t('checkout.listEmpty')}
@@ -220,6 +208,6 @@ export function StaffCheckouts({ canCheckIn }: { readonly canCheckIn: boolean })
           </View>
         );
       })}
-    </View>
+    </ScreenSection>
   );
 }

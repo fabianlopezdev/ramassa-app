@@ -8,6 +8,10 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
+import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { PermissionToggles } from '@/components/team/permission-toggles';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -47,20 +51,22 @@ function Sheet({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-white" testID={testID}>
-        <KeyboardAvoidingView
-          className="flex-1"
-          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
-        >
-          <ScrollView
-            contentContainerClassName="gap-md p-lg"
-            keyboardShouldPersistTaps="handled"
-            automaticallyAdjustKeyboardInsets
+      <NativeModalScope>
+        <SafeAreaView className="flex-1 bg-white" testID={testID}>
+          <KeyboardAvoidingView
+            className="flex-1"
+            behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
           >
-            {visible ? children : null}
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+            <ScrollView
+              contentContainerClassName={screenContentClassName}
+              keyboardShouldPersistTaps="handled"
+              automaticallyAdjustKeyboardInsets
+            >
+              {visible ? children : null}
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </NativeModalScope>
     </Modal>
   );
 }
@@ -130,19 +136,11 @@ function SheetButtons({
             {isBusy ? t('working') : saveLabel}
           </Text>
         </PressableScale>
-        <PressableScale
+        <RaisedActionButton
           testID={`${testIDPrefix}-cancel`}
-          accessibilityRole="button"
-          accessibilityLabel={t('cancel')}
+          label={t('cancel')}
           onPress={onClose}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-            {t('cancel')}
-          </Text>
-        </PressableScale>
+        />
       </View>
     </View>
   );
@@ -183,9 +181,7 @@ function MemberAccessForm({
         title={t('team.editAccessTitle', { name: `${member.first_name} ${member.last_name}` })}
         intro={t('team.editAccessIntro')}
       />
-      <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-        {t('team.presetLabel')}
-      </Text>
+      <FieldLabel>{t('team.presetLabel')}</FieldLabel>
       <View className="flex-row flex-wrap gap-sm">
         {presets.map((preset) => (
           <ChoiceOption
@@ -199,24 +195,17 @@ function MemberAccessForm({
           />
         ))}
       </View>
-      <PressableScale
+      <RaisedActionButton
         testID="member-access-use-preset"
-        accessibilityRole="button"
-        accessibilityLabel={t('team.usePreset')}
+        size="compact"
+        label={t('team.usePreset')}
         onPress={() => {
           if (chosen === undefined) return;
           setPermissions((current) => presetWithinReach(current, chosen, holds));
           setPresetId(chosen.id);
         }}
         isDisabled={chosen === undefined}
-        haptic="tapLight"
-        style={continuousCorners}
-        className="min-h-recommended items-center justify-center self-start rounded-md border border-primary bg-white px-lg"
-      >
-        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-          {t('team.usePreset')}
-        </Text>
-      </PressableScale>
+      />
       <PermissionToggles value={permissions} onChange={setPermissions} holds={holds} />
       <SheetButtons
         testIDPrefix="member-access"

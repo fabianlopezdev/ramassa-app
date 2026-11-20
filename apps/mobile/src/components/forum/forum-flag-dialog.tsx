@@ -1,21 +1,12 @@
-import { useAppLock } from '@/components/auth/app-lock';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
-import { continuousCorners } from '@/lib/continuous-corners';
-import { playHaptic } from '@/lib/haptics/haptics';
+import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
+import { AppSheet } from '@/components/layout/app-sheet';
 import { useFlagForumContent } from '@/lib/player-forum';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { toAppError } from '@ramassa/shared/errors';
 import {
   FORUM_FLAG_COMMENT_MAX_LENGTH,
@@ -26,14 +17,13 @@ import { tokens } from '@ramassa/shared/tokens';
 
 const FORUM_FLAG_COMMENT_MIN_HEIGHT = tokens.spacing['3xl'] * 2;
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: tokens.colors.white },
   comment: { minHeight: FORUM_FLAG_COMMENT_MIN_HEIGHT, writingDirection: 'auto' },
 });
-const selectedRadioAccessibilityState = { checked: true, selected: true } as const;
-const unselectedRadioAccessibilityState = { checked: false, selected: false } as const;
-const enabledButtonAccessibilityState = { busy: false, disabled: false } as const;
-const busyButtonAccessibilityState = { busy: true, disabled: true } as const;
 
+/**
+ * One reason, on the raised choice card onboarding uses for a choice
+ * (RAPP-881), so picking a reason looks and presses like picking a language.
+ */
 const ForumFlagReasonOption = memo(function ForumFlagReasonOption({
   candidate,
   label,
@@ -47,29 +37,16 @@ const ForumFlagReasonOption = memo(function ForumFlagReasonOption({
   readonly languageFontClass: string;
   readonly onSelect: (candidate: ForumFlagInput['reason']) => void;
 }) {
-  const select = useCallback(() => {
-    playHaptic('selection');
-    onSelect(candidate);
-  }, [candidate, onSelect]);
+  const select = useCallback(() => onSelect(candidate), [candidate, onSelect]);
 
   return (
-    <Pressable
+    <SelectionChoiceCard
       testID={`forum-flag-reason-${candidate}`}
-      accessibilityRole="radio"
-      accessibilityLabel={label}
-      accessibilityState={
-        selected ? selectedRadioAccessibilityState : unselectedRadioAccessibilityState
-      }
+      label={label}
+      fontClass={languageFontClass}
+      isSelected={selected}
       onPress={select}
-      style={continuousCorners}
-      className={`min-h-recommended justify-center rounded-md border px-lg active:opacity-90 ${selected ? 'border-primary bg-primary' : 'border-neutral-300 bg-white'}`}
-    >
-      <Text
-        className={`text-start font-semibold ${selected ? 'text-white' : 'text-neutral-800'} ${languageFontClass}`}
-      >
-        {label}
-      </Text>
-    </Pressable>
+    />
   );
 });
 
@@ -80,6 +57,12 @@ export interface ForumFlagDialogProps {
   readonly onConfirmed: () => void;
 }
 
+/**
+ * The report sheet ("Avisa l'equip tècnic"), in the app's one sheet frame
+ * (RAPP-881): the reasons, an optional note, and "Envia l'avís" as the action
+ * at the bottom with the privacy line above it. She leaves without sending by
+ * dragging the sheet down.
+ */
 export function ForumFlagDialog({ target, postId, onClose, onConfirmed }: ForumFlagDialogProps) {
   const { t } = useTranslation('forum');
   const languageFontClass = useLanguageFontClass();
@@ -100,7 +83,6 @@ export function ForumFlagDialog({ target, postId, onClose, onConfirmed }: ForumF
     onClose();
   }, [flagMutation.isPending, onClose]);
 
-  const { isCovered } = useAppLock();
   const submit = useCallback(async () => {
     if (target === null || reason === null) {
       setErrorCode('VALIDATION-1');
@@ -116,14 +98,7 @@ export function ForumFlagDialog({ target, postId, onClose, onConfirmed }: ForumF
       setErrorCode(toAppError(error).code);
     }
   }, [comment, onConfirmed, reason, submitFlag, target]);
-  const pressSubmit = useCallback(() => {
-    playHaptic('tapLight');
-    void submit();
-  }, [submit]);
-  const pressClose = useCallback(() => {
-    playHaptic('tapLight');
-    close();
-  }, [close]);
+  const pressSubmit = useCallback(() => void submit(), [submit]);
   const renderReason = useCallback(
     (candidate: ForumFlagInput['reason']) => (
       <ForumFlagReasonOption
@@ -139,106 +114,56 @@ export function ForumFlagDialog({ target, postId, onClose, onConfirmed }: ForumF
   );
 
   return (
-    <Modal
-      visible={target !== null && !isCovered}
-      animationType="slide"
-      presentationStyle="formSheet"
-      onRequestClose={close}
-    >
-      <SafeAreaView style={styles.screen}>
-        <ScrollView
-          contentContainerClassName="grow gap-lg p-lg"
-          contentInsetAdjustmentBehavior="automatic"
-          keyboardDismissMode="on-drag"
-          keyboardShouldPersistTaps="handled"
-        >
-          <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
-            >
-              {t('flagTitle')}
-            </Text>
-            <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-              {t('flagIntro')}
-            </Text>
-          </View>
-          <View
-            accessibilityRole="radiogroup"
-            accessibilityLabel={t('flagReasonLabel')}
-            className="gap-sm"
-          >
-            {/* A native Modal owns a separate Android root outside the app's
-                gesture root. Native pressables remain interactive here without
-                nesting another GestureHandlerRootView, which crashes Fabric. */}
-            {FORUM_FLAG_REASONS.map(renderReason)}
-          </View>
-          <AuthTextField
-            testID="forum-flag-comment"
-            label={t('flagCommentLabel')}
-            placeholder={t('flagCommentPlaceholder')}
-            value={comment}
-            onChangeText={setComment}
-            maxLength={FORUM_FLAG_COMMENT_MAX_LENGTH}
-            multiline
-            textAlignVertical="top"
-            style={styles.comment}
-          />
-          {errorCode === null ? null : (
-            <Text
-              selectable
-              accessibilityRole="alert"
-              className={`text-start text-sm text-error ${languageFontClass}`}
-            >
-              {errorCode === 'VALIDATION-1' ? t('flagReasonRequired') : t('flagFailed')}
-            </Text>
-          )}
-          <View className="gap-sm">
-            <Pressable
-              testID="forum-flag-submit"
-              accessibilityRole="button"
-              accessibilityLabel={flagMutation.isPending ? t('flagSubmitting') : t('flagSubmit')}
-              accessibilityState={
-                flagMutation.isPending
-                  ? busyButtonAccessibilityState
-                  : enabledButtonAccessibilityState
-              }
-              disabled={flagMutation.isPending}
-              onPress={pressSubmit}
-              style={continuousCorners}
-              className={`min-h-recommended flex-row items-center justify-center gap-sm rounded-md bg-primary px-lg active:opacity-90 ${flagMutation.isPending ? 'opacity-60' : ''}`}
-            >
-              {flagMutation.isPending ? (
-                <ActivityIndicator accessible={false} color={tokens.colors.white} />
-              ) : null}
-              <Text className={`text-lg font-bold text-white ${languageFontClass}`}>
-                {flagMutation.isPending ? t('flagSubmitting') : t('flagSubmit')}
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('cancel')}
-              accessibilityState={
-                flagMutation.isPending
-                  ? busyButtonAccessibilityState
-                  : enabledButtonAccessibilityState
-              }
-              disabled={flagMutation.isPending}
-              onPress={pressClose}
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg active:opacity-90"
-            >
-              <Text className={`font-bold text-neutral-700 ${languageFontClass}`}>
-                {t('cancel')}
-              </Text>
-            </Pressable>
-          </View>
+    <AppSheet
+      testID="forum-flag-sheet"
+      title={t('flagTitle')}
+      visible={target !== null}
+      onClose={close}
+      action={
+        <>
           <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
             {t('flagPrivacy')}
           </Text>
-          <Text className="sr-only">{t('flagConfirmation')}</Text>
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
+          <AuthSubmitButton
+            testID="forum-flag-submit"
+            label={flagMutation.isPending ? t('flagSubmitting') : t('flagSubmit')}
+            onPress={pressSubmit}
+            isLoading={flagMutation.isPending}
+          />
+        </>
+      }
+    >
+      <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
+        {t('flagIntro')}
+      </Text>
+      <View
+        accessibilityRole="radiogroup"
+        accessibilityLabel={t('flagReasonLabel')}
+        className="gap-sm"
+      >
+        {FORUM_FLAG_REASONS.map(renderReason)}
+      </View>
+      <AuthTextField
+        testID="forum-flag-comment"
+        label={t('flagCommentLabel')}
+        placeholder={t('flagCommentPlaceholder')}
+        value={comment}
+        onChangeText={setComment}
+        maxLength={FORUM_FLAG_COMMENT_MAX_LENGTH}
+        multiline
+        textAlignVertical="top"
+        style={styles.comment}
+      />
+      {errorCode === null ? null : (
+        <Text
+          selectable
+          accessibilityRole="alert"
+          className={`text-start text-sm text-error ${languageFontClass}`}
+        >
+          {errorCode === 'VALIDATION-1' ? t('flagReasonRequired') : t('flagFailed')}
+        </Text>
+      )}
+      <Text className="sr-only">{t('flagConfirmation')}</Text>
+    </AppSheet>
   );
 }

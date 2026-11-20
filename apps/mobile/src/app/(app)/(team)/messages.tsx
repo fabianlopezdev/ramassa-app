@@ -7,6 +7,7 @@ import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { StaffMessageThread } from '@/components/messaging/message-thread';
 import { StaffConversationCard } from '@/components/messaging/staff-conversation-card';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { useTeamLayout } from '@/components/team/team-layout-context';
 import { useStaffConversationList } from '@/lib/messaging';
 import { formatUnreadBadge } from '@/lib/unread-badge';
@@ -22,18 +23,23 @@ import type { StaffConversationRow } from '@ramassa/shared/messaging';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_CONVERSATIONS: readonly StaffConversationRow[] = [];
+// The room on top is for the unread count, which rises above the first card.
 const listContentStyle = {
   paddingHorizontal: tokens.spacing.lg,
+  paddingTop: tokens.spacing.sm,
   paddingBottom: tokens.spacing['3xl'],
-  gap: tokens.spacing.md,
 } as const;
+// FlashList takes no `gap`, so the room between two cards is a separator.
+function RowSeparator() {
+  return <View className="h-md" />;
+}
 const keyExtractor = (row: StaffConversationRow) => row.conversationId;
 
 // Two parts list, three parts open item, within sensible bounds.
 const listPaneStyle = { flex: 2, minWidth: 280, maxWidth: 400 } as const;
 const detailPaneStyle = { flex: 3 } as const;
 
-export default function StaffConversationsScreen() {
+function StaffConversationsScreen() {
   const { t } = useTranslation('messaging');
   const fontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -132,6 +138,7 @@ export default function StaffConversationsScreen() {
             renderItem={renderItem}
             keyExtractor={keyExtractor}
             contentInsetAdjustmentBehavior="automatic"
+            ItemSeparatorComponent={RowSeparator}
             contentContainerStyle={listContentStyle}
           />
         )}
@@ -168,3 +175,5 @@ export default function StaffConversationsScreen() {
     </SafeAreaView>
   );
 }
+
+export default withScreenEntrance('messages', StaffConversationsScreen);

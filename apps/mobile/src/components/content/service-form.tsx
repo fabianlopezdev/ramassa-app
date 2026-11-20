@@ -18,7 +18,8 @@ import { SERVICE_AVAILABILITY_KEYS, SERVICE_COST_KEYS } from '@/components/conte
 import { ServiceMetadataFields } from '@/components/content/service-metadata-fields';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { FieldLabel } from '@/components/forms/field-label';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { DraftPreviewSheet } from '@/components/preview/draft-preview-sheet';
 import { ServiceArticle, ServiceInterestPreview } from '@/components/services/service-article';
@@ -115,15 +116,6 @@ const CONTACT_FIELDS: typeof TEXT_FIELDS = [
   { key: 'schedule', label: 'fieldSchedule' },
   { key: 'externalUrl', label: 'fieldExternalUrl', keyboard: 'url', isLink: true },
 ];
-
-function SectionLabel({ children }: { readonly children: string }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-      {children}
-    </Text>
-  );
-}
 
 function startImageReview(
   alt: string,
@@ -408,7 +400,7 @@ export function ServiceForm({
       )}
 
       <View className="gap-xs">
-        <SectionLabel>{t('fieldCategory')}</SectionLabel>
+        <FieldLabel>{t('fieldCategory')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {categories.map((candidate) => (
             <ChoiceOption
@@ -454,7 +446,7 @@ export function ServiceForm({
 
       {TEXT_FIELDS.map(textField)}
       <View className="gap-xs">
-        <SectionLabel>{t('fieldCostType')}</SectionLabel>
+        <FieldLabel>{t('fieldCostType')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {SERVICE_COST_TYPES.map((costType) => (
             <ChoiceOption
@@ -483,7 +475,7 @@ export function ServiceForm({
       {textField({ key: 'costDetails', label: 'fieldCostDetails' })}
       {CONTACT_FIELDS.map(textField)}
       <View className="gap-xs">
-        <SectionLabel>{t('fieldAvailability')}</SectionLabel>
+        <FieldLabel>{t('fieldAvailability')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {SERVICE_AVAILABILITIES.map((availability) => (
             <ChoiceOption
@@ -538,24 +530,12 @@ export function ServiceForm({
         }}
       />
 
-      <PressableScale
+      <RaisedActionButton
         testID="service-generate"
-        accessibilityRole="button"
-        accessibilityLabel={isGenerating ? t('generatingTranslations') : t('generateTranslations')}
+        label={isGenerating ? t('generatingTranslations') : t('generateTranslations')}
         onPress={() => void generate()}
-        isBusy={isGenerating}
-        isDisabled={!canGenerate}
-        haptic="tapLight"
-        className={`min-h-recommended items-center justify-center rounded-md border px-lg ${
-          canGenerate ? 'border-primary bg-white' : 'border-neutral-200 bg-neutral-100'
-        }`}
-      >
-        <Text
-          className={`text-center text-md font-bold ${canGenerate ? 'text-primary-dark' : 'text-neutral-500'} ${fontClass}`}
-        >
-          {isGenerating ? t('generatingTranslations') : t('generateTranslations')}
-        </Text>
-      </PressableScale>
+        isDisabled={!canGenerate || isGenerating}
+      />
       <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
         {t('translationHelp')}
       </Text>
@@ -576,7 +556,7 @@ export function ServiceForm({
         </View>
       ) : null}
       <View className="gap-sm">
-        <SectionLabel>{t('modeLabel')}</SectionLabel>
+        <FieldLabel>{t('modeLabel')}</FieldLabel>
         {isApproval ? (
           <Text className={`text-start text-sm text-neutral-700 ${fontClass}`}>{t('modeNow')}</Text>
         ) : canPublish ? (
@@ -619,19 +599,12 @@ export function ServiceForm({
         )}
       </View>
 
-      <PressableScale
+      <RaisedActionButton
         testID="service-preview"
-        accessibilityRole="button"
-        accessibilityLabel={tCommon('previewAction')}
+        label={tCommon('previewAction')}
         onPress={() => setIsPreviewOpen(true)}
         isDisabled={form.title.trim().length === 0}
-        haptic="tapLight"
-        className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-      >
-        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-          {tCommon('previewAction')}
-        </Text>
-      </PressableScale>
+      />
       <DraftPreviewSheet
         visible={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}

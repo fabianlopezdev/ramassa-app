@@ -3,12 +3,13 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { useFormFieldAppearance } from '@/components/forms/field-appearance';
+import { FieldLabel } from '@/components/forms/field-label';
+import type { IconName } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { OnboardingQuestionHeading } from '@/components/onboarding/onboarding-question-heading';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import type { SymbolViewProps } from 'expo-symbols';
 import { memo, useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Modal, Pressable, Text, View, type ListRenderItemInfo } from 'react-native';
@@ -84,7 +85,7 @@ export interface MunicipalityPickerProps {
   readonly value: string;
   readonly onChange: (canonical: string) => void;
   readonly errorMessage?: string;
-  readonly symbol?: SymbolViewProps['name'];
+  readonly symbol?: IconName;
 }
 
 export function MunicipalityPicker({
@@ -148,9 +149,7 @@ export function MunicipalityPicker({
   return (
     <View className="gap-xs">
       {symbol === undefined ? (
-        <Text className={`text-start text-form font-medium text-neutral-800 ${languageFontClass}`}>
-          {label}
-        </Text>
+        <FieldLabel>{label}</FieldLabel>
       ) : (
         <OnboardingQuestionHeading label={label} symbol={symbol} />
       )}

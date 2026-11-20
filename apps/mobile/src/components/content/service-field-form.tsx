@@ -6,20 +6,22 @@
  * filter by it, a select's options and a number's minimum. The native side of
  * one entry in the web admin's schema JSON.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { FieldLabel } from '@/components/forms/field-label';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { SwitchCard } from '@/components/forms/switch-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { fieldKey, keepsStoredLabel, type FormField } from '@/lib/service-category-form';
 import { generateDrafts } from '@/lib/translation-worker';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Switch, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { getErrorMessageKey, type AppErrorCode } from '@ramassa/shared/errors';
 import { SERVICE_METADATA_FIELD_TYPES } from '@ramassa/shared/services';
-import { tokens } from '@ramassa/shared/tokens';
 import {
   approveTranslation,
   createTranslationReview,
@@ -29,32 +31,6 @@ import {
 } from '@ramassa/shared/translation';
 import { MultilingualField } from './multilingual-field';
 import { SERVICE_FIELD_TYPE_KEYS } from './service-labels';
-
-function Toggle({
-  testID,
-  label,
-  value,
-  onChange,
-}: {
-  readonly testID: string;
-  readonly label: string;
-  readonly value: boolean;
-  readonly onChange: (value: boolean) => void;
-}) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View className="flex-row items-center justify-between gap-md">
-      <Text className={`flex-1 text-start text-md text-neutral-800 ${fontClass}`}>{label}</Text>
-      <Switch
-        testID={testID}
-        accessibilityLabel={label}
-        value={value}
-        onValueChange={onChange}
-        trackColor={{ true: tokens.colors.primary.DEFAULT }}
-      />
-    </View>
-  );
-}
 
 export function ServiceFieldForm({
   field,
@@ -109,20 +85,13 @@ export function ServiceFieldForm({
         }
       />
       {keepsStoredLabel(draft) && review === undefined ? null : (
-        <PressableScale
+        <RaisedActionButton
           testID="service-field-generate"
-          accessibilityRole="button"
+          label={isGenerating ? t('generatingTranslations') : t('fieldLabelGenerate')}
           accessibilityLabel={t('fieldLabelGenerate')}
           onPress={() => void generate()}
-          isBusy={isGenerating}
-          isDisabled={draft.label.trim().length === 0}
-          haptic="tapLight"
-          className="min-h-recommended items-center justify-center rounded-md border border-primary bg-white px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-            {isGenerating ? t('generatingTranslations') : t('fieldLabelGenerate')}
-          </Text>
-        </PressableScale>
+          isDisabled={draft.label.trim().length === 0 || isGenerating}
+        />
       )}
 
       <View className="gap-xs">
@@ -133,9 +102,7 @@ export function ServiceFieldForm({
             testID="service-field-key-stored"
             className="gap-xs"
           >
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('fieldKey')}
-            </Text>
+            <FieldLabel>{t('fieldKey')}</FieldLabel>
             <Text selectable className={`text-start text-md text-neutral-900 ${fontClass}`}>
               {draft.key}
             </Text>
@@ -157,9 +124,7 @@ export function ServiceFieldForm({
       </View>
 
       <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-          {t('fieldType')}
-        </Text>
+        <FieldLabel>{t('fieldType')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {SERVICE_METADATA_FIELD_TYPES.map((type) => (
             <ChoiceOption
@@ -174,24 +139,22 @@ export function ServiceFieldForm({
           ))}
         </View>
       </View>
-      <Toggle
+      <SwitchCard
         testID="service-field-required"
         label={t('fieldRequired')}
         value={draft.required}
-        onChange={(required) => set({ required })}
+        onValueChange={(required) => set({ required })}
       />
-      <Toggle
+      <SwitchCard
         testID="service-field-filterable"
         label={t('fieldFilterable')}
         value={draft.filterable}
-        onChange={(filterable) => set({ filterable })}
+        onValueChange={(filterable) => set({ filterable })}
       />
 
       {usesOptions ? (
         <View className="gap-sm" testID="service-field-options">
-          <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-            {t('fieldOptions')}
-          </Text>
+          <FieldLabel>{t('fieldOptions')}</FieldLabel>
           <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
             {t('fieldOptionsHelp')}
           </Text>
@@ -255,32 +218,16 @@ export function ServiceFieldForm({
         <FailureNotice code={errorCode} message={tErrors(getErrorMessageKey(errorCode))} />
       )}
       <View className="flex-row flex-wrap gap-sm">
-        <PressableScale
+        <AuthSubmitButton
           testID="service-field-done"
-          accessibilityRole="button"
-          accessibilityLabel={t('fieldDone')}
+          label={t('fieldDone')}
           onPress={() => onDone(draft, review)}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-            {t('fieldDone')}
-          </Text>
-        </PressableScale>
-        <PressableScale
+        />
+        <RaisedActionButton
           testID="service-field-cancel"
-          accessibilityRole="button"
-          accessibilityLabel={t('categoryCancel')}
+          label={t('categoryCancel')}
           onPress={onCancel}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-            {t('categoryCancel')}
-          </Text>
-        </PressableScale>
+        />
       </View>
     </View>
   );

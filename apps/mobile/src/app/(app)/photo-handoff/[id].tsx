@@ -5,11 +5,13 @@
  * completes the handoff; the desk sees it arrive. Anyone else, an expired code
  * or a used one gets a plain sentence and no camera.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { ActionScreen } from '@/components/layout/screen-action';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { compressNativeStoryImage } from '@/lib/native-image-compression';
 import { mobileClientEnv, supabase } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -100,26 +102,22 @@ export default function PhotoHandoffScreen() {
     }
   };
 
-  const button = (label: string, onPress: () => void, testID: string, primary: boolean) => (
-    <PressableScale
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      isBusy={status === 'sending'}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended items-center justify-center rounded-md px-lg ${
-        primary ? 'bg-primary' : 'border border-primary'
-      }`}
-    >
-      <Text
-        className={`text-center text-md font-bold ${primary ? 'text-white' : 'text-primary-dark'} ${fontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
-  );
+  const button = (label: string, onPress: () => void, testID: string, primary: boolean) =>
+    primary ? (
+      <AuthSubmitButton
+        testID={testID}
+        label={label}
+        onPress={onPress}
+        isLoading={status === 'sending'}
+      />
+    ) : (
+      <RaisedActionButton
+        testID={testID}
+        label={label}
+        onPress={onPress}
+        isDisabled={status === 'sending'}
+      />
+    );
 
   const sentence = (text: string, testID?: string) => (
     <Text
@@ -131,21 +129,15 @@ export default function PhotoHandoffScreen() {
     </Text>
   );
 
+  // She can still send a photo: the two ways to do it are the screen's actions.
+  const canSend = state === 'open' && handoff.data != null && status !== 'sent';
+
   return (
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right', 'bottom']}>
-      <NativeScreenHeader title={t('handoff.pageTitle')} />
-      <ScrollView contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
-          {handoff.isPending ? <ActivityIndicator color={tokens.colors.primary.DEFAULT} /> : null}
-          {state === 'missing' ? sentence(t('handoff.notFound')) : null}
-          {state === 'expired' ? sentence(t('handoff.pageExpired')) : null}
-          {state === 'done' && status !== 'sent' ? sentence(t('handoff.pageUsed')) : null}
-          {status === 'sent' ? sentence(t('handoff.sent'), 'photo-handoff-sent') : null}
-          {state === 'open' && handoff.data != null && status !== 'sent' ? (
-            <View className="gap-md">
-              <Text className={`text-start text-md text-neutral-700 ${fontClass}`}>
-                {t('handoff.pageIntro', { name: handoff.data.documentName })}
-              </Text>
+      <ActionScreen
+        action={
+          canSend ? (
+            <>
               {button(
                 t('handoff.takePhoto'),
                 () => void take('camera'),
@@ -158,19 +150,37 @@ export default function PhotoHandoffScreen() {
                 'photo-handoff-library',
                 false,
               )}
-              {status === 'sending' ? (
-                <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-                  {t('handoff.uploading')}
+            </>
+          ) : null
+        }
+      >
+        <NativeScreenHeader title={t('handoff.pageTitle')} />
+        <ScrollView contentContainerClassName="pb-3xl">
+          <PageWidth className={screenContentClassName}>
+            {handoff.isPending ? <ActivityIndicator color={tokens.colors.primary.DEFAULT} /> : null}
+            {state === 'missing' ? sentence(t('handoff.notFound')) : null}
+            {state === 'expired' ? sentence(t('handoff.pageExpired')) : null}
+            {state === 'done' && status !== 'sent' ? sentence(t('handoff.pageUsed')) : null}
+            {status === 'sent' ? sentence(t('handoff.sent'), 'photo-handoff-sent') : null}
+            {canSend && handoff.data != null ? (
+              <View className="gap-md">
+                <Text className={`text-start text-md text-neutral-700 ${fontClass}`}>
+                  {t('handoff.pageIntro', { name: handoff.data.documentName })}
                 </Text>
-              ) : null}
-              {denied ? sentence(t('handoff.cameraDenied')) : null}
-              {errorCode === null ? null : (
-                <FailureNotice code={errorCode} message={t('handoff.sendFailed')} />
-              )}
-            </View>
-          ) : null}
-        </PageWidth>
-      </ScrollView>
+                {status === 'sending' ? (
+                  <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
+                    {t('handoff.uploading')}
+                  </Text>
+                ) : null}
+                {denied ? sentence(t('handoff.cameraDenied')) : null}
+                {errorCode === null ? null : (
+                  <FailureNotice code={errorCode} message={t('handoff.sendFailed')} />
+                )}
+              </View>
+            ) : null}
+          </PageWidth>
+        </ScrollView>
+      </ActionScreen>
     </SafeAreaView>
   );
 }

@@ -8,23 +8,56 @@
  * states, so her photo never disappears while a tab waits for its data.
  */
 import { PageWidth } from '@/components/layout/content-width';
+import { Divider } from '@/components/layout/divider';
+import {
+  screenBlockGapClassName,
+  titleToContentGapClassName,
+} from '@/components/layout/screen-spacing';
 import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { PLAYER_TAB_TOP_GAP } from '@/lib/use-player-tab-content-insets';
 import { useMemo, type ReactNode } from 'react';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { tokens } from '@ramassa/shared/tokens';
 
-export function PlayerTabHeader({ title }: { readonly title: string }) {
+/** The page colour every tab shares (RAPP-847). */
+const styles = StyleSheet.create({
+  frame: { flex: 1, backgroundColor: tokens.colors.surface.page },
+});
+
+/**
+ * `children` is the tab's switch between its views (RAPP-889): it sits under the
+ * title at the gap a section title keeps from its content, and Inici's section
+ * divider closes the header, so every tab with a switch reads the same.
+ */
+export function PlayerTabHeader({
+  title,
+  children,
+}: {
+  readonly title: string;
+  readonly children?: ReactNode;
+}) {
   const languageFontClass = useLanguageFontClass();
-  return (
+  const titleRow = (
     <View testID="player-tab-header" className="flex-row items-center gap-md">
       <Text
         accessibilityRole="header"
-        className={`flex-1 text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
+        className={`flex-1 text-start text-4xl font-extrabold text-neutral-900 ${languageFontClass}`}
       >
         {title}
       </Text>
       <ProfilePhotoButton />
+    </View>
+  );
+  if (children === undefined) return titleRow;
+  return (
+    <View className={screenBlockGapClassName}>
+      <View className={titleToContentGapClassName}>
+        {titleRow}
+        {children}
+      </View>
+      <Divider />
     </View>
   );
 }
@@ -38,10 +71,10 @@ export function PlayerTabStateFrame({
   readonly children: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
-  const topInset = useMemo(() => ({ paddingTop: insets.top }), [insets.top]);
+  const topInset = useMemo(() => ({ paddingTop: insets.top + PLAYER_TAB_TOP_GAP }), [insets.top]);
   return (
-    <View className="flex-1 bg-white" style={topInset}>
-      <View className="px-lg pt-lg">
+    <View style={[styles.frame, topInset]}>
+      <View className="px-lg">
         <PageWidth>
           <PlayerTabHeader title={title} />
         </PageWidth>

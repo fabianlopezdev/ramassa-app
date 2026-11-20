@@ -1,5 +1,13 @@
-/** Dashboard-themed primary action shared by language selection and login forms. */
+/**
+ * The primary action of language selection, the login forms and onboarding,
+ * also used as a player tab's main action, such as Share on Comunitat
+ * (RAPP-852), which shows an icon before its label.
+ *
+ * It keeps its solid navy fill, with no raised edge, on every screen
+ * (RAPP-878): the call to action is the one press target that stays flat.
+ */
 
+import { Icon, type IconName } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -13,6 +21,8 @@ export interface AuthSubmitButtonProps {
   readonly isLoading?: boolean;
   readonly disabled?: boolean;
   readonly testID?: string;
+  /** A symbol before the label; players find actions by their shape. */
+  readonly icon?: IconName;
 }
 
 export function AuthSubmitButton({
@@ -21,6 +31,7 @@ export function AuthSubmitButton({
   isLoading,
   disabled,
   testID,
+  icon,
 }: AuthSubmitButtonProps) {
   const languageFontClass = useLanguageFontClass();
   const { fontScale } = useWindowDimensions();
@@ -57,6 +68,14 @@ export function AuthSubmitButton({
             color={isDisabled ? tokens.colors.neutral[600] : tokens.colors.white}
           />
         ) : null}
+        {icon === undefined || isBusy ? null : (
+          <Icon
+            name={icon}
+            weight="boldDuotone"
+            size={tokens.fontSize.xl}
+            color={isDisabled ? tokens.colors.neutral[600] : tokens.colors.white}
+          />
+        )}
         <Text
           className={`text-center text-form font-bold ${isDisabled ? 'text-neutral-600' : 'text-white'} ${languageFontClass}`}
         >

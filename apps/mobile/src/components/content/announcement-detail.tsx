@@ -10,7 +10,9 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PreviewItemAsPlayer } from '@/components/preview/preview-as-player';
 import { useAnnouncementActions, useContentAnnouncement } from '@/lib/content-announcements';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -106,7 +108,7 @@ export function AnnouncementDetail({
   };
 
   return (
-    <ScrollView contentContainerClassName="gap-md p-lg" testID="announcement-detail">
+    <ScrollView contentContainerClassName={screenContentClassName} testID="announcement-detail">
       <View className="gap-xs">
         <Text
           accessibilityRole="header"
@@ -121,48 +123,25 @@ export function AnnouncementDetail({
         </Text>
       </View>
       <View className="flex-row flex-wrap gap-sm">
-        <PressableScale
+        <AuthSubmitButton
           testID="announcement-edit"
-          accessibilityRole="button"
-          accessibilityLabel={t('editAction')}
+          label={t('editAction')}
           onPress={() => push(`/content-announcement-edit/${data.id}` as Href)}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-            {t('editAction')}
-          </Text>
-        </PressableScale>
-        <PressableScale
+        />
+        <RaisedActionButton
           testID="announcement-pin"
-          accessibilityRole="button"
-          accessibilityLabel={data.is_pinned ? t('unpin') : t('pin')}
+          label={data.is_pinned ? t('unpin') : t('pin')}
           onPress={() => setPinned.mutate({ id: data.id, isPinned: !data.is_pinned })}
-          isBusy={setPinned.isPending}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-            {data.is_pinned ? t('unpin') : t('pin')}
-          </Text>
-        </PressableScale>
+          isDisabled={setPinned.isPending}
+        />
         {canPublish ? (
-          <PressableScale
+          <RaisedActionButton
             testID="announcement-delete"
-            accessibilityRole="button"
-            accessibilityLabel={t('delete')}
+            tone="danger"
+            label={t('delete')}
             onPress={confirmDelete}
-            isBusy={remove.isPending}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-error bg-white px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-error ${fontClass}`}>
-              {t('delete')}
-            </Text>
-          </PressableScale>
+            isDisabled={remove.isPending}
+          />
         ) : null}
       </View>
       <PreviewItemAsPlayer

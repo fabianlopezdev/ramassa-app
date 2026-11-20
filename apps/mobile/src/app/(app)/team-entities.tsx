@@ -7,6 +7,8 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { RaisedCard } from '@/components/layout/raised-card';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -38,7 +40,7 @@ export default function TeamEntitiesScreen() {
         contentContainerClassName="pb-3xl"
         keyboardShouldPersistTaps="handled"
       >
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <View className="gap-xs">
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
               {t('managementIntro')}
@@ -108,15 +110,11 @@ export default function TeamEntitiesScreen() {
           ) : (
             <View className="gap-sm">
               {(entities.data ?? []).map((entity) => (
-                <PressableScale
+                <RaisedCard
                   key={entity.id}
                   testID={`entity-${entity.id}`}
-                  accessibilityRole="button"
                   accessibilityLabel={entity.name}
-                  onPress={() => push(`/team-entity/${entity.id}` as Href)}
-                  haptic="selection"
-                  style={continuousCorners}
-                  className="gap-xs rounded-md border border-neutral-200 bg-white p-md"
+                  onOpen={() => push(`/team-entity/${entity.id}` as Href)}
                 >
                   <View className="flex-row flex-wrap items-center justify-between gap-sm">
                     <Text
@@ -135,7 +133,7 @@ export default function TeamEntitiesScreen() {
                       `${t('pendingInvitations')}: ${entity.pendingInvitationCount}`,
                     ].join(' · ')}
                   </Text>
-                </PressableScale>
+                </RaisedCard>
               ))}
             </View>
           )}

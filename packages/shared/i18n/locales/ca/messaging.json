@@ -1,9 +1,9 @@
 {
-  "playerTitle": "Xat amb l’equip",
+  "playerTitle": "Xat amb l’equip tècnic",
   "entityTitle": "Xat amb l’equip",
   "staffTitle": "Xat",
   "emptyTitle": "Encara no hi ha missatges",
-  "emptyBody": "Escriu a l’equip quan necessitis ajuda.",
+  "emptyBody": "Escriu a l’equip tècnic quan necessitis ajuda.",
   "composerPlaceholder": "Escriu un missatge",
   "send": "Envia",
   "sendError": "No s’ha enviat. Revisa la connexió i torna-ho a provar.",

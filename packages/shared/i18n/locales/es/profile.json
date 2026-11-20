@@ -54,7 +54,7 @@
     "settings": "Abrir ajustes",
     "failed": "No se ha podido guardar el cambio. Inténtalo de nuevo."
   },
-  "appLockIntro": "Con el bloqueo activado, Ramassà te pide Face ID, la huella o el código del teléfono cuando vuelves a la app. Así tus datos están protegidos si alguien coge tu teléfono.",
+  "appLockIntro": "Con el bloqueo activado, la aplicación de AE Ramassà te pide Face ID, la huella o el código del teléfono cuando vuelves a la app. Así tus datos están protegidos si alguien coge tu teléfono.",
   "menu": {
     "data": "Mis datos",
     "attendance": "Mi asistencia",

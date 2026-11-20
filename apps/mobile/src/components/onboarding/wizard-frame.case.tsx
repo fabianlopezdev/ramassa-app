@@ -4,7 +4,10 @@ import { createElement, type ReactNode } from 'react';
 
 let params: { edit?: string } = {};
 mock.module('expo-router', () => ({ useLocalSearchParams: () => params }));
-mock.module('@/lib/onboarding-entrance', () => ({ useOnboardingEntrance: () => 'none' }));
+mock.module('@/lib/screen-entrance', () => ({
+  useScreenEntrance: () => 'none',
+  useOwnEntrance: () => 'none',
+}));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
 mock.module('react-i18next', () => ({
   useTranslation: () => ({

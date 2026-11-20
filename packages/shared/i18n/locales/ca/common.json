@@ -37,5 +37,7 @@
   "previewDraftTitle": "Esborrany com el veuran les jugadores. Encara no el veu ningú.",
   "previewDraftMissing": "Falta el text en aquest idioma. Les jugadores el veuran en un altre idioma.",
   "previewOpening": "Obrint la vista de jugadora.",
-  "characterCount": "{{count}} / {{limit}} caràcters"
+  "characterCount": "{{count}} / {{limit}} caràcters",
+  "newCount_one": "{{label}}, {{count}} nou",
+  "newCount_other": "{{label}}, {{count}} nous"
 }

@@ -4,8 +4,7 @@
  * An item that players cannot see yet says so instead, because the preview
  * shows only what players see.
  */
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { startPreview } from '@/lib/player-preview';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useCallback, useState } from 'react';
@@ -66,20 +65,13 @@ export function PreviewItemAsPlayer({
   }
   return (
     <View className="gap-xs">
-      <PressableScale
+      <RaisedActionButton
         testID="preview-as-player"
-        accessibilityRole="button"
-        accessibilityLabel={t('previewAsPlayer')}
+        size="compact"
+        label={t('previewAsPlayer')}
         onPress={() => void start(target)}
-        isBusy={isStarting}
-        haptic="tapLight"
-        style={continuousCorners}
-        className="min-h-recommended items-center justify-center self-start rounded-md border border-neutral-300 bg-white px-lg"
-      >
-        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-          {t('previewAsPlayer')}
-        </Text>
-      </PressableScale>
+        isDisabled={isStarting}
+      />
       <PreviewStartFailed isShown={hasFailed} />
     </View>
   );

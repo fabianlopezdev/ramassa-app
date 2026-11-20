@@ -3,6 +3,8 @@
   "feedTitle": "Annonces",
   "filterLabel": "Filtre les annonces par catégorie",
   "filterAll": "Tout",
+  "filterNewCount_one": "{{count}} nouveau",
+  "filterNewCount_other": "{{count}} nouveaux",
   "category": {
     "info": "Information",
     "training": "Entraînements",
@@ -10,20 +12,29 @@
     "urgent": "Urgent"
   },
   "pinned": "À la une",
+  "unseen": "Nouveau",
   "emptyTitle": "Pas encore d’annonces",
-  "emptyBody": "Quand l’équipe publiera une nouvelle, tu la trouveras ici.",
+  "emptyBody": "Quand l’équipe technique publiera une nouvelle, tu la trouveras ici.",
   "loadFailed": "Nous n’avons pas pu charger les annonces.",
   "retryAction": "Réessaie",
   "loading": "Chargement des annonces",
   "pendingForm": {
-    "eyebrow": "Formulaire",
     "deadline": "Jusqu’au {{date}}",
     "answer": "Réponds",
     "dismiss": "Pas maintenant"
   },
+  "later": {
+    "title": "Pour plus tard",
+    "waiting": "{{count}} formulaires pour plus tard",
+    "waiting_one": "{{count}} formulaire pour plus tard",
+    "waiting_other": "{{count}} formulaires pour plus tard",
+    "delete": "Supprime",
+    "cancel": "Annule",
+    "deleteTitle": "Supprimer ce formulaire ?",
+    "deleteBody": "Tu ne pourras plus y répondre. L'équipe technique verra que tu l'as écarté."
+  },
   "toDo": {
-    "title": "À faire",
-    "count": "{{current}} sur {{total}}"
+    "title": "Formulaires et enquêtes"
   },
   "nextActivity": {
     "title": "Prochaine activité"

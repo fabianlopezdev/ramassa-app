@@ -1,13 +1,12 @@
 import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
-import { requestCatalanTranslation } from '@/lib/translation-worker';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { localizedTextFromReview } from '@ramassa/shared/announcements';
+import { CATEGORY_COLORS } from '@ramassa/shared/category-colors';
 import type { AppErrorCode } from '@ramassa/shared/errors';
 import {
   countServicesIncompatibleWithCategorySchema,
@@ -22,9 +21,8 @@ import {
 } from '@ramassa/shared/services';
 import { isTranslationReviewPublishable } from '@ramassa/shared/translation';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
-import { approveAll, reviewOptions, startGeneratedReview } from './announcement-editor';
-import { MultilingualEditor } from './multilingual-editor';
-import { TranslationReviewPanel } from './translation-review-panel';
+import { reviewOptions } from './announcement-editor';
+import { CategoryBasicsFields, CategoryListItem } from './category-manager-parts';
 
 const EMPTY_SCHEMA = JSON.stringify({ fields: [] }, null, 2);
 
@@ -39,12 +37,11 @@ export function ServiceCategoryManager({
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [icon, setIcon] = useState('circle');
-  const [color, setColor] = useState('primary');
+  const [color, setColor] = useState<string>(CATEGORY_COLORS[0] ?? 'sky');
   const [schemaText, setSchemaText] = useState(EMPTY_SCHEMA);
   const [incompatibleCount, setIncompatibleCount] = useState(0);
   const [schemaInvalid, setSchemaInvalid] = useState(false);
   const [reviewRequired, setReviewRequired] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [errorCode, setErrorCode] = useState<AppErrorCode | null>(null);
   const nameReview = useTranslationReview();
@@ -55,7 +52,7 @@ export function ServiceCategoryManager({
     setName('');
     setSlug('');
     setIcon('circle');
-    setColor('primary');
+    setColor(CATEGORY_COLORS[0] ?? 'sky');
     setSchemaText(EMPTY_SCHEMA);
     setIncompatibleCount(0);
     setSchemaInvalid(false);
@@ -75,15 +72,6 @@ export function ServiceCategoryManager({
     setReviewRequired(false);
     const options = reviewOptions(category.name.ca, category.name);
     if (options !== undefined) nameReview.start(options);
-  }
-
-  async function generateTranslations() {
-    setErrorCode(null);
-    setIsGenerating(true);
-    const result = await requestCatalanTranslation(name);
-    if (result.ok) startGeneratedReview(result.value, nameReview.start);
-    else setErrorCode(result.error.code);
-    setIsGenerating(false);
   }
 
   function parseSchema() {
@@ -221,15 +209,13 @@ export function ServiceCategoryManager({
         </header>
         <ul className="flex flex-col gap-2" data-testid="service-category-list">
           {categories.map((category, index) => (
-            <li
+            <CategoryListItem
               key={category.id}
-              className="flex flex-wrap items-center gap-2 rounded-lg border p-3"
-              data-testid={`service-category-row-${category.id}`}
+              testId={`service-category-row-${category.id}`}
+              name={category.name[locale] ?? category.name.ca}
+              slug={category.slug}
+              color={category.color}
             >
-              <span className="min-w-0 flex-1 font-medium">
-                {category.name[locale] ?? category.name.ca}
-                <span className="ml-2 text-xs text-muted-foreground">{category.slug}</span>
-              </span>
               <Button
                 type="button"
                 size="sm"
@@ -267,7 +253,7 @@ export function ServiceCategoryManager({
               >
                 {t('services:categoryDelete')}
               </Button>
-            </li>
+            </CategoryListItem>
           ))}
         </ul>
       </div>
@@ -279,64 +265,20 @@ export function ServiceCategoryManager({
         <h2 className="text-xl font-semibold">
           {editingId === null ? t('services:newCategory') : t('services:editCategory')}
         </h2>
-        <MultilingualEditor
-          fieldId="service-category-name"
-          sourceLabel={t('services:categoryName')}
-          sourceValue={name}
-          review={nameReview.review}
-          maxLength={200}
-          translationNamespace="services"
-          onSourceChange={(value) => {
-            setName(value);
-            nameReview.reset();
-          }}
-          onTranslationChange={nameReview.edit}
+        <CategoryBasicsFields
+          idPrefix="service-category"
+          namespace="services"
+          name={name}
+          onNameChange={setName}
+          nameReview={nameReview}
+          slug={slug}
+          onSlugChange={setSlug}
+          icon={icon}
+          onIconChange={setIcon}
+          color={color}
+          onColorChange={setColor}
+          onError={setErrorCode}
         />
-        <TranslationReviewPanel
-          fieldId="service-category-name"
-          review={nameReview.review}
-          translationNamespace="services"
-          onApprove={nameReview.approve}
-          onReject={nameReview.reject}
-          onApproveAll={() => approveAll(nameReview.review, nameReview.approve)}
-        />
-        <Button
-          type="button"
-          variant="secondary"
-          data-testid="service-category-generate"
-          disabled={name.trim().length === 0 || isGenerating}
-          onClick={() => void generateTranslations()}
-        >
-          {isGenerating ? t('services:generatingTranslations') : t('services:generateTranslations')}
-        </Button>
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium">{t('services:categorySlug')}</span>
-          <Input
-            required
-            pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-            data-testid="service-category-slug"
-            value={slug}
-            onChange={(event) => setSlug(event.target.value)}
-          />
-        </label>
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium">{t('services:categoryIcon')}</span>
-          <Input
-            required
-            data-testid="service-category-icon"
-            value={icon}
-            onChange={(event) => setIcon(event.target.value)}
-          />
-        </label>
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium">{t('services:categoryColor')}</span>
-          <Input
-            required
-            data-testid="service-category-color"
-            value={color}
-            onChange={(event) => setColor(event.target.value)}
-          />
-        </label>
         <label className="flex flex-col gap-2">
           <span className="text-sm font-medium">{t('services:categorySchema')}</span>
           <Textarea

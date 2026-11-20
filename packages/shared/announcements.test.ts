@@ -1,11 +1,15 @@
 import { describe, expect, test } from 'bun:test';
 import {
+  ANNOUNCEMENT_CATEGORIES,
+  announcementCategoryColor,
   announcementInputSchema,
   areAnnouncementTranslationsApproved,
   filterAndOrderPlayerAnnouncements,
   getAnnouncementLifecycle,
   isContentVisible,
+  raiseUnopenedUrgentAnnouncements,
 } from './announcements';
+import { SECTION_URGENT_COLOR, sectionWash } from './section-colors';
 import {
   approveTranslation,
   createTranslationReview,
@@ -163,6 +167,37 @@ describe('player announcement feed', () => {
     ]);
   });
 
+  test('raises urgent items she has not opened to just after the pinned ones', () => {
+    const ordered = filterAndOrderPlayerAnnouncements(
+      [
+        row('info-newest', { category: 'info', published_at: '2026-08-04T11:00:00.000Z' }),
+        row('urgent-opened', { category: 'urgent', published_at: '2026-08-03T11:00:00.000Z' }),
+        row('urgent-unopened', { category: 'urgent', published_at: '2026-08-02T10:00:00.000Z' }),
+        row('info-older', { category: 'info', published_at: '2026-08-03T10:00:00.000Z' }),
+        row('pinned-info', {
+          category: 'info',
+          is_pinned: true,
+          published_at: '2026-08-01T10:00:00.000Z',
+        }),
+      ],
+      'all',
+      now,
+    );
+
+    const raised = raiseUnopenedUrgentAnnouncements(
+      ordered,
+      new Set(['urgent-unopened', 'info-newest']),
+    );
+
+    expect(raised.map(({ id }) => id)).toEqual([
+      'pinned-info',
+      'urgent-unopened',
+      'info-newest',
+      'urgent-opened',
+      'info-older',
+    ]);
+  });
+
   test('applies a category without changing pinned-first ordering', () => {
     const filtered = filterAndOrderPlayerAnnouncements(
       [
@@ -314,5 +349,22 @@ describe('announcement review state', () => {
         imageAltReview: approvedReview('Jugadores al camp'),
       }),
     ).toBe(true);
+  });
+});
+
+describe('announcement kind colours', () => {
+  test('each kind keeps one colour of the shared section palette', () => {
+    expect(announcementCategoryColor('urgent')).toBe(SECTION_URGENT_COLOR);
+    expect(announcementCategoryColor('training')).toBe('primary');
+    expect(announcementCategoryColor('info')).toBe('teal');
+    expect(announcementCategoryColor('social')).toBe('amber');
+  });
+
+  test('every kind has a wash, and no two kinds share one', () => {
+    const washes = ANNOUNCEMENT_CATEGORIES.map((category) =>
+      sectionWash(announcementCategoryColor(category)),
+    );
+    for (const wash of washes) expect(wash).toBeDefined();
+    expect(new Set(washes).size).toBe(ANNOUNCEMENT_CATEGORIES.length);
   });
 });

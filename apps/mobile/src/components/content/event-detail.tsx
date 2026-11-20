@@ -12,6 +12,9 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { SectionTitle } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { PreviewItemAsPlayer } from '@/components/preview/preview-as-player';
 import { useContentEvent, useContentEventOccurrences, useEventActions } from '@/lib/content-events';
@@ -119,7 +122,7 @@ export function EventDetail({
   const locationUrl = data.location_url;
 
   return (
-    <ScrollView contentContainerClassName="gap-md p-lg" testID="event-detail">
+    <ScrollView contentContainerClassName={screenContentClassName} testID="event-detail">
       <View className="gap-xs">
         <Text
           accessibilityRole="header"
@@ -150,20 +153,13 @@ export function EventDetail({
           </Text>
         </PressableScale>
         {canPublish ? (
-          <PressableScale
+          <RaisedActionButton
             testID="event-delete"
-            accessibilityRole="button"
-            accessibilityLabel={t('delete')}
+            tone="danger"
+            label={t('delete')}
             onPress={confirmDelete}
-            isBusy={remove.isPending}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-error bg-white px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-error ${fontClass}`}>
-              {t('delete')}
-            </Text>
-          </PressableScale>
+            isDisabled={remove.isPending}
+          />
         ) : null}
       </View>
       <PreviewItemAsPlayer
@@ -216,21 +212,18 @@ export function EventDetail({
         </Text>
       )}
       {occurrences.data === undefined || occurrences.data.length < 2 ? null : (
-        <View className="gap-xs" testID="event-detail-sessions">
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-          >
-            {t('sessionsTitle', { count: occurrences.data.length })}
-          </Text>
-          {occurrences.data.map((occurrence) => (
-            <Text
-              key={occurrence.id}
-              className={`text-start text-md tabular-nums text-neutral-800 ${fontClass}`}
-            >
-              {format.format(new Date(occurrence.starts_at))}
-            </Text>
-          ))}
+        <View className="gap-md" testID="event-detail-sessions">
+          <SectionTitle title={t('sessionsTitle', { count: occurrences.data.length })} />
+          <View className="gap-xs">
+            {occurrences.data.map((occurrence) => (
+              <Text
+                key={occurrence.id}
+                className={`text-start text-md tabular-nums text-neutral-800 ${fontClass}`}
+              >
+                {format.format(new Date(occurrence.starts_at))}
+              </Text>
+            ))}
+          </View>
         </View>
       )}
     </ScrollView>

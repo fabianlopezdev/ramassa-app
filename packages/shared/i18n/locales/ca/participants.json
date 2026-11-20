@@ -399,9 +399,7 @@
       "player_kit": "Equipament de jugadora",
       "team_equipment": "Material d'equip"
     },
-    "kindHint": "L'equipament de jugadora es lliura a les jugadores i porta codi d'unitat. El material d'equip es compta.",
     "sizesLabel": "Talles",
-    "sizesHint": "Deixa-ho buit per a un article sense talles. Una talla que encara té estoc no es pot treure.",
     "noSizes": "Sense talles",
     "addSize": "Afegir la talla",
     "newSize": "Talla nova",
@@ -415,7 +413,6 @@
       "on": "En ús",
       "off": "Desactivat"
     },
-    "activeHint": "Un article desactivat surt de les llistes i conserva l'historial.",
     "save": "Desar l'article",
     "saving": "Desant",
     "saveFailed": "L'article no s'ha desat. Torna-ho a provar.",
@@ -580,7 +577,7 @@
   "inviteQuestionNotAsked": "No se li pregunta",
   "inviteQuestionAskedWhenItApplies": "Se li pregunta quan li correspon",
   "testScenarioTitle": "Escenari de prova",
-  "testScenarioIntro": "Tria la seva situació i després obre l'app com si fossis ella. L'app ho mostra el pròxim cop que s'obri.",
+  "testScenarioIntro": "Tria la seva situació i després obre l'app com si fossis ella. L'app ho mostra el proper cop que s'obri.",
   "testScenarioTermsTitle": "Condicions de l'app",
   "testScenarioTermsAccepted": "Acceptades: ja ha entrat i no passa per la inscripció.",
   "testScenarioTermsNot": "No acceptades: passa per la inscripció.",

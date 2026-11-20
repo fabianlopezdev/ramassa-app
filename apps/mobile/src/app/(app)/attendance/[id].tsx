@@ -6,7 +6,7 @@ export default function AttendanceSheetScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
   return (
     <>
-      <NativeScreenHeader />
+      <NativeScreenHeader surface="white" />
       <AttendanceSheet occurrenceId={id} />
     </>
   );

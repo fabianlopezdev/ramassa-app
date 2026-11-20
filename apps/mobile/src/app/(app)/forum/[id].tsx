@@ -1,15 +1,16 @@
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ForumFlagDialog } from '@/components/forum/forum-flag-dialog';
+import { ForumOwnPostActions, ForumOwnPostIcons } from '@/components/forum/forum-own-post-actions';
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
-import { ForumReplyCard } from '@/components/forum/forum-reply-card';
+import { ForumReplyComposer } from '@/components/forum/forum-reply-composer';
+import { ForumThreadMessage } from '@/components/forum/forum-thread-message';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { ShakeOnError } from '@/components/motion/shake-on-error';
-import { AuthorLine } from '@/components/people/person-avatar';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { ActionScreen } from '@/components/layout/screen-action';
+import { buildReplyThread, threadRows, type ForumThreadRow } from '@/lib/forum-reply-thread';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
@@ -22,31 +23,58 @@ import {
   useOwnForumPostingStatus,
 } from '@/lib/player-forum';
 import { mobileClientEnv } from '@/lib/supabase';
+import { useForumPostWash } from '@/lib/use-forum-post-wash';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
+import { useMarkForumPostSeen } from '@/lib/use-tab-news';
+import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  StyleSheet,
+  Text,
+  View,
+  type LayoutChangeEvent,
+  type TextInput,
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import type { ForumFlagTargetType, ForumReplyRow } from '@ramassa/shared/forum';
-import { FORUM_POST_MAX_LENGTH, FORUM_REPLY_MAX_LENGTH } from '@ramassa/shared/schemas';
+import { FORUM_POST_MAX_LENGTH } from '@ramassa/shared/schemas';
 import { tokens } from '@ramassa/shared/tokens';
 
 const FORUM_DETAIL_IMAGE_HEIGHT = tokens.spacing['3xl'] * 4;
 const SAFE_AREA_BOTTOM_EDGES = ['bottom'] as const;
 const EMPTY_REPLIES: readonly ForumReplyRow[] = [];
+const NO_RAILS = [] as const;
+// A new answer lands in the middle of the list, with its context above it.
+const REVEAL_IN_MIDDLE = 0.5;
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: tokens.colors.neutral[50] },
   image: { width: '100%', height: FORUM_DETAIL_IMAGE_HEIGHT },
   mixedDirectionInput: { writingDirection: 'auto' },
-  replyInput: { minHeight: tokens.spacing['2xl'], writingDirection: 'auto' },
 });
-const replyKeyExtractor = (reply: ForumReplyRow) => reply.id;
+const threadRowKeyExtractor = (row: ForumThreadRow) => row.reply.id;
+const threadRowType = (row: ForumThreadRow) => row.level;
+
+/** The message she tapped "Respon" on, and where her answer goes. */
+interface ReplyTarget {
+  readonly messageId: string;
+  readonly name: string;
+  /** Null answers the post; an answer to an answer stays on the second level. */
+  readonly parentReplyId: string | null;
+}
+
+/** What she typed, and for which message, so closing the field keeps it. */
+interface ReplyDraft {
+  readonly targetId: string | null;
+  readonly text: string;
+}
+const EMPTY_DRAFT: ReplyDraft = { targetId: null, text: '' };
 
 export default function ForumPostDetailScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -68,6 +96,11 @@ export default function ForumPostDetailScreen() {
     [postQuery.data?.author_id, repliesQuery.data],
   );
   const personCards = usePersonCards(authorIds);
+  // The answers as one thread, one row per message (RAPP-884).
+  const rows = useMemo(
+    () => threadRows(buildReplyThread(repliesQuery.data ?? EMPTY_REPLIES)),
+    [repliesQuery.data],
+  );
   const createReply = useCreateForumReply(postId);
   const editPost = useEditForumPost(postId);
   const deletePost = useDeleteForumPost(postId);
@@ -75,26 +108,37 @@ export default function ForumPostDetailScreen() {
   const refetchPost = postQuery.refetch;
   const refetchReplies = repliesQuery.refetch;
   const createReplyAsync = createReply.mutateAsync;
+  const resetCreateReply = createReply.reset;
   const editPostAsync = editPost.mutateAsync;
   const deletePostAsync = deletePost.mutateAsync;
-  const [reply, setReply] = useState('');
+  const [draft, setDraft] = useState<ReplyDraft>(EMPTY_DRAFT);
+  const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null);
   const [editContent, setEditContent] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
-  const [localErrorCode, setLocalErrorCode] = useState<AppErrorCode | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [replyErrorCode, setReplyErrorCode] = useState<AppErrorCode | null>(null);
+  const [replyErrorMessage, setReplyErrorMessage] = useState<string | null>(null);
+  const [postErrorMessage, setPostErrorMessage] = useState<string | null>(null);
   const [flagTarget, setFlagTarget] = useState<{
     readonly targetType: ForumFlagTargetType;
     readonly targetId: string;
   } | null>(null);
+  const listRef = useRef<FlashListRef<ForumThreadRow>>(null);
+  const replyInputRef = useRef<TextInput>(null);
+  const listHeightRef = useRef(0);
+  // The message kept in view above the reply field while it is open.
+  const revealIdRef = useRef<string | null>(null);
   const insets = useSafeAreaInsets();
   const post = postQuery.data;
+  // The post opens onto the wash of its category's colour (RAPP-893).
+  const { wash, screenStyle } = useForumPostWash(post?.category_id, styles.screen);
+  useMarkForumPostSeen(post?.id);
   const isOwnPost =
     post !== undefined && post.author_id === user?.id && post.visibility === 'visible';
-  const mutationError = createReply.error ?? editPost.error ?? deletePost.error;
-  const mutationErrorCode = mutationError === null ? null : toAppError(mutationError).code;
-  const errorCode = localErrorCode ?? mutationErrorCode;
+  const replyMutationCode = createReply.error === null ? null : toAppError(createReply.error).code;
   const postingDisabled = postingStatus.data === true;
+  const canReplyHere = post !== undefined && post.visibility !== 'deleted' && !postingDisabled;
+  const isReplyDisabled = !isOnline || postingStatus.isPending;
   const imageSource = useMemo(
     () =>
       resolveMediaImageSource({
@@ -106,7 +150,6 @@ export default function ForumPostDetailScreen() {
   );
   const contentStyle = useMemo(
     () => ({
-      paddingHorizontal: tokens.spacing.lg,
       paddingTop: tokens.spacing.lg,
       paddingBottom: insets.bottom + tokens.spacing['3xl'],
     }),
@@ -117,76 +160,203 @@ export default function ForumPostDetailScreen() {
     (targetId: string) => setFlagTarget({ targetType: 'reply', targetId }),
     [],
   );
+  const flagPost = useCallback(
+    (targetId: string) => setFlagTarget({ targetType: 'post', targetId }),
+    [],
+  );
   const refresh = useCallback(() => {
     void Promise.all([refetchPost(), refetchReplies()]);
   }, [refetchPost, refetchReplies]);
   const retryPost = useCallback(() => void refetchPost(), [refetchPost]);
+  const retryReplies = useCallback(() => void refetchReplies(), [refetchReplies]);
+
+  // Scrolls the message she answers into view right above the reply field: its
+  // end at the bottom of what shows, or its start at the top when it is taller
+  // than that, so her name and first line stay in view. The offset is worked
+  // out from the list height measured here, which is fresh while the keyboard
+  // opens, where the list's own window size can still be the height from before.
+  const revealReplyTarget = useCallback(() => {
+    const messageId = revealIdRef.current;
+    const list = listRef.current;
+    if (messageId === null || list === null) return;
+    const firstItemOffset = list.getFirstItemOffset();
+    let messageStart = 0;
+    let messageEnd = firstItemOffset;
+    if (messageId !== post?.id) {
+      const layout = list.getLayout(rows.findIndex((row) => row.reply.id === messageId));
+      if (layout === undefined) return;
+      messageStart = firstItemOffset + layout.y;
+      messageEnd = messageStart + layout.height;
+    }
+    const offset = Math.max(0, Math.min(messageStart, messageEnd - listHeightRef.current));
+    list.scrollToOffset({ offset, animated: true });
+  }, [post?.id, rows]);
+  // Once the keyboard has finished opening, a last time, because a scroll
+  // asked for while it still moves can be cut short.
+  const revealAfterKeyboard = useCallback(
+    () => requestAnimationFrame(revealReplyTarget),
+    [revealReplyTarget],
+  );
+  const measureList = useCallback(
+    (event: LayoutChangeEvent) => {
+      listHeightRef.current = event.nativeEvent.layout.height;
+      requestAnimationFrame(revealReplyTarget);
+    },
+    [revealReplyTarget],
+  );
+
+  const openReply = useCallback(
+    (messageId: string) => {
+      if (post === undefined) return;
+      let target: ReplyTarget;
+      if (messageId === post.id) {
+        target = { messageId, name: post.author_first_name, parentReplyId: null };
+      } else {
+        const row = rows.find((candidate) => candidate.reply.id === messageId);
+        if (row === undefined) return;
+        target = {
+          messageId,
+          name: row.reply.author_first_name,
+          parentReplyId: row.level === 1 ? row.reply.id : row.reply.parent_reply_id,
+        };
+      }
+      // Her draft stays with the message she began it for.
+      setDraft((current) =>
+        current.targetId === messageId ? current : { targetId: messageId, text: '' },
+      );
+      setReplyErrorCode(null);
+      setReplyErrorMessage(null);
+      resetCreateReply();
+      setReplyTarget(target);
+      revealIdRef.current = messageId;
+      replyInputRef.current?.focus();
+      requestAnimationFrame(revealReplyTarget);
+    },
+    [post, resetCreateReply, revealReplyTarget, rows],
+  );
+  const closeReply = useCallback(() => {
+    revealIdRef.current = null;
+    setReplyTarget(null);
+  }, []);
+  const changeReply = useCallback(
+    (text: string) => setDraft((current) => ({ ...current, text })),
+    [],
+  );
 
   const beginEdit = useCallback(() => {
     setEditContent(post?.content ?? '');
     setIsEditing(true);
-    setLocalErrorCode(null);
-    setErrorMessage(null);
+    setPostErrorMessage(null);
   }, [post?.content]);
   const cancelEdit = useCallback(() => setIsEditing(false), []);
   const saveEdit = useCallback(async () => {
     if (editContent.trim().length === 0) {
-      setLocalErrorCode('VALIDATION-1');
-      setErrorMessage(t('forum:contentRequired'));
+      setPostErrorMessage(t('forum:contentRequired'));
       return;
     }
-    setLocalErrorCode(null);
-    setErrorMessage(null);
+    setPostErrorMessage(null);
     try {
       await editPostAsync(editContent);
       setIsEditing(false);
     } catch {
-      setErrorMessage(t('forum:publishFailed'));
+      setPostErrorMessage(t('forum:publishFailed'));
     }
   }, [editContent, editPostAsync, t]);
   const confirmDelete = useCallback(() => setIsConfirmingDelete(true), []);
   const cancelDelete = useCallback(() => setIsConfirmingDelete(false), []);
   const performDelete = useCallback(async () => {
-    setLocalErrorCode(null);
-    setErrorMessage(null);
+    setPostErrorMessage(null);
     try {
       await deletePostAsync();
       setIsConfirmingDelete(false);
     } catch {
-      setErrorMessage(t('forum:deleteFailed'));
+      setPostErrorMessage(t('forum:deleteFailed'));
     }
   }, [deletePostAsync, t]);
   const submitReply = useCallback(async () => {
-    if (reply.trim().length === 0) {
-      setLocalErrorCode('VALIDATION-1');
-      setErrorMessage(t('forum:contentRequired'));
+    if (replyTarget === null) return;
+    if (draft.text.trim().length === 0) {
+      setReplyErrorCode('VALIDATION-1');
+      setReplyErrorMessage(t('forum:contentRequired'));
       return;
     }
-    setLocalErrorCode(null);
-    setErrorMessage(null);
+    setReplyErrorCode(null);
+    setReplyErrorMessage(null);
+    let newReplyId: string;
     try {
-      await createReplyAsync(reply);
-      setReply('');
+      newReplyId = await createReplyAsync({
+        content: draft.text,
+        parentReplyId: replyTarget.parentReplyId,
+      });
     } catch {
-      setErrorMessage(t('forum:replyFailed'));
+      setReplyErrorMessage(t('forum:replyFailed'));
+      return;
     }
-  }, [createReplyAsync, reply, t]);
-  const renderReply = useCallback(
-    ({ item }: ListRenderItemInfo<ForumReplyRow>) => (
-      <ForumReplyCard
-        reply={item}
-        authorLabel={t('forum:postBy', { name: item.author_first_name })}
-        authorAvatarKey={personCards.get(item.author_id)?.avatarKey ?? null}
-        tombstone={t('forum:deletedTombstone')}
-        languageFontClass={languageFontClass}
-        openLinkLabel={openLinkLabel}
-        flagLabel={t('forum:flag')}
-        flagAccessibilityLabel={t('forum:flagReply')}
-        isFlagDisabled={!isOnline}
-        onFlag={item.author_id === user?.id || item.visibility !== 'visible' ? null : flagReply}
-      />
-    ),
-    [flagReply, isOnline, languageFontClass, openLinkLabel, personCards, t, user?.id],
+    revealIdRef.current = null;
+    setReplyTarget(null);
+    setDraft(EMPTY_DRAFT);
+    // The answers are fresh once the send settles; the list then scrolls to hers.
+    const refreshed = await refetchReplies();
+    const index = threadRows(buildReplyThread(refreshed.data ?? EMPTY_REPLIES)).findIndex(
+      (row) => row.reply.id === newReplyId,
+    );
+    if (index >= 0) {
+      requestAnimationFrame(() =>
+        listRef.current?.scrollToIndex({ index, viewPosition: REVEAL_IN_MIDDLE, animated: true }),
+      );
+    }
+  }, [createReplyAsync, draft.text, refetchReplies, replyTarget, t]);
+
+  const highlightedId = replyTarget?.messageId ?? null;
+  const renderRow = useCallback(
+    ({ item }: ListRenderItemInfo<ForumThreadRow>) => {
+      const { reply } = item;
+      const canReply = canReplyHere && reply.visibility === 'visible' && reply.content !== null;
+      const postBy = t('forum:postBy', { name: reply.author_first_name });
+      return (
+        <PageWidth>
+          <ForumThreadMessage
+            id={reply.id}
+            kind="reply"
+            name={reply.author_first_name}
+            avatarKey={personCards.get(reply.author_id)?.avatarKey ?? null}
+            authorLabel={
+              item.answersTo === null
+                ? postBy
+                : `${postBy}. ${t('forum:replyTo', { name: item.answersTo })}`
+            }
+            content={reply.content}
+            tombstone={t('forum:deletedTombstone')}
+            rails={item.rails}
+            hasAnswersBelow={item.hasAnswersBelow}
+            isHighlighted={reply.id === highlightedId}
+            languageFontClass={languageFontClass}
+            openLinkLabel={openLinkLabel}
+            flagAccessibilityLabel={t('forum:flagReply')}
+            isFlagDisabled={!isOnline}
+            onFlag={
+              reply.author_id === user?.id || reply.visibility !== 'visible' ? null : flagReply
+            }
+            replyLabel={t('forum:reply')}
+            isReplyDisabled={isReplyDisabled}
+            onReply={canReply ? openReply : null}
+          />
+        </PageWidth>
+      );
+    },
+    [
+      canReplyHere,
+      flagReply,
+      highlightedId,
+      isOnline,
+      isReplyDisabled,
+      languageFontClass,
+      openLinkLabel,
+      openReply,
+      personCards,
+      t,
+      user?.id,
+    ],
   );
 
   const confirmFlag = useCallback(() => {
@@ -194,9 +364,6 @@ export default function ForumPostDetailScreen() {
     Alert.alert(t('forum:flagConfirmationTitle'), t('forum:flagConfirmation'));
     back();
   }, [back, t]);
-  const flagPost = useCallback(() => {
-    if (post !== undefined) setFlagTarget({ targetType: 'post', targetId: post.id });
-  }, [post]);
   const closeFlagDialog = useCallback(() => setFlagTarget(null), []);
 
   if (postQuery.isPending && post === undefined) {
@@ -219,218 +386,183 @@ export default function ForumPostDetailScreen() {
           >
             {t('forum:loadFailed')}
           </Text>
-          <PressableScale
-            accessibilityLabel={t('forum:retry')}
-            onPress={retryPost}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended justify-center rounded-md bg-primary px-lg"
-          >
-            <Text className={`font-bold text-white ${languageFontClass}`}>{t('forum:retry')}</Text>
-          </PressableScale>
+          <AuthSubmitButton label={t('forum:retry')} onPress={retryPost} />
         </View>
       </SafeAreaView>
     );
   }
 
+  const isComposerOpen = replyTarget !== null && canReplyHere;
+
   return (
-    <>
-      <NativeScreenHeader title={t('forum:detailTitle')} />
+    <ActionScreen
+      className="bg-neutral-50"
+      backgroundColor={wash}
+      action={
+        isComposerOpen ? (
+          <ForumReplyComposer
+            name={replyTarget.name}
+            text={draft.text}
+            inputRef={replyInputRef}
+            onChangeText={changeReply}
+            onClose={closeReply}
+            onSubmit={submitReply}
+            isSubmitting={createReply.isPending}
+            isSubmitDisabled={!isOnline || postingDisabled || postingStatus.isPending}
+            errorMessage={
+              replyErrorMessage ?? (replyMutationCode === null ? null : t('forum:replyFailed'))
+            }
+            errorCode={replyErrorCode ?? replyMutationCode}
+            languageFontClass={languageFontClass}
+            onKeyboardShown={revealAfterKeyboard}
+          />
+        ) : null
+      }
+    >
+      <NativeScreenHeader title={t('forum:detailTitle')} backgroundColor={wash} />
       <FlashList
+        ref={listRef}
         testID="forum-detail-screen"
-        data={repliesQuery.data ?? EMPTY_REPLIES}
-        renderItem={renderReply}
-        keyExtractor={replyKeyExtractor}
-        style={styles.screen}
+        data={rows}
+        renderItem={renderRow}
+        keyExtractor={threadRowKeyExtractor}
+        getItemType={threadRowType}
+        extraData={highlightedId}
+        style={screenStyle}
         contentContainerStyle={contentStyle}
         contentInsetAdjustmentBehavior="automatic"
         keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        onLayout={measureList}
         refreshing={(postQuery.isRefetching || repliesQuery.isRefetching) && isOnline}
         onRefresh={refresh}
         ListHeaderComponent={
-          <PageWidth className="gap-lg pb-lg">
-            <View className="gap-xs">
-              <AuthorLine
-                name={post.author_first_name}
-                avatarKey={personCards.get(post.author_id)?.avatarKey ?? null}
-                label={t('forum:postBy', { name: post.author_first_name })}
-                languageFontClass={languageFontClass}
-              />
-            </View>
-            {imageSource === null ? null : (
-              <Image
-                source={imageSource}
-                accessibilityLabel={t('forum:imageAlt', { name: post.author_first_name })}
-                contentFit="cover"
-                cachePolicy="memory-disk"
-                style={styles.image}
-              />
+          <PageWidth>
+            {isOnline && !postingDisabled ? null : (
+              <View className="gap-sm px-lg pb-md">
+                {isOnline ? null : (
+                  <Text
+                    selectable
+                    accessibilityRole="alert"
+                    className={`text-start text-sm text-error ${languageFontClass}`}
+                  >
+                    {t('forum:offlineWrite')}
+                  </Text>
+                )}
+                {postingDisabled ? (
+                  <Text
+                    selectable
+                    accessibilityRole="alert"
+                    className={`text-start text-sm text-neutral-700 ${languageFontClass}`}
+                  >
+                    {t('forum:postingDisabled')}
+                  </Text>
+                ) : null}
+              </View>
             )}
-            {post.content === null ? (
-              <Text
-                accessibilityRole="text"
-                className={`text-start text-md italic text-neutral-600 ${languageFontClass}`}
-              >
-                {t('forum:deletedTombstone')}
-              </Text>
-            ) : isEditing ? (
-              <View className="gap-sm">
-                <AuthTextField
-                  testID="forum-edit-content"
-                  label={t('forum:editTitle')}
-                  value={editContent}
-                  onChangeText={setEditContent}
-                  maxLength={FORUM_POST_MAX_LENGTH}
-                  multiline
-                  textAlignVertical="top"
-                  style={styles.mixedDirectionInput}
+            <ForumThreadMessage
+              id={post.id}
+              kind="post"
+              testID="forum-thread-post"
+              name={post.author_first_name}
+              avatarKey={personCards.get(post.author_id)?.avatarKey ?? null}
+              authorLabel={t('forum:postBy', { name: post.author_first_name })}
+              content={post.content}
+              tombstone={t('forum:deletedTombstone')}
+              rails={NO_RAILS}
+              hasAnswersBelow={rows.length > 0}
+              isHighlighted={post.id === highlightedId}
+              languageFontClass={languageFontClass}
+              openLinkLabel={openLinkLabel}
+              flagAccessibilityLabel={t('forum:flagPost')}
+              isFlagDisabled={!isOnline}
+              onFlag={isOwnPost || post.visibility !== 'visible' ? null : flagPost}
+              replyLabel={t('forum:reply')}
+              isReplyDisabled={isReplyDisabled}
+              onReply={
+                canReplyHere && post.visibility === 'visible' && post.content !== null
+                  ? openReply
+                  : null
+              }
+              startActions={
+                isOwnPost && !isEditing && !isConfirmingDelete ? (
+                  <ForumOwnPostIcons
+                    isOnline={isOnline}
+                    isDeleting={deletePost.isPending}
+                    onEdit={beginEdit}
+                    onAskDelete={confirmDelete}
+                  />
+                ) : undefined
+              }
+              footer={
+                <ForumOwnPostActions
+                  isConfirmingDelete={isConfirmingDelete}
+                  isDeleting={deletePost.isPending}
+                  onCancelDelete={cancelDelete}
+                  onConfirmDelete={performDelete}
+                  errorMessage={postErrorMessage}
+                  languageFontClass={languageFontClass}
                 />
-                <View className="flex-row gap-sm">
-                  <PressableScale
-                    accessibilityLabel={t('forum:cancel')}
-                    onPress={cancelEdit}
-                    haptic="tapLight"
-                    style={continuousCorners}
-                    className="min-h-recommended grow items-center justify-center rounded-md border border-neutral-300 px-lg"
-                  >
-                    <Text className={`font-bold text-neutral-700 ${languageFontClass}`}>
-                      {t('forum:cancel')}
-                    </Text>
-                  </PressableScale>
-                  <PressableScale
-                    testID="forum-save-edit"
-                    accessibilityLabel={t('forum:save')}
-                    onPress={saveEdit}
-                    haptic="tapLight"
-                    isBusy={editPost.isPending}
-                    isDisabled={!isOnline}
-                    style={continuousCorners}
-                    className="min-h-recommended grow items-center justify-center rounded-md bg-primary px-lg"
-                  >
-                    <Text className={`font-bold text-white ${languageFontClass}`}>
-                      {editPost.isPending ? t('forum:saving') : t('forum:save')}
-                    </Text>
-                  </PressableScale>
-                </View>
-              </View>
-            ) : (
-              <ForumPlainText
-                content={post.content}
-                languageFontClass={languageFontClass}
-                openLinkLabel={openLinkLabel}
-              />
-            )}
-            {isOwnPost && !isEditing && !isConfirmingDelete ? (
-              <View className="flex-row gap-sm">
-                <PressableScale
-                  testID="forum-edit"
-                  accessibilityLabel={t('forum:edit')}
-                  onPress={beginEdit}
-                  haptic="tapLight"
-                  isDisabled={!isOnline}
-                  style={continuousCorners}
-                  className="min-h-recommended grow items-center justify-center rounded-md border border-primary px-lg"
-                >
-                  <Text className={`font-bold text-primary ${languageFontClass}`}>
-                    {t('forum:edit')}
-                  </Text>
-                </PressableScale>
-                <PressableScale
-                  testID="forum-delete"
-                  accessibilityLabel={t('forum:delete')}
-                  onPress={confirmDelete}
-                  haptic="warning"
-                  isDisabled={!isOnline}
-                  isBusy={deletePost.isPending}
-                  style={continuousCorners}
-                  className="min-h-recommended grow items-center justify-center rounded-md border border-error px-lg"
-                >
-                  <Text className={`font-bold text-error ${languageFontClass}`}>
-                    {t('forum:delete')}
-                  </Text>
-                </PressableScale>
-              </View>
-            ) : null}
-            {isOwnPost || post.visibility !== 'visible' ? null : (
-              <PressableScale
-                testID="forum-flag-post"
-                accessibilityLabel={t('forum:flagPost')}
-                onPress={flagPost}
-                haptic="warning"
-                isDisabled={!isOnline}
-                style={continuousCorners}
-                className="min-h-recommended self-start justify-center rounded-md border border-neutral-300 px-lg"
-              >
-                <Text className={`font-semibold text-neutral-700 ${languageFontClass}`}>
-                  {t('forum:flag')}
-                </Text>
-              </PressableScale>
-            )}
-            {!isConfirmingDelete ? null : (
-              <View
-                accessibilityRole="alert"
-                className="gap-md rounded-lg border border-error bg-white p-md"
-                style={continuousCorners}
-              >
-                <Text
-                  accessibilityRole="header"
-                  className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-                >
-                  {t('forum:deleteConfirmTitle')}
-                </Text>
-                <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
-                  {t('forum:deleteConfirmBody')}
-                </Text>
-                <View className="flex-row gap-sm">
-                  <PressableScale
-                    accessibilityLabel={t('forum:cancel')}
-                    onPress={cancelDelete}
-                    haptic="tapLight"
-                    style={continuousCorners}
-                    className="min-h-recommended grow items-center justify-center rounded-md border border-neutral-300 px-lg"
-                  >
-                    <Text className={`font-bold text-neutral-700 ${languageFontClass}`}>
-                      {t('forum:cancel')}
-                    </Text>
-                  </PressableScale>
-                  <PressableScale
-                    testID="forum-confirm-delete"
-                    accessibilityLabel={t('forum:deleteConfirm')}
-                    onPress={performDelete}
-                    haptic="warning"
-                    isBusy={deletePost.isPending}
-                    style={continuousCorners}
-                    className="min-h-recommended grow items-center justify-center rounded-md bg-error px-lg"
-                  >
-                    <Text className={`font-bold text-white ${languageFontClass}`}>
-                      {t('forum:deleteConfirm')}
-                    </Text>
-                  </PressableScale>
-                </View>
-              </View>
-            )}
-            {!isOnline ? (
-              <Text
-                selectable
-                accessibilityRole="alert"
-                className={`text-start text-sm text-error ${languageFontClass}`}
-              >
-                {t('forum:offlineWrite')}
-              </Text>
-            ) : null}
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-xl font-bold tabular-nums text-neutral-900 ${languageFontClass}`}
+              }
             >
-              {t('forum:repliesCount', { count: post.reply_count })}
-            </Text>
+              {imageSource === null ? null : (
+                <Image
+                  source={imageSource}
+                  accessibilityLabel={t('forum:imageAlt', { name: post.author_first_name })}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  style={styles.image}
+                />
+              )}
+              {post.content === null ? (
+                <Text
+                  accessibilityRole="text"
+                  className={`text-start text-md italic text-neutral-600 ${languageFontClass}`}
+                >
+                  {t('forum:deletedTombstone')}
+                </Text>
+              ) : isEditing ? (
+                <View className="gap-sm">
+                  <AuthTextField
+                    testID="forum-edit-content"
+                    label={t('forum:editTitle')}
+                    value={editContent}
+                    onChangeText={setEditContent}
+                    maxLength={FORUM_POST_MAX_LENGTH}
+                    multiline
+                    textAlignVertical="top"
+                    style={styles.mixedDirectionInput}
+                  />
+                  <View className="flex-row gap-sm">
+                    <View className="flex-1">
+                      <RaisedActionButton label={t('forum:cancel')} onPress={cancelEdit} />
+                    </View>
+                    <View className="flex-1">
+                      <AuthSubmitButton
+                        testID="forum-save-edit"
+                        label={editPost.isPending ? t('forum:saving') : t('forum:save')}
+                        onPress={saveEdit}
+                        isLoading={editPost.isPending}
+                        disabled={!isOnline}
+                      />
+                    </View>
+                  </View>
+                </View>
+              ) : (
+                <ForumPlainText
+                  content={post.content}
+                  languageFontClass={languageFontClass}
+                  openLinkLabel={openLinkLabel}
+                />
+              )}
+            </ForumThreadMessage>
           </PageWidth>
         }
         ListEmptyComponent={
           repliesQuery.isPending && repliesQuery.data === undefined ? (
             <AnnouncementFeedSkeleton accessibilityLabel={t('forum:loading')} />
           ) : repliesQuery.isError && repliesQuery.data === undefined ? (
-            <PageWidth className="items-center gap-md pb-lg">
+            <PageWidth className="items-center gap-md px-lg pb-lg">
               <Text
                 selectable
                 accessibilityRole="alert"
@@ -438,78 +570,9 @@ export default function ForumPostDetailScreen() {
               >
                 {t('forum:loadFailed')}
               </Text>
-              <PressableScale
-                accessibilityLabel={t('forum:retry')}
-                onPress={() => void refetchReplies()}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended justify-center rounded-md bg-primary px-lg"
-              >
-                <Text className={`font-bold text-white ${languageFontClass}`}>
-                  {t('forum:retry')}
-                </Text>
-              </PressableScale>
+              <AuthSubmitButton label={t('forum:retry')} onPress={retryReplies} />
             </PageWidth>
-          ) : (
-            <PageWidth>
-              <Text className={`pb-lg text-start text-neutral-600 ${languageFontClass}`}>
-                {t('forum:noReplies')}
-              </Text>
-            </PageWidth>
-          )
-        }
-        ListFooterComponent={
-          post.visibility === 'deleted' ? null : (
-            <PageWidth className="gap-sm pt-md">
-              {postingDisabled ? (
-                <Text
-                  selectable
-                  accessibilityRole="alert"
-                  className={`text-start text-sm text-neutral-700 ${languageFontClass}`}
-                >
-                  {t('forum:postingDisabled')}
-                </Text>
-              ) : null}
-              <AuthTextField
-                testID="forum-reply-content"
-                label={t('forum:reply')}
-                placeholder={t('forum:replyPlaceholder')}
-                value={reply}
-                onChangeText={setReply}
-                maxLength={FORUM_REPLY_MAX_LENGTH}
-                multiline
-                textAlignVertical="top"
-                style={styles.replyInput}
-                editable={!postingDisabled}
-              />
-              <Text
-                className={`text-end text-sm tabular-nums text-neutral-600 ${languageFontClass}`}
-              >
-                {t('forum:charactersRemaining', { count: FORUM_REPLY_MAX_LENGTH - reply.length })}
-              </Text>
-              <ShakeOnError errorCode={errorCode}>
-                <View className="gap-sm">
-                  {errorMessage === null && mutationErrorCode === null ? null : (
-                    <Text
-                      selectable
-                      accessibilityRole="alert"
-                      accessibilityLiveRegion="polite"
-                      className={`text-start text-sm text-error ${languageFontClass}`}
-                    >
-                      {errorMessage ?? t('forum:replyFailed')}
-                    </Text>
-                  )}
-                  <AuthSubmitButton
-                    testID="forum-submit-reply"
-                    label={createReply.isPending ? t('forum:replying') : t('forum:reply')}
-                    onPress={submitReply}
-                    isLoading={createReply.isPending}
-                    disabled={!isOnline || postingDisabled || postingStatus.isPending}
-                  />
-                </View>
-              </ShakeOnError>
-            </PageWidth>
-          )
+          ) : null
         }
       />
       <ForumFlagDialog
@@ -518,6 +581,6 @@ export default function ForumPostDetailScreen() {
         onClose={closeFlagDialog}
         onConfirmed={confirmFlag}
       />
-    </>
+    </ActionScreen>
   );
 }

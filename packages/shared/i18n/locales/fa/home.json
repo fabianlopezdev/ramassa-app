@@ -3,6 +3,8 @@
   "feedTitle": "اطلاعیه‌ها",
   "filterLabel": "فیلتر اطلاعیه‌ها بر اساس دسته",
   "filterAll": "همه",
+  "filterNewCount_one": "{{count}} اعلان جدید",
+  "filterNewCount_other": "{{count}} اعلان جدید",
   "category": {
     "info": "اطلاعات",
     "training": "تمرین‌ها",
@@ -10,20 +12,29 @@
     "urgent": "فوری"
   },
   "pinned": "سنجاق‌شده",
+  "unseen": "جدید",
   "emptyTitle": "هنوز اطلاعیه‌ای نیست",
-  "emptyBody": "وقتی تیم خبر تازه‌ای منتشر کند، آن را اینجا می‌بینید.",
+  "emptyBody": "وقتی کادر فنی خبر تازه‌ای منتشر کند، آن را اینجا می‌بینید.",
   "loadFailed": "اطلاعیه‌ها بارگذاری نشدند.",
   "retryAction": "دوباره تلاش کنید",
   "loading": "در حال بارگذاری اطلاعیه‌ها",
   "pendingForm": {
-    "eyebrow": "فرم",
     "deadline": "تا {{date}}",
     "answer": "پاسخ بده",
     "dismiss": "الان نه"
   },
+  "later": {
+    "title": "برای بعد",
+    "waiting": "{{count}} فرم برای بعد",
+    "waiting_one": "{{count}} فرم برای بعد",
+    "waiting_other": "{{count}} فرم برای بعد",
+    "delete": "حذف",
+    "cancel": "لغو",
+    "deleteTitle": "این فرم حذف شود؟",
+    "deleteBody": "دیگر نمی‌توانی به آن پاسخ بدهی. کادر فنی می‌بیند که آن را کنار گذاشته‌ای."
+  },
   "toDo": {
-    "title": "کارهای مانده",
-    "count": "{{current}} از {{total}}"
+    "title": "فرم‌ها و نظرسنجی‌ها"
   },
   "nextActivity": {
     "title": "برنامه بعدی"

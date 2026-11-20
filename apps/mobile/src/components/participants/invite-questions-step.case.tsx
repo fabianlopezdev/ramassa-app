@@ -23,9 +23,12 @@ mock.module('react-native', () => ({
     testID?: string;
     onPress?: () => void;
   }) => createElement('button', { 'data-testid': testID, onClick: onPress }, children),
-  Switch: ({ testID }: { testID?: string }) => createElement('input', { 'data-testid': testID }),
 }));
-mock.module('@/components/forms/data-icon', () => ({ BrandSymbol: () => null }));
+mock.module('@/components/forms/data-icon', () => ({ BrandIcon: () => null }));
+mock.module('@/components/forms/switch-card', () => ({
+  SwitchCard: ({ testID, label }: { testID?: string; label: string }) =>
+    createElement('button', { 'data-testid': testID, role: 'switch' }, label),
+}));
 mock.module('@/lib/haptics/haptics', () => ({ playHaptic: () => undefined }));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
 mock.module('@ramassa/shared/i18n', () => ({ useLanguage: () => ({ language: 'ca' }) }));

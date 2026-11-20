@@ -54,7 +54,7 @@ mock.module('react-native', () => ({
     ),
 }));
 mock.module('react-native-safe-area-context', () => ({ SafeAreaView: box }));
-mock.module('expo-symbols', () => ({ SymbolView: () => null }));
+mock.module('@/components/icons/icon', () => ({ Icon: () => null }));
 mock.module('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: keyof typeof messages) => messages[key],

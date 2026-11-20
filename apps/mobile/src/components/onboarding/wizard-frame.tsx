@@ -33,7 +33,7 @@ import { usePlacedFields } from '@/components/onboarding/placed-fields';
 import { QuestionHelp } from '@/components/onboarding/question-help';
 import { WizardProgress } from '@/components/onboarding/wizard-progress';
 import { WizardValidationSummary } from '@/components/onboarding/wizard-validation-summary';
-import { useOnboardingEntrance } from '@/lib/onboarding-entrance';
+import { useScreenEntrance } from '@/lib/screen-entrance';
 import { useScreenWording } from '@/lib/screen-wording';
 import { useLocalSearchParams } from 'expo-router';
 import type { ReactNode } from 'react';
@@ -104,7 +104,7 @@ function WizardFrameContent({
 }: WizardFrameProps) {
   const { entrance, edit } = useLocalSearchParams<{ entrance?: string; edit?: string }>();
   const showProgress = stepNumber !== undefined && edit !== '1';
-  const entranceMode = useOnboardingEntrance(screenId, entrance !== 'none' && edit !== '1');
+  const entranceMode = useScreenEntrance(screenId, entrance !== 'none' && edit !== '1');
   const wording = useScreenWording(screenId);
   const { t } = useTranslation('onboarding');
   const added = usePlacedFields(screenId);

@@ -5,10 +5,13 @@
  * while the search changes. Groups are not deleted here, as in the web admin.
  */
 import { useAppLock } from '@/components/auth/app-lock';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { FieldLabel } from '@/components/forms/field-label';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
+import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useNotificationActions } from '@/lib/team-notifications';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -86,7 +89,7 @@ function GroupForm({
 
   return (
     <ScrollView
-      contentContainerClassName="gap-md p-lg"
+      contentContainerClassName={screenContentClassName}
       keyboardShouldPersistTaps="handled"
       // The page sheet does not move with the keyboard, so the scroll view does.
       automaticallyAdjustKeyboardInsets
@@ -116,9 +119,7 @@ function GroupForm({
       />
       <View className="gap-sm">
         <View className="flex-row flex-wrap items-center justify-between gap-sm">
-          <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-            {t('groupMembers')}
-          </Text>
+          <FieldLabel>{t('groupMembers')}</FieldLabel>
           <Text
             testID="notification-group-selected"
             className={`text-sm font-semibold tabular-nums text-neutral-700 ${fontClass}`}
@@ -158,34 +159,18 @@ function GroupForm({
         </Text>
       ) : null}
       <View className="flex-row flex-wrap gap-sm">
-        <PressableScale
+        <AuthSubmitButton
           testID="notification-group-save"
-          accessibilityRole="button"
-          accessibilityLabel={t('saveGroup')}
+          label={t('saveGroup')}
           onPress={submit}
-          isBusy={saveGroup.isPending}
-          isDisabled={!canSave}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-            {t('saveGroup')}
-          </Text>
-        </PressableScale>
-        <PressableScale
+          isLoading={saveGroup.isPending}
+          disabled={!canSave}
+        />
+        <RaisedActionButton
           testID="notification-group-cancel"
-          accessibilityRole="button"
-          accessibilityLabel={tProfile('cancelAction')}
+          label={tProfile('cancelAction')}
           onPress={onClose}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-            {tProfile('cancelAction')}
-          </Text>
-        </PressableScale>
+        />
       </View>
     </ScrollView>
   );
@@ -212,21 +197,23 @@ export function NotificationGroupSheet({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-white" testID="notification-group-sheet">
-        <KeyboardAvoidingView
-          className="flex-1"
-          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
-        >
-          {visible ? (
-            <GroupForm
-              key={group?.id ?? 'new'}
-              group={group}
-              participants={participants}
-              onClose={onClose}
-            />
-          ) : null}
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+      <NativeModalScope>
+        <SafeAreaView className="flex-1 bg-white" testID="notification-group-sheet">
+          <KeyboardAvoidingView
+            className="flex-1"
+            behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
+          >
+            {visible ? (
+              <GroupForm
+                key={group?.id ?? 'new'}
+                group={group}
+                participants={participants}
+                onClose={onClose}
+              />
+            ) : null}
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </NativeModalScope>
     </Modal>
   );
 }

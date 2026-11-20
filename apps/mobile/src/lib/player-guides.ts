@@ -1,8 +1,5 @@
 import type { KnowledgeArticleListRow, KnowledgeCategoryRow } from '@ramassa/shared/knowledge';
 
-/** How many guides the Ajuda tab shows above "Totes les guies". */
-export const LATEST_PLAYER_GUIDES_LIMIT = 3;
-
 /** `all` or a knowledge category id. */
 export type PlayerGuideFilter = 'all' | (string & {});
 
@@ -18,12 +15,6 @@ export function selectPlayerGuides(
 ): readonly KnowledgeArticleListRow[] {
   if (articles === undefined) return NO_GUIDES;
   return articles.filter((article) => article.content_type !== 'participant_story');
-}
-
-export function selectLatestPlayerGuides(
-  articles: readonly KnowledgeArticleListRow[] | undefined,
-): readonly KnowledgeArticleListRow[] {
-  return selectPlayerGuides(articles).slice(0, LATEST_PLAYER_GUIDES_LIMIT);
 }
 
 export function filterPlayerGuides(

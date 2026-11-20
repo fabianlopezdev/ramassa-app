@@ -3,7 +3,13 @@
  * worker when there is one, her initial on the brand colour underneath, so
  * the initial shows while the photo loads or when it cannot load. One
  * component for chat, forum and articles, with one size per context.
+ *
+ * Where the avatar stands for "me" and no name sits beside it, such as the
+ * button that opens her profile, `fallback="person"` shows a person icon in
+ * place of the initial (RAPP-819). Lists of people keep the initial, because
+ * the letter is what tells two people apart.
  */
+import { Icon } from '@/components/icons/icon';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { Image } from 'expo-image';
@@ -14,12 +20,14 @@ import { tokens } from '@ramassa/shared/tokens';
 
 /**
  * `small` beside chat bubbles and forum author lines, `medium` on an article,
- * `header` on the photo button that opens her profile (a full touch target).
+ * `header` on the photo button that opens her profile (a full touch target),
+ * `card` in the start block of a raised card, as wide as the block (RAPP-859).
  */
 export const PERSON_AVATAR_SIZE = {
   small: 28,
   medium: 40,
   header: tokens.tapTarget.min,
+  card: tokens.spacing['2xl'],
   profile: tokens.spacing['3xl'] * 2,
 } as const;
 export type PersonAvatarSize = keyof typeof PERSON_AVATAR_SIZE;
@@ -39,6 +47,11 @@ const styles = StyleSheet.create({
     width: PERSON_AVATAR_SIZE.header,
     height: PERSON_AVATAR_SIZE.header,
     borderRadius: PERSON_AVATAR_SIZE.header / 2,
+  },
+  card: {
+    width: PERSON_AVATAR_SIZE.card,
+    height: PERSON_AVATAR_SIZE.card,
+    borderRadius: PERSON_AVATAR_SIZE.card / 2,
   },
   profile: {
     width: PERSON_AVATAR_SIZE.profile,
@@ -64,11 +77,14 @@ export const PersonAvatar = memo(function PersonAvatar({
   name,
   avatarKey,
   size = 'small',
+  fallback = 'initial',
   testID,
 }: {
   readonly name: string | null | undefined;
   readonly avatarKey: string | null | undefined;
   readonly size?: PersonAvatarSize;
+  /** What shows under the photo: her initial, or a person icon. */
+  readonly fallback?: 'initial' | 'person';
   readonly testID?: string;
 }) {
   const { session } = useAuth();
@@ -89,12 +105,21 @@ export const PersonAvatar = memo(function PersonAvatar({
       importantForAccessibility="no-hide-descendants"
       style={[styles.circle, styles[size]]}
     >
-      <Text
-        className={`font-semibold text-white ${size === 'profile' ? 'text-2xl' : size === 'small' ? 'text-xs' : size === 'header' ? 'text-lg' : 'text-md'}`}
-        allowFontScaling={false}
-      >
-        {personInitial(name)}
-      </Text>
+      {fallback === 'person' ? (
+        <Icon
+          name="user"
+          weight="boldDuotone"
+          size={PERSON_AVATAR_SIZE[size] / 2}
+          color={tokens.colors.white}
+        />
+      ) : (
+        <Text
+          className={`font-semibold text-white ${size === 'profile' ? 'text-2xl' : size === 'small' ? 'text-xs' : size === 'header' || size === 'card' ? 'text-lg' : 'text-md'}`}
+          allowFontScaling={false}
+        >
+          {personInitial(name)}
+        </Text>
+      )}
       {source === null ? null : (
         <Image
           source={source}

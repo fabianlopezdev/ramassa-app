@@ -1,6 +1,6 @@
 {
   "title": "Galería de la comunidad",
-  "intro": "Comparte fotos y vídeos con la comunidad o solo con el equipo.",
+  "intro": "Comparte fotos y vídeos con la comunidad o solo con el equipo técnico.",
   "upload": "Compartir contenido",
   "uploadTitle": "Comparte una foto o un vídeo",
   "pickMedia": "Elige una foto o un vídeo",
@@ -15,7 +15,7 @@
   "privacy": "¿Quién puede verlo?",
   "privacyLevels": {
     "community": "Toda la comunidad",
-    "staff_only": "Solo el equipo"
+    "staff_only": "Solo el equipo técnico"
   },
   "consentReminder": "Confirmo que todas las personas que aparecen han aceptado compartir este contenido.",
   "consentRequired": "Debes confirmar el consentimiento antes de publicar.",
@@ -25,7 +25,7 @@
   "retry": "Volver a intentarlo",
   "loading": "Cargando la galería...",
   "loadFailed": "No se ha podido cargar este contenido.",
-  "loadFailedHelp": "Comprueba la conexión y vuelve a intentarlo. Si sigue fallando, comparte el código con el equipo.",
+  "loadFailedHelp": "Comprueba la conexión y vuelve a intentarlo. Si sigue fallando, comparte el código con el equipo técnico.",
   "emptyTitle": "Todavía no se ha compartido nada",
   "emptyBody": "Las fotos y los vídeos compartidos con la comunidad aparecerán aquí.",
   "offlineEmptyTitle": "La galería no está disponible sin conexión",
@@ -37,7 +37,7 @@
   "deleteTitle": "¿Quieres eliminar este contenido?",
   "deleteBody": "La foto o el vídeo y su miniatura se eliminarán definitivamente.",
   "cancel": "Cancelar",
-  "flag": "Avisar al equipo",
+  "flag": "Avisar al equipo técnico",
   "moderationTitle": "Moderación de la galería",
   "moderationIntro": "Oculta o vuelve a mostrar cualquier foto o vídeo, aunque nadie haya informado de ello.",
   "moderationTotal": "Elementos: {{count}}",

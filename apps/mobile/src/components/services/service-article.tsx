@@ -7,7 +7,8 @@
  */
 import { FailureNotice } from '@/components/error-code-line';
 import { EventDetailLine } from '@/components/events/event-card';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { SectionTitle } from '@/components/layout/screen-section';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
@@ -105,20 +106,11 @@ function ContactAction({
   readonly url: string;
   readonly onOpen: (url: string) => void;
 }) {
-  const languageFontClass = useLanguageFontClass();
   const handlePress = useCallback(() => onOpen(url), [onOpen, url]);
   return (
-    <PressableScale
-      accessibilityLabel={label}
-      onPress={handlePress}
-      haptic="tapLight"
-      className="min-h-recommended basis-[48%] grow items-center justify-center rounded-md border border-primary px-md"
-      style={continuousCorners}
-    >
-      <Text className={`text-center text-md font-bold text-primary-dark ${languageFontClass}`}>
-        {label}
-      </Text>
-    </PressableScale>
+    <View className="basis-[48%] grow">
+      <RaisedActionButton accessibilityRole="link" label={label} onPress={handlePress} />
+    </View>
   );
 }
 
@@ -204,73 +196,65 @@ export function ServiceArticle({
         />
       )}
 
-      <View className="gap-md rounded-lg bg-neutral-50 p-lg" style={continuousCorners}>
-        <Text
-          accessibilityRole="header"
-          className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-        >
-          {t('playerServices:details')}
-        </Text>
-        {service.providerName === null ? null : (
-          <EventDetailLine
-            label={t('playerServices:provider')}
-            value={service.providerName}
-            languageFontClass={languageFontClass}
-          />
-        )}
-        {service.location === null ? null : (
-          <EventDetailLine
-            label={t('playerServices:location')}
-            value={service.location}
-            languageFontClass={languageFontClass}
-          />
-        )}
-        <EventDetailLine
-          label={t('playerServices:cost')}
-          value={cost}
-          languageFontClass={languageFontClass}
-        />
-        {service.schedule === null ? null : (
-          <EventDetailLine
-            label={t('playerServices:schedule')}
-            value={service.schedule}
-            languageFontClass={languageFontClass}
-          />
-        )}
-        <EventDetailLine
-          label={t('playerServices:availability')}
-          value={t(`playerServices:availability${availabilityKey(service.availability)}`)}
-          languageFontClass={languageFontClass}
-        />
-        {formFields.map((field) => {
-          const value = service.metadata[field.key];
-          const label = resolveLocalizedText(field.label, language);
-          // A draft holds an unanswered field as blank; a stored service leaves it out.
-          const isBlank =
-            value === undefined ||
-            value === null ||
-            value === '' ||
-            (Array.isArray(value) && value.length === 0);
-          if (isBlank || label === undefined) return null;
-          return (
+      <View className="gap-md">
+        <SectionTitle title={t('playerServices:details')} />
+        <View className="gap-md rounded-lg bg-neutral-50 p-lg" style={continuousCorners}>
+          {service.providerName === null ? null : (
             <EventDetailLine
-              key={field.key}
-              label={label.text}
-              value={metadataValueLabel(field, value, t)}
+              label={t('playerServices:provider')}
+              value={service.providerName}
               languageFontClass={languageFontClass}
             />
-          );
-        })}
+          )}
+          {service.location === null ? null : (
+            <EventDetailLine
+              label={t('playerServices:location')}
+              value={service.location}
+              languageFontClass={languageFontClass}
+            />
+          )}
+          <EventDetailLine
+            label={t('playerServices:cost')}
+            value={cost}
+            languageFontClass={languageFontClass}
+          />
+          {service.schedule === null ? null : (
+            <EventDetailLine
+              label={t('playerServices:schedule')}
+              value={service.schedule}
+              languageFontClass={languageFontClass}
+            />
+          )}
+          <EventDetailLine
+            label={t('playerServices:availability')}
+            value={t(`playerServices:availability${availabilityKey(service.availability)}`)}
+            languageFontClass={languageFontClass}
+          />
+          {formFields.map((field) => {
+            const value = service.metadata[field.key];
+            const label = resolveLocalizedText(field.label, language);
+            // A draft holds an unanswered field as blank; a stored service leaves it out.
+            const isBlank =
+              value === undefined ||
+              value === null ||
+              value === '' ||
+              (Array.isArray(value) && value.length === 0);
+            if (isBlank || label === undefined) return null;
+            return (
+              <EventDetailLine
+                key={field.key}
+                label={label.text}
+                value={metadataValueLabel(field, value, t)}
+                languageFontClass={languageFontClass}
+              />
+            );
+          })}
+        </View>
       </View>
 
       {Object.values(contactLinks).every((value) => value === null) ? null : (
         <View className="gap-md">
-          <Text
-            accessibilityRole="header"
-            className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-          >
-            {t('playerServices:contact')}
-          </Text>
+          <SectionTitle title={t('playerServices:contact')} />
           <View className="flex-row flex-wrap gap-sm">
             {contactLinks.phone === null ? null : (
               <ContactAction

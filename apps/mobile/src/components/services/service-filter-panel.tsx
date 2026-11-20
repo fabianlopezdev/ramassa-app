@@ -1,5 +1,5 @@
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { RaisedChip } from '@/components/layout/filter-chips';
 import type { PlayerServiceFilterSelection } from '@/lib/player-services';
 import {
   availableServiceZones,
@@ -36,25 +36,14 @@ const FilterChip = memo(function FilterChip({
 }) {
   const handlePress = useCallback(() => onToggle(value), [onToggle, value]);
   return (
-    <PressableScale
+    <RaisedChip
       accessibilityRole="checkbox"
-      accessibilityLabel={label}
+      label={label}
       accessibilityHint={groupLabel}
-      onPress={handlePress}
-      haptic="selection"
       isSelected={selected}
-      className={`min-h-recommended justify-center rounded-full border px-md ${
-        selected ? 'border-primary bg-primary' : 'border-neutral-300 bg-white'
-      }`}
-    >
-      <Text
-        className={`text-md font-medium ${
-          selected ? 'text-white' : 'text-neutral-800'
-        } ${languageFontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
+      onPress={handlePress}
+      languageFontClass={languageFontClass}
+    />
   );
 });
 
@@ -110,7 +99,6 @@ export function ServiceFilterPanel({
 }) {
   const { t } = useTranslation('playerServices');
   const { language } = useLanguage();
-  const languageFontClass = useLanguageFontClass();
   const metadataGroups = useMemo(
     () => buildPlayerServiceMetadataFilterGroups(contract, availableServices),
     [availableServices, contract],
@@ -168,28 +156,14 @@ export function ServiceFilterPanel({
   );
 
   return (
-    <View
-      className="gap-lg rounded-lg border border-neutral-200 bg-neutral-50 p-md"
-      style={continuousCorners}
-    >
-      <View className="flex-row items-center justify-between gap-md">
-        <Text
-          accessibilityRole="header"
-          className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-        >
-          {t('filterHeading')}
-        </Text>
-        <PressableScale
-          accessibilityLabel={t('filterClear')}
-          onPress={onClear}
-          haptic="tapLight"
-          className="min-h-recommended justify-center rounded-full px-md"
-        >
-          <Text className={`text-md font-semibold text-primary-dark ${languageFontClass}`}>
-            {t('filterClear')}
-          </Text>
-        </PressableScale>
-      </View>
+    <View className="gap-lg">
+      <RaisedActionButton
+        testID="services-clear-filters"
+        size="compact"
+        icon="trash"
+        label={t('filterClear')}
+        onPress={onClear}
+      />
       <FilterGroup
         label={t('filterZone')}
         options={zones}

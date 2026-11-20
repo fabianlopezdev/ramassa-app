@@ -295,10 +295,10 @@ for (const os of ['ios', 'android']) {
 }
 
 test('revisiting a wizard screen skips the heading, form and CTA entrance together', async () => {
-  const { OnboardingEntranceProvider } = await import('../../lib/onboarding-entrance');
+  const { ScreenEntranceProvider } = await import('../../lib/screen-entrance');
   const form = (screenId: 'identity' | 'background') =>
     createElement(
-      OnboardingEntranceProvider,
+      ScreenEntranceProvider,
       null,
       createElement(WizardFrame, {
         screenId,

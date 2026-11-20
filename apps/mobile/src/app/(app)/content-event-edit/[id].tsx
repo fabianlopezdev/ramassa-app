@@ -20,7 +20,8 @@ import { MultilingualField } from '@/components/content/multilingual-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { EventArticle, EventSignupPreview } from '@/components/events/event-article';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { FieldLabel } from '@/components/forms/field-label';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { DraftPreviewSheet } from '@/components/preview/draft-preview-sheet';
 import { PUBLISH_MODES } from '@/lib/announcement-draft';
@@ -81,15 +82,6 @@ const RECURRENCE_KEYS = { one_off: 'recurrenceOneOff', weekly: 'recurrenceWeekly
 const INTERVALS = Array.from({ length: MAX_EVENT_RECURRENCE_INTERVAL }, (_unused, i) => i + 1);
 
 type FormError = AppErrorCode | 'invalid';
-
-function SectionLabel({ children }: { readonly children: string }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-      {children}
-    </Text>
-  );
-}
 
 function EventForm({
   eventId,
@@ -240,7 +232,7 @@ function EventForm({
       )}
 
       <View className="gap-xs">
-        <SectionLabel>{t('fieldCategory')}</SectionLabel>
+        <FieldLabel>{t('fieldCategory')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {categories.map((category) => (
             <View key={category.id} className="flex-row items-center gap-xs">
@@ -281,24 +273,12 @@ function EventForm({
         multiline
         {...reviewHandlers(descriptionReview, touch)}
       />
-      <PressableScale
+      <RaisedActionButton
         testID="event-generate"
-        accessibilityRole="button"
-        accessibilityLabel={isGenerating ? t('generatingTranslations') : t('generateTranslations')}
+        label={isGenerating ? t('generatingTranslations') : t('generateTranslations')}
         onPress={() => void generate()}
-        isBusy={isGenerating}
-        isDisabled={!canGenerate}
-        haptic="tapLight"
-        className={`min-h-recommended items-center justify-center rounded-md border px-lg ${
-          canGenerate ? 'border-primary bg-white' : 'border-neutral-200 bg-neutral-100'
-        }`}
-      >
-        <Text
-          className={`text-center text-md font-bold ${canGenerate ? 'text-primary-dark' : 'text-neutral-500'} ${fontClass}`}
-        >
-          {isGenerating ? t('generatingTranslations') : t('generateTranslations')}
-        </Text>
-      </PressableScale>
+        isDisabled={!canGenerate || isGenerating}
+      />
       <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
         {tAnnouncements('translationHelp')}
       </Text>
@@ -321,7 +301,7 @@ function EventForm({
       />
 
       <View className="gap-xs">
-        <SectionLabel>{t('fieldRecurrence')}</SectionLabel>
+        <FieldLabel>{t('fieldRecurrence')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {EVENT_RECURRENCES.map((recurrence) => (
             <ChoiceOption
@@ -354,7 +334,7 @@ function EventForm({
       {form.recurrence === 'weekly' ? (
         <>
           <View className="gap-xs">
-            <SectionLabel>{t('fieldInterval')}</SectionLabel>
+            <FieldLabel>{t('fieldInterval')}</FieldLabel>
             <View className="flex-row flex-wrap gap-sm">
               {INTERVALS.map((interval) => (
                 <ChoiceOption
@@ -389,7 +369,7 @@ function EventForm({
         maxLength={5}
       />
       <View className="gap-xs">
-        <SectionLabel>{t('fieldSignup')}</SectionLabel>
+        <FieldLabel>{t('fieldSignup')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {EVENT_SIGNUP_MODES.map((signupMode) => (
             <ChoiceOption
@@ -406,7 +386,7 @@ function EventForm({
       </View>
 
       <View className="gap-sm">
-        <SectionLabel>{tAnnouncements('modeLabel')}</SectionLabel>
+        <FieldLabel>{tAnnouncements('modeLabel')}</FieldLabel>
         {canPublish ? (
           <>
             <View className="flex-row flex-wrap gap-sm">
@@ -447,19 +427,12 @@ function EventForm({
         )}
       </View>
 
-      <PressableScale
+      <RaisedActionButton
         testID="event-preview"
-        accessibilityRole="button"
-        accessibilityLabel={tCommon('previewAction')}
+        label={tCommon('previewAction')}
         onPress={() => setIsPreviewOpen(true)}
         isDisabled={form.title.trim().length === 0}
-        haptic="tapLight"
-        className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-      >
-        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-          {tCommon('previewAction')}
-        </Text>
-      </PressableScale>
+      />
       <DraftPreviewSheet
         visible={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}

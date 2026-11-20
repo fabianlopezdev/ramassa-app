@@ -10,9 +10,9 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedCard } from '@/components/layout/raised-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useContentAnnouncements } from '@/lib/content-announcements';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter, type Href } from 'expo-router';
@@ -66,17 +66,11 @@ function AnnouncementRow({
   const title = row.title.ca ?? '';
   const detail = [t(ANNOUNCEMENT_CATEGORY_KEYS[row.category]), date].filter(Boolean).join(' · ');
   return (
-    <PressableScale
+    <RaisedCard
       testID={`content-announcement-${row.id}`}
-      accessibilityRole="button"
       accessibilityLabel={`${title}, ${t(ANNOUNCEMENT_STATUS_KEYS[lifecycle])}, ${detail}`}
-      onPress={() => onOpen(row.id)}
-      haptic="selection"
+      onOpen={() => onOpen(row.id)}
       isSelected={isSelected}
-      style={continuousCorners}
-      className={`min-h-recommended justify-center gap-xs rounded-md border bg-white px-md py-sm ${
-        isSelected ? 'border-primary' : 'border-neutral-200'
-      }`}
     >
       <View className="flex-row flex-wrap items-baseline justify-between gap-sm">
         <Text className={`flex-1 text-start text-md font-bold text-neutral-900 ${fontClass}`}>
@@ -92,7 +86,7 @@ function AnnouncementRow({
         </Text>
       </View>
       <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>{detail}</Text>
-    </PressableScale>
+    </RaisedCard>
   );
 }
 

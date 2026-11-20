@@ -11,12 +11,16 @@
  * because the database refuses any change to it.
  */
 import { AnnouncementArticle } from '@/components/announcements/announcement-article';
+import { useAnnouncementWash } from '@/components/announcements/category-filters';
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { ANNOUNCEMENT_CATEGORY_KEYS } from '@/components/content/announcement-labels';
 import { DateTimeField } from '@/components/content/date-time-field';
 import { MultilingualField } from '@/components/content/multilingual-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { FieldLabel } from '@/components/forms/field-label';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { SwitchCard } from '@/components/forms/switch-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { DraftPreviewSheet } from '@/components/preview/draft-preview-sheet';
@@ -49,7 +53,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Switch, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ANNOUNCEMENT_CATEGORIES,
@@ -63,7 +67,6 @@ import {
 } from '@ramassa/shared/announcements';
 import { useAuth } from '@ramassa/shared/auth';
 import { getErrorMessageKey, type AppErrorCode } from '@ramassa/shared/errors';
-import { tokens } from '@ramassa/shared/tokens';
 import { MAX_TRANSLATION_TEXT_LENGTH } from '@ramassa/shared/translation';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 
@@ -134,6 +137,8 @@ function AnnouncementForm({
   const hasImage = photo !== null || form.imageUrl !== null;
   // The player preview of this draft (RAPP-373): its unsaved text in every language.
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  // The preview sits on the wash of the chosen kind, as the player's page does (RAPP-893).
+  const previewWash = useAnnouncementWash(form.category);
   const previewTitle = draftLocalizedContent(form.title, titleReview.review);
   const previewBody = draftLocalizedContent(form.body, bodyReview.review);
   const previewImage =
@@ -291,9 +296,7 @@ function AnnouncementForm({
         </Text>
       )}
       <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-          {t('fieldCategory')}
-        </Text>
+        <FieldLabel>{t('fieldCategory')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {ANNOUNCEMENT_CATEGORIES.map((category) => (
             <ChoiceOption
@@ -327,9 +330,7 @@ function AnnouncementForm({
       />
 
       <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-          {t('fieldImage')}
-        </Text>
+        <FieldLabel>{t('fieldImage')}</FieldLabel>
         {hasImage ? (
           <Text
             testID="announcement-image-state"
@@ -380,45 +381,25 @@ function AnnouncementForm({
         />
       ) : null}
 
-      <PressableScale
+      <RaisedActionButton
         testID="announcement-generate"
-        accessibilityRole="button"
-        accessibilityLabel={isGenerating ? t('generatingTranslations') : t('generateTranslations')}
+        label={isGenerating ? t('generatingTranslations') : t('generateTranslations')}
         onPress={() => void generate()}
-        isBusy={isGenerating}
-        isDisabled={!canGenerate}
-        haptic="tapLight"
-        className={`min-h-recommended items-center justify-center rounded-md border px-lg ${
-          canGenerate ? 'border-primary bg-white' : 'border-neutral-200 bg-neutral-100'
-        }`}
-      >
-        <Text
-          className={`text-center text-md font-bold ${canGenerate ? 'text-primary-dark' : 'text-neutral-500'} ${fontClass}`}
-        >
-          {isGenerating ? t('generatingTranslations') : t('generateTranslations')}
-        </Text>
-      </PressableScale>
+        isDisabled={!canGenerate || isGenerating}
+      />
       <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
         {t('translationHelp')}
       </Text>
 
-      <View className="flex-row items-center justify-between gap-md">
-        <Text className={`flex-1 text-start text-md text-neutral-800 ${fontClass}`}>
-          {t('fieldPinned')}
-        </Text>
-        <Switch
-          testID="announcement-pinned"
-          accessibilityLabel={t('fieldPinned')}
-          value={form.isPinned}
-          onValueChange={(isPinned) => set({ isPinned })}
-          trackColor={{ true: tokens.colors.primary.DEFAULT }}
-        />
-      </View>
+      <SwitchCard
+        testID="announcement-pinned"
+        label={t('fieldPinned')}
+        value={form.isPinned}
+        onValueChange={(isPinned) => set({ isPinned })}
+      />
 
       <View className="gap-sm">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-          {t('modeLabel')}
-        </Text>
+        <FieldLabel>{t('modeLabel')}</FieldLabel>
         {canPublish ? (
           <>
             <View className="flex-row flex-wrap gap-sm">
@@ -459,22 +440,16 @@ function AnnouncementForm({
         )}
       </View>
 
-      <PressableScale
+      <RaisedActionButton
         testID="announcement-preview"
-        accessibilityRole="button"
-        accessibilityLabel={tCommon('previewAction')}
+        label={tCommon('previewAction')}
         onPress={() => setIsPreviewOpen(true)}
         isDisabled={form.title.trim().length === 0}
-        haptic="tapLight"
-        className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-      >
-        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-          {tCommon('previewAction')}
-        </Text>
-      </PressableScale>
+      />
       <DraftPreviewSheet
         visible={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
+        backgroundColor={previewWash}
         isMissing={(language) =>
           (previewTitle[language] ?? '').trim().length === 0 ||
           (previewBody[language] ?? '').trim().length === 0

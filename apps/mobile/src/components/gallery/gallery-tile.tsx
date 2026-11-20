@@ -1,7 +1,9 @@
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
+import { Badge } from '@/components/layout/badge';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
+import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { Image } from 'expo-image';
 import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -12,6 +14,26 @@ const styles = StyleSheet.create({
   tile: { width: '100%', aspectRatio: GALLERY_TILE_ASPECT_RATIO },
 });
 
+/**
+ * The word on a photo new to her (RAPP-873), at its top start corner, where
+ * the team's gallery places its mark over a photo, in the colour every "Nou"
+ * has. It is not read out and takes no touch: the tile's own label carries
+ * the word. Its own component, so a tile without the word looks up no font.
+ */
+function GalleryTileUnseenMark({ label }: { readonly label: string }) {
+  const languageFontClass = useLanguageFontClass();
+  return (
+    <View
+      pointerEvents="none"
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
+      className="absolute start-xs top-xs"
+    >
+      <Badge label={label} tone="brand" languageFontClass={languageFontClass} />
+    </View>
+  );
+}
+
 export const GalleryTile = memo(function GalleryTile({
   id,
   objectKeyOrUrl,
@@ -19,6 +41,7 @@ export const GalleryTile = memo(function GalleryTile({
   accessibilityLabel,
   imageAlt,
   onOpen,
+  unseenLabel = null,
 }: {
   readonly id: string;
   readonly objectKeyOrUrl: string;
@@ -26,6 +49,8 @@ export const GalleryTile = memo(function GalleryTile({
   readonly accessibilityLabel: string;
   readonly imageAlt: string;
   readonly onOpen: (id: string) => void;
+  /** Set while the photo is new to her: the word over its top start corner. */
+  readonly unseenLabel?: string | null;
 }) {
   const source = useMemo(
     () =>
@@ -40,26 +65,31 @@ export const GalleryTile = memo(function GalleryTile({
 
   return (
     <View className="p-xs">
-      <PressableScale
+      <SelectionChoiceSurface
         testID={`gallery-item-${id}`}
-        accessibilityLabel={accessibilityLabel}
+        label={accessibilityLabel}
+        accessibilityRole="link"
         onPress={open}
-        haptic="tapLight"
-        style={continuousCorners}
-        className="overflow-hidden rounded-md bg-neutral-200"
+        paddingClassName=""
+        contentClassName=""
+        rowStyle={continuousCorners}
       >
-        {source === null ? null : (
-          <Image
-            recyclingKey={id}
-            source={source}
-            accessibilityLabel={imageAlt}
-            cachePolicy="memory-disk"
-            contentFit="cover"
-            transition={motionTokens.duration.fast}
-            style={styles.tile}
-          />
-        )}
-      </PressableScale>
+        {/* Grey while the photo loads, or when it has no source. */}
+        <View className="bg-neutral-200" style={styles.tile}>
+          {source === null ? null : (
+            <Image
+              recyclingKey={id}
+              source={source}
+              accessibilityLabel={imageAlt}
+              cachePolicy="memory-disk"
+              contentFit="cover"
+              transition={motionTokens.duration.fast}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
+          {unseenLabel === null ? null : <GalleryTileUnseenMark label={unseenLabel} />}
+        </View>
+      </SelectionChoiceSurface>
     </View>
   );
 });

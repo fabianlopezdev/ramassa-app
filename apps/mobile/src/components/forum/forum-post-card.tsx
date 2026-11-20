@@ -1,32 +1,38 @@
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { AuthorLine } from '@/components/people/person-avatar';
-import { composeContinuousViewStyle } from '@/lib/continuous-corners';
+import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
+import type { RaisedTone } from '@/components/layout/raised-surface';
+import { PersonAvatar } from '@/components/people/person-avatar';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { Image } from 'expo-image';
 import { memo, useCallback, useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import type { ForumPostRow } from '@ramassa/shared/forum';
 import { tokens } from '@ramassa/shared/tokens';
 
 const FORUM_POST_IMAGE_HEIGHT = tokens.spacing['3xl'] * 3;
 const FORUM_POST_PREVIEW_LINES = 5;
-const FORUM_POST_CARD_BORDER_WIDTH = 1;
 const styles = StyleSheet.create({
-  card: {
-    overflow: 'hidden',
-    borderWidth: FORUM_POST_CARD_BORDER_WIDTH,
-    borderColor: tokens.colors.neutral[200],
-    borderRadius: tokens.radius.lg,
-    backgroundColor: tokens.colors.white,
-  },
   image: { width: '100%', height: FORUM_POST_IMAGE_HEIGHT },
 });
-const cardStyle = composeContinuousViewStyle(styles.card);
 
+/**
+ * A forum post on Comunitat as the shared raised card (RAPP-852): its photo
+ * across the top, the author's avatar in the block before the divider
+ * (RAPP-859), the author's name, a preview of the text and the number of
+ * replies, in the colour of its category. A pinned post carries the word on
+ * the card's top edge, like "Nou" on an avis.
+ *
+ * A post new to her carries her word for new on that edge in its place
+ * (RAPP-873), and the count of replies she has not read sits on the same edge
+ * near the end, in the circle. The caller says both in the card's label.
+ *
+ * Without a photo the avatar shows the person icon in place of the initial,
+ * so a photo is what makes her card hers.
+ */
 export const ForumPostCard = memo(function ForumPostCard({
   post,
+  tone,
   authorLabel,
   authorAvatarKey,
   repliesLabel,
@@ -37,10 +43,14 @@ export const ForumPostCard = memo(function ForumPostCard({
   accessToken,
   openLinkLabel,
   onOpen,
+  unseenLabel = null,
+  newRepliesCount = null,
 }: {
   readonly post: ForumPostRow;
+  /** The colour of the post's category, as a wash on the card. */
+  readonly tone?: RaisedTone;
   readonly authorLabel: string;
-  /** A team member's photo (RAPP-639); players show their initial. */
+  /** The author's photo (RAPP-639); without one, the person icon. */
   readonly authorAvatarKey: string | null;
   readonly repliesLabel: string;
   readonly pinnedLabel: string;
@@ -50,6 +60,10 @@ export const ForumPostCard = memo(function ForumPostCard({
   readonly accessToken: string | undefined;
   readonly openLinkLabel: (url: string) => string;
   readonly onOpen: (id: string) => void;
+  /** Set while the post is new to her: the word on the card's edge, ahead of pinned. */
+  readonly unseenLabel?: string | null;
+  /** The replies she has not read, already formatted, in the circle on the edge. */
+  readonly newRepliesCount?: string | null;
 }) {
   const imageSource = useMemo(
     () =>
@@ -61,54 +75,60 @@ export const ForumPostCard = memo(function ForumPostCard({
     [accessToken, post.image_url],
   );
   const open = useCallback(() => onOpen(post.id), [onOpen, post.id]);
+  const badge = useMemo<RaisedCardBadge | null>(() => {
+    if (unseenLabel !== null) return { label: unseenLabel, tone: 'brand' };
+    return post.is_pinned ? { label: pinnedLabel, tone: 'accent' } : null;
+  }, [pinnedLabel, post.is_pinned, unseenLabel]);
+  const cardAccessibilityLabel = [
+    accessibilityLabel,
+    post.is_pinned ? pinnedLabel : null,
+    repliesLabel,
+  ]
+    .filter((part): part is string => part !== null)
+    .join('. ');
   return (
-    <PressableScale
+    <RaisedCard
       testID={`forum-post-${post.id}`}
-      accessibilityLabel={accessibilityLabel}
-      accessibilityHint={repliesLabel}
-      onPress={open}
-      haptic="tapLight"
-      style={cardStyle}
-      className="overflow-hidden rounded-lg border border-neutral-200 bg-white"
+      accessibilityLabel={cardAccessibilityLabel}
+      onOpen={open}
+      badge={badge}
+      count={newRepliesCount}
+      tone={tone}
+      leading={
+        <PersonAvatar
+          name={post.author_first_name}
+          avatarKey={authorAvatarKey}
+          size="card"
+          fallback="person"
+        />
+      }
+      media={
+        imageSource === null ? null : (
+          <Image
+            source={imageSource}
+            accessibilityLabel={imageAlt}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            recyclingKey={post.image_url ?? post.id}
+            style={styles.image}
+          />
+        )
+      }
     >
-      {imageSource === null ? null : (
-        <Image
-          source={imageSource}
-          accessibilityLabel={imageAlt}
-          contentFit="cover"
-          cachePolicy="memory-disk"
-          recyclingKey={post.image_url ?? post.id}
-          style={styles.image}
+      <Text className={`text-start text-md font-bold text-primary-dark ${languageFontClass}`}>
+        {authorLabel}
+      </Text>
+      {post.content === null ? null : (
+        <ForumPlainText
+          content={post.content}
+          languageFontClass={languageFontClass}
+          openLinkLabel={openLinkLabel}
+          numberOfLines={FORUM_POST_PREVIEW_LINES}
         />
       )}
-      <View className="gap-sm p-md">
-        <View className="flex-row flex-wrap items-center gap-sm">
-          <AuthorLine
-            name={post.author_first_name}
-            avatarKey={authorAvatarKey}
-            label={authorLabel}
-            languageFontClass={languageFontClass}
-          />
-          {post.is_pinned ? (
-            <Text
-              className={`rounded-full bg-secondary-light px-sm py-xs text-xs font-semibold text-neutral-900 ${languageFontClass}`}
-            >
-              {pinnedLabel}
-            </Text>
-          ) : null}
-        </View>
-        {post.content === null ? null : (
-          <ForumPlainText
-            content={post.content}
-            languageFontClass={languageFontClass}
-            openLinkLabel={openLinkLabel}
-            numberOfLines={FORUM_POST_PREVIEW_LINES}
-          />
-        )}
-        <Text className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}>
-          {repliesLabel}
-        </Text>
-      </View>
-    </PressableScale>
+      <Text className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}>
+        {repliesLabel}
+      </Text>
+    </RaisedCard>
   );
 });

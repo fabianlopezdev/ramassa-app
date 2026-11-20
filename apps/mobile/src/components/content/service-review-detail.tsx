@@ -16,9 +16,13 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { FieldLabel } from '@/components/forms/field-label';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useServiceReview, useServiceReviewActions } from '@/lib/content-service-reviews';
 import { useContentServiceCategories } from '@/lib/content-services';
@@ -182,9 +186,7 @@ function Thread({
           </View>
         ))
       )}
-      <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-        {t('reviewCommentVisibility')}
-      </Text>
+      <FieldLabel>{t('reviewCommentVisibility')}</FieldLabel>
       <View className="flex-row flex-wrap gap-sm">
         {VISIBILITIES.map((candidate) => (
           <ChoiceOption
@@ -214,9 +216,10 @@ function Thread({
           message={tErrors(getErrorMessageKey(toAppError(comment.error).code))}
         />
       ) : null}
-      <PressableScale
+      <RaisedActionButton
         testID="service-review-comment-send"
-        accessibilityRole="button"
+        size="compact"
+        label={comment.isPending ? t('reviewCommentSending') : t('reviewCommentSend')}
         accessibilityLabel={t('reviewCommentSend')}
         onPress={() =>
           comment.mutate(
@@ -229,16 +232,8 @@ function Thread({
             },
           )
         }
-        isBusy={comment.isPending}
-        isDisabled={body.trim().length === 0}
-        haptic="tapLight"
-        style={continuousCorners}
-        className="min-h-recommended items-center justify-center self-start rounded-md border border-primary bg-white px-lg"
-      >
-        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-          {comment.isPending ? t('reviewCommentSending') : t('reviewCommentSend')}
-        </Text>
-      </PressableScale>
+        isDisabled={body.trim().length === 0 || comment.isPending}
+      />
     </View>
   );
 }
@@ -288,7 +283,7 @@ export function ServiceReviewDetail({
 
   return (
     <ScrollView
-      contentContainerClassName="gap-md p-lg"
+      contentContainerClassName={screenContentClassName}
       keyboardShouldPersistTaps="handled"
       automaticallyAdjustKeyboardInsets
       testID="service-review-detail"
@@ -317,20 +312,12 @@ export function ServiceReviewDetail({
 
       {notification === null ? (
         <>
-          <PressableScale
+          <AuthSubmitButton
             testID="service-review-approve"
-            accessibilityRole="button"
-            accessibilityLabel={t('reviewApproveAction')}
+            label={t('reviewApproveAction')}
             onPress={() => push(`/content-service-approve/${service.id}` as Href)}
-            isDisabled={service.status !== 'pending'}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center self-start rounded-md bg-primary px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-              {t('reviewApproveAction')}
-            </Text>
-          </PressableScale>
+            disabled={service.status !== 'pending'}
+          />
           <ServiceFacts service={service} images={images} category={category} />
           <View
             style={continuousCorners}
@@ -353,9 +340,11 @@ export function ServiceReviewDetail({
             <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
               {t('reviewRejectHelp')}
             </Text>
-            <PressableScale
+            <RaisedActionButton
               testID="service-review-reject"
-              accessibilityRole="button"
+              size="compact"
+              tone="danger"
+              label={reject.isPending ? t('reviewRejecting') : t('reviewReject')}
               accessibilityLabel={t('reviewReject')}
               onPress={() =>
                 reject.mutate(
@@ -369,16 +358,10 @@ export function ServiceReviewDetail({
                   },
                 )
               }
-              isBusy={reject.isPending}
-              isDisabled={rejection.trim().length === 0 || service.status !== 'pending'}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center self-start rounded-md border border-error bg-white px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-error ${fontClass}`}>
-                {reject.isPending ? t('reviewRejecting') : t('reviewReject')}
-              </Text>
-            </PressableScale>
+              isDisabled={
+                rejection.trim().length === 0 || service.status !== 'pending' || reject.isPending
+              }
+            />
           </View>
         </>
       ) : (

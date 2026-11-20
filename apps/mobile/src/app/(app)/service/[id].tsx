@@ -2,13 +2,13 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { ActionScreen } from '@/components/layout/screen-action';
 import { SuccessPop } from '@/components/motion/success-pop';
 import { ServiceArticle } from '@/components/services/service-article';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { playErrorHaptic } from '@/lib/haptics/haptics';
 import { safeAsync } from '@/lib/observability';
 import {
@@ -17,6 +17,7 @@ import {
   useServiceInterest,
 } from '@/lib/player-services';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useMarkServiceSeen } from '@/lib/use-tab-news';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -39,6 +40,7 @@ export default function ServiceDetailScreen() {
   const [contactErrorCode, setContactErrorCode] = useState<AppErrorCode | null>(null);
   const interestErrorCode = interest.error === null ? null : toAppError(interest.error).code;
   const service = serviceQuery.data;
+  useMarkServiceSeen(service?.id);
   const category = categoriesQuery.data?.find((candidate) => candidate.id === service?.category_id);
   const title = service === undefined ? undefined : resolveLocalizedText(service.title, language);
   const androidInsets = useMemo(
@@ -71,7 +73,7 @@ export default function ServiceDetailScreen() {
   if (serviceQuery.isPending && serviceQuery.data === undefined) {
     return (
       <>
-        <NativeScreenHeader />
+        <NativeScreenHeader surface="white" />
         <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />
       </>
     );
@@ -79,7 +81,7 @@ export default function ServiceDetailScreen() {
   if (serviceQuery.isError && serviceQuery.data === undefined) {
     return (
       <>
-        <NativeScreenHeader />
+        <NativeScreenHeader surface="white" />
         <AnnouncementFeedError
           message={t('playerServices:loadFailed')}
           retryLabel={t('playerServices:retry')}
@@ -92,11 +94,29 @@ export default function ServiceDetailScreen() {
   }
 
   return (
-    <>
-      <NativeScreenHeader />
+    <ActionScreen
+      className="bg-white"
+      action={
+        service !== undefined && title !== undefined ? (
+          <AuthSubmitButton
+            testID="service-interest-toggle"
+            label={
+              interest.isPending
+                ? t('playerServices:interestPending')
+                : service.interested
+                  ? t('playerServices:interestRemove')
+                  : t('playerServices:interestAdd')
+            }
+            onPress={toggleInterest}
+            isLoading={interest.isPending}
+          />
+        ) : null
+      }
+    >
+      <NativeScreenHeader surface="white" />
       <ScrollView
         testID="player-service-detail"
-        className="flex-1 bg-white"
+        className="flex-1"
         contentContainerClassName="grow px-lg py-lg"
         contentContainerStyle={androidInsets}
         contentInsetAdjustmentBehavior="automatic"
@@ -139,27 +159,6 @@ export default function ServiceDetailScreen() {
               onOpenContact={(url) => void openContact(url)}
               contactErrorCode={contactErrorCode}
             >
-              <PressableScale
-                testID="service-interest-toggle"
-                accessibilityLabel={
-                  service.interested
-                    ? t('playerServices:interestRemove')
-                    : t('playerServices:interestAdd')
-                }
-                onPress={toggleInterest}
-                haptic="tapLight"
-                isBusy={interest.isPending}
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-              >
-                <Text className={`text-center text-lg font-bold text-white ${languageFontClass}`}>
-                  {interest.isPending
-                    ? t('playerServices:interestPending')
-                    : service.interested
-                      ? t('playerServices:interestRemove')
-                      : t('playerServices:interestAdd')}
-                </Text>
-              </PressableScale>
               {interest.isSuccess ? (
                 <SuccessPop>
                   <Text
@@ -182,6 +181,6 @@ export default function ServiceDetailScreen() {
           )}
         </PageWidth>
       </ScrollView>
-    </>
+    </ActionScreen>
   );
 }

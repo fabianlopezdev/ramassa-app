@@ -1,68 +1,56 @@
 /**
  * A row that either opens something or does not look tappable (X5). With
- * `onOpen` it presses, gives feedback and ends with a forward chevron; without
- * it the same content renders as a plain card, so a dead end never looks like
- * a door.
+ * `onOpen` it is the raised card (RAPP-878): border, edge and forward arrow.
+ * Without it the same content renders as a plain block, so a dead end never
+ * looks like a door. Either way it may carry one badge on its top edge
+ * (RAPP-873), such as "Nou".
  */
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { EdgeMarks, type EdgeMarkBadge } from '@/components/layout/edge-marks';
+import { RaisedCard } from '@/components/layout/raised-card';
 import { continuousCorners } from '@/lib/continuous-corners';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import type { ReactNode } from 'react';
-import { I18nManager, View } from 'react-native';
-import { tokens } from '@ramassa/shared/tokens';
-
-// iOS flips `chevron.forward` itself; the Material glyph needs the direction.
-const forwardSymbol: SymbolViewProps['name'] = {
-  ios: 'chevron.forward',
-  android: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',
-  web: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',
-};
+import { View } from 'react-native';
 
 export function OpenableCard({
   testID,
   accessibilityLabel,
   onOpen,
   className,
+  badge = null,
   children,
 }: {
   readonly testID?: string;
   readonly accessibilityLabel: string;
   /** Leave out when the row has nothing to open. */
   readonly onOpen?: () => void;
-  /** The card's surface: border, background, padding. */
-  readonly className: string;
+  /** The surface of the plain block, for a row that opens nothing. */
+  readonly className?: string;
+  /** The word on the top edge, while the row holds something new to her. */
+  readonly badge?: EdgeMarkBadge | null;
   readonly children: ReactNode;
 }) {
   if (onOpen === undefined) {
-    return (
+    const block = (
       <View
         testID={testID}
         accessible
         accessibilityLabel={accessibilityLabel}
         style={continuousCorners}
-        className={`gap-xs ${className}`}
+        className={`gap-xs ${className ?? ''}`}
       >
         {children}
       </View>
     );
+    return badge === null ? block : <EdgeMarks badge={badge}>{block}</EdgeMarks>;
   }
   return (
-    <PressableScale
+    <RaisedCard
       testID={testID}
-      accessibilityRole="link"
       accessibilityLabel={accessibilityLabel}
-      onPress={onOpen}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended flex-row items-center gap-md ${className}`}
+      onOpen={onOpen}
+      badge={badge}
     >
-      <View className="flex-1 gap-xs">{children}</View>
-      <SymbolView
-        accessible={false}
-        name={forwardSymbol}
-        size={tokens.fontSize.lg}
-        tintColor={tokens.colors.neutral[500]}
-      />
-    </PressableScale>
+      {children}
+    </RaisedCard>
   );
 }

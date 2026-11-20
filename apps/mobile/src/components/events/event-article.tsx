@@ -6,7 +6,8 @@
  */
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { EventDetailLine } from '@/components/events/event-card';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { Badge } from '@/components/layout/badge';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useMemo, type ReactNode } from 'react';
@@ -75,11 +76,11 @@ export function EventArticle({
   return (
     <View className="gap-xl">
       <View className="gap-md">
-        <View className="self-start rounded-full bg-neutral-100 px-sm py-xs">
-          <Text className={`text-sm font-medium text-neutral-700 ${languageFontClass}`}>
-            {category?.text ?? ''}
-          </Text>
-        </View>
+        <Badge
+          label={category?.text ?? ''}
+          languageFontClass={languageFontClass}
+          className="self-start"
+        />
         <Text
           accessibilityRole="header"
           className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
@@ -121,22 +122,17 @@ export function EventArticle({
           languageFontClass={languageFontClass}
         />
         {event.locationUrl === null ? null : (
-          <PressableScale
+          <RaisedActionButton
             accessibilityRole="link"
-            accessibilityLabel={t('playerOpenMap')}
+            label={t('playerOpenMap')}
             onPress={onOpenMap}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-          >
-            <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
-              {t('playerOpenMap')}
-            </Text>
-          </PressableScale>
+          />
         )}
       </View>
 
-      <View className="gap-md rounded-lg border border-neutral-200 p-lg" style={continuousCorners}>
+      {/* The places left, then what the screen says about her sign-up. The
+          action itself sits at the bottom of the screen (RAPP-881). */}
+      <View className="gap-md">
         <Text
           accessibilityRole="header"
           className={`text-start text-lg font-bold tabular-nums text-neutral-900 ${languageFontClass}`}

@@ -3,6 +3,7 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import {
   EventCard,
   eventCategoryColor,
@@ -14,32 +15,34 @@ import {
   EventViewToggle,
   type PlayerEventFilterOption,
 } from '@/components/events/event-filters';
+import { EventMonthCalendar } from '@/components/events/event-month-calendar';
 import { PageWidth } from '@/components/layout/content-width';
-import { NavRow } from '@/components/layout/nav-row';
+import { RaisedIconCard } from '@/components/layout/raised-icon-card';
+import { ScreenSection, SectionTitle } from '@/components/layout/screen-section';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader, PlayerTabStateFrame } from '@/components/profile/player-tab-header';
-import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import {
   addPrivateMentoringMarkedDates,
-  buildCalendarLocale,
   buildEventMarkedDates,
   eventDateKey,
 } from '@/lib/event-calendar';
-import { playHaptic } from '@/lib/haptics/haptics';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { logger } from '@/lib/observability';
 import { usePlayerEvents } from '@/lib/player-events';
 import { usePlayerMentoringRequests } from '@/lib/player-mentoring';
 import { playerNavIcons } from '@/lib/player-nav-icons';
+import { useActivitiesAttention } from '@/lib/use-activities-attention';
+import { useHomeSeen } from '@/lib/use-home-attention';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
+import { useListSeenWhen } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
-import { Calendar, LocaleConfig, type DateData } from 'react-native-calendars';
+import { StyleSheet, View } from 'react-native';
 import type { MarkedDates } from 'react-native-calendars/src/types';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toAppError } from '@ramassa/shared/errors';
 import {
   filterPlayerEventOccurrences,
@@ -52,31 +55,13 @@ import { getPrivateMentoringCalendarEntries } from '@ramassa/shared/mentoring';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_EVENTS: readonly PlayerEventOccurrence[] = [];
-const CALENDAR_FIRST_DAY_MONDAY = 1;
 const UTC_MIDDAY_SUFFIX = 'T12:00:00Z';
-const CALENDAR_BORDER_WIDTH = StyleSheet.hairlineWidth;
 
 const styles = StyleSheet.create({
-  list: { flex: 1, backgroundColor: tokens.colors.white },
+  list: { flex: 1, backgroundColor: tokens.colors.surface.page },
+  hidden: { display: 'none' },
   content: { paddingHorizontal: tokens.spacing.lg, paddingBottom: tokens.spacing['3xl'] },
-  calendar: {
-    borderWidth: CALENDAR_BORDER_WIDTH,
-    borderColor: tokens.colors.neutral[200],
-    borderRadius: tokens.radius.lg,
-    overflow: 'hidden',
-  },
 });
-const calendarTheme = {
-  calendarBackground: tokens.colors.white,
-  selectedDayBackgroundColor: tokens.colors.primary.light,
-  selectedDayTextColor: tokens.colors.neutral[900],
-  todayTextColor: tokens.colors.primary.dark,
-  arrowColor: tokens.colors.primary.DEFAULT,
-  monthTextColor: tokens.colors.neutral[900],
-  dayTextColor: tokens.colors.neutral[800],
-  textDisabledColor: tokens.colors.neutral[400],
-} as const;
-const calendarStyle = composeContinuousViewStyle(styles.calendar);
 
 const keyExtractor = (item: PlayerEventOccurrence) => item.occurrence_id;
 const getItemType = (item: PlayerEventOccurrence) =>
@@ -84,19 +69,38 @@ const getItemType = (item: PlayerEventOccurrence) =>
     ? 'signed-up-event'
     : 'event';
 
-export default function EventsScreen() {
-  const { t, i18n } = useTranslation(['events', 'common', 'mentoring', 'nav']);
+function EventsScreen() {
+  const { t, i18n } = useTranslation(['events', 'common', 'mentoring', 'nav', 'home']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
+  const brandColor = useBrandColor();
   const { push } = useRouter();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
   const [category, setCategory] = useState<PlayerEventCategoryFilter>('all');
   const [view, setView] = useState<'list' | 'calendar'>('list');
+  // The switch answers the tap at once; the list or calendar under it follows
+  // as soon as React has it ready, without holding the switch back.
+  const contentView = useDeferredValue(view);
+  // Once opened, the calendar stays mounted and only hides behind the list, so
+  // coming back to it skips building its weeks again and keeps her month.
+  const [hasOpenedCalendar, setHasOpenedCalendar] = useState(false);
+  if (contentView === 'calendar' && !hasOpenedCalendar) setHasOpenedCalendar(true);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const { data, isPending, isError, error, isRefetching, refetch } = usePlayerEvents();
   const mentoringQuery = usePlayerMentoringRequests();
   const refetchMentoring = mentoringQuery.refetch;
+  // New activities carry the same "Nou" mark as on Inici, one card per activity (RAPP-873).
+  const { newOccurrenceIds, count: newActivitiesCount } = useActivitiesAttention();
+  // Seeing the whole list clears the number: loaded, as a list, with every
+  // category showing. The calendar and a chosen category show only some of the
+  // cards. Each card keeps its "Nou" until she opens the activity (RAPP-873).
+  useListSeenWhen(
+    'activities',
+    data !== undefined && view === 'list' && category === 'all',
+    newActivitiesCount > 0,
+  );
+  const refetchSeen = useHomeSeen().refetch;
   const now = new Date();
   const events = useMemo(
     () => filterPlayerEventOccurrences(data ?? EMPTY_EVENTS, category, now),
@@ -116,7 +120,6 @@ export default function EventsScreen() {
         byId.set(row.event.category.id, {
           id: row.event.category.id,
           label: name.text,
-          color: row.event.category.color,
         });
       }
     }
@@ -129,20 +132,21 @@ export default function EventsScreen() {
     );
   const visibleEvents = useMemo(
     () =>
-      view === 'list'
+      contentView === 'list'
         ? events
         : events.filter((row) => eventDateKey(row.occurrence_starts_at) === effectiveSelectedDate),
-    [effectiveSelectedDate, events, view],
+    [effectiveSelectedDate, events, contentView],
   );
   const visibleMentoringEntries = useMemo(
     () =>
-      view === 'list'
+      contentView === 'list'
         ? mentoringEntries
         : mentoringEntries.filter(
             (entry) => eventDateKey(entry.scheduledAt) === effectiveSelectedDate,
           ),
-    [effectiveSelectedDate, mentoringEntries, view],
+    [effectiveSelectedDate, mentoringEntries, contentView],
   );
+  const locale = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;
   const dateFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE, {
@@ -160,30 +164,14 @@ export default function EventsScreen() {
       }),
     [i18n.resolvedLanguage],
   );
-  const calendarLocaleKey = `ramassa-${language}`;
-  const calendarLocale = useMemo(
-    () => buildCalendarLocale(language, t('playerToday')),
-    [language, t],
-  );
-  const calendarLocaleDefinition = useMemo(
-    () => ({
-      monthNames: [...calendarLocale.monthNames],
-      monthNamesShort: [...calendarLocale.monthNamesShort],
-      dayNames: [...calendarLocale.dayNames],
-      dayNamesShort: [...calendarLocale.dayNamesShort],
-      today: calendarLocale.today,
-    }),
-    [calendarLocale],
-  );
-  LocaleConfig.locales[calendarLocaleKey] = calendarLocaleDefinition;
-  LocaleConfig.defaultLocale = calendarLocaleKey;
   const markedDates = useMemo(
     () =>
       addPrivateMentoringMarkedDates(
         buildEventMarkedDates(
           events,
           effectiveSelectedDate,
-          (categoryId) => eventCategoryColor(categoryColorsById.get(categoryId) ?? 'primary'),
+          (categoryId) =>
+            eventCategoryColor(categoryColorsById.get(categoryId) ?? 'primary', brandColor),
           (date) =>
             t('playerSelectedDate', {
               date: dateFormatter.format(new Date(`${date}${UTC_MIDDAY_SUFFIX}`)),
@@ -195,7 +183,15 @@ export default function EventsScreen() {
             new Date(`${date}${UTC_MIDDAY_SUFFIX}`),
           )}`,
       ) as MarkedDates,
-    [categoryColorsById, dateFormatter, effectiveSelectedDate, events, mentoringEntries, t],
+    [
+      brandColor,
+      categoryColorsById,
+      dateFormatter,
+      effectiveSelectedDate,
+      events,
+      mentoringEntries,
+      t,
+    ],
   );
   const openOccurrence = useCallback(
     (eventId: string, occurrenceId: string) => {
@@ -207,6 +203,11 @@ export default function EventsScreen() {
     [push],
   );
   const openMentoring = useCallback(() => push('/mentoring' as Href), [push]);
+  const mentoringWhen = useCallback(
+    (scheduledAt: string) =>
+      `${dateFormatter.format(new Date(scheduledAt))} · ${timeFormatter.format(new Date(scheduledAt))}`,
+    [dateFormatter, timeFormatter],
+  );
 
   const renderEvent = useCallback(
     ({ item }: ListRenderItemInfo<PlayerEventOccurrence>) => {
@@ -217,20 +218,20 @@ export default function EventsScreen() {
       const time = timeFormatter.format(new Date(item.occurrence_starts_at));
       const capacity = playerEventCapacityLabel(item, t);
       const signup = playerEventSignupLabel(item.signup?.state, t);
+      const unseenLabel = newOccurrenceIds.has(item.occurrence_id) ? t('home:unseen') : null;
       return (
         <PageWidth className="pb-md">
           <EventCard
             eventId={item.event.id}
             occurrenceId={item.occurrence_id}
             title={title.text}
-            category={categoryName.text}
-            categoryColor={item.event.category.color}
-            date={date}
-            time={time}
+            startsAt={item.occurrence_starts_at}
+            locale={locale}
             location={item.event.location}
-            capacityLabel={capacity}
             signupLabel={signup}
+            unseenLabel={unseenLabel}
             accessibilityLabel={[
+              unseenLabel,
               t('playerOpenEvent', { title: title.text }),
               categoryName.text,
               date,
@@ -247,43 +248,39 @@ export default function EventsScreen() {
         </PageWidth>
       );
     },
-    [dateFormatter, language, languageFontClass, openOccurrence, t, timeFormatter],
+    [
+      dateFormatter,
+      language,
+      languageFontClass,
+      locale,
+      newOccurrenceIds,
+      openOccurrence,
+      t,
+      timeFormatter,
+    ],
   );
 
-  const insets = useSafeAreaInsets();
-  const contentContainerStyle = useMemo(
-    () => [
-      styles.content,
-      process.env.EXPO_OS === 'android'
-        ? {
-            paddingTop: insets.top + tokens.spacing.lg,
-            paddingBottom: insets.bottom + tokens.spacing['3xl'],
-          }
-        : { paddingTop: tokens.spacing.lg },
-    ],
-    [insets.bottom, insets.top],
-  );
+  const tabInsets = usePlayerTabContentInsets();
+  const contentContainerStyle = useMemo(() => [styles.content, tabInsets], [tabInsets]);
   const onRefresh = useCallback(
-    () => void Promise.all([refetch(), refetchMentoring()]),
-    [refetch, refetchMentoring],
+    () => void Promise.all([refetch(), refetchMentoring(), refetchSeen()]),
+    [refetch, refetchMentoring, refetchSeen],
   );
-  const selectCalendarDay = useCallback((day: DateData) => {
-    playHaptic('selection');
-    setSelectedDate(day.dateString);
-  }, []);
+  // The day presses with its own selection haptic.
+  const selectCalendarDay = useCallback((date: string) => setSelectedDate(date), []);
   const listExtraData = useMemo(
-    () => ({ category, effectiveSelectedDate, view }),
-    [category, effectiveSelectedDate, view],
+    () => ({ category, effectiveSelectedDate, newOccurrenceIds, view: contentView }),
+    [category, effectiveSelectedDate, newOccurrenceIds, contentView],
   );
   const onListLoad = useCallback(
     ({ elapsedTimeInMs }: { readonly elapsedTimeInMs: number }) => {
       logger.info('player events rendered', {
         elapsedTimeInMs: Math.round(elapsedTimeInMs),
         itemCount: visibleEvents.length,
-        view,
+        view: contentView,
       });
     },
-    [view, visibleEvents.length],
+    [contentView, visibleEvents.length],
   );
 
   if (isPending && data === undefined) {
@@ -323,12 +320,18 @@ export default function EventsScreen() {
       onLoad={onListLoad}
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
-          <View className="gap-xs">
-            <PlayerTabHeader title={t('nav:tabs.events')} />
-            <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
-              {t('playerIntro')}
-            </Text>
-          </View>
+          <PlayerTabHeader title={t('nav:tabs.events')}>
+            <EventViewToggle
+              selected={view}
+              listLabel={t('playerListView')}
+              calendarLabel={t('playerCalendarView')}
+              listAccessibilityLabel={t('playerListViewAction')}
+              calendarAccessibilityLabel={t('playerCalendarViewAction')}
+              accessibilityLabel={t('playerViewLabel')}
+              languageFontClass={languageFontClass}
+              onSelect={setView}
+            />
+          </PlayerTabHeader>
           <EventCategoryFilters
             categories={categories}
             selected={category}
@@ -337,68 +340,47 @@ export default function EventsScreen() {
             languageFontClass={languageFontClass}
             onSelect={setCategory}
           />
-          <EventViewToggle
-            selected={view}
-            listLabel={t('playerListView')}
-            calendarLabel={t('playerCalendarView')}
-            listAccessibilityLabel={t('playerListViewAction')}
-            calendarAccessibilityLabel={t('playerCalendarViewAction')}
-            accessibilityLabel={t('playerViewLabel')}
-            languageFontClass={languageFontClass}
-            onSelect={setView}
-          />
           {/* Her mentoring appointments, a shortcut to Mentoria with the same
               name and icon as its row in Xat (RAPP-793). */}
           {visibleMentoringEntries.length === 0 ? null : (
             <View className="gap-sm">
               {visibleMentoringEntries.map((entry) => (
-                <NavRow
+                <RaisedIconCard
                   key={entry.id}
                   testID={`private-mentoring-calendar-${entry.id}`}
                   icon={playerNavIcons.mentoring}
-                  label={t('mentoring:title')}
-                  detail={`${dateFormatter.format(new Date(entry.scheduledAt))} · ${timeFormatter.format(
-                    new Date(entry.scheduledAt),
-                  )}`}
-                  onPress={openMentoring}
+                  title={t('mentoring:title')}
+                  detail={mentoringWhen(entry.scheduledAt)}
+                  accessibilityLabel={`${t('mentoring:title')}, ${mentoringWhen(entry.scheduledAt)}`}
+                  languageFontClass={languageFontClass}
+                  onOpen={openMentoring}
                 />
               ))}
             </View>
           )}
-          {view === 'calendar' ? (
-            <View className="gap-sm">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('playerCalendarLabel')}
-              </Text>
-              <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-                {t('playerCalendarHint')}
-              </Text>
-              <Calendar
-                key={calendarLocaleKey}
-                current={effectiveSelectedDate}
-                minDate={eventDateKey(now.toISOString())}
-                firstDay={CALENDAR_FIRST_DAY_MONDAY}
-                markingType="multi-dot"
-                markedDates={markedDates}
-                enableSwipeMonths
-                onDayPress={selectCalendarDay}
-                testID="player-events-calendar"
-                style={calendarStyle}
-                theme={calendarTheme}
-              />
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-lg font-bold tabular-nums text-neutral-900 ${languageFontClass}`}
-              >
-                {t('playerSelectedDate', {
+          {hasOpenedCalendar ? (
+            <View className="gap-lg" style={contentView === 'calendar' ? undefined : styles.hidden}>
+              <ScreenSection title={t('playerCalendarLabel')}>
+                <EventMonthCalendar
+                  language={language}
+                  todayLabel={t('playerToday')}
+                  previousMonthLabel={t('playerPreviousMonth')}
+                  nextMonthLabel={t('playerNextMonth')}
+                  current={effectiveSelectedDate}
+                  minDate={eventDateKey(now.toISOString())}
+                  markedDates={markedDates}
+                  onSelectDay={selectCalendarDay}
+                  testID="player-events-calendar"
+                />
+              </ScreenSection>
+              <SectionTitle
+                className="tabular-nums"
+                title={t('playerSelectedDate', {
                   date: dateFormatter.format(
                     new Date(`${effectiveSelectedDate}${UTC_MIDDAY_SUFFIX}`),
                   ),
                 })}
-              </Text>
+              />
             </View>
           ) : null}
         </PageWidth>
@@ -407,11 +389,11 @@ export default function EventsScreen() {
         <PageWidth>
           <AnnouncementEmptyState
             title={
-              view === 'calendar' && events.length > 0
+              contentView === 'calendar' && events.length > 0
                 ? t('playerNoEventsDate')
                 : t('playerEmptyTitle')
             }
-            body={view === 'calendar' && events.length > 0 ? '' : t('playerEmptyBody')}
+            body={contentView === 'calendar' && events.length > 0 ? '' : t('playerEmptyBody')}
             languageFontClass={languageFontClass}
           />
         </PageWidth>
@@ -419,3 +401,5 @@ export default function EventsScreen() {
     />
   );
 }
+
+export default withScreenEntrance('events', EventsScreen);

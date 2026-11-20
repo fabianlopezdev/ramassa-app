@@ -354,7 +354,7 @@ export function buildForumCategory(overrides: Partial<ForumCategoryRow> = {}): F
     },
     slug: 'jobs',
     icon: 'briefcase',
-    color: 'secondary',
+    color: 'pink',
     sort_order: 20,
     created_at: FIXTURE_TIMESTAMP,
     ...overrides,
@@ -431,6 +431,7 @@ export function buildForumReply(overrides: Partial<ForumReplyRow> = {}): ForumRe
     id: '5eed0000-0000-4000-8010-000000000199',
     org_id: SEED_ORGANIZATION_ID,
     post_id: buildForumPost().id,
+    parent_reply_id: null,
     author_id: seedUserId(author.ordinal),
     author_first_name: author.firstName,
     content: 'أعرف una feina a Vic.',
@@ -587,6 +588,7 @@ export function buildKnowledgeCategory(
   return {
     id: '5eed0000-0000-4000-8004-000000000099',
     org_id: SEED_ORGANIZATION_ID,
+    color: 'indigo',
     name: {
       ca: 'Drets i asil',
       es: 'Derechos y asilo',
@@ -1890,6 +1892,7 @@ export function buildCustomFormResponse(
     answered_at: null,
     answered_by: null,
     filled_by: null,
+    put_off_at: null,
     ...overrides,
   };
 }

@@ -13,11 +13,14 @@
  * registration will ask, and staff confirm or change it (RAPP-618).
  */
 import { useAppLock } from '@/components/auth/app-lock';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { FieldLabel } from '@/components/forms/field-label';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
+import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { InviteQuestionsStep } from '@/components/participants/invite-questions-step';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useInviteIntakeCatalog, type useParticipantInvites } from '@/lib/participant-invites';
 import { useParticipantFilterOptions } from '@/lib/participant-lookup';
@@ -62,26 +65,15 @@ function SheetButton({
   readonly isPrimary?: boolean;
   readonly isBusy?: boolean;
 }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <PressableScale
+  return isPrimary ? (
+    <AuthSubmitButton testID={testID} label={label} onPress={onPress} isLoading={isBusy} />
+  ) : (
+    <RaisedActionButton
       testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
+      label={label}
       onPress={onPress}
-      isBusy={isBusy}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended items-center justify-center rounded-md px-lg ${
-        isPrimary ? 'bg-primary' : 'border border-neutral-300 bg-white'
-      }`}
-    >
-      <Text
-        className={`text-center text-md font-bold ${isPrimary ? 'text-white' : 'text-primary-dark'} ${fontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
+      isDisabled={isBusy === true}
+    />
   );
 }
 
@@ -189,193 +181,193 @@ export function InviteSheet({
       presentationStyle="pageSheet"
       onRequestClose={close}
     >
-      <SafeAreaView className="flex-1 bg-white" testID="invite-sheet">
-        <KeyboardAvoidingView
-          className="flex-1"
-          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
-        >
-          <ScrollView
-            contentContainerClassName="gap-md p-lg"
-            keyboardShouldPersistTaps="handled"
-            // The page sheet does not move with the keyboard, so the scroll view does.
-            automaticallyAdjustKeyboardInsets
+      <NativeModalScope>
+        <SafeAreaView className="flex-1 bg-white" testID="invite-sheet">
+          <KeyboardAvoidingView
+            className="flex-1"
+            behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
           >
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}
+            <ScrollView
+              contentContainerClassName={screenContentClassName}
+              keyboardShouldPersistTaps="handled"
+              // The page sheet does not move with the keyboard, so the scroll view does.
+              automaticallyAdjustKeyboardInsets
             >
-              {created !== null
-                ? t('invitedTitle')
-                : details !== null
-                  ? t('inviteQuestionsTitle')
-                  : t('newTitle')}
-            </Text>
-            {created === null && details !== null ? (
-              <>
-                <Text className={`text-start text-md text-neutral-800 ${fontClass}`}>
-                  {t('inviteQuestionsFor', {
-                    name: `${details.firstName} ${details.lastName}`,
-                    email: details.email,
-                  })}
-                </Text>
-                <InviteQuestionsStep
-                  answered={answered}
-                  choices={choices}
-                  onChange={setChoices}
-                  catalog={catalog}
-                />
-                {create.isError ? (
-                  <Text
-                    accessibilityLiveRegion="polite"
-                    className={`text-start text-sm text-error ${fontClass}`}
-                  >
-                    {hasAccount ? t('inviteAlreadyHasAccount') : t('inviteFailed')}
-                  </Text>
-                ) : null}
-                <View className="flex-row flex-wrap gap-sm">
-                  <SheetButton
-                    testID="invite-create"
-                    label={t('inviteAction')}
-                    onPress={confirm}
-                    isBusy={create.isPending}
-                    isPrimary
-                  />
-                  <SheetButton
-                    testID="invite-back"
-                    label={t('inviteBackAction')}
-                    onPress={() => setDetails(null)}
-                  />
-                </View>
-              </>
-            ) : created === null ? (
-              <>
-                <Text className={`text-start text-md text-neutral-700 ${fontClass}`}>
-                  {t('inviteIntro')}
-                </Text>
-                <AuthTextField
-                  testID="invite-first-name"
-                  label={t('onboarding:firstNameLabel')}
-                  value={firstName}
-                  onChangeText={setFirstName}
-                  isInvalid={nameError !== null && firstName.trim() === ''}
-                  autoCapitalize="words"
-                  autoComplete="off"
-                />
-                <AuthTextField
-                  testID="invite-last-name"
-                  label={t('onboarding:lastNameLabel')}
-                  value={lastName}
-                  onChangeText={setLastName}
-                  errorMessage={nameError ?? undefined}
-                  autoCapitalize="words"
-                  autoComplete="off"
-                />
-                <AuthTextField
-                  testID="invite-email"
-                  label={t('invites.emailLabel')}
-                  value={email}
-                  onChangeText={setEmail}
-                  errorMessage={emailError ?? undefined}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete="off"
-                />
-                <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-                  {t('inviteNoEmailHint')}
-                </Text>
-                <View className="gap-xs">
-                  <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-                    {t('entityOptionalLabel')}
-                  </Text>
-                  <View className="flex-row flex-wrap gap-sm">
-                    {[NONE, ...entities, OTHER].map((candidate) => (
-                      <ChoiceOption
-                        key={candidate}
-                        testID={`invite-entity-${candidate}`}
-                        value={candidate}
-                        label={
-                          candidate === NONE
-                            ? t('invites.entityNone')
-                            : candidate === OTHER
-                              ? t('invites.entityOther')
-                              : candidate
-                        }
-                        selected={candidate === entity}
-                        onSelect={setEntity}
-                        languageFontClass={fontClass}
-                      />
-                    ))}
-                  </View>
-                  {entity === OTHER ? (
-                    <AuthTextField
-                      testID="invite-entity-other-name"
-                      label={t('invites.entityOtherLabel')}
-                      value={otherEntity}
-                      onChangeText={setOtherEntity}
-                    />
-                  ) : null}
-                  <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-                    {t('entityPrefillHint')}
-                  </Text>
-                </View>
-                <View className="flex-row flex-wrap gap-sm">
-                  <SheetButton
-                    testID="invite-review"
-                    label={t('inviteReviewAction')}
-                    onPress={submit}
-                    isPrimary
-                  />
-                  <SheetButton
-                    testID="invite-close"
-                    label={t('profile:cancelAction')}
-                    onPress={close}
-                  />
-                </View>
-              </>
-            ) : (
-              <>
-                <Text className={`text-start text-md text-neutral-800 ${fontClass}`}>
-                  {t('invitedBody', { email: created.email })}
-                </Text>
-                <Text className={`text-start text-md text-neutral-800 ${fontClass}`}>
-                  {t('invitedExpires', { date: formatDate(created.expires_at) })}
-                </Text>
-                {created.profile_id === null ? null : (
+              <Text
+                accessibilityRole="header"
+                className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}
+              >
+                {created !== null
+                  ? t('invitedTitle')
+                  : details !== null
+                    ? t('inviteQuestionsTitle')
+                    : t('newTitle')}
+              </Text>
+              {created === null && details !== null ? (
+                <>
                   <Text className={`text-start text-md text-neutral-800 ${fontClass}`}>
-                    {t('invitedCompleteHint')}
+                    {t('inviteQuestionsFor', {
+                      name: `${details.firstName} ${details.lastName}`,
+                      email: details.email,
+                    })}
                   </Text>
-                )}
-                <View className="flex-row flex-wrap gap-sm">
-                  {created.profile_id === null ? null : (
+                  <InviteQuestionsStep
+                    answered={answered}
+                    choices={choices}
+                    onChange={setChoices}
+                    catalog={catalog}
+                  />
+                  {create.isError ? (
+                    <Text
+                      accessibilityLiveRegion="polite"
+                      className={`text-start text-sm text-error ${fontClass}`}
+                    >
+                      {hasAccount ? t('inviteAlreadyHasAccount') : t('inviteFailed')}
+                    </Text>
+                  ) : null}
+                  <View className="flex-row flex-wrap gap-sm">
                     <SheetButton
-                      testID="invite-complete"
-                      label={t('invitedCompleteAction')}
-                      onPress={() => {
-                        const profileId = created.profile_id;
-                        close();
-                        if (profileId !== null) router.push(`/participant/${profileId}`);
-                      }}
+                      testID="invite-create"
+                      label={t('inviteAction')}
+                      onPress={confirm}
+                      isBusy={create.isPending}
                       isPrimary
                     />
+                    <SheetButton
+                      testID="invite-back"
+                      label={t('inviteBackAction')}
+                      onPress={() => setDetails(null)}
+                    />
+                  </View>
+                </>
+              ) : created === null ? (
+                <>
+                  <Text className={`text-start text-md text-neutral-700 ${fontClass}`}>
+                    {t('inviteIntro')}
+                  </Text>
+                  <AuthTextField
+                    testID="invite-first-name"
+                    label={t('onboarding:firstNameLabel')}
+                    value={firstName}
+                    onChangeText={setFirstName}
+                    isInvalid={nameError !== null && firstName.trim() === ''}
+                    autoCapitalize="words"
+                    autoComplete="off"
+                  />
+                  <AuthTextField
+                    testID="invite-last-name"
+                    label={t('onboarding:lastNameLabel')}
+                    value={lastName}
+                    onChangeText={setLastName}
+                    errorMessage={nameError ?? undefined}
+                    autoCapitalize="words"
+                    autoComplete="off"
+                  />
+                  <AuthTextField
+                    testID="invite-email"
+                    label={t('invites.emailLabel')}
+                    value={email}
+                    onChangeText={setEmail}
+                    errorMessage={emailError ?? undefined}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="off"
+                  />
+                  <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+                    {t('inviteNoEmailHint')}
+                  </Text>
+                  <View className="gap-xs">
+                    <FieldLabel>{t('entityOptionalLabel')}</FieldLabel>
+                    <View className="flex-row flex-wrap gap-sm">
+                      {[NONE, ...entities, OTHER].map((candidate) => (
+                        <ChoiceOption
+                          key={candidate}
+                          testID={`invite-entity-${candidate}`}
+                          value={candidate}
+                          label={
+                            candidate === NONE
+                              ? t('invites.entityNone')
+                              : candidate === OTHER
+                                ? t('invites.entityOther')
+                                : candidate
+                          }
+                          selected={candidate === entity}
+                          onSelect={setEntity}
+                          languageFontClass={fontClass}
+                        />
+                      ))}
+                    </View>
+                    {entity === OTHER ? (
+                      <AuthTextField
+                        testID="invite-entity-other-name"
+                        label={t('invites.entityOtherLabel')}
+                        value={otherEntity}
+                        onChangeText={setOtherEntity}
+                      />
+                    ) : null}
+                    <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+                      {t('entityPrefillHint')}
+                    </Text>
+                  </View>
+                  <View className="flex-row flex-wrap gap-sm">
+                    <SheetButton
+                      testID="invite-review"
+                      label={t('inviteReviewAction')}
+                      onPress={submit}
+                      isPrimary
+                    />
+                    <SheetButton
+                      testID="invite-close"
+                      label={t('profile:cancelAction')}
+                      onPress={close}
+                    />
+                  </View>
+                </>
+              ) : (
+                <>
+                  <Text className={`text-start text-md text-neutral-800 ${fontClass}`}>
+                    {t('invitedBody', { email: created.email })}
+                  </Text>
+                  <Text className={`text-start text-md text-neutral-800 ${fontClass}`}>
+                    {t('invitedExpires', { date: formatDate(created.expires_at) })}
+                  </Text>
+                  {created.profile_id === null ? null : (
+                    <Text className={`text-start text-md text-neutral-800 ${fontClass}`}>
+                      {t('invitedCompleteHint')}
+                    </Text>
                   )}
-                  <SheetButton
-                    testID="invite-another"
-                    label={t('inviteAnotherAction')}
-                    onPress={reset}
-                  />
-                  <SheetButton
-                    testID="invite-done"
-                    label={t('material.done')}
-                    onPress={close}
-                    isPrimary={created.profile_id === null}
-                  />
-                </View>
-              </>
-            )}
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+                  <View className="flex-row flex-wrap gap-sm">
+                    {created.profile_id === null ? null : (
+                      <SheetButton
+                        testID="invite-complete"
+                        label={t('invitedCompleteAction')}
+                        onPress={() => {
+                          const profileId = created.profile_id;
+                          close();
+                          if (profileId !== null) router.push(`/participant/${profileId}`);
+                        }}
+                        isPrimary
+                      />
+                    )}
+                    <SheetButton
+                      testID="invite-another"
+                      label={t('inviteAnotherAction')}
+                      onPress={reset}
+                    />
+                    <SheetButton
+                      testID="invite-done"
+                      label={t('material.done')}
+                      onPress={close}
+                      isPrimary={created.profile_id === null}
+                    />
+                  </View>
+                </>
+              )}
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </NativeModalScope>
     </Modal>
   );
 }

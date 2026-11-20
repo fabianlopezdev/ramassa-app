@@ -1,362 +1,166 @@
 import {
-  AnnouncementEmptyState,
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
-import { LatestGuidesSection } from '@/components/knowledge/latest-guides-section';
+import { PlayerGuideList } from '@/components/knowledge/player-guide-list';
 import { PageWidth } from '@/components/layout/content-width';
-import { FadeSlideIn } from '@/components/motion/fade-slide-in';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { PlayerTabHeader, PlayerTabStateFrame } from '@/components/profile/player-tab-header';
-import { ServiceCard } from '@/components/services/service-card';
-import { ServiceCategoryGrid } from '@/components/services/service-category-grid';
-import { ServiceFilterPanel } from '@/components/services/service-filter-panel';
-import { continuousCorners } from '@/lib/continuous-corners';
-import { isNetworkStateOnline } from '@/lib/network-status';
+import { ScreenSection } from '@/components/layout/screen-section';
+import { screenBlockGapClassName } from '@/components/layout/screen-spacing';
 import {
-  usePlayerServiceCategories,
-  usePlayerServices,
-  type PlayerServiceFilterSelection,
-} from '@/lib/player-services';
+  SegmentedControl,
+  type SegmentedControlOption,
+} from '@/components/layout/segmented-control';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
+import { PlayerTabHeader } from '@/components/profile/player-tab-header';
+import { ServiceCategoryGrid } from '@/components/services/service-category-grid';
+import { countUnseenHelpItems, NO_HELP_NUMBERS } from '@/lib/help-news';
+import { usePlayerServiceCategories } from '@/lib/player-services';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
-import { useNetworkState } from 'expo-network';
+import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
+import { useTabNews } from '@/lib/use-tab-news';
 import { useRouter, type Href } from 'expo-router';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { toAppError } from '@ramassa/shared/errors';
-import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
-import type { PlayerServiceRow } from '@ramassa/shared/services';
 import { tokens } from '@ramassa/shared/tokens';
 
-const EMPTY_FILTERS: PlayerServiceFilterSelection = {};
-const EMPTY_SERVICES: readonly PlayerServiceRow[] = [];
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: tokens.colors.white },
+  screen: { flex: 1, backgroundColor: tokens.colors.surface.page },
   listContent: {
     paddingHorizontal: tokens.spacing.lg,
     paddingBottom: tokens.spacing['3xl'],
   },
 });
-const keyExtractor = (service: PlayerServiceRow) => service.id;
-// The Ajuda tab's own icon, so the way back to the grid reads as this tab's start.
-const categoryGridSymbol: SymbolViewProps['name'] = {
-  ios: 'square.grid.2x2.fill',
-  android: 'category',
-  web: 'category',
-};
+/** The two views of Ajuda (RAPP-851): services by category, and the guides. */
+type AjudaSegment = 'services' | 'guides';
 
-function hasFilters(filters: PlayerServiceFilterSelection): boolean {
-  return (
-    filters.zone !== undefined ||
-    filters.costType !== undefined ||
-    filters.availability !== undefined ||
-    Object.keys(filters.metadata ?? {}).length > 0
-  );
-}
-
-function activeFilterCount(filters: PlayerServiceFilterSelection): number {
-  return (
-    Number(filters.zone !== undefined) +
-    Number(filters.costType !== undefined) +
-    Number(filters.availability !== undefined) +
-    Object.keys(filters.metadata ?? {}).length
-  );
-}
-
-export default function ServicesScreen() {
-  const { t, i18n } = useTranslation(['playerServices', 'errors', 'nav']);
-  const { language } = useLanguage();
+function ServicesScreen() {
+  const { t } = useTranslation(['playerServices', 'errors', 'nav', 'common']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
-  const networkState = useNetworkState();
-  const isOffline = !isNetworkStateOnline(networkState);
-  const insets = useSafeAreaInsets();
   const categoriesQuery = usePlayerServiceCategories();
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
-  const [filters, setFilters] = useState<PlayerServiceFilterSelection>(EMPTY_FILTERS);
-  const [filtersVisible, setFiltersVisible] = useState(false);
-  const category =
-    categoriesQuery.data?.find((candidate) => candidate.id === selectedCategoryId) ?? null;
-  const baseServicesQuery = usePlayerServices(category, EMPTY_FILTERS);
-  const servicesQuery = usePlayerServices(category, filters);
-  const services = servicesQuery.data ?? EMPTY_SERVICES;
-  const availableServices = baseServicesQuery.data ?? EMPTY_SERVICES;
-  const selectedFilterCount = activeFilterCount(filters);
-  const selectedCategoryName =
-    category === null ? undefined : resolveLocalizedText(category.name, language);
-  const contentContainerStyle = useMemo(
-    () => [
-      styles.listContent,
-      process.env.EXPO_OS === 'android'
-        ? {
-            paddingTop: insets.top + tokens.spacing.lg,
-            paddingBottom: insets.bottom + tokens.spacing['3xl'],
-          }
-        : { paddingTop: tokens.spacing.lg },
-    ],
-    [insets.bottom, insets.top],
-  );
-  const currencyFormatter = useMemo(
+  const [segment, setSegment] = useState<AjudaSegment>('services');
+  // The numbers count what she has not seen in a category's list; the "Nou"
+  // stays until she opens that service or guide (RAPP-873).
+  const { data: news } = useTabNews();
+  const serviceNews = useMemo(
     () =>
-      new Intl.NumberFormat(i18n.resolvedLanguage ?? 'ca', {
-        style: 'currency',
-        currency: 'EUR',
-      }),
-    [i18n.resolvedLanguage],
+      news === undefined ? NO_HELP_NUMBERS : countUnseenHelpItems(news.services.unseenServices),
+    [news],
   );
-  const selectCategory = useCallback((id: string) => {
-    setSelectedCategoryId(id);
-    setFilters(EMPTY_FILTERS);
-    setFiltersVisible(false);
-  }, []);
-  const backToCategories = useCallback(() => {
-    setSelectedCategoryId(null);
-    setFilters(EMPTY_FILTERS);
-    setFiltersVisible(false);
-  }, []);
-  const clearFilters = useCallback(() => setFilters(EMPTY_FILTERS), []);
-  const toggleFilters = useCallback(() => setFiltersVisible((visible) => !visible), []);
-  const openService = useCallback(
-    (id: string) => push({ pathname: '/service/[id]', params: { id } } as unknown as Href),
+  const guideNewsCount = news?.guides.unseenArticles.length ?? 0;
+  const tabInsets = usePlayerTabContentInsets();
+  const contentContainerStyle = useMemo(() => [styles.listContent, tabInsets], [tabInsets]);
+  const selectCategory = useCallback(
+    (categoryId: string) =>
+      push({
+        pathname: '/service-category/[categoryId]',
+        params: { categoryId },
+      } as unknown as Href),
     [push],
   );
-  const refresh = useCallback(() => {
-    void Promise.all([
-      categoriesQuery.refetch(),
-      baseServicesQuery.refetch(),
-      servicesQuery.refetch(),
-    ]);
-  }, [baseServicesQuery, categoriesQuery, servicesQuery]);
-  const renderService = useCallback(
-    ({ item, index }: ListRenderItemInfo<PlayerServiceRow>) => {
-      const title = resolveLocalizedText(item.title, language);
-      if (title === undefined) return null;
-      const firstImage = item.images[0];
-      const imageAlt =
-        firstImage === undefined ? undefined : resolveLocalizedText(firstImage.alt_text, language);
-      const cost =
-        item.cost_amount === null
-          ? t(`playerServices:cost${capitalize(item.cost_type)}`)
-          : currencyFormatter.format(item.cost_amount);
-      const availability = t(`playerServices:availability${availabilityKey(item.availability)}`);
-      return (
-        <PageWidth className="pb-md">
-          <FadeSlideIn index={index}>
-            <ServiceCard
-              id={item.id}
-              title={title.text}
-              provider={item.provider_name}
-              location={item.location}
-              cost={cost}
-              availability={availability}
-              interested={item.interested}
-              interestedLabel={t('playerServices:interestSaved')}
-              imageObjectKey={firstImage?.url ?? null}
-              imageAlt={imageAlt?.text ?? null}
-              accessibilityLabel={[
-                t('playerServices:openService', { title: title.text }),
-                item.provider_name,
-                item.location,
-                cost,
-                availability,
-              ]
-                .filter((value): value is string => typeof value === 'string')
-                .join('. ')}
-              languageFontClass={languageFontClass}
-              onOpen={openService}
-            />
-          </FadeSlideIn>
-        </PageWidth>
-      );
-    },
-    [currencyFormatter, language, languageFontClass, openService, t],
+  const segmentOptions = useMemo<readonly SegmentedControlOption<AjudaSegment>[]>(
+    () => [
+      {
+        key: 'services',
+        label: t('playerServices:segmentServices'),
+        symbol: 'grid',
+        testID: 'ajuda-segment-services',
+        count: serviceNews.total,
+        accessibilityLabel:
+          serviceNews.total > 0
+            ? t('common:newCount', {
+                label: t('playerServices:segmentServices'),
+                count: serviceNews.total,
+              })
+            : undefined,
+      },
+      {
+        key: 'guides',
+        label: t('playerServices:segmentGuides'),
+        symbol: 'book',
+        testID: 'ajuda-segment-guides',
+        count: guideNewsCount,
+        accessibilityLabel:
+          guideNewsCount > 0
+            ? t('common:newCount', {
+                label: t('playerServices:segmentGuides'),
+                count: guideNewsCount,
+              })
+            : undefined,
+      },
+    ],
+    [guideNewsCount, serviceNews.total, t],
   );
 
-  if (categoriesQuery.isPending && categoriesQuery.data === undefined) {
-    return (
-      <PlayerTabStateFrame title={t('nav:tabs.services')}>
-        <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />
-      </PlayerTabStateFrame>
-    );
-  }
-  if (categoriesQuery.isError && categoriesQuery.data === undefined) {
-    return (
-      <PlayerTabStateFrame title={t('nav:tabs.services')}>
-        <AnnouncementFeedError
-          message={t('playerServices:loadFailed')}
-          retryLabel={t('playerServices:retry')}
-          code={toAppError(categoriesQuery.error).code}
-          languageFontClass={languageFontClass}
-          onRetry={() => void categoriesQuery.refetch()}
-        />
-      </PlayerTabStateFrame>
-    );
-  }
+  // One header for both segments, so the switch stays in place while either loads.
+  // The shared header draws Inici's section divider under the switch (RAPP-854).
+  const tabHeader = (
+    <PlayerTabHeader title={t('nav:tabs.services')}>
+      <SegmentedControl
+        testID="ajuda-segments"
+        options={segmentOptions}
+        selected={segment}
+        onSelect={setSegment}
+        accessibilityLabel={t('playerServices:segmentsLabel')}
+        languageFontClass={languageFontClass}
+      />
+    </PlayerTabHeader>
+  );
 
-  if (category === null || selectedCategoryName === undefined) {
+  if (segment === 'guides') {
     return (
-      <ScrollView
-        testID="player-services-categories"
-        style={styles.screen}
+      <PlayerGuideList
+        header={<PageWidth>{tabHeader}</PageWidth>}
         contentContainerStyle={contentContainerStyle}
-        contentInsetAdjustmentBehavior="automatic"
-      >
-        <PageWidth className="gap-lg">
-          <PlayerTabHeader title={t('nav:tabs.services')} />
-          <LatestGuidesSection />
-          <View className="gap-sm">
-            <View className="gap-xs">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('playerServices:chooseCategory')}
-              </Text>
-              <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-                {t('playerServices:categoryHint')}
-              </Text>
-            </View>
-            <ServiceCategoryGrid
-              categories={categoriesQuery.data ?? []}
-              onSelect={selectCategory}
-            />
-          </View>
-        </PageWidth>
-      </ScrollView>
+      />
     );
   }
 
-  if (servicesQuery.isPending && servicesQuery.data === undefined) {
-    return (
-      <PlayerTabStateFrame title={t('nav:tabs.services')}>
-        <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />
-      </PlayerTabStateFrame>
-    );
-  }
-  if (servicesQuery.isError && servicesQuery.data === undefined) {
-    return (
-      <PlayerTabStateFrame title={t('nav:tabs.services')}>
-        <AnnouncementFeedError
-          message={t('playerServices:loadFailed')}
-          retryLabel={t('playerServices:retry')}
-          code={toAppError(servicesQuery.error).code}
-          languageFontClass={languageFontClass}
-          onRetry={() => void servicesQuery.refetch()}
-        />
-      </PlayerTabStateFrame>
-    );
-  }
-
-  return (
-    <FlashList
-      testID="player-services-list"
-      data={services}
-      renderItem={renderService}
-      keyExtractor={keyExtractor}
+  const stateScreen = (body: ReactElement, testID?: string) => (
+    <ScrollView
+      testID={testID}
       style={styles.screen}
       contentContainerStyle={contentContainerStyle}
       contentInsetAdjustmentBehavior="automatic"
-      refreshing={servicesQuery.isRefetching && !isOffline}
-      onRefresh={refresh}
-      ListHeaderComponent={
-        <PageWidth className="gap-lg pb-lg">
-          <PlayerTabHeader title={t('nav:tabs.services')} />
-          {/* A state of this tab, so it stays an in-page control: it shows
-              the grid again (RAPP-806). */}
-          <PressableScale
-            testID="services-show-categories"
-            accessibilityLabel={t('playerServices:backCategories')}
-            onPress={backToCategories}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended flex-row items-center gap-sm rounded-md border border-neutral-300 bg-white px-lg"
-          >
-            <SymbolView
-              accessible={false}
-              name={categoryGridSymbol}
-              size={tokens.fontSize.xl}
-              tintColor={tokens.colors.primary.dark}
-            />
-            <Text className={`text-start text-md font-bold text-primary-dark ${languageFontClass}`}>
-              {t('playerServices:backCategories')}
-            </Text>
-          </PressableScale>
-          <View className="gap-xs">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
-            >
-              {selectedCategoryName.text}
-            </Text>
-            <Text
-              className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}
-            >
-              {t('playerServices:resultsCount', { count: services.length })}
-            </Text>
-          </View>
-          <PressableScale
-            accessibilityLabel={
-              filtersVisible
-                ? t('playerServices:filterHide')
-                : selectedFilterCount > 0
-                  ? t('playerServices:filterShowActive', { count: selectedFilterCount })
-                  : t('playerServices:filterShow')
-            }
-            onPress={toggleFilters}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-          >
-            <Text className={`text-md font-bold text-primary-dark ${languageFontClass}`}>
-              {filtersVisible
-                ? t('playerServices:filterHide')
-                : selectedFilterCount > 0
-                  ? t('playerServices:filterShowActive', { count: selectedFilterCount })
-                  : t('playerServices:filterShow')}
-            </Text>
-          </PressableScale>
-          {filtersVisible ? (
-            <ServiceFilterPanel
-              contract={category.contract}
-              availableServices={availableServices}
-              selection={filters}
-              onChange={setFilters}
-              onClear={clearFilters}
-            />
-          ) : null}
-        </PageWidth>
-      }
-      ListEmptyComponent={
-        <PageWidth>
-          <AnnouncementEmptyState
-            title={
-              hasFilters(filters)
-                ? t('playerServices:emptyFilteredTitle')
-                : t('playerServices:emptyCategoryTitle')
-            }
-            body={
-              hasFilters(filters)
-                ? t('playerServices:emptyFilteredBody')
-                : t('playerServices:emptyCategoryBody')
-            }
-            languageFontClass={languageFontClass}
-          />
-        </PageWidth>
-      }
-    />
+    >
+      <View className={screenBlockGapClassName}>
+        <PageWidth>{tabHeader}</PageWidth>
+        {body}
+      </View>
+    </ScrollView>
+  );
+
+  if (categoriesQuery.isPending && categoriesQuery.data === undefined) {
+    return stateScreen(
+      <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />,
+    );
+  }
+  if (categoriesQuery.isError && categoriesQuery.data === undefined) {
+    return stateScreen(
+      <AnnouncementFeedError
+        message={t('playerServices:loadFailed')}
+        retryLabel={t('playerServices:retry')}
+        code={toAppError(categoriesQuery.error).code}
+        languageFontClass={languageFontClass}
+        onRetry={() => void categoriesQuery.refetch()}
+      />,
+    );
+  }
+
+  return stateScreen(
+    <PageWidth>
+      <ScreenSection title={t('playerServices:chooseCategory')} isLast>
+        <ServiceCategoryGrid
+          categories={categoriesQuery.data ?? []}
+          newCounts={serviceNews.countsByCategoryId}
+          onSelect={selectCategory}
+        />
+      </ScreenSection>
+    </PageWidth>,
+    'player-services-categories',
   );
 }
 
-function capitalize(value: string): string {
-  return `${value.slice(0, 1).toUpperCase()}${value.slice(1)}`;
-}
-
-function availabilityKey(value: PlayerServiceRow['availability']): string {
-  if (value === 'waiting_list') return 'WaitingList';
-  if (value === 'by_appointment') return 'ByAppointment';
-  return capitalize(value);
-}
+export default withScreenEntrance('services', ServicesScreen);

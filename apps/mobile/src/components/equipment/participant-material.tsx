@@ -9,6 +9,7 @@
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { SignaturePreview } from '@/components/equipment/signature-pad';
 import { FailureNotice } from '@/components/error-code-line';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import {
@@ -218,13 +219,7 @@ export function ParticipantMaterial({ participantId }: { readonly participantId:
     size === null ? itemLabel(key) : `${itemLabel(key)} ${size}`;
 
   return (
-    <View testID="participant-material" className="gap-sm">
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-      >
-        {t('material.materialTitle')}
-      </Text>
+    <ScreenSection testID="participant-material" title={t('material.materialTitle')}>
       {material.isError ? (
         <FailureNotice code={toAppError(material.error).code} message={t('material.loadFailed')} />
       ) : null}
@@ -325,6 +320,6 @@ export function ParticipantMaterial({ participantId }: { readonly participantId:
           </View>
         );
       })}
-    </View>
+    </ScreenSection>
   );
 }

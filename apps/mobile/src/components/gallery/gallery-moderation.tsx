@@ -9,7 +9,13 @@
  */
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { useAppLock } from '@/components/auth/app-lock';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
+import { Badge } from '@/components/layout/badge';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
+import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -53,6 +59,7 @@ const styles = StyleSheet.create({
   tile: { aspectRatio: 1 },
   large: { width: '100%', aspectRatio: 4 / 3 },
 });
+const tileFaceStyle = [styles.tile, continuousCorners];
 const keyExtractor = (item: MediaItemRow) => item.id;
 const listContentStyle = {
   paddingHorizontal: tokens.spacing.md,
@@ -88,40 +95,34 @@ function Tile({ item, onOpen }: { readonly item: MediaItemRow; readonly onOpen: 
   const source = useItemSource(item, false);
   const state = stateKey(item);
   return (
-    <PressableScale
-      testID={`team-gallery-item-${item.id}`}
-      accessibilityRole="button"
-      accessibilityLabel={[
-        t('openItem', { name: item.uploader_first_name }),
-        state === null ? null : t(state),
-      ]
-        .filter(Boolean)
-        .join(', ')}
-      onPress={onOpen}
-      haptic="selection"
-      style={[styles.tile, continuousCorners]}
-      className="m-xs flex-1 overflow-hidden rounded-md bg-neutral-200"
-    >
-      {source === null ? null : (
-        <Image source={source} contentFit="cover" style={StyleSheet.absoluteFill} />
-      )}
-      {state === null && item.file_type === 'image' ? null : (
-        <View className="absolute bottom-xs start-xs flex-row gap-xs">
-          {item.file_type === 'video' ? (
-            <View className="rounded-full bg-neutral-900/80 px-sm py-xs">
-              <Text className={`text-xs font-semibold text-white ${fontClass}`}>
-                {t('moderationVideo')}
-              </Text>
-            </View>
-          ) : null}
-          {state === null ? null : (
-            <View className="rounded-full bg-error px-sm py-xs">
-              <Text className={`text-xs font-semibold text-white ${fontClass}`}>{t(state)}</Text>
-            </View>
-          )}
-        </View>
-      )}
-    </PressableScale>
+    <View className="m-xs flex-1">
+      <SelectionChoiceSurface
+        testID={`team-gallery-item-${item.id}`}
+        label={[t('openItem', { name: item.uploader_first_name }), state === null ? null : t(state)]
+          .filter(Boolean)
+          .join(', ')}
+        onPress={onOpen}
+        paddingClassName=""
+        contentClassName=""
+        rowStyle={tileFaceStyle}
+      >
+        {/* Grey while the photo loads. */}
+        <View className="bg-neutral-200" style={StyleSheet.absoluteFill} />
+        {source === null ? null : (
+          <Image source={source} contentFit="cover" style={StyleSheet.absoluteFill} />
+        )}
+        {state === null && item.file_type === 'image' ? null : (
+          <View className="absolute bottom-xs start-xs flex-row gap-xs">
+            {item.file_type === 'video' ? (
+              <Badge label={t('moderationVideo')} tone="overlay" languageFontClass={fontClass} />
+            ) : null}
+            {state === null ? null : (
+              <Badge label={t(state)} tone="danger" languageFontClass={fontClass} />
+            )}
+          </View>
+        )}
+      </SelectionChoiceSurface>
+    </View>
   );
 }
 
@@ -140,9 +141,11 @@ function ItemSheet({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-white" testID="team-gallery-sheet">
-        {item === null ? null : <ItemDetail item={item} onClose={onClose} />}
-      </SafeAreaView>
+      <NativeModalScope>
+        <SafeAreaView className="flex-1 bg-white" testID="team-gallery-sheet">
+          {item === null ? null : <ItemDetail item={item} onClose={onClose} />}
+        </SafeAreaView>
+      </NativeModalScope>
     </Modal>
   );
 }
@@ -191,7 +194,7 @@ function ItemDetail({
   };
 
   return (
-    <ScrollView contentContainerClassName="gap-md p-lg">
+    <ScrollView contentContainerClassName={screenContentClassName}>
       <PressableScale
         testID="team-gallery-sheet-close"
         accessibilityRole="button"
@@ -242,36 +245,21 @@ function ItemDetail({
         )}
       </View>
       <View className="flex-row flex-wrap gap-sm">
-        <PressableScale
+        <AuthSubmitButton
           testID={isVisible ? 'team-gallery-hide' : 'team-gallery-show'}
-          accessibilityRole="button"
-          accessibilityLabel={isVisible ? t('moderationHide') : t('moderationShow')}
+          label={isVisible ? t('moderationHide') : t('moderationShow')}
           onPress={() =>
             setState.mutate({ id: item.id, state: isVisible ? 'hidden' : 'visible' }, done)
           }
-          isBusy={setState.isPending}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-            {isVisible ? t('moderationHide') : t('moderationShow')}
-          </Text>
-        </PressableScale>
-        <PressableScale
+          isLoading={setState.isPending}
+        />
+        <RaisedActionButton
           testID="team-gallery-remove"
-          accessibilityRole="button"
-          accessibilityLabel={t('delete')}
+          tone="danger"
+          label={t('delete')}
           onPress={confirmRemove}
-          isBusy={remove.isPending}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md border border-error bg-white px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-error ${fontClass}`}>
-            {t('delete')}
-          </Text>
-        </PressableScale>
+          isDisabled={remove.isPending}
+        />
       </View>
       {hasFailed ? (
         <Text

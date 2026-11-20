@@ -8,6 +8,7 @@
  * (RAPP-798).
  */
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { InviteSheet } from '@/components/participants/invite-sheet';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -95,19 +96,11 @@ export function ParticipantInvitesPanel() {
           {t('invitesSummary', { count: rows.length })}
         </Text>
       ) : null}
-      <PressableScale
+      <AuthSubmitButton
         testID="invites-new"
-        accessibilityRole="button"
-        accessibilityLabel={t('newTitle')}
+        label={t('newTitle')}
         onPress={() => setIsSheetOpen(true)}
-        haptic="tapLight"
-        style={continuousCorners}
-        className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-      >
-        <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-          {t('newTitle')}
-        </Text>
-      </PressableScale>
+      />
 
       {renew.isError || revoke.isError ? (
         <Text

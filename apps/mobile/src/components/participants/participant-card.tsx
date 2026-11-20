@@ -14,8 +14,11 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ParticipantMaterial } from '@/components/equipment/participant-material';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { ParticipantActivity } from '@/components/participants/participant-activity';
 import { ParticipantNotes } from '@/components/participants/participant-notes';
 import { ParticipantRgpd } from '@/components/participants/participant-rgpd';
@@ -69,28 +72,15 @@ function CardAction({
   readonly isPrimary?: boolean;
   readonly isBusy?: boolean;
 }) {
-  const languageFontClass = useLanguageFontClass();
-  return (
-    <PressableScale
+  return isPrimary ? (
+    <AuthSubmitButton testID={testID} label={label} onPress={onPress} isLoading={isBusy} />
+  ) : (
+    <RaisedActionButton
       testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      isBusy={isBusy}
+      label={label}
       onPress={onPress}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended items-center justify-center rounded-md px-lg ${
-        isPrimary ? 'bg-primary' : 'border border-neutral-300 bg-white'
-      } ${isBusy ? 'opacity-60' : ''}`}
-    >
-      <Text
-        className={`text-center text-md font-bold ${
-          isPrimary ? 'text-white' : 'text-primary-dark'
-        } ${languageFontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
+      isDisabled={isBusy === true}
+    />
   );
 }
 
@@ -339,7 +329,7 @@ export function ParticipantCard({
   };
 
   return (
-    <ScrollView contentContainerClassName="gap-md p-lg" testID="participant-card">
+    <ScrollView contentContainerClassName={screenContentClassName} testID="participant-card">
       <View className="gap-xs">
         <Text
           accessibilityRole="header"
@@ -423,18 +413,12 @@ export function ParticipantCard({
         </Text>
       ) : null}
 
-      <View className="gap-xs">
-        <Text
-          accessibilityRole="header"
-          className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-        >
-          {t('sectionProfile')}
-        </Text>
+      <ScreenSection title={t('sectionProfile')}>
         {/* Said out loud: opening this card wrote an audit row with her name. */}
         <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
           {t('accessLogged')}
         </Text>
-      </View>
+      </ScreenSection>
       <View
         testID="participant-profile"
         style={continuousCorners}

@@ -1,17 +1,17 @@
 {
   "rationaleTitle": "می‌خواهید اعلان‌ها را دریافت کنید؟",
-  "rationaleBody": "هر وقت برنامه تازه، تغییر ساعت یا پیامی از تیم باشد به شما خبر می‌دهیم. همین.",
+  "rationaleBody": "هر وقت برنامه تازه، تغییر ساعت یا پیامی از کادر فنی باشد به شما خبر می‌دهیم. همین.",
   "rationaleAccept": "بله، فعال کن",
   "rationaleDecline": "الان نه",
   "eventFallbackBody": "برای دیدن برنامه ضربه بزنید.",
   "announcementFallbackBody": "برای خواندن اطلاعیه ضربه بزنید.",
-  "messageTitle": "پیام جدید از تیم",
-  "messageBody": "Ramassà را باز کنید تا آن را بخوانید.",
+  "messageTitle": "پیام جدید از کادر فنی",
+  "messageBody": "برنامه AE Ramassà را باز کنید تا آن را بخوانید.",
   "forumFlagTitle": "محتوای گزارش‌شده جدید در انجمن",
   "forumFlagBody": "نظارت انجمن را برای بررسی باز کنید.",
   "referralUpdateTitle": "به‌روزرسانی جدید ارجاع",
   "referralUpdateBody": "پرونده شرکت‌کننده را برای بررسی باز کنید.",
   "mentoringUpdateTitle": "به‌روزرسانی راهنمایی شما",
-  "mentoringUpdateBody": "Ramassà را باز کنید تا روز و ساعت را ببینید.",
+  "mentoringUpdateBody": "برنامه AE Ramassà را باز کنید تا روز و ساعت را ببینید.",
   "customFormFallbackBody": "برای پاسخ دادن ضربه بزن."
 }

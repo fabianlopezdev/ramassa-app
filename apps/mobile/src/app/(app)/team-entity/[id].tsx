@@ -8,13 +8,15 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useEntityActions, useEntityCollaborators, useManagedEntities } from '@/lib/team-entities';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useLocalSearchParams } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Platform, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -36,24 +38,6 @@ function confirmThen(
     { text: labels.cancel, style: 'cancel' },
     { text: labels.confirm, style: 'destructive', onPress: run },
   ]);
-}
-
-function Section({ title, children }: { readonly title: string; readonly children: ReactNode }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View
-      style={continuousCorners}
-      className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-    >
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-      >
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
 }
 
 function RowAction({
@@ -135,7 +119,7 @@ export default function TeamEntityScreen() {
         contentContainerClassName="pb-3xl"
         keyboardShouldPersistTaps="handled"
       >
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           {entity === undefined ? null : (
             <>
               <View className="gap-xs">
@@ -189,7 +173,7 @@ export default function TeamEntityScreen() {
               )}
 
               {entity.isActive ? (
-                <Section title={t('inviteTitle')}>
+                <ScreenSection title={t('inviteTitle')}>
                   <AuthTextField
                     testID="entity-invite-first-name"
                     label={t('firstName')}
@@ -249,10 +233,10 @@ export default function TeamEntityScreen() {
                       {invite.isPending ? t('working') : t('sendInvite')}
                     </Text>
                   </PressableScale>
-                </Section>
+                </ScreenSection>
               ) : null}
 
-              <Section title={t('collaborators')}>
+              <ScreenSection title={t('collaborators')} isLast>
                 {(collaborators.data ?? []).length === 0 ? (
                   <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
                     {t('noCollaborators')}
@@ -338,7 +322,7 @@ export default function TeamEntityScreen() {
                     </View>
                   ))
                 )}
-              </Section>
+              </ScreenSection>
             </>
           )}
         </PageWidth>

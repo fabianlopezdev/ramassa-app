@@ -12,7 +12,6 @@ const phaseSixTargets = [
   'app/(app)/gallery/[id].tsx',
   'app/(app)/gallery/index.tsx',
   'app/(app)/gallery/upload.tsx',
-  'components/community/community-share-sheet.tsx',
   'components/gallery/gallery-grid.tsx',
   'components/gallery/gallery-tile.tsx',
   'components/knowledge/community-story-list.tsx',
@@ -21,7 +20,9 @@ const phaseSixTargets = [
   'components/forum/forum-flag-dialog.tsx',
   'components/forum/forum-plain-text.tsx',
   'components/forum/forum-post-card.tsx',
-  'components/forum/forum-reply-card.tsx',
+  'components/forum/forum-own-post-actions.tsx',
+  'components/forum/forum-reply-composer.tsx',
+  'components/forum/forum-thread-message.tsx',
   'lib/forum-write.ts',
   'lib/gallery-upload.ts',
   'lib/media-upload-policy.ts',
@@ -38,14 +39,15 @@ describe('Phase 6 React Native performance contract', () => {
     const forumDetail = await readMobileSource('app/(app)/forum/[id].tsx');
     const gallery = await readMobileSource('components/gallery/gallery-grid.tsx');
     const forumPostCard = await readMobileSource('components/forum/forum-post-card.tsx');
-    const forumReplyCard = await readMobileSource('components/forum/forum-reply-card.tsx');
+    const forumThreadMessage = await readMobileSource('components/forum/forum-thread-message.tsx');
     const galleryTile = await readMobileSource('components/gallery/gallery-tile.tsx');
 
     expect(community).toContain('<FlashList');
     expect(forumDetail).toContain('<FlashList');
     expect(gallery).toContain('<FlashList');
     expect(forumPostCard).toContain('memo(function ForumPostCard');
-    expect(forumReplyCard).toContain('memo(function ForumReplyCard');
+    // The post and its answers are one memoised message (RAPP-884).
+    expect(forumThreadMessage).toContain('memo(function ForumThreadMessage');
     expect(galleryTile).toContain('memo(function GalleryTile');
     expect(gallery).toContain('<GalleryTile');
     expect(gallery).not.toContain('onPress={() => openItem(item.id)}');
@@ -58,11 +60,13 @@ describe('Phase 6 React Native performance contract', () => {
     const galleryItem = await readMobileSource('app/(app)/gallery/[id].tsx');
     const galleryUpload = await readMobileSource('app/(app)/gallery/upload.tsx');
     const flagDialog = await readMobileSource('components/forum/forum-flag-dialog.tsx');
-    const replyCard = await readMobileSource('components/forum/forum-reply-card.tsx');
+    const threadMessage = await readMobileSource('components/forum/forum-thread-message.tsx');
 
     expect(forumDetail).not.toContain("onPress={() => setFlagTarget({ targetType: 'reply'");
-    expect(replyCard).toContain('const flag = useCallback');
-    expect(replyCard).toContain('onPress={flag}');
+    expect(threadMessage).toContain('const flag = useCallback');
+    expect(threadMessage).toContain('onPress={flag}');
+    expect(threadMessage).toContain('const reply = useCallback');
+    expect(threadMessage).toContain('onPress={reply}');
     expect(forumComposer).not.toContain('onPress={() => setCategoryId(category.id)}');
     expect(galleryItem).not.toContain('onPress={() => privacyMutation.mutate(value)}');
     expect(galleryUpload).not.toContain('onPress={() => setPrivacy(value)}');
@@ -91,7 +95,8 @@ describe('Phase 6 React Native performance contract', () => {
     expect(community).toContain('categoriesQuery.data ?? EMPTY_CATEGORIES');
     expect(forumComposer).toContain('categoriesQuery.data ?? EMPTY_CATEGORIES');
     expect(forumComposer).toContain('.map(renderCategory)');
-    expect(categoryTabs).toContain('categories.map(renderCategory)');
+    // The category pills are the shared filter chips (RAPP-852).
+    expect(categoryTabs).toContain('<FilterChips');
     expect(flagDialog).toContain('FORUM_FLAG_REASONS.map(renderReason)');
     expect(forumPlainText).toContain('segments.map(renderSegment)');
     expect(galleryItem).toContain('MEDIA_PRIVACY_OPTIONS.map(renderPrivacyOption)');
@@ -108,7 +113,9 @@ describe('Phase 6 React Native performance contract', () => {
     expect(forumComposer).not.toContain('source={{ uri: image.uri }}');
     expect(forumComposer).toContain('source={imageSource}');
     expect(forumDetail).toContain('const EMPTY_REPLIES');
-    expect(forumDetail).toContain('data={repliesQuery.data ?? EMPTY_REPLIES}');
+    // The answers reach the list as thread rows, built once per answer list (RAPP-884).
+    expect(forumDetail).toContain('buildReplyThread(repliesQuery.data ?? EMPTY_REPLIES)');
+    expect(forumDetail).toContain('data={rows}');
   });
 
   test('target rendering and animation paths remain GPU-safe and leak no falsy JSX values', async () => {

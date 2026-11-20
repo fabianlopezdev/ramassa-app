@@ -1,106 +1,110 @@
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { FilterChips } from '@/components/layout/filter-chips';
+import { useSectionWash, type RaisedTone } from '@/components/layout/raised-surface';
 import type { TFunction } from 'i18next';
-import { memo, useCallback } from 'react';
-import { Text, View } from 'react-native';
+import { useMemo } from 'react';
 import {
-  ANNOUNCEMENT_CATEGORIES,
+  announcementCategoryColor,
+  PLAYER_ANNOUNCEMENT_CATEGORY_ORDER,
   type AnnouncementCategory,
   type PlayerAnnouncementCategoryFilter,
 } from '@ramassa/shared/announcements';
 
-const FILTERS: readonly PlayerAnnouncementCategoryFilter[] = ['all', ...ANNOUNCEMENT_CATEGORIES];
+/** How many of her new announcements each kind holds (RAPP-848). */
+export type NewAnnouncementCounts = ReadonlyMap<AnnouncementCategory, number>;
 
-function categoryLabel(filter: PlayerAnnouncementCategoryFilter, t: TFunction): string {
-  return filter === 'all' ? t('filterAll') : t(`category.${filter}`);
+export function countNewAnnouncements(
+  announcements: readonly { readonly id: string; readonly category: AnnouncementCategory }[],
+  newIds: ReadonlySet<string>,
+): NewAnnouncementCounts {
+  const counts = new Map<AnnouncementCategory, number>();
+  for (const announcement of announcements) {
+    if (!newIds.has(announcement.id)) continue;
+    counts.set(announcement.category, (counts.get(announcement.category) ?? 0) + 1);
+  }
+  return counts;
 }
 
-function categoryDotClass(category: PlayerAnnouncementCategoryFilter): string {
-  switch (category) {
-    case 'training':
-      return 'bg-primary';
-    case 'social':
-      return 'bg-secondary-dark';
-    case 'urgent':
-      return 'bg-error';
-    case 'info':
-      return 'bg-info';
-    case 'all':
-      return 'bg-neutral-500';
-  }
+/**
+ * "Tot" first, then the kinds with something new, then the rest, each with
+ * Urgent first (RAPP-850).
+ */
+function orderedFilters(newCounts: NewAnnouncementCounts): PlayerAnnouncementCategoryFilter[] {
+  const withNew = PLAYER_ANNOUNCEMENT_CATEGORY_ORDER.filter(
+    (category) => (newCounts.get(category) ?? 0) > 0,
+  );
+  const without = PLAYER_ANNOUNCEMENT_CATEGORY_ORDER.filter(
+    (category) => !withNew.includes(category),
+  );
+  return ['all', ...withNew, ...without];
 }
 
 export function announcementCategoryLabel(category: AnnouncementCategory, t: TFunction): string {
   return t(`category.${category}`);
 }
 
+/**
+ * The colour of each kind (RAPP-845), from the shared map both apps read
+ * (RAPP-893), so a pill, a card and the open avís share one shade.
+ */
+export function announcementCategoryTone(category: AnnouncementCategory): RaisedTone {
+  return announcementCategoryColor(category);
+}
+
+/**
+ * The wash an open avís sits on (RAPP-893): the shade of its card on Inici,
+ * shared by the player's page and the team's preview of a draft. `undefined`
+ * while there is no avís, so the screen keeps its own background.
+ */
+export function useAnnouncementWash(
+  category: AnnouncementCategory | undefined,
+): string | undefined {
+  return useSectionWash(category === undefined ? undefined : announcementCategoryColor(category));
+}
+
 export interface CategoryFiltersProps {
   readonly selected: PlayerAnnouncementCategoryFilter;
+  readonly newCounts: NewAnnouncementCounts;
   readonly onSelect: (category: PlayerAnnouncementCategoryFilter) => void;
   readonly t: TFunction;
   readonly languageFontClass: string;
 }
 
-const CategoryFilterOption = memo(function CategoryFilterOption({
-  filter,
-  label,
-  isSelected,
-  languageFontClass,
-  onSelect,
-}: {
-  readonly filter: PlayerAnnouncementCategoryFilter;
-  readonly label: string;
-  readonly isSelected: boolean;
-  readonly languageFontClass: string;
-  readonly onSelect: (category: PlayerAnnouncementCategoryFilter) => void;
-}) {
-  const handlePress = useCallback(() => onSelect(filter), [filter, onSelect]);
-  return (
-    <PressableScale
-      accessibilityRole="radio"
-      accessibilityLabel={label}
-      onPress={handlePress}
-      haptic="selection"
-      isSelected={isSelected}
-      className={`min-h-recommended flex-row items-center gap-sm rounded-full border px-md ${
-        isSelected ? 'border-primary bg-primary' : 'border-neutral-300 bg-white'
-      }`}
-    >
-      <View accessible={false} className={`h-sm w-sm rounded-full ${categoryDotClass(filter)}`} />
-      <Text
-        className={`text-md font-medium ${
-          isSelected ? 'text-white' : 'text-neutral-800'
-        } ${languageFontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
-  );
-});
-
+/**
+ * The announcement categories on Inici, as the shared filter chips (RAPP-829).
+ * A kind with new announcements she has not opened comes first after "Tot"
+ * and carries their number (RAPP-848).
+ */
 export function CategoryFilters({
   selected,
+  newCounts,
   onSelect,
   t,
   languageFontClass,
 }: CategoryFiltersProps) {
+  const options = useMemo(
+    () =>
+      orderedFilters(newCounts).map((filter) => {
+        if (filter === 'all') return { id: filter, label: t('filterAll') };
+        const label = announcementCategoryLabel(filter, t);
+        const newCount = newCounts.get(filter) ?? 0;
+        return {
+          id: filter,
+          label,
+          tone: announcementCategoryTone(filter),
+          count: newCount > 0 ? String(newCount) : null,
+          accessibilityLabel:
+            newCount > 0 ? `${label}, ${t('filterNewCount', { count: newCount })}` : label,
+        };
+      }),
+    [newCounts, t],
+  );
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={t('filterLabel')}>
-      <View className="flex-row flex-wrap gap-sm">
-        {FILTERS.map((filter) => {
-          const label = categoryLabel(filter, t);
-          const isSelected = selected === filter;
-          return (
-            <CategoryFilterOption
-              key={filter}
-              filter={filter}
-              label={label}
-              isSelected={isSelected}
-              languageFontClass={languageFontClass}
-              onSelect={onSelect}
-            />
-          );
-        })}
-      </View>
-    </View>
+    <FilterChips
+      options={options}
+      selected={selected}
+      accessibilityLabel={t('filterLabel')}
+      languageFontClass={languageFontClass}
+      onSelect={onSelect}
+    />
   );
 }

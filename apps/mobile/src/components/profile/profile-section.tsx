@@ -10,32 +10,54 @@
  * nobody.
  */
 
+import { DIVIDER_COLOR_CLASS_NAME } from '@/components/layout/divider';
+import { outlinedSurfaceClassName } from '@/components/layout/raised-surface';
+import { SectionTitle } from '@/components/layout/screen-section';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
+/**
+ * A titled card of the profile (RAPP-888): the title is the one every tab uses,
+ * and the card wears the brand border, like the other outlined surfaces.
+ */
+/** A full point, so the line between two rows reads at a glance (RAPP-888). */
+const ROW_LINE_WIDTH = 1;
+const FIRST_ROW_LINE_HIDDEN = { marginTop: -ROW_LINE_WIDTH } as const;
+
 export function ProfileSection({
   title,
+  isOpen = false,
   children,
 }: {
   readonly title: string;
+  /**
+   * Content that is already made of its own cards, such as the consent
+   * checks (RAPP-898): it sits under the title with no card around it.
+   */
+  readonly isOpen?: boolean;
   readonly children: ReactNode;
 }) {
-  const languageFontClass = useLanguageFontClass();
-  return (
-    <View className="gap-sm">
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-form font-semibold text-neutral-900 ${languageFontClass}`}
-      >
-        {title}
-      </Text>
-      <View
-        style={continuousCorners}
-        className="gap-xs rounded-md border border-neutral-200 bg-white p-md"
-      >
+  // The space under the title is the tabs' own (`ScreenSection`, RAPP-898).
+  if (isOpen) {
+    return (
+      <View className="gap-md">
+        <SectionTitle title={title} />
         {children}
+      </View>
+    );
+  }
+  return (
+    <View className="gap-md">
+      <SectionTitle title={title} />
+      <View style={continuousCorners} className={`px-md py-xs ${outlinedSurfaceClassName()}`}>
+        {/* Every row draws a line above itself (RAPP-888). Pulled up by that
+            line and clipped, the first one's line disappears, so the lines
+            fall only between rows, whatever renders them. */}
+        <View className="overflow-hidden">
+          <View style={FIRST_ROW_LINE_HIDDEN}>{children}</View>
+        </View>
       </View>
     </View>
   );
@@ -60,14 +82,23 @@ export interface ProfileRowProps {
     | 'support';
 }
 
+const ROW_LINE = { borderTopWidth: ROW_LINE_WIDTH } as const;
+
 export function ProfileRow({ label, value }: ProfileRowProps) {
   const languageFontClass = useLanguageFontClass();
   return (
     // One accessibility node per row, so a screen reader announces "Phone,
     // +34 600 111 222" rather than two disconnected fragments the listener has
     // to reassemble.
-    <View accessible accessibilityLabel={`${label}: ${value}`} className="gap-xs py-xs">
-      <Text className={`text-start text-form text-neutral-700 ${languageFontClass}`}>{label}</Text>
+    <View
+      accessible
+      accessibilityLabel={`${label}: ${value}`}
+      className={`gap-xs border-t py-sm ${DIVIDER_COLOR_CLASS_NAME}`}
+      style={ROW_LINE}
+    >
+      <Text className={`text-start text-form font-semibold text-neutral-700 ${languageFontClass}`}>
+        {label}
+      </Text>
       {/* Selectable: this screen exists so a woman can READ what the
           organization holds about her, and a document or phone number she can
           long-press and copy is one she can also paste into a form or send to

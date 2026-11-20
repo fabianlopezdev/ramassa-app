@@ -6,12 +6,12 @@ mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () =
 mock.module('nativewind', () => ({
   cssInterop: (Component: ComponentType<Record<string, unknown>>, mapping: unknown) => {
     expect(mapping).toEqual({
-      className: { target: false, nativeStyleToProp: { color: 'tintColor' } },
+      className: { target: false, nativeStyleToProp: { color: true } },
     });
     return (props: Record<string, unknown>) =>
       createElement(Component, {
         ...props,
-        tintColor: props.className === 'text-primary-dark' ? '#123456' : undefined,
+        color: props.className === 'text-primary-dark' ? '#123456' : undefined,
       });
   },
 }));
@@ -20,18 +20,12 @@ mock.module('expo-glass-effect', () => ({
   isGlassEffectAPIAvailable: () => false,
   isLiquidGlassAvailable: () => false,
 }));
-mock.module('expo-symbols', () => ({
-  SymbolView: ({
-    name,
-    tintColor,
-  }: {
-    name: { ios: string; android: string; web: string };
-    tintColor: string;
-  }) =>
+mock.module('@/components/icons/icon', () => ({
+  Icon: ({ name, color }: { name: string; color: string }) =>
     createElement('span', {
       'data-testid': 'symbol',
-      'data-color': tintColor,
-      'data-names': JSON.stringify(name),
+      'data-color': color,
+      'data-name': name,
     }),
 }));
 mock.module('react-native', () => ({

@@ -54,7 +54,7 @@
     "settings": "Open settings",
     "failed": "Your change could not be saved. Please try again."
   },
-  "appLockIntro": "When the app lock is on, Ramassà asks for Face ID, your fingerprint or your phone's code when you come back to the app. This keeps your data safe if someone picks up your phone.",
+  "appLockIntro": "When the app lock is on, the AE Ramassà app asks for Face ID, your fingerprint or your phone's code when you come back to the app. This keeps your data safe if someone picks up your phone.",
   "menu": {
     "data": "My details",
     "attendance": "My attendance",

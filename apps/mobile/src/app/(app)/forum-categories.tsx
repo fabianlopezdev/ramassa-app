@@ -10,9 +10,12 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ActionScreen } from '@/components/layout/screen-action';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { ForumCategorySheet } from '@/components/team/forum-category-sheet';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -104,91 +107,88 @@ export default function ForumCategoriesScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right']}>
-      <NativeScreenHeader title={t('categoryManagerTitle')} />
-      <PageWidth className="flex-1">
-        <ScrollView contentContainerClassName="gap-md p-lg" testID="forum-categories">
-          <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-            {tEvents('categoriesHelpPhone')}
-          </Text>
-          <PressableScale
+      <ActionScreen
+        action={
+          <AuthSubmitButton
             testID="forum-category-new"
-            accessibilityRole="button"
-            accessibilityLabel={tEvents('newCategory')}
+            label={tEvents('newCategory')}
             onPress={() => setSheet({ category: null })}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center self-start rounded-md bg-primary px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-              {tEvents('newCategory')}
+          />
+        }
+      >
+        <NativeScreenHeader title={t('categoryManagerTitle')} />
+        <PageWidth className="flex-1">
+          <ScrollView contentContainerClassName={screenContentClassName} testID="forum-categories">
+            <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+              {tEvents('categoriesHelpPhone')}
             </Text>
-          </PressableScale>
-          {remove.isError ? (
-            <FailureNotice code="DB-1" message={t('categoryDeleteFailed')} />
-          ) : reorder.isError ? (
-            <FailureNotice code="DB-1" message={t('categorySaveFailed')} />
-          ) : null}
-          {categories.isPending ? (
-            <AnnouncementFeedSkeleton accessibilityLabel={t('categoryManagerTitle')} />
-          ) : categories.isError ? (
-            <AnnouncementFeedError
-              message={t('categorySaveFailed')}
-              retryLabel={tErrors('retry')}
-              code={toAppError(categories.error).code}
-              languageFontClass={fontClass}
-              onRetry={() => void categories.refetch()}
-              isLoading={categories.isFetching}
-            />
-          ) : (
-            <View className="gap-sm" accessibilityRole="list">
-              {rows.map((category, index) => (
-                <View
-                  key={category.id}
-                  testID={`forum-category-row-${category.slug}`}
-                  style={continuousCorners}
-                  className="gap-xs rounded-md border border-neutral-200 bg-white px-md py-sm"
-                >
-                  <Text className={`text-start text-md font-bold text-neutral-900 ${fontClass}`}>
-                    {resolveLocalizedText(category.name, language)?.text ?? category.slug}
-                  </Text>
-                  <Text className="text-start text-sm text-neutral-600">{category.slug}</Text>
-                  <View className="flex-row flex-wrap gap-sm">
-                    <RowAction
-                      testID={`forum-category-up-${category.slug}`}
-                      label={tEvents('categoryMoveUp')}
-                      onPress={() => move(index, -1)}
-                      isDisabled={index === 0 || reorder.isPending}
-                    />
-                    <RowAction
-                      testID={`forum-category-down-${category.slug}`}
-                      label={tEvents('categoryMoveDown')}
-                      onPress={() => move(index, 1)}
-                      isDisabled={index === rows.length - 1 || reorder.isPending}
-                    />
-                    <RowAction
-                      testID={`forum-category-edit-${category.slug}`}
-                      label={t('categoryEdit')}
-                      onPress={() => setSheet({ category })}
-                    />
-                    <RowAction
-                      testID={`forum-category-delete-${category.slug}`}
-                      label={t('categoryDelete')}
-                      onPress={() => confirmDelete(category)}
-                      isDestructive
-                    />
+            {remove.isError ? (
+              <FailureNotice code="DB-1" message={t('categoryDeleteFailed')} />
+            ) : reorder.isError ? (
+              <FailureNotice code="DB-1" message={t('categorySaveFailed')} />
+            ) : null}
+            {categories.isPending ? (
+              <AnnouncementFeedSkeleton accessibilityLabel={t('categoryManagerTitle')} />
+            ) : categories.isError ? (
+              <AnnouncementFeedError
+                message={t('categorySaveFailed')}
+                retryLabel={tErrors('retry')}
+                code={toAppError(categories.error).code}
+                languageFontClass={fontClass}
+                onRetry={() => void categories.refetch()}
+                isLoading={categories.isFetching}
+              />
+            ) : (
+              <View className="gap-sm" accessibilityRole="list">
+                {rows.map((category, index) => (
+                  <View
+                    key={category.id}
+                    testID={`forum-category-row-${category.slug}`}
+                    style={continuousCorners}
+                    className="gap-xs rounded-md border border-neutral-200 bg-white px-md py-sm"
+                  >
+                    <Text className={`text-start text-md font-bold text-neutral-900 ${fontClass}`}>
+                      {resolveLocalizedText(category.name, language)?.text ?? category.slug}
+                    </Text>
+                    <Text className="text-start text-sm text-neutral-600">{category.slug}</Text>
+                    <View className="flex-row flex-wrap gap-sm">
+                      <RowAction
+                        testID={`forum-category-up-${category.slug}`}
+                        label={tEvents('categoryMoveUp')}
+                        onPress={() => move(index, -1)}
+                        isDisabled={index === 0 || reorder.isPending}
+                      />
+                      <RowAction
+                        testID={`forum-category-down-${category.slug}`}
+                        label={tEvents('categoryMoveDown')}
+                        onPress={() => move(index, 1)}
+                        isDisabled={index === rows.length - 1 || reorder.isPending}
+                      />
+                      <RowAction
+                        testID={`forum-category-edit-${category.slug}`}
+                        label={t('categoryEdit')}
+                        onPress={() => setSheet({ category })}
+                      />
+                      <RowAction
+                        testID={`forum-category-delete-${category.slug}`}
+                        label={t('categoryDelete')}
+                        onPress={() => confirmDelete(category)}
+                        isDestructive
+                      />
+                    </View>
                   </View>
-                </View>
-              ))}
-            </View>
-          )}
-        </ScrollView>
-      </PageWidth>
-      <ForumCategorySheet
-        visible={sheet !== null}
-        category={sheet?.category ?? null}
-        nextSortOrder={nextSortOrder}
-        onClose={() => setSheet(null)}
-      />
+                ))}
+              </View>
+            )}
+          </ScrollView>
+        </PageWidth>
+        <ForumCategorySheet
+          visible={sheet !== null}
+          category={sheet?.category ?? null}
+          nextSortOrder={nextSortOrder}
+          onClose={() => setSheet(null)}
+        />
+      </ActionScreen>
     </SafeAreaView>
   );
 }

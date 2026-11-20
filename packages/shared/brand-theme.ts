@@ -109,6 +109,14 @@ function mixHex(color: string, target: '#000000' | '#FFFFFF', amount: number): s
   return `#${channels.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`.toUpperCase();
 }
 
+/**
+ * A pale, solid wash of a colour (RAPP-856): the colour mixed with white, so
+ * `strength` 0.12 keeps 12% of it. Solid, so it looks the same on any surface.
+ */
+export function washHex(color: string, strength: number): string {
+  return mixHex(normalizeHexColor(color), '#FFFFFF', 1 - strength);
+}
+
 export type BrandThemeVariables = Readonly<Record<`--ramassa-${string}`, string>>;
 
 /** Runtime variables consumed by admin CSS and NativeWind's inherited theme. */

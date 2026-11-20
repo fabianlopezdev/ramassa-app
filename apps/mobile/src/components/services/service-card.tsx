@@ -1,24 +1,15 @@
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { composeContinuousViewStyle } from '@/lib/continuous-corners';
+import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { Image } from 'expo-image';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { tokens } from '@ramassa/shared/tokens';
 
 const styles = StyleSheet.create({
-  card: {
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: tokens.colors.neutral[200],
-    borderRadius: tokens.radius.lg,
-    backgroundColor: tokens.colors.white,
-  },
   image: { width: '100%', height: tokens.spacing['3xl'] * 3 },
 });
-const cardStyle = composeContinuousViewStyle(styles.card);
 
 export interface ServiceCardProps {
   readonly id: string;
@@ -34,6 +25,11 @@ export interface ServiceCardProps {
   readonly accessibilityLabel: string;
   readonly languageFontClass: string;
   readonly onOpen: (id: string) => void;
+  /**
+   * Set while the service is new to her (RAPP-873): the word on the card's top
+   * edge, where every card carries it. The caller says it in the label.
+   */
+  readonly unseenLabel?: string | null;
 }
 
 export const ServiceCard = memo(function ServiceCard({
@@ -50,6 +46,7 @@ export const ServiceCard = memo(function ServiceCard({
   accessibilityLabel,
   languageFontClass,
   onOpen,
+  unseenLabel = null,
 }: ServiceCardProps) {
   const { session } = useAuth();
   const imageSource = resolveMediaImageSource({
@@ -58,33 +55,32 @@ export const ServiceCard = memo(function ServiceCard({
     accessToken: session?.access_token,
   });
   const handlePress = useCallback(() => onOpen(id), [id, onOpen]);
+  // Her saved interest sits on the card's edge, like her sign-up on an activity
+  // card. While the service is new to her, "Nou" takes that place (RAPP-873).
+  const badge = useMemo<RaisedCardBadge | null>(() => {
+    if (unseenLabel !== null) return { label: unseenLabel, tone: 'brand' };
+    return interested ? { label: interestedLabel, tone: 'accent' } : null;
+  }, [interested, interestedLabel, unseenLabel]);
   return (
-    <PressableScale
+    <RaisedCard
       testID={`service-card-${id}`}
       accessibilityLabel={accessibilityLabel}
-      onPress={handlePress}
-      haptic="tapLight"
-      style={cardStyle}
-      className="overflow-hidden rounded-lg border border-neutral-200 bg-white"
+      onOpen={handlePress}
+      badge={badge}
+      media={
+        imageSource === null ? undefined : (
+          <Image
+            source={imageSource}
+            accessibilityLabel={imageAlt ?? title}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            recyclingKey={imageObjectKey ?? id}
+            style={styles.image}
+          />
+        )
+      }
     >
-      {imageSource === null ? null : (
-        <Image
-          source={imageSource}
-          accessibilityLabel={imageAlt ?? title}
-          contentFit="cover"
-          cachePolicy="memory-disk"
-          recyclingKey={imageObjectKey ?? id}
-          style={styles.image}
-        />
-      )}
-      <View className="gap-sm p-md">
-        {interested ? (
-          <View className="self-start rounded-full bg-secondary-light px-sm py-xs">
-            <Text className={`text-sm font-semibold text-neutral-900 ${languageFontClass}`}>
-              {interestedLabel}
-            </Text>
-          </View>
-        ) : null}
+      <View className="gap-sm">
         <Text
           className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
           numberOfLines={2}
@@ -115,6 +111,6 @@ export const ServiceCard = memo(function ServiceCard({
           </Text>
         </View>
       </View>
-    </PressableScale>
+    </RaisedCard>
   );
 });

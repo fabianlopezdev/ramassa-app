@@ -1,11 +1,8 @@
-import {
-  AnnouncementCard,
-  PinnedAnnouncementCard,
-  type AnnouncementCardProps,
-} from '@/components/announcements/announcement-card';
+import { AnnouncementCard } from '@/components/announcements/announcement-card';
 import {
   announcementCategoryLabel,
   CategoryFilters,
+  countNewAnnouncements,
 } from '@/components/announcements/category-filters';
 import {
   AnnouncementEmptyState,
@@ -13,32 +10,33 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { HomeNextActivity } from '@/components/home/home-next-activity';
-import { HomeSectionHeader } from '@/components/home/home-section-header';
 import { HomeToDo } from '@/components/home/home-to-do';
 import { PageWidth } from '@/components/layout/content-width';
+import { ScreenSection } from '@/components/layout/screen-section';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader, PlayerTabStateFrame } from '@/components/profile/player-tab-header';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
 import { useMyCustomForms } from '@/lib/custom-forms';
-import { pickNextPlayerActivity } from '@/lib/home-next-activity';
-import { buildHomeToDoQueue } from '@/lib/home-to-do';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { logger } from '@/lib/observability';
 import { usePlayerEvents } from '@/lib/player-events';
 import { usePlayerSurveys } from '@/lib/player-surveys';
+import { useHomeAttention, useHomeSeen } from '@/lib/use-home-attention';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
+import { useListSeenWhen } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   filterAndOrderPlayerAnnouncements,
+  raiseUnopenedUrgentAnnouncements,
   type AnnouncementListRow,
   type PlayerAnnouncementCategoryFilter,
 } from '@ramassa/shared/announcements';
-import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import { DEFAULT_LANGUAGE, resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
@@ -46,7 +44,7 @@ import { tokens } from '@ramassa/shared/tokens';
 const EMPTY_ANNOUNCEMENTS: readonly AnnouncementListRow[] = [];
 
 const styles = StyleSheet.create({
-  list: { flex: 1, backgroundColor: tokens.colors.white },
+  list: { flex: 1, backgroundColor: tokens.colors.surface.page },
   content: {
     paddingHorizontal: tokens.spacing.lg,
     paddingBottom: tokens.spacing['3xl'],
@@ -54,15 +52,12 @@ const styles = StyleSheet.create({
 });
 
 const keyExtractor = (item: AnnouncementListRow) => item.id;
-const getItemType = (item: AnnouncementListRow) =>
-  item.image_url === null ? 'text-announcement' : 'image-announcement';
 
-export default function HomeScreen() {
+function HomeScreen() {
   const { t, i18n } = useTranslation(['home', 'common', 'nav']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
-  const { session } = useAuth();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
   const [category, setCategory] = useState<PlayerAnnouncementCategoryFilter>('all');
@@ -73,16 +68,37 @@ export default function HomeScreen() {
   const refetchForms = formsQuery.refetch;
   const refetchSurveys = surveysQuery.refetch;
   const refetchEvents = eventsQuery.refetch;
+  const refetchSeen = useHomeSeen().refetch;
 
-  const toDoItems = useMemo(
-    () => buildHomeToDoQueue(formsQuery.data, surveysQuery.data),
-    [formsQuery.data, surveysQuery.data],
+  // The same count the Inici tab shows as its badge (RAPP-821).
+  const {
+    toDoItems,
+    nextActivity,
+    isNextActivityUnseen,
+    isNextActivityCounted,
+    unseenAnnouncementIds,
+  } = useHomeAttention();
+  // Seeing Inici clears the number for its new activity. The card keeps "Nou"
+  // until she opens the activity (RAPP-873).
+  useListSeenWhen('home', true, isNextActivityCounted);
+  // An announcement stays new, with its mark and in the counts, until she
+  // opens it (RAPP-848); scrolling past it no longer counts.
+  const newCounts = useMemo(
+    () => countNewAnnouncements(data ?? EMPTY_ANNOUNCEMENTS, unseenAnnouncementIds),
+    [data, unseenAnnouncementIds],
   );
-  const nextActivity = useMemo(() => pickNextPlayerActivity(eventsQuery.data), [eventsQuery.data]);
+  const listExtraData = useMemo(
+    () => ({ category, unseenAnnouncementIds }),
+    [category, unseenAnnouncementIds],
+  );
 
   const announcements = useMemo(
-    () => filterAndOrderPlayerAnnouncements(data ?? EMPTY_ANNOUNCEMENTS, category),
-    [category, data],
+    () =>
+      raiseUnopenedUrgentAnnouncements(
+        filterAndOrderPlayerAnnouncements(data ?? EMPTY_ANNOUNCEMENTS, category),
+        unseenAnnouncementIds,
+      ),
+    [category, data, unseenAnnouncementIds],
   );
   const dateFormatter = useMemo(
     () =>
@@ -97,47 +113,33 @@ export default function HomeScreen() {
   const renderAnnouncement = useCallback(
     ({ item }: ListRenderItemInfo<AnnouncementListRow>) => {
       const title = resolveLocalizedText(item.title, language);
-      const body = resolveLocalizedText(item.body, language);
-      if (title === undefined || body === undefined) return null;
-      const imageAlt =
-        item.image_alt === null ? undefined : resolveLocalizedText(item.image_alt, language);
-      const categoryLabel = announcementCategoryLabel(item.category, t);
-      const publishedDate = dateFormatter.format(new Date(item.published_at ?? item.created_at));
-      const completeLabel = [
-        categoryLabel,
+      if (title === undefined) return null;
+      const unseenLabel = unseenAnnouncementIds.has(item.id) ? t('unseen') : null;
+      const accessibilityLabel = [
+        unseenLabel,
+        announcementCategoryLabel(item.category, t),
         item.is_pinned ? t('pinned') : null,
         title.text,
-        body.text,
-        imageAlt?.text ?? null,
-        publishedDate,
+        dateFormatter.format(new Date(item.published_at ?? item.created_at)),
       ]
         .filter((part): part is string => typeof part === 'string')
         .join('. ');
-      const cardProps: AnnouncementCardProps = {
-        id: item.id,
-        title: title.text,
-        body: body.text,
-        category: categoryLabel,
-        publishedDate,
-        imageObjectKeyOrUrl: item.image_url,
-        accessToken: session?.access_token,
-        imageAlt: imageAlt?.text ?? null,
-        accessibilityLabel: completeLabel,
-        languageFontClass,
-        onOpen: openAnnouncement,
-      };
 
       return (
         <PageWidth className="pb-md">
-          {item.is_pinned ? (
-            <PinnedAnnouncementCard {...cardProps} pinnedLabel={t('pinned')} />
-          ) : (
-            <AnnouncementCard {...cardProps} />
-          )}
+          <AnnouncementCard
+            id={item.id}
+            title={title.text}
+            category={item.category}
+            accessibilityLabel={accessibilityLabel}
+            unseenLabel={unseenLabel}
+            languageFontClass={languageFontClass}
+            onOpen={openAnnouncement}
+          />
         </PageWidth>
       );
     },
-    [dateFormatter, language, languageFontClass, openAnnouncement, session?.access_token, t],
+    [dateFormatter, language, languageFontClass, unseenAnnouncementIds, openAnnouncement, t],
   );
 
   const onRefresh = useCallback(() => {
@@ -145,7 +147,8 @@ export default function HomeScreen() {
     void refetchForms();
     void refetchSurveys();
     void refetchEvents();
-  }, [refetch, refetchEvents, refetchForms, refetchSurveys]);
+    void refetchSeen();
+  }, [refetch, refetchEvents, refetchForms, refetchSeen, refetchSurveys]);
 
   const onListLoad = useCallback(
     ({ elapsedTimeInMs }: { readonly elapsedTimeInMs: number }) => {
@@ -157,19 +160,8 @@ export default function HomeScreen() {
     [announcements.length],
   );
 
-  const insets = useSafeAreaInsets();
-  const contentContainerStyle = useMemo(
-    () => [
-      styles.content,
-      process.env.EXPO_OS === 'android'
-        ? {
-            paddingTop: insets.top + tokens.spacing.lg,
-            paddingBottom: insets.bottom + tokens.spacing['3xl'],
-          }
-        : { paddingTop: tokens.spacing.lg },
-    ],
-    [insets.bottom, insets.top],
-  );
+  const tabInsets = usePlayerTabContentInsets();
+  const contentContainerStyle = useMemo(() => [styles.content, tabInsets], [tabInsets]);
 
   if (isPending && data === undefined) {
     return (
@@ -199,8 +191,7 @@ export default function HomeScreen() {
       data={announcements}
       renderItem={renderAnnouncement}
       keyExtractor={keyExtractor}
-      getItemType={getItemType}
-      extraData={category}
+      extraData={listExtraData}
       style={styles.list}
       contentContainerStyle={contentContainerStyle}
       contentInsetAdjustmentBehavior="automatic"
@@ -210,16 +201,27 @@ export default function HomeScreen() {
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
           <PlayerTabHeader title={t('nav:tabs.home')} />
-          {/* Per fer, then her next activity, then the announcements (RAPP-790). */}
-          <HomeToDo items={toDoItems} languageFontClass={languageFontClass} />
-          <HomeNextActivity occurrence={nextActivity} languageFontClass={languageFontClass} />
-          <HomeSectionHeader title={t('feedTitle')} languageFontClass={languageFontClass} />
-          <CategoryFilters
-            selected={category}
-            onSelect={setCategory}
-            t={t}
+          {/*
+            Her next activity, then the forms and surveys that wait, then the
+            announcements (RAPP-790). The activity comes first because it is
+            what she opens the app for, and it is there every week, so the top
+            of Inici stays the same when forms come and go (RAPP-855).
+          */}
+          <HomeNextActivity
+            occurrence={nextActivity}
+            isUnseen={isNextActivityUnseen}
             languageFontClass={languageFontClass}
           />
+          <HomeToDo items={toDoItems} languageFontClass={languageFontClass} />
+          <ScreenSection title={t('feedTitle')} isLast>
+            <CategoryFilters
+              selected={category}
+              newCounts={newCounts}
+              onSelect={setCategory}
+              t={t}
+              languageFontClass={languageFontClass}
+            />
+          </ScreenSection>
         </PageWidth>
       }
       ListEmptyComponent={
@@ -234,3 +236,5 @@ export default function HomeScreen() {
     />
   );
 }
+
+export default withScreenEntrance('index', HomeScreen);

@@ -25,6 +25,7 @@
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { FieldLabel } from '@/components/forms/field-label';
 import { FormTextArea } from '@/components/forms/form-text-area';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -87,10 +88,7 @@ export interface CustomQuestionFieldProps {
 }
 
 function QuestionLabel({ text }: { readonly text: string }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>{text}</Text>
-  );
+  return <FieldLabel>{text}</FieldLabel>;
 }
 
 const asText = (value: CustomAnswerValue | undefined): string =>
@@ -297,7 +295,6 @@ export function CustomQuestionField(props: CustomQuestionFieldProps) {
   const { question, value, onChange, errorMessage } = props;
   const { t } = useTranslation(['onboarding']);
   const { language } = useLanguage();
-  const fontClass = useLanguageFontClass();
   const label = textIn(question.label, language);
   const help = textIn(question.help, language) || null;
   const testID = `custom-question-${question.id}`;
@@ -473,9 +470,7 @@ export function CustomQuestionField(props: CustomQuestionFieldProps) {
 
   return (
     <View testID={testID} className="gap-sm">
-      <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
-        {label}
-      </Text>
+      <FieldLabel>{label}</FieldLabel>
       <QuestionHelp text={help} />
       <ChoiceGrid maximumColumns={isYesNo ? 3 : 2}>
         {options.map((option) => (

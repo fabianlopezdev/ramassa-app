@@ -1,19 +1,20 @@
 /**
- * The one offline banner (RAPP-807): a strip at the top of the signed-in shell
- * for players, the team and entities, shown whenever the phone has no
- * connection. Screens keep only what this banner cannot say, next to the action
- * it concerns (a write that waits for the connection, marks queued on the
- * phone).
+ * The one offline notice (RAPP-807, RAPP-817): a slim strip under the status
+ * bar of the signed-in shell, for players, the team and entities, shown only
+ * while the app's online state says the phone has no connection. Screens keep
+ * only what this strip cannot say, next to the action it concerns (a write
+ * that waits for the connection, marks queued on the phone).
  *
- * The banner sits above the navigator, so it never covers a tab bar or a
- * header's controls: the screens move down by its height. The navigator gets
- * its own safe-area provider, measured below the banner, so headers and screens
- * stop adding the status bar a second time while the banner is up. A plain
- * view, so the app lock cover hides it like any other screen content.
+ * The strip sits above the navigator, so it never covers a tab bar or a
+ * header's controls: the screens move down by its height. The status bar area
+ * keeps the app's normal colour. The navigator gets its own safe-area
+ * provider, measured below the strip, so headers and screens stop adding the
+ * status bar a second time while the strip is up. A plain view, so the app
+ * lock cover hides it like any other screen content.
  */
-import { isNetworkStateOnline } from '@/lib/network-status';
+import { Icon } from '@/components/icons/icon';
+import { useIsOnline } from '@/lib/use-is-online';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useNetworkState } from 'expo-network';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -22,6 +23,7 @@ import {
   useSafeAreaFrame,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import { tokens } from '@ramassa/shared/tokens';
 
 const styles = StyleSheet.create({ fill: { flex: 1 } });
 
@@ -30,18 +32,17 @@ function ShellOfflineBanner({ topInset }: { readonly topInset: number }) {
   const languageFontClass = useLanguageFontClass();
   const topInsetStyle = useMemo(() => ({ paddingTop: topInset }), [topInset]);
   return (
-    <View
-      testID="shell-offline-banner"
-      accessibilityRole="alert"
-      accessibilityLiveRegion="polite"
-      className="border-b border-secondary-dark bg-secondary-light"
-      style={topInsetStyle}
-    >
-      <View className="flex-row items-center gap-sm px-lg py-sm">
-        <View accessible={false} className="h-sm w-sm rounded-full bg-warning" />
-        <Text
-          className={`flex-1 text-start text-sm font-medium text-neutral-900 ${languageFontClass}`}
-        >
+    <View className="bg-white" style={topInsetStyle}>
+      <View
+        testID="shell-offline-banner"
+        accessible
+        accessibilityRole="alert"
+        accessibilityLiveRegion="polite"
+        accessibilityLabel={t('offline')}
+        className="flex-row items-center justify-center gap-xs border-b border-neutral-200 bg-neutral-100 px-lg py-xs"
+      >
+        <Icon name="wifi-off" size={tokens.fontSize.md} color={tokens.colors.neutral[700]} />
+        <Text className={`text-center text-sm font-medium text-neutral-800 ${languageFontClass}`}>
           {t('offline')}
         </Text>
       </View>
@@ -49,9 +50,9 @@ function ShellOfflineBanner({ topInset }: { readonly topInset: number }) {
   );
 }
 
-/** Wraps the signed-in navigator: the banner on top, the screens below it. */
+/** Wraps the signed-in navigator: the strip on top, the screens below it. */
 export function ShellOfflineFrame({ children }: { readonly children: ReactNode }) {
-  const isOffline = !isNetworkStateOnline(useNetworkState());
+  const isOffline = !useIsOnline();
   const insets = useSafeAreaInsets();
   const frame = useSafeAreaFrame();
   // Only the first render reads these: the nested provider measures itself

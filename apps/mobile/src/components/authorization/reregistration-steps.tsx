@@ -10,8 +10,10 @@
  * cannot load, the built-in ones still work and the failure is logged.
  */
 
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import {
   CustomQuestionList,
   type CustomAnswerDraft,
@@ -23,7 +25,6 @@ import {
   type SeasonAnswers,
   type SeasonQuestion,
 } from '@/components/profile/season-answer-fields';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { logger } from '@/lib/observability';
@@ -77,29 +78,10 @@ function ActionButton({
   readonly isBusy?: boolean;
   readonly testID: string;
 }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <PressableScale
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      isBusy={isBusy}
-      isDisabled={isBusy}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended items-center justify-center rounded-md px-lg ${
-        isPrimary ? 'bg-primary' : 'border border-primary bg-white'
-      }`}
-    >
-      <Text
-        className={`text-center text-md font-bold ${
-          isPrimary ? 'text-white' : 'text-primary-dark'
-        } ${fontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
+  return isPrimary ? (
+    <AuthSubmitButton testID={testID} label={label} onPress={onPress} isLoading={isBusy} />
+  ) : (
+    <RaisedActionButton testID={testID} label={label} onPress={onPress} isDisabled={isBusy} />
   );
 }
 
@@ -219,7 +201,7 @@ export function ReregistrationSteps({
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
       >
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <View className="gap-xs">
             <Text
               accessibilityRole="header"

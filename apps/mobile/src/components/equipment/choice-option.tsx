@@ -1,8 +1,9 @@
-/** One choice in a group of radio options (item, size, mode, condition). */
-import { continuousCorners } from '@/lib/continuous-corners';
-import { playHaptic } from '@/lib/haptics/haptics';
+/**
+ * One choice in a group of radio options (item, size, mode, condition): the
+ * raised pill every filter in the app shares (RAPP-878).
+ */
+import { RaisedChip } from '@/components/layout/filter-chips';
 import { memo, useCallback } from 'react';
-import { Pressable, Text } from 'react-native';
 
 function ChoiceOptionView<Value extends string>({
   value,
@@ -19,30 +20,15 @@ function ChoiceOptionView<Value extends string>({
   readonly testID: string;
   readonly languageFontClass: string;
 }) {
-  const select = useCallback(() => {
-    playHaptic('selection');
-    onSelect(value);
-  }, [onSelect, value]);
+  const select = useCallback(() => onSelect(value), [onSelect, value]);
   return (
-    <Pressable
+    <RaisedChip
       testID={testID}
-      accessibilityRole="radio"
-      accessibilityLabel={label}
-      // aria-checked: react-native-web drops accessibilityState.checked.
-      aria-checked={selected}
-      aria-selected={selected}
+      label={label}
+      isSelected={selected}
       onPress={select}
-      style={continuousCorners}
-      className={`min-h-recommended min-w-recommended items-center justify-center rounded-md border px-md active:opacity-90 ${
-        selected ? 'border-primary bg-primary' : 'border-neutral-300 bg-white'
-      }`}
-    >
-      <Text
-        className={`text-center font-semibold ${selected ? 'text-white' : 'text-neutral-800'} ${languageFontClass}`}
-      >
-        {label}
-      </Text>
-    </Pressable>
+      languageFontClass={languageFontClass}
+    />
   );
 }
 

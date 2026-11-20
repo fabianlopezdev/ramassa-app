@@ -7,7 +7,10 @@
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { FieldLabel } from '@/components/forms/field-label';
 import { PageWidth } from '@/components/layout/content-width';
+import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverItemTypes } from '@/lib/handover';
@@ -156,7 +159,7 @@ export default function StockCountScreen() {
         contentInsetAdjustmentBehavior="automatic"
         contentContainerClassName="pb-3xl"
       >
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <PressableScale
             testID="count-back"
             accessibilityLabel={step === 'review' ? t('count.back') : tCommon('back')}
@@ -217,13 +220,7 @@ export default function StockCountScreen() {
           ) : (
             <>
               {needsReason ? (
-                <View className="gap-sm" testID="count-differences">
-                  <Text
-                    accessibilityRole="header"
-                    className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-                  >
-                    {t('count.differencesTitle')}
-                  </Text>
+                <ScreenSection testID="count-differences" title={t('count.differencesTitle')}>
                   {differences.map((difference) => (
                     <Text
                       key={difference.size ?? ''}
@@ -234,11 +231,7 @@ export default function StockCountScreen() {
                         : t('count.difference', { ...difference })}
                     </Text>
                   ))}
-                  <Text
-                    className={`pt-sm text-start text-md font-semibold text-neutral-900 ${fontClass}`}
-                  >
-                    {t('count.reasonLabel')}
-                  </Text>
+                  <FieldLabel className="pt-sm">{t('count.reasonLabel')}</FieldLabel>
                   <View
                     accessibilityRole="radiogroup"
                     accessibilityLabel={t('count.reasonLabel')}
@@ -263,7 +256,7 @@ export default function StockCountScreen() {
                     onChangeText={setNote}
                     maxLength={500}
                   />
-                </View>
+                </ScreenSection>
               ) : (
                 <Text
                   testID="count-matches"

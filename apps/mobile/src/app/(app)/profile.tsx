@@ -1,7 +1,9 @@
 /**
  * El meu perfil (RAPP-22, RAPP-794): opened from her photo at the top of every
- * tab, as a short menu of six rows. Each row opens one screen, except the last,
- * which signs her out.
+ * tab, as a short menu on the shared raised cards (RAPP-863). Her data and her
+ * attendance come first, as a pair of half-width raised cards (RAPP-874); the
+ * other rows follow on the raised icon card. Each opens one screen, except the
+ * last, which signs her out.
  *
  * It stays the RGPD self-service surface. She sees and corrects her data under
  * "Les meves dades", and gives or withdraws her consents and asks for erasure
@@ -13,7 +15,9 @@
  * that already point here keep working.
  */
 
-import { NavRow } from '@/components/layout/nav-row';
+import { ICON_LICENCE } from '@/components/icons/icon';
+import { RaisedHalfCard, RaisedHalfCardRow } from '@/components/layout/raised-half-card';
+import { RaisedIconCard } from '@/components/layout/raised-icon-card';
 import { ProfileScreenFrame } from '@/components/profile/profile-screen-frame';
 import { logout } from '@/lib/auth';
 import { playerNavIcons } from '@/lib/player-nav-icons';
@@ -21,7 +25,7 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 
 // The dev-menu entry, required inside a __DEV__ branch so neither the component
 // nor its label reaches a production bundle (RAPP-19).
@@ -41,54 +45,86 @@ export default function ProfileScreen() {
   const openPrivacy = useCallback(() => push('/profile-privacy' as Href), [push]);
   const signOut = useCallback(() => void logout(), []);
 
-  return (
-    <ProfileScreenFrame title={t('title')} testID="profile-menu">
-      <NavRow
-        testID="profile-open-data"
-        icon={playerNavIcons.myData}
-        label={t('menu.data')}
-        onPress={openData}
-      />
-      <NavRow
-        testID="profile-open-attendance"
-        icon={playerNavIcons.attendance}
-        label={t('menu.attendance')}
-        onPress={openAttendance}
-      />
-      <NavRow
-        testID="profile-open-language"
-        icon={playerNavIcons.language}
-        label={t('menu.language')}
-        onPress={openLanguage}
-      />
-      {/* The lock does not exist on the web. */}
-      {Platform.OS === 'web' ? null : (
-        <NavRow
-          testID="open-app-lock"
-          icon={playerNavIcons.appLock}
-          label={t('menu.appLock')}
-          onPress={openAppLock}
-        />
-      )}
-      <NavRow
-        testID="profile-open-privacy"
-        icon={playerNavIcons.privacy}
-        label={t('menu.privacy')}
-        onPress={openPrivacy}
-      />
-      <NavRow
-        testID="profile-sign-out"
-        icon={playerNavIcons.signOut}
-        label={t('signOutAction')}
-        tone="danger"
-        onPress={signOut}
-      />
+  /*
+    The credits, together and centred in the frame's footer, at the very
+    bottom of the phone (RAPP-877): the funding the grant terms ask to
+    mention (RAPP-64), then the icon set's licence credit (RAPP-834). Small
+    type takes a tight line height, so a wrapped line stays close to the
+    one above.
+  */
+  const credits = (
+    <View className="items-center gap-xs">
       <Text
         testID="generalitat-credit"
-        className={`text-start text-xs leading-body text-neutral-600 ${languageFontClass}`}
+        className={`text-center text-xs leading-5 text-neutral-600 ${languageFontClass}`}
       >
         {t('common:fundingAcknowledgment')}
       </Text>
+      <Text
+        testID="icon-credit"
+        className={`text-center text-xs leading-5 text-neutral-600 ${languageFontClass}`}
+      >
+        {ICON_LICENCE.credit}
+      </Text>
+    </View>
+  );
+
+  return (
+    <ProfileScreenFrame title={t('title')} testID="profile-menu" footer={credits}>
+      <RaisedHalfCardRow>
+        <RaisedHalfCard
+          testID="profile-open-data"
+          icon={playerNavIcons.myData}
+          title={t('menu.data')}
+          accessibilityLabel={t('menu.data')}
+          languageFontClass={languageFontClass}
+          onOpen={openData}
+        />
+        <RaisedHalfCard
+          testID="profile-open-attendance"
+          icon={playerNavIcons.attendance}
+          title={t('menu.attendance')}
+          accessibilityLabel={t('menu.attendance')}
+          languageFontClass={languageFontClass}
+          onOpen={openAttendance}
+        />
+      </RaisedHalfCardRow>
+      <RaisedIconCard
+        testID="profile-open-language"
+        icon={playerNavIcons.language}
+        title={t('menu.language')}
+        accessibilityLabel={t('menu.language')}
+        languageFontClass={languageFontClass}
+        onOpen={openLanguage}
+      />
+      {/* The lock does not exist on the web. */}
+      {Platform.OS === 'web' ? null : (
+        <RaisedIconCard
+          testID="open-app-lock"
+          icon={playerNavIcons.appLock}
+          title={t('menu.appLock')}
+          accessibilityLabel={t('menu.appLock')}
+          languageFontClass={languageFontClass}
+          onOpen={openAppLock}
+        />
+      )}
+      <RaisedIconCard
+        testID="profile-open-privacy"
+        icon={playerNavIcons.privacy}
+        title={t('menu.privacy')}
+        accessibilityLabel={t('menu.privacy')}
+        languageFontClass={languageFontClass}
+        onOpen={openPrivacy}
+      />
+      <RaisedIconCard
+        testID="profile-sign-out"
+        icon={playerNavIcons.signOut}
+        title={t('signOutAction')}
+        accessibilityLabel={t('signOutAction')}
+        languageFontClass={languageFontClass}
+        tone="danger"
+        onOpen={signOut}
+      />
       {DevMenuEntry === null ? null : <DevMenuEntry />}
     </ProfileScreenFrame>
   );

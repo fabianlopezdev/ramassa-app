@@ -22,10 +22,12 @@
  * Two widths rather than a free-form prop, because there are only two shapes of
  * player screen: a column of inputs, and a column of reading or listing. Both
  * come from `tokens.contentWidth`, so a change there moves both apps.
+ *
+ * The column is also what rises when its screen arrives (RAPP-875).
  */
 
+import { EntranceColumn } from '@/components/motion/screen-entrance';
 import type { ReactNode } from 'react';
-import { View } from 'react-native';
 
 interface ContentWidthProps {
   readonly children: ReactNode;
@@ -35,10 +37,18 @@ interface ContentWidthProps {
 
 /** A single column of inputs: sign-in, the onboarding steps, any short form. */
 export function FormWidth({ children, className = '' }: ContentWidthProps) {
-  return <View className={`w-full sm:max-w-form sm:self-center ${className}`}>{children}</View>;
+  return (
+    <EntranceColumn className={`w-full sm:max-w-form sm:self-center ${className}`}>
+      {children}
+    </EntranceColumn>
+  );
 }
 
 /** A column of reading or listing content: feeds, articles, directories. */
 export function PageWidth({ children, className = '' }: ContentWidthProps) {
-  return <View className={`w-full sm:max-w-page sm:self-center ${className}`}>{children}</View>;
+  return (
+    <EntranceColumn className={`w-full sm:max-w-page sm:self-center ${className}`}>
+      {children}
+    </EntranceColumn>
+  );
 }

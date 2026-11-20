@@ -3,20 +3,40 @@
  * title and back control, which mirrors by itself in right-to-left languages,
  * over one scrolling column. The profile menu and each screen it opens share
  * it, so moving between them never changes the shape of the page.
+ *
+ * A screen may pass a `footer`, such as the credits of the menu (RAPP-877). It
+ * sits under the column at the very bottom of the phone: pushed down when the
+ * page is shorter than the screen, with no page padding under it, and reaching
+ * into the space kept for the home indicator to a small gap above the bar. A
+ * phone with no bar keeps no such space, and the footer stays where it is.
+ * The column itself is left alone, since it is the part that rises when the
+ * screen arrives (RAPP-875).
+ *
+ * A screen may pass an `action`, its call to action, such as "Edita" on Les
+ * meves dades (RAPP-881). It sits at the bottom of the screen, under the
+ * column, like every screen's call to action.
  */
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ActionScreen } from '@/components/layout/screen-action';
 import { useMemo, type ReactNode } from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { tokens } from '@ramassa/shared/tokens';
 
 export function ProfileScreenFrame({
   title,
   testID,
+  footer,
+  action,
   children,
 }: {
   readonly title: string;
   readonly testID: string;
+  /** A last block kept at the very bottom of the phone, under everything else. */
+  readonly footer?: ReactNode;
+  /** The screen's call to action, at the bottom of the screen. */
+  readonly action?: ReactNode;
   readonly children: ReactNode;
 }) {
   // Android only: the header already clears the status bar, and on iOS the
@@ -26,18 +46,37 @@ export function ProfileScreenFrame({
     () => (process.env.EXPO_OS === 'android' ? { paddingBottom: insets.bottom } : undefined),
     [insets.bottom],
   );
-  return (
+  const hasFooter = footer !== undefined && footer !== null;
+  const bottomTuckStyle = useMemo(
+    () =>
+      hasFooter ? { marginBottom: -Math.max(0, insets.bottom - tokens.spacing.md) } : undefined,
+    [hasFooter, insets.bottom],
+  );
+  const page = (
     <>
       <NativeScreenHeader title={title} />
       <ScrollView
         testID={testID}
         className="flex-1 bg-neutral-50"
-        contentContainerClassName="grow p-lg"
+        contentContainerClassName={`grow px-lg pt-lg ${hasFooter ? '' : 'pb-lg'}`}
         contentContainerStyle={androidBottomInset}
         contentInsetAdjustmentBehavior="automatic"
       >
-        <PageWidth className="gap-lg">{children}</PageWidth>
+        <View className="grow" style={bottomTuckStyle}>
+          <PageWidth className="gap-lg">{children}</PageWidth>
+          {hasFooter ? (
+            <View className="mt-auto w-full pt-lg sm:max-w-page sm:self-center">{footer}</View>
+          ) : null}
+        </View>
       </ScrollView>
     </>
+  );
+  // With an action, the page shares the screen with it; without one the frame
+  // stays as it was, so screens that only read keep their layout.
+  if (action === undefined || action === null) return page;
+  return (
+    <ActionScreen className="bg-neutral-50" action={action}>
+      {page}
+    </ActionScreen>
   );
 }

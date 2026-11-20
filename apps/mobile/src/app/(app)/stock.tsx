@@ -5,10 +5,15 @@
  * Holders of `equipment.items` add items here and open each item's editor from
  * its card (RAPP-800), so no separate item list sits between.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { StaffCheckouts } from '@/components/equipment/staff-checkouts';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ActionScreen } from '@/components/layout/screen-action';
+import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useHandoverItemTypes } from '@/lib/handover';
@@ -182,173 +187,147 @@ export default function StockScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right']}>
-      <NativeScreenHeader title={t('stock.title')} />
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
-          <View className="gap-xs">
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-              {t('stock.intro')}
-            </Text>
-          </View>
-          {canReceive ? (
-            <PressableScale
+      <ActionScreen
+        action={
+          canReceive ? (
+            <AuthSubmitButton
               testID="stock-record-arrival"
-              accessibilityRole="button"
-              accessibilityLabel={t('stock.recordArrival')}
+              label={t('stock.recordArrival')}
               onPress={() => push('/arrival/new' as Href)}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-                {t('stock.recordArrival')}
-              </Text>
-            </PressableScale>
-          ) : null}
-
-          {canCheckOut ? (
-            <PressableScale
-              testID="stock-check-out"
-              accessibilityRole="button"
-              accessibilityLabel={t('checkout.action')}
-              onPress={() => push('/checkout/new' as Href)}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                {t('checkout.action')}
-              </Text>
-            </PressableScale>
-          ) : null}
-
-          {canEditItems ? (
-            <PressableScale
-              testID="items-add"
-              accessibilityRole="button"
-              accessibilityLabel={t('items.add')}
-              onPress={() => push('/item-type/new' as Href)}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                {t('items.add')}
-              </Text>
-            </PressableScale>
-          ) : null}
-
-          <View className="gap-sm" testID="stock-levels">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('stock.levelsTitle')}
-            </Text>
-            {levels.isPending ? <ActivityIndicator color={tokens.colors.primary.DEFAULT} /> : null}
-            {levels.isError ? (
-              <FailureNotice code={toAppError(levels.error).code} message={t('stock.loadFailed')} />
-            ) : null}
-            {levels.isSuccess && itemTypes.isSuccess && items.length === 0 ? (
+            />
+          ) : null
+        }
+      >
+        <NativeScreenHeader title={t('stock.title')} />
+        <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
+          <PageWidth className={screenContentClassName}>
+            <View className="gap-xs">
               <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-                {t('stock.levelsEmpty')}
+                {t('stock.intro')}
               </Text>
-            ) : null}
-            {items.map((item) => (
-              <View
-                key={item.itemKey}
-                testID={`stock-item-${item.itemKey}`}
-                style={continuousCorners}
-                className="gap-sm rounded-md border border-neutral-200 bg-white p-md"
-              >
-                <View className="flex-row items-center justify-between gap-sm">
-                  {canEditItems && item.typeId !== null ? (
-                    <PressableScale
-                      testID={`items-row-${item.itemKey}`}
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        item.isActive ? item.label : `${item.label}, ${t('items.inactive')}`
-                      }
-                      onPress={() => push(`/item-type/${item.typeId}` as Href)}
-                      haptic="selection"
-                      className="min-h-recommended flex-1 justify-center"
-                    >
-                      <StockItemName label={item.label} isActive={item.isActive} />
-                    </PressableScale>
-                  ) : (
-                    <View className="flex-1">
-                      <StockItemName label={item.label} isActive={item.isActive} />
-                    </View>
-                  )}
-                  {canCount && item.typeId !== null ? (
-                    <PressableScale
-                      testID={`stock-count-${item.itemKey}`}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('count.actionLabel', { item: item.label })}
-                      onPress={() => push(`/count/${item.typeId}` as Href)}
-                      haptic="tapLight"
-                      className="min-h-recommended justify-center px-sm"
-                    >
-                      <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-                        {t('count.action')}
-                      </Text>
-                    </PressableScale>
-                  ) : null}
-                </View>
-                <View className="flex-row flex-wrap gap-sm">
-                  {item.sizes.map((level) => {
-                    const below = level.quantity < 0;
-                    const text =
-                      level.size === null
-                        ? String(level.quantity)
-                        : `${level.size}: ${level.quantity}`;
-                    return (
-                      <View
-                        key={level.size ?? ''}
-                        accessible
-                        accessibilityLabel={below ? `${text}. ${t('stock.belowZero')}` : text}
-                        style={continuousCorners}
-                        className={`rounded-sm px-sm py-xs ${below ? 'border border-error bg-white' : 'bg-neutral-100'}`}
-                      >
-                        <Text
-                          className={`text-sm font-semibold ${below ? 'text-error' : 'text-neutral-800'} ${fontClass}`}
-                        >
-                          {text}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              </View>
-            ))}
-          </View>
+            </View>
 
-          <StaffCheckouts canCheckIn={canCheckOut} />
-
-          <View className="gap-sm" testID="stock-arrivals">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('stock.arrivalsTitle')}
-            </Text>
-            {arrivals.isSuccess && arrivals.data.length === 0 ? (
-              <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-                {t('stock.arrivalsEmpty')}
-              </Text>
-            ) : null}
-            {arrivals.isError ? (
-              <FailureNotice
-                code={toAppError(arrivals.error).code}
-                message={t('stock.loadFailed')}
+            {canCheckOut ? (
+              <RaisedActionButton
+                testID="stock-check-out"
+                label={t('checkout.action')}
+                onPress={() => push('/checkout/new' as Href)}
               />
             ) : null}
-            {(arrivals.data ?? []).map((arrival) => (
-              <ArrivalCard key={arrival.id} arrival={arrival} />
-            ))}
-          </View>
-        </PageWidth>
-      </ScrollView>
+
+            {canEditItems ? (
+              <RaisedActionButton
+                testID="items-add"
+                label={t('items.add')}
+                onPress={() => push('/item-type/new' as Href)}
+              />
+            ) : null}
+
+            <ScreenSection testID="stock-levels" title={t('stock.levelsTitle')}>
+              {levels.isPending ? (
+                <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
+              ) : null}
+              {levels.isError ? (
+                <FailureNotice
+                  code={toAppError(levels.error).code}
+                  message={t('stock.loadFailed')}
+                />
+              ) : null}
+              {levels.isSuccess && itemTypes.isSuccess && items.length === 0 ? (
+                <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
+                  {t('stock.levelsEmpty')}
+                </Text>
+              ) : null}
+              {items.map((item) => (
+                <View
+                  key={item.itemKey}
+                  testID={`stock-item-${item.itemKey}`}
+                  style={continuousCorners}
+                  className="gap-sm rounded-md border border-neutral-200 bg-white p-md"
+                >
+                  <View className="flex-row items-center justify-between gap-sm">
+                    {canEditItems && item.typeId !== null ? (
+                      <PressableScale
+                        testID={`items-row-${item.itemKey}`}
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          item.isActive ? item.label : `${item.label}, ${t('items.inactive')}`
+                        }
+                        onPress={() => push(`/item-type/${item.typeId}` as Href)}
+                        haptic="selection"
+                        className="min-h-recommended flex-1 justify-center"
+                      >
+                        <StockItemName label={item.label} isActive={item.isActive} />
+                      </PressableScale>
+                    ) : (
+                      <View className="flex-1">
+                        <StockItemName label={item.label} isActive={item.isActive} />
+                      </View>
+                    )}
+                    {canCount && item.typeId !== null ? (
+                      <PressableScale
+                        testID={`stock-count-${item.itemKey}`}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('count.actionLabel', { item: item.label })}
+                        onPress={() => push(`/count/${item.typeId}` as Href)}
+                        haptic="tapLight"
+                        className="min-h-recommended justify-center px-sm"
+                      >
+                        <Text className={`font-semibold text-primary-dark ${fontClass}`}>
+                          {t('count.action')}
+                        </Text>
+                      </PressableScale>
+                    ) : null}
+                  </View>
+                  <View className="flex-row flex-wrap gap-sm">
+                    {item.sizes.map((level) => {
+                      const below = level.quantity < 0;
+                      const text =
+                        level.size === null
+                          ? String(level.quantity)
+                          : `${level.size}: ${level.quantity}`;
+                      return (
+                        <View
+                          key={level.size ?? ''}
+                          accessible
+                          accessibilityLabel={below ? `${text}. ${t('stock.belowZero')}` : text}
+                          style={continuousCorners}
+                          className={`rounded-sm px-sm py-xs ${below ? 'border border-error bg-white' : 'bg-neutral-100'}`}
+                        >
+                          <Text
+                            className={`text-sm font-semibold ${below ? 'text-error' : 'text-neutral-800'} ${fontClass}`}
+                          >
+                            {text}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              ))}
+            </ScreenSection>
+
+            <StaffCheckouts canCheckIn={canCheckOut} />
+
+            <ScreenSection testID="stock-arrivals" title={t('stock.arrivalsTitle')} isLast>
+              {arrivals.isSuccess && arrivals.data.length === 0 ? (
+                <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
+                  {t('stock.arrivalsEmpty')}
+                </Text>
+              ) : null}
+              {arrivals.isError ? (
+                <FailureNotice
+                  code={toAppError(arrivals.error).code}
+                  message={t('stock.loadFailed')}
+                />
+              ) : null}
+              {(arrivals.data ?? []).map((arrival) => (
+                <ArrivalCard key={arrival.id} arrival={arrival} />
+              ))}
+            </ScreenSection>
+          </PageWidth>
+        </ScrollView>
+      </ActionScreen>
     </SafeAreaView>
   );
 }

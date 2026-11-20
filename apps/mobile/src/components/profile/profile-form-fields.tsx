@@ -11,6 +11,9 @@
  */
 
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { ChoiceGroup } from '@/components/forms/choice-group';
+import { FieldLabel } from '@/components/forms/field-label';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { CountryPicker } from '@/components/onboarding/country-picker';
 import { MunicipalityPicker } from '@/components/onboarding/municipality-picker';
 import { OptionChip } from '@/components/onboarding/option-chip';
@@ -78,24 +81,6 @@ function birthDateParts(iso: string | undefined) {
   return { day, month, year };
 }
 
-function ChoiceGroup({
-  label,
-  children,
-}: {
-  readonly label: string;
-  readonly children: ReactNode;
-}) {
-  const languageFontClass = useLanguageFontClass();
-  return (
-    <View className="gap-xs">
-      <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-        {label}
-      </Text>
-      <View className="flex-row flex-wrap gap-sm">{children}</View>
-    </View>
-  );
-}
-
 /**
  * Day, month and year boxes over one ISO date, as the intake wizard asks for
  * it. The boxes keep what was typed, so a half-typed date stays on screen and
@@ -136,9 +121,7 @@ export function BirthDateField({
   };
   return (
     <View className="gap-xs">
-      <Text className={`text-start text-md font-medium text-neutral-800 ${languageFontClass}`}>
-        {label ?? t('dateOfBirthLabel')}
-      </Text>
+      <FieldLabel>{label ?? t('dateOfBirthLabel')}</FieldLabel>
       <View className="flex-row flex-wrap gap-sm">
         <View className="min-w-[72px] flex-1">
           <AuthTextField
@@ -204,7 +187,6 @@ function SeasonAnswerControllers({
   readonly shows: (question: SeasonQuestion) => boolean;
 }) {
   const { t } = useTranslation(['onboarding']);
-  const languageFontClass = useLanguageFontClass();
   const entityNames = useSupportingEntityNames();
   const applicantStatus = useController({ control, name: 'applicantStatus' });
   const supportingEntities = useController({ control, name: 'supportingEntities' });
@@ -219,13 +201,7 @@ function SeasonAnswerControllers({
     specificNeeds: (specificNeeds.field.value as string | undefined) ?? '',
   };
   return (
-    <View className="gap-md">
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-      >
-        {t('onboarding:seasonSectionTitle')}
-      </Text>
+    <ScreenSection title={t('onboarding:seasonSectionTitle')}>
       <SeasonAnswerFields
         testIDPrefix={testIDPrefix}
         value={value}
@@ -243,7 +219,7 @@ function SeasonAnswerControllers({
           if ('specificNeeds' in patch) specificNeeds.field.onChange(patch.specificNeeds);
         }}
       />
-    </View>
+    </ScreenSection>
   );
 }
 

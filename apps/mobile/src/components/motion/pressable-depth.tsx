@@ -7,6 +7,7 @@ import {
   View,
   type AccessibilityActionEvent,
   type AccessibilityRole,
+  type Insets,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -17,6 +18,7 @@ import {
   useReducedMotion,
   useSharedValue,
   withTiming,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { motionTokens } from '@ramassa/shared/tokens/motion';
 import { ACTIVATE_ACCESSIBILITY_ACTIONS } from './accessibility-actions';
@@ -26,6 +28,10 @@ import { NativeWindAnimatedView } from './nativewind-animated-view';
 const PRESS_IN_TIMING = { duration: motionTokens.depthPress.inMs } as const;
 const PRESS_OUT_TIMING = { duration: motionTokens.depthPress.outMs } as const;
 const REDUCED_MOTION_TIMING = { duration: 0 } as const;
+
+/** The roles a browser reads a checked state for; a switch is one (RAPP-891). */
+const hasCheckedState = (role: AccessibilityRole) =>
+  role === 'radio' || role === 'checkbox' || role === 'switch';
 
 interface PressableDepthProps {
   readonly children: ReactNode;
@@ -44,6 +50,31 @@ interface PressableDepthProps {
   readonly faceStyle?: StyleProp<ViewStyle>;
   readonly inlineOffset: number;
   readonly blockOffset: number;
+  /** How far past its edges a touch still counts, for a small button. */
+  readonly hitSlop?: Insets;
+  /** A fill that covers the face while it is held down, such as `bg-secondary`. */
+  readonly pressedFillClassName?: string;
+}
+
+/**
+ * The fill that covers a face while it is held, on the UI thread. Its own
+ * component, so a control without a fill sets up no animation for one.
+ */
+function PressedFill({
+  pressed,
+  className,
+}: {
+  readonly pressed: SharedValue<number>;
+  readonly className: string;
+}) {
+  const style = useAnimatedStyle(() => ({ opacity: pressed.get() }));
+  return (
+    <NativeWindAnimatedView
+      pointerEvents="none"
+      className={`absolute inset-0 ${className}`}
+      style={style}
+    />
+  );
 }
 
 /** A stationary touch target and shadow, with a face that sinks on the UI thread. */
@@ -76,6 +107,8 @@ function ModalPressableDepth({
   style,
   faceClassName,
   faceStyle,
+  pressedFillClassName,
+  hitSlop,
 }: PressableDepthProps) {
   const handlePress = useCallback(() => {
     if (haptic !== undefined) playHaptic(haptic);
@@ -92,21 +125,27 @@ function ModalPressableDepth({
       accessibilityState={
         isSelected === undefined ? undefined : { selected: isSelected, checked: isSelected }
       }
-      aria-checked={
-        accessibilityRole === 'radio' || accessibilityRole === 'checkbox' ? isSelected : undefined
-      }
+      aria-checked={hasCheckedState(accessibilityRole) ? isSelected : undefined}
       onPress={handlePress}
+      hitSlop={hitSlop}
       className={`${className ?? ''} active:opacity-90`}
       style={style}
     >
-      {shadow}
-      <View
-        importantForAccessibility="no-hide-descendants"
-        className={faceClassName}
-        style={faceStyle}
-      >
-        {children}
-      </View>
+      {({ pressed }) => (
+        <>
+          {shadow}
+          <View
+            importantForAccessibility="no-hide-descendants"
+            className={faceClassName}
+            style={faceStyle}
+          >
+            {pressedFillClassName === undefined || !pressed ? null : (
+              <View pointerEvents="none" className={`absolute inset-0 ${pressedFillClassName}`} />
+            )}
+            {children}
+          </View>
+        </>
+      )}
     </Pressable>
   );
 }
@@ -128,6 +167,8 @@ function GesturePressableDepth({
   faceStyle,
   inlineOffset,
   blockOffset,
+  pressedFillClassName,
+  hitSlop,
 }: PressableDepthProps) {
   const reduced = useReducedMotion();
   const pressed = useSharedValue(0);
@@ -146,7 +187,8 @@ function GesturePressableDepth({
   );
   const tap = useMemo(
     () =>
-      Gesture.Tap()
+      // A small button's touch reaches past its face; the others keep the default.
+      (hitSlop === undefined ? Gesture.Tap() : Gesture.Tap().hitSlop(hitSlop))
         .onBegin(() => {
           pressed.set(withTiming(1, pressInTiming));
         })
@@ -156,7 +198,7 @@ function GesturePressableDepth({
         .onEnd((_event, success) => {
           if (success) runOnJS(handlePress)();
         }),
-    [handlePress, pressed, pressInTiming, pressOutTiming],
+    [handlePress, hitSlop, pressed, pressInTiming, pressOutTiming],
   );
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -181,9 +223,7 @@ function GesturePressableDepth({
         accessibilityState={
           isSelected === undefined ? undefined : { selected: isSelected, checked: isSelected }
         }
-        aria-checked={
-          accessibilityRole === 'radio' || accessibilityRole === 'checkbox' ? isSelected : undefined
-        }
+        aria-checked={hasCheckedState(accessibilityRole) ? isSelected : undefined}
         className={className}
         style={style}
       >
@@ -193,6 +233,9 @@ function GesturePressableDepth({
           className={faceClassName}
           style={[faceStyle, animatedStyle]}
         >
+          {pressedFillClassName === undefined ? null : (
+            <PressedFill pressed={pressed} className={pressedFillClassName} />
+          )}
           {children}
         </NativeWindAnimatedView>
       </View>

@@ -3,6 +3,8 @@
   "feedTitle": "Announcements",
   "filterLabel": "Filter announcements by category",
   "filterAll": "All",
+  "filterNewCount_one": "{{count}} new",
+  "filterNewCount_other": "{{count}} new",
   "category": {
     "info": "Information",
     "training": "Training",
@@ -10,20 +12,29 @@
     "urgent": "Urgent"
   },
   "pinned": "Pinned",
+  "unseen": "New",
   "emptyTitle": "No announcements yet",
-  "emptyBody": "When the team posts an update, you will find it here.",
+  "emptyBody": "When the staff posts an update, you will find it here.",
   "loadFailed": "We could not load the announcements.",
   "retryAction": "Try again",
   "loading": "Loading announcements",
   "pendingForm": {
-    "eyebrow": "Form",
     "deadline": "By {{date}}",
     "answer": "Answer",
     "dismiss": "Not now"
   },
+  "later": {
+    "title": "For later",
+    "waiting": "{{count}} forms for later",
+    "waiting_one": "{{count}} form for later",
+    "waiting_other": "{{count}} forms for later",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "deleteTitle": "Delete this form?",
+    "deleteBody": "You will not be able to answer it any more. The staff will see that you discarded it."
+  },
   "toDo": {
-    "title": "To do",
-    "count": "{{current}} of {{total}}"
+    "title": "Forms and surveys"
   },
   "nextActivity": {
     "title": "Next activity"

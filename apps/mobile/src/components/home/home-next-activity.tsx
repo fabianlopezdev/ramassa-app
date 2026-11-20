@@ -1,5 +1,5 @@
 /**
- * Pròxima activitat on Inici (RAPP-790): the Activitats card for her next
+ * Propera activitat on Inici (RAPP-790): the Activitats card for her next
  * activity, opening the same activity detail. No upcoming activity: the card
  * is not rendered.
  */
@@ -9,20 +9,25 @@ import {
   playerEventCapacityLabel,
   playerEventSignupLabel,
 } from '@/components/events/event-card';
-import { HomeSectionHeader } from '@/components/home/home-section-header';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
 import { MADRID_TIME_ZONE, type PlayerEventOccurrence } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE, resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 
 interface HomeNextActivityProps {
   readonly occurrence: PlayerEventOccurrence | null;
+  /** New to her: not opened and not answered yet (RAPP-821). */
+  readonly isUnseen: boolean;
   readonly languageFontClass: string;
 }
 
-export function HomeNextActivity({ occurrence, languageFontClass }: HomeNextActivityProps) {
+export function HomeNextActivity({
+  occurrence,
+  isUnseen,
+  languageFontClass,
+}: HomeNextActivityProps) {
   const { t, i18n } = useTranslation(['home', 'events']);
   const { language } = useLanguage();
   const { push } = useRouter();
@@ -60,22 +65,21 @@ export function HomeNextActivity({ occurrence, languageFontClass }: HomeNextActi
   const time = timeFormatter.format(startsAt);
   const capacity = playerEventCapacityLabel(occurrence, t);
   const signup = playerEventSignupLabel(occurrence.signup?.state, t);
+  const unseenLabel = isUnseen ? t('home:unseen') : null;
 
   return (
-    <View testID="home-next-activity" className="gap-sm">
-      <HomeSectionHeader title={t('nextActivity.title')} languageFontClass={languageFontClass} />
+    <ScreenSection testID="home-next-activity" title={t('nextActivity.title')}>
       <EventCard
         eventId={occurrence.event.id}
         occurrenceId={occurrence.occurrence_id}
         title={title.text}
-        category={categoryName.text}
-        categoryColor={occurrence.event.category.color}
-        date={date}
-        time={time}
+        startsAt={occurrence.occurrence_starts_at}
+        locale={locale}
         location={occurrence.event.location}
-        capacityLabel={capacity}
         signupLabel={signup}
+        unseenLabel={unseenLabel}
         accessibilityLabel={[
+          unseenLabel,
           t('events:playerOpenEvent', { title: title.text }),
           categoryName.text,
           date,
@@ -89,6 +93,6 @@ export function HomeNextActivity({ occurrence, languageFontClass }: HomeNextActi
         languageFontClass={languageFontClass}
         onOpen={openOccurrence}
       />
-    </View>
+    </ScreenSection>
   );
 }

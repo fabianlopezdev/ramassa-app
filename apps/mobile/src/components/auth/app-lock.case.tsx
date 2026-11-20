@@ -36,6 +36,21 @@ mock.module('@/components/motion/pressable-scale', () => ({
     accessibilityLabel: string;
   }) => createElement('button', { onClick: onPress, 'aria-label': accessibilityLabel }, children),
 }));
+// The shared buttons (RAPP-878), as plain buttons that keep their label and testID.
+const sharedButton = ({
+  label,
+  onPress,
+  testID,
+}: {
+  label: string;
+  onPress: () => void;
+  testID?: string;
+}) =>
+  createElement('button', { onClick: onPress, 'aria-label': label, 'data-testid': testID }, label);
+mock.module('@/components/forms/raised-action-button', () => ({
+  RaisedActionButton: sharedButton,
+}));
+mock.module('@/components/auth/auth-submit-button', () => ({ AuthSubmitButton: sharedButton }));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
 const t = (key: string) => key;
 mock.module('react-i18next', () => ({ useTranslation: () => ({ t }) }));

@@ -8,6 +8,7 @@
 import { TeamSidebarItem } from '@/components/team/team-sidebar-item';
 import { useUnreadMessages } from '@/lib/messaging';
 import { nativeTabsHostProps } from '@/lib/native-tabs-direction';
+import { tabIcons } from '@/lib/tab-icons';
 import { boundedTabSlotStyle } from '@/lib/tab-slot-style';
 import { unreadBadgeProps } from '@/lib/unread-badge';
 import { usePathname } from 'expo-router';
@@ -19,23 +20,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { tokens } from '@ramassa/shared/tokens';
 
 const TABLET_WIDTH = 768;
-const homeIcon = { ios: 'chart.bar.fill', android: 'insights', web: 'insights' } as const;
-const referralsIcon = {
-  ios: 'person.crop.circle.badge.plus',
-  android: 'person_add',
-  web: 'person_add',
-} as const;
-const servicesIcon = {
-  ios: 'square.grid.2x2.fill',
-  android: 'category',
-  web: 'category',
-} as const;
-const eventsIcon = { ios: 'calendar', android: 'calendar_month', web: 'calendar_month' } as const;
-const messagesIcon = {
-  ios: 'bubble.left.and.bubble.right.fill',
-  android: 'chat',
-  web: 'chat',
-} as const;
+const homeIcon = 'chart';
+const referralsIcon = 'user-plus';
+const servicesIcon = 'grid';
+const eventsIcon = 'calendar';
+const messagesIcon = 'chats';
 // A style object, as in the team shell: TabList puts its own row layout on its
 // child, and that wins over classes.
 const sidebarStyle = {
@@ -141,23 +130,23 @@ export default function EntityShellLayout() {
       tintColor={tokens.colors.primary.dark}
     >
       <NativeTabs.Trigger name="entity-home" testID="entity-tab-home">
-        <NativeTabs.Trigger.Icon sf="chart.bar.fill" md="insights" />
+        <NativeTabs.Trigger.Icon src={tabIcons.chart} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('entity.dashboard')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="entity-referrals" testID="entity-tab-referrals">
-        <NativeTabs.Trigger.Icon sf="person.crop.circle.badge.plus" md="person_add" />
+        <NativeTabs.Trigger.Icon src={tabIcons['user-plus']} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('entity.referrals')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="entity-services" testID="entity-tab-services">
-        <NativeTabs.Trigger.Icon sf="square.grid.2x2.fill" md="category" />
+        <NativeTabs.Trigger.Icon src={tabIcons.grid} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('entity.services')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="entity-events" testID="entity-tab-events">
-        <NativeTabs.Trigger.Icon sf="calendar" md="calendar_month" />
+        <NativeTabs.Trigger.Icon src={tabIcons.calendar} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('entity.events')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="entity-messages" testID="entity-tab-messages">
-        <NativeTabs.Trigger.Icon sf="bubble.left.and.bubble.right.fill" md="chat" />
+        <NativeTabs.Trigger.Icon src={tabIcons.chats} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('entity.messages')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Badge hidden={unreadBadge.hidden}>
           {unreadBadge.children}

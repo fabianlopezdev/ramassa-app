@@ -24,7 +24,6 @@ describe('app lock and native modals', () => {
   test('the sheets added by the restructure use the one shared sheet frame (RAPP-812)', async () => {
     const root = `${import.meta.dir}/..`;
     for (const path of [
-      'components/community/community-share-sheet.tsx',
       'components/entity/entity-account-menu.tsx',
       'components/entity/entity-event-sheet.tsx',
     ]) {

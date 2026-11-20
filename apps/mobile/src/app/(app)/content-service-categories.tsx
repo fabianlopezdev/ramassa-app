@@ -10,17 +10,20 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
-import { SERVICE_ICON_SYMBOLS } from '@/components/content/service-labels';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { SERVICE_ICON_NAMES } from '@/components/content/service-labels';
 import { FailureNotice } from '@/components/error-code-line';
+import { Icon } from '@/components/icons/icon';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ActionScreen } from '@/components/layout/screen-action';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { useContentServiceCategories, useServiceCategoryActions } from '@/lib/content-services';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { Alert, Platform, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -98,103 +101,104 @@ export default function ServiceCategoriesScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right']}>
-      <NativeScreenHeader title={t('categoriesTitle')} />
-      <PageWidth className="flex-1">
-        <ScrollView contentContainerClassName="gap-md p-lg" testID="service-categories">
-          <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-            {t('categoriesHelpPhone')}
-          </Text>
-          <PressableScale
+      <ActionScreen
+        action={
+          <AuthSubmitButton
             testID="service-category-new"
-            accessibilityRole="button"
-            accessibilityLabel={t('newCategory')}
+            label={t('newCategory')}
             onPress={() => push('/content-service-category/new' as Href)}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center self-start rounded-md bg-primary px-lg"
+          />
+        }
+      >
+        <NativeScreenHeader title={t('categoriesTitle')} />
+        <PageWidth className="flex-1">
+          <ScrollView
+            contentContainerClassName={screenContentClassName}
+            testID="service-categories"
           >
-            <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-              {t('newCategory')}
+            <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+              {t('categoriesHelpPhone')}
             </Text>
-          </PressableScale>
-          {failure === null ? null : (
-            <FailureNotice
-              code={toAppError(failure).code}
-              message={tErrors(getErrorMessageKey(toAppError(failure).code))}
-            />
-          )}
-          {categories.isPending ? (
-            <AnnouncementFeedSkeleton accessibilityLabel={t('categoriesTitle')} />
-          ) : categories.isError ? (
-            <AnnouncementFeedError
-              message={t('loadFailed')}
-              retryLabel={tErrors('retry')}
-              code={toAppError(categories.error).code}
-              languageFontClass={fontClass}
-              onRetry={() => void categories.refetch()}
-              isLoading={categories.isFetching}
-            />
-          ) : (
-            <View className="gap-sm" accessibilityRole="list">
-              {rows.map((category, index) => {
-                const symbol =
-                  SERVICE_ICON_SYMBOLS[category.icon as keyof typeof SERVICE_ICON_SYMBOLS];
-                return (
-                  <View
-                    key={category.id}
-                    testID={`service-category-row-${category.id}`}
-                    style={continuousCorners}
-                    className="gap-xs rounded-md border border-neutral-200 bg-white px-md py-sm"
-                  >
-                    <View className="flex-row items-center gap-xs">
-                      {symbol === undefined ? null : (
-                        <SymbolView
-                          name={symbol}
-                          size={18}
-                          tintColor={tokens.colors.primary.DEFAULT}
-                        />
-                      )}
-                      <Text
-                        className={`flex-1 text-start text-md font-semibold text-neutral-900 ${fontClass}`}
-                      >
-                        {category.name[language] ?? category.name.ca}
+            {failure === null ? null : (
+              <FailureNotice
+                code={toAppError(failure).code}
+                message={tErrors(getErrorMessageKey(toAppError(failure).code))}
+              />
+            )}
+            {categories.isPending ? (
+              <AnnouncementFeedSkeleton accessibilityLabel={t('categoriesTitle')} />
+            ) : categories.isError ? (
+              <AnnouncementFeedError
+                message={t('loadFailed')}
+                retryLabel={tErrors('retry')}
+                code={toAppError(categories.error).code}
+                languageFontClass={fontClass}
+                onRetry={() => void categories.refetch()}
+                isLoading={categories.isFetching}
+              />
+            ) : (
+              <View className="gap-sm" accessibilityRole="list">
+                {rows.map((category, index) => {
+                  const symbol =
+                    SERVICE_ICON_NAMES[category.icon as keyof typeof SERVICE_ICON_NAMES];
+                  return (
+                    <View
+                      key={category.id}
+                      testID={`service-category-row-${category.id}`}
+                      style={continuousCorners}
+                      className="gap-xs rounded-md border border-neutral-200 bg-white px-md py-sm"
+                    >
+                      <View className="flex-row items-center gap-xs">
+                        {symbol === undefined ? null : (
+                          <Icon
+                            name={symbol}
+                            weight="boldDuotone"
+                            size={tokens.fontSize.lg}
+                            color={tokens.colors.primary.DEFAULT}
+                          />
+                        )}
+                        <Text
+                          className={`flex-1 text-start text-md font-semibold text-neutral-900 ${fontClass}`}
+                        >
+                          {category.name[language] ?? category.name.ca}
+                        </Text>
+                      </View>
+                      <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+                        {`${category.slug} · ${t('fieldsTitle')}: ${category.metadataSchema.fields.length}`}
                       </Text>
+                      <View className="flex-row flex-wrap gap-sm">
+                        <RowAction
+                          testID={`service-category-up-${category.id}`}
+                          label={t('categoryMoveUp')}
+                          onPress={() => move(index, -1)}
+                          isDisabled={index === 0 || reorder.isPending}
+                        />
+                        <RowAction
+                          testID={`service-category-down-${category.id}`}
+                          label={t('categoryMoveDown')}
+                          onPress={() => move(index, 1)}
+                          isDisabled={index === rows.length - 1 || reorder.isPending}
+                        />
+                        <RowAction
+                          testID={`service-category-edit-${category.id}`}
+                          label={t('categoryEdit')}
+                          onPress={() => push(`/content-service-category/${category.id}` as Href)}
+                        />
+                        <RowAction
+                          testID={`service-category-delete-${category.id}`}
+                          label={t('categoryDelete')}
+                          onPress={() => confirmDelete(category)}
+                          isDestructive
+                        />
+                      </View>
                     </View>
-                    <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-                      {`${category.slug} · ${t('fieldsTitle')}: ${category.metadataSchema.fields.length}`}
-                    </Text>
-                    <View className="flex-row flex-wrap gap-sm">
-                      <RowAction
-                        testID={`service-category-up-${category.id}`}
-                        label={t('categoryMoveUp')}
-                        onPress={() => move(index, -1)}
-                        isDisabled={index === 0 || reorder.isPending}
-                      />
-                      <RowAction
-                        testID={`service-category-down-${category.id}`}
-                        label={t('categoryMoveDown')}
-                        onPress={() => move(index, 1)}
-                        isDisabled={index === rows.length - 1 || reorder.isPending}
-                      />
-                      <RowAction
-                        testID={`service-category-edit-${category.id}`}
-                        label={t('categoryEdit')}
-                        onPress={() => push(`/content-service-category/${category.id}` as Href)}
-                      />
-                      <RowAction
-                        testID={`service-category-delete-${category.id}`}
-                        label={t('categoryDelete')}
-                        onPress={() => confirmDelete(category)}
-                        isDestructive
-                      />
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-          )}
-        </ScrollView>
-      </PageWidth>
+                  );
+                })}
+              </View>
+            )}
+          </ScrollView>
+        </PageWidth>
+      </ActionScreen>
     </SafeAreaView>
   );
 }

@@ -1,11 +1,9 @@
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import type { CompressedNativeStoryImage } from '@/lib/native-image-compression-core';
-import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { Image } from 'expo-image';
 import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 const photoStyle = {
@@ -25,7 +23,6 @@ export const StoryImagePreview = memo(function StoryImagePreview({
   readonly onRemove: (uri: string) => void;
 }) {
   const { t } = useTranslation('knowledge');
-  const languageFontClass = useLanguageFontClass();
   const source = useMemo(() => ({ uri: image.uri }), [image.uri]);
   const remove = useCallback(() => onRemove(image.uri), [image.uri, onRemove]);
 
@@ -40,17 +37,12 @@ export const StoryImagePreview = memo(function StoryImagePreview({
         contentFit="cover"
         style={photoStyle}
       />
-      <PressableScale
+      <RaisedActionButton
+        size="compact"
+        label={t('knowledge:imageRemove')}
         accessibilityLabel={t('knowledge:removePhoto', { number })}
         onPress={remove}
-        haptic="tapLight"
-        style={continuousCorners}
-        className="min-h-min items-center justify-center rounded-md border border-neutral-300 px-sm"
-      >
-        <Text className={`text-xs text-neutral-700 ${languageFontClass}`}>
-          {t('knowledge:imageRemove')}
-        </Text>
-      </PressableScale>
+      />
     </View>
   );
 });

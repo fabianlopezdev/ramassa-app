@@ -20,12 +20,14 @@
  * draw: the coach confirms she agreed.
  */
 import { useAppLock } from '@/components/auth/app-lock';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { ConsentRow } from '@/components/authorization/consent-row';
 import { FormWalker } from '@/components/forms/form-walker';
 import { PageWidth } from '@/components/layout/content-width';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SignatureBlockField } from '@/components/onboarding/signature-block-field';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { fontClassForLanguage } from '@/lib/language-font-class';
 import {
@@ -195,7 +197,7 @@ function SigningMode() {
     return (
       <SafeAreaView testID="signing-language" className="flex-1 bg-neutral-50">
         <ScrollView contentContainerClassName="pb-3xl">
-          <PageWidth className="gap-lg p-lg">
+          <PageWidth className={screenContentClassName}>
             <ReturnToCoach onPress={() => void leave()} />
             {/* She may read none of the coach's languages: the question is asked in all five. */}
             <View className="gap-xs">
@@ -211,27 +213,19 @@ function SigningMode() {
               ))}
             </View>
             {SUPPORTED_LANGUAGES.map((candidate) => (
-              <PressableScale
+              <SelectionChoiceCard
                 key={candidate}
                 testID={`signing-language-${candidate}`}
-                accessibilityRole="button"
-                accessibilityLabel={LANGUAGE_NATIVE_NAMES[candidate]}
-                accessibilityLanguage={candidate}
+                label={LANGUAGE_NATIVE_NAMES[candidate]}
+                language={candidate}
+                fontClass={fontClassForLanguage(candidate)}
+                isSelected={false}
                 onPress={() => {
                   setLanguage(candidate);
                   keptLanguage = { startedAt: session.startedAt, language: candidate };
                   setStep('form');
                 }}
-                haptic="selection"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md border border-primary bg-white px-lg"
-              >
-                <Text
-                  className={`text-center text-lg font-bold text-primary-dark ${fontClassForLanguage(candidate)}`}
-                >
-                  {LANGUAGE_NATIVE_NAMES[candidate]}
-                </Text>
-              </PressableScale>
+              />
             ))}
           </PageWidth>
         </ScrollView>
@@ -315,7 +309,7 @@ function SigningMode() {
     return (
       <SafeAreaView testID="signing-blocks" style={direction} className="flex-1 bg-neutral-50">
         <ScrollView scrollEnabled={!isDrawing} contentContainerClassName="pb-3xl">
-          <PageWidth className="gap-lg p-lg">
+          <PageWidth className={screenContentClassName}>
             <ReturnToCoach onPress={() => void leave()} />
             <Text className={`text-start text-md text-neutral-700 ${fontClass}`}>
               {t('signingFor', { name })}
@@ -367,20 +361,12 @@ function SigningMode() {
                 {t('authorizationSignFailed')}
               </Text>
             ) : null}
-            <PressableScale
+            <AuthSubmitButton
               testID="signing-blocks-submit"
-              accessibilityRole="button"
-              accessibilityLabel={t('signingBlocksAction')}
-              isDisabled={isSaving}
+              label={t('signingBlocksAction')}
               onPress={() => void signBlocks()}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-            >
-              <Text className={`text-center text-lg font-bold text-white ${fontClass}`}>
-                {t('signingBlocksAction')}
-              </Text>
-            </PressableScale>
+              disabled={isSaving}
+            />
           </PageWidth>
         </ScrollView>
       </SafeAreaView>

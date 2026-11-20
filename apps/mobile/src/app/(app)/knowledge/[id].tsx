@@ -8,6 +8,7 @@ import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { usePlayerKnowledgeArticle } from '@/lib/player-knowledge';
 import { useStaffCards } from '@/lib/staff-cards';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useMarkArticleSeen } from '@/lib/use-tab-news';
 import { useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useMemo } from 'react';
@@ -28,6 +29,7 @@ export default function PlayerKnowledgeDetailScreen() {
   const { session } = useAuth();
   const query = usePlayerKnowledgeArticle(id);
   const article = query.data;
+  useMarkArticleSeen(article?.id);
   // A team article names its author with her photo; a story keeps the
   // player's first name with her initial (RAPP-639).
   const staffAuthorIds = useMemo(
@@ -66,7 +68,7 @@ export default function PlayerKnowledgeDetailScreen() {
   if (query.isPending && article === undefined) {
     return (
       <>
-        <NativeScreenHeader />
+        <NativeScreenHeader surface="white" />
         <AnnouncementFeedSkeleton accessibilityLabel={t('knowledge:itemLoading')} />
       </>
     );
@@ -74,7 +76,7 @@ export default function PlayerKnowledgeDetailScreen() {
   if (query.isError && article === undefined) {
     return (
       <>
-        <NativeScreenHeader />
+        <NativeScreenHeader surface="white" />
         <AnnouncementFeedError
           message={t('knowledge:playerLoadFailed')}
           retryLabel={t('knowledge:playerRetry')}
@@ -88,7 +90,7 @@ export default function PlayerKnowledgeDetailScreen() {
 
   return (
     <>
-      <NativeScreenHeader />
+      <NativeScreenHeader surface="white" />
       <ScrollView
         testID="knowledge-detail-screen"
         className="flex-1 bg-white"
@@ -116,7 +118,8 @@ export default function PlayerKnowledgeDetailScreen() {
             <KnowledgeArticle
               article={{
                 title: article.title,
-                categoryName: article.category.name,
+                categoryName:
+                  article.content_type === 'participant_story' ? null : article.category.name,
                 authorFirstName: article.author_first_name ?? staffAuthor?.firstName ?? null,
                 authorAvatarKey: staffAuthor?.avatarKey ?? null,
                 body: article.body,

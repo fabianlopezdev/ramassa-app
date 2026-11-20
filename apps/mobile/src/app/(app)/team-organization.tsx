@@ -8,15 +8,19 @@
  * refuses. A locked language (Catalan, when the grant requires it) stays on and
  * the default.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { useRefreshOrganizationBranding } from '@/components/branding/organization-branding-provider';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { ActionScreen } from '@/components/layout/screen-action';
+import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { teamScreens } from '@/lib/account-area';
 import type { PickedPhoto } from '@/lib/content-upload';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { uploadOrganizationLogo } from '@/lib/logo-upload';
 import { resolveMediaImageSource } from '@/lib/media-source';
@@ -27,7 +31,7 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -46,24 +50,6 @@ import {
 
 const HEX = /^#[0-9A-F]{6}$/i;
 const logoStyle = { width: 160, height: 64 } as const;
-
-function Section({ title, children }: { readonly title: string; readonly children: ReactNode }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View
-      style={continuousCorners}
-      className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-    >
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-      >
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
-}
 
 function ColorField({
   testID,
@@ -239,193 +225,179 @@ export default function TeamOrganizationScreen() {
       className="flex-1 bg-neutral-50"
       edges={['left', 'right']}
     >
-      <NativeScreenHeader title={t('tabOrganization')} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerClassName="pb-3xl"
-        keyboardShouldPersistTaps="handled"
+      <ActionScreen
+        action={
+          row !== undefined ? (
+            <AuthSubmitButton
+              testID="organization-save"
+              label={save.isPending ? t('working') : t('save')}
+              onPress={() => {
+                setNotice(null);
+                save.mutate();
+              }}
+              isLoading={save.isPending}
+              disabled={!canSave}
+            />
+          ) : null
+        }
       >
-        <PageWidth className="gap-lg p-lg">
-          <View className="gap-xs">
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>{t('intro')}</Text>
-          </View>
-
-          {row === undefined ? null : (
-            <>
-              <Section title={t('tabOrganization')}>
-                <AuthTextField
-                  testID="organization-name"
-                  label={t('organizationName')}
-                  value={name}
-                  onChangeText={setName}
-                  maxLength={200}
-                  editable={canEditOrganization}
-                />
-                <AuthTextField
-                  testID="organization-email"
-                  label={t('contactEmail')}
-                  value={contactEmail}
-                  onChangeText={setContactEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  maxLength={254}
-                  editable={canEditOrganization}
-                />
-                <AuthTextField
-                  testID="organization-phone"
-                  label={t('contactPhone')}
-                  value={contactPhone}
-                  onChangeText={setContactPhone}
-                  keyboardType="phone-pad"
-                  maxLength={254}
-                  editable={canEditOrganization}
-                />
-              </Section>
-
-              <Section title={t('logo')}>
-                {logoSource === null ? null : (
-                  <Image
-                    testID="organization-logo"
-                    source={logoSource}
-                    style={logoStyle}
-                    contentFit="contain"
-                    accessibilityLabel={row.name}
-                  />
-                )}
-                <PressableScale
-                  testID="organization-choose-logo"
-                  accessibilityRole="button"
-                  accessibilityLabel={t('chooseLogo')}
-                  onPress={() => void pickLogo()}
-                  isDisabled={!canEditBranding}
-                  haptic="tapLight"
-                  style={continuousCorners}
-                  className="min-h-recommended items-center justify-center self-start rounded-md border border-neutral-300 bg-white px-lg"
-                >
-                  <Text
-                    className={`text-center text-md font-bold ${canEditBranding ? 'text-primary-dark' : 'text-neutral-400'} ${fontClass}`}
-                  >
-                    {t('chooseLogo')}
-                  </Text>
-                </PressableScale>
-                <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-                  {t('logoHelp')}
-                </Text>
-                <ColorField
-                  testID="organization-primary-color"
-                  label={t('primaryColor')}
-                  value={primaryColor}
-                  ratio={contrast?.primaryRatio ?? null}
-                  onChange={(value) => {
-                    setNotice(null);
-                    setPrimaryColor(value);
-                  }}
-                  isLocked={!canEditBranding}
-                />
-                <ColorField
-                  testID="organization-secondary-color"
-                  label={t('secondaryColor')}
-                  value={secondaryColor}
-                  ratio={contrast?.secondaryRatio ?? null}
-                  onChange={(value) => {
-                    setNotice(null);
-                    setSecondaryColor(value);
-                  }}
-                  isLocked={!canEditBranding}
-                />
-                <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-                  {t('contrastHelp')}
-                </Text>
-              </Section>
-
-              <Section title={t('languages')}>
-                <View className="flex-row flex-wrap gap-sm">
-                  {SUPPORTED_LANGUAGES.map((language) => (
-                    <ChoiceOption
-                      key={language}
-                      testID={`organization-language-${language}`}
-                      value={language}
-                      label={LANGUAGE_NATIVE_NAMES[language]}
-                      selected={languages.available.includes(language)}
-                      onSelect={(next) => {
-                        if (!canEditOrganization) return;
-                        setNotice(null);
-                        setLanguages((current) =>
-                          toggleOrganizationLanguage(current, next, locked),
-                        );
-                      }}
-                      languageFontClass={fontClass}
-                    />
-                  ))}
-                </View>
-                <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-                  {t('defaultLanguage')}
-                </Text>
-                <View className="flex-row flex-wrap gap-sm">
-                  {languages.available.map((language) => (
-                    <ChoiceOption
-                      key={language}
-                      testID={`organization-default-${language}`}
-                      value={language}
-                      label={LANGUAGE_NATIVE_NAMES[language]}
-                      selected={language === languages.defaultLanguage}
-                      onSelect={(next) => {
-                        if (!canEditOrganization || locked !== null) return;
-                        setNotice(null);
-                        setLanguages((current) => ({ ...current, defaultLanguage: next }));
-                      }}
-                      languageFontClass={fontClass}
-                    />
-                  ))}
-                </View>
-                {locked === null ? null : (
-                  <Text
-                    className={`rounded-md bg-neutral-100 p-md text-start text-sm text-neutral-700 ${fontClass}`}
-                  >
-                    {t('languageLocked')}
-                  </Text>
-                )}
-              </Section>
-
-              <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-                {t('fundingNotice')}
+        <NativeScreenHeader title={t('tabOrganization')} />
+        <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
+          contentContainerClassName="pb-3xl"
+          keyboardShouldPersistTaps="handled"
+        >
+          <PageWidth className={screenContentClassName}>
+            <View className="gap-xs">
+              <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
+                {t('intro')}
               </Text>
-              <PressableScale
-                testID="organization-save"
-                accessibilityRole="button"
-                accessibilityLabel={t('save')}
-                onPress={() => {
-                  setNotice(null);
-                  save.mutate();
-                }}
-                isBusy={save.isPending}
-                isDisabled={!canSave}
-                haptic="tapLight"
-                style={continuousCorners}
-                className={`min-h-recommended items-center justify-center rounded-md px-lg ${
-                  canSave ? 'bg-primary' : 'bg-neutral-200'
-                }`}
-              >
-                <Text
-                  className={`text-center text-md font-bold ${canSave ? 'text-white' : 'text-neutral-500'} ${fontClass}`}
-                >
-                  {save.isPending ? t('working') : t('save')}
+            </View>
+
+            {row === undefined ? null : (
+              <>
+                <ScreenSection title={t('tabOrganization')}>
+                  <AuthTextField
+                    testID="organization-name"
+                    label={t('organizationName')}
+                    value={name}
+                    onChangeText={setName}
+                    maxLength={200}
+                    editable={canEditOrganization}
+                  />
+                  <AuthTextField
+                    testID="organization-email"
+                    label={t('contactEmail')}
+                    value={contactEmail}
+                    onChangeText={setContactEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    maxLength={254}
+                    editable={canEditOrganization}
+                  />
+                  <AuthTextField
+                    testID="organization-phone"
+                    label={t('contactPhone')}
+                    value={contactPhone}
+                    onChangeText={setContactPhone}
+                    keyboardType="phone-pad"
+                    maxLength={254}
+                    editable={canEditOrganization}
+                  />
+                </ScreenSection>
+
+                <ScreenSection title={t('logo')}>
+                  {logoSource === null ? null : (
+                    <Image
+                      testID="organization-logo"
+                      source={logoSource}
+                      style={logoStyle}
+                      contentFit="contain"
+                      accessibilityLabel={row.name}
+                    />
+                  )}
+                  <RaisedActionButton
+                    testID="organization-choose-logo"
+                    size="compact"
+                    label={t('chooseLogo')}
+                    onPress={() => void pickLogo()}
+                    isDisabled={!canEditBranding}
+                  />
+                  <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+                    {t('logoHelp')}
+                  </Text>
+                  <ColorField
+                    testID="organization-primary-color"
+                    label={t('primaryColor')}
+                    value={primaryColor}
+                    ratio={contrast?.primaryRatio ?? null}
+                    onChange={(value) => {
+                      setNotice(null);
+                      setPrimaryColor(value);
+                    }}
+                    isLocked={!canEditBranding}
+                  />
+                  <ColorField
+                    testID="organization-secondary-color"
+                    label={t('secondaryColor')}
+                    value={secondaryColor}
+                    ratio={contrast?.secondaryRatio ?? null}
+                    onChange={(value) => {
+                      setNotice(null);
+                      setSecondaryColor(value);
+                    }}
+                    isLocked={!canEditBranding}
+                  />
+                  <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+                    {t('contrastHelp')}
+                  </Text>
+                </ScreenSection>
+
+                <ScreenSection title={t('languages')}>
+                  <View className="flex-row flex-wrap gap-sm">
+                    {SUPPORTED_LANGUAGES.map((language) => (
+                      <ChoiceOption
+                        key={language}
+                        testID={`organization-language-${language}`}
+                        value={language}
+                        label={LANGUAGE_NATIVE_NAMES[language]}
+                        selected={languages.available.includes(language)}
+                        onSelect={(next) => {
+                          if (!canEditOrganization) return;
+                          setNotice(null);
+                          setLanguages((current) =>
+                            toggleOrganizationLanguage(current, next, locked),
+                          );
+                        }}
+                        languageFontClass={fontClass}
+                      />
+                    ))}
+                  </View>
+                  <FieldLabel>{t('defaultLanguage')}</FieldLabel>
+                  <View className="flex-row flex-wrap gap-sm">
+                    {languages.available.map((language) => (
+                      <ChoiceOption
+                        key={language}
+                        testID={`organization-default-${language}`}
+                        value={language}
+                        label={LANGUAGE_NATIVE_NAMES[language]}
+                        selected={language === languages.defaultLanguage}
+                        onSelect={(next) => {
+                          if (!canEditOrganization || locked !== null) return;
+                          setNotice(null);
+                          setLanguages((current) => ({ ...current, defaultLanguage: next }));
+                        }}
+                        languageFontClass={fontClass}
+                      />
+                    ))}
+                  </View>
+                  {locked === null ? null : (
+                    <Text
+                      className={`rounded-md bg-neutral-100 p-md text-start text-sm text-neutral-700 ${fontClass}`}
+                    >
+                      {t('languageLocked')}
+                    </Text>
+                  )}
+                </ScreenSection>
+
+                <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+                  {t('fundingNotice')}
                 </Text>
-              </PressableScale>
-              {notice === null ? null : (
-                <Text
-                  testID="organization-notice"
-                  accessibilityLiveRegion="polite"
-                  className={`text-start text-md ${notice.ok ? 'text-success' : 'text-error'} ${fontClass}`}
-                >
-                  {notice.text}
-                </Text>
-              )}
-            </>
-          )}
-        </PageWidth>
-      </ScrollView>
+                {notice === null ? null : (
+                  <Text
+                    testID="organization-notice"
+                    accessibilityLiveRegion="polite"
+                    className={`text-start text-md ${notice.ok ? 'text-success' : 'text-error'} ${fontClass}`}
+                  >
+                    {notice.text}
+                  </Text>
+                )}
+              </>
+            )}
+          </PageWidth>
+        </ScrollView>
+      </ActionScreen>
     </SafeAreaView>
   );
 }

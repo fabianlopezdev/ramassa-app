@@ -7,6 +7,7 @@ import { createI18n } from '@ramassa/shared/i18n';
 const push = mock(() => undefined);
 const restart = mock(async () => undefined);
 const storage = new Map<string, unknown>();
+mock.module('@/components/icons/icon', () => ({ Icon: () => null }));
 mock.module('expo-router', () => ({ useRouter: () => ({ push }) }));
 mock.module('expo', () => ({ reloadAppAsync: restart }));
 mock.module('@/lib/storage', () => ({
@@ -97,6 +98,9 @@ mock.module('@/components/motion/pressable-depth', () => ({
 mock.module('@/components/motion/drawn-checkmark', () => ({ DrawnCheckmark: () => null }));
 mock.module('@/components/error-fallback', () => ({ ErrorFallback: () => null }));
 mock.module('expo-router/stack', () => ({ Stack: () => null }));
+mock.module('@/components/motion/screen-entrance', () => ({
+  EntranceColumn: ({ children }: { children: ReactNode }) => children,
+}));
 mock.module('@/components/motion/fade-slide-in', () => ({
   FadeSlideIn: ({ children }: { children: ReactNode }) => createElement('div', null, children),
 }));

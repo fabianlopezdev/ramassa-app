@@ -9,6 +9,7 @@
 import { useFormFieldAppearance } from '@/components/forms/field-appearance';
 import { fieldFocusOwner } from '@/components/forms/field-focus-owner';
 import { FieldFocusRing } from '@/components/forms/field-focus-ring';
+import { FieldLabel } from '@/components/forms/field-label';
 import { composeContinuousTextStyle } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useCallback, useEffect, useId, useMemo, type Ref } from 'react';
@@ -34,6 +35,12 @@ export interface FormTextFieldProps extends TextInputProps {
   readonly hint?: string | null;
   /** Marks the border without repeating a field-level error sentence. */
   readonly isInvalid?: boolean;
+  /**
+   * False only where a visible line right above the field already names it,
+   * such as "Responent a Amina" over the forum reply (RAPP-884). The screen
+   * reader still reads the label on the field.
+   */
+  readonly isLabelVisible?: boolean;
   readonly ref?: Ref<TextInput>;
 }
 
@@ -42,6 +49,7 @@ export function FormTextField({
   errorMessage,
   hint,
   isInvalid,
+  isLabelVisible = true,
   inputWidth = 'full',
   ref,
   style,
@@ -127,9 +135,7 @@ export function FormTextField({
 
   return (
     <View className="gap-xs">
-      <Text className={`text-start text-form font-medium text-neutral-800 ${languageFontClass}`}>
-        {label}
-      </Text>
+      {isLabelVisible ? <FieldLabel>{label}</FieldLabel> : null}
       <View className="relative" style={frameStyle}>
         <TextInput
           ref={ref}

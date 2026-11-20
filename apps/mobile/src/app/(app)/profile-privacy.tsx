@@ -4,13 +4,12 @@
  * photo and video consent.
  */
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
 import { MyConsentsSection } from '@/components/profile/my-consents-section';
 import { ProfileScreenFrame } from '@/components/profile/profile-screen-frame';
 import { ProfileRow, ProfileSection } from '@/components/profile/profile-section';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
@@ -84,7 +83,9 @@ export default function ProfilePrivacyScreen() {
         </>
       )}
 
-      <ProfileSection title={t('sectionData')}>
+      {/* Open: its only content is the call to ask for erasure, a red button
+          as wide as the page (RAPP-898). */}
+      <ProfileSection title={t('sectionData')} isOpen>
         {deletionRequest?.state === 'open' ? (
           // Already asked: say so rather than offering the button again.
           <View className="gap-xs">
@@ -101,18 +102,12 @@ export default function ProfilePrivacyScreen() {
             </Text>
           </View>
         ) : (
-          <PressableScale
+          <RaisedActionButton
             testID="profile-open-delete-data"
-            accessibilityLabel={t('deleteTitle')}
+            label={t('deleteTitle')}
+            tone="danger"
             onPress={handleDelete}
-            haptic="selection"
-            style={continuousCorners}
-            className="min-h-recommended justify-center rounded-md border border-neutral-300 px-lg"
-          >
-            <Text className={`text-center text-md font-medium text-error ${languageFontClass}`}>
-              {t('deleteTitle')}
-            </Text>
-          </PressableScale>
+          />
         )}
       </ProfileSection>
     </ProfileScreenFrame>

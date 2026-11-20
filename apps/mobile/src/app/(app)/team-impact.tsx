@@ -9,15 +9,20 @@
  */
 import { useAppLock } from '@/components/auth/app-lock';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { RaisedCard } from '@/components/layout/raised-card';
+import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
+import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { BarRow, MonthBars, Sparkline } from '@/components/team/impact-charts';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { IMPACT_PERIODS, impactPeriodRange, type ImpactPeriod } from '@/lib/impact-period';
 import { useImpactReport } from '@/lib/team-impact';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -50,33 +55,6 @@ interface Metric {
 
 const percent = (value: number) => `${value.toFixed(2)}%`;
 const count = (value: number) => String(value);
-
-function Section({
-  testID,
-  title,
-  children,
-}: {
-  readonly testID?: string;
-  readonly title: string;
-  readonly children: ReactNode;
-}) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View
-      testID={testID}
-      style={continuousCorners}
-      className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-    >
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-      >
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
-}
 
 function ChartSheet({
   metric,
@@ -113,66 +91,60 @@ function ChartSheet({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-white" testID="impact-chart-sheet">
-        {metric === null ? null : (
-          <ScrollView contentContainerClassName="gap-md p-lg">
-            <Text
-              accessibilityRole="header"
-              className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}
-            >
-              {t('impactChartMonthly', { metric: t(metric.labelKey) })}
-            </Text>
-            {rows.length === 0 ? (
-              <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-                {t('impactChartEmpty')}
+      <NativeModalScope>
+        <SafeAreaView className="flex-1 bg-white" testID="impact-chart-sheet">
+          {metric === null ? null : (
+            <ScrollView contentContainerClassName={screenContentClassName}>
+              <Text
+                accessibilityRole="header"
+                className={`text-start text-2xl font-bold text-neutral-900 ${fontClass}`}
+              >
+                {t('impactChartMonthly', { metric: t(metric.labelKey) })}
               </Text>
-            ) : (
-              <>
-                <MonthBars
-                  bars={rows.map((row) => ({
-                    key: row.monthStart,
-                    label: row.short,
-                    value: row.value,
-                  }))}
-                />
-                <View accessibilityRole="list" className="gap-xs">
-                  {rows.map((row) => (
-                    <View
-                      key={row.monthStart}
-                      testID={`impact-chart-row-${row.monthStart}`}
-                      accessible
-                      accessibilityLabel={`${row.label}: ${metric.format(row.value)}`}
-                      className="flex-row justify-between gap-sm border-b border-neutral-100 py-sm"
-                    >
-                      <Text className={`text-start text-md text-neutral-800 ${fontClass}`}>
-                        {row.label}
-                      </Text>
-                      <Text
-                        className={`text-md font-semibold tabular-nums text-neutral-900 ${fontClass}`}
+              {rows.length === 0 ? (
+                <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
+                  {t('impactChartEmpty')}
+                </Text>
+              ) : (
+                <>
+                  <MonthBars
+                    bars={rows.map((row) => ({
+                      key: row.monthStart,
+                      label: row.short,
+                      value: row.value,
+                    }))}
+                  />
+                  <View accessibilityRole="list" className="gap-xs">
+                    {rows.map((row) => (
+                      <View
+                        key={row.monthStart}
+                        testID={`impact-chart-row-${row.monthStart}`}
+                        accessible
+                        accessibilityLabel={`${row.label}: ${metric.format(row.value)}`}
+                        className="flex-row justify-between gap-sm border-b border-neutral-100 py-sm"
                       >
-                        {metric.format(row.value)}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </>
-            )}
-            <PressableScale
-              testID="impact-chart-close"
-              accessibilityRole="button"
-              accessibilityLabel={t('impactClose')}
-              onPress={onClose}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                {t('impactClose')}
-              </Text>
-            </PressableScale>
-          </ScrollView>
-        )}
-      </SafeAreaView>
+                        <Text className={`text-start text-md text-neutral-800 ${fontClass}`}>
+                          {row.label}
+                        </Text>
+                        <Text
+                          className={`text-md font-semibold tabular-nums text-neutral-900 ${fontClass}`}
+                        >
+                          {metric.format(row.value)}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              )}
+              <RaisedActionButton
+                testID="impact-chart-close"
+                label={t('impactClose')}
+                onPress={onClose}
+              />
+            </ScrollView>
+          )}
+        </SafeAreaView>
+      </NativeModalScope>
     </Modal>
   );
 }
@@ -274,7 +246,7 @@ export default function TeamImpactScreen() {
     <SafeAreaView testID="team-impact" className="flex-1 bg-neutral-50" edges={['left', 'right']}>
       <NativeScreenHeader title={t('impactReportTitle')} />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <View className="gap-xs">
             <Text
               testID="impact-period-range"
@@ -285,9 +257,7 @@ export default function TeamImpactScreen() {
           </View>
 
           <View className="gap-sm">
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('impactPeriod')}
-            </Text>
+            <FieldLabel>{t('impactPeriod')}</FieldLabel>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -307,9 +277,7 @@ export default function TeamImpactScreen() {
             </ScrollView>
             {data === undefined ? null : (
               <>
-                <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-                  {t('filterCategory')}
-                </Text>
+                <FieldLabel>{t('filterCategory')}</FieldLabel>
                 {filterRow(
                   'impact-category',
                   t('filterAllCategories'),
@@ -322,11 +290,7 @@ export default function TeamImpactScreen() {
                 )}
                 {data.availableFilters.entities.length === 0 ? null : (
                   <>
-                    <Text
-                      className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}
-                    >
-                      {t('filterEntity')}
-                    </Text>
+                    <FieldLabel>{t('filterEntity')}</FieldLabel>
                     {filterRow(
                       'impact-entity',
                       t('filterAllEntities'),
@@ -348,11 +312,11 @@ export default function TeamImpactScreen() {
               {t('impactLoadFailed')}
             </Text>
           ) : data === undefined ? null : data.summary.suppressed ? (
-            <Section testID="impact-suppressed" title={t('impactPrivacyTitle')}>
+            <ScreenSection testID="impact-suppressed" title={t('impactPrivacyTitle')}>
               <Text className={`text-start text-md text-neutral-700 ${fontClass}`}>
                 {t('impactPrivacyDescription')}
               </Text>
-            </Section>
+            </ScreenSection>
           ) : (
             <>
               <View
@@ -388,24 +352,21 @@ export default function TeamImpactScreen() {
                       {content}
                     </View>
                   ) : (
-                    <PressableScale
-                      key={metric.key}
-                      testID={`impact-card-${metric.key}`}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${t(metric.labelKey)}: ${metric.value}`}
-                      accessibilityHint={t('impactShowChart')}
-                      onPress={() => setOpenMetric(metric.key)}
-                      haptic="tapLight"
-                      style={[continuousCorners, { width: cardWidth }]}
-                      className={frame}
-                    >
-                      {content}
-                    </PressableScale>
+                    <View key={metric.key} style={{ width: cardWidth }}>
+                      <RaisedCard
+                        testID={`impact-card-${metric.key}`}
+                        accessibilityLabel={`${t(metric.labelKey)}: ${metric.value}`}
+                        accessibilityHint={t('impactShowChart')}
+                        onOpen={() => setOpenMetric(metric.key)}
+                      >
+                        {content}
+                      </RaisedCard>
+                    </View>
                   );
                 })}
               </View>
 
-              <Section testID="impact-categories" title={t('impactCategoryTitle')}>
+              <ScreenSection testID="impact-categories" title={t('impactCategoryTitle')}>
                 {data.categories.map((category) => (
                   <BarRow
                     key={category.categoryId}
@@ -421,9 +382,9 @@ export default function TeamImpactScreen() {
                     }
                   />
                 ))}
-              </Section>
+              </ScreenSection>
 
-              <Section testID="impact-activity" title={t('impactActivityTitle')}>
+              <ScreenSection testID="impact-activity" title={t('impactActivityTitle')}>
                 <View className="flex-row flex-wrap justify-between gap-y-sm">
                   {[
                     {
@@ -474,7 +435,7 @@ export default function TeamImpactScreen() {
                     </View>
                   ))}
                 </View>
-              </Section>
+              </ScreenSection>
 
               {(
                 [
@@ -487,7 +448,7 @@ export default function TeamImpactScreen() {
                   ...buckets.map((bucket) => (bucket.suppressed ? 0 : bucket.count)),
                 );
                 return (
-                  <Section key={testID} testID={testID} title={t(titleKey)}>
+                  <ScreenSection key={testID} testID={testID} title={t(titleKey)}>
                     {buckets.map((bucket) => (
                       <BarRow
                         key={bucket.label}
@@ -496,12 +457,12 @@ export default function TeamImpactScreen() {
                         share={bucket.suppressed ? 0 : bucket.count / highest}
                       />
                     ))}
-                  </Section>
+                  </ScreenSection>
                 );
               })}
 
               {data.entities.length === 0 ? null : (
-                <Section testID="impact-entities" title={t('impactEntitiesTitle')}>
+                <ScreenSection testID="impact-entities" title={t('impactEntitiesTitle')}>
                   {data.entities.map((entity) => (
                     <BarRow
                       key={entity.entityId}
@@ -527,7 +488,7 @@ export default function TeamImpactScreen() {
                       }
                     />
                   ))}
-                </Section>
+                </ScreenSection>
               )}
 
               <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>

@@ -3,6 +3,8 @@
   "feedTitle": "Avisos",
   "filterLabel": "Filtra els avisos per categoria",
   "filterAll": "Tot",
+  "filterNewCount_one": "{{count}} nou",
+  "filterNewCount_other": "{{count}} nous",
   "category": {
     "info": "Informació",
     "training": "Entrenaments",
@@ -10,22 +12,31 @@
     "urgent": "Urgent"
   },
   "pinned": "Destacat",
+  "unseen": "Nou",
   "emptyTitle": "Encara no hi ha avisos",
-  "emptyBody": "Quan l'equip publiqui una novetat, la trobaràs aquí.",
+  "emptyBody": "Quan l'equip tècnic publiqui una novetat, la trobaràs aquí.",
   "loadFailed": "No hem pogut carregar els avisos.",
   "retryAction": "Torna-ho a provar",
   "loading": "Carregant els avisos",
   "pendingForm": {
-    "eyebrow": "Formulari",
     "deadline": "Fins al {{date}}",
     "answer": "Respon",
     "dismiss": "Ara no"
   },
+  "later": {
+    "title": "Per a més tard",
+    "waiting": "{{count}} formularis per a més tard",
+    "waiting_one": "{{count}} formulari per a més tard",
+    "waiting_other": "{{count}} formularis per a més tard",
+    "delete": "Elimina",
+    "cancel": "Cancel·la",
+    "deleteTitle": "Vols eliminar aquest formulari?",
+    "deleteBody": "Ja no el podràs respondre. L'equip tècnic veurà que l'has descartat."
+  },
   "toDo": {
-    "title": "Per fer",
-    "count": "{{current}} de {{total}}"
+    "title": "Formularis i enquestes"
   },
   "nextActivity": {
-    "title": "Pròxima activitat"
+    "title": "Propera activitat"
   }
 }

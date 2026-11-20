@@ -11,61 +11,26 @@
 import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-load-failure';
 import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { PageWidth } from '@/components/layout/content-width';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { RaisedCard } from '@/components/layout/raised-card';
+import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { BarRow, MonthBars, Sparkline } from '@/components/team/impact-charts';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useEntityDashboard } from '@/lib/entity-portal';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
-import { useMemo, type ReactNode } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { I18nManager, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
-import { tokens } from '@ramassa/shared/tokens';
 
 const TABLET_WIDTH = 768;
 
-// The forward chevron of the app's other rows that open a detail
-// (attendance-occurrence-row). SF Symbols mirror by themselves; the Material
-// name is picked by direction.
-const forwardSymbol = {
-  ios: 'chevron.forward',
-  android: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',
-  web: I18nManager.isRTL ? 'chevron_left' : 'chevron_right',
-} as const;
-
 const percent = (value: number | null) => (value === null ? '' : `${value.toFixed(2)}%`);
 
-function Section({
-  testID,
-  title,
-  children,
-}: {
-  readonly testID?: string;
-  readonly title: string;
-  readonly children: ReactNode;
-}) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View
-      testID={testID}
-      style={continuousCorners}
-      className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-    >
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-      >
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
-}
-
-export default function EntityHomeScreen() {
+function EntityHomeScreen() {
   const { t } = useTranslation('nav');
   const { t: tEntity, i18n } = useTranslation('entity-management');
   // One status vocabulary with the Referrals tab (RAPP-804).
@@ -127,16 +92,16 @@ export default function EntityHomeScreen() {
       edges={['top', 'left', 'right']}
     >
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <EntityScreenHeader title={t('entity.dashboard')} intro={tEntity('dashboardIntro')} />
           {hasLoadFailed(dashboard) ? <EntityLoadFailure query={dashboard} /> : null}
 
           {impact === undefined ? null : impact.suppressed ? (
-            <Section testID="entity-impact-suppressed" title={tEntity('privacyTitle')}>
+            <ScreenSection testID="entity-impact-suppressed" title={tEntity('privacyTitle')}>
               <Text className={`text-start text-md text-neutral-700 ${fontClass}`}>
                 {tEntity('privacyBody')}
               </Text>
-            </Section>
+            </ScreenSection>
           ) : (
             <>
               <View className="flex-row flex-wrap justify-between gap-y-sm">
@@ -163,7 +128,7 @@ export default function EntityHomeScreen() {
               </View>
 
               {trend.length === 0 ? null : (
-                <Section testID="entity-monthly" title={tEntity('monthlyTitle')}>
+                <ScreenSection testID="entity-monthly" title={tEntity('monthlyTitle')}>
                   <MonthBars
                     bars={trend.map((point) => ({
                       key: point.monthStart,
@@ -190,13 +155,13 @@ export default function EntityHomeScreen() {
                       </View>
                     ))}
                   </View>
-                </Section>
+                </ScreenSection>
               )}
             </>
           )}
 
           {data === undefined ? null : (
-            <Section testID="entity-tracking" title={tEntity('trackingTitle')}>
+            <ScreenSection testID="entity-tracking" title={tEntity('trackingTitle')} isLast>
               {data.tracking.length === 0 ? (
                 <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
                   {tEntity('trackingEmpty')}
@@ -205,51 +170,41 @@ export default function EntityHomeScreen() {
                 data.tracking.map((row) => {
                   const name = `${row.referredFirstName} ${row.referredLastName}`.trim();
                   return (
-                    <PressableScale
+                    <RaisedCard
                       key={row.referralId}
                       testID={`entity-tracking-${row.referralId}`}
-                      accessibilityRole="button"
                       accessibilityLabel={`${tReferrals('open')}: ${name}`}
-                      onPress={() => push(`/entity-referral/${row.referralId}` as Href)}
-                      haptic="selection"
-                      style={continuousCorners}
-                      className="min-h-recommended flex-row items-center gap-md rounded-md py-sm"
+                      onOpen={() => push(`/entity-referral/${row.referralId}` as Href)}
                     >
-                      <View className="flex-1 gap-xs">
-                        <View className="flex-row flex-wrap items-center justify-between gap-sm">
-                          <Text
-                            className={`flex-1 text-start text-md font-bold text-neutral-900 ${fontClass}`}
-                          >
-                            {name}
-                          </Text>
-                          <Text className={`text-sm font-semibold text-neutral-700 ${fontClass}`}>
-                            {tReferrals(`status.${row.status}`)}
-                          </Text>
-                        </View>
-                        <BarRow
-                          label={[
-                            `${tEntity('present')}: ${row.attendancePresentCount}`,
-                            `${tEntity('absent')}: ${row.attendanceAbsentCount}`,
-                            `${tEntity('excused')}: ${row.attendanceExcusedCount}`,
-                          ].join(' · ')}
-                          value={percent(row.attendanceRate)}
-                          share={row.attendanceRate / 100}
-                        />
+                      <View className="flex-row flex-wrap items-center justify-between gap-sm">
+                        <Text
+                          className={`flex-1 text-start text-md font-bold text-neutral-900 ${fontClass}`}
+                        >
+                          {name}
+                        </Text>
+                        <Text className={`text-sm font-semibold text-neutral-700 ${fontClass}`}>
+                          {tReferrals(`status.${row.status}`)}
+                        </Text>
                       </View>
-                      <SymbolView
-                        accessible={false}
-                        name={forwardSymbol}
-                        size={tokens.fontSize.lg}
-                        tintColor={tokens.colors.neutral[500]}
+                      <BarRow
+                        label={[
+                          `${tEntity('present')}: ${row.attendancePresentCount}`,
+                          `${tEntity('absent')}: ${row.attendanceAbsentCount}`,
+                          `${tEntity('excused')}: ${row.attendanceExcusedCount}`,
+                        ].join(' · ')}
+                        value={percent(row.attendanceRate)}
+                        share={row.attendanceRate / 100}
                       />
-                    </PressableScale>
+                    </RaisedCard>
                   );
                 })
               )}
-            </Section>
+            </ScreenSection>
           )}
         </PageWidth>
       </ScrollView>
     </SafeAreaView>
   );
 }
+
+export default withScreenEntrance('entity-home', EntityHomeScreen);

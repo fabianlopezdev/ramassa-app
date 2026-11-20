@@ -1,17 +1,17 @@
 {
   "rationaleTitle": "هل تريدين تلقي التنبيهات؟",
-  "rationaleBody": "سنخبرك عند وجود نشاط جديد أو تغيير في المواعيد أو رسالة من الفريق. لا شيء غير ذلك.",
+  "rationaleBody": "سنخبرك عند وجود نشاط جديد أو تغيير في المواعيد أو رسالة من الطاقم الفني. لا شيء غير ذلك.",
   "rationaleAccept": "نعم، فعّليها",
   "rationaleDecline": "ليس الآن",
   "eventFallbackBody": "اضغطي لعرض النشاط.",
   "announcementFallbackBody": "اضغطي لقراءة الإعلان.",
-  "messageTitle": "رسالة جديدة من الفريق",
-  "messageBody": "افتحي Ramassà لقراءتها.",
+  "messageTitle": "رسالة جديدة من الطاقم الفني",
+  "messageBody": "افتحي تطبيق AE Ramassà لقراءتها.",
   "forumFlagTitle": "محتوى جديد مُبلَّغ عنه في المنتدى",
   "forumFlagBody": "افتحي الإشراف على المنتدى لمراجعته.",
   "referralUpdateTitle": "تحديث جديد لإحالة",
   "referralUpdateBody": "افتحي سجل المشاركة لمراجعته.",
   "mentoringUpdateTitle": "تحديث بشأن الإرشاد",
-  "mentoringUpdateBody": "افتحي Ramassà لرؤية اليوم والوقت.",
+  "mentoringUpdateBody": "افتحي تطبيق AE Ramassà لرؤية اليوم والوقت.",
   "customFormFallbackBody": "اضغطي للإجابة عليه."
 }

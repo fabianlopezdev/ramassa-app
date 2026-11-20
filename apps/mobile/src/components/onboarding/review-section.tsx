@@ -1,29 +1,29 @@
-import { BrandSymbol, DataIcon } from '@/components/forms/data-icon';
+import { BrandIcon, DataIcon } from '@/components/forms/data-icon';
 import { GlassIconSurface } from '@/components/forms/glass-icon-surface';
+import type { IconName } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import type { ProfileRowProps } from '@/components/profile/profile-section';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import type { SymbolViewProps } from 'expo-symbols';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
-const symbols = {
-  person: { ios: 'person', android: 'person', web: 'person' },
-  calendar: { ios: 'calendar', android: 'calendar_today', web: 'calendar_today' },
-  location: { ios: 'mappin.and.ellipse', android: 'location_on', web: 'location_on' },
-  globe: { ios: 'globe', android: 'language', web: 'language' },
-  conversation: { ios: 'bubble', android: 'chat_bubble', web: 'chat_bubble' },
-  document: { ios: 'doc.text', android: 'description', web: 'description' },
-  phone: { ios: 'phone', android: 'call', web: 'call' },
-  home: { ios: 'house', android: 'home', web: 'home' },
-  entity: { ios: 'building.2', android: 'apartment', web: 'apartment' },
-  people: { ios: 'person.2', android: 'group', web: 'group' },
-  clothing: { ios: 'tshirt', android: 'checkroom', web: 'checkroom' },
-  shoes: { ios: 'shoe', android: 'footprint', web: 'footprint' },
-  support: { ios: 'heart', android: 'favorite', web: 'favorite' },
-  edit: { ios: 'pencil', android: 'edit', web: 'edit' },
-} as const satisfies Record<string, SymbolViewProps['name']>;
+const icons = {
+  person: 'user',
+  calendar: 'calendar',
+  location: 'map-point',
+  globe: 'globe',
+  conversation: 'chat',
+  document: 'document',
+  phone: 'phone',
+  home: 'home',
+  entity: 'buildings',
+  people: 'users',
+  clothing: 'shirt',
+  shoes: 'walking',
+  support: 'heart',
+  edit: 'pen',
+} as const satisfies Record<string, IconName>;
 
 const headingStyle = { flexBasis: tokens.formField.width.medium } as const;
 
@@ -47,7 +47,7 @@ export function ReviewEditAction({
       className="min-h-recommended min-w-recommended items-center justify-center self-start rounded-full"
     >
       <GlassIconSurface>
-        <BrandSymbol name={symbols.edit} />
+        <BrandIcon name={icons.edit} />
       </GlassIconSurface>
     </PressableScale>
   );
@@ -89,7 +89,7 @@ export function ReviewRow({ label, value, icon = 'document' }: ProfileRowProps) 
       accessibilityLabel={`${label}: ${value}`}
       className="flex-row items-center gap-md border-b border-neutral-200 py-md"
     >
-      <DataIcon name={symbols[icon]} />
+      <DataIcon name={icons[icon]} />
       <View className="min-w-0 flex-1 gap-xs">
         <Text className={`text-start text-form text-neutral-700 ${fontClass}`}>{label}</Text>
         <Text

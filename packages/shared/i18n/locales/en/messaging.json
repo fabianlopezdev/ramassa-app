@@ -1,9 +1,9 @@
 {
-  "playerTitle": "Chat with the team",
+  "playerTitle": "Chat with the staff",
   "entityTitle": "Chat with the team",
   "staffTitle": "Chat",
   "emptyTitle": "No messages yet",
-  "emptyBody": "Write to the team whenever you need help.",
+  "emptyBody": "Write to the staff whenever you need help.",
   "composerPlaceholder": "Write a message",
   "send": "Send",
   "sendError": "Not sent. Check your connection and try again.",

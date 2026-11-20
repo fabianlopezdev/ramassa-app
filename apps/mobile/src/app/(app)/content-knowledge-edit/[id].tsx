@@ -28,8 +28,9 @@ import { KNOWLEDGE_TYPE_KEYS } from '@/components/content/knowledge-labels';
 import { MultilingualField } from '@/components/content/multilingual-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { FieldLabel } from '@/components/forms/field-label';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { KnowledgeArticle } from '@/components/knowledge/knowledge-article';
-import { PressableScale } from '@/components/motion/pressable-scale';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { DraftPreviewSheet } from '@/components/preview/draft-preview-sheet';
 import { PUBLISH_MODES } from '@/lib/announcement-draft';
@@ -103,15 +104,6 @@ const MODE_KEYS = { draft: 'modeDraft', now: 'modeNow', scheduled: 'modeSchedule
 const STAFF_TYPES = KNOWLEDGE_CONTENT_TYPES.filter((type) => type !== 'participant_story');
 
 type FormError = AppErrorCode | 'invalid';
-
-function SectionLabel({ children }: { readonly children: string }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-      {children}
-    </Text>
-  );
-}
 
 function KnowledgeForm({
   articleId,
@@ -335,7 +327,7 @@ function KnowledgeForm({
       )}
 
       <View className="gap-xs">
-        <SectionLabel>{t('fieldCategory')}</SectionLabel>
+        <FieldLabel>{t('fieldCategory')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {categories.map((category) => (
             <ChoiceOption
@@ -351,7 +343,7 @@ function KnowledgeForm({
         </View>
       </View>
       <View className="gap-xs">
-        <SectionLabel>{t('fieldContentType')}</SectionLabel>
+        <FieldLabel>{t('fieldContentType')}</FieldLabel>
         {isStory ? (
           <Text className={`text-start text-md text-neutral-800 ${fontClass}`}>
             {t('typeParticipantStory')}
@@ -396,24 +388,12 @@ function KnowledgeForm({
         onRemove={removeSourceBlock}
         onAdd={addBlock}
       />
-      <PressableScale
+      <RaisedActionButton
         testID="knowledge-generate"
-        accessibilityRole="button"
-        accessibilityLabel={isGenerating ? t('generatingTranslations') : t('generateTranslations')}
+        label={isGenerating ? t('generatingTranslations') : t('generateTranslations')}
         onPress={() => void generate()}
-        isBusy={isGenerating}
-        isDisabled={!canGenerate}
-        haptic="tapLight"
-        className={`min-h-recommended items-center justify-center rounded-md border px-lg ${
-          canGenerate ? 'border-primary bg-white' : 'border-neutral-200 bg-neutral-100'
-        }`}
-      >
-        <Text
-          className={`text-center text-md font-bold ${canGenerate ? 'text-primary-dark' : 'text-neutral-500'} ${fontClass}`}
-        >
-          {isGenerating ? t('generatingTranslations') : t('generateTranslations')}
-        </Text>
-      </PressableScale>
+        isDisabled={!canGenerate || isGenerating}
+      />
       <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
         {t('translationHelp')}
       </Text>
@@ -452,7 +432,7 @@ function KnowledgeForm({
       />
 
       <View className="gap-sm">
-        <SectionLabel>{t('modeLabel')}</SectionLabel>
+        <FieldLabel>{t('modeLabel')}</FieldLabel>
         {canPublish ? (
           <>
             <View className="flex-row flex-wrap gap-sm">
@@ -493,19 +473,12 @@ function KnowledgeForm({
         )}
       </View>
 
-      <PressableScale
+      <RaisedActionButton
         testID="knowledge-preview"
-        accessibilityRole="button"
-        accessibilityLabel={tCommon('previewAction')}
+        label={tCommon('previewAction')}
         onPress={() => setIsPreviewOpen(true)}
         isDisabled={form.title.trim().length === 0}
-        haptic="tapLight"
-        className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-      >
-        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-          {tCommon('previewAction')}
-        </Text>
-      </PressableScale>
+      />
       <DraftPreviewSheet
         visible={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}

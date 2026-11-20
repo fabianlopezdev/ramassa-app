@@ -12,10 +12,9 @@ import {
 } from '@/components/announcements/feed-states';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { RaisedCard } from '@/components/layout/raised-card';
 import { useServiceReviewQueue } from '@/lib/content-service-reviews';
 import { useContentServiceCategories } from '@/lib/content-services';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 import {
@@ -88,17 +87,11 @@ function ReviewRow({
   const kind = t(KIND_KEYS[row.kind]);
   const detail = [categoryName, row.providerName, row.contactName].filter(Boolean).join(' · ');
   return (
-    <PressableScale
+    <RaisedCard
       testID={`content-review-${row.kind}-${row.id}`}
-      accessibilityRole="button"
       accessibilityLabel={`${row.title.ca}, ${kind}, ${detail}, ${date}`}
-      onPress={() => onOpen(reviewKey(row))}
-      haptic="selection"
+      onOpen={() => onOpen(reviewKey(row))}
       isSelected={isSelected}
-      style={continuousCorners}
-      className={`min-h-recommended justify-center gap-xs rounded-md border bg-white px-md py-sm ${
-        isSelected ? 'border-primary' : 'border-neutral-200'
-      }`}
     >
       <View className="flex-row flex-wrap items-baseline justify-between gap-sm">
         <Text className={`flex-1 text-start text-md font-bold text-neutral-900 ${fontClass}`}>
@@ -112,7 +105,7 @@ function ReviewRow({
       <Text className={`text-start text-sm tabular-nums text-neutral-600 ${fontClass}`}>
         {date}
       </Text>
-    </PressableScale>
+    </RaisedCard>
   );
 }
 

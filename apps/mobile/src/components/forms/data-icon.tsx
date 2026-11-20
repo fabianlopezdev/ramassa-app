@@ -1,10 +1,12 @@
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+import { Icon, type IconName, type IconWeight } from '@/components/icons/icon';
 import { cssInterop } from 'nativewind';
 import { View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
-const ThemedSymbol = cssInterop(SymbolView, {
-  className: { target: false, nativeStyleToProp: { color: 'tintColor' } },
+// The icon takes its colour from a text colour class, so it follows the
+// organization's brand like the text beside it.
+const ThemedIcon = cssInterop(Icon, {
+  className: { target: false, nativeStyleToProp: { color: true } },
 });
 
 const circleStyle = {
@@ -13,24 +15,22 @@ const circleStyle = {
   borderRadius: tokens.radius.full,
   flexShrink: 0,
 } as const;
-export function BrandSymbol({
+
+/** An icon in the brand's dark tone. */
+export function BrandIcon({
   name,
   size = tokens.spacing.lg,
   weight,
-}: Pick<SymbolViewProps, 'name' | 'size' | 'weight'>) {
-  return (
-    <ThemedSymbol
-      accessible={false}
-      name={name}
-      size={size}
-      weight={weight}
-      className="text-primary-dark"
-    />
-  );
+}: {
+  readonly name: IconName;
+  readonly size?: number;
+  readonly weight?: IconWeight;
+}) {
+  return <ThemedIcon name={name} size={size} weight={weight} className="text-primary-dark" />;
 }
 
 /** Shared readable data/privacy icon with a soft tint from the dashboard palette. */
-export function DataIcon({ name }: { readonly name: SymbolViewProps['name'] }) {
+export function DataIcon({ name }: { readonly name: IconName }) {
   return (
     <View
       style={circleStyle}
@@ -38,7 +38,7 @@ export function DataIcon({ name }: { readonly name: SymbolViewProps['name'] }) {
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
-      <BrandSymbol name={name} />
+      <BrandIcon name={name} />
     </View>
   );
 }

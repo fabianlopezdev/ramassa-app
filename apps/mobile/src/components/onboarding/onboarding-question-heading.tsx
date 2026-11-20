@@ -1,7 +1,7 @@
 /** A visual label for tap-first onboarding questions. */
 
+import { Icon, type IconName } from '@/components/icons/icon';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -10,7 +10,7 @@ export function OnboardingQuestionHeading({
   symbol,
 }: {
   readonly label: string;
-  readonly symbol?: SymbolViewProps['name'];
+  readonly symbol?: IconName;
 }) {
   const languageFontClass = useLanguageFontClass();
 
@@ -24,12 +24,7 @@ export function OnboardingQuestionHeading({
           importantForAccessibility="no-hide-descendants"
           className="h-lg w-lg items-center justify-center rounded-full bg-primary-light"
         >
-          <SymbolView
-            accessible={false}
-            name={symbol}
-            size={tokens.fontSize.lg}
-            tintColor={tokens.colors.primary.dark}
-          />
+          <Icon name={symbol} size={tokens.fontSize.lg} color={tokens.colors.primary.dark} />
         </View>
       )}
       <Text

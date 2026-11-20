@@ -390,6 +390,43 @@ export async function dismissCustomForm(client: Client, responseId: string): Pro
   if (error) throw databaseError(error);
 }
 
+/** "Ara no" (RAPP-833): the form leaves Per fer and waits in her later list, still answerable. */
+export async function putOffCustomForm(client: Client, responseId: string): Promise<void> {
+  const { error } = await client.rpc('put_off_custom_form', { p_response_id: responseId });
+  if (error) throw databaseError(error);
+}
+
+/** The asks she put off for later, by response id (RAPP-833). */
+export async function fetchMyPutOffCustomFormIds(client: Client): Promise<readonly string[]> {
+  const { data, error } = await client.rpc('my_put_off_custom_forms');
+  if (error) throw databaseError(error);
+  return z.array(z.uuid()).catch([]).parse(data);
+}
+
+export interface CustomFormsByPlace {
+  /** In Per fer. Undefined while her forms have not loaded. */
+  readonly waiting: readonly PendingCustomForm[] | undefined;
+  /** Put off with "Ara no": in her later list. */
+  readonly later: readonly PendingCustomForm[];
+}
+
+/**
+ * Her open forms by where they wait (RAPP-833). When the put-off list is not
+ * known (not loaded, or a server from before it existed), every form waits in
+ * Per fer, as it did before.
+ */
+export function splitCustomFormsByPlace(
+  forms: readonly PendingCustomForm[] | undefined,
+  putOffIds: readonly string[] | undefined,
+): CustomFormsByPlace {
+  if (forms === undefined) return { waiting: undefined, later: [] };
+  const putOff = new Set(putOffIds ?? []);
+  return {
+    waiting: forms.filter((form) => !putOff.has(form.responseId)),
+    later: forms.filter((form) => putOff.has(form.responseId)),
+  };
+}
+
 // The team ---------------------------------------------------------------------------------------------
 
 export const CUSTOM_FORM_RESPONSE_STATUSES = ['pending', 'done', 'dismissed'] as const;

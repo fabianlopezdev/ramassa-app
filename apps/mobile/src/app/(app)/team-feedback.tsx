@@ -6,10 +6,15 @@
  * inbox answers in the chat it opened.
  */
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { Badge } from '@/components/layout/badge';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { nextFeedbackStatuses } from '@/lib/feedback-status';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -98,19 +103,13 @@ function SubmissionCard({
           </Text>
         </View>
         <View className="flex-row flex-wrap gap-xs">
-          <View className="rounded-full bg-neutral-100 px-sm py-xs">
-            <Text className={`text-sm font-semibold text-neutral-800 ${fontClass}`}>
-              {t(TYPE_KEYS[submission.type])}
-            </Text>
-          </View>
-          <View className="rounded-full border border-neutral-300 px-sm py-xs">
-            <Text
-              testID={`feedback-status-${submission.id}`}
-              className={`text-sm font-semibold text-neutral-800 ${fontClass}`}
-            >
-              {t(STATUS_KEYS[submission.status])}
-            </Text>
-          </View>
+          <Badge label={t(TYPE_KEYS[submission.type])} languageFontClass={fontClass} />
+          <Badge
+            testID={`feedback-status-${submission.id}`}
+            label={t(STATUS_KEYS[submission.status])}
+            tone="outline"
+            languageFontClass={fontClass}
+          />
         </View>
       </View>
       <Text selectable className={`text-start text-md text-neutral-900 ${fontClass}`}>
@@ -128,11 +127,11 @@ function SubmissionCard({
       )}
       <View className="flex-row flex-wrap gap-sm">
         {nextFeedbackStatuses(submission.status).map((status) => (
-          <PressableScale
+          <RaisedActionButton
             key={status}
             testID={`feedback-${status}-${submission.id}`}
-            accessibilityRole="button"
-            accessibilityLabel={t(ACTION_KEYS[status])}
+            size="compact"
+            label={t(ACTION_KEYS[status])}
             onPress={() =>
               transition.mutate(
                 { submissionId: submission.id, status },
@@ -148,31 +147,15 @@ function SubmissionCard({
                 },
               )
             }
-            isBusy={transition.isPending && transition.variables?.status === status}
             isDisabled={transition.isPending}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-md"
-          >
-            <Text className={`text-center text-md font-semibold text-primary-dark ${fontClass}`}>
-              {t(ACTION_KEYS[status])}
-            </Text>
-          </PressableScale>
+          />
         ))}
         {canChat ? (
-          <PressableScale
+          <AuthSubmitButton
             testID={`feedback-chat-${submission.id}`}
-            accessibilityRole="button"
-            accessibilityLabel={t('respondChat')}
+            label={t('respondChat')}
             onPress={() => push(`/messages/${submission.conversationId}` as Href)}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md bg-primary px-md"
-          >
-            <Text className={`text-center text-md font-semibold text-white ${fontClass}`}>
-              {t('respondChat')}
-            </Text>
-          </PressableScale>
+          />
         ) : null}
       </View>
       {errorCode === null ? null : (
@@ -227,20 +210,14 @@ export default function TeamFeedbackScreen() {
     <SafeAreaView testID="team-feedback" className="flex-1 bg-neutral-50" edges={['left', 'right']}>
       <NativeScreenHeader title={t('inboxTitle')} />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <View className="gap-xs">
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
               {t('inboxIntro')}
             </Text>
           </View>
           {(monthly.data ?? []).length === 0 ? null : (
-            <View className="gap-sm">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-              >
-                {t('monthlyTitle')}
-              </Text>
+            <ScreenSection title={t('monthlyTitle')}>
               <View testID="team-feedback-monthly" className="flex-row flex-wrap gap-sm">
                 {(monthly.data ?? []).slice(0, MONTHS_SHOWN).map((item) => (
                   <View
@@ -264,12 +241,10 @@ export default function TeamFeedbackScreen() {
                   </View>
                 ))}
               </View>
-            </View>
+            </ScreenSection>
           )}
           <View className="gap-sm">
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('filterType')}
-            </Text>
+            <FieldLabel>{t('filterType')}</FieldLabel>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View className="flex-row gap-sm">
                 {(['all', ...FEEDBACK_TYPES] as const).map((candidate) => (
@@ -285,9 +260,7 @@ export default function TeamFeedbackScreen() {
                 ))}
               </View>
             </ScrollView>
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('filterStatus')}
-            </Text>
+            <FieldLabel>{t('filterStatus')}</FieldLabel>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View className="flex-row gap-sm">
                 {(['all', ...FEEDBACK_STATUSES] as const).map((candidate) => (

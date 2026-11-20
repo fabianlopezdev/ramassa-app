@@ -9,7 +9,11 @@ import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-loa
 import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { EntityServiceStatus } from '@/components/entity/entity-service-status';
 import { PageWidth } from '@/components/layout/content-width';
+import { RaisedCard } from '@/components/layout/raised-card';
+import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { confirmDelete } from '@/lib/confirm-delete';
 import { continuousCorners } from '@/lib/continuous-corners';
 import {
@@ -68,7 +72,7 @@ function CardButton({
   );
 }
 
-export default function EntityServicesScreen() {
+function EntityServicesScreen() {
   const { t, i18n } = useTranslation('entity-services');
   const { t: tErrors } = useTranslation('errors');
   const { t: tProfile } = useTranslation('profile');
@@ -103,7 +107,7 @@ export default function EntityServicesScreen() {
       edges={['top', 'left', 'right']}
     >
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <EntityScreenHeader title={t('title')} intro={t('intro')} />
           <View className="self-start">
             <CardButton
@@ -125,29 +129,15 @@ export default function EntityServicesScreen() {
           )}
 
           {notifications.length === 0 ? null : (
-            <View
-              testID="entity-service-decisions"
-              style={continuousCorners}
-              className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-            >
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-              >
-                {t('decisionTitle')}
-              </Text>
+            <ScreenSection testID="entity-service-decisions" title={t('decisionTitle')}>
               {notifications.map((notification) => (
-                <PressableScale
+                <RaisedCard
                   key={notification.id}
                   testID={`entity-service-decision-${notification.id}`}
-                  accessibilityRole="button"
                   accessibilityLabel={`${t('decisionOpen')}: ${
                     notification.serviceTitle[language] ?? notification.serviceTitle.ca
                   }`}
-                  onPress={() => open(notification.serviceId)}
-                  haptic="selection"
-                  style={continuousCorners}
-                  className="gap-xs rounded-md bg-neutral-50 p-md"
+                  onOpen={() => open(notification.serviceId)}
                 >
                   <View className="flex-row flex-wrap items-center justify-between gap-sm">
                     <Text
@@ -169,9 +159,9 @@ export default function EntityServicesScreen() {
                       {notification.comment}
                     </Text>
                   )}
-                </PressableScale>
+                </RaisedCard>
               ))}
-            </View>
+            </ScreenSection>
           )}
 
           {hasLoadFailed(services) ? (
@@ -265,3 +255,5 @@ export default function EntityServicesScreen() {
     </SafeAreaView>
   );
 }
+
+export default withScreenEntrance('entity-services', EntityServicesScreen);

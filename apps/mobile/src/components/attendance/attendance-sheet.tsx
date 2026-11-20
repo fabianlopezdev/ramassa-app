@@ -26,7 +26,10 @@ import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_PARTICIPANTS: readonly AttendanceParticipant[] = [];
-const listContentStyle = { paddingBottom: tokens.spacing['3xl'] } as const;
+const listContentStyle = {
+  paddingTop: tokens.spacing.sm,
+  paddingBottom: tokens.spacing['3xl'],
+} as const;
 const keyExtractor = (participant: AttendanceParticipant) => participant.id;
 
 /**

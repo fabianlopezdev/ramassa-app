@@ -4,9 +4,12 @@
  * when it closes and how many answered. Managers start a new survey here;
  * results holders open a survey's attributed answers.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { RaisedCard } from '@/components/layout/raised-card';
+import { ActionScreen } from '@/components/layout/screen-action';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { teamScreens } from '@/lib/account-area';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { surveyPhase, type SurveyPhase } from '@/lib/survey-phase';
@@ -73,17 +76,13 @@ function SurveyRow({
     );
   }
   return (
-    <PressableScale
+    <RaisedCard
       testID={`team-survey-${survey.id}`}
-      accessibilityRole="button"
       accessibilityLabel={`${title}, ${t('results')}`}
-      onPress={() => push(`/team-survey-results/${survey.id}` as Href)}
-      haptic="selection"
-      style={continuousCorners}
-      className={frame}
+      onOpen={() => push(`/team-survey-results/${survey.id}` as Href)}
     >
       {content}
-    </PressableScale>
+    </RaisedCard>
   );
 }
 
@@ -106,47 +105,46 @@ export default function TeamSurveysScreen() {
 
   return (
     <SafeAreaView testID="team-surveys" className="flex-1 bg-neutral-50" edges={['left', 'right']}>
-      <NativeScreenHeader title={t('title')} />
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
-          <View className="gap-xs">
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>{t('intro')}</Text>
-          </View>
-          {team.surveyEditor ? (
-            <PressableScale
+      <ActionScreen
+        action={
+          team.surveyEditor ? (
+            <AuthSubmitButton
               testID="team-surveys-new"
-              accessibilityRole="button"
-              accessibilityLabel={t('newSurvey')}
+              label={t('newSurvey')}
               onPress={() => push('/team-survey-new' as Href)}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-                {t('newSurvey')}
+            />
+          ) : null
+        }
+      >
+        <NativeScreenHeader title={t('title')} />
+        <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
+          <PageWidth className={screenContentClassName}>
+            <View className="gap-xs">
+              <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
+                {t('intro')}
               </Text>
-            </PressableScale>
-          ) : null}
-          {surveys.isError ? (
-            <Text className={`text-start text-md text-error ${fontClass}`}>{t('loadError')}</Text>
-          ) : surveys.data !== undefined && surveys.data.length === 0 ? (
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-              {t('noSurveys')}
-            </Text>
-          ) : (
-            <View className="gap-sm">
-              {(surveys.data ?? []).map((survey) => (
-                <SurveyRow
-                  key={survey.id}
-                  survey={survey}
-                  canOpen={team.surveyResults}
-                  format={format}
-                />
-              ))}
             </View>
-          )}
-        </PageWidth>
-      </ScrollView>
+            {surveys.isError ? (
+              <Text className={`text-start text-md text-error ${fontClass}`}>{t('loadError')}</Text>
+            ) : surveys.data !== undefined && surveys.data.length === 0 ? (
+              <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
+                {t('noSurveys')}
+              </Text>
+            ) : (
+              <View className="gap-sm">
+                {(surveys.data ?? []).map((survey) => (
+                  <SurveyRow
+                    key={survey.id}
+                    survey={survey}
+                    canOpen={team.surveyResults}
+                    format={format}
+                  />
+                ))}
+              </View>
+            )}
+          </PageWidth>
+        </ScrollView>
+      </ActionScreen>
     </SafeAreaView>
   );
 }

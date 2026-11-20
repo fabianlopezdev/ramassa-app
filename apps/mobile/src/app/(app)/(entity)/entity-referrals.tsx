@@ -4,12 +4,15 @@
  * newest first, a search over names, phone, email and entity that ignores
  * case and accents, New referral, and a tap that opens one referral.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { EntityLoadFailure, hasLoadFailed } from '@/components/entity/entity-load-failure';
 import { EntityScreenHeader } from '@/components/entity/entity-screen-header';
 import { PageWidth } from '@/components/layout/content-width';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { RaisedCard } from '@/components/layout/raised-card';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
+import { TabScreenAction } from '@/components/layout/tab-screen-action';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { useEntityReferrals } from '@/lib/entity-referrals';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
@@ -20,8 +23,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MADRID_TIME_ZONE } from '@ramassa/shared/events';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
 import { filterReferrals } from '@ramassa/shared/referrals';
+import { tokens } from '@ramassa/shared/tokens';
 
-export default function EntityReferralsScreen() {
+function EntityReferralsScreen() {
   const { t, i18n } = useTranslation('referrals');
   const fontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -37,6 +41,12 @@ export default function EntityReferralsScreen() {
   );
   const all = referrals.data ?? [];
   const rows = filterReferrals(all, query);
+  // The list keeps the height of the pinned action free at its end.
+  const [actionHeight, setActionHeight] = useState(0);
+  const actionRoom = useMemo(
+    () => ({ paddingBottom: tokens.spacing['3xl'] + actionHeight }),
+    [actionHeight],
+  );
 
   return (
     <SafeAreaView
@@ -47,23 +57,11 @@ export default function EntityReferralsScreen() {
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerClassName="pb-3xl"
+        contentContainerStyle={actionRoom}
         keyboardShouldPersistTaps="handled"
       >
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <EntityScreenHeader title={t('title')} intro={t('intro')} />
-          <PressableScale
-            testID="entity-referral-new"
-            accessibilityRole="button"
-            accessibilityLabel={t('newAction')}
-            onPress={() => push('/entity-referral-new' as Href)}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center self-start rounded-md bg-primary px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-              {t('newAction')}
-            </Text>
-          </PressableScale>
 
           {hasLoadFailed(referrals) ? (
             <EntityLoadFailure query={referrals} />
@@ -97,15 +95,11 @@ export default function EntityReferralsScreen() {
                     const name =
                       `${referral.referredFirstName} ${referral.referredLastName}`.trim();
                     return (
-                      <PressableScale
+                      <RaisedCard
                         key={referral.id}
                         testID={`entity-referral-${referral.id}`}
-                        accessibilityRole="button"
                         accessibilityLabel={`${t('open')}: ${name}`}
-                        onPress={() => push(`/entity-referral/${referral.id}` as Href)}
-                        haptic="selection"
-                        style={continuousCorners}
-                        className="gap-xs rounded-md border border-neutral-200 bg-white p-md"
+                        onOpen={() => push(`/entity-referral/${referral.id}` as Href)}
                       >
                         <View className="flex-row flex-wrap items-center justify-between gap-sm">
                           <Text
@@ -120,7 +114,7 @@ export default function EntityReferralsScreen() {
                         <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
                           {`${t('createdLabel')}: ${dates.format(new Date(referral.createdAt))}`}
                         </Text>
-                      </PressableScale>
+                      </RaisedCard>
                     );
                   })}
                 </View>
@@ -129,6 +123,17 @@ export default function EntityReferralsScreen() {
           )}
         </PageWidth>
       </ScrollView>
+      {/* "New referral" is this tab's call to action, pinned above the tab bar
+          like Share on Comunitat (RAPP-881). */}
+      <TabScreenAction testID="entity-referral-new-action" onContentHeight={setActionHeight}>
+        <AuthSubmitButton
+          testID="entity-referral-new"
+          label={t('newAction')}
+          onPress={() => push('/entity-referral-new' as Href)}
+        />
+      </TabScreenAction>
     </SafeAreaView>
   );
 }
+
+export default withScreenEntrance('entity-referrals', EntityReferralsScreen);

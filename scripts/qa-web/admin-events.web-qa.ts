@@ -147,7 +147,8 @@ test.describe('event lifecycle and recurrence', () => {
     const name = `${RUN_TAG} category`;
     await page.getByTestId('event-category-name-source').fill(name);
     await page.getByTestId('event-category-icon').selectOption('theater');
-    await page.getByTestId('event-category-color').selectOption('chart-2');
+    await page.getByTestId('event-category-color').click();
+    await page.getByTestId('event-category-color-amber').click();
     await page.getByTestId('event-category-generate').click();
     await expect(page.getByTestId('event-category-name-draft-es')).toBeVisible({ timeout: 20_000 });
     await page.getByTestId('event-category-name-approve-all').click();
@@ -175,14 +176,14 @@ test.describe('event lifecycle and recurrence', () => {
         `select icon || '|' || color || '|' || (select count(*) from jsonb_object_keys(name))
            from public.event_categories where id = '${categoryId}'`,
       ),
-    ).toBe('theater|chart-2|5');
+    ).toBe('theater|amber|5');
 
     await page.goto('/content/events/new');
     await page.getByTestId('event-category').selectOption(categoryId);
     const selected = page.getByTestId('event-selected-category');
     await expect(selected).toContainText(name);
     await expect(selected.locator(`[aria-label="${name}"]`)).toBeVisible();
-    await expect(selected.locator('[data-color="chart-2"]')).toBeVisible();
+    await expect(selected.locator('[data-color="amber"]')).toBeVisible();
   });
 
   test('category and lifecycle filters match the independent database count', async ({ page }) => {

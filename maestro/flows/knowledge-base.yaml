@@ -234,10 +234,10 @@ env:
 - tapOn: '^${TAB_HELP}$'
 - extendedWaitUntil:
     visible:
-      id: 'ajuda-all-guides'
+      id: 'ajuda-segment-guides'
     timeout: 30000
 - tapOn:
-    id: 'ajuda-all-guides'
+    id: 'ajuda-segment-guides'
 - extendedWaitUntil:
     visible: '.*${PLAYER_TITLE}.*'
     timeout: 30000

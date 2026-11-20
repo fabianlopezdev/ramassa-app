@@ -11,6 +11,7 @@ import {
   flagForumContent,
   moderateForumTarget,
   parseForumPlainText,
+  saveForumCategory,
   setForumPostCategory,
   setForumPostingDisabled,
   setForumPostPinned,
@@ -176,7 +177,16 @@ describe('forum category board', () => {
       content: '  Busco feina  ',
       imageObjectKey: null,
     });
-    await createForumReply(client as never, { postId, content: '  Jo en conec una  ' });
+    await createForumReply(client as never, {
+      postId,
+      content: '  Jo en conec una  ',
+      parentReplyId: null,
+    });
+    await createForumReply(client as never, {
+      postId,
+      content: '  Quin?  ',
+      parentReplyId: '5eed0000-0000-4000-8010-000000000011',
+    });
     await editOwnForumPost(client as never, { postId, content: '  Busco feina a Vic  ' });
     await deleteOwnForumPost(client as never, postId);
     expect(calls).toEqual([
@@ -189,9 +199,38 @@ describe('forum category board', () => {
         },
       ],
       ['create_forum_reply', { p_post_id: postId, p_content: 'Jo en conec una' }],
+      [
+        'create_forum_reply',
+        {
+          p_post_id: postId,
+          p_content: 'Quin?',
+          p_parent_reply_id: '5eed0000-0000-4000-8010-000000000011',
+        },
+      ],
       ['edit_own_forum_post', { p_post_id: postId, p_content: 'Busco feina a Vic' }],
       ['delete_own_forum_post', { p_post_id: postId }],
     ]);
+  });
+
+  test('a category saves a palette colour, no colour, or the older name it was stored with (RAPP-893)', async () => {
+    const colors: unknown[] = [];
+    const client = {
+      async rpc(_name: string, args: { readonly p_color: string }) {
+        colors.push(args.p_color);
+        return { data: '5eed0000-0000-4000-8006-000000000002', error: null };
+      },
+    };
+    const category = {
+      id: '5eed0000-0000-4000-8006-000000000002',
+      name: { ca: 'Feina', es: 'Empleo', en: 'Jobs', fr: 'Emplois', ar: 'العمل', fa: 'کار' },
+      slug: 'jobs',
+      icon: 'briefcase',
+      sortOrder: 20,
+    };
+    for (const color of ['pink', 'primary', 'neutral', 'secondary']) {
+      await saveForumCategory(client as never, { ...category, color });
+    }
+    expect(colors).toEqual(['pink', 'primary', 'neutral', 'secondary']);
   });
 
   test('flags and moderation actions use validated server boundaries', async () => {

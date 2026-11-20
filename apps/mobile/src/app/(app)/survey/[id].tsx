@@ -1,8 +1,16 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { FailureNotice } from '@/components/error-code-line';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
+import { Icon } from '@/components/icons/icon';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { ActionScreen } from '@/components/layout/screen-action';
+import {
+  screenBlockGapClassName,
+  screenContentClassName,
+} from '@/components/layout/screen-spacing';
 import { continuousCorners } from '@/lib/continuous-corners';
 import {
   useOwnSurveyResponse,
@@ -11,7 +19,6 @@ import {
 } from '@/lib/player-surveys';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -35,7 +42,6 @@ import {
 import { tokens } from '@ramassa/shared/tokens';
 
 const styles = StyleSheet.create({
-  selected: { borderColor: tokens.colors.primary.DEFAULT },
   textInput: {
     minHeight: tokens.spacing['3xl'] * 2 + tokens.spacing.md,
     textAlignVertical: 'top',
@@ -43,34 +49,12 @@ const styles = StyleSheet.create({
   },
   dynamicCopy: { writingDirection: 'auto' },
 });
-const optionStyle = continuousCorners;
-const selectedOptionStyle = [continuousCorners, styles.selected];
 const textInputStyle = [styles.textInput, continuousCorners];
 const RATING_OPTIONS = [1, 2, 3, 4, 5] as const;
 const YES_NO_OPTIONS = [true, false] as const;
 const EMPTY_SURVEY_QUESTIONS: readonly SurveyQuestion[] = [];
 const EMPTY_SURVEY_ANSWERS: Readonly<Record<string, SurveyAnswer>> = {};
 const SURVEY_FREE_TEXT_MAX_LENGTH = 4_000;
-const starSymbol: SymbolViewProps['name'] = {
-  ios: 'star.fill',
-  android: 'star',
-  web: 'star',
-};
-const yesSymbol: SymbolViewProps['name'] = {
-  ios: 'checkmark',
-  android: 'check',
-  web: 'check',
-};
-const noSymbol: SymbolViewProps['name'] = {
-  ios: 'xmark',
-  android: 'close',
-  web: 'close',
-};
-const successSymbol: SymbolViewProps['name'] = {
-  ios: 'checkmark.circle.fill',
-  android: 'check_circle',
-  web: 'check_circle',
-};
 
 interface QuestionControlProps {
   readonly question: SurveyQuestion;
@@ -102,24 +86,24 @@ function RatingQuestionControl({ question, answer, language, onChange }: Questio
       accessibilityLabel={resolveSurveyCopy(question.prompt, language)}
     >
       {RATING_OPTIONS.map((rating) => (
-        <PressableScale
+        <SelectionChoiceSurface
           key={rating}
           testID={`survey-rating-${rating}`}
-          accessibilityLabel={t('ratingLabel', { count: rating })}
+          label={t('ratingLabel', { count: rating })}
           accessibilityRole="radio"
           isSelected={answer === rating}
           onPress={() => onChange(rating)}
-          haptic="selection"
-          style={answer === rating ? selectedOptionStyle : optionStyle}
-          className={`min-h-recommended min-w-12 flex-1 items-center justify-center rounded-md border-2 border-neutral-200 ${answer === rating ? 'bg-primary/10' : 'bg-white'}`}
+          className="flex-1"
+          paddingClassName="px-xs"
+          contentClassName="items-center justify-center"
         >
-          <SymbolView
-            accessible={false}
-            name={starSymbol}
+          <Icon
+            name="star"
+            weight="boldDuotone"
             size={tokens.fontSize['3xl']}
-            tintColor={tokens.colors.secondary.dark}
+            color={tokens.colors.secondary.dark}
           />
-        </PressableScale>
+        </SelectionChoiceSurface>
       ))}
     </View>
   );
@@ -139,24 +123,14 @@ function MultipleChoiceQuestionControl({
       accessibilityLabel={resolveSurveyCopy(question.prompt, language)}
     >
       {question.options?.map((option) => (
-        <PressableScale
+        <SelectionChoiceCard
           key={option.id}
           testID={`survey-choice-${option.id}`}
-          accessibilityLabel={resolveSurveyCopy(option.label, language)}
-          accessibilityRole="radio"
+          label={resolveSurveyCopy(option.label, language)}
+          fontClass={languageFontClass}
           isSelected={answer === option.id}
           onPress={() => onChange(option.id)}
-          haptic="selection"
-          style={answer === option.id ? selectedOptionStyle : optionStyle}
-          className={`min-h-recommended justify-center rounded-md border-2 border-neutral-200 px-lg py-md ${answer === option.id ? 'bg-primary/10' : 'bg-white'}`}
-        >
-          <Text
-            style={styles.dynamicCopy}
-            className={`text-center text-lg font-bold text-neutral-900 ${languageFontClass}`}
-          >
-            {resolveSurveyCopy(option.label, language)}
-          </Text>
-        </PressableScale>
+        />
       ))}
     </View>
   );
@@ -177,27 +151,25 @@ function YesNoQuestionControl({
       accessibilityLabel={resolveSurveyCopy(question.prompt, language)}
     >
       {YES_NO_OPTIONS.map((value) => (
-        <PressableScale
+        <SelectionChoiceSurface
           key={String(value)}
           testID={value ? 'survey-yes' : 'survey-no'}
-          accessibilityLabel={value ? t('yes') : t('no')}
+          label={value ? t('yes') : t('no')}
           accessibilityRole="radio"
           isSelected={answer === value}
           onPress={() => onChange(value)}
-          haptic="selection"
-          style={answer === value ? selectedOptionStyle : optionStyle}
-          className={`min-h-recommended flex-1 flex-row items-center justify-center gap-sm rounded-md border-2 border-neutral-200 px-lg py-xl ${answer === value ? 'bg-primary/10' : 'bg-white'}`}
+          className="flex-1"
+          contentClassName="flex-row items-center justify-center gap-sm py-lg"
         >
-          <SymbolView
-            accessible={false}
-            name={value ? yesSymbol : noSymbol}
+          <Icon
+            name={value ? 'check' : 'close'}
             size={tokens.fontSize['2xl']}
-            tintColor={tokens.colors.neutral[900]}
+            color={tokens.colors.neutral[900]}
           />
           <Text className={`text-2xl font-bold text-neutral-900 ${languageFontClass}`}>
             {value ? t('yes') : t('no')}
           </Text>
-        </PressableScale>
+        </SelectionChoiceSurface>
       ))}
     </View>
   );
@@ -232,6 +204,8 @@ interface SurveyScreenFrameProps {
   readonly contentContainerClassName: string;
   readonly contentInsets: StyleProp<ViewStyle>;
   readonly screenTitle: string;
+  /** The screen's call to action, at the bottom of the screen (RAPP-881). */
+  readonly action?: ReactNode;
 }
 
 function SurveyScreenFrame({
@@ -239,12 +213,13 @@ function SurveyScreenFrame({
   contentContainerClassName,
   contentInsets,
   screenTitle,
+  action,
 }: SurveyScreenFrameProps) {
   return (
-    <>
-      <NativeScreenHeader title={screenTitle} />
+    <ActionScreen className="bg-white" action={action}>
+      <NativeScreenHeader surface="white" title={screenTitle} />
       <ScrollView
-        className="flex-1 bg-white"
+        className="flex-1"
         contentContainerClassName={contentContainerClassName}
         contentContainerStyle={contentInsets}
         keyboardShouldPersistTaps="handled"
@@ -253,7 +228,7 @@ function SurveyScreenFrame({
       >
         {children}
       </ScrollView>
-    </>
+    </ActionScreen>
   );
 }
 
@@ -413,14 +388,15 @@ export default function SurveyScreen() {
       <SurveyScreenFrame
         screenTitle={screenTitle}
         contentInsets={contentInsets}
-        contentContainerClassName="grow items-center justify-center gap-lg p-xl"
+        contentContainerClassName={`grow items-center justify-center ${screenContentClassName}`}
+        action={<AuthSubmitButton label={t('back')} onPress={back} />}
       >
         <View testID="survey-completion" className="w-full items-center gap-lg">
-          <SymbolView
-            accessible={false}
-            name={successSymbol}
+          <Icon
+            name="check-circle"
+            weight="boldDuotone"
             size={tokens.fontSize['4xl']}
-            tintColor={tokens.colors.success}
+            color={tokens.colors.success}
           />
           <Text
             accessibilityRole="header"
@@ -431,9 +407,6 @@ export default function SurveyScreen() {
           <Text className={`text-center text-lg text-neutral-600 ${languageFontClass}`}>
             {t('thankBody')}
           </Text>
-          <View className="w-full max-w-form">
-            <AuthSubmitButton label={t('back')} onPress={back} />
-          </View>
         </View>
       </SurveyScreenFrame>
     );
@@ -457,9 +430,25 @@ export default function SurveyScreen() {
       screenTitle={screenTitle}
       contentInsets={contentInsets}
       contentContainerClassName="grow px-lg py-lg"
+      action={
+        <>
+          <AuthSubmitButton
+            label={isAtEnd ? t('submit') : t('next')}
+            onPress={() => void next()}
+            isLoading={isSavePending}
+            disabled={!canContinue}
+            testID="survey-next"
+          />
+          <RaisedActionButton
+            label={t('saveExit')}
+            onPress={() => void saveAndExit()}
+            isDisabled={isSavePending}
+          />
+        </>
+      }
     >
-      <FormWidth className="grow justify-between gap-xl">
-        <View className="gap-xl">
+      <FormWidth className={screenBlockGapClassName}>
+        <View className={screenBlockGapClassName}>
           <View className="gap-sm">
             <Text
               style={styles.dynamicCopy}
@@ -512,28 +501,7 @@ export default function SurveyScreen() {
             />
           </View>
         </View>
-        <View className="gap-md">
-          {saveError === null ? null : <FailureNotice code={saveError.code} message={t('error')} />}
-          <AuthSubmitButton
-            label={isAtEnd ? t('submit') : t('next')}
-            onPress={() => void next()}
-            isLoading={isSavePending}
-            disabled={!canContinue}
-            testID="survey-next"
-          />
-          <PressableScale
-            accessibilityLabel={t('saveExit')}
-            onPress={() => void saveAndExit()}
-            haptic="tapLight"
-            isBusy={isSavePending}
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg"
-          >
-            <Text className={`font-bold text-neutral-700 ${languageFontClass}`}>
-              {t('saveExit')}
-            </Text>
-          </PressableScale>
-        </View>
+        {saveError === null ? null : <FailureNotice code={saveError.code} message={t('error')} />}
       </FormWidth>
     </SurveyScreenFrame>
   );

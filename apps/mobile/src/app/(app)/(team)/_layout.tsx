@@ -13,6 +13,7 @@ import { TeamLayoutContext } from '@/components/team/team-layout-context';
 import { TeamSidebarItem } from '@/components/team/team-sidebar-item';
 import { useUnreadMessages } from '@/lib/messaging';
 import { nativeTabsHostProps } from '@/lib/native-tabs-direction';
+import { tabIcons } from '@/lib/tab-icons';
 import { boundedTabSlotStyle } from '@/lib/tab-slot-style';
 import { isCompactSidebar, showsToday, teamAreas, teamLayout } from '@/lib/team-shell';
 import { unreadBadgeProps } from '@/lib/unread-badge';
@@ -51,15 +52,11 @@ const compactSidebarStyle = {
   width: 96,
   paddingHorizontal: tokens.spacing.xs,
 } as const;
-const todayIcon = { ios: 'sun.max.fill', android: 'today', web: 'today' } as const;
-const participantsIcon = { ios: 'person.2.fill', android: 'group', web: 'group' } as const;
-const contentIcon = { ios: 'doc.richtext.fill', android: 'article', web: 'article' } as const;
-const messagesIcon = {
-  ios: 'bubble.left.and.bubble.right.fill',
-  android: 'chat',
-  web: 'chat',
-} as const;
-const moreIcon = { ios: 'ellipsis.circle.fill', android: 'more_horiz', web: 'more_horiz' } as const;
+const todayIcon = 'sun';
+const participantsIcon = 'users';
+const contentIcon = 'document';
+const messagesIcon = 'chats';
+const moreIcon = 'more';
 
 export default function TeamShellLayout() {
   const { t } = useTranslation('nav');
@@ -188,7 +185,7 @@ export default function TeamShellLayout() {
         tintColor={tokens.colors.primary.dark}
       >
         <NativeTabs.Trigger name="today" hidden={!hasToday} testID="team-tab-today">
-          <NativeTabs.Trigger.Icon sf="sun.max.fill" md="today" />
+          <NativeTabs.Trigger.Icon src={tabIcons.sun} renderingMode="template" />
           <NativeTabs.Trigger.Label>{t('team.today')}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger
@@ -196,22 +193,22 @@ export default function TeamShellLayout() {
           hidden={!hasParticipants}
           testID="team-tab-participants"
         >
-          <NativeTabs.Trigger.Icon sf="person.2.fill" md="group" />
+          <NativeTabs.Trigger.Icon src={tabIcons.users} renderingMode="template" />
           <NativeTabs.Trigger.Label>{t('team.participants')}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="content" hidden={!hasContent} testID="team-tab-content">
-          <NativeTabs.Trigger.Icon sf="doc.richtext.fill" md="article" />
+          <NativeTabs.Trigger.Icon src={tabIcons.document} renderingMode="template" />
           <NativeTabs.Trigger.Label>{t('team.content')}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="messages" hidden={!hasMessages} testID="team-tab-messages">
-          <NativeTabs.Trigger.Icon sf="bubble.left.and.bubble.right.fill" md="chat" />
+          <NativeTabs.Trigger.Icon src={tabIcons.chats} renderingMode="template" />
           <NativeTabs.Trigger.Label>{t('team.messages')}</NativeTabs.Trigger.Label>
           <NativeTabs.Trigger.Badge hidden={unreadBadge.hidden}>
             {unreadBadge.children}
           </NativeTabs.Trigger.Badge>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="more" testID="team-tab-more">
-          <NativeTabs.Trigger.Icon sf="ellipsis.circle.fill" md="more_horiz" />
+          <NativeTabs.Trigger.Icon src={tabIcons.more} renderingMode="template" />
           <NativeTabs.Trigger.Label>{t('team.more')}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="home" hidden />

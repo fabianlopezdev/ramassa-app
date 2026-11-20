@@ -1,97 +1,58 @@
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
-import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
-import { memo, useCallback } from 'react';
-import { Text, View } from 'react-native';
+import type { IconName } from '@/components/icons/icon';
+import { CategoryTileGrid, type CategoryTile } from '@/components/layout/category-tile-grid';
+import { formatUnreadBadge } from '@/lib/unread-badge';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { categoryWash } from '@ramassa/shared/category-colors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
-import type { AdminServiceCategory } from '@ramassa/shared/services';
-import { tokens } from '@ramassa/shared/tokens';
+import { type AdminServiceCategory } from '@ramassa/shared/services';
 
-const categorySymbols: Readonly<Record<string, SymbolViewProps['name']>> = {
-  housing: { ios: 'house.fill', android: 'home', web: 'home' },
-  'language-courses': { ios: 'character.book.closed.fill', android: 'translate', web: 'translate' },
-  'job-insertion': { ios: 'briefcase.fill', android: 'work', web: 'work' },
-  'legal-aid': { ios: 'scale.3d', android: 'gavel', web: 'gavel' },
-  health: { ios: 'heart.text.square.fill', android: 'medical_services', web: 'medical_services' },
-  training: { ios: 'graduationcap.fill', android: 'school', web: 'school' },
-  'leisure-culture': {
-    ios: 'ticket.fill',
-    android: 'confirmation_number',
-    web: 'confirmation_number',
-  },
-  documentation: { ios: 'doc.text.fill', android: 'description', web: 'description' },
+const categoryIcons: Readonly<Record<string, IconName>> = {
+  housing: 'home',
+  'language-courses': 'translate',
+  'job-insertion': 'briefcase',
+  'legal-aid': 'scale',
+  health: 'heart-pulse',
+  training: 'graduation-cap',
+  'leisure-culture': 'ticket',
+  documentation: 'document',
 };
-const defaultCategorySymbol: SymbolViewProps['name'] = {
-  ios: 'square.grid.2x2.fill',
-  android: 'category',
-  web: 'category',
-};
+const defaultCategoryIcon: IconName = 'grid';
 
-interface ServiceCategoryCardProps {
-  readonly id: string;
-  readonly slug: string;
-  readonly title: string;
-  readonly onSelect: (id: string) => void;
-}
-
-const ServiceCategoryCard = memo(function ServiceCategoryCard({
-  id,
-  slug,
-  title,
-  onSelect,
-}: ServiceCategoryCardProps) {
-  const languageFontClass = useLanguageFontClass();
-  const handlePress = useCallback(() => onSelect(id), [id, onSelect]);
-  return (
-    <View className="basis-[48%] grow">
-      <PressableScale
-        testID={`service-category-${slug}`}
-        accessibilityLabel={title}
-        onPress={handlePress}
-        haptic="selection"
-        style={continuousCorners}
-        className="min-h-3xl items-start justify-between gap-md rounded-lg border border-neutral-200 bg-neutral-50 p-md"
-      >
-        <View className="h-xl w-xl items-center justify-center rounded-full bg-primary-light">
-          <SymbolView
-            accessible={false}
-            name={categorySymbols[slug] ?? defaultCategorySymbol}
-            size={tokens.fontSize.xl}
-            tintColor={tokens.colors.primary.dark}
-          />
-        </View>
-        <Text className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}>
-          {title}
-        </Text>
-      </PressableScale>
-    </View>
-  );
-});
-
+/** The Ajuda service categories as the shared category tiles (RAPP-870). */
 export function ServiceCategoryGrid({
   categories,
+  newCounts,
   onSelect,
 }: {
   readonly categories: readonly AdminServiceCategory[];
+  /** New items she has not opened, by category id (RAPP-873). */
+  readonly newCounts: Readonly<Record<string, number>>;
   readonly onSelect: (id: string) => void;
 }) {
+  const { t } = useTranslation('common');
   const { language } = useLanguage();
-  return (
-    <View className="flex-row flex-wrap gap-sm">
-      {categories.map((category) => {
+  const tiles = useMemo(
+    () =>
+      categories.flatMap((category): CategoryTile[] => {
         const title = resolveLocalizedText(category.name, language);
-        if (title === undefined) return null;
-        return (
-          <ServiceCategoryCard
-            key={category.id}
-            id={category.id}
-            slug={category.slug}
-            title={title.text}
-            onSelect={onSelect}
-          />
-        );
-      })}
-    </View>
+        const newCount = newCounts[category.id] ?? 0;
+        return title === undefined
+          ? []
+          : [
+              {
+                id: category.id,
+                testID: `service-category-${category.slug}`,
+                icon: categoryIcons[category.slug] ?? defaultCategoryIcon,
+                wash: categoryWash(category.color),
+                title: title.text,
+                count: formatUnreadBadge(newCount),
+                accessibilityLabel:
+                  newCount > 0 ? t('newCount', { label: title.text, count: newCount }) : undefined,
+              },
+            ];
+      }),
+    [categories, language, newCounts, t],
   );
+  return <CategoryTileGrid tiles={tiles} onSelect={onSelect} />;
 }

@@ -10,8 +10,13 @@ import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { DateTimeField } from '@/components/content/date-time-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { Badge } from '@/components/layout/badge';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
@@ -99,14 +104,11 @@ function RequestCard({
             {t('adminRequested', { date: requestedAt })}
           </Text>
         </View>
-        <View className="rounded-full bg-neutral-100 px-sm py-xs">
-          <Text
-            testID={`mentoring-status-${request.id}`}
-            className={`text-sm font-semibold text-neutral-800 ${fontClass}`}
-          >
-            {t(MENTORING_STATUS_KEYS[request.status])}
-          </Text>
-        </View>
+        <Badge
+          testID={`mentoring-status-${request.id}`}
+          label={t(MENTORING_STATUS_KEYS[request.status])}
+          languageFontClass={fontClass}
+        />
       </View>
       <View style={continuousCorners} className="gap-xs rounded-md bg-neutral-50 p-md">
         <Text className={`text-start text-md font-semibold text-neutral-900 ${fontClass}`}>
@@ -138,9 +140,7 @@ function RequestCard({
             inMadridTime
           />
           <View className="gap-xs">
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('adminAssignee')}
-            </Text>
+            <FieldLabel>{t('adminAssignee')}</FieldLabel>
             <View className="flex-row flex-wrap gap-sm">
               {staff.map((member) => (
                 <ChoiceOption
@@ -195,21 +195,12 @@ function RequestCard({
               </Text>
             </PressableScale>
             {request.status === 'scheduled' ? (
-              <PressableScale
+              <RaisedActionButton
                 testID={`mentoring-complete-${request.id}`}
-                accessibilityRole="button"
-                accessibilityLabel={t('adminCompleteAction')}
+                label={t('adminCompleteAction')}
                 onPress={() => complete.mutate(request.id, onDone)}
-                isBusy={complete.isPending}
-                isDisabled={isSaving}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-              >
-                <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                  {t('adminCompleteAction')}
-                </Text>
-              </PressableScale>
+                isDisabled={isSaving || complete.isPending}
+              />
             ) : null}
           </View>
           {errorCode === null ? null : (
@@ -243,7 +234,7 @@ export default function TeamMentoringScreen() {
     >
       <NativeScreenHeader title={t('adminTitle')} />
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerClassName="pb-3xl">
-        <PageWidth className="gap-lg p-lg">
+        <PageWidth className={screenContentClassName}>
           <View className="gap-xs">
             <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
               {t('adminIntro')}
@@ -258,13 +249,7 @@ export default function TeamMentoringScreen() {
             ) : null}
           </View>
           {topics.length === 0 ? null : (
-            <View className="gap-sm">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-              >
-                {t('adminTopicBreakdown')}
-              </Text>
+            <ScreenSection title={t('adminTopicBreakdown')}>
               <View className="flex-row flex-wrap gap-sm">
                 {topics.map((item) => (
                   <View
@@ -283,7 +268,7 @@ export default function TeamMentoringScreen() {
                   </View>
                 ))}
               </View>
-            </View>
+            </ScreenSection>
           )}
           {requests.isPending ? (
             <AnnouncementFeedSkeleton accessibilityLabel={t('adminTitle')} />

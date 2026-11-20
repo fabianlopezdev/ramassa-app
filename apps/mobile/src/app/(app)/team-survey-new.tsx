@@ -7,11 +7,16 @@
  * Choices take a Catalan label with its own review, where the web form asks
  * for the five labels by hand.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { DateTimeField } from '@/components/content/date-time-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { ActionScreen } from '@/components/layout/screen-action';
+import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { AudiencePicker } from '@/components/team/audience-picker';
 import { ReviewedField, type ReviewedText } from '@/components/team/reviewed-field';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -21,7 +26,7 @@ import { generateDrafts } from '@/lib/translation-worker';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { randomUUID } from 'expo-crypto';
 import { useRouter } from 'expo-router';
-import { useCallback, useState, type ReactNode } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -83,24 +88,6 @@ function nextChoiceId(choices: readonly DraftChoice[]): string {
   return `option_${Math.max(0, ...used) + 1}`;
 }
 
-function Section({ title, children }: { readonly title: string; readonly children: ReactNode }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View
-      style={continuousCorners}
-      className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-    >
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-xl font-bold text-neutral-900 ${fontClass}`}
-      >
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
-}
-
 function OutlineButton({
   testID,
   label,
@@ -112,26 +99,8 @@ function OutlineButton({
   readonly onPress: () => void;
   readonly isDisabled?: boolean;
 }) {
-  const fontClass = useLanguageFontClass();
   return (
-    <PressableScale
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      isDisabled={isDisabled}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended items-center justify-center rounded-md border px-lg ${
-        isDisabled ? 'border-neutral-200 bg-neutral-100' : 'border-neutral-300 bg-white'
-      }`}
-    >
-      <Text
-        className={`text-center text-md font-bold ${isDisabled ? 'text-neutral-500' : 'text-primary-dark'} ${fontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
+    <RaisedActionButton testID={testID} label={label} onPress={onPress} isDisabled={isDisabled} />
   );
 }
 
@@ -266,255 +235,231 @@ export default function TeamSurveyNewScreen() {
       className="flex-1 bg-neutral-50"
       edges={['left', 'right']}
     >
-      <NativeScreenHeader title={t('newSurvey')} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerClassName="pb-3xl"
-        keyboardShouldPersistTaps="handled"
+      <ActionScreen
+        action={
+          <AuthSubmitButton
+            testID="survey-save"
+            label={save.isPending ? t('saving') : t('savePublish')}
+            onPress={submit}
+            isLoading={save.isPending}
+            disabled={audience === null}
+          />
+        }
       >
-        <PageWidth className="gap-lg p-lg">
-          <Section title={t('newSurvey')}>
-            <ReviewedField
-              reviewKey={TITLE_KEY}
-              testIDPrefix="survey-title"
-              label={t('surveyTitle')}
-              value={title}
-              onChangeText={setTitle}
-              onTouch={touch}
-              onReport={report}
-              maxLength={TITLE_MAX}
-            />
-            <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-              {t('eventLabel')}
-            </Text>
-            <View className="flex-row flex-wrap gap-sm">
-              {[{ id: NO_EVENT, title: t('noEvent') }, ...(options.data?.events ?? [])].map(
-                (event) => (
-                  <ChoiceOption
-                    key={event.id}
-                    testID={`survey-event-${event.id}`}
-                    value={event.id}
-                    label={event.title}
-                    selected={event.id === eventId}
-                    onSelect={(next) => {
-                      touch();
-                      setEventId(next);
-                    }}
-                    languageFontClass={fontClass}
-                  />
-                ),
-              )}
-            </View>
-            <DateTimeField
-              testID="survey-published-at"
-              label={t('publishAt')}
-              value={publishedAt}
-              onChange={(next) => {
-                touch();
-                setPublishedAt(next);
-              }}
-              inMadridTime
-            />
-            <DateTimeField
-              testID="survey-closes-at"
-              label={t('closesAt')}
-              value={closesAt}
-              onChange={(next) => {
-                touch();
-                setClosesAt(next);
-              }}
-              emptyLabel={t('optional')}
-              inMadridTime
-            />
-            {options.data === undefined ? null : (
-              <AudiencePicker
-                testIDPrefix="survey"
-                audience={audience}
-                groups={groups.data ?? []}
-                options={options.data}
-                onChange={(next) => {
-                  touch();
-                  setAudience(next);
-                }}
+        <NativeScreenHeader title={t('newSurvey')} />
+        <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
+          contentContainerClassName="pb-3xl"
+          keyboardShouldPersistTaps="handled"
+        >
+          <PageWidth className={screenContentClassName}>
+            <ScreenSection title={t('newSurvey')}>
+              <ReviewedField
+                reviewKey={TITLE_KEY}
+                testIDPrefix="survey-title"
+                label={t('surveyTitle')}
+                value={title}
+                onChangeText={setTitle}
+                onTouch={touch}
+                onReport={report}
+                maxLength={TITLE_MAX}
               />
-            )}
-          </Section>
-
-          <Section title={t('questionsTitle')}>
-            {questions.map((question, index) => (
-              <View
-                key={question.id}
-                testID={`survey-question-${index}`}
-                style={continuousCorners}
-                className="gap-md rounded-md bg-neutral-50 p-md"
-              >
-                <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-                  {t('questionType')}
-                </Text>
-                <View className="flex-row flex-wrap gap-sm">
-                  {QUESTION_TYPES.map((type) => (
+              <FieldLabel>{t('eventLabel')}</FieldLabel>
+              <View className="flex-row flex-wrap gap-sm">
+                {[{ id: NO_EVENT, title: t('noEvent') }, ...(options.data?.events ?? [])].map(
+                  (event) => (
                     <ChoiceOption
-                      key={type}
-                      testID={`survey-question-${index}-type-${type}`}
-                      value={type}
-                      label={t(type)}
-                      selected={type === question.type}
-                      onSelect={(next) =>
-                        updateQuestion(question.id, {
-                          type: next,
-                          required: next !== 'free_text',
-                          choices: next === 'multiple_choice' ? starterChoices() : [],
-                        })
-                      }
+                      key={event.id}
+                      testID={`survey-event-${event.id}`}
+                      value={event.id}
+                      label={event.title}
+                      selected={event.id === eventId}
+                      onSelect={(next) => {
+                        touch();
+                        setEventId(next);
+                      }}
                       languageFontClass={fontClass}
                     />
-                  ))}
-                </View>
-                <ReviewedField
-                  reviewKey={promptKey(question.id)}
-                  testIDPrefix={`survey-question-${index}-prompt`}
-                  label={t('prompt')}
-                  value={question.source}
-                  onChangeText={(next) => updateQuestion(question.id, { source: next })}
-                  onTouch={touch}
-                  onReport={report}
-                  maxLength={TEXT_MAX}
-                  multiline
-                />
-                {question.type === 'multiple_choice' ? (
-                  <View className="gap-md">
-                    <Text
-                      className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}
-                    >
-                      {t('choices')}
-                    </Text>
-                    {question.choices.map((choice, choiceIndex) => (
-                      <View key={choice.id} className="gap-sm">
-                        <ReviewedField
-                          reviewKey={choiceKey(question.id, choice.id)}
-                          testIDPrefix={`survey-question-${index}-choice-${choiceIndex}`}
-                          label={t('choiceLabel', { number: choiceIndex + 1 })}
-                          value={choice.source}
-                          onChangeText={(next) =>
-                            updateQuestion(question.id, {
-                              choices: question.choices.map((item) =>
-                                item.id === choice.id ? { ...item, source: next } : item,
-                              ),
-                            })
-                          }
-                          onTouch={touch}
-                          onReport={report}
-                          maxLength={TEXT_MAX}
-                        />
-                        <OutlineButton
-                          testID={`survey-question-${index}-choice-${choiceIndex}-remove`}
-                          label={t('removeChoice')}
-                          isDisabled={question.choices.length <= MIN_CHOICES}
-                          onPress={() =>
-                            updateQuestion(question.id, {
-                              choices: question.choices.filter((item) => item.id !== choice.id),
-                            })
-                          }
-                        />
-                      </View>
-                    ))}
-                    <OutlineButton
-                      testID={`survey-question-${index}-add-choice`}
-                      label={t('addChoice')}
-                      isDisabled={question.choices.length >= MAX_CHOICES}
-                      onPress={() =>
-                        updateQuestion(question.id, {
-                          choices: [
-                            ...question.choices,
-                            { id: nextChoiceId(question.choices), source: '' },
-                          ],
-                        })
-                      }
-                    />
-                  </View>
-                ) : null}
-                <View className="flex-row flex-wrap gap-sm">
-                  <ChoiceOption
-                    testID={`survey-question-${index}-required`}
-                    value="required"
-                    label={t('required')}
-                    selected={question.required}
-                    onSelect={() => updateQuestion(question.id, { required: !question.required })}
-                    languageFontClass={fontClass}
-                  />
-                </View>
-                <OutlineButton
-                  testID={`survey-question-${index}-remove`}
-                  label={t('removeQuestion')}
-                  isDisabled={questions.length === 1}
-                  onPress={() => {
+                  ),
+                )}
+              </View>
+              <DateTimeField
+                testID="survey-published-at"
+                label={t('publishAt')}
+                value={publishedAt}
+                onChange={(next) => {
+                  touch();
+                  setPublishedAt(next);
+                }}
+                inMadridTime
+              />
+              <DateTimeField
+                testID="survey-closes-at"
+                label={t('closesAt')}
+                value={closesAt}
+                onChange={(next) => {
+                  touch();
+                  setClosesAt(next);
+                }}
+                emptyLabel={t('optional')}
+                inMadridTime
+              />
+              {options.data === undefined ? null : (
+                <AudiencePicker
+                  testIDPrefix="survey"
+                  audience={audience}
+                  groups={groups.data ?? []}
+                  options={options.data}
+                  onChange={(next) => {
                     touch();
-                    setQuestions((current) => current.filter((item) => item.id !== question.id));
+                    setAudience(next);
                   }}
                 />
-              </View>
-            ))}
-            <OutlineButton
-              testID="survey-add-question"
-              label={t('addQuestion')}
-              isDisabled={questions.length >= MAX_QUESTIONS}
-              onPress={() => {
-                touch();
-                setQuestions((current) => [...current, newQuestion()]);
-              }}
-            />
-          </Section>
+              )}
+            </ScreenSection>
 
-          <View className="gap-sm">
-            <PressableScale
-              testID="survey-generate"
-              accessibilityRole="button"
-              accessibilityLabel={isGenerating ? t('generating') : t('generateTranslations')}
-              onPress={() => void generate()}
-              isBusy={isGenerating}
-              isDisabled={!canGenerate}
-              haptic="tapLight"
-              style={continuousCorners}
-              className={`min-h-recommended items-center justify-center rounded-md border px-lg ${
-                canGenerate ? 'border-primary bg-white' : 'border-neutral-200 bg-neutral-100'
-              }`}
-            >
-              <Text
-                className={`text-center text-md font-bold ${canGenerate ? 'text-primary-dark' : 'text-neutral-500'} ${fontClass}`}
-              >
-                {isGenerating ? t('generating') : t('generateTranslations')}
+            <ScreenSection title={t('questionsTitle')}>
+              {questions.map((question, index) => (
+                <View
+                  key={question.id}
+                  testID={`survey-question-${index}`}
+                  style={continuousCorners}
+                  className="gap-md rounded-md bg-neutral-50 p-md"
+                >
+                  <FieldLabel>{t('questionType')}</FieldLabel>
+                  <View className="flex-row flex-wrap gap-sm">
+                    {QUESTION_TYPES.map((type) => (
+                      <ChoiceOption
+                        key={type}
+                        testID={`survey-question-${index}-type-${type}`}
+                        value={type}
+                        label={t(type)}
+                        selected={type === question.type}
+                        onSelect={(next) =>
+                          updateQuestion(question.id, {
+                            type: next,
+                            required: next !== 'free_text',
+                            choices: next === 'multiple_choice' ? starterChoices() : [],
+                          })
+                        }
+                        languageFontClass={fontClass}
+                      />
+                    ))}
+                  </View>
+                  <ReviewedField
+                    reviewKey={promptKey(question.id)}
+                    testIDPrefix={`survey-question-${index}-prompt`}
+                    label={t('prompt')}
+                    value={question.source}
+                    onChangeText={(next) => updateQuestion(question.id, { source: next })}
+                    onTouch={touch}
+                    onReport={report}
+                    maxLength={TEXT_MAX}
+                    multiline
+                  />
+                  {question.type === 'multiple_choice' ? (
+                    <View className="gap-md">
+                      <FieldLabel>{t('choices')}</FieldLabel>
+                      {question.choices.map((choice, choiceIndex) => (
+                        <View key={choice.id} className="gap-sm">
+                          <ReviewedField
+                            reviewKey={choiceKey(question.id, choice.id)}
+                            testIDPrefix={`survey-question-${index}-choice-${choiceIndex}`}
+                            label={t('choiceLabel', { number: choiceIndex + 1 })}
+                            value={choice.source}
+                            onChangeText={(next) =>
+                              updateQuestion(question.id, {
+                                choices: question.choices.map((item) =>
+                                  item.id === choice.id ? { ...item, source: next } : item,
+                                ),
+                              })
+                            }
+                            onTouch={touch}
+                            onReport={report}
+                            maxLength={TEXT_MAX}
+                          />
+                          <OutlineButton
+                            testID={`survey-question-${index}-choice-${choiceIndex}-remove`}
+                            label={t('removeChoice')}
+                            isDisabled={question.choices.length <= MIN_CHOICES}
+                            onPress={() =>
+                              updateQuestion(question.id, {
+                                choices: question.choices.filter((item) => item.id !== choice.id),
+                              })
+                            }
+                          />
+                        </View>
+                      ))}
+                      <OutlineButton
+                        testID={`survey-question-${index}-add-choice`}
+                        label={t('addChoice')}
+                        isDisabled={question.choices.length >= MAX_CHOICES}
+                        onPress={() =>
+                          updateQuestion(question.id, {
+                            choices: [
+                              ...question.choices,
+                              { id: nextChoiceId(question.choices), source: '' },
+                            ],
+                          })
+                        }
+                      />
+                    </View>
+                  ) : null}
+                  <View className="flex-row flex-wrap gap-sm">
+                    <ChoiceOption
+                      testID={`survey-question-${index}-required`}
+                      value="required"
+                      label={t('required')}
+                      selected={question.required}
+                      onSelect={() => updateQuestion(question.id, { required: !question.required })}
+                      languageFontClass={fontClass}
+                    />
+                  </View>
+                  <OutlineButton
+                    testID={`survey-question-${index}-remove`}
+                    label={t('removeQuestion')}
+                    isDisabled={questions.length === 1}
+                    onPress={() => {
+                      touch();
+                      setQuestions((current) => current.filter((item) => item.id !== question.id));
+                    }}
+                  />
+                </View>
+              ))}
+              <OutlineButton
+                testID="survey-add-question"
+                label={t('addQuestion')}
+                isDisabled={questions.length >= MAX_QUESTIONS}
+                onPress={() => {
+                  touch();
+                  setQuestions((current) => [...current, newQuestion()]);
+                }}
+              />
+            </ScreenSection>
+
+            <View className="gap-sm">
+              <RaisedActionButton
+                testID="survey-generate"
+                label={isGenerating ? t('generating') : t('generateTranslations')}
+                onPress={() => void generate()}
+                isDisabled={!canGenerate || isGenerating}
+              />
+              <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+                {t('translationHelp')}
               </Text>
-            </PressableScale>
-            <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-              {t('translationHelp')}
-            </Text>
-            <PressableScale
-              testID="survey-save"
-              accessibilityRole="button"
-              accessibilityLabel={save.isPending ? t('saving') : t('savePublish')}
-              onPress={submit}
-              isBusy={save.isPending}
-              isDisabled={audience === null}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-            >
-              <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-                {save.isPending ? t('saving') : t('savePublish')}
-              </Text>
-            </PressableScale>
-            {noticeText === null ? null : (
-              <Text
-                testID="survey-notice"
-                accessibilityLiveRegion="polite"
-                className={`text-start text-sm text-error ${fontClass}`}
-              >
-                {noticeText}
-              </Text>
-            )}
-          </View>
-        </PageWidth>
-      </ScrollView>
+              {noticeText === null ? null : (
+                <Text
+                  testID="survey-notice"
+                  accessibilityLiveRegion="polite"
+                  className={`text-start text-sm text-error ${fontClass}`}
+                >
+                  {noticeText}
+                </Text>
+              )}
+            </View>
+          </PageWidth>
+        </ScrollView>
+      </ActionScreen>
     </SafeAreaView>
   );
 }

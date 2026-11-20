@@ -1,4 +1,5 @@
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -57,6 +58,23 @@ const composerStyle = {
   borderTopColor: tokens.colors.neutral[200],
 } as const;
 const messageBubbleWidthStyle = { maxWidth: tokens.messaging.messageBubbleMaxWidth } as const;
+/**
+ * The bubble's shape (RAPP-899), as plain styles: the logical corner classes
+ * (`rounded-es-*`) never reached the phone, so the tail corner did not show.
+ * The start and end corners mirror by themselves in right-to-left languages.
+ */
+const bubbleShapeStyle = {
+  ...continuousCorners,
+  borderRadius: tokens.messaging.bubbleRadius,
+} as const;
+const bubbleTailStartStyle = {
+  ...bubbleShapeStyle,
+  borderBottomStartRadius: tokens.messaging.bubbleTailRadius,
+} as const;
+const bubbleTailEndStyle = {
+  ...bubbleShapeStyle,
+  borderBottomEndRadius: tokens.messaging.bubbleTailRadius,
+} as const;
 /** Keeps a run's bubbles in one column where no avatar is drawn. */
 const avatarSlotStyle = { width: PERSON_AVATAR_SIZE.small } as const;
 const timelineKeyExtractor = (row: TimelineRow) => row.id;
@@ -127,8 +145,8 @@ const MessageBubble = memo(function MessageBubble({
             </Text>
           ) : null}
           <View
-            style={continuousCorners}
-            className={`rounded-2xl bg-white px-md py-sm ${showSenderAvatar ? 'rounded-es-sm' : ''}`}
+            style={showSenderAvatar ? bubbleTailStartStyle : bubbleShapeStyle}
+            className="bg-white px-md py-sm"
           >
             <Text
               selectable
@@ -148,10 +166,8 @@ const MessageBubble = memo(function MessageBubble({
       className={`gap-xs pb-sm ${isOwn ? 'self-end' : 'self-start'}`}
     >
       <View
-        style={continuousCorners}
-        className={`rounded-2xl px-md py-sm ${
-          isOwn ? 'rounded-ee-sm bg-primary-dark' : 'rounded-es-sm bg-white'
-        }`}
+        style={isOwn ? bubbleTailEndStyle : bubbleTailStartStyle}
+        className={`px-md py-sm ${isOwn ? 'bg-primary-dark' : 'bg-white'}`}
       >
         <Text
           selectable
@@ -175,18 +191,12 @@ const MessageBubble = memo(function MessageBubble({
       ) : null}
       {isOwn && isRejected ? (
         <View className="flex-row items-center justify-end gap-sm">
-          <PressableScale
+          <RaisedActionButton
             testID={`message-retry-${id}`}
-            accessibilityRole="button"
-            accessibilityLabel={retryLabel}
+            size="compact"
+            label={retryLabel}
             onPress={handleRetry}
-            haptic="tapLight"
-            className="min-h-recommended justify-center rounded-md border border-primary px-md"
-          >
-            <Text className={`text-sm font-semibold text-primary-dark ${languageClass}`}>
-              {retryLabel}
-            </Text>
-          </PressableScale>
+          />
           <PressableScale
             testID={`message-discard-${id}`}
             accessibilityRole="button"
@@ -222,15 +232,23 @@ function MessageThreadEmptyState({
 }) {
   return (
     <View className="flex-1 items-center justify-center gap-md px-xl">
+      {/* Two bubbles of a conversation, drawn with the real bubbles' shape and
+          colours, lines standing in for the words (RAPP-899). */}
       <View accessible={false} className="w-full max-w-form gap-sm px-xl">
         <View
-          style={continuousCorners}
-          className="h-xl w-2/3 self-start rounded-2xl rounded-es-sm border border-neutral-200 bg-white"
-        />
+          style={bubbleTailStartStyle}
+          className="w-2/3 gap-sm self-start border border-neutral-200 bg-white px-lg py-lg"
+        >
+          <View className="h-sm w-full rounded-full bg-neutral-200" />
+          <View className="h-sm w-2/3 rounded-full bg-neutral-200" />
+        </View>
         <View
-          style={continuousCorners}
-          className="h-xl w-1/2 self-end rounded-2xl rounded-ee-sm bg-primary-light"
-        />
+          style={bubbleTailEndStyle}
+          className="w-1/2 gap-sm self-end bg-primary-dark px-lg py-lg"
+        >
+          <View className="h-sm w-full rounded-full bg-white/40" />
+          <View className="h-sm w-1/2 rounded-full bg-white/40" />
+        </View>
       </View>
       <Text
         accessibilityRole="header"
@@ -282,17 +300,13 @@ const MessageComposer = memo(function MessageComposer({
         style={continuousCorners}
         className={`min-h-recommended flex-1 rounded-2xl border border-neutral-300 bg-neutral-50 px-md py-sm text-neutral-900 ${languageClass}`}
       />
-      <PressableScale
+      <RaisedActionButton
         testID="message-send"
-        accessibilityLabel={sendLabel}
-        onPress={submit}
+        size="fit"
+        label={sendLabel}
         isDisabled={draft.trim().length === 0}
-        haptic="selection"
-        style={continuousCorners}
-        className="min-h-recommended justify-center rounded-2xl bg-primary-dark px-lg"
-      >
-        <Text className={`font-semibold text-white ${languageClass}`}>{sendLabel}</Text>
-      </PressableScale>
+        onPress={submit}
+      />
     </View>
   );
 });

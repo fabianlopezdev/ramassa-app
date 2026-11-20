@@ -8,8 +8,10 @@
  */
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PreviewStartFailed, useStartPreview } from '@/components/preview/preview-as-player';
-import { ProfileSection } from '@/components/profile/profile-section';
 import { useTeamLayout } from '@/components/team/team-layout-context';
 import { TeamListRow } from '@/components/team/team-list-row';
 import { useGuardedLogout } from '@/lib/sign-out-guard';
@@ -47,7 +49,7 @@ const ROUTES: Readonly<
   settings: { testID: 'team-more-settings', href: '/app-lock' as Href },
 };
 
-export default function TeamMoreScreen() {
+function TeamMoreScreen() {
   const signOut = useGuardedLogout();
   // In the large-button layout More is a screen pushed from the home, so
   // the native header goes back to it (RAPP-815); tabs and the sidebar need none.
@@ -155,7 +157,7 @@ export default function TeamMoreScreen() {
         {/* The inset keeps the last entry, sign-out, clear of the floating tab bar. */}
         <ScrollView
           contentInsetAdjustmentBehavior="automatic"
-          contentContainerClassName="gap-lg p-lg pb-3xl"
+          contentContainerClassName={`${screenContentClassName} pb-3xl`}
         >
           <Text
             accessibilityRole="header"
@@ -163,10 +165,14 @@ export default function TeamMoreScreen() {
           >
             {t('team.more')}
           </Text>
-          {groups.map(({ group, entries }) => (
-            <ProfileSection key={group} title={groupTitles[group]}>
+          {groups.map(({ group, entries }, index) => (
+            <ScreenSection
+              key={group}
+              title={groupTitles[group]}
+              isLast={index === groups.length - 1}
+            >
               {entries.map(renderEntry)}
-            </ProfileSection>
+            </ScreenSection>
           ))}
           <PreviewStartFailed isShown={preview.hasFailed} />
         </ScrollView>
@@ -174,3 +180,5 @@ export default function TeamMoreScreen() {
     </SafeAreaView>
   );
 }
+
+export default withScreenEntrance('more', TeamMoreScreen);

@@ -1,30 +1,17 @@
-import { FIELD_SHAPE_CLASS_NAME } from '@/components/forms/field-appearance';
+import {
+  outlinedSurfaceClassName,
+  RaisedSurfaceEdge,
+  raisedSurfaceWrapperStyle,
+  RaisedToneWash,
+  useRaisedChoiceFaceStyle,
+  type RaisedTone,
+} from '@/components/layout/raised-surface';
 import { PressableDepth } from '@/components/motion/pressable-depth';
 import { SelectionTransition } from '@/components/motion/selection-transition';
 import { continuousCorners } from '@/lib/continuous-corners';
-import { useMemo, type ReactNode } from 'react';
-import {
-  useWindowDimensions,
-  View,
-  type AccessibilityRole,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import type { ReactNode } from 'react';
+import { type AccessibilityRole, type Insets, type StyleProp, type ViewStyle } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
-
-const FACE_CLASS = `relative overflow-hidden ${FIELD_SHAPE_CLASS_NAME} border-primary bg-white px-lg`;
-const wrapperStyle = {
-  paddingEnd: tokens.languageChoice.shadowInlineOffset,
-  paddingBottom: tokens.languageChoice.shadowBlockOffset,
-} as const;
-const shadowStyle = {
-  ...continuousCorners,
-  position: 'absolute',
-  top: tokens.languageChoice.shadowBlockOffset,
-  start: tokens.languageChoice.shadowInlineOffset,
-  end: 0,
-  bottom: 0,
-} as const;
 
 interface SelectionChoiceSurfaceProps {
   readonly children: ReactNode;
@@ -36,8 +23,16 @@ interface SelectionChoiceSurfaceProps {
   readonly isSelected?: boolean;
   readonly onPress: () => void;
   readonly className?: string;
+  /** The face's side padding; a grid tile takes less (RAPP-854). */
+  readonly paddingClassName?: string;
   readonly contentClassName: string;
   readonly rowStyle?: StyleProp<ViewStyle>;
+  /** A colour for the face (RAPP-845), as a pale wash. */
+  readonly tone?: RaisedTone;
+  /** The corners of face and edge; a small icon button takes smaller ones (RAPP-884). */
+  readonly shapeClassName?: string;
+  /** How far past its edges a touch still counts, for a small button. */
+  readonly hitSlop?: Insets;
 }
 
 /** One raised picker surface for full-width cards and compact option buttons. */
@@ -51,19 +46,14 @@ export function SelectionChoiceSurface({
   isSelected,
   onPress,
   className,
+  paddingClassName = 'px-lg',
   contentClassName,
   rowStyle,
+  tone,
+  shapeClassName,
+  hitSlop,
 }: SelectionChoiceSurfaceProps) {
-  const { fontScale } = useWindowDimensions();
-  const defaultRowStyle = useMemo(
-    () => ({
-      ...continuousCorners,
-      minHeight:
-        tokens.formField.minHeight * Math.max(1, fontScale) -
-        tokens.languageChoice.shadowBlockOffset,
-    }),
-    [fontScale],
-  );
+  const defaultRowStyle = useRaisedChoiceFaceStyle();
   return (
     <PressableDepth
       testID={testID}
@@ -74,14 +64,16 @@ export function SelectionChoiceSurface({
       isSelected={isSelected}
       onPress={onPress}
       haptic="selection"
-      style={wrapperStyle}
+      style={raisedSurfaceWrapperStyle}
       className={`relative ${className ?? ''}`}
       faceStyle={rowStyle ?? defaultRowStyle}
-      faceClassName={`${FACE_CLASS} ${contentClassName}`}
+      faceClassName={`relative overflow-hidden ${outlinedSurfaceClassName(shapeClassName)} ${paddingClassName} ${contentClassName}`}
       inlineOffset={tokens.languageChoice.shadowInlineOffset}
       blockOffset={tokens.languageChoice.shadowBlockOffset}
-      shadow={<View pointerEvents="none" className="rounded-lg bg-primary" style={shadowStyle} />}
+      hitSlop={hitSlop}
+      shadow={<RaisedSurfaceEdge shapeClassName={shapeClassName} />}
     >
+      <RaisedToneWash tone={tone} />
       <SelectionTransition
         active={isSelected === true}
         duration="base"

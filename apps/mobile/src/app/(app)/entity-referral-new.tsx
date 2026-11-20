@@ -8,15 +8,18 @@
  * checks every required field again. A field the form refuses says why until
  * it changes; once sent, the referral opens.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import {
   ReferralBuiltinField,
   type ReferralCheckedField,
 } from '@/components/entity/referral-builtin-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { ActionScreen } from '@/components/layout/screen-action';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import {
   CustomQuestionField,
   type CustomAnswerDraft,
@@ -27,7 +30,6 @@ import {
   SeasonAnswerFields,
   type SeasonAnswers,
 } from '@/components/profile/season-answer-fields';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { checkCustomAnswers } from '@/lib/custom-answer-errors';
 import {
   useReferralActions,
@@ -320,141 +322,136 @@ export default function EntityReferralNewScreen() {
       className="flex-1 bg-neutral-50"
       edges={['left', 'right']}
     >
-      <NativeScreenHeader title={t('formTitle')} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerClassName="pb-3xl"
-        keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets
+      <ActionScreen
+        action={
+          <AuthSubmitButton
+            testID="entity-referral-save"
+            label={t('save')}
+            onPress={submit}
+            isLoading={create.isPending}
+            disabled={create.isPending}
+          />
+        }
       >
-        <PageWidth className="gap-lg p-lg">
-          <View className="gap-xs">
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-              {t('formIntro')}
-            </Text>
-          </View>
+        <NativeScreenHeader title={t('formTitle')} />
+        <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
+          contentContainerClassName="pb-3xl"
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+        >
+          <PageWidth className={screenContentClassName}>
+            <View className="gap-xs">
+              <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
+                {t('formIntro')}
+              </Text>
+            </View>
 
-          {items.map((item) => {
-            if (item.kind === 'builtin') {
+            {items.map((item) => {
+              if (item.kind === 'builtin') {
+                return (
+                  <ReferralBuiltinField
+                    key={item.placement.id}
+                    item={item}
+                    values={form}
+                    onChange={set}
+                    errorFor={errorFor}
+                    isMissing={missing.has(item.field.id)}
+                    language={language}
+                    entityNames={entityNames.data ?? []}
+                  />
+                );
+              }
+              if (!isCustomQuestionVisible(item.question, customAnswers)) return null;
               return (
-                <ReferralBuiltinField
+                <CustomQuestionField
                   key={item.placement.id}
-                  item={item}
-                  values={form}
-                  onChange={set}
-                  errorFor={errorFor}
-                  isMissing={missing.has(item.field.id)}
-                  language={language}
-                  entityNames={entityNames.data ?? []}
+                  question={markedRequired(item)}
+                  value={customAnswers[item.field.id]}
+                  errorMessage={
+                    customErrors[item.field.id] ??
+                    (missing.has(item.field.id) ? t('requiredError') : undefined)
+                  }
+                  onChange={(value) => changeAnswer(item.field.id, value)}
                 />
               );
-            }
-            if (!isCustomQuestionVisible(item.question, customAnswers)) return null;
-            return (
-              <CustomQuestionField
-                key={item.placement.id}
-                question={markedRequired(item)}
-                value={customAnswers[item.field.id]}
-                errorMessage={
-                  customErrors[item.field.id] ??
-                  (missing.has(item.field.id) ? t('requiredError') : undefined)
-                }
-                onChange={(value) => changeAnswer(item.field.id, value)}
-              />
-            );
-          })}
+            })}
 
-          <AuthTextField
-            testID="entity-referral-email"
-            label={t('email')}
-            value={form.email}
-            onChangeText={(email) => set({ email })}
-            errorMessage={errorFor('email')}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            maxLength={254}
-          />
-          <View className="gap-sm">
-            <Text className={`text-start text-form font-medium text-neutral-800 ${fontClass}`}>
-              {t('documentationLabel')}
-            </Text>
-            <View className="flex-row flex-wrap gap-sm">
-              {DOCUMENTATION_STATUSES.map((status) => (
-                <ChoiceOption
-                  key={status}
-                  testID={`entity-referral-documentation-${status}`}
-                  value={status}
-                  label={t(`documentation.${status}`)}
-                  selected={status === form.documentationStatus}
-                  onSelect={(documentationStatus) => set({ documentationStatus })}
-                  languageFontClass={fontClass}
-                />
-              ))}
-            </View>
-          </View>
-          <SeasonAnswerFields
-            testIDPrefix="entity-referral"
-            value={form.season}
-            onChange={(patch) => set({ season: { ...form.season, ...patch } })}
-            entityNames={[]}
-            showSensitive={false}
-            showSeasonNumber
-            shows={hidesSeasonQuestions}
-          />
-          <AuthTextField
-            testID="entity-referral-notes"
-            label={t('notes')}
-            value={form.notes}
-            onChangeText={(notes) => set({ notes })}
-            multiline
-            maxLength={4000}
-          />
-
-          <View className="gap-xs">
-            <OptionChip
-              testID="entity-referral-consent"
-              label={t('consentLabel')}
-              isSelected={form.consentConfirmed}
-              onPress={() => set({ consentConfirmed: !form.consentConfirmed })}
+            <AuthTextField
+              testID="entity-referral-email"
+              label={t('email')}
+              value={form.email}
+              onChangeText={(email) => set({ email })}
+              errorMessage={errorFor('email')}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              maxLength={254}
             />
-            {errorFor('consentConfirmed') === undefined ? null : (
+            <View className="gap-sm">
+              <FieldLabel>{t('documentationLabel')}</FieldLabel>
+              <View className="flex-row flex-wrap gap-sm">
+                {DOCUMENTATION_STATUSES.map((status) => (
+                  <ChoiceOption
+                    key={status}
+                    testID={`entity-referral-documentation-${status}`}
+                    value={status}
+                    label={t(`documentation.${status}`)}
+                    selected={status === form.documentationStatus}
+                    onSelect={(documentationStatus) => set({ documentationStatus })}
+                    languageFontClass={fontClass}
+                  />
+                ))}
+              </View>
+            </View>
+            <SeasonAnswerFields
+              testIDPrefix="entity-referral"
+              value={form.season}
+              onChange={(patch) => set({ season: { ...form.season, ...patch } })}
+              entityNames={[]}
+              showSensitive={false}
+              showSeasonNumber
+              shows={hidesSeasonQuestions}
+            />
+            <AuthTextField
+              testID="entity-referral-notes"
+              label={t('notes')}
+              value={form.notes}
+              onChangeText={(notes) => set({ notes })}
+              multiline
+              maxLength={4000}
+            />
+
+            <View className="gap-xs">
+              <OptionChip
+                testID="entity-referral-consent"
+                label={t('consentLabel')}
+                isSelected={form.consentConfirmed}
+                onPress={() => set({ consentConfirmed: !form.consentConfirmed })}
+              />
+              {errorFor('consentConfirmed') === undefined ? null : (
+                <Text
+                  accessibilityLiveRegion="polite"
+                  className={`text-start text-sm text-error ${fontClass}`}
+                >
+                  {errorFor('consentConfirmed')}
+                </Text>
+              )}
+              <Text className={`text-start text-sm text-neutral-500 ${fontClass}`}>
+                {t('privacyNote')}
+              </Text>
+            </View>
+            {hasFailed ? (
               <Text
                 accessibilityLiveRegion="polite"
-                className={`text-start text-sm text-error ${fontClass}`}
+                className={`text-start text-md text-error ${fontClass}`}
               >
-                {errorFor('consentConfirmed')}
+                {t('saveError')}
               </Text>
-            )}
-            <Text className={`text-start text-sm text-neutral-500 ${fontClass}`}>
-              {t('privacyNote')}
-            </Text>
-          </View>
-          {hasFailed ? (
-            <Text
-              accessibilityLiveRegion="polite"
-              className={`text-start text-md text-error ${fontClass}`}
-            >
-              {t('saveError')}
-            </Text>
-          ) : null}
-          <PressableScale
-            testID="entity-referral-save"
-            accessibilityRole="button"
-            accessibilityLabel={t('save')}
-            onPress={submit}
-            isBusy={create.isPending}
-            isDisabled={create.isPending}
-            haptic="tapLight"
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-          >
-            <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-              {t('save')}
-            </Text>
-          </PressableScale>
-        </PageWidth>
-      </ScrollView>
+            ) : null}
+          </PageWidth>
+        </ScrollView>
+      </ActionScreen>
     </SafeAreaView>
   );
 }

@@ -110,7 +110,7 @@ test('a category is created in five languages, moved up and deleted', async ({ p
     });
     await page.getByTestId('category-name-approve-all').click();
     await page.getByTestId('category-icon-theater').click();
-    await page.getByTestId('category-color-chart-2').click();
+    await page.getByTestId('category-color-amber').click();
     await page.getByTestId('category-save').click();
 
     await expect
@@ -122,7 +122,7 @@ test('a category is created in five languages, moved up and deleted', async ({ p
           `).trim(),
         { timeout: 30_000 },
       )
-      .toBe('theater|chart-2|5');
+      .toBe('theater|amber|5');
 
     const id = queryDatabase(
       `select id from public.event_categories where name ->> 'ca' = '${name}';`,

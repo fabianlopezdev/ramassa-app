@@ -4,9 +4,12 @@
  * of its tools (RAPP-797), then Settings and sign-out. Easier than a tab bar
  * for a coach whose whole job in the app is taking attendance.
  */
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
+import { RaisedCard } from '@/components/layout/raised-card';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { useUnreadMessages } from '@/lib/messaging';
 import { useGuardedLogout } from '@/lib/sign-out-guard';
 import { hasMoreEntries, showsToday, teamAreas } from '@/lib/team-shell';
@@ -30,26 +33,22 @@ function HomeButton({
 }) {
   const languageFontClass = useLanguageFontClass();
   return (
-    <PressableScale
+    <RaisedCard
       testID={testID}
-      accessibilityRole="button"
       accessibilityLabel={detail === undefined ? label : `${label}, ${detail}`}
-      onPress={onPress}
-      haptic="tapLight"
-      style={continuousCorners}
-      className="min-h-3xl justify-center gap-xs rounded-md bg-primary px-lg py-md"
+      onOpen={onPress}
     >
-      <Text className={`text-start text-xl font-bold text-white ${languageFontClass}`}>
+      <Text className={`text-start text-xl font-bold text-primary-dark ${languageFontClass}`}>
         {label}
       </Text>
       {detail === undefined ? null : (
-        <Text className={`text-start text-md text-white ${languageFontClass}`}>{detail}</Text>
+        <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>{detail}</Text>
       )}
-    </PressableScale>
+    </RaisedCard>
   );
 }
 
-export default function TeamHomeButtonsScreen() {
+function TeamHomeButtonsScreen() {
   const signOut = useGuardedLogout();
   const { t } = useTranslation('nav');
   const { t: tMessaging } = useTranslation('messaging');
@@ -65,7 +64,7 @@ export default function TeamHomeButtonsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-neutral-50" testID="team-home-buttons">
       <PageWidth className="flex-1">
-        <ScrollView contentContainerClassName="gap-lg p-lg">
+        <ScrollView contentContainerClassName={screenContentClassName}>
           <Text
             accessibilityRole="header"
             className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
@@ -116,19 +115,11 @@ export default function TeamHomeButtonsScreen() {
             />
           ) : null}
           <View className="gap-sm pt-md">
-            <PressableScale
+            <RaisedActionButton
               testID="team-home-settings"
-              accessibilityRole="button"
-              accessibilityLabel={tAuth('teamSettingsTitle')}
+              label={tAuth('teamSettingsTitle')}
               onPress={() => push('/app-lock' as Href)}
-              haptic="selection"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-            >
-              <Text className={`text-md font-bold text-primary ${languageFontClass}`}>
-                {tAuth('teamSettingsTitle')}
-              </Text>
-            </PressableScale>
+            />
             <PressableScale
               testID="team-home-sign-out"
               accessibilityRole="button"
@@ -147,3 +138,5 @@ export default function TeamHomeButtonsScreen() {
     </SafeAreaView>
   );
 }
+
+export default withScreenEntrance('home', TeamHomeButtonsScreen);

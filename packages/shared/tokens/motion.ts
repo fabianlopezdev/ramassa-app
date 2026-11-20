@@ -38,20 +38,18 @@ export const motionTokens = {
   /** Raised card faces sink quickly into their fixed backing, then lift on release. */
   depthPress: { inMs: 80, outMs: 140 },
 
-  /** Content entrance: a short rise plus a fade, staggered down a list. */
+  /**
+   * The one entrance of the app (RAPP-875): each block rises and fades in, one
+   * after another. It was drawn for onboarding (RAPP-127) and every screen
+   * shares it now, so a screen and the wizard arrive the same way.
+   */
   entrance: {
-    translateY: 12,
-    staggerMs: 40,
-    /** Ceiling on the stagger so a long list does not crawl in for seconds. */
-    maxStaggerMs: 240,
-  },
-
-  /** Visible onboarding choreography, independent of image download time. */
-  onboardingEntrance: {
     durationMs: 600,
     translateY: 24,
     staggerMs: 120,
+    /** The wait before the first block moves, so the eye is on the screen. */
     leadInMs: 180,
+    /** Ceiling on the stagger so a long list does not crawl in for seconds. */
     maxStaggerMs: 480,
   },
   logoEntrance: { durationMs: 700 },

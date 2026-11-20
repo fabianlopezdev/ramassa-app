@@ -1,11 +1,11 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ForumCategoryOption } from '@/components/forum/forum-category-tabs';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { ActionScreen } from '@/components/layout/screen-action';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { compressNativeStoryImage } from '@/lib/native-image-compression';
 import type { CompressedNativeStoryImage } from '@/lib/native-image-compression-core';
 import { isNetworkStateOnline } from '@/lib/network-status';
@@ -157,11 +157,28 @@ export default function ForumPostComposerScreen() {
   );
 
   return (
-    <>
-      <NativeScreenHeader title={t('forum:composerTitle')} />
+    <ActionScreen
+      className="bg-white"
+      action={
+        <AuthSubmitButton
+          testID="forum-publish"
+          label={createPost.isPending ? t('forum:publishing') : t('forum:publish')}
+          onPress={submit}
+          isLoading={createPost.isPending}
+          disabled={
+            !isOnline ||
+            isProcessingPhoto ||
+            categoriesQuery.isPending ||
+            postingStatus.isPending ||
+            postingDisabled
+          }
+        />
+      }
+    >
+      <NativeScreenHeader surface="white" title={t('forum:composerTitle')} />
       <ScrollView
         testID="forum-create-screen"
-        className="flex-1 bg-white"
+        className="flex-1"
         contentContainerClassName="grow px-lg py-lg"
         contentContainerStyle={contentInsets}
         contentInsetAdjustmentBehavior="automatic"
@@ -207,24 +224,19 @@ export default function ForumPostComposerScreen() {
             {t('forum:charactersRemaining', { count: remaining })}
           </Text>
           <View className="gap-sm">
-            <PressableScale
+            <RaisedActionButton
               testID="forum-add-photo"
-              accessibilityLabel={image === null ? t('forum:addPhoto') : t('forum:changePhoto')}
-              onPress={choosePhoto}
-              haptic="tapLight"
-              isDisabled={isProcessingPhoto || postingDisabled}
-              isBusy={isProcessingPhoto}
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-            >
-              <Text className={`font-bold text-primary ${languageFontClass}`}>
-                {isProcessingPhoto
+              label={
+                isProcessingPhoto
                   ? t('forum:processingPhoto')
                   : image === null
                     ? t('forum:addPhoto')
-                    : t('forum:changePhoto')}
-              </Text>
-            </PressableScale>
+                    : t('forum:changePhoto')
+              }
+              accessibilityLabel={image === null ? t('forum:addPhoto') : t('forum:changePhoto')}
+              onPress={choosePhoto}
+              isDisabled={isProcessingPhoto || postingDisabled || isProcessingPhoto}
+            />
             {isProcessingPhoto ? (
               <ActivityIndicator
                 accessibilityRole="progressbar"
@@ -239,17 +251,7 @@ export default function ForumPostComposerScreen() {
                   contentFit="cover"
                   style={styles.preview}
                 />
-                <PressableScale
-                  accessibilityLabel={t('forum:removePhoto')}
-                  onPress={removePhoto}
-                  haptic="tapLight"
-                  style={continuousCorners}
-                  className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 px-lg"
-                >
-                  <Text className={`text-neutral-700 ${languageFontClass}`}>
-                    {t('forum:removePhoto')}
-                  </Text>
-                </PressableScale>
+                <RaisedActionButton label={t('forum:removePhoto')} onPress={removePhoto} />
               </View>
             )}
           </View>
@@ -274,23 +276,10 @@ export default function ForumPostComposerScreen() {
                   {validationMessage ?? t('forum:publishFailed')}
                 </Text>
               )}
-              <AuthSubmitButton
-                testID="forum-publish"
-                label={createPost.isPending ? t('forum:publishing') : t('forum:publish')}
-                onPress={submit}
-                isLoading={createPost.isPending}
-                disabled={
-                  !isOnline ||
-                  isProcessingPhoto ||
-                  categoriesQuery.isPending ||
-                  postingStatus.isPending ||
-                  postingDisabled
-                }
-              />
             </View>
           </ShakeOnError>
         </FormWidth>
       </ScrollView>
-    </>
+    </ActionScreen>
   );
 }

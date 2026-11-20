@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
 import { draftTranslationsSchema, languageCodeSchema, type LanguageCode } from './schemas/language';
+import { SECTION_BRAND_COLOR, SECTION_URGENT_COLOR } from './section-colors';
 import {
   isTranslationReviewPublishable,
   MAX_TRANSLATION_TEXT_LENGTH,
@@ -10,6 +11,27 @@ import {
 import type { Database } from './types/database';
 
 export const ANNOUNCEMENT_CATEGORIES = ['info', 'training', 'social', 'urgent'] as const;
+/**
+ * The order the player app shows the kinds in (RAPP-850): urgent first,
+ * because it is what the team needs her to see now.
+ */
+export const PLAYER_ANNOUNCEMENT_CATEGORY_ORDER = ['urgent', 'info', 'training', 'social'] as const;
+/**
+ * The section colour of each kind (RAPP-893), read by the player app and the
+ * team's screens alike: urgent keeps its red, training the club colour, and
+ * info and social take a hue of the shared palette.
+ */
+const ANNOUNCEMENT_CATEGORY_COLORS = {
+  urgent: SECTION_URGENT_COLOR,
+  training: SECTION_BRAND_COLOR,
+  info: 'teal',
+  social: 'amber',
+} as const satisfies Record<AnnouncementCategory, string>;
+
+export function announcementCategoryColor(category: AnnouncementCategory): string {
+  return ANNOUNCEMENT_CATEGORY_COLORS[category];
+}
+
 export const ANNOUNCEMENT_STATUSES = ['draft', 'published'] as const;
 export const ANNOUNCEMENT_LIFECYCLES = ['draft', 'published', 'scheduled', 'expired'] as const;
 export const ANNOUNCEMENT_STATUS_FILTERS = ['all', ...ANNOUNCEMENT_LIFECYCLES] as const;
@@ -232,6 +254,24 @@ export function filterAndOrderPlayerAnnouncements(
         new Date(right.published_at ?? 0).getTime() - new Date(left.published_at ?? 0).getTime();
       return publishedDifference === 0 ? left.id.localeCompare(right.id) : publishedDifference;
     });
+}
+
+/**
+ * Urgent announcements she has not opened move up to just after the pinned
+ * ones (RAPP-850). Once she opens one, it goes back to its place by date, so
+ * an old urgent notice never sits above newer news. Takes rows already
+ * ordered by `filterAndOrderPlayerAnnouncements`.
+ */
+export function raiseUnopenedUrgentAnnouncements<
+  Row extends { readonly id: string; readonly category: string; readonly is_pinned: boolean },
+>(rows: readonly Row[], unopenedIds: ReadonlySet<string>): readonly Row[] {
+  const isRaised = (row: Row) =>
+    !row.is_pinned && row.category === 'urgent' && unopenedIds.has(row.id);
+  return [
+    ...rows.filter((row) => row.is_pinned),
+    ...rows.filter(isRaised),
+    ...rows.filter((row) => !row.is_pinned && !isRaised(row)),
+  ];
 }
 
 export interface AnnouncementQueryBuilder {

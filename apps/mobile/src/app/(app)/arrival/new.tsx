@@ -5,11 +5,17 @@
  * connection; the arrival's id is made once, so a second press after a lost
  * answer saves nothing twice.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
+import { FieldLabel } from '@/components/forms/field-label';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ActionScreen } from '@/components/layout/screen-action';
+import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import {
   addArrivalLine,
@@ -30,7 +36,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useNetworkState } from 'expo-network';
 import { useRouter } from 'expo-router';
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -57,21 +63,6 @@ interface PhotoDraft {
   readonly failed: boolean;
 }
 
-function Section({ title, children }: { readonly title: string; readonly children: ReactNode }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View className="gap-sm">
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-      >
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
-}
-
 function OutlineButton({
   label,
   accessibilityLabel,
@@ -86,26 +77,15 @@ function OutlineButton({
   readonly testID: string;
   readonly disabled?: boolean;
 }) {
-  const fontClass = useLanguageFontClass();
   return (
-    <PressableScale
+    <RaisedActionButton
       testID={testID}
-      accessibilityRole="button"
+      size="fit"
+      label={label}
       accessibilityLabel={accessibilityLabel ?? label}
       onPress={onPress}
       isDisabled={disabled}
-      haptic="tapLight"
-      style={continuousCorners}
-      className={`min-h-recommended items-center justify-center rounded-md border px-md ${
-        disabled ? 'border-neutral-300' : 'border-primary'
-      }`}
-    >
-      <Text
-        className={`text-center font-bold ${disabled ? 'text-neutral-500' : 'text-primary-dark'} ${fontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
+    />
   );
 }
 
@@ -284,312 +264,297 @@ export default function NewArrivalScreen() {
             : null;
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right', 'bottom']}>
-      <NativeScreenHeader title={t('arrival.title')} />
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerClassName="pb-3xl"
+    <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right']}>
+      <ActionScreen
+        action={
+          <AuthSubmitButton
+            testID="arrival-save"
+            label={recordArrival.isPending ? t('arrival.saving') : t('arrival.save')}
+            onPress={save}
+            isLoading={recordArrival.isPending}
+            disabled={blocker !== null}
+          />
+        }
       >
-        <PageWidth className="gap-lg p-lg">
-          <Section title={t('arrival.sourceLabel')}>
-            <View
-              accessibilityRole="radiogroup"
-              accessibilityLabel={t('arrival.sourceLabel')}
-              className="flex-row flex-wrap gap-sm"
-            >
-              {ARRIVAL_SOURCES.map((candidate) => (
-                <ChoiceOption
-                  key={candidate}
-                  testID={`arrival-source-${candidate}`}
-                  value={candidate}
-                  label={t(`stock.source.${candidate}`)}
-                  selected={candidate === source}
-                  onSelect={chooseSource}
-                  languageFontClass={fontClass}
-                />
-              ))}
-            </View>
-            <AuthTextField
-              testID="arrival-source-name"
-              label={t(`arrival.sourceName.${source}`)}
-              value={sourceName}
-              onChangeText={setSourceName}
-              maxLength={200}
-            />
-          </Section>
-
-          <Section title={t('arrival.linesLabel')}>
-            {lines.map((line, index) => {
-              const item =
-                line.size === null
-                  ? itemLabel(line.itemKey)
-                  : `${itemLabel(line.itemKey)} ${line.size}`;
-              return (
-                <View
-                  key={`${line.itemTypeId}-${line.size ?? ''}-${line.unitValueCents ?? ''}`}
-                  testID={`arrival-line-${index}`}
-                  style={continuousCorners}
-                  className="flex-row items-center justify-between gap-sm rounded-md border border-neutral-200 bg-white px-md py-sm"
-                >
-                  <View className="flex-1 gap-xs">
-                    <Text
-                      className={`text-start text-md font-semibold text-neutral-900 ${fontClass}`}
-                    >
-                      {t('arrival.lineSummary', { item, quantity: line.quantity })}
-                    </Text>
-                    {line.unitValueCents === null ? null : (
-                      <Text className={`text-start text-sm text-neutral-700 ${fontClass}`}>
-                        {t('arrival.lineValue', { value: euro.format(line.unitValueCents / 100) })}
-                      </Text>
-                    )}
-                  </View>
-                  <PressableScale
-                    testID={`arrival-line-remove-${index}`}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('arrival.removeLine', { item })}
-                    onPress={() => setLines((current) => current.filter((_, at) => at !== index))}
-                    haptic="tapLight"
-                    className="min-h-recommended min-w-recommended items-center justify-center"
-                  >
-                    <Text className={`font-semibold text-primary-dark ${fontClass}`}>
-                      {t('arrival.remove')}
-                    </Text>
-                  </PressableScale>
-                </View>
-              );
-            })}
-
-            <View
-              style={continuousCorners}
-              className="gap-md rounded-md border border-neutral-200 bg-white p-md"
-            >
-              <Text className={`text-start text-md font-semibold text-neutral-800 ${fontClass}`}>
-                {t('arrival.itemLabel')}
-              </Text>
-              {itemTypes.isPending ? (
-                <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
-              ) : null}
+        <NativeScreenHeader title={t('arrival.title')} />
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          contentInsetAdjustmentBehavior="automatic"
+          contentContainerClassName="pb-3xl"
+        >
+          <PageWidth className={screenContentClassName}>
+            <ScreenSection title={t('arrival.sourceLabel')}>
               <View
                 accessibilityRole="radiogroup"
-                accessibilityLabel={t('arrival.itemLabel')}
+                accessibilityLabel={t('arrival.sourceLabel')}
                 className="flex-row flex-wrap gap-sm"
               >
-                {types.map((type) => (
+                {ARRIVAL_SOURCES.map((candidate) => (
                   <ChoiceOption
-                    key={type.id}
-                    testID={`arrival-item-${type.key}`}
-                    value={type.id}
-                    label={itemLabel(type.key)}
-                    selected={type.id === itemTypeId}
-                    onSelect={chooseItem}
+                    key={candidate}
+                    testID={`arrival-source-${candidate}`}
+                    value={candidate}
+                    label={t(`stock.source.${candidate}`)}
+                    selected={candidate === source}
+                    onSelect={chooseSource}
                     languageFontClass={fontClass}
                   />
                 ))}
               </View>
-              {needsSize ? (
-                <>
-                  <Text
-                    className={`text-start text-md font-semibold text-neutral-800 ${fontClass}`}
-                  >
-                    {t('arrival.sizeLabel')}
-                  </Text>
-                  <View
-                    accessibilityRole="radiogroup"
-                    accessibilityLabel={t('arrival.sizeLabel')}
-                    className="flex-row flex-wrap gap-sm"
-                  >
-                    {itemType.sizes.map((candidate) => (
-                      <ChoiceOption
-                        key={candidate}
-                        testID={`arrival-size-${candidate}`}
-                        value={candidate}
-                        label={candidate}
-                        selected={candidate === size}
-                        onSelect={setSize}
-                        languageFontClass={fontClass}
-                      />
-                    ))}
-                  </View>
-                </>
-              ) : null}
-              {itemType === null ? null : (
-                <>
-                  <Text
-                    className={`text-start text-md font-semibold text-neutral-800 ${fontClass}`}
-                  >
-                    {t('arrival.quantityLabel')}
-                  </Text>
-                  <View className="flex-row items-center gap-sm">
-                    <OutlineButton
-                      testID="arrival-quantity-less"
-                      label="−"
-                      accessibilityLabel={t('arrival.less')}
-                      onPress={() => setQuantity((current) => clampQuantity(current - 1))}
-                      disabled={quantity <= 1}
-                    />
-                    <TextInput
-                      testID="arrival-quantity"
-                      accessibilityLabel={t('arrival.quantityLabel')}
-                      value={String(quantity)}
-                      onChangeText={(text) =>
-                        setQuantity(clampQuantity(Number(text.replace(/\D/g, '')) || 1))
-                      }
-                      keyboardType="number-pad"
-                      selectTextOnFocus
-                      style={continuousCorners}
-                      className={`min-h-recommended w-3xl rounded-md border border-neutral-300 bg-white text-center text-lg text-neutral-900 ${fontClass}`}
-                    />
-                    <OutlineButton
-                      testID="arrival-quantity-more"
-                      label="+"
-                      accessibilityLabel={t('arrival.more')}
-                      onPress={() => setQuantity((current) => clampQuantity(current + 1))}
-                    />
-                  </View>
-                  <AuthTextField
-                    testID="arrival-value"
-                    label={t(`arrival.valueLabel.${source}`)}
-                    value={valueText}
-                    onChangeText={setValueText}
-                    keyboardType="decimal-pad"
-                    errorMessage={value.ok ? undefined : t('arrival.valueInvalid')}
-                  />
-                  {source === 'purchase' || itemType.default_value_cents === null ? null : (
-                    <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-                      {t('arrival.valueHint')}
-                    </Text>
-                  )}
-                </>
-              )}
-              <OutlineButton
-                testID="arrival-add-line"
-                label={t('arrival.addLine')}
-                onPress={addLine}
-                disabled={!canAddLine}
+              <AuthTextField
+                testID="arrival-source-name"
+                label={t(`arrival.sourceName.${source}`)}
+                value={sourceName}
+                onChangeText={setSourceName}
+                maxLength={200}
               />
-            </View>
-          </Section>
+            </ScreenSection>
 
-          {source === 'purchase' ? (
-            <AuthTextField
-              testID="arrival-total-cost"
-              label={t('arrival.totalCostLabel')}
-              value={totalCostText}
-              onChangeText={setTotalCostText}
-              keyboardType="decimal-pad"
-              errorMessage={readValue(totalCostText).ok ? undefined : t('arrival.valueInvalid')}
-            />
-          ) : null}
-
-          <AuthTextField
-            testID="arrival-problems"
-            label={t('arrival.problemsLabel')}
-            value={problems}
-            onChangeText={setProblems}
-            maxLength={1000}
-            multiline
-            textAlignVertical="top"
-          />
-
-          <Section title={t('arrival.photosLabel')}>
-            <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-              {t('arrival.photosHint')}
-            </Text>
-            {photos.length === 0 ? null : (
-              <View className="flex-row flex-wrap gap-sm">
-                {photos.map((photo) => (
-                  <View key={photo.key} className="items-start gap-xs">
-                    <Image
-                      source={{ uri: photo.uri }}
-                      style={photoStyle}
-                      contentFit="cover"
-                      accessibilityLabel={t(`stock.photo.${photo.kind}`)}
-                    />
-                    {photo.objectKey === null && !photo.failed ? (
-                      <ActivityIndicator
-                        accessibilityLabel={t('arrival.uploading')}
-                        color={tokens.colors.primary.DEFAULT}
-                      />
-                    ) : (
-                      <PressableScale
-                        testID={`arrival-photo-remove-${photo.key}`}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('arrival.removePhoto')}
-                        onPress={() =>
-                          setPhotos((current) =>
-                            current.filter((candidate) => candidate.key !== photo.key),
-                          )
-                        }
-                        haptic="tapLight"
-                        className="min-h-recommended justify-center"
+            <ScreenSection title={t('arrival.linesLabel')}>
+              {lines.map((line, index) => {
+                const item =
+                  line.size === null
+                    ? itemLabel(line.itemKey)
+                    : `${itemLabel(line.itemKey)} ${line.size}`;
+                return (
+                  <View
+                    key={`${line.itemTypeId}-${line.size ?? ''}-${line.unitValueCents ?? ''}`}
+                    testID={`arrival-line-${index}`}
+                    style={continuousCorners}
+                    className="flex-row items-center justify-between gap-sm rounded-md border border-neutral-200 bg-white px-md py-sm"
+                  >
+                    <View className="flex-1 gap-xs">
+                      <Text
+                        className={`text-start text-md font-semibold text-neutral-900 ${fontClass}`}
                       >
-                        <Text className={`text-sm font-semibold text-primary-dark ${fontClass}`}>
-                          {t('arrival.removePhoto')}
+                        {t('arrival.lineSummary', { item, quantity: line.quantity })}
+                      </Text>
+                      {line.unitValueCents === null ? null : (
+                        <Text className={`text-start text-sm text-neutral-700 ${fontClass}`}>
+                          {t('arrival.lineValue', {
+                            value: euro.format(line.unitValueCents / 100),
+                          })}
                         </Text>
-                      </PressableScale>
-                    )}
+                      )}
+                    </View>
+                    <PressableScale
+                      testID={`arrival-line-remove-${index}`}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('arrival.removeLine', { item })}
+                      onPress={() => setLines((current) => current.filter((_, at) => at !== index))}
+                      haptic="tapLight"
+                      className="min-h-recommended min-w-recommended items-center justify-center"
+                    >
+                      <Text className={`font-semibold text-primary-dark ${fontClass}`}>
+                        {t('arrival.remove')}
+                      </Text>
+                    </PressableScale>
                   </View>
-                ))}
-              </View>
-            )}
-            {photos.length >= ARRIVAL_MAX_PHOTOS ? null : (
-              <View className="gap-sm">
-                {ARRIVAL_PHOTO_KINDS.map((kind) => (
-                  <OutlineButton
-                    key={kind}
-                    testID={`arrival-take-${kind}`}
-                    label={t(`arrival.takePhoto.${kind}`)}
-                    onPress={() => void addPhoto(kind, 'camera')}
-                  />
-                ))}
+                );
+              })}
+
+              <View
+                style={continuousCorners}
+                className="gap-md rounded-md border border-neutral-200 bg-white p-md"
+              >
+                <FieldLabel>{t('arrival.itemLabel')}</FieldLabel>
+                {itemTypes.isPending ? (
+                  <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
+                ) : null}
+                <View
+                  accessibilityRole="radiogroup"
+                  accessibilityLabel={t('arrival.itemLabel')}
+                  className="flex-row flex-wrap gap-sm"
+                >
+                  {types.map((type) => (
+                    <ChoiceOption
+                      key={type.id}
+                      testID={`arrival-item-${type.key}`}
+                      value={type.id}
+                      label={itemLabel(type.key)}
+                      selected={type.id === itemTypeId}
+                      onSelect={chooseItem}
+                      languageFontClass={fontClass}
+                    />
+                  ))}
+                </View>
+                {needsSize ? (
+                  <>
+                    <FieldLabel>{t('arrival.sizeLabel')}</FieldLabel>
+                    <View
+                      accessibilityRole="radiogroup"
+                      accessibilityLabel={t('arrival.sizeLabel')}
+                      className="flex-row flex-wrap gap-sm"
+                    >
+                      {itemType.sizes.map((candidate) => (
+                        <ChoiceOption
+                          key={candidate}
+                          testID={`arrival-size-${candidate}`}
+                          value={candidate}
+                          label={candidate}
+                          selected={candidate === size}
+                          onSelect={setSize}
+                          languageFontClass={fontClass}
+                        />
+                      ))}
+                    </View>
+                  </>
+                ) : null}
+                {itemType === null ? null : (
+                  <>
+                    <FieldLabel>{t('arrival.quantityLabel')}</FieldLabel>
+                    <View className="flex-row items-center gap-sm">
+                      <OutlineButton
+                        testID="arrival-quantity-less"
+                        label="−"
+                        accessibilityLabel={t('arrival.less')}
+                        onPress={() => setQuantity((current) => clampQuantity(current - 1))}
+                        disabled={quantity <= 1}
+                      />
+                      <TextInput
+                        testID="arrival-quantity"
+                        accessibilityLabel={t('arrival.quantityLabel')}
+                        value={String(quantity)}
+                        onChangeText={(text) =>
+                          setQuantity(clampQuantity(Number(text.replace(/\D/g, '')) || 1))
+                        }
+                        keyboardType="number-pad"
+                        selectTextOnFocus
+                        style={continuousCorners}
+                        className={`min-h-recommended w-3xl rounded-md border border-neutral-300 bg-white text-center text-lg text-neutral-900 ${fontClass}`}
+                      />
+                      <OutlineButton
+                        testID="arrival-quantity-more"
+                        label="+"
+                        accessibilityLabel={t('arrival.more')}
+                        onPress={() => setQuantity((current) => clampQuantity(current + 1))}
+                      />
+                    </View>
+                    <AuthTextField
+                      testID="arrival-value"
+                      label={t(`arrival.valueLabel.${source}`)}
+                      value={valueText}
+                      onChangeText={setValueText}
+                      keyboardType="decimal-pad"
+                      errorMessage={value.ok ? undefined : t('arrival.valueInvalid')}
+                    />
+                    {source === 'purchase' || itemType.default_value_cents === null ? null : (
+                      <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+                        {t('arrival.valueHint')}
+                      </Text>
+                    )}
+                  </>
+                )}
                 <OutlineButton
-                  testID="arrival-choose-photo"
-                  label={t('arrival.choosePhoto')}
-                  onPress={() => void addPhoto('goods', 'library')}
+                  testID="arrival-add-line"
+                  label={t('arrival.addLine')}
+                  onPress={addLine}
+                  disabled={!canAddLine}
                 />
               </View>
+            </ScreenSection>
+
+            {source === 'purchase' ? (
+              <AuthTextField
+                testID="arrival-total-cost"
+                label={t('arrival.totalCostLabel')}
+                value={totalCostText}
+                onChangeText={setTotalCostText}
+                keyboardType="decimal-pad"
+                errorMessage={readValue(totalCostText).ok ? undefined : t('arrival.valueInvalid')}
+              />
+            ) : null}
+
+            <AuthTextField
+              testID="arrival-problems"
+              label={t('arrival.problemsLabel')}
+              value={problems}
+              onChangeText={setProblems}
+              maxLength={1000}
+              multiline
+              textAlignVertical="top"
+            />
+
+            <ScreenSection title={t('arrival.photosLabel')}>
+              <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+                {t('arrival.photosHint')}
+              </Text>
+              {photos.length === 0 ? null : (
+                <View className="flex-row flex-wrap gap-sm">
+                  {photos.map((photo) => (
+                    <View key={photo.key} className="items-start gap-xs">
+                      <Image
+                        source={{ uri: photo.uri }}
+                        style={photoStyle}
+                        contentFit="cover"
+                        accessibilityLabel={t(`stock.photo.${photo.kind}`)}
+                      />
+                      {photo.objectKey === null && !photo.failed ? (
+                        <ActivityIndicator
+                          accessibilityLabel={t('arrival.uploading')}
+                          color={tokens.colors.primary.DEFAULT}
+                        />
+                      ) : (
+                        <PressableScale
+                          testID={`arrival-photo-remove-${photo.key}`}
+                          accessibilityRole="button"
+                          accessibilityLabel={t('arrival.removePhoto')}
+                          onPress={() =>
+                            setPhotos((current) =>
+                              current.filter((candidate) => candidate.key !== photo.key),
+                            )
+                          }
+                          haptic="tapLight"
+                          className="min-h-recommended justify-center"
+                        >
+                          <Text className={`text-sm font-semibold text-primary-dark ${fontClass}`}>
+                            {t('arrival.removePhoto')}
+                          </Text>
+                        </PressableScale>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              )}
+              {photos.length >= ARRIVAL_MAX_PHOTOS ? null : (
+                <View className="gap-sm">
+                  {ARRIVAL_PHOTO_KINDS.map((kind) => (
+                    <OutlineButton
+                      key={kind}
+                      testID={`arrival-take-${kind}`}
+                      label={t(`arrival.takePhoto.${kind}`)}
+                      onPress={() => void addPhoto(kind, 'camera')}
+                    />
+                  ))}
+                  <OutlineButton
+                    testID="arrival-choose-photo"
+                    label={t('arrival.choosePhoto')}
+                    onPress={() => void addPhoto('goods', 'library')}
+                  />
+                </View>
+              )}
+              {photoError === null ? null : (
+                <Text
+                  accessibilityRole="alert"
+                  className={`text-start text-sm text-error ${fontClass}`}
+                >
+                  {photoError}
+                </Text>
+              )}
+            </ScreenSection>
+
+            {saveError === null ? null : (
+              <FailureNotice code={saveError} message={t('arrival.saveFailed')} />
             )}
-            {photoError === null ? null : (
-              <Text
-                accessibilityRole="alert"
-                className={`text-start text-sm text-error ${fontClass}`}
-              >
-                {photoError}
+            {blockerText === null ? null : (
+              <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
+                {blockerText}
               </Text>
             )}
-          </Section>
-
-          {saveError === null ? null : (
-            <FailureNotice code={saveError} message={t('arrival.saveFailed')} />
-          )}
-          {blockerText === null ? null : (
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-              {blockerText}
-            </Text>
-          )}
-          <PressableScale
-            testID="arrival-save"
-            accessibilityRole="button"
-            accessibilityLabel={recordArrival.isPending ? t('arrival.saving') : t('arrival.save')}
-            onPress={save}
-            isDisabled={blocker !== null}
-            isBusy={recordArrival.isPending}
-            haptic="tapLight"
-            style={continuousCorners}
-            className={`min-h-recommended items-center justify-center rounded-md px-lg ${
-              blocker === null ? 'bg-primary' : 'bg-neutral-300'
-            }`}
-          >
-            <Text
-              className={`text-center text-md font-bold ${blocker === null ? 'text-white' : 'text-neutral-700'} ${fontClass}`}
-            >
-              {recordArrival.isPending ? t('arrival.saving') : t('arrival.save')}
-            </Text>
-          </PressableScale>
-        </PageWidth>
-      </ScrollView>
+          </PageWidth>
+        </ScrollView>
+      </ActionScreen>
     </SafeAreaView>
   );
 }

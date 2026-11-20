@@ -10,6 +10,21 @@
  * `primary` and `secondary` palettes at runtime from the `organizations` table.
  */
 
+// Neutral ramp for text, surfaces, and borders. Declared first so the page
+// colour below can name one of its steps.
+const neutral = {
+  50: '#F8FAFC',
+  100: '#F1F5F9',
+  200: '#E2E8F0',
+  300: '#CBD5E1',
+  400: '#94A3B8',
+  500: '#64748B',
+  600: '#475569',
+  700: '#334155',
+  800: '#1E293B',
+  900: '#0F172A',
+} as const;
+
 export const tokens = {
   colors: {
     // Club identity: blue primary, gold secondary.
@@ -23,23 +38,28 @@ export const tokens = {
     error: '#BE123C',
     info: '#118AB2',
 
-    // Neutral ramp for text, surfaces, and borders.
-    neutral: {
-      50: '#F8FAFC',
-      100: '#F1F5F9',
-      200: '#E2E8F0',
-      300: '#CBD5E1',
-      400: '#94A3B8',
-      500: '#64748B',
-      600: '#475569',
-      700: '#334155',
-      800: '#1E293B',
-      900: '#0F172A',
-    },
+    neutral,
 
     // The warm page canvas behind cards (RAPP-631): the same warm white as the
     // player app's splash screen, so both apps share one paper colour.
-    surface: { warm: '#F7F5EE' },
+    // `page` (RAPP-847): the light grey behind the cards of the player app,
+    // on every tab, its tab bar and the header of pushed screens.
+    surface: { warm: '#F7F5EE', page: neutral[50] },
+
+    // Service category hues (RAPP-856): each Ajuda category is told apart by
+    // a pale wash of one of these, on its icon circle and behind its list.
+    // Kept apart from the status colours, so no category reads as an error;
+    // `pink` sits on the magenta side, away from the Urgent avisos red.
+    category: {
+      sky: '#0284C7',
+      green: '#16A34A',
+      purple: '#9333EA',
+      orange: '#EA580C',
+      pink: '#DB2777',
+      teal: '#0D9488',
+      amber: '#D97706',
+      indigo: '#4F46E5',
+    },
 
     white: '#FFFFFF',
     black: '#000000',
@@ -50,7 +70,18 @@ export const tokens = {
   radius: { sm: 8, md: 12, lg: 16, xl: 24, full: 9999 },
 
   // Shared readable baseline for onboarding and its form primitives (RAPP-562).
-  fontSize: { xs: 12, sm: 14, md: 16, lg: 18, form: 18, xl: 20, '2xl': 24, '3xl': 30, '4xl': 36 },
+  fontSize: {
+    xs: 12,
+    sm: 14,
+    md: 16,
+    lg: 18,
+    form: 18,
+    xl: 20,
+    '2xl': 24,
+    '3xl': 30,
+    '4xl': 36,
+    '5xl': 48,
+  },
 
   // Long body copy needs enough room for the bundled Arabic and Farsi fonts.
   // 27dp at the 16dp body size is approximately 1.7em on every platform.
@@ -108,7 +139,9 @@ export const tokens = {
   // Conversation bubbles stay comfortably readable without spanning the full
   // thread width. A percentage keeps the measure responsive at large text and
   // across phone widths while leaving sender alignment visually obvious.
-  messaging: { messageBubbleMaxWidth: '84%' },
+  // A chat bubble (RAPP-899): round corners, and one small corner on the side
+  // of the person who wrote it, the bubble's tail.
+  messaging: { messageBubbleMaxWidth: '84%', bubbleRadius: 20, bubbleTailRadius: 4 },
 
   // Client-side upload ceilings, enforced before the R2 upload (ADR-013).
   upload: {
@@ -119,7 +152,8 @@ export const tokens = {
   },
 
   // Number of flags that auto-hides a forum post pending moderation (ADR-014).
-  forum: { autoHideFlagThreshold: 3 },
+  // `threadLineWidth` (RAPP-884): the line that joins a forum post to its answers.
+  forum: { autoHideFlagThreshold: 3, threadLineWidth: 2 },
 } as const;
 
 export type Tokens = typeof tokens;

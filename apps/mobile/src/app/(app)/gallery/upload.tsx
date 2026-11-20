@@ -1,10 +1,13 @@
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { SwitchCard } from '@/components/forms/switch-card';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { ActionScreen } from '@/components/layout/screen-action';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { uploadGalleryMedia } from '@/lib/gallery-upload';
-import { playHaptic } from '@/lib/haptics/haptics';
 import {
   initialMediaUploadState,
   mediaUploadReducer,
@@ -23,33 +26,20 @@ import { useRouter, type Href } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useCallback, useMemo, useReducer, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, ScrollView, StyleSheet, Switch, Text, View, type TextStyle } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, type TextStyle } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import { MEDIA_CAPTION_MAX_LENGTH, type MediaPrivacy } from '@ramassa/shared/media';
 import { uploadContentTypeSchema } from '@ramassa/shared/schemas';
-import { tokens } from '@ramassa/shared/tokens';
 
 const IMAGE_PICKER_ORIGINAL_QUALITY = 1;
 const PROGRESS_PERCENT_MIN = 0;
 const PROGRESS_PERCENT_MAX = 100;
 const GALLERY_UPLOAD_PREVIEW_ASPECT_RATIO = 4 / 3;
 const MEDIA_PRIVACY_OPTIONS: readonly MediaPrivacy[] = ['community', 'staff_only'];
-const IOS_SWITCH_VISUAL_HEIGHT = 28;
-const IOS_SWITCH_SCALE = tokens.tapTarget.min / IOS_SWITCH_VISUAL_HEIGHT;
-const uncheckedSwitchAccessibilityState = { checked: false } as const;
-const checkedSwitchAccessibilityState = { checked: true } as const;
-const consentSwitchRole = Platform.OS === 'web' ? 'none' : 'switch';
 const mixedDirectionInputStyle: TextStyle = { writingDirection: 'auto' };
 const styles = StyleSheet.create({
   preview: { width: '100%', aspectRatio: GALLERY_UPLOAD_PREVIEW_ASPECT_RATIO },
-  consentSwitch: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: tokens.tapTarget.min,
-    minWidth: tokens.tapTarget.min,
-    transform: Platform.OS === 'ios' ? [{ scale: IOS_SWITCH_SCALE }] : undefined,
-  },
 });
 
 export default function GalleryUploadScreen() {
@@ -93,30 +83,16 @@ export default function GalleryUploadScreen() {
   );
   const renderPrivacyOption = useCallback(
     (value: MediaPrivacy) => (
-      <PressableScale
+      <SelectionChoiceCard
         key={value}
-        accessibilityRole="radio"
-        accessibilityLabel={t(`gallery:privacyLevels.${value}`)}
+        label={t(`gallery:privacyLevels.${value}`)}
+        fontClass={languageFontClass}
         isSelected={privacy === value}
         onPress={privacyActions[value]}
-        haptic="selection"
-        style={continuousCorners}
-        className={`min-h-recommended justify-center rounded-md border px-lg ${privacy === value ? 'border-primary bg-primary' : 'border-neutral-300'}`}
-      >
-        <Text
-          className={`${privacy === value ? 'text-white' : 'text-neutral-800'} ${languageFontClass}`}
-        >
-          {t(`gallery:privacyLevels.${value}`)}
-        </Text>
-      </PressableScale>
+      />
     ),
     [languageFontClass, privacy, privacyActions, t],
   );
-
-  const toggleConsent = useCallback(() => {
-    playHaptic('selection');
-    setConsent((current) => !current);
-  }, []);
 
   const pick = useCallback(async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -192,35 +168,36 @@ export default function GalleryUploadScreen() {
   }, [submit]);
 
   return (
-    <>
-      <NativeScreenHeader title={t('gallery:uploadTitle')} />
+    <ActionScreen
+      className="bg-white"
+      action={
+        <AuthSubmitButton
+          testID="gallery-upload-submit"
+          label={t('gallery:publish')}
+          onPress={submit}
+          isLoading={state.status === 'uploading'}
+          disabled={state.draft === null || !consent}
+        />
+      }
+    >
+      <NativeScreenHeader surface="white" title={t('gallery:uploadTitle')} />
       <ScrollView
-        className="flex-1 bg-white"
+        className="flex-1"
         contentContainerClassName="grow px-lg py-lg"
         contentInsetAdjustmentBehavior="automatic"
       >
         <FormWidth className="gap-lg">
           {selectedDraft === null ? (
-            <PressableScale
+            <RaisedActionButton
               testID="gallery-pick-media"
-              accessibilityLabel={t('gallery:pickMedia')}
+              label={t('gallery:pickMedia')}
               onPress={pick}
-              haptic="tapLight"
-              style={continuousCorners}
-              className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-            >
-              <Text className={`font-bold text-primary ${languageFontClass}`}>
-                {t('gallery:pickMedia')}
-              </Text>
-            </PressableScale>
+            />
           ) : (
-            <View testID="gallery-selected-media-preview" className="gap-sm">
-              <Text
-                accessibilityRole="header"
-                className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('gallery:selectedMediaPreview')}
-              </Text>
+            <ScreenSection
+              testID="gallery-selected-media-preview"
+              title={t('gallery:selectedMediaPreview')}
+            >
               {selectedDraft.sourceKind === 'video' ? (
                 <VideoView
                   player={previewVideoPlayer}
@@ -239,32 +216,23 @@ export default function GalleryUploadScreen() {
                 />
               )}
               <View className="flex-row gap-sm">
-                <PressableScale
-                  testID="gallery-change-media"
-                  accessibilityLabel={t('gallery:changeMedia')}
-                  onPress={pick}
-                  haptic="tapLight"
-                  style={continuousCorners}
-                  className="min-h-recommended grow items-center justify-center rounded-md border border-primary px-md"
-                >
-                  <Text className={`font-bold text-primary ${languageFontClass}`}>
-                    {t('gallery:changeMedia')}
-                  </Text>
-                </PressableScale>
-                <PressableScale
-                  testID="gallery-remove-media"
-                  accessibilityLabel={t('gallery:removeMedia')}
-                  onPress={removeSelectedMedia}
-                  haptic="warning"
-                  style={continuousCorners}
-                  className="min-h-recommended grow items-center justify-center rounded-md border border-error px-md"
-                >
-                  <Text className={`font-bold text-error ${languageFontClass}`}>
-                    {t('gallery:removeMedia')}
-                  </Text>
-                </PressableScale>
+                <View className="flex-1">
+                  <RaisedActionButton
+                    testID="gallery-change-media"
+                    label={t('gallery:changeMedia')}
+                    onPress={pick}
+                  />
+                </View>
+                <View className="flex-1">
+                  <RaisedActionButton
+                    testID="gallery-remove-media"
+                    tone="danger"
+                    label={t('gallery:removeMedia')}
+                    onPress={removeSelectedMedia}
+                  />
+                </View>
               </View>
-            </View>
+            </ScreenSection>
           )}
           {permissionDenied ? (
             <View testID="gallery-media-permission-error" className="gap-sm">
@@ -275,18 +243,11 @@ export default function GalleryUploadScreen() {
               >
                 {t('gallery:mediaPermissionDenied')}
               </Text>
-              <PressableScale
+              <AuthSubmitButton
                 testID="gallery-open-settings"
-                accessibilityLabel={t('gallery:openSettings')}
+                label={t('gallery:openSettings')}
                 onPress={openSettings}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-              >
-                <Text className={`font-bold text-white ${languageFontClass}`}>
-                  {t('gallery:openSettings')}
-                </Text>
-              </PressableScale>
+              />
             </View>
           ) : null}
           <AuthTextField
@@ -304,22 +265,12 @@ export default function GalleryUploadScreen() {
           >
             {MEDIA_PRIVACY_OPTIONS.map(renderPrivacyOption)}
           </View>
-          <View className="flex-row items-center gap-md">
-            <Switch
-              testID="gallery-consent-acknowledgment"
-              style={styles.consentSwitch}
-              value={consent}
-              onValueChange={toggleConsent}
-              accessibilityRole={consentSwitchRole}
-              accessibilityLabel={t('gallery:consentReminder')}
-              accessibilityState={
-                consent ? checkedSwitchAccessibilityState : uncheckedSwitchAccessibilityState
-              }
-            />
-            <Text className={`flex-1 text-start text-md text-neutral-700 ${languageFontClass}`}>
-              {t('gallery:consentReminder')}
-            </Text>
-          </View>
+          <SwitchCard
+            testID="gallery-consent-acknowledgment"
+            label={t('gallery:consentReminder')}
+            value={consent}
+            onValueChange={setConsent}
+          />
           {state.status === 'uploading' ? (
             <View
               testID="gallery-upload-progress"
@@ -350,37 +301,16 @@ export default function GalleryUploadScreen() {
                   : t('gallery:uploadFailed')}
               </Text>
               {state.draft === null ? null : (
-                <PressableScale
+                <RaisedActionButton
                   testID="gallery-upload-retry"
-                  accessibilityLabel={t('gallery:retry')}
+                  label={t('gallery:retry')}
                   onPress={retry}
-                  haptic="tapLight"
-                  style={continuousCorners}
-                  className="min-h-recommended items-center justify-center rounded-md border border-primary px-lg"
-                >
-                  <Text className={`font-bold text-primary ${languageFontClass}`}>
-                    {t('gallery:retry')}
-                  </Text>
-                </PressableScale>
+                />
               )}
             </View>
           ) : null}
-          <PressableScale
-            testID="gallery-upload-submit"
-            accessibilityLabel={t('gallery:publish')}
-            onPress={submit}
-            haptic="tapLight"
-            isBusy={state.status === 'uploading'}
-            isDisabled={state.draft === null || !consent}
-            style={continuousCorners}
-            className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-          >
-            <Text className={`font-bold text-white ${languageFontClass}`}>
-              {t('gallery:publish')}
-            </Text>
-          </PressableScale>
         </FormWidth>
       </ScrollView>
-    </>
+    </ActionScreen>
   );
 }

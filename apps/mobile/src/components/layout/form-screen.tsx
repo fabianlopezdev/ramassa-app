@@ -1,7 +1,9 @@
 import { AuthActionFooter } from '@/components/auth/auth-action-footer';
 import { FormWidth } from '@/components/layout/content-width';
 import { FormRevealContext } from '@/components/layout/form-reveal';
+import { screenBlockGapClassName } from '@/components/layout/screen-spacing';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
+import { useOwnEntrance, type EntranceMode } from '@/lib/screen-entrance';
 import { BlurTargetView } from 'expo-blur';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
@@ -18,13 +20,17 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { tokens } from '@ramassa/shared/tokens';
 import { motionTokens } from '@ramassa/shared/tokens/motion';
 
+/** The page colour of the app (RAPP-847, RAPP-849): onboarding, sign-in and forms sit on it. */
+const pageBackground = { backgroundColor: tokens.colors.surface.page } as const;
+
 const viewportStyle = { flex: 1, overflow: 'hidden' } as const;
 // NativeWind's remapped flex class overrides the height behavior's flex: 0.
 // A native style lets KeyboardAvoidingView shrink its container on Android.
 const keyboardContainerStyle = { flex: 1 } as const;
 
 type FormScreenProps = {
-  readonly entrance?: 'staggered' | 'none';
+  /** Omit to follow the screen: the first visit after opening the app staggers. */
+  readonly entrance?: EntranceMode;
   readonly testID?: string;
   readonly style?: StyleProp<ViewStyle>;
   readonly accessibilityLanguage?: string;
@@ -40,20 +46,24 @@ type FormScreenProps = {
   readonly headingAnchor?: { readonly height: number };
 };
 
-/** Shared safe area, keyboard handling, scroll clearance and entrance motion for onboarding forms. */
+/** Shared safe area, keyboard handling, scroll clearance and entrance motion for forms. */
 export function FormScreen({
   navigation,
   heading,
   children,
   bottomAction,
   headingAnchor,
-  entrance = 'staggered',
+  entrance: requestedEntrance,
   testID,
   style,
   accessibilityLanguage,
   scrollEnabled = true,
   onEndReached,
 }: FormScreenProps) {
+  // Heading, fields and action arrive one after another here, so the screen
+  // does not also move as one piece (RAPP-875).
+  const screenEntrance = useOwnEntrance();
+  const entrance = requestedEntrance ?? screenEntrance;
   const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
   useEffect(() => {
     const show = Keyboard.addListener(
@@ -146,9 +156,9 @@ export function FormScreen({
   return (
     <SafeAreaView
       testID={testID}
-      style={style}
+      style={[pageBackground, style]}
       accessibilityLanguage={accessibilityLanguage}
-      className="flex-1 bg-white"
+      className="flex-1"
       edges={['top', 'left', 'right']}
     >
       {navigation}
@@ -190,7 +200,7 @@ export function FormScreen({
               onContentSizeChange={(_width, height) => setContentHeight(height)}
               keyboardShouldPersistTaps="handled"
             >
-              <FormWidth className="gap-xl">
+              <FormWidth className={screenBlockGapClassName}>
                 <FormEntrance entrance={entrance} index={0}>
                   {heading}
                 </FormEntrance>
@@ -221,13 +231,13 @@ function FormEntrance({
   index,
   children,
 }: {
-  readonly entrance: 'staggered' | 'none';
+  readonly entrance: EntranceMode;
   readonly index: number;
   readonly children: ReactNode;
 }) {
   if (entrance === 'none') return <View>{children}</View>;
   return (
-    <FadeSlideIn preset="onboarding" index={index} composite>
+    <FadeSlideIn index={index} composite>
       {children}
     </FadeSlideIn>
   );

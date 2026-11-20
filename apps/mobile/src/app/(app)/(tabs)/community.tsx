@@ -3,35 +3,35 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
-import {
-  CommunityShareSheet,
-  type CommunityShareChoice,
-} from '@/components/community/community-share-sheet';
-import { ForumCategoryTabs } from '@/components/forum/forum-category-tabs';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { ForumCategoryFilters } from '@/components/forum/forum-category-tabs';
 import { ForumPostCard } from '@/components/forum/forum-post-card';
 import { GalleryGrid } from '@/components/gallery/gallery-grid';
 import { CommunityStoryList } from '@/components/knowledge/community-story-list';
 import { PageWidth } from '@/components/layout/content-width';
+import { raisedToneFromColorName, type RaisedTone } from '@/components/layout/raised-surface';
+import { screenBlockGapClassName } from '@/components/layout/screen-spacing';
 import {
   SegmentedControl,
   type SegmentedControlOption,
 } from '@/components/layout/segmented-control';
-import { FadeSlideIn } from '@/components/motion/fade-slide-in';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { TabScreenAction } from '@/components/layout/tab-screen-action';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { communityUnseenCounts, forumPostMarks, toUnopenedIdSet } from '@/lib/community-news';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
 import { useForumCategories, useForumPosts } from '@/lib/player-forum';
+import { formatUnreadBadge } from '@/lib/unread-badge';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
+import { useListSeen, useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import {
@@ -39,48 +39,34 @@ import {
   type ForumCategoryRow,
   type ForumPostRow,
 } from '@ramassa/shared/forum';
+import { EMPTY_TAB_NEWS } from '@ramassa/shared/tab-news';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_POSTS: readonly ForumPostRow[] = [];
 const EMPTY_CATEGORIES: readonly ForumCategoryRow[] = [];
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: tokens.colors.neutral[50] },
+  screen: { flex: 1, backgroundColor: tokens.colors.surface.page },
   content: { paddingBottom: tokens.spacing['3xl'], paddingHorizontal: tokens.spacing.lg },
 });
 const postKeyExtractor = (post: ForumPostRow) => post.id;
-const shareSymbol: SymbolViewProps['name'] = {
-  ios: 'plus.circle.fill',
-  android: 'add_circle',
-  web: 'add_circle',
-};
-const forumSymbol: SymbolViewProps['name'] = {
-  ios: 'bubble.left.and.bubble.right.fill',
-  android: 'forum',
-  web: 'forum',
-};
-const gallerySymbol: SymbolViewProps['name'] = {
-  ios: 'photo.on.rectangle.angled',
-  android: 'photo_library',
-  web: 'photo_library',
-};
-const storiesSymbol: SymbolViewProps['name'] = {
-  ios: 'book.fill',
-  android: 'auto_stories',
-  web: 'auto_stories',
-};
 type CommunitySegment = 'forum' | 'gallery' | 'stories';
-const shareRoutes: Readonly<Record<CommunityShareChoice, Href>> = {
-  post: '/forum/create' as Href,
-  media: '/gallery/upload' as Href,
-  story: '/story/submit' as Href,
+/**
+ * The pinned button opens the form of the section on show (RAPP-858), with
+ * its own words, so she never has to pick again what she already picked.
+ */
+const shareActions: Readonly<
+  Record<CommunitySegment, { readonly route: Href; readonly labelKey: string }>
+> = {
+  forum: { route: '/forum/create' as Href, labelKey: 'forum:shareForum' },
+  gallery: { route: '/gallery/upload' as Href, labelKey: 'forum:shareGallery' },
+  stories: { route: '/story/submit' as Href, labelKey: 'forum:shareStories' },
 };
 
-export default function CommunityScreen() {
-  const { t } = useTranslation(['forum', 'errors', 'nav']);
+function CommunityScreen() {
+  const { t } = useTranslation(['forum', 'errors', 'nav', 'common', 'home']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const { session } = useAuth();
-  const insets = useSafeAreaInsets();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
   const categoriesQuery = useForumCategories();
@@ -89,7 +75,40 @@ export default function CommunityScreen() {
   const refetchPosts = postsQuery.refetch;
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [segment, setSegment] = useState<CommunitySegment>('forum');
-  const [isShareSheetOpen, setIsShareSheetOpen] = useState(false);
+  // Two levels, both live (RAPP-873). The number on each switch option counts
+  // what she has not seen in that list, and seeing the list on show clears it.
+  // "Nou" stays on a post, photo or story until she opens it. The new replies
+  // on her own post stay in the number and on its card until she opens it.
+  const tabNewsQuery = useTabNews();
+  const refetchTabNews = tabNewsQuery.refetch;
+  const segmentCounts = useMemo(
+    () => communityUnseenCounts(tabNewsQuery.data),
+    [tabNewsQuery.data],
+  );
+  // A list counts as seen once its cards are on show: the forum with its posts
+  // loaded and every category showing, since a chosen category hides the rest.
+  // The gallery and the stories say it themselves, where their lists load.
+  useListSeen('forum', segment === 'forum' && categoryId === null && postsQuery.data !== undefined);
+  const forumNews = tabNewsQuery.data?.forum ?? EMPTY_TAB_NEWS.forum;
+  const galleryNews = tabNewsQuery.data?.gallery ?? EMPTY_TAB_NEWS.gallery;
+  const storiesNews = tabNewsQuery.data?.stories ?? EMPTY_TAB_NEWS.stories;
+  const unopenedPostIds = useMemo(
+    () => toUnopenedIdSet(forumNews.unopenedPostIds),
+    [forumNews.unopenedPostIds],
+  );
+  const newRepliesByPostId = forumNews.newRepliesByPostId;
+  const unopenedGalleryItemIds = useMemo(
+    () => toUnopenedIdSet(galleryNews.unopenedItemIds),
+    [galleryNews.unopenedItemIds],
+  );
+  const unopenedStoryIds = useMemo(
+    () => toUnopenedIdSet(storiesNews.unopenedArticleIds),
+    [storiesNews.unopenedArticleIds],
+  );
+  const forumListMarks = useMemo(
+    () => ({ unopenedPostIds, newRepliesByPostId }),
+    [newRepliesByPostId, unopenedPostIds],
+  );
   const posts = useMemo(
     () => filterForumPostsByCategory(postsQuery.data ?? EMPTY_POSTS, categoryId),
     [categoryId, postsQuery.data],
@@ -100,79 +119,118 @@ export default function CommunityScreen() {
     [postsQuery.data],
   );
   const personCards = usePersonCards(authorIds);
+  // Each category's colour, which tints its pill and its posts (RAPP-852).
+  const toneByCategoryId = useMemo<Readonly<Record<string, RaisedTone | undefined>>>(
+    () =>
+      Object.fromEntries(
+        (categoriesQuery.data ?? EMPTY_CATEGORIES).map((category) => [
+          category.id,
+          raisedToneFromColorName(category.color),
+        ]),
+      ),
+    [categoriesQuery.data],
+  );
+  const tabInsets = usePlayerTabContentInsets();
+  // Share is pinned above the tab bar; the list keeps its height free at the end.
+  const [shareActionHeight, setShareActionHeight] = useState(0);
   const contentStyle = useMemo(
     () => [
       styles.content,
-      process.env.EXPO_OS === 'android'
-        ? {
-            paddingTop: insets.top + tokens.spacing.lg,
-            paddingBottom: insets.bottom + tokens.spacing['3xl'],
-          }
-        : { paddingTop: tokens.spacing.lg },
+      tabInsets,
+      {
+        paddingBottom:
+          (('paddingBottom' in tabInsets ? tabInsets.paddingBottom : undefined) ??
+            tokens.spacing['3xl']) + shareActionHeight,
+      },
     ],
-    [insets.bottom, insets.top],
+    [shareActionHeight, tabInsets],
   );
   const openPost = useCallback(
     (id: string) => push({ pathname: '/forum/[id]', params: { id } } as unknown as Href),
     [push],
   );
-  const openShareSheet = useCallback(() => setIsShareSheetOpen(true), []);
-  const closeShareSheet = useCallback(() => setIsShareSheetOpen(false), []);
-  const chooseShare = useCallback(
-    (choice: CommunityShareChoice) => {
-      setIsShareSheetOpen(false);
-      push(shareRoutes[choice]);
-    },
-    [push],
-  );
-  const segmentOptions = useMemo<readonly SegmentedControlOption<CommunitySegment>[]>(
-    () => [
+  const share = useCallback(() => push(shareActions[segment].route), [push, segment]);
+  const segmentOptions = useMemo<readonly SegmentedControlOption<CommunitySegment>[]>(() => {
+    const newCountLabel = (label: string, count: number) =>
+      count > 0 ? t('common:newCount', { label, count }) : undefined;
+    const forumLabel = t('forum:segmentForum');
+    const galleryLabel = t('forum:segmentGallery');
+    const storiesLabel = t('forum:segmentStories');
+    return [
       {
         key: 'forum',
-        label: t('forum:segmentForum'),
-        symbol: forumSymbol,
+        label: forumLabel,
+        symbol: 'chats',
         testID: 'community-segment-forum',
+        count: segmentCounts.forum,
+        accessibilityLabel: newCountLabel(forumLabel, segmentCounts.forum),
       },
       {
         key: 'gallery',
-        label: t('forum:segmentGallery'),
-        symbol: gallerySymbol,
+        label: galleryLabel,
+        symbol: 'gallery',
         testID: 'community-segment-gallery',
+        count: segmentCounts.gallery,
+        accessibilityLabel: newCountLabel(galleryLabel, segmentCounts.gallery),
       },
       {
         key: 'stories',
-        label: t('forum:segmentStories'),
-        symbol: storiesSymbol,
+        label: storiesLabel,
+        symbol: 'book',
         testID: 'community-segment-stories',
+        count: segmentCounts.stories,
+        accessibilityLabel: newCountLabel(storiesLabel, segmentCounts.stories),
       },
-    ],
-    [t],
-  );
+    ];
+  }, [segmentCounts, t]);
   const openLinkLabel = useCallback((url: string) => t('forum:openLink', { url }), [t]);
   const refresh = useCallback(() => {
-    void Promise.all([refetchCategories(), refetchPosts()]);
-  }, [refetchCategories, refetchPosts]);
+    void Promise.all([refetchCategories(), refetchPosts(), refetchTabNews()]);
+  }, [refetchCategories, refetchPosts, refetchTabNews]);
   const renderPost = useCallback(
-    ({ item, index }: ListRenderItemInfo<ForumPostRow>) => (
-      <PageWidth className="pb-md">
-        <FadeSlideIn index={index}>
+    ({ item }: ListRenderItemInfo<ForumPostRow>) => {
+      const marks = forumPostMarks(unopenedPostIds, newRepliesByPostId, item.id);
+      const unseenLabel = marks.isUnopened ? t('home:unseen') : null;
+      // The card adds pinned and the reply count; the word goes first (RAPP-873).
+      const accessibilityLabel = [
+        unseenLabel,
+        t('forum:openPost', { name: item.author_first_name }),
+        marks.newReplies > 0 ? t('forum:newReplies', { count: marks.newReplies }) : null,
+      ]
+        .filter((part): part is string => part !== null)
+        .join('. ');
+      return (
+        <PageWidth className="pb-md">
           <ForumPostCard
             post={item}
+            tone={toneByCategoryId[item.category_id]}
             authorLabel={t('forum:postBy', { name: item.author_first_name })}
             authorAvatarKey={personCards.get(item.author_id)?.avatarKey ?? null}
             repliesLabel={t('forum:repliesCount', { count: item.reply_count })}
             pinnedLabel={t('forum:pinned')}
             imageAlt={t('forum:imageAlt', { name: item.author_first_name })}
-            accessibilityLabel={t('forum:openPost', { name: item.author_first_name })}
+            accessibilityLabel={accessibilityLabel}
             languageFontClass={languageFontClass}
             accessToken={session?.access_token}
             openLinkLabel={openLinkLabel}
             onOpen={openPost}
+            unseenLabel={unseenLabel}
+            newRepliesCount={formatUnreadBadge(marks.newReplies)}
           />
-        </FadeSlideIn>
-      </PageWidth>
-    ),
-    [languageFontClass, openLinkLabel, openPost, session?.access_token, personCards, t],
+        </PageWidth>
+      );
+    },
+    [
+      languageFontClass,
+      newRepliesByPostId,
+      openLinkLabel,
+      openPost,
+      session?.access_token,
+      personCards,
+      t,
+      toneByCategoryId,
+      unopenedPostIds,
+    ],
   );
 
   const loadError = categoriesQuery.error ?? postsQuery.error;
@@ -205,52 +263,47 @@ export default function CommunityScreen() {
   // Fòrum segment, so the screen never stacks two filter rows (plan P4).
   const header = (
     <View className="gap-lg pb-lg">
-      <PageWidth className="gap-md">
-        <PlayerTabHeader title={t('nav:tabs.community')} />
-        <PressableScale
-          testID="community-share"
-          accessibilityLabel={t('forum:share')}
-          onPress={openShareSheet}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended flex-row items-center justify-center gap-sm rounded-md bg-primary px-lg"
-        >
-          <SymbolView
-            accessible={false}
-            name={shareSymbol}
-            size={tokens.fontSize.xl}
-            tintColor={tokens.colors.white}
+      <PageWidth className={screenBlockGapClassName}>
+        <PlayerTabHeader title={t('nav:tabs.community')}>
+          <SegmentedControl
+            testID="community-segments"
+            options={segmentOptions}
+            selected={segment}
+            onSelect={setSegment}
+            accessibilityLabel={t('forum:segmentsLabel')}
+            languageFontClass={languageFontClass}
           />
-          <Text className={`text-md font-bold text-white ${languageFontClass}`}>
-            {t('forum:share')}
-          </Text>
-        </PressableScale>
-        <SegmentedControl
-          testID="community-segments"
-          options={segmentOptions}
-          selected={segment}
-          onSelect={setSegment}
-          accessibilityLabel={t('forum:segmentsLabel')}
-          languageFontClass={languageFontClass}
-        />
+        </PlayerTabHeader>
+        {segment === 'forum' ? (
+          <ForumCategoryFilters
+            categories={categoriesQuery.data ?? EMPTY_CATEGORIES}
+            selectedId={categoryId}
+            allLabel={t('forum:allCategories')}
+            accessibilityLabel={t('forum:categoriesLabel')}
+            onSelect={setCategoryId}
+          />
+        ) : null}
       </PageWidth>
-      {segment === 'forum' ? (
-        <ForumCategoryTabs
-          categories={categoriesQuery.data ?? EMPTY_CATEGORIES}
-          selectedId={categoryId}
-          allLabel={t('forum:allCategories')}
-          accessibilityLabel={t('forum:categoriesLabel')}
-          onSelect={setCategoryId}
-        />
-      ) : null}
     </View>
   );
 
   let segmentList: ReactElement;
   if (segment === 'gallery') {
-    segmentList = <GalleryGrid header={header} contentContainerStyle={contentStyle} />;
+    segmentList = (
+      <GalleryGrid
+        header={header}
+        contentContainerStyle={contentStyle}
+        unopenedItemIds={unopenedGalleryItemIds}
+      />
+    );
   } else if (segment === 'stories') {
-    segmentList = <CommunityStoryList header={header} contentContainerStyle={contentStyle} />;
+    segmentList = (
+      <CommunityStoryList
+        header={header}
+        contentContainerStyle={contentStyle}
+        unopenedArticleIds={unopenedStoryIds}
+      />
+    );
   } else {
     segmentList = (
       <FlashList
@@ -258,6 +311,7 @@ export default function CommunityScreen() {
         data={posts}
         renderItem={renderPost}
         keyExtractor={postKeyExtractor}
+        extraData={forumListMarks}
         style={styles.screen}
         contentContainerStyle={contentStyle}
         contentInsetAdjustmentBehavior="automatic"
@@ -272,12 +326,18 @@ export default function CommunityScreen() {
   return (
     <>
       {segmentList}
-      <CommunityShareSheet
-        visible={isShareSheetOpen}
-        isPostDisabled={isOffline}
-        onChoose={chooseShare}
-        onClose={closeShareSheet}
-      />
+      <TabScreenAction testID="community-share-action" onContentHeight={setShareActionHeight}>
+        <AuthSubmitButton
+          testID="community-share"
+          label={t(shareActions[segment].labelKey)}
+          icon="plus"
+          // A forum post needs the network; the sheet used to grey it out the same way.
+          disabled={segment === 'forum' && isOffline}
+          onPress={share}
+        />
+      </TabScreenAction>
     </>
   );
 }
+
+export default withScreenEntrance('community', CommunityScreen);

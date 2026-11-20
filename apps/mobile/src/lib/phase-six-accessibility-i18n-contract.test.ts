@@ -38,28 +38,34 @@ describe('Phase 6 accessibility and i18n contract', () => {
     const galleryGrid = await readMobileSource('components/gallery/gallery-grid.tsx');
     const galleryItem = await readMobileSource('app/(app)/gallery/[id].tsx');
 
-    expect(galleryGrid).toContain(
-      "accessibilityLabel={t('openItem', { name: item.uploader_first_name })}",
-    );
+    expect(galleryGrid).toContain("t('openItem', { name: item.uploader_first_name })");
     // The screen title is the native header's (RAPP-806).
     expect(gallery).toContain("<NativeScreenHeader title={t('title')} />");
+    // The video is drawn by the media stage (RAPP-897): the screen names it and
+    // the stage hands that name to the player.
+    const galleryStage = await readMobileSource('components/gallery/gallery-media-stage.tsx');
     expect(galleryItem).toMatch(
-      /<VideoView[\s\S]*?accessibilityLabel=\{[\s\S]*?item\.caption \?\? t\('gallery:mediaBy'/,
+      /<GalleryVideoStage[\s\S]*?accessibilityLabel=\{[\s\S]*?item\.caption \?\? t\('gallery:mediaBy'/,
     );
+    expect(galleryStage).toMatch(/<VideoView[\s\S]*?accessibilityLabel=\{accessibilityLabel\}/);
   });
 
   test('stateful upload controls announce translated state and progress', async () => {
     const upload = await readMobileSource('app/(app)/gallery/upload.tsx');
     const composer = await readMobileSource('app/(app)/forum/create.tsx');
 
+    // The consent is the shared switch card (RAPP-891): the card is the
+    // switch and the tap target, and the drawn switch is hidden from readers.
+    const switchCard = await readMobileSource('components/forms/switch-card.tsx');
     expect(upload).toMatch(
-      /<Switch[\s\S]*?testID="gallery-consent-acknowledgment"[\s\S]*?style=\{styles\.consentSwitch\}[\s\S]*?accessibilityRole=\{consentSwitchRole\}[\s\S]*?accessibilityLabel=\{t\('gallery:consentReminder'\)\}[\s\S]*?accessibilityState=/,
+      /<SwitchCard[\s\S]*?testID="gallery-consent-acknowledgment"[\s\S]*?label=\{t\('gallery:consentReminder'\)\}[\s\S]*?value=\{consent\}/,
     );
-    expect(upload).toContain('IOS_SWITCH_SCALE');
-    expect(upload).toContain("Platform.OS === 'web' ? 'none' : 'switch'");
-    expect(upload).toContain('style={styles.consentSwitch}');
-    expect(upload).toContain('minHeight: tokens.tapTarget.min');
-    expect(upload).toContain('minWidth: tokens.tapTarget.min');
+    expect(upload).not.toContain('IOS_SWITCH_SCALE');
+    expect(switchCard).toContain('accessibilityRole="switch"');
+    expect(switchCard).toContain('isSelected={value}');
+    expect(switchCard).toMatch(
+      /pointerEvents="none"[\s\S]*?accessibilityElementsHidden[\s\S]*?<Switch/,
+    );
     expect(upload).toMatch(
       /accessibilityRole="progressbar"[\s\S]*?accessibilityLabel=\{uploadProgressLabel\}/,
     );
@@ -74,7 +80,7 @@ describe('Phase 6 accessibility and i18n contract', () => {
     const forumPostCard = await readMobileSource('components/forum/forum-post-card.tsx');
     const gallery = await readMobileSource('components/gallery/gallery-grid.tsx');
     const galleryTile = await readMobileSource('components/gallery/gallery-tile.tsx');
-    const galleryItem = await readMobileSource('app/(app)/gallery/[id].tsx');
+    const galleryStage = await readMobileSource('components/gallery/gallery-media-stage.tsx');
     const upload = await readMobileSource('app/(app)/gallery/upload.tsx');
 
     expect(composer).toContain('IMAGE_PICKER_ORIGINAL_QUALITY');
@@ -86,7 +92,9 @@ describe('Phase 6 accessibility and i18n contract', () => {
     expect(gallery).toContain('GALLERY_COLUMN_COUNT');
     expect(galleryTile).toContain('GALLERY_TILE_ASPECT_RATIO');
     expect(galleryTile).toContain('motionTokens.duration.fast');
-    expect(galleryItem).toContain('GALLERY_MEDIA_ASPECT_RATIO');
+    // An opened photo or video keeps its own shape (RAPP-897); the named value
+    // is the shape of its frame until the media has been measured.
+    expect(galleryStage).toContain('GALLERY_MEDIA_FALLBACK_ASPECT_RATIO');
     expect(upload).toContain('IMAGE_PICKER_ORIGINAL_QUALITY');
     expect(upload).toContain('MEDIA_CAPTION_MAX_LENGTH');
     expect(upload).toContain('PROGRESS_PERCENT_MAX');
@@ -115,7 +123,8 @@ describe('Phase 6 accessibility and i18n contract', () => {
 
     expect(composer).toContain('FORUM_COMPOSER_INPUT_MIN_HEIGHT');
     expect(flagDialog).toContain('FORUM_FLAG_COMMENT_MIN_HEIGHT');
-    expect(forumPostCard).toContain('FORUM_POST_CARD_BORDER_WIDTH');
+    // The post card draws its border through the shared raised card (RAPP-852).
+    expect(forumPostCard).toContain('<RaisedCard');
     expect(playerForum).toContain('FORUM_POSTING_STATUS_STALE_TIME_MS');
   });
 
@@ -142,6 +151,8 @@ describe('Phase 6 accessibility and i18n contract', () => {
       'app/(app)/forum/create.tsx',
       'app/(app)/gallery/upload.tsx',
       'components/forum/forum-flag-dialog.tsx',
+      'components/forum/forum-own-post-actions.tsx',
+      'components/forum/forum-reply-composer.tsx',
     ] as const;
 
     for (const path of paths) {

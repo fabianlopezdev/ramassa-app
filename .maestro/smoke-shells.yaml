@@ -26,7 +26,7 @@ env:
 # Hierarchy visibility is not accepted as evidence that Material painted text.
 
 # Each tab opens and renders its own header. Community has a unique heading.
-# Activitats, Xat and Services repeat their tab label as the screen title, so
+# Activitats, Contacte and Services repeat their tab label as the screen title, so
 # `index: 1` proves a second match (the screen heading) exists; without the
 # index, the tab-bar label would satisfy the assertion before the tap happened.
 - tapOn:

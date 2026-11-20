@@ -3,6 +3,8 @@
   "feedTitle": "Avisos",
   "filterLabel": "Filtra los avisos por categoría",
   "filterAll": "Todo",
+  "filterNewCount_one": "{{count}} nuevo",
+  "filterNewCount_other": "{{count}} nuevos",
   "category": {
     "info": "Información",
     "training": "Entrenamientos",
@@ -10,20 +12,29 @@
     "urgent": "Urgente"
   },
   "pinned": "Destacado",
+  "unseen": "Nuevo",
   "emptyTitle": "Todavía no hay avisos",
-  "emptyBody": "Cuando el equipo publique una novedad, la encontrarás aquí.",
+  "emptyBody": "Cuando el equipo técnico publique una novedad, la encontrarás aquí.",
   "loadFailed": "No hemos podido cargar los avisos.",
   "retryAction": "Volver a intentar",
   "loading": "Cargando los avisos",
   "pendingForm": {
-    "eyebrow": "Formulario",
     "deadline": "Hasta el {{date}}",
     "answer": "Responder",
     "dismiss": "Ahora no"
   },
+  "later": {
+    "title": "Para más tarde",
+    "waiting": "{{count}} formularios para más tarde",
+    "waiting_one": "{{count}} formulario para más tarde",
+    "waiting_other": "{{count}} formularios para más tarde",
+    "delete": "Eliminar",
+    "cancel": "Cancelar",
+    "deleteTitle": "¿Quieres eliminar este formulario?",
+    "deleteBody": "Ya no podrás responderlo. El equipo técnico verá que lo has descartado."
+  },
   "toDo": {
-    "title": "Pendiente",
-    "count": "{{current}} de {{total}}"
+    "title": "Formularios y encuestas"
   },
   "nextActivity": {
     "title": "Próxima actividad"

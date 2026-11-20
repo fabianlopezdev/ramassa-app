@@ -7,6 +7,8 @@ import { AttendanceOccurrenceRow } from '@/components/attendance/attendance-occu
 import { AttendanceSheet } from '@/components/attendance/attendance-sheet';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { SectionTitle } from '@/components/layout/screen-section';
+import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { useTeamLayout } from '@/components/team/team-layout-context';
 import { TodayPendingList } from '@/components/team/today-pending-list';
 import { useAttendanceOccurrences } from '@/lib/attendance';
@@ -36,7 +38,7 @@ const keyExtractor = (row: AttendanceOccurrenceListRow) => row.id;
 const listPaneStyle = { flex: 2, minWidth: 280, maxWidth: 400 } as const;
 const detailPaneStyle = { flex: 3 } as const;
 
-export default function AttendanceOccurrencesScreen() {
+function AttendanceOccurrencesScreen() {
   const { t, i18n } = useTranslation('attendance');
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
@@ -120,14 +122,7 @@ export default function AttendanceOccurrencesScreen() {
       >
         {tNav('team.today')}
       </Text>
-      {hasSessions ? (
-        <Text
-          accessibilityRole="header"
-          className={`pt-md text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-        >
-          {t('today')}
-        </Text>
-      ) : null}
+      {hasSessions ? <SectionTitle title={t('today')} /> : null}
     </View>
   );
   const footer = (
@@ -189,3 +184,5 @@ export default function AttendanceOccurrencesScreen() {
 function OccurrenceSeparator() {
   return <View className="h-md" />;
 }
+
+export default withScreenEntrance('today', AttendanceOccurrencesScreen);

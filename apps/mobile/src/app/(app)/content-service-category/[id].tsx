@@ -10,15 +10,18 @@
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { MultilingualField } from '@/components/content/multilingual-field';
+import { SectionColorPicker } from '@/components/content/section-color-picker';
 import { ServiceFieldForm } from '@/components/content/service-field-form';
 import {
   SERVICE_FIELD_TYPE_KEYS,
   SERVICE_ICON_KEYS,
-  SERVICE_ICON_SYMBOLS,
+  SERVICE_ICON_NAMES,
 } from '@/components/content/service-labels';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
-import { eventCategoryColor } from '@/components/events/event-card';
+import { FieldLabel } from '@/components/forms/field-label';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { Icon } from '@/components/icons/icon';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { useContentServiceCategories, useServiceCategoryActions } from '@/lib/content-services';
@@ -26,12 +29,12 @@ import { reviewHandlers, reviewOptions } from '@/lib/content-translations';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import {
+  CATEGORY_COLORS,
   emptyField,
   fieldKey,
   isCategoryInputValid,
   isFieldValid,
   moveField,
-  SERVICE_CATEGORY_COLORS,
   SERVICE_CATEGORY_ICONS,
   slugFromName,
   startingCategoryForm,
@@ -42,14 +45,12 @@ import {
 import { generateDrafts } from '@/lib/translation-worker';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getErrorMessageKey, toAppError, type AppErrorCode } from '@ramassa/shared/errors';
-import type { EventCategoryColor } from '@ramassa/shared/events';
-import type { AdminServiceCategory } from '@ramassa/shared/services';
+import { type AdminServiceCategory } from '@ramassa/shared/services';
 import { tokens } from '@ramassa/shared/tokens';
 import {
   isTranslationReviewPublishable,
@@ -57,30 +58,12 @@ import {
 } from '@ramassa/shared/translation';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 
-const COLOR_KEYS = {
-  primary: 'colorPrimary',
-  secondary: 'colorSecondary',
-  accent: 'colorAccent',
-  'chart-1': 'colorChart1',
-  'chart-2': 'colorChart2',
-  'chart-3': 'colorChart3',
-} as const satisfies Record<(typeof SERVICE_CATEGORY_COLORS)[number], string>;
-
 type FormError =
   AppErrorCode | 'invalid' | 'name' | 'fieldOpen' | { readonly incompatible: number };
 
 /** The fixed choices, plus a stored value outside them, so an edit never changes it unseen. */
 function withStored<T extends string>(choices: readonly T[], stored: string): readonly string[] {
   return (choices as readonly string[]).includes(stored) ? choices : [...choices, stored];
-}
-
-function SectionLabel({ children }: { readonly children: string }) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-      {children}
-    </Text>
-  );
 }
 
 function CategoryEditor({ category }: { readonly category: AdminServiceCategory | undefined }) {
@@ -182,20 +165,13 @@ function CategoryEditor({ category }: { readonly category: AdminServiceCategory 
         maxLength={200}
         {...reviewHandlers(nameReview, () => undefined)}
       />
-      <PressableScale
+      <RaisedActionButton
         testID="service-category-generate"
-        accessibilityRole="button"
+        label={isGenerating ? t('generatingTranslations') : t('generateTranslations')}
         accessibilityLabel={t('generateTranslations')}
         onPress={() => void generate()}
-        isBusy={isGenerating}
-        isDisabled={form.name.trim().length === 0}
-        haptic="tapLight"
-        className="min-h-recommended items-center justify-center rounded-md border border-primary bg-white px-lg"
-      >
-        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-          {isGenerating ? t('generatingTranslations') : t('generateTranslations')}
-        </Text>
-      </PressableScale>
+        isDisabled={form.name.trim().length === 0 || isGenerating}
+      />
       <AuthTextField
         testID="service-category-slug"
         label={t('categorySlug')}
@@ -209,15 +185,20 @@ function CategoryEditor({ category }: { readonly category: AdminServiceCategory 
       />
 
       <View className="gap-xs">
-        <SectionLabel>{t('categoryIcon')}</SectionLabel>
+        <FieldLabel>{t('categoryIcon')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {withStored(SERVICE_CATEGORY_ICONS, form.icon).map((icon) => {
-            const symbol = SERVICE_ICON_SYMBOLS[icon as keyof typeof SERVICE_ICON_SYMBOLS];
+            const symbol = SERVICE_ICON_NAMES[icon as keyof typeof SERVICE_ICON_NAMES];
             const key = SERVICE_ICON_KEYS[icon as keyof typeof SERVICE_ICON_KEYS];
             return (
               <View key={icon} className="flex-row items-center gap-xs">
                 {symbol === undefined ? null : (
-                  <SymbolView name={symbol} size={18} tintColor={tokens.colors.primary.DEFAULT} />
+                  <Icon
+                    name={symbol}
+                    weight="boldDuotone"
+                    size={tokens.fontSize.lg}
+                    color={tokens.colors.primary.DEFAULT}
+                  />
                 )}
                 <ChoiceOption
                   testID={`service-category-icon-${icon}`}
@@ -232,36 +213,16 @@ function CategoryEditor({ category }: { readonly category: AdminServiceCategory 
           })}
         </View>
       </View>
-      <View className="gap-xs">
-        <SectionLabel>{t('categoryColor')}</SectionLabel>
-        <View className="flex-row flex-wrap gap-sm">
-          {withStored(SERVICE_CATEGORY_COLORS, form.color).map((color) => {
-            const key = COLOR_KEYS[color as keyof typeof COLOR_KEYS];
-            return (
-              <View key={color} className="flex-row items-center gap-xs">
-                {key === undefined ? null : (
-                  <View
-                    accessible={false}
-                    className="h-md w-md rounded-full"
-                    style={{ backgroundColor: eventCategoryColor(color as EventCategoryColor) }}
-                  />
-                )}
-                <ChoiceOption
-                  testID={`service-category-color-${color}`}
-                  value={color}
-                  label={key === undefined ? color : tEvents(key)}
-                  selected={color === form.color}
-                  onSelect={(value) => set({ color: value })}
-                  languageFontClass={fontClass}
-                />
-              </View>
-            );
-          })}
-        </View>
-      </View>
+      <SectionColorPicker
+        label={t('categoryColor')}
+        choices={CATEGORY_COLORS}
+        value={form.color}
+        onChange={(color) => set({ color })}
+        testIDPrefix="service-category-color"
+      />
 
       <View className="gap-sm" testID="service-category-fields">
-        <SectionLabel>{t('fieldsTitle')}</SectionLabel>
+        <FieldLabel>{t('fieldsTitle')}</FieldLabel>
         <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
           {t('fieldsHelp')}
         </Text>

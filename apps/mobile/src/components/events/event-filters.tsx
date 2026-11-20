@@ -1,99 +1,14 @@
+import { FilterChips } from '@/components/layout/filter-chips';
 import { SegmentedControl } from '@/components/layout/segmented-control';
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { composeViewStyles } from '@/lib/continuous-corners';
-import type { SymbolViewProps } from 'expo-symbols';
-import { memo, useCallback, useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import type { EventCategoryColor, PlayerEventCategoryFilter } from '@ramassa/shared/events';
-import { tokens } from '@ramassa/shared/tokens';
-import { eventCategoryBackgroundStyle } from './event-card';
-
-const styles = StyleSheet.create({
-  filterOption: {
-    minHeight: tokens.tapTarget.recommended,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: tokens.spacing.sm,
-    borderWidth: 1,
-    borderRadius: tokens.radius.full,
-    paddingHorizontal: tokens.spacing.md,
-  },
-  filterOptionSelected: {
-    borderColor: tokens.colors.primary.DEFAULT,
-    backgroundColor: tokens.colors.primary.DEFAULT,
-  },
-  filterOptionIdle: {
-    borderColor: tokens.colors.neutral[300],
-    backgroundColor: tokens.colors.white,
-  },
-});
-const selectedFilterOptionStyle = composeViewStyles(
-  styles.filterOption,
-  styles.filterOptionSelected,
-);
-const idleFilterOptionStyle = composeViewStyles(styles.filterOption, styles.filterOptionIdle);
-
-const listViewSymbol: SymbolViewProps['name'] = {
-  ios: 'list.bullet',
-  android: 'view_list',
-  web: 'view_list',
-};
-const monthViewSymbol: SymbolViewProps['name'] = {
-  ios: 'calendar',
-  android: 'calendar_month',
-  web: 'calendar_month',
-};
+import { useMemo } from 'react';
+import type { PlayerEventCategoryFilter } from '@ramassa/shared/events';
 
 export interface PlayerEventFilterOption {
   readonly id: string;
   readonly label: string;
-  readonly color: EventCategoryColor;
 }
 
-interface EventCategoryOptionProps extends PlayerEventFilterOption {
-  readonly isSelected: boolean;
-  readonly languageFontClass: string;
-  readonly onSelect: (category: PlayerEventCategoryFilter) => void;
-}
-
-const EventCategoryOption = memo(function EventCategoryOption({
-  id,
-  label,
-  color,
-  isSelected,
-  languageFontClass,
-  onSelect,
-}: EventCategoryOptionProps) {
-  const handlePress = useCallback(() => onSelect(id), [id, onSelect]);
-  return (
-    <PressableScale
-      testID={`event-filter-${id}`}
-      accessibilityRole="radio"
-      accessibilityLabel={label}
-      onPress={handlePress}
-      haptic="selection"
-      isSelected={isSelected}
-      style={isSelected ? selectedFilterOptionStyle : idleFilterOptionStyle}
-      className={`min-h-recommended flex-row items-center gap-sm rounded-full border px-md ${
-        isSelected ? 'border-primary bg-primary' : 'border-neutral-300 bg-white'
-      }`}
-    >
-      <View
-        accessible={false}
-        className="h-sm w-sm rounded-full"
-        style={eventCategoryBackgroundStyle(color)}
-      />
-      <Text
-        className={`text-md font-medium ${
-          isSelected ? 'text-white' : 'text-neutral-800'
-        } ${languageFontClass}`}
-      >
-        {label}
-      </Text>
-    </PressableScale>
-  );
-});
-
+/** The activity categories on Activitats, as the shared filter chips (RAPP-829). */
 export function EventCategoryFilters({
   categories,
   selected,
@@ -110,23 +25,21 @@ export function EventCategoryFilters({
   readonly onSelect: (category: PlayerEventCategoryFilter) => void;
 }) {
   const options = useMemo(
-    () => [{ id: 'all', label: allLabel, color: 'primary' as const }, ...categories],
+    () =>
+      [{ id: 'all', label: allLabel }, ...categories].map((option) => ({
+        ...option,
+        testID: `event-filter-${option.id}`,
+      })),
     [allLabel, categories],
   );
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={accessibilityLabel}>
-      <View className="flex-row flex-wrap gap-sm">
-        {options.map((option) => (
-          <EventCategoryOption
-            key={option.id}
-            {...option}
-            isSelected={selected === option.id}
-            languageFontClass={languageFontClass}
-            onSelect={onSelect}
-          />
-        ))}
-      </View>
-    </View>
+    <FilterChips
+      options={options}
+      selected={selected}
+      accessibilityLabel={accessibilityLabel}
+      languageFontClass={languageFontClass}
+      onSelect={onSelect}
+    />
   );
 }
 
@@ -156,13 +69,13 @@ export function EventViewToggle({
           key: 'list',
           label: listLabel,
           accessibilityLabel: listAccessibilityLabel,
-          symbol: listViewSymbol,
+          symbol: 'list',
         },
         {
           key: 'calendar',
           label: calendarLabel,
           accessibilityLabel: calendarAccessibilityLabel,
-          symbol: monthViewSymbol,
+          symbol: 'calendar',
         },
       ] as const,
     [calendarAccessibilityLabel, calendarLabel, listAccessibilityLabel, listLabel],

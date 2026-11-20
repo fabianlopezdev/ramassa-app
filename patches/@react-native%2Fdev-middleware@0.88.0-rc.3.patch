@@ -1,0 +1,35 @@
+diff --git a/dist/inspector-proxy/InspectorProxy.js b/dist/inspector-proxy/InspectorProxy.js
+index 0f14ba1996ff3e4e0a347346acd9c71c15da348f..5107b012aa4d66ec88456823dd83ca81aab980a5 100644
+--- a/dist/inspector-proxy/InspectorProxy.js
++++ b/dist/inspector-proxy/InspectorProxy.js
+@@ -238,8 +238,12 @@ class InspectorProxy {
+       noServer: true,
+       perMessageDeflate: true,
+       maxPayload: 0,
++      maxFragments: 0,
+     });
+     wss.on("connection", async (socket, req) => {
++      socket.on("error", (error) => {
++        this.#logger?.error("Inspector proxy socket error:", error);
++      });
+       const wssTimestamp = Date.now();
+       const fallbackDeviceId = String(this.#deviceCounter++);
+       const query = tryParseQueryParams(req.url);
+@@ -366,6 +370,7 @@ class InspectorProxy {
+       noServer: true,
+       perMessageDeflate: false,
+       maxPayload: 0,
++      maxFragments: 0,
+       verifyClient: (info) => {
+         if (this.#serverBaseUrl.origin === info.origin) {
+           return true;
+@@ -387,6 +392,9 @@ class InspectorProxy {
+       },
+     });
+     wss.on("connection", async (socket, req) => {
++      socket.on("error", (error) => {
++        this.#logger?.error("Inspector proxy socket error:", error);
++      });
+       const wssTimestamp = Date.now();
+       const query = tryParseQueryParams(req.url);
+       const deviceId = query?.get("device") || null;

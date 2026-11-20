@@ -23,11 +23,16 @@ describe('native messaging UI contract', () => {
     ).toHaveLength(3);
   });
 
-  test('uses logical bubble corners and a shared width token for RTL layouts', async () => {
+  // The tail corner is a plain start/end style (RAPP-899): the logical corner
+  // classes never reached the phone, and start/end still mirror in RTL.
+  test('draws the bubble tail with start/end corners and shared tokens for RTL layouts', async () => {
     const source = await Bun.file(threadPath).text();
 
-    expect(source).toContain('rounded-ee-sm');
-    expect(source).toContain('rounded-es-sm');
+    expect(source).toContain('borderBottomEndRadius: tokens.messaging.bubbleTailRadius');
+    expect(source).toContain('borderBottomStartRadius: tokens.messaging.bubbleTailRadius');
+    expect(source).toContain('borderRadius: tokens.messaging.bubbleRadius');
+    expect(source).not.toContain('borderBottomRightRadius');
+    expect(source).not.toContain('borderBottomLeftRadius');
     expect(source).not.toContain('rounded-br-sm');
     expect(source).not.toContain('rounded-bl-sm');
     expect(source).toContain('tokens.messaging.messageBubbleMaxWidth');
@@ -206,8 +211,12 @@ describe('native messaging UI contract', () => {
     expect(source).toContain('<MessageThreadEmptyState');
     expect(source).toContain('accessible={false}');
     expect(source).toContain('className={`min-h-recommended flex-1');
-    expect(source).toContain('className="min-h-recommended justify-center rounded-2xl');
+    // Send is the raised button at the height of a recommended tap target (RAPP-878).
+    expect(source).toMatch(/<RaisedActionButton\s+testID="message-send"\s+size="fit"/);
+    const raisedButton = await Bun.file(
+      new URL('../components/forms/raised-action-button.tsx', import.meta.url),
+    ).text();
+    expect(raisedButton).toMatch(/fitFaceStyle = \{[^}]*minHeight: RAISED_FACE_MIN_HEIGHT/);
     expect(source).not.toContain('className={`min-h-12 flex-1');
-    expect(source).not.toContain('className="min-h-12 justify-center');
   });
 });

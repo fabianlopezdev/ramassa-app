@@ -14,7 +14,9 @@
       "project": ["scripts/**/*.{ts,mjs}", "tests/**/*.ts"],
       // The Supabase CLI is a developer and CI tool installed outside the repo
       // (CI pins it with `bunx supabase@<version>`), so it is not a dependency.
-      "ignoreBinaries": ["supabase"],
+      // `qlmanage` is macOS QuickLook, a system tool that scripts/generate-tab-icons.ts
+      // runs by hand on a Mac to draw the tab icons; it is no package.
+      "ignoreBinaries": ["supabase", "qlmanage"],
       // Pinned on purpose (RAPP-75): NativeWind's Metro integration resolves Tailwind 3
       // from the hoisted root while the admin app uses Tailwind 4.
       "ignoreDependencies": ["tailwindcss"],

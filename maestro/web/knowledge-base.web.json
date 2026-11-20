@@ -23,11 +23,11 @@
     {
       "label": "help",
       "goto": "/services",
-      "waitFor": "[data-testid=\"ajuda-all-guides\"]"
+      "waitFor": "[data-testid=\"ajuda-segment-guides\"]"
     },
     {
       "label": "browse",
-      "click": "[data-testid=\"ajuda-all-guides\"]",
+      "click": "[data-testid=\"ajuda-segment-guides\"]",
       "waitFor": "[data-testid=\"knowledge-base-screen\"]"
     },
     {

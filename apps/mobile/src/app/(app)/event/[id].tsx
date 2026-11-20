@@ -6,12 +6,15 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { EventArticle } from '@/components/events/event-article';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenAction } from '@/components/layout/screen-action';
 import { SuccessPop } from '@/components/motion/success-pop';
 import { EventSurveyPrompt } from '@/components/surveys/survey-prompt';
 import { isEventSignupActionDisabled } from '@/lib/event-signup-policy';
 import { playErrorHaptic } from '@/lib/haptics/haptics';
 import { isNetworkStateOnline } from '@/lib/network-status';
-import { useEventSignup, usePlayerEvents } from '@/lib/player-events';
+import { useEventSignup } from '@/lib/player-events';
+import { useFreshPlayerEvents } from '@/lib/use-fresh-player-events';
+import { useMarkEventSeen } from '@/lib/use-home-attention';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import * as Linking from 'expo-linking';
 import { useNetworkState } from 'expo-network';
@@ -38,7 +41,8 @@ export default function EventDetailScreen() {
   const languageFontClass = useLanguageFontClass();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
-  const { data, error, isError, isPending, refetch } = usePlayerEvents();
+  // The places decide what she can do here, so they are kept current (RAPP-883).
+  const { data, error, isError, isPending, refetch } = useFreshPlayerEvents();
   const {
     data: signupData,
     error: signupMutationError,
@@ -50,6 +54,7 @@ export default function EventDetailScreen() {
   const row =
     data?.find((candidate) => candidate.occurrence_id === occurrenceId) ??
     data?.find((candidate) => candidate.event.id === id);
+  useMarkEventSeen(row?.event.id);
   const title = row === undefined ? undefined : resolveLocalizedText(row.event.title, language);
   const category =
     row === undefined ? undefined : resolveLocalizedText(row.event.category.name, language);
@@ -102,7 +107,7 @@ export default function EventDetailScreen() {
   if (isPending && data === undefined) {
     return (
       <>
-        <NativeScreenHeader title={screenTitle} />
+        <NativeScreenHeader surface="white" title={screenTitle} />
         <AnnouncementFeedSkeleton accessibilityLabel={t('playerLoading')} />
       </>
     );
@@ -110,7 +115,7 @@ export default function EventDetailScreen() {
   if (isError && data === undefined) {
     return (
       <>
-        <NativeScreenHeader title={screenTitle} />
+        <NativeScreenHeader surface="white" title={screenTitle} />
         <AnnouncementFeedError
           message={t('playerLoadFailed')}
           retryLabel={t('playerRetryAction')}
@@ -122,13 +127,16 @@ export default function EventDetailScreen() {
     );
   }
 
+  // Her sign-up is the screen's call to action, at the bottom (RAPP-881).
+  const hasAction = row !== undefined && nextState !== null;
+
   return (
-    <>
-      <NativeScreenHeader title={screenTitle} />
+    <View className="flex-1 bg-white">
+      <NativeScreenHeader surface="white" title={screenTitle} />
       <ScrollView
-        className="flex-1 bg-white"
+        className="flex-1"
         contentContainerClassName="grow px-lg py-lg"
-        contentContainerStyle={androidInsets}
+        contentContainerStyle={hasAction ? undefined : androidInsets}
         contentInsetAdjustmentBehavior="automatic"
       >
         <PageWidth className="gap-lg">
@@ -171,14 +179,7 @@ export default function EventDetailScreen() {
                   <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
                     {t('playerSignupClosed')}
                   </Text>
-                ) : (
-                  <AuthSubmitButton
-                    label={actionLabel}
-                    disabled={actionDisabled}
-                    isLoading={isSignupPending}
-                    onPress={submitSignup}
-                  />
-                )}
+                ) : null}
                 {isOffline && nextState !== null ? (
                   <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
                     {t('playerSignupOffline')}
@@ -213,6 +214,16 @@ export default function EventDetailScreen() {
           )}
         </PageWidth>
       </ScrollView>
-    </>
+      {hasAction ? (
+        <ScreenAction testID="event-signup-action">
+          <AuthSubmitButton
+            label={actionLabel}
+            disabled={actionDisabled}
+            isLoading={isSignupPending}
+            onPress={submitSignup}
+          />
+        </ScreenAction>
+      ) : null}
+    </View>
   );
 }

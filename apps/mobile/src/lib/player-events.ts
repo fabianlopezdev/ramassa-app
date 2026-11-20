@@ -15,12 +15,18 @@ import { supabase } from './supabase';
 
 const playerEventsQueryKey = (userId: string) => ['player-events', userId] as const;
 
-export function usePlayerEvents() {
+export function usePlayerEvents({
+  refetchInterval = false,
+}: {
+  /** Ask again this often while a screen needs current places (RAPP-883). */
+  readonly refetchInterval?: number | false;
+} = {}) {
   const { user } = useAuth();
   return useQuery<readonly PlayerEventOccurrence[]>({
     queryKey: playerEventsQueryKey(user?.id ?? 'signed-out'),
     queryFn: ({ signal }) => fetchPlayerEventOccurrences(supabase, { signal }),
     enabled: user !== null,
+    refetchInterval,
   });
 }
 

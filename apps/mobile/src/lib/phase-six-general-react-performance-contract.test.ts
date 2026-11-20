@@ -32,7 +32,8 @@ describe('Phase 6 general React performance contract', () => {
       readMobileSource('components/forum/forum-flag-dialog.tsx'),
       readMobileSource('components/forum/forum-plain-text.tsx'),
       readMobileSource('components/forum/forum-post-card.tsx'),
-      readMobileSource('components/forum/forum-reply-card.tsx'),
+      readMobileSource('components/forum/forum-own-post-actions.tsx'),
+      readMobileSource('components/forum/forum-thread-message.tsx'),
       readMobileSource('lib/forum-write.ts'),
       readMobileSource('lib/gallery-upload.ts'),
       readMobileSource('lib/media-upload-policy.ts'),
@@ -42,7 +43,6 @@ describe('Phase 6 general React performance contract', () => {
       readMobileSource('lib/query-persistence.ts'),
       readMobileSource('components/gallery/gallery-grid.tsx'),
       readMobileSource('components/knowledge/community-story-list.tsx'),
-      readMobileSource('components/community/community-share-sheet.tsx'),
       readMobileSource('components/layout/segmented-control.tsx'),
       readMobileSource('lib/community-stories.ts'),
     ]);

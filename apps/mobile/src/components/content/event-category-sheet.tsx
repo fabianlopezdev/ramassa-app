@@ -1,21 +1,24 @@
 /**
  * Adding or changing an event category on the phone (RAPP-342), in a sheet:
  * the Catalan name with its four translations, which must all be approved,
- * as the database stores every language; an icon; and a colour. The web
- * admin's category form, field for field.
+ * as the database stores every language; an icon; and a colour from the
+ * shared section palette (RAPP-893). The web admin's category form, field
+ * for field.
  */
 import { useAppLock } from '@/components/auth/app-lock';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
-import { eventCategoryColor } from '@/components/events/event-card';
-import { PressableScale } from '@/components/motion/pressable-scale';
+import { FieldLabel } from '@/components/forms/field-label';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
+import { NativeModalScope } from '@/components/motion/native-modal-scope';
 import { useEventCategoryActions } from '@/lib/content-events';
 import { reviewHandlers, reviewOptions } from '@/lib/content-translations';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { generateDrafts } from '@/lib/translation-worker';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Modal, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,6 +28,7 @@ import {
   EVENT_CATEGORY_COLORS,
   EVENT_CATEGORY_ICONS,
   eventCategoryInputSchema,
+  eventCategoryPaletteColor,
   MAX_EVENT_TITLE_LENGTH,
   type EventCategoryColor,
   type EventCategoryIcon,
@@ -33,8 +37,9 @@ import {
 import { isTranslationReviewPublishable } from '@ramassa/shared/translation';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 import { EventCategoryGlyph } from './event-category-badge';
-import { EVENT_COLOR_KEYS, EVENT_ICON_KEYS } from './event-labels';
+import { EVENT_ICON_KEYS } from './event-labels';
 import { MultilingualField } from './multilingual-field';
+import { SectionColorPicker } from './section-color-picker';
 
 function CategoryForm({
   category,
@@ -45,11 +50,20 @@ function CategoryForm({
 }) {
   const { t } = useTranslation('events');
   const { t: tErrors } = useTranslation('errors');
+  const { t: tServices } = useTranslation('services');
   const fontClass = useLanguageFontClass();
   const { save } = useEventCategoryActions();
   const [name, setName] = useState(category?.name.ca ?? '');
   const [icon, setIcon] = useState<EventCategoryIcon>(category?.icon ?? 'dumbbell');
-  const [color, setColor] = useState<EventCategoryColor>(category?.color ?? 'primary');
+  // An older colour name opens as the palette colour it moves to (RAPP-893).
+  const [color, setColor] = useState<EventCategoryColor>(
+    eventCategoryPaletteColor(category?.color ?? 'primary'),
+  );
+  // The shared picker hands back a stored name; the sheet keeps a palette colour.
+  const selectColor = useCallback(
+    (value: string) => setColor(eventCategoryPaletteColor(value)),
+    [],
+  );
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorCode, setErrorCode] = useState<AppErrorCode | null>(null);
   const nameReview = useTranslationReview(
@@ -96,7 +110,7 @@ function CategoryForm({
 
   return (
     <ScrollView
-      contentContainerClassName="gap-md p-lg"
+      contentContainerClassName={screenContentClassName}
       keyboardShouldPersistTaps="handled"
       // The page sheet does not move with the keyboard, so the scroll view does.
       automaticallyAdjustKeyboardInsets
@@ -118,25 +132,15 @@ function CategoryForm({
         maxLength={MAX_EVENT_TITLE_LENGTH}
         {...reviewHandlers(nameReview, noop)}
       />
-      <PressableScale
+      <RaisedActionButton
         testID="category-generate"
-        accessibilityRole="button"
-        accessibilityLabel={isGenerating ? t('generatingTranslations') : t('categoryGenerate')}
+        label={isGenerating ? t('generatingTranslations') : t('categoryGenerate')}
         onPress={() => void generate()}
-        isBusy={isGenerating}
-        isDisabled={name.trim().length === 0}
-        haptic="tapLight"
-        className="min-h-recommended items-center justify-center rounded-md border border-primary bg-white px-lg"
-      >
-        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-          {isGenerating ? t('generatingTranslations') : t('categoryGenerate')}
-        </Text>
-      </PressableScale>
+        isDisabled={name.trim().length === 0 || isGenerating}
+      />
 
       <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-          {t('categoryIcon')}
-        </Text>
+        <FieldLabel>{t('categoryIcon')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
           {EVENT_CATEGORY_ICONS.map((candidate) => (
             <View key={candidate} className="flex-row items-center gap-xs">
@@ -153,30 +157,13 @@ function CategoryForm({
           ))}
         </View>
       </View>
-      <View className="gap-xs">
-        <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-          {t('categoryColor')}
-        </Text>
-        <View className="flex-row flex-wrap gap-sm">
-          {EVENT_CATEGORY_COLORS.map((candidate) => (
-            <View key={candidate} className="flex-row items-center gap-xs">
-              <View
-                accessible={false}
-                className="h-md w-md rounded-full"
-                style={{ backgroundColor: eventCategoryColor(candidate) }}
-              />
-              <ChoiceOption
-                testID={`category-color-${candidate}`}
-                value={candidate}
-                label={t(EVENT_COLOR_KEYS[candidate])}
-                selected={candidate === color}
-                onSelect={setColor}
-                languageFontClass={fontClass}
-              />
-            </View>
-          ))}
-        </View>
-      </View>
+      <SectionColorPicker
+        label={tServices('categoryColor')}
+        choices={EVENT_CATEGORY_COLORS}
+        value={color}
+        onChange={selectColor}
+        testIDPrefix="category-color"
+      />
 
       {shownError === null ? null : (
         <FailureNotice
@@ -189,33 +176,17 @@ function CategoryForm({
         />
       )}
       <View className="flex-row flex-wrap gap-sm">
-        <PressableScale
+        <AuthSubmitButton
           testID="category-save"
-          accessibilityRole="button"
-          accessibilityLabel={t('categorySave')}
+          label={t('categorySave')}
           onPress={submit}
-          isBusy={save.isPending}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-            {t('categorySave')}
-          </Text>
-        </PressableScale>
-        <PressableScale
+          isLoading={save.isPending}
+        />
+        <RaisedActionButton
           testID="category-cancel"
-          accessibilityRole="button"
-          accessibilityLabel={t('categoryCancel')}
+          label={t('categoryCancel')}
           onPress={onClose}
-          haptic="tapLight"
-          style={continuousCorners}
-          className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-        >
-          <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-            {t('categoryCancel')}
-          </Text>
-        </PressableScale>
+        />
       </View>
     </ScrollView>
   );
@@ -240,16 +211,18 @@ export function EventCategorySheet({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-white" testID="event-category-sheet">
-        <KeyboardAvoidingView
-          className="flex-1"
-          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
-        >
-          {visible ? (
-            <CategoryForm key={category?.id ?? 'new'} category={category} onClose={onClose} />
-          ) : null}
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+      <NativeModalScope>
+        <SafeAreaView className="flex-1 bg-white" testID="event-category-sheet">
+          <KeyboardAvoidingView
+            className="flex-1"
+            behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
+          >
+            {visible ? (
+              <CategoryForm key={category?.id ?? 'new'} category={category} onClose={onClose} />
+            ) : null}
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </NativeModalScope>
     </Modal>
   );
 }

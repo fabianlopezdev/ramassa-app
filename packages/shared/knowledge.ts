@@ -1,8 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { isCategoryColor } from './category-colors';
 import { AppError } from './errors';
 import { getContentLanguageFallbacks } from './i18n/localized-content';
-import { languageCodeSchema, type LanguageCode } from './schemas/language';
+import {
+  languageCodeSchema,
+  publishedTranslationsSchema,
+  type LanguageCode,
+} from './schemas/language';
 import {
   MAX_STORY_IMAGES,
   participantStoryResendSchema,
@@ -320,6 +325,8 @@ export interface KnowledgeCategoryRow {
   readonly name: KnowledgeLocalizedText;
   readonly slug: string;
   readonly icon: string;
+  /** One of the category palette's colours (RAPP-868), see `@ramassa/shared/category-colors`. */
+  readonly color: string;
   readonly sort_order: number;
 }
 
@@ -358,7 +365,9 @@ export interface KnowledgeArticlePage {
 
 type Client = SupabaseClient<Database>;
 const KNOWLEDGE_COLUMNS =
-  'id, category_id, category:knowledge_categories!knowledge_articles_category_same_org(id, name, slug, icon, sort_order), title, body, image_url, video_url, external_url, content_type, story_status, submission_language, story_image_urls, publication_consent, publication_consent_at, publication_consent_version, author_id, author_first_name, created_by, reviewer_note, is_published, published_at, expires_at, created_at, updated_at';
+  'id, category_id, category:knowledge_categories!knowledge_articles_category_same_org(id, name, slug, icon, color, sort_order), title, body, image_url, video_url, external_url, content_type, story_status, submission_language, story_image_urls, publication_consent, publication_consent_at, publication_consent_version, author_id, author_first_name, created_by, reviewer_note, is_published, published_at, expires_at, created_at, updated_at';
+
+const KNOWLEDGE_CATEGORY_COLUMNS = 'id, name, slug, icon, color, sort_order';
 
 export async function fetchKnowledgeCategories(
   client: Client,
@@ -366,13 +375,80 @@ export async function fetchKnowledgeCategories(
 ): Promise<KnowledgeCategoryRow[]> {
   let query = client
     .from('knowledge_categories')
-    .select('id, name, slug, icon, sort_order')
+    .select(KNOWLEDGE_CATEGORY_COLUMNS)
     .order('sort_order', { ascending: true })
     .order('id', { ascending: true });
   if (options.signal !== undefined) query = query.abortSignal(options.signal);
   const { data, error } = await query;
   if (error) throw new AppError('DB-1', { message: error.message });
   return (data ?? []) as KnowledgeCategoryRow[];
+}
+
+export const MAX_KNOWLEDGE_CATEGORY_NAME_LENGTH = 200;
+export const MAX_KNOWLEDGE_CATEGORY_ICON_LENGTH = 100;
+const KNOWLEDGE_CATEGORY_SORT_STEP = 10;
+
+/**
+ * A guide category as staff save it (RAPP-869): the name in every language,
+ * as the database's `knowledge_categories_name_complete` check asks, and a
+ * colour from the one category palette that services also use.
+ */
+export const knowledgeCategoryInputSchema = z.object({
+  name: publishedTranslationsSchema(nonEmptyText(MAX_KNOWLEDGE_CATEGORY_NAME_LENGTH)),
+  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  icon: nonEmptyText(MAX_KNOWLEDGE_CATEGORY_ICON_LENGTH),
+  color: z.string().refine(isCategoryColor),
+});
+export type KnowledgeCategoryInput = z.infer<typeof knowledgeCategoryInputSchema>;
+
+/** A new category goes after the last one, so the list keeps the order staff already see. */
+export async function createKnowledgeCategory(
+  client: Client,
+  rawInput: KnowledgeCategoryInput,
+): Promise<KnowledgeCategoryRow> {
+  const input = knowledgeCategoryInputSchema.parse(rawInput);
+  const last = await client
+    .from('knowledge_categories')
+    .select('sort_order')
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (last.error) throw new AppError('DB-1', { message: last.error.message });
+  const { data, error } = await client
+    .from('knowledge_categories')
+    .insert({
+      ...input,
+      sort_order: (last.data?.sort_order ?? 0) + KNOWLEDGE_CATEGORY_SORT_STEP,
+    })
+    .select(KNOWLEDGE_CATEGORY_COLUMNS)
+    .single();
+  if (error) throw new AppError('DB-1', { message: error.message });
+  return data as KnowledgeCategoryRow;
+}
+
+export async function updateKnowledgeCategory(
+  client: Client,
+  categoryId: string,
+  rawInput: KnowledgeCategoryInput,
+): Promise<KnowledgeCategoryRow> {
+  const input = knowledgeCategoryInputSchema.parse(rawInput);
+  const { data, error } = await client
+    .from('knowledge_categories')
+    .update(input)
+    .eq('id', z.uuid().parse(categoryId))
+    .select(KNOWLEDGE_CATEGORY_COLUMNS)
+    .single();
+  if (error) throw new AppError('DB-1', { message: error.message });
+  return data as KnowledgeCategoryRow;
+}
+
+/** The database refuses this while a guide still uses the category (its foreign key). */
+export async function deleteKnowledgeCategory(client: Client, categoryId: string): Promise<void> {
+  const { error } = await client
+    .from('knowledge_categories')
+    .delete()
+    .eq('id', z.uuid().parse(categoryId));
+  if (error) throw new AppError('DB-1', { message: error.message });
 }
 
 export async function fetchKnowledgeArticles(

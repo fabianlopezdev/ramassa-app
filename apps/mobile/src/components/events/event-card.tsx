@@ -1,53 +1,22 @@
-import { PressableScale } from '@/components/motion/pressable-scale';
-import { composeContinuousViewStyle } from '@/lib/continuous-corners';
+import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
 import type { TFunction } from 'i18next';
-import { memo, useCallback } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import type {
-  EventCategoryColor,
-  EventSignupState,
-  PlayerEventOccurrence,
+import { memo, useCallback, useMemo } from 'react';
+import { Text, View } from 'react-native';
+import {
+  eventCategoryPaletteColor,
+  MADRID_TIME_ZONE,
+  type EventSignupState,
+  type PlayerEventOccurrence,
 } from '@ramassa/shared/events';
-import { tokens } from '@ramassa/shared/tokens';
+import { sectionHue } from '@ramassa/shared/section-colors';
 
-const styles = StyleSheet.create({
-  card: {
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: tokens.colors.neutral[200],
-    borderRadius: tokens.radius.lg,
-    backgroundColor: tokens.colors.white,
-  },
-});
-const categoryBackgroundStyles = StyleSheet.create({
-  primary: { backgroundColor: tokens.colors.primary.DEFAULT },
-  secondary: { backgroundColor: tokens.colors.secondary.dark },
-  accent: { backgroundColor: tokens.colors.info },
-  'chart-1': { backgroundColor: tokens.colors.success },
-  'chart-2': { backgroundColor: tokens.colors.warning },
-  'chart-3': { backgroundColor: tokens.colors.error },
-});
-const cardStyle = composeContinuousViewStyle(styles.card);
-
-export function eventCategoryColor(color: EventCategoryColor): string {
-  switch (color) {
-    case 'primary':
-      return tokens.colors.primary.DEFAULT;
-    case 'secondary':
-      return tokens.colors.secondary.dark;
-    case 'accent':
-      return tokens.colors.info;
-    case 'chart-1':
-      return tokens.colors.success;
-    case 'chart-2':
-      return tokens.colors.warning;
-    case 'chart-3':
-      return tokens.colors.error;
-  }
-}
-
-export function eventCategoryBackgroundStyle(color: EventCategoryColor) {
-  return categoryBackgroundStyles[color];
+/**
+ * The shade of an activity category's stored colour (RAPP-893), from the
+ * shared section palette: `primary` is the organization's own colour, passed
+ * as `brandColor`, and an older name shows the palette colour it moves to.
+ */
+export function eventCategoryColor(color: string, brandColor: string): string {
+  return sectionHue(eventCategoryPaletteColor(color), brandColor) ?? brandColor;
 }
 
 /** Her sign-up chip on an activity card; `t` resolves the `events` namespace. */
@@ -94,98 +63,116 @@ export function EventDetailLine({
   );
 }
 
+interface EventCardDateParts {
+  readonly day: string;
+  readonly month: string;
+  readonly time: string;
+}
+
+const datePartFormatters = new Map<string, readonly Intl.DateTimeFormat[]>();
+
+/** The day, short month and time of an activity, in Madrid time, for the card's date block. */
+function eventCardDateParts(startsAt: string, locale: string): EventCardDateParts {
+  let formatters = datePartFormatters.get(locale);
+  if (formatters === undefined) {
+    formatters = [
+      new Intl.DateTimeFormat(locale, { day: 'numeric', timeZone: MADRID_TIME_ZONE }),
+      new Intl.DateTimeFormat(locale, { month: 'short', timeZone: MADRID_TIME_ZONE }),
+      new Intl.DateTimeFormat(locale, {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: MADRID_TIME_ZONE,
+      }),
+    ];
+    datePartFormatters.set(locale, formatters);
+  }
+  const date = new Date(startsAt);
+  const [day, month, time] = formatters.map((formatter) => formatter.format(date));
+  return { day: day ?? '', month: month ?? '', time: time ?? '' };
+}
+
 export interface EventCardProps {
   readonly eventId: string;
   readonly occurrenceId: string;
   readonly title: string;
-  readonly category: string;
-  readonly categoryColor: EventCategoryColor;
-  readonly date: string;
-  readonly time: string;
+  /** When this occurrence starts; the card shows its day, month and time. */
+  readonly startsAt: string;
+  readonly locale: string;
   readonly location: string;
-  readonly capacityLabel: string;
   readonly signupLabel: string | null;
+  /** Set while the activity is new to her (RAPP-821): the word shown on its mark. */
+  readonly unseenLabel?: string | null;
   readonly accessibilityLabel: string;
   readonly languageFontClass: string;
   readonly onOpen: (eventId: string, occurrenceId: string) => void;
 }
 
+/**
+ * An activity as a raised card (RAPP-828): its day and month in a block at the
+ * start, then its name, time, place and her sign-up. The same card on Inici
+ * and in the Activitats list.
+ */
 export const EventCard = memo(function EventCard({
   eventId,
   occurrenceId,
   title,
-  category,
-  categoryColor,
-  date,
-  time,
+  startsAt,
+  locale,
   location,
-  capacityLabel,
   signupLabel,
+  unseenLabel = null,
   accessibilityLabel,
   languageFontClass,
   onOpen,
 }: EventCardProps) {
-  const handlePress = useCallback(
+  const handleOpen = useCallback(
     () => onOpen(eventId, occurrenceId),
     [eventId, occurrenceId, onOpen],
   );
+  const { day, month, time } = eventCardDateParts(startsAt, locale);
+  // One badge on the card's edge: her sign-up once she has one, else "Nou" while it is new to her.
+  const badge = useMemo<RaisedCardBadge | null>(() => {
+    if (signupLabel !== null) return { label: signupLabel, tone: 'accent' };
+    return unseenLabel === null ? null : { label: unseenLabel, tone: 'brand' };
+  }, [signupLabel, unseenLabel]);
 
   return (
-    <View testID={`event-card-${eventId}-${occurrenceId}`}>
-      <PressableScale
-        accessibilityLabel={accessibilityLabel}
-        onPress={handlePress}
-        haptic="tapLight"
-        style={cardStyle}
-        className="overflow-hidden rounded-lg border border-neutral-200 bg-white"
+    <RaisedCard
+      testID={`event-card-${eventId}-${occurrenceId}`}
+      accessibilityLabel={accessibilityLabel}
+      onOpen={handleOpen}
+      showsArrow={false}
+      badge={badge}
+      leading={
+        <>
+          <Text
+            className={`text-4xl font-extrabold tabular-nums text-neutral-900 ${languageFontClass}`}
+          >
+            {day}
+          </Text>
+          <Text className={`text-md font-bold uppercase text-primary-dark ${languageFontClass}`}>
+            {month}
+          </Text>
+        </>
+      }
+    >
+      <Text
+        className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
+        numberOfLines={2}
       >
-        <View
-          accessible={false}
-          className="h-xs"
-          style={eventCategoryBackgroundStyle(categoryColor)}
-        />
-        <View className="gap-sm p-md">
-          <View className="flex-row flex-wrap items-center gap-sm">
-            <View className="flex-row items-center gap-xs rounded-full bg-neutral-100 px-sm py-xs">
-              <View
-                accessible={false}
-                className="h-sm w-sm rounded-full"
-                style={eventCategoryBackgroundStyle(categoryColor)}
-              />
-              <Text className={`text-sm font-medium text-neutral-700 ${languageFontClass}`}>
-                {category}
-              </Text>
-            </View>
-            {signupLabel === null ? null : (
-              <View className="rounded-full bg-secondary-light px-sm py-xs">
-                <Text className={`text-sm font-semibold text-neutral-900 ${languageFontClass}`}>
-                  {signupLabel}
-                </Text>
-              </View>
-            )}
-          </View>
-          <Text
-            className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-            numberOfLines={2}
-          >
-            {title}
-          </Text>
-          <Text
-            className={`text-start text-md font-medium tabular-nums text-primary-dark ${languageFontClass}`}
-          >
-            {date} · {time}
-          </Text>
-          <Text
-            className={`text-start text-md text-neutral-700 ${languageFontClass}`}
-            numberOfLines={2}
-          >
-            {location}
-          </Text>
-          <Text className={`text-start text-sm tabular-nums text-neutral-500 ${languageFontClass}`}>
-            {capacityLabel}
-          </Text>
-        </View>
-      </PressableScale>
-    </View>
+        {title}
+      </Text>
+      <Text
+        className={`text-start text-lg font-bold tabular-nums text-primary-dark ${languageFontClass}`}
+      >
+        {time}
+      </Text>
+      <Text
+        className={`text-start text-md text-neutral-700 ${languageFontClass}`}
+        numberOfLines={2}
+      >
+        {location}
+      </Text>
+    </RaisedCard>
   );
 });

@@ -2,10 +2,11 @@
  * One announcement as a player sees it: category, pinned, title, date, image
  * and body, in the reader's language. The player screen draws a stored
  * announcement with it, and the team's editor draws its unsaved draft with it
- * (RAPP-373), so the preview is the player's own layout.
+ * (RAPP-373), so the preview is the player's own layout. Both draw it on
+ * the wash of its kind (RAPP-893), so its grey text starts at neutral-600.
  */
 import { announcementCategoryLabel } from '@/components/announcements/category-filters';
-import { FadeSlideIn } from '@/components/motion/fade-slide-in';
+import { Badge } from '@/components/layout/badge';
 import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { Image, type ImageSource } from 'expo-image';
@@ -57,47 +58,40 @@ export function AnnouncementArticle({
   );
 
   return (
-    <FadeSlideIn index={0}>
-      <View className="gap-md">
-        <View className="flex-row flex-wrap items-center gap-sm">
-          <View className="rounded-full bg-neutral-100 px-sm py-xs">
-            <Text className={`text-sm font-medium text-neutral-700 ${languageFontClass}`}>
-              {announcementCategoryLabel(announcement.category, t)}
-            </Text>
-          </View>
-          {announcement.isPinned ? (
-            <View className="rounded-full bg-secondary px-sm py-xs">
-              <Text className={`text-sm font-semibold text-neutral-900 ${languageFontClass}`}>
-                {t('pinned')}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-        <Text
-          accessibilityRole="header"
-          className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
-        >
-          {title?.text ?? ''}
-        </Text>
-        <Text className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>
-          {dateFormatter.format(new Date(announcement.shownAt))}
-        </Text>
-        {imageSource === null ? null : (
-          <View className="overflow-hidden rounded-lg" style={imageFrameStyle}>
-            <Image
-              source={imageSource}
-              accessible={imageAlt !== undefined}
-              accessibilityLabel={imageAlt?.text}
-              cachePolicy="memory-disk"
-              contentFit="cover"
-              style={styles.image}
-            />
-          </View>
-        )}
-        <Text className={`text-start text-lg text-neutral-800 ${languageFontClass}`}>
-          {body?.text ?? ''}
-        </Text>
+    <View className="gap-md">
+      <View className="flex-row flex-wrap items-center gap-sm">
+        <Badge
+          label={announcementCategoryLabel(announcement.category, t)}
+          languageFontClass={languageFontClass}
+        />
+        {announcement.isPinned ? (
+          <Badge label={t('pinned')} tone="accent" languageFontClass={languageFontClass} />
+        ) : null}
       </View>
-    </FadeSlideIn>
+      <Text
+        accessibilityRole="header"
+        className={`text-start text-3xl font-bold text-neutral-900 ${languageFontClass}`}
+      >
+        {title?.text ?? ''}
+      </Text>
+      <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+        {dateFormatter.format(new Date(announcement.shownAt))}
+      </Text>
+      {imageSource === null ? null : (
+        <View className="overflow-hidden rounded-lg" style={imageFrameStyle}>
+          <Image
+            source={imageSource}
+            accessible={imageAlt !== undefined}
+            accessibilityLabel={imageAlt?.text}
+            cachePolicy="memory-disk"
+            contentFit="cover"
+            style={styles.image}
+          />
+        </View>
+      )}
+      <Text className={`text-start text-lg text-neutral-800 ${languageFontClass}`}>
+        {body?.text ?? ''}
+      </Text>
+    </View>
   );
 }

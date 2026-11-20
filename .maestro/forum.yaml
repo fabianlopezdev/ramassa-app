@@ -119,6 +119,9 @@ env:
     visible:
       id: forum-detail-screen
     timeout: 30000
+# The reply field opens under "Respon" on the post (RAPP-884).
+- tapOn:
+    id: forum-reply-post
 - tapOn:
     id: forum-reply-content
 - runFlow:
@@ -264,6 +267,9 @@ env:
     visible:
       id: forum-detail-screen
     timeout: 30000
+# The reply field opens under "Respon" on the post (RAPP-884).
+- tapOn:
+    id: forum-reply-post
 - tapOn:
     id: forum-reply-content
 - runFlow:

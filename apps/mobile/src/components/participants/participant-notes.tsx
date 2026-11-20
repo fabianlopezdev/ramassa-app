@@ -9,9 +9,12 @@
  * and its button, because the field sits low on a long card.
  */
 import { useAppLock } from '@/components/auth/app-lock';
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
+import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { ScreenSection } from '@/components/layout/screen-section';
+import { screenContentClassName } from '@/components/layout/screen-spacing';
 import { PressableScale } from '@/components/motion/pressable-scale';
-import { continuousCorners } from '@/lib/continuous-corners';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useParticipantNotes } from '@/lib/participant-lookup';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -88,7 +91,7 @@ function NoteSheet({
           behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
         >
           <ScrollView
-            contentContainerClassName="gap-md p-lg"
+            contentContainerClassName={screenContentClassName}
             keyboardShouldPersistTaps="handled"
             // The page sheet does not move with the keyboard, so the scroll view does.
             automaticallyAdjustKeyboardInsets
@@ -122,33 +125,17 @@ function NoteSheet({
               </Text>
             ) : null}
             <View className="flex-row flex-wrap gap-sm">
-              <PressableScale
+              <AuthSubmitButton
                 testID="participant-note-add"
-                accessibilityRole="button"
-                accessibilityLabel={t('noteAddAction')}
+                label={t('noteAddAction')}
                 onPress={submit}
-                isBusy={addNote.isPending}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md bg-primary px-lg"
-              >
-                <Text className={`text-center text-md font-bold text-white ${fontClass}`}>
-                  {t('noteAddAction')}
-                </Text>
-              </PressableScale>
-              <PressableScale
+                isLoading={addNote.isPending}
+              />
+              <RaisedActionButton
                 testID="participant-note-cancel"
-                accessibilityRole="button"
-                accessibilityLabel={tProfile('cancelAction')}
+                label={tProfile('cancelAction')}
                 onPress={close}
-                haptic="tapLight"
-                style={continuousCorners}
-                className="min-h-recommended items-center justify-center rounded-md border border-neutral-300 bg-white px-lg"
-              >
-                <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-                  {tProfile('cancelAction')}
-                </Text>
-              </PressableScale>
+              />
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -175,26 +162,13 @@ export function ParticipantNotes({ participantId }: { readonly participantId: st
   );
 
   return (
-    <View className="gap-sm" testID="participant-notes">
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}
-      >
-        {t('sectionNotes')}
-      </Text>
-      <PressableScale
+    <ScreenSection testID="participant-notes" title={t('sectionNotes')}>
+      <RaisedActionButton
         testID="participant-note-open"
-        accessibilityRole="button"
-        accessibilityLabel={t('noteAddLabel')}
+        size="compact"
+        label={t('noteAddLabel')}
         onPress={() => setIsSheetOpen(true)}
-        haptic="tapLight"
-        style={continuousCorners}
-        className="min-h-recommended items-center justify-center self-start rounded-md border border-neutral-300 bg-white px-lg"
-      >
-        <Text className={`text-center text-md font-bold text-primary-dark ${fontClass}`}>
-          {t('noteAddLabel')}
-        </Text>
-      </PressableScale>
+      />
 
       {notes.isPending ? (
         <ActivityIndicator color={tokens.colors.primary.DEFAULT} />
@@ -238,6 +212,6 @@ export function ParticipantNotes({ participantId }: { readonly participantId: st
         </View>
       )}
       <NoteSheet visible={isSheetOpen} onClose={() => setIsSheetOpen(false)} addNote={addNote} />
-    </View>
+    </ScreenSection>
   );
 }
