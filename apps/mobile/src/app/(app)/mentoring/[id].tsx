@@ -2,6 +2,8 @@
  * One of her mentoring requests, read only (X5): the topic, her note, the day
  * she preferred, its status, who she meets and when. It reads the request
  * list she already loaded, so it opens offline from the cache too.
+ * Opening it is what clears a staff change from her numbers and its "Nou"
+ * (RAPP-873); a later change counts again.
  */
 import { FailureNotice } from '@/components/error-code-line';
 import { FormWidth } from '@/components/layout/content-width';
@@ -15,6 +17,7 @@ import {
 } from '@/lib/mentoring-labels';
 import { usePlayerMentoringRequests } from '@/lib/player-mentoring';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useMarkMentoringRequestSeen } from '@/lib/use-tab-news';
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -35,6 +38,7 @@ export default function MentoringRequestScreen() {
   const languageFontClass = useLanguageFontClass();
   const requestsQuery = usePlayerMentoringRequests();
   const request = requestsQuery.data?.find((candidate) => candidate.id === id);
+  useMarkMentoringRequestSeen(request?.id);
   const locale = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;
   const formatters = useMemo(
     () => ({

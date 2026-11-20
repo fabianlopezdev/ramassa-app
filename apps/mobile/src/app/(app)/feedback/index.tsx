@@ -14,7 +14,7 @@ import { isNetworkStateOnline } from '@/lib/network-status';
 import { useCreateFeedback, usePlayerFeedback } from '@/lib/player-feedback';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useTabNews } from '@/lib/use-tab-news';
+import { useMarkSuggestionSeen, useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -68,7 +68,8 @@ interface FeedbackHistoryCardProps {
   readonly typeLabel: string;
   readonly statusAndDate: string;
   readonly languageFontClass: string;
-  readonly onOpenChat: () => void;
+  /** One shared callback for every row, given the row's id (RAPP-873). */
+  readonly onOpenChat: (id: string) => void;
   /** Set while the staff's change of status is new to her (RAPP-873): the word on the top edge. */
   readonly unseenLabel: string | null;
 }
@@ -82,6 +83,7 @@ function FeedbackHistoryCard({
   onOpenChat,
   unseenLabel,
 }: FeedbackHistoryCardProps) {
+  const handleOpen = useCallback(() => onOpenChat(id), [id, onOpenChat]);
   const badge = useMemo<EdgeMarkBadge | null>(
     () => (unseenLabel === null ? null : { label: unseenLabel, tone: 'brand' }),
     [unseenLabel],
@@ -92,7 +94,7 @@ function FeedbackHistoryCard({
       accessibilityLabel={[unseenLabel, typeLabel, content, statusAndDate]
         .filter((part): part is string => part !== null)
         .join('. ')}
-      onOpen={onOpenChat}
+      onOpen={handleOpen}
       className="rounded-lg border border-neutral-200 bg-white p-lg"
     >
       <Text className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}>
@@ -129,9 +131,17 @@ export default function FeedbackScreen() {
   const networkState = useNetworkState();
   const isOnline = isNetworkStateOnline(networkState);
   const feedbackQuery = usePlayerFeedback();
-  // Her suggestions whose status the staff changed keep "Nou" until she taps
-  // each one; opening this screen clears nothing (RAPP-873).
+  // A status change the staff made is addressed to her, so the suggestion keeps
+  // "Nou" and its number until she taps its row; the tap is the opening (RAPP-873).
   const changedSubmissionIds = useTabNews().data?.feedback.changedSubmissionIds ?? NO_CHANGED_IDS;
+  const markSuggestionSeen = useMarkSuggestionSeen();
+  const openSuggestion = useCallback(
+    (submissionId: string) => {
+      markSuggestionSeen(submissionId);
+      openChat();
+    },
+    [markSuggestionSeen, openChat],
+  );
   const changedSubmissions = useMemo(() => new Set(changedSubmissionIds), [changedSubmissionIds]);
   const unseenWord = t('home:unseen');
   const { error: createError, mutateAsync: createFeedbackAsync } = useCreateFeedback();
@@ -226,11 +236,11 @@ export default function FeedbackScreen() {
           new Date(item.createdAt),
         )}`}
         languageFontClass={languageFontClass}
-        onOpenChat={openChat}
+        onOpenChat={openSuggestion}
         unseenLabel={changedSubmissions.has(item.id) ? unseenWord : null}
       />
     ),
-    [changedSubmissions, dateFormatter, languageFontClass, openChat, t, unseenWord],
+    [changedSubmissions, dateFormatter, languageFontClass, openSuggestion, t, unseenWord],
   );
   const submitAnother = useCallback(() => {
     setIsComplete(false);

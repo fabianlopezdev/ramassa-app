@@ -50,8 +50,8 @@ export default function MentoringScreen() {
   const { t, i18n } = useTranslation(['mentoring', 'common', 'home']);
   const languageFontClass = useLanguageFontClass();
   const requestsQuery = usePlayerMentoringRequests();
-  // Her requests the staff changed keep "Nou" until she opens each one; opening
-  // this screen clears nothing (RAPP-873).
+  // A change the staff made to her request is addressed to her, so the request
+  // keeps "Nou" and its number until she opens its own screen (RAPP-873).
   const changedRequestIds = useTabNews().data?.mentoring.changedRequestIds ?? NO_CHANGED_IDS;
   const changedRequests = useMemo(() => new Set(changedRequestIds), [changedRequestIds]);
   const unseenWord = t('home:unseen');
