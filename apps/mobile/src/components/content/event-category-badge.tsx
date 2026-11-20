@@ -2,6 +2,7 @@
  * An event category as the team sees it (RAPP-342): its colour, its icon and
  * its Catalan name, as the web admin's badge shows them.
  */
+import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { eventCategoryColor } from '@/components/events/event-card';
 import { Icon } from '@/components/icons/icon';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -16,12 +17,13 @@ export function EventCategoryGlyph({
   readonly category: Pick<EventCategoryRow, 'icon' | 'color'>;
   readonly size?: number;
 }) {
+  const brandColor = useBrandColor();
   return (
     <Icon
       name={EVENT_ICON_NAMES[category.icon]}
       weight="boldDuotone"
       size={size}
-      color={eventCategoryColor(category.color)}
+      color={eventCategoryColor(category.color, brandColor)}
     />
   );
 }

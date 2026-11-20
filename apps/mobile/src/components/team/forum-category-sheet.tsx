@@ -1,15 +1,17 @@
 /**
  * Adding or changing a forum category on the phone (RAPP-386), in a sheet, as
  * the web admin's category form: the name in five languages, the identifier,
- * the icon and the colour. The name is written in Catalan and its four
- * translations are generated and approved, as for event categories, where
- * the web form asks for the five names by hand. A new category's identifier
- * follows the Catalan name until it is changed by hand.
+ * the icon and the colour, chosen from the shared section colours
+ * (RAPP-893). The name is written in Catalan and its four translations
+ * are generated and approved, as for event categories, where the web form
+ * asks for the five names by hand. A new category's identifier follows the
+ * Catalan name until it is changed by hand.
  */
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { MultilingualField } from '@/components/content/multilingual-field';
+import { SectionColorPicker } from '@/components/content/section-color-picker';
 import { FailureNotice } from '@/components/error-code-line';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { screenContentClassName } from '@/components/layout/screen-spacing';
@@ -26,12 +28,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { localizedTextFromReview } from '@ramassa/shared/announcements';
 import { getErrorMessageKey, type AppErrorCode } from '@ramassa/shared/errors';
 import type { ForumCategoryRow } from '@ramassa/shared/forum';
+import { SECTION_COLOR_CHOICES } from '@ramassa/shared/section-colors';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 
 const NAME_MAX = 80;
 const FIELD_MAX = 64;
 const NEW_ICON = 'bubble';
-const NEW_COLOR = 'neutral';
+// The stored name of a category with no colour (RAPP-893), where a new one starts.
+const NO_COLOR = 'neutral';
 
 type Notice = 'translations' | 'slug' | 'saveFailed' | AppErrorCode | null;
 
@@ -53,7 +57,7 @@ function CategoryForm({
   const [slug, setSlug] = useState(category?.slug ?? '');
   const [isSlugEdited, setIsSlugEdited] = useState(category !== null);
   const [icon, setIcon] = useState(category?.icon ?? NEW_ICON);
-  const [color, setColor] = useState(category?.color ?? NEW_COLOR);
+  const [color, setColor] = useState(category?.color ?? NO_COLOR);
   const [isGenerating, setIsGenerating] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
   const nameReview = useTranslationReview(
@@ -95,7 +99,7 @@ function CategoryForm({
         },
         slug: slug.trim(),
         icon: icon.trim(),
-        color: color.trim(),
+        color,
         sortOrder: category?.sort_order ?? nextSortOrder,
       },
       {
@@ -121,8 +125,7 @@ function CategoryForm({
           : notice === 'saveFailed'
             ? t('categorySaveFailed')
             : tErrors(getErrorMessageKey(notice));
-  const canSave =
-    name.trim().length > 0 && icon.trim().length > 0 && color.trim().length > 0 && !save.isPending;
+  const canSave = name.trim().length > 0 && icon.trim().length > 0 && !save.isPending;
 
   return (
     <ScrollView
@@ -186,17 +189,16 @@ function CategoryForm({
         autoCorrect={false}
         maxLength={FIELD_MAX}
       />
-      <AuthTextField
-        testID="forum-category-color"
+      <SectionColorPicker
         label={t('categoryColor')}
+        choices={SECTION_COLOR_CHOICES}
         value={color}
-        onChangeText={(value) => {
+        onChange={(value) => {
           touch();
           setColor(value);
         }}
-        autoCapitalize="none"
-        autoCorrect={false}
-        maxLength={FIELD_MAX}
+        testIDPrefix="forum-category-color"
+        noColorValue={NO_COLOR}
       />
       {noticeText === null || notice === null ? null : (
         <FailureNotice

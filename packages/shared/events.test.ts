@@ -8,6 +8,7 @@ import {
   EVENT_CATEGORY_COLORS,
   EVENT_CATEGORY_ICONS,
   eventCategoryInputSchema,
+  eventCategoryPaletteColor,
   eventInputSchema,
   filterPlayerEventOccurrences,
   formatEventCapacity,
@@ -21,6 +22,7 @@ import {
   type EventQueryBuilder,
   type PlayerEventOccurrence,
 } from './events';
+import { SECTION_COLOR_CHOICES } from './section-colors';
 import { approveTranslation, createTranslationReview } from './translation/index';
 
 const completeTitle = {
@@ -178,6 +180,28 @@ describe('event category management', () => {
     expect(eventCategoryInputSchema.safeParse({ ...category, color: '#ff0000' }).success).toBe(
       false,
     );
+  });
+
+  test('offers the shared section palette and saves no older colour name (RAPP-893)', () => {
+    expect(EVENT_CATEGORY_COLORS).toEqual(SECTION_COLOR_CHOICES);
+    const category = { name: completeTitle, icon: EVENT_CATEGORY_ICONS[0] };
+    for (const color of SECTION_COLOR_CHOICES) {
+      expect(eventCategoryInputSchema.safeParse({ ...category, color }).success).toBe(true);
+    }
+    for (const color of ['secondary', 'accent', 'chart-1', 'chart-2', 'chart-3', 'error']) {
+      expect(eventCategoryInputSchema.safeParse({ ...category, color }).success).toBe(false);
+    }
+  });
+
+  test('reads an older colour name as the palette colour it moves to (RAPP-893)', () => {
+    expect(eventCategoryPaletteColor('primary')).toBe('primary');
+    expect(eventCategoryPaletteColor('sky')).toBe('sky');
+    expect(eventCategoryPaletteColor('secondary')).toBe('amber');
+    expect(eventCategoryPaletteColor('accent')).toBe('sky');
+    expect(eventCategoryPaletteColor('chart-1')).toBe('green');
+    expect(eventCategoryPaletteColor('chart-2')).toBe('amber');
+    expect(eventCategoryPaletteColor('chart-3')).toBe('pink');
+    expect(eventCategoryPaletteColor('#ff0000')).toBe('primary');
   });
 
   test('moves a dragged category before its target without losing any IDs', () => {

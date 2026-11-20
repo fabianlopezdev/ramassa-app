@@ -24,6 +24,16 @@ test('the queue exposes every required staff moderation action', async () => {
   expect(source).toContain('ForumCategoryManager');
 });
 
+test('a forum category picks its colour from the shared section palette (RAPP-893)', async () => {
+  const source = await readAdminSource('components/forum/forum-moderation.tsx');
+  expect(source).toContain('<CategoryColorSelect');
+  expect(source).toContain('choices={SECTION_COLOR_CHOICES}');
+  expect(source).toContain("const FORUM_CATEGORY_NO_COLOR = 'neutral'");
+  expect(source).toContain('noneValue={FORUM_CATEGORY_NO_COLOR}');
+  expect(source).toContain('color: FORUM_CATEGORY_NO_COLOR,');
+  expect(source).not.toContain("label={t('categoryColor')}");
+});
+
 test('participant detail exposes the forum posting toggle', async () => {
   const source = await readAdminSource('components/participants/participant-detail.tsx');
   expect(source).toContain('setForumPostingDisabled');

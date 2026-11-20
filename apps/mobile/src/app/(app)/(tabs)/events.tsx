@@ -3,6 +3,7 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import {
   EventCard,
   eventCategoryColor,
@@ -69,6 +70,7 @@ function EventsScreen() {
   const { t, i18n } = useTranslation(['events', 'common', 'mentoring', 'nav']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
+  const brandColor = useBrandColor();
   const { push } = useRouter();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
@@ -154,7 +156,8 @@ function EventsScreen() {
         buildEventMarkedDates(
           events,
           effectiveSelectedDate,
-          (categoryId) => eventCategoryColor(categoryColorsById.get(categoryId) ?? 'primary'),
+          (categoryId) =>
+            eventCategoryColor(categoryColorsById.get(categoryId) ?? 'primary', brandColor),
           (date) =>
             t('playerSelectedDate', {
               date: dateFormatter.format(new Date(`${date}${UTC_MIDDAY_SUFFIX}`)),
@@ -166,7 +169,15 @@ function EventsScreen() {
             new Date(`${date}${UTC_MIDDAY_SUFFIX}`),
           )}`,
       ) as MarkedDates,
-    [categoryColorsById, dateFormatter, effectiveSelectedDate, events, mentoringEntries, t],
+    [
+      brandColor,
+      categoryColorsById,
+      dateFormatter,
+      effectiveSelectedDate,
+      events,
+      mentoringEntries,
+      t,
+    ],
   );
   const openOccurrence = useCallback(
     (eventId: string, occurrenceId: string) => {

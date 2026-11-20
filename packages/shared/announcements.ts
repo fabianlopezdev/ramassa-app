@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
 import { draftTranslationsSchema, languageCodeSchema, type LanguageCode } from './schemas/language';
+import { SECTION_BRAND_COLOR, SECTION_URGENT_COLOR } from './section-colors';
 import {
   isTranslationReviewPublishable,
   MAX_TRANSLATION_TEXT_LENGTH,
@@ -15,6 +16,22 @@ export const ANNOUNCEMENT_CATEGORIES = ['info', 'training', 'social', 'urgent'] 
  * because it is what the team needs her to see now.
  */
 export const PLAYER_ANNOUNCEMENT_CATEGORY_ORDER = ['urgent', 'info', 'training', 'social'] as const;
+/**
+ * The section colour of each kind (RAPP-893), read by the player app and the
+ * team's screens alike: urgent keeps its red, training the club colour, and
+ * info and social take a hue of the shared palette.
+ */
+const ANNOUNCEMENT_CATEGORY_COLORS = {
+  urgent: SECTION_URGENT_COLOR,
+  training: SECTION_BRAND_COLOR,
+  info: 'teal',
+  social: 'amber',
+} as const satisfies Record<AnnouncementCategory, string>;
+
+export function announcementCategoryColor(category: AnnouncementCategory): string {
+  return ANNOUNCEMENT_CATEGORY_COLORS[category];
+}
+
 export const ANNOUNCEMENT_STATUSES = ['draft', 'published'] as const;
 export const ANNOUNCEMENT_LIFECYCLES = ['draft', 'published', 'scheduled', 'expired'] as const;
 export const ANNOUNCEMENT_STATUS_FILTERS = ['all', ...ANNOUNCEMENT_LIFECYCLES] as const;

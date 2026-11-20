@@ -7,6 +7,7 @@
  * The wrapper keeps room for the edge, the edge sits absolute behind the face,
  * and the face holds the content. Face and edge share one shape class.
  */
+import { useBrandColor } from '@/components/branding/organization-branding-context';
 import { PressableDepth } from '@/components/motion/pressable-depth';
 import { continuousCorners } from '@/lib/continuous-corners';
 import type { HapticFeedback } from '@/lib/haptics/haptic-policy';
@@ -19,6 +20,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { sectionHue, sectionWash } from '@ramassa/shared/section-colors';
 import { tokens } from '@ramassa/shared/tokens';
 
 const { shadowInlineOffset, shadowBlockOffset } = tokens.languageChoice;
@@ -27,25 +29,32 @@ const { shadowInlineOffset, shadowBlockOffset } = tokens.languageChoice;
 export const RAISED_SHAPE_CLASS_NAME = 'rounded-lg';
 
 /**
- * A colour a raised surface can take on its face (RAPP-845), such as the kind
- * of an announcement on Inici: a pale wash of it. The border and edge stay in
- * the brand, and a chosen face still fills with the secondary colour.
+ * A colour a raised surface can take on its face (RAPP-845, RAPP-893), such
+ * as the kind of an announcement on Inici: the name of a section colour, shown
+ * as its pale wash. The border and edge stay in the brand, and a chosen face
+ * still fills with the secondary colour.
  */
-const raisedToneWashClasses = {
-  primary: 'bg-primary/10',
-  secondary: 'bg-secondary/25',
-  error: 'bg-error/10',
-  info: 'bg-info/10',
-} as const;
-
-export type RaisedTone = keyof typeof raisedToneWashClasses;
+export type RaisedTone = string;
 
 /**
  * The tone a stored colour name stands for, such as a forum category's
- * `color` (RAPP-852); a name with no tone, like `neutral`, leaves the face white.
+ * `color` (RAPP-852); a name with no colour, like `neutral`, leaves the face white.
  */
 export function raisedToneFromColorName(colorName: string): RaisedTone | undefined {
-  return Object.hasOwn(raisedToneWashClasses, colorName) ? (colorName as RaisedTone) : undefined;
+  return sectionHue(colorName) === undefined ? undefined : colorName;
+}
+
+/**
+ * The solid wash of a section colour in this organization's brand (RAPP-893):
+ * the shade a card's face and the screen it opens share. `undefined` for no
+ * colour, so the surface keeps its own background.
+ */
+export function useSectionWash(colorName: string | undefined): string | undefined {
+  const brandColor = useBrandColor();
+  return useMemo(
+    () => (colorName === undefined ? undefined : sectionWash(colorName, brandColor)),
+    [brandColor, colorName],
+  );
 }
 
 /** The outlined face: white, with the brand border, in the given shape. */
@@ -55,13 +64,11 @@ export function outlinedSurfaceClassName(shapeClassName = RAISED_SHAPE_CLASS_NAM
 
 /** The pale wash of a tone over a white face, under its content. */
 export function RaisedToneWash({ tone }: { readonly tone: RaisedTone | undefined }) {
-  if (tone === undefined) return null;
+  const wash = useSectionWash(tone);
+  const style = useMemo(() => ({ backgroundColor: wash }), [wash]);
+  if (wash === undefined) return null;
   return (
-    <View
-      pointerEvents="none"
-      accessible={false}
-      className={`absolute inset-0 ${raisedToneWashClasses[tone]}`}
-    />
+    <View pointerEvents="none" accessible={false} className="absolute inset-0" style={style} />
   );
 }
 

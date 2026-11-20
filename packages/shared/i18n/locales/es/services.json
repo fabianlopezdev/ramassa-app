@@ -140,6 +140,8 @@
   "categoryColorTeal": "Verde azulado",
   "categoryColorAmber": "Ámbar",
   "categoryColorIndigo": "Añil",
+  "categoryColorPrimary": "Color del club",
+  "categoryColorNone": "Sin color",
   "categorySchema": "Esquema de metadatos JSON",
   "categorySave": "Guardar la categoría",
   "categoryCancel": "Cancelar",

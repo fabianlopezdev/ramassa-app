@@ -11,6 +11,7 @@
  * because the database refuses any change to it.
  */
 import { AnnouncementArticle } from '@/components/announcements/announcement-article';
+import { useAnnouncementWash } from '@/components/announcements/category-filters';
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { ANNOUNCEMENT_CATEGORY_KEYS } from '@/components/content/announcement-labels';
 import { DateTimeField } from '@/components/content/date-time-field';
@@ -136,6 +137,8 @@ function AnnouncementForm({
   const hasImage = photo !== null || form.imageUrl !== null;
   // The player preview of this draft (RAPP-373): its unsaved text in every language.
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  // The preview sits on the wash of the chosen kind, as the player's page does (RAPP-893).
+  const previewWash = useAnnouncementWash(form.category);
   const previewTitle = draftLocalizedContent(form.title, titleReview.review);
   const previewBody = draftLocalizedContent(form.body, bodyReview.review);
   const previewImage =
@@ -446,6 +449,7 @@ function AnnouncementForm({
       <DraftPreviewSheet
         visible={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
+        backgroundColor={previewWash}
         isMissing={(language) =>
           (previewTitle[language] ?? '').trim().length === 0 ||
           (previewBody[language] ?? '').trim().length === 0

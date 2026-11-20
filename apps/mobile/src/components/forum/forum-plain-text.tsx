@@ -22,7 +22,7 @@ const ForumLink = memo(function ForumLink({
       accessibilityRole="link"
       accessibilityLabel={accessibilityLabel}
       onPress={open}
-      className="text-primary underline"
+      className="text-primary-dark underline"
     >
       {url}
     </Text>

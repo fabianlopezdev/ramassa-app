@@ -23,6 +23,7 @@ import {
   useOwnForumPostingStatus,
 } from '@/lib/player-forum';
 import { mobileClientEnv } from '@/lib/supabase';
+import { useForumPostWash } from '@/lib/use-forum-post-wash';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 import { Image } from 'expo-image';
@@ -128,6 +129,8 @@ export default function ForumPostDetailScreen() {
   const revealIdRef = useRef<string | null>(null);
   const insets = useSafeAreaInsets();
   const post = postQuery.data;
+  // The post opens onto the wash of its category's colour (RAPP-893).
+  const { wash, screenStyle } = useForumPostWash(post?.category_id, styles.screen);
   const isOwnPost =
     post !== undefined && post.author_id === user?.id && post.visibility === 'visible';
   const replyMutationCode = createReply.error === null ? null : toAppError(createReply.error).code;
@@ -392,6 +395,7 @@ export default function ForumPostDetailScreen() {
   return (
     <ActionScreen
       className="bg-neutral-50"
+      backgroundColor={wash}
       action={
         isComposerOpen ? (
           <ForumReplyComposer
@@ -413,7 +417,7 @@ export default function ForumPostDetailScreen() {
         ) : null
       }
     >
-      <NativeScreenHeader title={t('forum:detailTitle')} />
+      <NativeScreenHeader title={t('forum:detailTitle')} backgroundColor={wash} />
       <FlashList
         ref={listRef}
         testID="forum-detail-screen"
@@ -422,7 +426,7 @@ export default function ForumPostDetailScreen() {
         keyExtractor={threadRowKeyExtractor}
         getItemType={threadRowType}
         extraData={highlightedId}
-        style={styles.screen}
+        style={screenStyle}
         contentContainerStyle={contentStyle}
         contentInsetAdjustmentBehavior="automatic"
         keyboardDismissMode="on-drag"

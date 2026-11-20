@@ -10,7 +10,7 @@
  */
 import { PageWidth } from '@/components/layout/content-width';
 import { HeaderHeightContext } from 'expo-router/react-navigation';
-import { use, type ReactNode } from 'react';
+import { use, useMemo, type ReactNode } from 'react';
 import { KeyboardAvoidingView, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -38,6 +38,7 @@ export function ActionScreen({
   action,
   actionTestID,
   className,
+  backgroundColor,
   children,
 }: {
   /** The call to action, or nothing when the screen has none right now. */
@@ -45,6 +46,8 @@ export function ActionScreen({
   readonly actionTestID?: string;
   /** The screen's surface, such as `bg-white`. */
   readonly className?: string;
+  /** A screen on its own colour, such as a forum post on its category's wash (RAPP-893). */
+  readonly backgroundColor?: string;
   readonly children: ReactNode;
 }) {
   // The keyboard is measured from the top of the screen and this view starts
@@ -54,9 +57,13 @@ export function ActionScreen({
   const { bottom } = useSafeAreaInsets();
   const keyboardOffset = headerHeight - (process.env.EXPO_OS === 'ios' ? bottom : 0);
   const hasAction = action !== null && action !== undefined && action !== false;
+  const style = useMemo(
+    () => (backgroundColor === undefined ? fillStyle : { ...fillStyle, backgroundColor }),
+    [backgroundColor],
+  );
   return (
     <KeyboardAvoidingView
-      style={fillStyle}
+      style={style}
       className={className}
       behavior={KEYBOARD_BEHAVIOR}
       keyboardVerticalOffset={keyboardOffset}

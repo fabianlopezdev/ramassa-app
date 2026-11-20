@@ -354,7 +354,7 @@ export function buildForumCategory(overrides: Partial<ForumCategoryRow> = {}): F
     },
     slug: 'jobs',
     icon: 'briefcase',
-    color: 'secondary',
+    color: 'pink',
     sort_order: 20,
     created_at: FIXTURE_TIMESTAMP,
     ...overrides,

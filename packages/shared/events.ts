@@ -10,6 +10,12 @@ import {
   storedTranslationsSchema,
 } from './schemas/language';
 import {
+  isSectionColorChoice,
+  SECTION_BRAND_COLOR,
+  SECTION_COLOR_CHOICES,
+  type SectionColorChoice,
+} from './section-colors';
+import {
   isTranslationReviewPublishable,
   MAX_TRANSLATION_TEXT_LENGTH,
   type TranslationReview,
@@ -30,14 +36,25 @@ export const EVENT_CATEGORY_ICONS = [
   'footprints',
   'users',
 ] as const;
-export const EVENT_CATEGORY_COLORS = [
-  'primary',
-  'secondary',
-  'accent',
-  'chart-1',
-  'chart-2',
-  'chart-3',
-] as const;
+/**
+ * What staff choose for an activity category (RAPP-893): the shared section
+ * palette, the club colour first and then the eight topic hues, so an
+ * activity's topic keeps the colour it has everywhere else in the app.
+ */
+export const EVENT_CATEGORY_COLORS = SECTION_COLOR_CHOICES;
+/**
+ * The names an activity category held before the shared palette (RAPP-893),
+ * with the palette colour each one moves to. A database migrated later can
+ * still return them, so reads accept them and show the colour they move to.
+ * `primary` kept its name and is a palette colour already.
+ */
+export const LEGACY_EVENT_CATEGORY_COLORS = {
+  secondary: 'amber',
+  accent: 'sky',
+  'chart-1': 'green',
+  'chart-2': 'amber',
+  'chart-3': 'pink',
+} as const satisfies Readonly<Record<string, SectionColorChoice>>;
 export const MAX_EVENT_TITLE_LENGTH = 200;
 export const MAX_EVENT_LOCATION_LENGTH = 500;
 export const MAX_EVENT_RECURRENCE_COUNT = 52;
@@ -47,7 +64,23 @@ export type EventSignupMode = (typeof EVENT_SIGNUP_MODES)[number];
 export type EventSignupState = (typeof EVENT_SIGNUP_STATES)[number];
 export type EventStatus = (typeof EVENT_STATUSES)[number];
 export type EventCategoryIcon = (typeof EVENT_CATEGORY_ICONS)[number];
-export type EventCategoryColor = (typeof EVENT_CATEGORY_COLORS)[number];
+/** A colour staff can save on an activity category. */
+export type EventCategoryColor = SectionColorChoice;
+/** A colour an activity category can come back with: a palette colour or an older name. */
+export type StoredEventCategoryColor =
+  EventCategoryColor | keyof typeof LEGACY_EVENT_CATEGORY_COLORS;
+
+/**
+ * The palette colour of a stored activity category colour (RAPP-893): itself
+ * when it is one already, the colour an older name moves to, and the club
+ * colour for anything else.
+ */
+export function eventCategoryPaletteColor(stored: string): EventCategoryColor {
+  if (isSectionColorChoice(stored)) return stored;
+  return Object.hasOwn(LEGACY_EVENT_CATEGORY_COLORS, stored)
+    ? LEGACY_EVENT_CATEGORY_COLORS[stored as keyof typeof LEGACY_EVENT_CATEGORY_COLORS]
+    : SECTION_BRAND_COLOR;
+}
 
 type Client = SupabaseClient<Database>;
 
@@ -297,7 +330,7 @@ export interface EventCategoryRow {
   readonly id: string;
   readonly name: EventLocalizedText;
   readonly icon: EventCategoryIcon;
-  readonly color: EventCategoryColor;
+  readonly color: StoredEventCategoryColor;
   readonly sort_order: number;
   readonly created_at: string;
   readonly updated_at: string;

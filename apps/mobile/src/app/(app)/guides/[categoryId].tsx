@@ -12,6 +12,7 @@ import {
 import { KnowledgeArticleCard } from '@/components/knowledge/knowledge-article-card';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { useSectionWash } from '@/components/layout/raised-surface';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { filterPlayerGuides, selectPlayerGuides } from '@/lib/player-guides';
 import { usePlayerKnowledgeArticles, usePlayerKnowledgeCategories } from '@/lib/player-knowledge';
@@ -23,7 +24,7 @@ import { useCallback, useMemo, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
-import { categoryWash } from '@ramassa/shared/category-colors';
+import { isCategoryColor } from '@ramassa/shared/category-colors';
 import { toAppError } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import type { KnowledgeArticleListRow } from '@ramassa/shared/knowledge';
@@ -53,7 +54,12 @@ export default function GuideCategoryScreen() {
   const category = categoriesQuery.data?.find((candidate) => candidate.id === categoryId);
   const title =
     category === undefined ? '' : (resolveLocalizedText(category.name, language)?.text ?? '');
-  const wash = category === undefined ? undefined : categoryWash(category.color);
+  // The screen reads its shade like every coloured screen (RAPP-893). Only
+  // the eight hues wash it, the rule its tile follows, so a category left
+  // on an older name stays on the page colour like its tile.
+  const wash = useSectionWash(
+    category === undefined || !isCategoryColor(category.color) ? undefined : category.color,
+  );
   const screenStyle = useMemo(
     () => (wash === undefined ? styles.screen : { ...styles.screen, backgroundColor: wash }),
     [wash],

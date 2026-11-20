@@ -35,6 +35,11 @@ export interface ForumCategoryRow {
   readonly name: LocalizedContent;
   readonly slug: string;
   readonly icon: string;
+  /**
+   * A name from the shared section palette (RAPP-893), read with
+   * `sectionHue` and `sectionWash`; `neutral` stands for no colour. Rows saved
+   * before the palette may still hold an older word, so this stays free text.
+   */
   readonly color: string;
   readonly sort_order: number;
 }

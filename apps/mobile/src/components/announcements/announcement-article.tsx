@@ -2,7 +2,8 @@
  * One announcement as a player sees it: category, pinned, title, date, image
  * and body, in the reader's language. The player screen draws a stored
  * announcement with it, and the team's editor draws its unsaved draft with it
- * (RAPP-373), so the preview is the player's own layout.
+ * (RAPP-373), so the preview is the player's own layout. Both draw it on
+ * the wash of its kind (RAPP-893), so its grey text starts at neutral-600.
  */
 import { announcementCategoryLabel } from '@/components/announcements/category-filters';
 import { Badge } from '@/components/layout/badge';
@@ -73,7 +74,7 @@ export function AnnouncementArticle({
       >
         {title?.text ?? ''}
       </Text>
-      <Text className={`text-start text-sm text-neutral-500 ${languageFontClass}`}>
+      <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
         {dateFormatter.format(new Date(announcement.shownAt))}
       </Text>
       {imageSource === null ? null : (

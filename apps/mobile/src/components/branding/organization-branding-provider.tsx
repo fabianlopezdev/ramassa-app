@@ -1,3 +1,8 @@
+import {
+  OrganizationBrandingContext,
+  useBrandColor,
+  useOrganizationBranding,
+} from '@/components/branding/organization-branding-context';
 import { i18n } from '@/lib/i18n';
 import { supabase } from '@/lib/supabase';
 import { vars } from 'nativewind';
@@ -23,20 +28,10 @@ import { tokens } from '@ramassa/shared/tokens';
 
 const fullScreenStyle = { flex: 1 } as const;
 const organizationSlug = process.env.EXPO_PUBLIC_ORGANIZATION_SLUG?.trim() || 'ramassa';
-const OrganizationBrandingContext = createContext<OrganizationRow | null>(null);
 const RefreshBrandingContext = createContext<() => void>(() => undefined);
 
-export function useOrganizationBranding(): OrganizationRow | null {
-  return use(OrganizationBrandingContext);
-}
-
-/**
- * The organization's brand colour as a value, for native parts that cannot
- * read the theme's classes: an icon's tint, the tab bar's badges (RAPP-832).
- */
-export function useBrandColor(): string {
-  return use(OrganizationBrandingContext)?.primary_color ?? tokens.colors.primary.DEFAULT;
-}
+// Kept here for the screens that already import them from the provider.
+export { useBrandColor, useOrganizationBranding };
 
 /** Reads the organization again, after its settings change on the phone (RAPP-403). */
 export function useRefreshOrganizationBranding(): () => void {
