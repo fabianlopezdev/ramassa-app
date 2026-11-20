@@ -70,7 +70,18 @@ export const tokens = {
   radius: { sm: 8, md: 12, lg: 16, xl: 24, full: 9999 },
 
   // Shared readable baseline for onboarding and its form primitives (RAPP-562).
-  fontSize: { xs: 12, sm: 14, md: 16, lg: 18, form: 18, xl: 20, '2xl': 24, '3xl': 30, '4xl': 36 },
+  fontSize: {
+    xs: 12,
+    sm: 14,
+    md: 16,
+    lg: 18,
+    form: 18,
+    xl: 20,
+    '2xl': 24,
+    '3xl': 30,
+    '4xl': 36,
+    '5xl': 48,
+  },
 
   // Long body copy needs enough room for the bundled Arabic and Farsi fonts.
   // 27dp at the 16dp body size is approximately 1.7em on every platform.

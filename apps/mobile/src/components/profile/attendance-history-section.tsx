@@ -186,9 +186,9 @@ const TotalHalf = memo(function TotalHalf({
       testID={testID}
       accessible
       accessibilityLabel={`${label}: ${count}`}
-      className="flex-1 items-center"
+      className="flex-1 items-center gap-sm"
     >
-      <Text className={`text-center text-4xl font-extrabold tabular-nums text-white ${fontClass}`}>
+      <Text className={`text-center text-5xl font-extrabold tabular-nums text-white ${fontClass}`}>
         {count}
       </Text>
       <Text className={`text-center text-form text-white ${fontClass}`}>{label}</Text>
