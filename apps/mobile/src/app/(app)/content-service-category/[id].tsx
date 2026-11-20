@@ -10,6 +10,7 @@
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { MultilingualField } from '@/components/content/multilingual-field';
+import { SectionColorPicker } from '@/components/content/section-color-picker';
 import { ServiceFieldForm } from '@/components/content/service-field-form';
 import {
   SERVICE_FIELD_TYPE_KEYS,
@@ -47,7 +48,6 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { categoryHue, isCategoryColor, type CategoryColor } from '@ramassa/shared/category-colors';
 import { getErrorMessageKey, toAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import { type AdminServiceCategory } from '@ramassa/shared/services';
 import { tokens } from '@ramassa/shared/tokens';
@@ -56,18 +56,6 @@ import {
   type TranslationReview,
 } from '@ramassa/shared/translation';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
-
-// The label of each category hue (RAPP-856), in the services namespace.
-const COLOR_KEYS = {
-  sky: 'categoryColorSky',
-  green: 'categoryColorGreen',
-  purple: 'categoryColorPurple',
-  orange: 'categoryColorOrange',
-  pink: 'categoryColorPink',
-  teal: 'categoryColorTeal',
-  amber: 'categoryColorAmber',
-  indigo: 'categoryColorIndigo',
-} as const satisfies Record<CategoryColor, string>;
 
 type FormError =
   AppErrorCode | 'invalid' | 'name' | 'fieldOpen' | { readonly incompatible: number };
@@ -233,34 +221,13 @@ function CategoryEditor({ category }: { readonly category: AdminServiceCategory 
           })}
         </View>
       </View>
-      <View className="gap-xs">
-        <SectionLabel>{t('categoryColor')}</SectionLabel>
-        <View className="flex-row flex-wrap gap-sm">
-          {withStored(CATEGORY_COLORS, form.color).map((color) => {
-            const key = isCategoryColor(color) ? COLOR_KEYS[color] : undefined;
-            const hue = categoryHue(color);
-            return (
-              <View key={color} className="flex-row items-center gap-xs">
-                {hue === undefined ? null : (
-                  <View
-                    accessible={false}
-                    className="h-md w-md rounded-full"
-                    style={{ backgroundColor: hue }}
-                  />
-                )}
-                <ChoiceOption
-                  testID={`service-category-color-${color}`}
-                  value={color}
-                  label={key === undefined ? color : t(key)}
-                  selected={color === form.color}
-                  onSelect={(value) => set({ color: value })}
-                  languageFontClass={fontClass}
-                />
-              </View>
-            );
-          })}
-        </View>
-      </View>
+      <SectionColorPicker
+        label={t('categoryColor')}
+        choices={CATEGORY_COLORS}
+        value={form.color}
+        onChange={(color) => set({ color })}
+        testIDPrefix="service-category-color"
+      />
 
       <View className="gap-sm" testID="service-category-fields">
         <SectionLabel>{t('fieldsTitle')}</SectionLabel>
