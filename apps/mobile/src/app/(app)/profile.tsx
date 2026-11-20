@@ -25,7 +25,7 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 
 // The dev-menu entry, required inside a __DEV__ branch so neither the component
 // nor its label reaches a production bundle (RAPP-19).
@@ -101,19 +101,26 @@ export default function ProfileScreen() {
         tone="danger"
         onOpen={signOut}
       />
-      <Text
-        testID="generalitat-credit"
-        className={`text-start text-xs leading-body text-neutral-600 ${languageFontClass}`}
-      >
-        {t('common:fundingAcknowledgment')}
-      </Text>
-      {/* The icon set's licence asks for a credit she can reach (RAPP-834). */}
-      <Text
-        testID="icon-credit"
-        className={`text-start text-xs leading-body text-neutral-600 ${languageFontClass}`}
-      >
-        {ICON_LICENCE.credit}
-      </Text>
+      {/*
+        The credits, together and centred under the menu (RAPP-877): the
+        funding the grant terms ask to mention (RAPP-64), then the icon set's
+        licence credit (RAPP-834). Small type takes a tight line height, so a
+        wrapped line stays close to the one above.
+      */}
+      <View className="items-center gap-xs">
+        <Text
+          testID="generalitat-credit"
+          className={`text-center text-xs leading-5 text-neutral-600 ${languageFontClass}`}
+        >
+          {t('common:fundingAcknowledgment')}
+        </Text>
+        <Text
+          testID="icon-credit"
+          className={`text-center text-xs leading-5 text-neutral-600 ${languageFontClass}`}
+        >
+          {ICON_LICENCE.credit}
+        </Text>
+      </View>
       {DevMenuEntry === null ? null : <DevMenuEntry />}
     </ProfileScreenFrame>
   );
