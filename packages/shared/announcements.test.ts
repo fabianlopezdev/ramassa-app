@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
+  ANNOUNCEMENT_CATEGORIES,
+  announcementCategoryColor,
   announcementInputSchema,
   areAnnouncementTranslationsApproved,
   filterAndOrderPlayerAnnouncements,
@@ -7,6 +9,7 @@ import {
   isContentVisible,
   raiseUnopenedUrgentAnnouncements,
 } from './announcements';
+import { SECTION_URGENT_COLOR, sectionWash } from './section-colors';
 import {
   approveTranslation,
   createTranslationReview,
@@ -346,5 +349,22 @@ describe('announcement review state', () => {
         imageAltReview: approvedReview('Jugadores al camp'),
       }),
     ).toBe(true);
+  });
+});
+
+describe('announcement kind colours', () => {
+  test('each kind keeps one colour of the shared section palette', () => {
+    expect(announcementCategoryColor('urgent')).toBe(SECTION_URGENT_COLOR);
+    expect(announcementCategoryColor('training')).toBe('primary');
+    expect(announcementCategoryColor('info')).toBe('teal');
+    expect(announcementCategoryColor('social')).toBe('amber');
+  });
+
+  test('every kind has a wash, and no two kinds share one', () => {
+    const washes = ANNOUNCEMENT_CATEGORIES.map((category) =>
+      sectionWash(announcementCategoryColor(category)),
+    );
+    for (const wash of washes) expect(wash).toBeDefined();
+    expect(new Set(washes).size).toBe(ANNOUNCEMENT_CATEGORIES.length);
   });
 });
