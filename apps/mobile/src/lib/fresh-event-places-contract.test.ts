@@ -14,7 +14,7 @@ test('the activity screen reads its places through the fresh hook', () => {
 
 test('the fresh hook asks again on focus, on the app coming back and on a short timer', () => {
   const hook = read('lib/use-fresh-player-events.ts');
-  expect(hook).toContain('export const EVENT_PLACES_REFRESH_MS = 15_000;');
+  expect(hook).toContain('const EVENT_PLACES_REFRESH_MS = 15_000;');
   expect(hook).toContain('useFocusEffect(');
   expect(hook).toContain("AppState.addEventListener('change'");
   expect(hook).toMatch(/refetchInterval: isFocused \? EVENT_PLACES_REFRESH_MS : false/);

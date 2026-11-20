@@ -4,7 +4,7 @@ import { useCallback, useEffect } from 'react';
 import { AppState } from 'react-native';
 
 /** How often an open activity asks for its places again. */
-export const EVENT_PLACES_REFRESH_MS = 15_000;
+const EVENT_PLACES_REFRESH_MS = 15_000;
 
 /**
  * The player's activities for a screen where the places left decide what she
