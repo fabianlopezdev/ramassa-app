@@ -143,6 +143,9 @@ export function RaisedHalfCard({
         accessibilityRole="link"
         onPress={onOpen}
         className="grow"
+        // One step less room at the sides than a full-width card, so a name
+        // such as "Suggeriments" fits a half card at the smaller size (RAPP-882).
+        paddingClassName="px-md"
         contentClassName="grow items-start justify-between gap-sm py-md"
       >
         <RaisedCardSymbol name={icon} size={HALF_CARD_ICON_SIZE} />
