@@ -32,6 +32,7 @@ import { useActivitiesAttention } from '@/lib/use-activities-attention';
 import { useHomeSeen } from '@/lib/use-home-attention';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
+import { useListSeenWhen } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
@@ -86,7 +87,10 @@ export default function EventsScreen() {
   const mentoringQuery = usePlayerMentoringRequests();
   const refetchMentoring = mentoringQuery.refetch;
   // New activities carry the same "Nou" mark as on Inici, one card per activity (RAPP-873).
-  const { newOccurrenceIds } = useActivitiesAttention();
+  const { newOccurrenceIds, count: newActivitiesCount } = useActivitiesAttention();
+  // Seeing the list, as a list or as the calendar, clears the number. Each card
+  // keeps its "Nou" until she opens the activity (RAPP-873).
+  useListSeenWhen('activities', true, newActivitiesCount > 0);
   const refetchSeen = useHomeSeen().refetch;
   const now = new Date();
   const events = useMemo(

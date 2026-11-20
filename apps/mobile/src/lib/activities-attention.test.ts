@@ -8,6 +8,9 @@ const now = new Date('2026-11-16T10:00:00Z');
 const SINCE = '2026-11-01T00:00:00Z';
 const AFTER_SINCE = '2026-11-10T10:00:00Z';
 const BEFORE_SINCE = '2026-10-20T10:00:00Z';
+const LIST_SEEN_BEFORE = '2026-11-09T10:00:00Z';
+const LIST_SEEN_AFTER = '2026-11-12T10:00:00Z';
+const LATER_PUBLISHED = '2026-11-14T10:00:00Z';
 
 interface OccurrenceOptions {
   readonly publishedAt?: string;
@@ -41,13 +44,29 @@ function seenRecord(eventIds: readonly string[] = []): HomeSeen {
   return { since: SINCE, announcementIds: [], eventIds };
 }
 
+/** When she last saw each list; `null` is never, `undefined` is not loaded yet. */
+interface ListsSeen {
+  readonly home?: string | null;
+  readonly activities?: string | null;
+}
+
+const NEVER_SEEN: ListsSeen = { home: null, activities: null };
+
 /** What Inici counts for the same data, so the two tabs can be compared. */
 function homeFor(
   events: readonly PlayerEventOccurrence[] | undefined,
   seen: HomeSeen | undefined,
+  lists: ListsSeen = NEVER_SEEN,
 ): HomeAttention {
   return buildHomeAttention(
-    { forms: undefined, surveys: undefined, events, announcements: undefined, seen },
+    {
+      forms: undefined,
+      surveys: undefined,
+      events,
+      announcements: undefined,
+      seen,
+      homeSeenAt: lists.home,
+    },
     now,
   );
 }
@@ -55,8 +74,17 @@ function homeFor(
 function activitiesFor(
   events: readonly PlayerEventOccurrence[] | undefined,
   seen: HomeSeen | undefined,
+  lists: ListsSeen = NEVER_SEEN,
 ) {
-  return buildActivitiesAttention({ events, seen, homeAttention: homeFor(events, seen) }, now);
+  return buildActivitiesAttention(
+    {
+      events,
+      seen,
+      activitiesSeenAt: lists.activities,
+      homeAttention: homeFor(events, seen, lists),
+    },
+    now,
+  );
 }
 
 /** A signed-up activity sits first on Inici, so Inici counts no new activity. */
@@ -64,7 +92,7 @@ const signedUpFirst = occurrence('mine', 'mine-1', '2026-11-17T10:00:00Z', {
   signupState: 'confirmed',
 });
 
-describe('buildActivitiesAttention', () => {
+describe('buildActivitiesAttention, which cards say Nou', () => {
   test('before her seen record loads, nothing is new', () => {
     const result = activitiesFor(
       [signedUpFirst, occurrence('new', 'new-1', '2026-11-18T10:00:00Z')],
@@ -98,14 +126,15 @@ describe('buildActivitiesAttention', () => {
       seenRecord(),
     );
     expect(result.count).toBe(0);
+    expect(result.newOccurrenceIds.size).toBe(0);
   });
 
-  test('an activity she has opened is not new', () => {
-    const result = activitiesFor(
-      [signedUpFirst, occurrence('opened', 'opened-1', '2026-11-18T10:00:00Z')],
-      seenRecord(['opened']),
-    );
+  test('opening an activity removes its mark and its number', () => {
+    const events = [signedUpFirst, occurrence('opened', 'opened-1', '2026-11-18T10:00:00Z')];
+    expect([...activitiesFor(events, seenRecord()).newOccurrenceIds]).toEqual(['opened-1']);
+    const result = activitiesFor(events, seenRecord(['opened']));
     expect(result.count).toBe(0);
+    expect(result.newOccurrenceIds.size).toBe(0);
   });
 
   test('an activity with a sign-up of hers in any state is not new', () => {
@@ -122,6 +151,7 @@ describe('buildActivitiesAttention', () => {
       seenRecord(),
     );
     expect(result.count).toBe(0);
+    expect(result.newOccurrenceIds.size).toBe(0);
   });
 
   test('an activity with many occurrences counts once, marked on its earliest upcoming one', () => {
@@ -149,9 +179,10 @@ describe('buildActivitiesAttention', () => {
       seenRecord(),
     );
     expect(result.count).toBe(0);
+    expect(result.newOccurrenceIds.size).toBe(0);
   });
 
-  test('the new activity Inici counts is neither counted nor marked here', () => {
+  test('the new activity Inici shows says Nou here too, while its number stays on Inici', () => {
     const events = [
       occurrence('first', 'first-1', '2026-11-17T10:00:00Z'),
       occurrence('first', 'first-2', '2026-11-24T10:00:00Z'),
@@ -161,57 +192,49 @@ describe('buildActivitiesAttention', () => {
     expect(home.isNextActivityUnseen).toBe(true);
     expect(home.nextActivity?.event.id).toBe('first');
     const result = activitiesFor(events, seenRecord());
+    expect([...result.newOccurrenceIds].sort()).toEqual(['first-1', 'second-1']);
     expect(result.count).toBe(1);
-    expect([...result.newOccurrenceIds]).toEqual(['second-1']);
+  });
+});
+
+describe('buildActivitiesAttention, the number on the tab', () => {
+  const events = [signedUpFirst, occurrence('new', 'new-1', '2026-11-18T10:00:00Z')];
+
+  test('before the news loads, nothing counts and the mark still shows', () => {
+    const result = activitiesFor(events, seenRecord(), { home: undefined, activities: undefined });
+    expect(result.count).toBe(0);
+    expect([...result.newOccurrenceIds]).toEqual(['new-1']);
   });
 
-  test('the two tabs together count each new activity exactly once', () => {
-    const events = [
-      occurrence('a', 'a-1', '2026-11-17T10:00:00Z'),
-      occurrence('b', 'b-1', '2026-11-18T10:00:00Z'),
-      occurrence('b', 'b-2', '2026-11-25T10:00:00Z'),
-      occurrence('c', 'c-1', '2026-11-19T10:00:00Z'),
-    ];
-    const seen = seenRecord();
-    const home = homeFor(events, seen);
-    const activities = activitiesFor(events, seen);
-    expect(home.count + activities.count).toBe(3);
+  test('a new activity counts while the list was last seen before it was published', () => {
+    const result = activitiesFor(events, seenRecord(), {
+      home: null,
+      activities: LIST_SEEN_BEFORE,
+    });
+    expect(result.count).toBe(1);
   });
 
-  test('once she opens the activity on Inici, Inici stops counting it and the rest still count here', () => {
-    const events = [
-      occurrence('a', 'a-1', '2026-11-17T10:00:00Z'),
-      occurrence('b', 'b-1', '2026-11-18T10:00:00Z'),
-      occurrence('c', 'c-1', '2026-11-19T10:00:00Z'),
-    ];
-    const before = activitiesFor(events, seenRecord());
-    expect([...before.newOccurrenceIds].sort()).toEqual(['b-1', 'c-1']);
-
-    const seenAfterOpening = seenRecord(['a']);
-    const home = homeFor(events, seenAfterOpening);
-    expect(home.nextActivity?.event.id).toBe('a');
-    expect(home.isNextActivityUnseen).toBe(false);
-    const after = activitiesFor(events, seenAfterOpening);
-    // Inici keeps showing her first activity, now seen, so the others still count here.
-    expect([...after.newOccurrenceIds].sort()).toEqual(['b-1', 'c-1']);
-    expect(home.count + after.count).toBe(2);
+  test('a new activity counts until the list is seen and keeps its mark after', () => {
+    expect(activitiesFor(events, seenRecord()).count).toBe(1);
+    const result = activitiesFor(events, seenRecord(), { home: null, activities: LIST_SEEN_AFTER });
+    expect(result.count).toBe(0);
+    expect([...result.newOccurrenceIds]).toEqual(['new-1']);
   });
 
-  test('when Inici activity passes, the next new one moves to Inici and leaves this count', () => {
-    const events = [
-      occurrence('a', 'a-1', '2026-11-16T09:00:00Z'),
-      occurrence('b', 'b-1', '2026-11-18T10:00:00Z'),
-      occurrence('c', 'c-1', '2026-11-19T10:00:00Z'),
-    ];
-    const seen = seenRecord();
-    const home = homeFor(events, seen);
-    expect(home.nextActivity?.event.id).toBe('b');
-    const result = activitiesFor(events, seen);
-    expect([...result.newOccurrenceIds]).toEqual(['c-1']);
-    expect(home.count + result.count).toBe(2);
+  test('an activity published after the list was seen counts again', () => {
+    const result = activitiesFor(
+      [
+        ...events,
+        occurrence('later', 'later-1', '2026-11-19T10:00:00Z', { publishedAt: LATER_PUBLISHED }),
+      ],
+      seenRecord(),
+      { home: null, activities: LIST_SEEN_AFTER },
+    );
+    expect(result.count).toBe(1);
+    expect([...result.newOccurrenceIds].sort()).toEqual(['later-1', 'new-1']);
   });
 
-  test('the count always equals the number of marked cards', () => {
+  test('the count never includes more activities than the marked cards', () => {
     const result = activitiesFor(
       [
         signedUpFirst,
@@ -221,7 +244,68 @@ describe('buildActivitiesAttention', () => {
       ],
       seenRecord(),
     );
-    expect(result.count).toBe(result.newOccurrenceIds.size);
     expect(result.count).toBe(2);
+    expect(result.newOccurrenceIds.size).toBe(2);
+  });
+});
+
+describe('the two tabs together', () => {
+  const events = [
+    occurrence('a', 'a-1', '2026-11-17T10:00:00Z'),
+    occurrence('b', 'b-1', '2026-11-18T10:00:00Z'),
+    occurrence('b', 'b-2', '2026-11-25T10:00:00Z'),
+    occurrence('c', 'c-1', '2026-11-19T10:00:00Z'),
+  ];
+
+  test('count each new activity exactly once while neither list is seen', () => {
+    const home = homeFor(events, seenRecord());
+    const activities = activitiesFor(events, seenRecord());
+    expect(home.count).toBe(1);
+    expect(activities.count).toBe(2);
+  });
+
+  test('never count one activity twice, whichever lists she has seen', () => {
+    const moments = [undefined, null, LIST_SEEN_BEFORE, LIST_SEEN_AFTER];
+    for (const homeSeenAt of moments) {
+      for (const activitiesSeenAt of moments) {
+        const lists = { home: homeSeenAt, activities: activitiesSeenAt };
+        const home = homeFor(events, seenRecord(), lists);
+        const activities = activitiesFor(events, seenRecord(), lists);
+        expect(home.count + activities.count).toBeLessThanOrEqual(3);
+      }
+    }
+  });
+
+  test('seeing Inici clears its number and leaves the Activitats number as it was', () => {
+    const lists = { home: LIST_SEEN_AFTER, activities: null };
+    const home = homeFor(events, seenRecord(), lists);
+    const activities = activitiesFor(events, seenRecord(), lists);
+    expect(home.count).toBe(0);
+    expect(activities.count).toBe(2);
+    expect([...activities.newOccurrenceIds].sort()).toEqual(['a-1', 'b-1', 'c-1']);
+  });
+
+  test('once she opens the activity on Inici, Inici stops counting it and the rest still count here', () => {
+    const seenAfterOpening = seenRecord(['a']);
+    const home = homeFor(events, seenAfterOpening);
+    expect(home.nextActivity?.event.id).toBe('a');
+    expect(home.isNextActivityUnseen).toBe(false);
+    const after = activitiesFor(events, seenAfterOpening);
+    expect([...after.newOccurrenceIds].sort()).toEqual(['b-1', 'c-1']);
+    expect(home.count + after.count).toBe(2);
+  });
+
+  test('when Inici activity passes, the next new one moves to Inici and leaves this count', () => {
+    const withPast = [
+      occurrence('a', 'a-1', '2026-11-16T09:00:00Z'),
+      occurrence('b', 'b-1', '2026-11-18T10:00:00Z'),
+      occurrence('c', 'c-1', '2026-11-19T10:00:00Z'),
+    ];
+    const home = homeFor(withPast, seenRecord());
+    expect(home.nextActivity?.event.id).toBe('b');
+    const result = activitiesFor(withPast, seenRecord());
+    expect(result.count).toBe(1);
+    expect([...result.newOccurrenceIds].sort()).toEqual(['b-1', 'c-1']);
+    expect(home.count + result.count).toBe(2);
   });
 });
