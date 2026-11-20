@@ -2,6 +2,9 @@
  * The primary action of language selection, the login forms and onboarding,
  * also used as a player tab's main action, such as Share on Comunitat
  * (RAPP-852), which shows an icon before its label.
+ *
+ * It keeps its solid navy fill, with no raised edge, on every screen
+ * (RAPP-878): the call to action is the one press target that stays flat.
  */
 
 import { Icon, type IconName } from '@/components/icons/icon';
