@@ -23,11 +23,16 @@ import type { StaffConversationRow } from '@ramassa/shared/messaging';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_CONVERSATIONS: readonly StaffConversationRow[] = [];
+// The room on top is for the unread count, which rises above the first card.
 const listContentStyle = {
   paddingHorizontal: tokens.spacing.lg,
+  paddingTop: tokens.spacing.sm,
   paddingBottom: tokens.spacing['3xl'],
-  gap: tokens.spacing.md,
 } as const;
+// FlashList takes no `gap`, so the room between two cards is a separator.
+function RowSeparator() {
+  return <View className="h-md" />;
+}
 const keyExtractor = (row: StaffConversationRow) => row.conversationId;
 
 // Two parts list, three parts open item, within sensible bounds.
@@ -133,6 +138,7 @@ function StaffConversationsScreen() {
             renderItem={renderItem}
             keyExtractor={keyExtractor}
             contentInsetAdjustmentBehavior="automatic"
+            ItemSeparatorComponent={RowSeparator}
             contentContainerStyle={listContentStyle}
           />
         )}
