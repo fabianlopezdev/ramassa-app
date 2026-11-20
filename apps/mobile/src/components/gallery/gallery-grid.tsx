@@ -4,7 +4,7 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { GalleryTile } from '@/components/gallery/gallery-tile';
-import { NO_NEW_IDS } from '@/lib/community-news';
+import { NO_UNOPENED_IDS } from '@/lib/community-news';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { useGalleryItems } from '@/lib/player-gallery';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -35,12 +35,12 @@ const keyExtractor = (item: MediaItemRow) => item.id;
 export function GalleryGrid({
   header,
   contentContainerStyle,
-  newItemIds = NO_NEW_IDS,
+  unopenedItemIds = NO_UNOPENED_IDS,
 }: {
   readonly header: ReactElement;
   readonly contentContainerStyle: StyleProp<ViewStyle>;
-  /** Photos new to her when she opened the section, marked "Nou" (RAPP-873). */
-  readonly newItemIds?: ReadonlySet<string>;
+  /** Photos she has not opened yet, marked "Nou" until she does (RAPP-873). */
+  readonly unopenedItemIds?: ReadonlySet<string>;
 }) {
   const { t } = useTranslation(['gallery', 'home']);
   const languageFontClass = useLanguageFontClass();
@@ -61,7 +61,7 @@ export function GalleryGrid({
   }, [refetchGallery, refetchTabNews]);
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<MediaItemRow>) => {
-      const unseenLabel = newItemIds.has(item.id) ? t('home:unseen') : null;
+      const unseenLabel = unopenedItemIds.has(item.id) ? t('home:unseen') : null;
       // The tile does not read its mark aloud, so its label says the word first.
       const openLabel = t('openItem', { name: item.uploader_first_name });
       return (
@@ -76,7 +76,7 @@ export function GalleryGrid({
         />
       );
     },
-    [accessToken, newItemIds, openItem, t],
+    [accessToken, openItem, t, unopenedItemIds],
   );
 
   const hasNoData = query.data === undefined && isOnline;
@@ -110,7 +110,7 @@ export function GalleryGrid({
       data={query.data ?? EMPTY_GALLERY_ITEMS}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
-      extraData={newItemIds}
+      extraData={unopenedItemIds}
       numColumns={GALLERY_COLUMN_COUNT}
       style={styles.screen}
       contentContainerStyle={contentContainerStyle}

@@ -23,6 +23,7 @@ import {
 } from '@/lib/player-forum';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useMarkForumPostSeen } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { useNetworkState } from 'expo-network';
@@ -89,6 +90,7 @@ export default function ForumPostDetailScreen() {
   } | null>(null);
   const insets = useSafeAreaInsets();
   const post = postQuery.data;
+  useMarkForumPostSeen(post?.id);
   const isOwnPost =
     post !== undefined && post.author_id === user?.id && post.visibility === 'visible';
   const mutationError = createReply.error ?? editPost.error ?? deletePost.error;

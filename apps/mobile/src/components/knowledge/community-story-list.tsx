@@ -6,7 +6,7 @@ import {
 import { KnowledgeArticleCard } from '@/components/knowledge/knowledge-article-card';
 import { PageWidth } from '@/components/layout/content-width';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
-import { NO_NEW_IDS } from '@/lib/community-news';
+import { NO_UNOPENED_IDS } from '@/lib/community-news';
 import { useCommunityStories } from '@/lib/community-stories';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
@@ -36,12 +36,12 @@ const keyExtractor = (story: KnowledgeArticleListRow) => story.id;
 export function CommunityStoryList({
   header,
   contentContainerStyle,
-  newArticleIds = NO_NEW_IDS,
+  unopenedArticleIds = NO_UNOPENED_IDS,
 }: {
   readonly header: ReactElement;
   readonly contentContainerStyle: StyleProp<ViewStyle>;
-  /** Stories new to her when she opened the section, marked "Nou" (RAPP-873). */
-  readonly newArticleIds?: ReadonlySet<string>;
+  /** Stories she has not opened yet, marked "Nou" until she does (RAPP-873). */
+  readonly unopenedArticleIds?: ReadonlySet<string>;
 }) {
   const { t } = useTranslation(['knowledge', 'home']);
   const languageFontClass = useLanguageFontClass();
@@ -76,12 +76,12 @@ export function CommunityStoryList({
             authorAvatarKey={
               item.author_id === null ? null : (personCards.get(item.author_id)?.avatarKey ?? null)
             }
-            unseenLabel={newArticleIds.has(item.id) ? t('home:unseen') : null}
+            unseenLabel={unopenedArticleIds.has(item.id) ? t('home:unseen') : null}
           />
         </FadeSlideIn>
       </PageWidth>
     ),
-    [accessToken, newArticleIds, openStory, personCards, t],
+    [accessToken, openStory, personCards, t, unopenedArticleIds],
   );
 
   let emptyState: ReactElement;
@@ -116,7 +116,7 @@ export function CommunityStoryList({
       data={query.data ?? EMPTY_STORIES}
       renderItem={renderStory}
       keyExtractor={keyExtractor}
-      extraData={newArticleIds}
+      extraData={unopenedArticleIds}
       style={styles.screen}
       contentContainerStyle={contentContainerStyle}
       contentInsetAdjustmentBehavior="automatic"
