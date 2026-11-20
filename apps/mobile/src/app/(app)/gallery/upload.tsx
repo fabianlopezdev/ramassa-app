@@ -94,8 +94,6 @@ export default function GalleryUploadScreen() {
     [languageFontClass, privacy, privacyActions, t],
   );
 
-  const toggleConsent = useCallback(() => setConsent((current) => !current), []);
-
   const pick = useCallback(async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
@@ -271,7 +269,7 @@ export default function GalleryUploadScreen() {
             testID="gallery-consent-acknowledgment"
             label={t('gallery:consentReminder')}
             value={consent}
-            onToggle={toggleConsent}
+            onValueChange={setConsent}
           />
           {state.status === 'uploading' ? (
             <View

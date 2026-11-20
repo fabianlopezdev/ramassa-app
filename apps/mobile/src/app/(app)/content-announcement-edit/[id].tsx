@@ -18,6 +18,7 @@ import { MultilingualField } from '@/components/content/multilingual-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { SwitchCard } from '@/components/forms/switch-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { DraftPreviewSheet } from '@/components/preview/draft-preview-sheet';
@@ -50,7 +51,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Switch, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ANNOUNCEMENT_CATEGORIES,
@@ -64,7 +65,6 @@ import {
 } from '@ramassa/shared/announcements';
 import { useAuth } from '@ramassa/shared/auth';
 import { getErrorMessageKey, type AppErrorCode } from '@ramassa/shared/errors';
-import { tokens } from '@ramassa/shared/tokens';
 import { MAX_TRANSLATION_TEXT_LENGTH } from '@ramassa/shared/translation';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 
@@ -391,18 +391,12 @@ function AnnouncementForm({
         {t('translationHelp')}
       </Text>
 
-      <View className="flex-row items-center justify-between gap-md">
-        <Text className={`flex-1 text-start text-md text-neutral-800 ${fontClass}`}>
-          {t('fieldPinned')}
-        </Text>
-        <Switch
-          testID="announcement-pinned"
-          accessibilityLabel={t('fieldPinned')}
-          value={form.isPinned}
-          onValueChange={(isPinned) => set({ isPinned })}
-          trackColor={{ true: tokens.colors.primary.DEFAULT }}
-        />
-      </View>
+      <SwitchCard
+        testID="announcement-pinned"
+        label={t('fieldPinned')}
+        value={form.isPinned}
+        onValueChange={(isPinned) => set({ isPinned })}
+      />
 
       <View className="gap-sm">
         <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>

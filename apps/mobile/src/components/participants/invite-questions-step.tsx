@@ -13,11 +13,12 @@
  */
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { BrandIcon } from '@/components/forms/data-icon';
+import { SwitchCard } from '@/components/forms/switch-card';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Switch, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
   INTAKE_QUESTION_LABEL_KEYS,
@@ -41,8 +42,6 @@ import {
   type PlayerChoices,
 } from '@ramassa/shared/intake-builder';
 import { tokens } from '@ramassa/shared/tokens';
-
-const trackColor = { false: tokens.colors.neutral[300], true: tokens.colors.primary.DEFAULT };
 
 const ASKING_LABEL_KEYS: Readonly<Record<WizardQuestionAsking, string>> = {
   asked: 'inviteQuestionAsked',
@@ -195,93 +194,90 @@ function ScreenGroup({
       : textIn(question.question.label, language);
 
   return (
-    <View
-      className={`rounded-md border border-neutral-200 ${isSkipped ? 'bg-neutral-50' : 'bg-white'}`}
-      testID={`invite-screen-${step.key}`}
-    >
-      <View className="flex-row items-center gap-sm pe-md">
+    <View className="gap-sm" testID={`invite-screen-${step.key}`}>
+      <SwitchCard
+        testID={`invite-screen-switch-${step.key}`}
+        label={name}
+        description={subtitle}
+        accessibilityLabel={t('inviteScreenAsk', { screen: name })}
+        accessibilityHint={mustAsk ? t('inviteScreenRequired') : undefined}
+        value={!isSkipped}
+        isDisabled={mustAsk}
+        onValueChange={onSwitch}
+      />
+      {mustAsk ? (
+        <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+          {t('inviteScreenRequired')}
+        </Text>
+      ) : null}
+      {/* The card is one tap target, so the questions open from their own row (RAPP-894). */}
+      <View
+        className={`rounded-md border border-neutral-200 ${isSkipped ? 'bg-neutral-50' : 'bg-white'}`}
+      >
         <Pressable
           testID={`invite-screen-open-${step.key}`}
           accessibilityRole="button"
-          accessibilityLabel={`${name}, ${subtitle}`}
-          accessibilityHint={t('inviteScreenQuestions')}
+          accessibilityLabel={`${name}, ${t('inviteScreenQuestions')}`}
           accessibilityState={{ expanded: isOpen }}
           onPress={() => {
             playHaptic('selection');
             onToggleOpen();
           }}
-          className="min-h-recommended flex-1 flex-row items-center gap-sm py-sm ps-md active:opacity-80"
+          className="min-h-recommended flex-row items-center justify-between gap-sm px-md py-sm active:opacity-80"
         >
-          <View className="flex-1 gap-xs">
-            <Text
-              className={`text-start text-md font-semibold ${isSkipped ? 'text-neutral-600' : 'text-neutral-900'} ${fontClass}`}
-            >
-              {name}
-            </Text>
-            <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>{subtitle}</Text>
-          </View>
+          <Text className={`flex-1 text-start text-md font-semibold text-neutral-900 ${fontClass}`}>
+            {t('inviteScreenQuestions')}
+          </Text>
           <BrandIcon name={isOpen ? chevron.up : chevron.down} size={tokens.spacing.md} />
         </Pressable>
-        <Switch
-          testID={`invite-screen-switch-${step.key}`}
-          accessibilityLabel={t('inviteScreenAsk', { screen: name })}
-          accessibilityHint={mustAsk ? t('inviteScreenRequired') : undefined}
-          value={!isSkipped}
-          disabled={mustAsk}
-          onValueChange={onSwitch}
-          trackColor={trackColor}
-        />
-      </View>
-      {mustAsk ? (
-        <Text className={`px-md pb-sm text-start text-sm text-neutral-600 ${fontClass}`}>
-          {t('inviteScreenRequired')}
-        </Text>
-      ) : null}
-      {isOpen ? (
-        <View className="border-t border-neutral-200">
-          {questions.map((question, index) => (
-            <View
-              key={question.key}
-              className={`gap-xs p-md ${index === 0 ? '' : 'border-t border-neutral-100'}`}
-              testID={`invite-question-${question.key}`}
-            >
-              <Text className={`text-start text-md font-medium text-neutral-900 ${fontClass}`}>
-                {labelOf(question)}
-                {question.isRequired ? <Text className="text-primary"> *</Text> : null}
-              </Text>
-              <Text
-                testID={`invite-question-${question.key}-status`}
-                className={`text-start text-sm text-neutral-600 ${fontClass}`}
+        {isOpen ? (
+          <View className="border-t border-neutral-200">
+            {questions.map((question, index) => (
+              <View
+                key={question.key}
+                className={`gap-xs p-md ${index === 0 ? '' : 'border-t border-neutral-100'}`}
+                testID={`invite-question-${question.key}`}
               >
-                {t(ASKING_LABEL_KEYS[question.asking])}
-                {' · '}
-                {question.isAnswered ? t('questionStatesAnswered') : t('questionStatesUnanswered')}
-              </Text>
-              <View accessibilityRole="radiogroup" className="flex-row flex-wrap gap-sm pt-xs">
-                {(question.canSkip
-                  ? (['auto', 'ask', 'skip'] as const)
-                  : (['auto', 'ask'] as const)
-                ).map((state) => (
-                  <ChoiceOption
-                    key={state}
-                    testID={`invite-question-${question.key}-${state}`}
-                    value={state}
-                    label={t(CHOICE_LABEL_KEYS[state])}
-                    selected={question.state === state}
-                    onSelect={(next) => onChoice(question, next)}
-                    languageFontClass={fontClass}
-                  />
-                ))}
-              </View>
-              {question.canSkip ? null : (
-                <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-                  {t('questionStatesRequiredHint')}
+                <Text className={`text-start text-md font-medium text-neutral-900 ${fontClass}`}>
+                  {labelOf(question)}
+                  {question.isRequired ? <Text className="text-primary"> *</Text> : null}
                 </Text>
-              )}
-            </View>
-          ))}
-        </View>
-      ) : null}
+                <Text
+                  testID={`invite-question-${question.key}-status`}
+                  className={`text-start text-sm text-neutral-600 ${fontClass}`}
+                >
+                  {t(ASKING_LABEL_KEYS[question.asking])}
+                  {' · '}
+                  {question.isAnswered
+                    ? t('questionStatesAnswered')
+                    : t('questionStatesUnanswered')}
+                </Text>
+                <View accessibilityRole="radiogroup" className="flex-row flex-wrap gap-sm pt-xs">
+                  {(question.canSkip
+                    ? (['auto', 'ask', 'skip'] as const)
+                    : (['auto', 'ask'] as const)
+                  ).map((state) => (
+                    <ChoiceOption
+                      key={state}
+                      testID={`invite-question-${question.key}-${state}`}
+                      value={state}
+                      label={t(CHOICE_LABEL_KEYS[state])}
+                      selected={question.state === state}
+                      onSelect={(next) => onChoice(question, next)}
+                      languageFontClass={fontClass}
+                    />
+                  ))}
+                </View>
+                {question.canSkip ? null : (
+                  <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
+                    {t('questionStatesRequiredHint')}
+                  </Text>
+                )}
+              </View>
+            ))}
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }

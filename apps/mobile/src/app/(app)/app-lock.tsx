@@ -7,6 +7,7 @@
 import { useAppLock } from '@/components/auth/app-lock';
 import { AuthBackButton } from '@/components/auth/auth-back-button';
 import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
+import { SwitchCard } from '@/components/forms/switch-card';
 import { PageWidth } from '@/components/layout/content-width';
 import { LanguageSwitcher } from '@/components/profile/language-switcher';
 import { APP_LOCK_TIMEOUTS, type AppLockTimeout } from '@/lib/app-lock';
@@ -16,10 +17,9 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Switch, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { STAFF_LANGUAGES } from '@ramassa/shared/i18n';
-import { tokens } from '@ramassa/shared/tokens';
 
 const TIMEOUT_LABEL_KEYS: Record<AppLockTimeout, string> = {
   0: 'appLockImmediately',
@@ -27,8 +27,6 @@ const TIMEOUT_LABEL_KEYS: Record<AppLockTimeout, string> = {
   300: 'appLockAfterFiveMinutes',
   900: 'appLockAfterFifteenMinutes',
 };
-
-const switchTrackColor = { false: tokens.colors.neutral[300], true: tokens.colors.primary.DEFAULT };
 
 export default function AppLockScreen() {
   const { t } = useTranslation('auth');
@@ -103,19 +101,13 @@ export default function AppLockScreen() {
             </Text>
           )}
 
-          <View className="min-h-recommended flex-row items-center justify-between gap-md rounded-md border border-neutral-200 bg-white px-md">
-            <Text className={`flex-1 text-start text-md text-neutral-900 ${languageFontClass}`}>
-              {t('appLockSwitchLabel')}
-            </Text>
-            <Switch
-              testID="app-lock-switch"
-              accessibilityLabel={t('appLockSwitchLabel')}
-              value={settings?.enabled === true}
-              disabled={!isAvailable || settings === null || isConfirming}
-              onValueChange={(enabled) => void toggle(enabled)}
-              trackColor={switchTrackColor}
-            />
-          </View>
+          <SwitchCard
+            testID="app-lock-switch"
+            label={t('appLockSwitchLabel')}
+            value={settings?.enabled === true}
+            isDisabled={!isAvailable || settings === null || isConfirming}
+            onValueChange={(enabled) => void toggle(enabled)}
+          />
 
           {settings?.enabled === true && isAvailable ? (
             <View className="gap-sm" accessibilityRole="radiogroup">

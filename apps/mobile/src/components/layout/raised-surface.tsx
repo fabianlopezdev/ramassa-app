@@ -126,11 +126,13 @@ export function RaisedSurfaceEdge({
 export function RaisedPressable({
   children,
   accessibilityLabel,
+  accessibilityHint,
   accessibilityRole = 'button',
   isSelected,
   testID,
   onPress,
   haptic = 'selection',
+  className,
   faceClassName,
   faceStyle,
   pressedFillClassName,
@@ -138,11 +140,14 @@ export function RaisedPressable({
 }: {
   readonly children: ReactNode;
   readonly accessibilityLabel: string;
+  readonly accessibilityHint?: string;
   readonly accessibilityRole?: AccessibilityRole;
   readonly isSelected?: boolean;
   readonly testID?: string;
   readonly onPress: () => void;
   readonly haptic?: HapticFeedback;
+  /** For the whole control, edge included, such as the dimming of a locked one. */
+  readonly className?: string;
   readonly faceClassName?: string;
   /** A hoisted style for the face; include the continuous corners. */
   readonly faceStyle?: StyleProp<ViewStyle>;
@@ -153,12 +158,13 @@ export function RaisedPressable({
     <PressableDepth
       testID={testID}
       accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
       accessibilityRole={accessibilityRole}
       isSelected={isSelected}
       onPress={onPress}
       haptic={haptic}
       style={raisedSurfaceWrapperStyle}
-      className="relative"
+      className={className === undefined ? 'relative' : `relative ${className}`}
       faceStyle={faceStyle ?? continuousCorners}
       faceClassName={`relative overflow-hidden ${outlinedSurfaceClassName(shapeClassName)} ${
         faceClassName ?? ''

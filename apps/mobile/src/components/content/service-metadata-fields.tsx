@@ -8,13 +8,13 @@
  */
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { SwitchCard } from '@/components/forms/switch-card';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Switch, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import type { SupportedLanguage } from '@ramassa/shared/i18n';
 import type { ServiceMetadataFieldDefinition } from '@ramassa/shared/services';
-import { tokens } from '@ramassa/shared/tokens';
 import { DateField } from './date-field';
 import { fieldLabel } from './service-labels';
 
@@ -107,16 +107,7 @@ function MetadataField({
   }
   if (field.type === 'boolean') {
     return (
-      <View className="flex-row items-center justify-between gap-md" testID={`${testID}-row`}>
-        <Text className={`flex-1 text-start text-md text-neutral-800 ${fontClass}`}>{label}</Text>
-        <Switch
-          testID={testID}
-          accessibilityLabel={label}
-          value={value === true}
-          onValueChange={onChange}
-          trackColor={{ true: tokens.colors.primary.DEFAULT }}
-        />
-      </View>
+      <SwitchCard testID={testID} label={label} value={value === true} onValueChange={onChange} />
     );
   }
   if (field.type === 'date') {

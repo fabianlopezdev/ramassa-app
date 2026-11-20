@@ -11,16 +11,16 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { SwitchCard } from '@/components/forms/switch-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { fieldKey, keepsStoredLabel, type FormField } from '@/lib/service-category-form';
 import { generateDrafts } from '@/lib/translation-worker';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Switch, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { getErrorMessageKey, type AppErrorCode } from '@ramassa/shared/errors';
 import { SERVICE_METADATA_FIELD_TYPES } from '@ramassa/shared/services';
-import { tokens } from '@ramassa/shared/tokens';
 import {
   approveTranslation,
   createTranslationReview,
@@ -30,32 +30,6 @@ import {
 } from '@ramassa/shared/translation';
 import { MultilingualField } from './multilingual-field';
 import { SERVICE_FIELD_TYPE_KEYS } from './service-labels';
-
-function Toggle({
-  testID,
-  label,
-  value,
-  onChange,
-}: {
-  readonly testID: string;
-  readonly label: string;
-  readonly value: boolean;
-  readonly onChange: (value: boolean) => void;
-}) {
-  const fontClass = useLanguageFontClass();
-  return (
-    <View className="flex-row items-center justify-between gap-md">
-      <Text className={`flex-1 text-start text-md text-neutral-800 ${fontClass}`}>{label}</Text>
-      <Switch
-        testID={testID}
-        accessibilityLabel={label}
-        value={value}
-        onValueChange={onChange}
-        trackColor={{ true: tokens.colors.primary.DEFAULT }}
-      />
-    </View>
-  );
-}
 
 export function ServiceFieldForm({
   field,
@@ -168,17 +142,17 @@ export function ServiceFieldForm({
           ))}
         </View>
       </View>
-      <Toggle
+      <SwitchCard
         testID="service-field-required"
         label={t('fieldRequired')}
         value={draft.required}
-        onChange={(required) => set({ required })}
+        onValueChange={(required) => set({ required })}
       />
-      <Toggle
+      <SwitchCard
         testID="service-field-filterable"
         label={t('fieldFilterable')}
         value={draft.filterable}
-        onChange={(filterable) => set({ filterable })}
+        onValueChange={(filterable) => set({ filterable })}
       />
 
       {usesOptions ? (
