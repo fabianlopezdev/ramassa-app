@@ -1,4 +1,5 @@
 import { AnnouncementArticle } from '@/components/announcements/announcement-article';
+import { useAnnouncementWash } from '@/components/announcements/category-filters';
 import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
@@ -55,6 +56,13 @@ export default function AnnouncementDetailScreen() {
         : undefined,
     [insets.bottom],
   );
+  // An open avís sits on the wash of its kind, the shade of its card on Inici
+  // (RAPP-893). While it loads or is missing, the screen stays white.
+  const wash = useAnnouncementWash(announcement?.category);
+  const washStyle = useMemo(
+    () => (wash === undefined ? undefined : { backgroundColor: wash }),
+    [wash],
+  );
 
   if (query.isPending && data === undefined) {
     return (
@@ -82,10 +90,11 @@ export default function AnnouncementDetailScreen() {
 
   return (
     <>
-      <NativeScreenHeader surface="white" />
+      <NativeScreenHeader surface="white" backgroundColor={wash} />
       <ScrollView
         testID="announcement-detail-screen"
-        className="flex-1 bg-white"
+        className={wash === undefined ? 'flex-1 bg-white' : 'flex-1'}
+        style={washStyle}
         contentContainerClassName="grow px-lg py-lg"
         contentContainerStyle={androidEdgeInsets}
         contentInsetAdjustmentBehavior="automatic"
