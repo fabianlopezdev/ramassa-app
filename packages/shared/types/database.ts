@@ -3178,6 +3178,49 @@ export type Database = {
           },
         ];
       };
+      knowledge_article_reads: {
+        Row: {
+          article_id: string;
+          org_id: string;
+          seen_at: string;
+          user_id: string;
+        };
+        Insert: {
+          article_id: string;
+          org_id: string;
+          seen_at?: string;
+          user_id: string;
+        };
+        Update: {
+          article_id?: string;
+          org_id?: string;
+          seen_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'knowledge_article_reads_article_id_fkey';
+            columns: ['article_id'];
+            isOneToOne: false;
+            referencedRelation: 'knowledge_articles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'knowledge_article_reads_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'knowledge_article_reads_user_tenant_fkey';
+            columns: ['org_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       knowledge_articles: {
         Row: {
           author_first_name: string | null;
@@ -4553,6 +4596,42 @@ export type Database = {
           },
         ];
       };
+      section_visits: {
+        Row: {
+          org_id: string;
+          section: string;
+          user_id: string;
+          visited_at: string;
+        };
+        Insert: {
+          org_id: string;
+          section: string;
+          user_id: string;
+          visited_at?: string;
+        };
+        Update: {
+          org_id?: string;
+          section?: string;
+          user_id?: string;
+          visited_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'section_visits_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'section_visits_user_tenant_fkey';
+            columns: ['org_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       service_categories: {
         Row: {
           color: string;
@@ -4688,6 +4767,49 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'profiles';
             referencedColumns: ['id'];
+          },
+        ];
+      };
+      service_reads: {
+        Row: {
+          org_id: string;
+          seen_at: string;
+          service_id: string;
+          user_id: string;
+        };
+        Insert: {
+          org_id: string;
+          seen_at?: string;
+          service_id: string;
+          user_id: string;
+        };
+        Update: {
+          org_id?: string;
+          seen_at?: string;
+          service_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'service_reads_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'service_reads_service_tenant_fkey';
+            columns: ['org_id', 'service_id'];
+            isOneToOne: false;
+            referencedRelation: 'services';
+            referencedColumns: ['org_id', 'id'];
+          },
+          {
+            foreignKeyName: 'service_reads_user_tenant_fkey';
+            columns: ['org_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
           },
         ];
       };
@@ -7301,6 +7423,11 @@ export type Database = {
         Args: { p_conversation_id: string; p_message_id: string };
         Returns: undefined;
       };
+      mark_help_items_seen: {
+        Args: { p_article_ids?: string[]; p_service_ids?: string[] };
+        Returns: undefined;
+      };
+      mark_section_visited: { Args: { p_section: string }; Returns: undefined };
       mark_staff_notification_read: {
         Args: { p_id: string };
         Returns: undefined;
@@ -7415,6 +7542,7 @@ export type Database = {
       my_questions_to_ask: { Args: never; Returns: string[] };
       my_second_factor_waived: { Args: never; Returns: boolean };
       my_session_is_current: { Args: never; Returns: boolean };
+      my_tab_news: { Args: never; Returns: Json };
       my_terms_acceptance_needed: { Args: never; Returns: boolean };
       my_test_scenario_stamp: { Args: never; Returns: string };
       notification_audience_entities: { Args: never; Returns: string[] };

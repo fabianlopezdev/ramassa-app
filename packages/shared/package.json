@@ -42,6 +42,7 @@
     "./announcements": "./announcements.ts",
     "./events": "./events.ts",
     "./home-seen": "./home-seen.ts",
+    "./tab-news": "./tab-news.ts",
     "./forum": "./forum.ts",
     "./media": "./media.ts",
     "./attendance": "./attendance.ts",
