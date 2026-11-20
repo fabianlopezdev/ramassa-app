@@ -35,7 +35,6 @@
   "in_progress": "En curso",
   "completed": "Completada",
   "closes": "Cierra {{date}}",
-  "promptEyebrow": "Tu opinión importa",
   "promptAction": "Responder ahora",
   "promptStarted": "Continuar",
   "attributedNotice": "Esta respuesta no es anónima. El equipo puede ver quién respondió.",

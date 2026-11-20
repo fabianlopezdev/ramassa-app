@@ -19,7 +19,6 @@
   "retryAction": "Réessaie",
   "loading": "Chargement des annonces",
   "pendingForm": {
-    "eyebrow": "Formulaire",
     "deadline": "Jusqu’au {{date}}",
     "answer": "Réponds",
     "dismiss": "Pas maintenant"

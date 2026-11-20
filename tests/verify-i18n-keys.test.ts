@@ -61,6 +61,19 @@ describe('parity', () => {
     all.ar = { home: { greeting: 'مرحبا', items_one: 'عنصر واحد' } };
     expect(parityProblems(locales(all))).toEqual(['ar/home: placeholders differ in "greeting"']);
   });
+
+  test('a language may count with more plural forms than Catalan', () => {
+    const all = five({ items_one: '{{count}} element', items_other: '{{count}} elements' });
+    all.ar = {
+      home: {
+        items_one: 'عنصر واحد',
+        items_few: '{{count}} عناصر',
+        items_other: '{{count}} عنصر',
+        stray_few: 'x',
+      },
+    };
+    expect(parityProblems(locales(all))).toEqual(['ar/home: extra "stray_few"']);
+  });
 });
 
 describe('usage', () => {
@@ -89,5 +102,10 @@ describe('usage', () => {
   test('a literal namespace:key that does not exist is reported', () => {
     const code = indexCode(["t('home:title'); t('home:status'); t('home:gone')"]);
     expect(missingKeys(catalog, code)).toEqual(['home:gone']);
+  });
+
+  test('a literal namespace:key that Catalan counts with plural forms exists', () => {
+    const code = indexCode(["t('home:items', { count })"]);
+    expect(missingKeys(catalog, code)).toEqual([]);
   });
 });

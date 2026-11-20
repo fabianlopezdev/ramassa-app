@@ -19,7 +19,6 @@
   "retryAction": "دوباره تلاش کنید",
   "loading": "در حال بارگذاری اطلاعیه‌ها",
   "pendingForm": {
-    "eyebrow": "فرم",
     "deadline": "تا {{date}}",
     "answer": "پاسخ بده",
     "dismiss": "الان نه"

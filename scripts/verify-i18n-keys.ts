@@ -62,6 +62,15 @@ const placeholders = (key: string, text: string): string =>
 
 export type Locales = ReadonlyMap<string, ReadonlyMap<string, ReadonlyMap<string, string>>>;
 
+// True when the Catalan catalog counts `base` with plural forms (`base_one`, `base_other`).
+const hasPluralForms = (reference: ReadonlyMap<string, string>, base: string): boolean =>
+  reference.has(`${base}_one`) || reference.has(`${base}_other`);
+
+// Arabic counts with six forms where Catalan has two, so `newCount_few` is a
+// form of a key Catalan also counts and no stray key.
+const isPluralFormOf = (reference: ReadonlyMap<string, string>, key: string): boolean =>
+  PLURAL_FORM.test(key) && hasPluralForms(reference, key.replace(PLURAL_FORM, ''));
+
 export const parityProblems = (locales: Locales): string[] => {
   const problems: string[] = [];
   const reference = locales.get('ca') ?? new Map();
@@ -83,7 +92,8 @@ export const parityProblems = (locales: Locales): string[] => {
           problems.push(`${language}/${namespace}: placeholders differ in "${key}"`);
       }
       for (const key of catalog.keys()) {
-        if (!keys.has(key)) problems.push(`${language}/${namespace}: extra "${key}"`);
+        if (keys.has(key) || isPluralFormOf(keys, key)) continue;
+        problems.push(`${language}/${namespace}: extra "${key}"`);
       }
     }
   }
@@ -155,7 +165,8 @@ export const missingKeys = (locales: Locales, code: CodeIndex): string[] => {
     const keys = reference.get(namespace);
     if (keys === undefined) continue;
     const isBranch = [...keys.keys()].some((k) => k.startsWith(`${key}.`));
-    if (!keys.has(key) && !isBranch) missing.push(literal);
+    // `t('common:newCount', { count })` resolves to `newCount_one` / `newCount_other`.
+    if (!keys.has(key) && !isBranch && !hasPluralForms(keys, key)) missing.push(literal);
   }
   return missing.sort();
 };

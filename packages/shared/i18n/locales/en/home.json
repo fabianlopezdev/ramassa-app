@@ -19,7 +19,6 @@
   "retryAction": "Try again",
   "loading": "Loading announcements",
   "pendingForm": {
-    "eyebrow": "Form",
     "deadline": "By {{date}}",
     "answer": "Answer",
     "dismiss": "Not now"

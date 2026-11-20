@@ -35,7 +35,6 @@
   "in_progress": "در حال انجام",
   "completed": "تکمیل شده",
   "closes": "پایان {{date}}",
-  "promptEyebrow": "نظر شما مهم است",
   "promptAction": "اکنون پاسخ دهید",
   "promptStarted": "ادامه",
   "attributedNotice": "این پاسخ ناشناس نیست. تیم می تواند ببیند چه کسی پاسخ داده است.",

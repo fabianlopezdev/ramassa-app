@@ -35,7 +35,6 @@
   "in_progress": "En cours",
   "completed": "Terminée",
   "closes": "Fin : {{date}}",
-  "promptEyebrow": "Ton avis compte",
   "promptAction": "Répondre maintenant",
   "promptStarted": "Continue",
   "attributedNotice": "Cette réponse n’est pas anonyme. L’équipe pourra voir qui a répondu.",
