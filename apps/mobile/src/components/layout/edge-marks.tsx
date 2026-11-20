@@ -9,6 +9,11 @@
  * The marks are drawn over the surface from outside it, because its face
  * clips what it holds. The room above keeps them clear of what comes before.
  * Their words are not read out here: the surface's own label carries them.
+ *
+ * A surface that fills a cell of a row, such as an Ajuda tile or an option of
+ * the segmented control, takes `fill` (RAPP-873): the marks then grow with the
+ * cell, so the surface inside still stretches to the row's height and the
+ * cells stay level.
  */
 import { Badge, type BadgeTone } from '@/components/layout/badge';
 import { CountBubble } from '@/components/layout/count-bubble';
@@ -24,15 +29,18 @@ export interface EdgeMarkBadge {
 export function EdgeMarks({
   badge = null,
   count = null,
+  fill = false,
   children,
 }: {
   readonly badge?: EdgeMarkBadge | null;
   readonly count?: string | null;
+  /** Grow with the cell of a row, so the surface inside keeps the row's height. */
+  readonly fill?: boolean;
   readonly children: ReactNode;
 }) {
   const languageFontClass = useLanguageFontClass();
   return (
-    <View className="relative pt-sm">
+    <View className={fill ? 'relative flex-1 pt-sm' : 'relative pt-sm'}>
       {children}
       {badge === null ? null : (
         <View

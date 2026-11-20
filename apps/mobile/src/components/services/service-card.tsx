@@ -1,10 +1,11 @@
 import { Badge } from '@/components/layout/badge';
+import { EdgeMarks, type EdgeMarkBadge } from '@/components/layout/edge-marks';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { composeContinuousViewStyle } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { Image } from 'expo-image';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { tokens } from '@ramassa/shared/tokens';
@@ -35,6 +36,11 @@ export interface ServiceCardProps {
   readonly accessibilityLabel: string;
   readonly languageFontClass: string;
   readonly onOpen: (id: string) => void;
+  /**
+   * Set while the service is new to her (RAPP-873): the word on the card's top
+   * edge, where every card carries it. The caller says it in the label.
+   */
+  readonly unseenLabel?: string | null;
 }
 
 export const ServiceCard = memo(function ServiceCard({
@@ -51,6 +57,7 @@ export const ServiceCard = memo(function ServiceCard({
   accessibilityLabel,
   languageFontClass,
   onOpen,
+  unseenLabel = null,
 }: ServiceCardProps) {
   const { session } = useAuth();
   const imageSource = resolveMediaImageSource({
@@ -59,7 +66,11 @@ export const ServiceCard = memo(function ServiceCard({
     accessToken: session?.access_token,
   });
   const handlePress = useCallback(() => onOpen(id), [id, onOpen]);
-  return (
+  const badge = useMemo<EdgeMarkBadge | null>(
+    () => (unseenLabel === null ? null : { label: unseenLabel, tone: 'brand' }),
+    [unseenLabel],
+  );
+  const card = (
     <PressableScale
       testID={`service-card-${id}`}
       accessibilityLabel={accessibilityLabel}
@@ -119,4 +130,7 @@ export const ServiceCard = memo(function ServiceCard({
       </View>
     </PressableScale>
   );
+  if (badge === null) return card;
+  // The card is not a raised card, so the shared marks place the word.
+  return <EdgeMarks badge={badge}>{card}</EdgeMarks>;
 });

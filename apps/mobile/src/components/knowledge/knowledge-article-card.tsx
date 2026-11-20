@@ -1,5 +1,5 @@
 import { Badge } from '@/components/layout/badge';
-import { RaisedCard } from '@/components/layout/raised-card';
+import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
 import { PersonAvatar } from '@/components/people/person-avatar';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
@@ -39,6 +39,7 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
   compact = false,
   authorAvatarKey = null,
   showsCategory = true,
+  unseenLabel = null,
 }: {
   readonly article: KnowledgeArticleListRow;
   readonly accessToken: string | undefined;
@@ -49,6 +50,11 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
   readonly authorAvatarKey?: string | null;
   /** Off inside an open category, where every guide shares it (RAPP-870). */
   readonly showsCategory?: boolean;
+  /**
+   * Set while the guide or story is new to her (RAPP-873): the word on the
+   * card's edge, said first in its spoken label.
+   */
+  readonly unseenLabel?: string | null;
 }) {
   const { t } = useTranslation('knowledge');
   const { language } = useLanguage();
@@ -67,6 +73,10 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
     [accessToken, article.image_url, compact],
   );
   const handlePress = useCallback(() => onOpen(article.id), [article.id, onOpen]);
+  const badge = useMemo<RaisedCardBadge | null>(
+    () => (unseenLabel === null ? null : { label: unseenLabel, tone: 'brand' }),
+    [unseenLabel],
+  );
   if (title === undefined || category === undefined) return null;
 
   const isStory = article.content_type === 'participant_story';
@@ -79,12 +89,13 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
     <RaisedCard
       testID={`knowledge-article-${article.id}`}
       accessibilityLabel={(isStory
-        ? [title.text, attribution]
-        : [title.text, category.text, type, attribution]
+        ? [unseenLabel, title.text, attribution]
+        : [unseenLabel, title.text, category.text, type, attribution]
       )
         .filter(Boolean)
         .join('. ')}
       onOpen={handlePress}
+      badge={badge}
       leading={
         isStory ? (
           <PersonAvatar

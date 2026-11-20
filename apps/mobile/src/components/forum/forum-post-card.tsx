@@ -23,6 +23,10 @@ const styles = StyleSheet.create({
  * replies, in the colour of its category. A pinned post carries the word on
  * the card's top edge, like "Nou" on an avis.
  *
+ * A post new to her carries her word for new on that edge in its place
+ * (RAPP-873), and the count of replies she has not read sits on the same edge
+ * near the end, in the circle. The caller says both in the card's label.
+ *
  * Without a photo the avatar shows the person icon in place of the initial,
  * so a photo is what makes her card hers.
  */
@@ -39,6 +43,8 @@ export const ForumPostCard = memo(function ForumPostCard({
   accessToken,
   openLinkLabel,
   onOpen,
+  unseenLabel = null,
+  newRepliesCount = null,
 }: {
   readonly post: ForumPostRow;
   /** The colour of the post's category, as a wash on the card. */
@@ -54,6 +60,10 @@ export const ForumPostCard = memo(function ForumPostCard({
   readonly accessToken: string | undefined;
   readonly openLinkLabel: (url: string) => string;
   readonly onOpen: (id: string) => void;
+  /** Set while the post is new to her: the word on the card's edge, ahead of pinned. */
+  readonly unseenLabel?: string | null;
+  /** The replies she has not read, already formatted, in the circle on the edge. */
+  readonly newRepliesCount?: string | null;
 }) {
   const imageSource = useMemo(
     () =>
@@ -65,10 +75,10 @@ export const ForumPostCard = memo(function ForumPostCard({
     [accessToken, post.image_url],
   );
   const open = useCallback(() => onOpen(post.id), [onOpen, post.id]);
-  const badge = useMemo<RaisedCardBadge | null>(
-    () => (post.is_pinned ? { label: pinnedLabel, tone: 'accent' } : null),
-    [pinnedLabel, post.is_pinned],
-  );
+  const badge = useMemo<RaisedCardBadge | null>(() => {
+    if (unseenLabel !== null) return { label: unseenLabel, tone: 'brand' };
+    return post.is_pinned ? { label: pinnedLabel, tone: 'accent' } : null;
+  }, [pinnedLabel, post.is_pinned, unseenLabel]);
   const cardAccessibilityLabel = [
     accessibilityLabel,
     post.is_pinned ? pinnedLabel : null,
@@ -82,6 +92,7 @@ export const ForumPostCard = memo(function ForumPostCard({
       accessibilityLabel={cardAccessibilityLabel}
       onOpen={open}
       badge={badge}
+      count={newRepliesCount}
       tone={tone}
       leading={
         <PersonAvatar
