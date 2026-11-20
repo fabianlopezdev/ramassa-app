@@ -15,7 +15,9 @@ import {
   RaisedCardSymbol,
   type RaisedCardBadge,
 } from '@/components/layout/raised-card';
-import { Text } from 'react-native';
+import { breaksInsideAWord } from '@/lib/breaks-inside-a-word';
+import { useCallback, useState } from 'react';
+import { Text, type NativeSyntheticEvent, type TextLayoutEventData } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 interface RaisedIconCardProps {
@@ -31,7 +33,10 @@ interface RaisedIconCardProps {
   /** A number in a circle on the top edge near the end, such as unread messages. */
   readonly count?: string | null;
   readonly languageFontClass: string;
-  /** A tile in a grid, such as an Ajuda category: tighter, no arrow, smaller name. */
+  /**
+   * A tile in a grid, such as an Ajuda category: tighter, no arrow, smaller
+   * name. A name with a word too long to fit beside the icon stacks the tile.
+   */
   readonly tile?: boolean;
   /** An action that ends something, such as signing out. */
   readonly tone?: 'default' | 'danger';
@@ -53,6 +58,17 @@ export function RaisedIconCard({
   onOpen,
 }: RaisedIconCardProps) {
   const isDanger = tone === 'danger';
+  // A tile lays its name out beside the icon first. If a word of the name
+  // breaks across lines there, the tile stacks: icon on top, name under it
+  // (RAPP-879). It is kept per name, so a new language measures again.
+  const [stackedTitle, setStackedTitle] = useState<string | null>(null);
+  const stacked = tile && stackedTitle === title;
+  const handleTitleLayout = useCallback(
+    ({ nativeEvent }: NativeSyntheticEvent<TextLayoutEventData>) => {
+      if (breaksInsideAWord(nativeEvent.lines)) setStackedTitle(title);
+    },
+    [title],
+  );
   return (
     <RaisedCard
       testID={testID}
@@ -68,9 +84,11 @@ export function RaisedIconCard({
       badge={badge}
       count={count}
       tile={tile}
+      stacked={stacked}
       showsArrow={!isDanger}
     >
       <Text
+        onTextLayout={tile && !stacked ? handleTitleLayout : undefined}
         className={`text-start ${tile ? 'text-md' : 'text-xl'} font-bold ${isDanger ? 'text-error' : 'text-neutral-900'} ${languageFontClass}`}
       >
         {title}

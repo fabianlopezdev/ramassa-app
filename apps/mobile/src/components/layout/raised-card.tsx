@@ -25,7 +25,9 @@
  *
  * A card may be a tile in a grid (RAPP-854), such as an Ajuda category: the
  * same face, block and divider with tighter padding and gaps, no arrow, and
- * it fills its cell so the tiles in a row share a height.
+ * it fills its cell so the tiles in a row share a height. A tile may stack
+ * (RAPP-879): icon on top, divider across, name under it; the other tile of
+ * its row then takes the stacked tile's height.
  */
 import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
@@ -41,12 +43,14 @@ const leadingBlockStyle = { minWidth: tokens.spacing['2xl'] } as const;
 // The face keeps its side padding for the row; the photo reaches past it.
 const mediaBleedStyle = { marginHorizontal: -tokens.spacing.lg } as const;
 const ROW_CLASS_NAME = 'flex-row items-stretch gap-md';
+/** A tile is half the width of a card, so its row keeps a smaller gap. */
+const TILE_ROW_CLASS_NAME = 'flex-1 flex-row items-stretch gap-sm';
 /**
- * A tile is half the width of a card, so its row keeps the spacing tight
- * (RAPP-870): a name such as "Alfabetització" fits whole at the size every
- * other tile uses.
+ * A stacked tile (RAPP-879): the icon on top, the divider across, the name
+ * under it, all on the start edge. The name keeps to the bottom, so when the
+ * other tile of the row is taller the name still sits at its foot.
  */
-const TILE_ROW_CLASS_NAME = 'flex-1 flex-row items-stretch gap-xs';
+const TILE_STACK_CLASS_NAME = 'flex-1 items-stretch gap-sm';
 
 /**
  * An icon for the block at the start of a card: as wide as the block, in the
@@ -86,6 +90,11 @@ interface RaisedCardProps {
   readonly media?: ReactNode;
   /** A tile in a grid: tighter, no arrow, fills its cell. */
   readonly tile?: boolean;
+  /**
+   * A tile with its icon on top and its name under it, for a name with a word
+   * too long to fit beside the icon (RAPP-879).
+   */
+  readonly stacked?: boolean;
   readonly children: ReactNode;
 }
 
@@ -102,10 +111,23 @@ export function RaisedCard({
   tone,
   media,
   tile = false,
+  stacked = false,
   children,
 }: RaisedCardProps) {
   const brandColor = useBrandColor();
   const hasMedia = media !== undefined && media !== null;
+  const isStackedTile = tile && stacked && !hasMedia;
+  const stackedContent = (
+    <>
+      {leading === undefined ? null : (
+        <>
+          <View className="items-start">{leading}</View>
+          <View accessible={false} className="border-t-2 border-neutral-300" />
+        </>
+      )}
+      <View className="flex-1 justify-end gap-xs">{children}</View>
+    </>
+  );
   const rowContent = (
     <>
       {leading === undefined ? null : (
@@ -134,13 +156,17 @@ export function RaisedCard({
       accessibilityRole="link"
       onPress={onOpen}
       contentClassName={
-        hasMedia ? 'gap-md pb-md' : `${tile ? TILE_ROW_CLASS_NAME : ROW_CLASS_NAME} py-md`
+        hasMedia
+          ? 'gap-md pb-md'
+          : `${isStackedTile ? TILE_STACK_CLASS_NAME : tile ? TILE_ROW_CLASS_NAME : ROW_CLASS_NAME} py-md`
       }
       className={tile ? 'flex-1' : undefined}
-      paddingClassName={tile ? 'px-xs' : undefined}
+      paddingClassName={tile ? 'px-sm' : undefined}
       tone={tone}
     >
-      {hasMedia ? (
+      {isStackedTile ? (
+        stackedContent
+      ) : hasMedia ? (
         <>
           <View style={mediaBleedStyle}>{media}</View>
           <View className={ROW_CLASS_NAME}>{rowContent}</View>
