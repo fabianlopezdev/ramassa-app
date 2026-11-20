@@ -1,33 +1,67 @@
 /**
- * Edit and Delete under her own forum post, the confirmation before it is
- * deleted, and the error when either fails (RAPP-884). The screen keeps the
- * state; this only draws it inside the post's body column.
+ * Her own forum post's actions (RAPP-884). Delete and edit are small icon
+ * buttons at the start of the post's action row, before reply, with delete
+ * furthest from reply so a missed tap does not reach it; the confirmation
+ * before deleting and the error when either fails sit under the row. The
+ * screen keeps the state; these only draw it.
  */
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { OWN_POST_HIT_SLOPS } from '@/components/forum/forum-thread-message';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
-export const ForumOwnPostActions = memo(function ForumOwnPostActions({
-  showsActions,
-  isConfirmingDelete,
+export const ForumOwnPostIcons = memo(function ForumOwnPostIcons({
   isOnline,
   isDeleting,
   onEdit,
   onAskDelete,
+}: {
+  readonly isOnline: boolean;
+  readonly isDeleting: boolean;
+  readonly onEdit: () => void;
+  readonly onAskDelete: () => void;
+}) {
+  const { t } = useTranslation('forum');
+  return (
+    <>
+      <RaisedActionButton
+        testID="forum-delete"
+        size="compact"
+        icon="trash"
+        tone="danger"
+        isLabelHidden
+        iconFace="small"
+        hitSlop={OWN_POST_HIT_SLOPS.delete}
+        label={t('delete')}
+        onPress={onAskDelete}
+        isDisabled={!isOnline || isDeleting}
+      />
+      <RaisedActionButton
+        testID="forum-edit"
+        size="compact"
+        icon="pencil"
+        isLabelHidden
+        hitSlop={OWN_POST_HIT_SLOPS.edit}
+        label={t('edit')}
+        onPress={onEdit}
+        isDisabled={!isOnline}
+      />
+    </>
+  );
+});
+
+export const ForumOwnPostActions = memo(function ForumOwnPostActions({
+  isConfirmingDelete,
+  isDeleting,
   onCancelDelete,
   onConfirmDelete,
   errorMessage,
   languageFontClass,
 }: {
-  /** Edit and Delete show on her own post while she is not editing or confirming. */
-  readonly showsActions: boolean;
   readonly isConfirmingDelete: boolean;
-  readonly isOnline: boolean;
   readonly isDeleting: boolean;
-  readonly onEdit: () => void;
-  readonly onAskDelete: () => void;
   readonly onCancelDelete: () => void;
   readonly onConfirmDelete: () => void;
   readonly errorMessage: string | null;
@@ -36,27 +70,6 @@ export const ForumOwnPostActions = memo(function ForumOwnPostActions({
   const { t } = useTranslation('forum');
   return (
     <>
-      {showsActions ? (
-        <View className="flex-row gap-sm">
-          <View className="flex-1">
-            <RaisedActionButton
-              testID="forum-edit"
-              label={t('edit')}
-              onPress={onEdit}
-              isDisabled={!isOnline}
-            />
-          </View>
-          <View className="flex-1">
-            <RaisedActionButton
-              testID="forum-delete"
-              tone="danger"
-              label={t('delete')}
-              onPress={onAskDelete}
-              isDisabled={!isOnline || isDeleting}
-            />
-          </View>
-        </View>
-      ) : null}
       {!isConfirmingDelete ? null : (
         <View
           accessibilityRole="alert"

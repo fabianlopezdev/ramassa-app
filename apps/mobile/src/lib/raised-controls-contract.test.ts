@@ -90,7 +90,8 @@ test('the list of flat leftovers only shrinks', () => {
 
 test('the shared pieces carry the relief', () => {
   const surface = read('components/forms/selection-choice-surface.tsx');
-  expect(surface).toContain('<RaisedSurfaceEdge />');
+  // The edge takes the face's corners, smaller on a small icon button (RAPP-884).
+  expect(surface).toContain('<RaisedSurfaceEdge shapeClassName={shapeClassName} />');
   for (const piece of [
     'components/forms/raised-action-button.tsx',
     'components/layout/raised-card.tsx',

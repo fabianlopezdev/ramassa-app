@@ -7,6 +7,7 @@ import {
   View,
   type AccessibilityActionEvent,
   type AccessibilityRole,
+  type Insets,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -49,6 +50,8 @@ interface PressableDepthProps {
   readonly faceStyle?: StyleProp<ViewStyle>;
   readonly inlineOffset: number;
   readonly blockOffset: number;
+  /** How far past its edges a touch still counts, for a small button. */
+  readonly hitSlop?: Insets;
   /** A fill that covers the face while it is held down, such as `bg-secondary`. */
   readonly pressedFillClassName?: string;
 }
@@ -105,6 +108,7 @@ function ModalPressableDepth({
   faceClassName,
   faceStyle,
   pressedFillClassName,
+  hitSlop,
 }: PressableDepthProps) {
   const handlePress = useCallback(() => {
     if (haptic !== undefined) playHaptic(haptic);
@@ -123,6 +127,7 @@ function ModalPressableDepth({
       }
       aria-checked={hasCheckedState(accessibilityRole) ? isSelected : undefined}
       onPress={handlePress}
+      hitSlop={hitSlop}
       className={`${className ?? ''} active:opacity-90`}
       style={style}
     >
@@ -163,6 +168,7 @@ function GesturePressableDepth({
   inlineOffset,
   blockOffset,
   pressedFillClassName,
+  hitSlop,
 }: PressableDepthProps) {
   const reduced = useReducedMotion();
   const pressed = useSharedValue(0);
@@ -181,7 +187,8 @@ function GesturePressableDepth({
   );
   const tap = useMemo(
     () =>
-      Gesture.Tap()
+      // A small button's touch reaches past its face; the others keep the default.
+      (hitSlop === undefined ? Gesture.Tap() : Gesture.Tap().hitSlop(hitSlop))
         .onBegin(() => {
           pressed.set(withTiming(1, pressInTiming));
         })
@@ -191,7 +198,7 @@ function GesturePressableDepth({
         .onEnd((_event, success) => {
           if (success) runOnJS(handlePress)();
         }),
-    [handlePress, pressed, pressInTiming, pressOutTiming],
+    [handlePress, hitSlop, pressed, pressInTiming, pressOutTiming],
   );
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [

@@ -5,32 +5,32 @@
  *
  * The author's avatar sits in a rail at the start. While the message has
  * answers below it, a line runs down from under the avatar, and the answers sit
- * indented under it by one rail. At each answer the line turns with a rounded
- * corner into that answer's avatar: a branch while more answers follow, its
- * end at the last one. Each row draws the pieces of the lines of the messages
+ * indented under it by one rail. At each answer the line sweeps round in one
+ * quarter circle into the middle of that answer's avatar: a branch while more
+ * answers follow, its end at the last one. Each row draws the pieces of the lines of the messages
  * above it (`rails`, decided by `threadRows`), and nothing pads the rows apart
  * from outside, so the pieces join into one continuous line from row to row.
  *
- * Report sits at the end of the author row and reply at the end under the
- * text, as raised buttons that show only their icon (the owner's choice for
- * this screen), each a full tap target with its long label for the screen reader.
+ * Under the text, at the end, the red report button and then reply: small
+ * raised buttons that show only their icon (the owner's choice for this
+ * screen), each a full tap target with its long label for the screen reader.
  */
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
-import { RAISED_ICON_BUTTON_HEIGHT } from '@/components/layout/raised-surface';
+import { raisedIconHitSlop, type RaisedIconFaceSize } from '@/components/layout/raised-surface';
 import { PERSON_AVATAR_SIZE, PersonAvatar } from '@/components/people/person-avatar';
 import type { ForumThreadRail } from '@/lib/forum-reply-thread';
 import { memo, useCallback, type ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { I18nManager, StyleSheet, Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
-// The author row is as tall as the report button beside the name, and the
-// avatar sits centred in a box of the same height, so avatar and name line up.
-const AUTHOR_ROW_HEIGHT = RAISED_ICON_BUTTON_HEIGHT;
+// The author row holds only the avatar and the name, so it is as tall as the
+// avatar, and the name sits level with the avatar's middle.
+const AVATAR_SIZE = PERSON_AVATAR_SIZE.small;
+const AUTHOR_ROW_HEIGHT = AVATAR_SIZE;
 // The same room above a message's content as below it, inside the row, so a
 // highlighted row sits evenly in its band. The lines run through this room.
-const ROW_PADDING = tokens.spacing.sm;
-const AVATAR_SIZE = PERSON_AVATAR_SIZE.small;
+const ROW_PADDING = tokens.spacing.xs;
 const LINE_WIDTH = tokens.forum.threadLineWidth;
 const LINE_COLOR = tokens.colors.neutral[300];
 // The line runs down the middle of the rail, under the middle of the avatar.
@@ -38,6 +38,43 @@ const LINE_START = (AVATAR_SIZE - LINE_WIDTH) / 2;
 const AVATAR_MIDDLE = ROW_PADDING + AUTHOR_ROW_HEIGHT / 2;
 // The rail and the avatar of the answer are this far apart (`gap-sm`).
 const RAIL_GAP = tokens.spacing.sm;
+// The turn into an answer's avatar runs from the line to the avatar's edge and
+// from the top of the row down to the avatar's middle; the curve takes the
+// largest quarter circle that fits both, so it sweeps round with no straight stub.
+const CORNER_WIDTH = AVATAR_SIZE - LINE_START + RAIL_GAP;
+const CORNER_HEIGHT = AVATAR_MIDDLE + LINE_WIDTH / 2;
+const CORNER_RADIUS = Math.min(CORNER_WIDTH, CORNER_HEIGHT);
+// Flag and reply sit as a pair, `gap-sm` apart. Each touch reaches half the gap
+// towards the other, so the two tap areas meet in its middle without
+// overlapping, and the rest of each full tap target reaches away from the pair.
+const PAIR_HALF_GAP = tokens.spacing.sm / 2;
+// Her own post has three: delete, edit and reply, `gap-md` apart, so the
+// middle one's tap area (its face plus a half gap each side) still reaches a
+// full tap target across.
+const TRIO_HALF_GAP = tokens.spacing.md / 2;
+
+/** The start reach of a small icon button whose only neighbour sits at its end. */
+function startReachBeforeNeighbour(face: RaisedIconFaceSize, halfGap: number): number {
+  const even = raisedIconHitSlop(face, 0);
+  return (even.left ?? 0) + (even.right ?? 0) - halfGap;
+}
+
+const REPLY_HIT_SLOP = raisedIconHitSlop('regular', PAIR_HALF_GAP, I18nManager.isRTL);
+const FLAG_HIT_SLOP = raisedIconHitSlop(
+  'small',
+  startReachBeforeNeighbour('small', PAIR_HALF_GAP),
+  I18nManager.isRTL,
+);
+const TRIO_REPLY_HIT_SLOP = raisedIconHitSlop('regular', TRIO_HALF_GAP, I18nManager.isRTL);
+/** Where the touch of her own post's delete and edit buttons reaches (RAPP-884). */
+export const OWN_POST_HIT_SLOPS = {
+  delete: raisedIconHitSlop(
+    'small',
+    startReachBeforeNeighbour('small', TRIO_HALF_GAP),
+    I18nManager.isRTL,
+  ),
+  edit: raisedIconHitSlop('regular', TRIO_HALF_GAP, I18nManager.isRTL),
+} as const;
 const styles = StyleSheet.create({
   rail: { width: AVATAR_SIZE },
   avatarBox: { marginTop: ROW_PADDING, height: AUTHOR_ROW_HEIGHT, justifyContent: 'center' },
@@ -54,7 +91,7 @@ const styles = StyleSheet.create({
   // From under its own avatar to the bottom of the row, towards its answers.
   ownLine: {
     position: 'absolute',
-    top: AVATAR_MIDDLE + AVATAR_SIZE / 2,
+    top: ROW_PADDING + AVATAR_SIZE,
     bottom: 0,
     start: LINE_START,
     width: LINE_WIDTH,
@@ -66,11 +103,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     start: LINE_START,
-    width: AVATAR_SIZE - LINE_START + RAIL_GAP,
-    height: AVATAR_MIDDLE + LINE_WIDTH / 2,
+    width: CORNER_WIDTH,
+    height: CORNER_HEIGHT,
     borderStartWidth: LINE_WIDTH,
     borderBottomWidth: LINE_WIDTH,
-    borderBottomStartRadius: tokens.radius.md,
+    borderBottomStartRadius: CORNER_RADIUS,
     borderColor: LINE_COLOR,
   },
 });
@@ -107,6 +144,7 @@ export const ForumThreadMessage = memo(function ForumThreadMessage({
   replyLabel,
   isReplyDisabled,
   onReply,
+  startActions,
   children,
   footer,
 }: {
@@ -136,9 +174,14 @@ export const ForumThreadMessage = memo(function ForumThreadMessage({
   readonly isReplyDisabled: boolean;
   /** Null hides "Respon". */
   readonly onReply: ((id: string) => void) | null;
+  /**
+   * At the start of the action row in place of the flag, such as delete and
+   * edit on her own post; reply stays at the end.
+   */
+  readonly startActions?: ReactNode;
   /** In place of the text, such as the post's photo and text or its edit field. */
   readonly children?: ReactNode;
-  /** Under "Respon", such as the post's own Edit and Delete. */
+  /** Under the action row, such as the delete confirmation on her own post. */
   readonly footer?: ReactNode;
 }) {
   const flag = useCallback(() => onFlag?.(id), [onFlag, id]);
@@ -155,27 +198,14 @@ export const ForumThreadMessage = memo(function ForumThreadMessage({
           <PersonAvatar name={name} avatarKey={avatarKey} size="small" />
         </View>
       </View>
-      <View className="flex-1 gap-sm py-sm">
-        <View className="flex-row items-center gap-sm" style={styles.authorRow}>
+      <View className="flex-1 gap-sm py-xs">
+        <View className="justify-center" style={styles.authorRow}>
           <Text
             accessibilityLabel={authorLabel}
-            className={`flex-1 text-start text-md font-bold text-primary-dark ${languageFontClass}`}
+            className={`text-start text-md font-bold text-primary-dark ${languageFontClass}`}
           >
             {name}
           </Text>
-          {onFlag === null ? null : (
-            <View>
-              <RaisedActionButton
-                testID={kind === 'post' ? 'forum-flag-post' : `forum-flag-reply-${id}`}
-                size="compact"
-                icon="flag"
-                isLabelHidden
-                label={flagAccessibilityLabel}
-                onPress={flag}
-                isDisabled={isFlagDisabled}
-              />
-            </View>
-          )}
         </View>
         {children ??
           (content === null ? (
@@ -189,16 +219,44 @@ export const ForumThreadMessage = memo(function ForumThreadMessage({
               openLinkLabel={openLinkLabel}
             />
           ))}
-        {onReply === null ? null : (
-          <RaisedActionButton
-            testID={kind === 'post' ? 'forum-reply-post' : `forum-reply-to-${id}`}
-            size="compact"
-            icon="reply"
-            isLabelHidden
-            label={replyLabel}
-            onPress={reply}
-            isDisabled={isReplyDisabled}
-          />
+        {onFlag === null && onReply === null && startActions === undefined ? null : (
+          <View
+            className={`flex-row items-center justify-end ${startActions === undefined ? 'gap-sm' : 'gap-md'}`}
+          >
+            {startActions}
+            {onFlag === null || startActions !== undefined ? null : (
+              <RaisedActionButton
+                testID={kind === 'post' ? 'forum-flag-post' : `forum-flag-reply-${id}`}
+                size="compact"
+                icon="flag"
+                tone="danger"
+                isLabelHidden
+                iconFace="small"
+                hitSlop={onReply === null ? undefined : FLAG_HIT_SLOP}
+                label={flagAccessibilityLabel}
+                onPress={flag}
+                isDisabled={isFlagDisabled}
+              />
+            )}
+            {onReply === null ? null : (
+              <RaisedActionButton
+                testID={kind === 'post' ? 'forum-reply-post' : `forum-reply-to-${id}`}
+                size="compact"
+                icon="reply"
+                isLabelHidden
+                hitSlop={
+                  startActions !== undefined
+                    ? TRIO_REPLY_HIT_SLOP
+                    : onFlag === null
+                      ? undefined
+                      : REPLY_HIT_SLOP
+                }
+                label={replyLabel}
+                onPress={reply}
+                isDisabled={isReplyDisabled}
+              />
+            )}
+          </View>
         )}
         {footer}
       </View>

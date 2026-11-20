@@ -15,6 +15,7 @@ import {
   useWindowDimensions,
   View,
   type AccessibilityRole,
+  type Insets,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -89,15 +90,39 @@ export const RAISED_FACE_MIN_HEIGHT = tokens.tapTarget.recommended - shadowBlock
 export const RAISED_COMPACT_FACE_MIN_HEIGHT = tokens.tapTarget.min - shadowBlockOffset;
 
 /**
- * The square face of a raised button that shows only its icon (RAPP-884),
- * such as report and reply on a forum thread: at least a minimum tap target
- * across and down once its edge is added.
+ * The small square faces of a raised button that shows only its icon
+ * (RAPP-884), such as reply and, one size down, report on a forum thread, with
+ * smaller corners so they stay square buttons at these sizes.
  */
-export const RAISED_ICON_FACE_SIZE =
-  tokens.tapTarget.min - Math.min(shadowInlineOffset, shadowBlockOffset);
+export const RAISED_ICON_FACE_SIZES = {
+  regular: tokens.spacing.xl,
+  small: tokens.spacing.lg + tokens.spacing.xs,
+} as const;
+export type RaisedIconFaceSize = keyof typeof RAISED_ICON_FACE_SIZES;
+export const RAISED_ICON_SHAPE_CLASS_NAME = 'rounded-sm';
 
-/** The whole height of that button, its edge included. */
-export const RAISED_ICON_BUTTON_HEIGHT = RAISED_ICON_FACE_SIZE + shadowBlockOffset;
+/**
+ * How far the touch reaches past a small icon button, so its tap area is at
+ * least a minimum tap target across and down. Above and below it reaches
+ * evenly. Across, `startReach` sets the start side (for a button whose
+ * neighbour sits at its start) and the end side takes the rest; without it,
+ * both sides reach evenly. Start and end turn round when `isRightToLeft`.
+ */
+export function raisedIconHitSlop(
+  face: RaisedIconFaceSize,
+  startReach?: number,
+  isRightToLeft = false,
+): Insets {
+  const width = RAISED_ICON_FACE_SIZES[face] + shadowInlineOffset;
+  const height = RAISED_ICON_FACE_SIZES[face] + shadowBlockOffset;
+  const across = tokens.tapTarget.min - width;
+  const start = startReach ?? Math.ceil(across / 2);
+  const end = Math.max(0, across - start);
+  const vertical = Math.ceil((tokens.tapTarget.min - height) / 2);
+  return isRightToLeft
+    ? { top: vertical, bottom: vertical, left: end, right: start }
+    : { top: vertical, bottom: vertical, left: start, right: end };
+}
 
 /**
  * The face of a raised choice (a picker card, the segmented control): as tall

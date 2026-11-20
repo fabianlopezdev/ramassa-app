@@ -3,7 +3,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ForumFlagDialog } from '@/components/forum/forum-flag-dialog';
-import { ForumOwnPostActions } from '@/components/forum/forum-own-post-actions';
+import { ForumOwnPostActions, ForumOwnPostIcons } from '@/components/forum/forum-own-post-actions';
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
 import { ForumReplyComposer } from '@/components/forum/forum-reply-composer';
 import { ForumThreadMessage } from '@/components/forum/forum-thread-message';
@@ -478,14 +478,20 @@ export default function ForumPostDetailScreen() {
                   ? openReply
                   : null
               }
+              startActions={
+                isOwnPost && !isEditing && !isConfirmingDelete ? (
+                  <ForumOwnPostIcons
+                    isOnline={isOnline}
+                    isDeleting={deletePost.isPending}
+                    onEdit={beginEdit}
+                    onAskDelete={confirmDelete}
+                  />
+                ) : undefined
+              }
               footer={
                 <ForumOwnPostActions
-                  showsActions={isOwnPost && !isEditing && !isConfirmingDelete}
                   isConfirmingDelete={isConfirmingDelete}
-                  isOnline={isOnline}
                   isDeleting={deletePost.isPending}
-                  onEdit={beginEdit}
-                  onAskDelete={confirmDelete}
                   onCancelDelete={cancelDelete}
                   onConfirmDelete={performDelete}
                   errorMessage={postErrorMessage}
