@@ -89,6 +89,14 @@ export const RAISED_FACE_MIN_HEIGHT = tokens.tapTarget.recommended - shadowBlock
 export const RAISED_COMPACT_FACE_MIN_HEIGHT = tokens.tapTarget.min - shadowBlockOffset;
 
 /**
+ * The square face of a raised button that shows only its icon (RAPP-884),
+ * such as report and reply on a forum thread: at least a minimum tap target
+ * across and down once its edge is added.
+ */
+export const RAISED_ICON_FACE_SIZE =
+  tokens.tapTarget.min - Math.min(shadowInlineOffset, shadowBlockOffset);
+
+/**
  * The face of a raised choice (a picker card, the segmented control): as tall
  * as a form field once its edge is added, and taller with larger text.
  */

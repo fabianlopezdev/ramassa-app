@@ -15,6 +15,7 @@ import { Icon, type IconName } from '@/components/icons/icon';
 import {
   RAISED_COMPACT_FACE_MIN_HEIGHT,
   RAISED_FACE_MIN_HEIGHT,
+  RAISED_ICON_FACE_SIZE,
 } from '@/components/layout/raised-surface';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -29,6 +30,11 @@ const compactFaceStyle = {
 const fitFaceStyle = {
   ...continuousCorners,
   minHeight: RAISED_FACE_MIN_HEIGHT,
+} as const;
+const iconFaceStyle = {
+  ...continuousCorners,
+  width: RAISED_ICON_FACE_SIZE,
+  height: RAISED_ICON_FACE_SIZE,
 } as const;
 const wordSizedFaceStyles = { compact: compactFaceStyle, fit: fitFaceStyle } as const;
 
@@ -46,6 +52,7 @@ export function RaisedActionButton({
   size = 'full',
   icon,
   tone = 'brand',
+  isLabelHidden = false,
   isDisabled = false,
 }: {
   readonly label: string;
@@ -58,6 +65,12 @@ export function RaisedActionButton({
   /** An icon before the words. */
   readonly icon?: IconName;
   readonly tone?: keyof typeof toneStyles;
+  /**
+   * The icon alone on a square face (RAPP-884), with `label` read by the screen
+   * reader. Only where the owner chose it: the forum thread's report, reply and
+   * close buttons.
+   */
+  readonly isLabelHidden?: boolean;
   /** While its action runs, or until it may run, a press does nothing and the button dims. */
   readonly isDisabled?: boolean;
 }) {
@@ -67,6 +80,7 @@ export function RaisedActionButton({
     if (!isDisabled) onPress();
   }, [isDisabled, onPress]);
   const isWordSized = size !== 'full';
+  const isIconOnly = isLabelHidden && icon !== undefined;
   return (
     <SelectionChoiceSurface
       label={accessibilityLabel ?? label}
@@ -74,8 +88,10 @@ export function RaisedActionButton({
       onPress={handlePress}
       testID={testID}
       className={`${isWordSized ? 'self-end' : ''} ${isDisabled ? 'opacity-50' : ''}`}
-      paddingClassName={isWordSized ? 'px-md' : undefined}
-      rowStyle={size === 'full' ? undefined : wordSizedFaceStyles[size]}
+      paddingClassName={isIconOnly ? 'px-0' : isWordSized ? 'px-md' : undefined}
+      rowStyle={
+        isIconOnly ? iconFaceStyle : size === 'full' ? undefined : wordSizedFaceStyles[size]
+      }
       contentClassName="flex-row items-center justify-center gap-sm"
       tone={styles.wash}
     >
@@ -83,15 +99,17 @@ export function RaisedActionButton({
         <Icon
           name={icon}
           weight="boldDuotone"
-          size={isWordSized ? tokens.fontSize.xl : tokens.fontSize['2xl']}
+          size={isWordSized && !isIconOnly ? tokens.fontSize.xl : tokens.fontSize['2xl']}
           color={styles.icon}
         />
       )}
-      <Text
-        className={`text-center ${isWordSized ? 'text-md font-bold' : 'text-form font-medium'} ${styles.text} ${fontClass}`}
-      >
-        {label}
-      </Text>
+      {isIconOnly ? null : (
+        <Text
+          className={`text-center ${isWordSized ? 'text-md font-bold' : 'text-form font-medium'} ${styles.text} ${fontClass}`}
+        >
+          {label}
+        </Text>
+      )}
     </SelectionChoiceSurface>
   );
 }

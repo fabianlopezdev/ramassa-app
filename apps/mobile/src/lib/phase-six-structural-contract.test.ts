@@ -70,12 +70,12 @@ describe('Phase 6 structural polish contract', () => {
   });
 
   test('numeric forum and upload displays use tabular numerals', async () => {
-    const forumDetail = await readMobileSource('app/(app)/forum/[id].tsx');
+    const forumReplyComposer = await readMobileSource('components/forum/forum-reply-composer.tsx');
     const galleryUpload = await readMobileSource('app/(app)/gallery/upload.tsx');
 
     // The post screen has no reply count since it reads as a thread (RAPP-884);
     // the characters left under her answer are the number it shows.
-    expect(forumDetail).toContain('text-end text-sm tabular-nums text-neutral-600');
+    expect(forumReplyComposer).toContain('text-end text-sm tabular-nums text-neutral-600');
     expect(galleryUpload).toContain('text-sm tabular-nums text-neutral-700');
   });
 

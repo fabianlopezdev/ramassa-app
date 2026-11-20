@@ -1967,7 +1967,7 @@ values
     '5eed0000-0000-4000-8010-000000000001',
     '5eed0000-0000-4000-8000-000000000012',
     'pending',
-    'Conec un restaurant que busca ajuda. T envio el contacte.',
+    'Conec un restaurant que busca ajuda. T''envio el contacte.',
     now() - interval '1 day'
   ),
   (

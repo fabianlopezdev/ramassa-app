@@ -96,7 +96,7 @@ describe('threadRows (RAPP-884)', () => {
     expect(threadRows([])).toEqual([]);
   });
 
-  test('each answer is one row, with the lines of the messages above it beside it', () => {
+  test('each answer is one row: a branch off the line above it, or the corner where that line ends', () => {
     const thread = buildReplyThread([
       reply('a', '2026-11-20T09:00:00Z', null, { author_first_name: 'Amina' }),
       reply('a-1', '2026-11-20T09:10:00Z', 'a'),
@@ -105,22 +105,22 @@ describe('threadRows (RAPP-884)', () => {
       reply('b-1', '2026-11-20T09:40:00Z', 'b'),
     ]);
     expect(rowShape(threadRows(thread))).toEqual([
-      ['a', 1, ['through'], true, null],
-      ['a-1', 2, ['through', 'through'], false, 'Amina'],
-      ['a-2', 2, ['through', 'end'], false, 'Amina'],
-      ['b', 1, ['end'], true, null],
-      ['b-1', 2, ['none', 'end'], false, 'Laia'],
+      ['a', 1, ['branch'], true, null],
+      ['a-1', 2, ['through', 'branch'], false, 'Amina'],
+      ['a-2', 2, ['through', 'corner'], false, 'Amina'],
+      ['b', 1, ['corner'], true, null],
+      ['b-1', 2, ['none', 'corner'], false, 'Laia'],
     ]);
   });
 
-  test('the last answer to the post ends the post line at its avatar', () => {
+  test('the last answer to the post ends the post line in a corner into its avatar', () => {
     const thread = buildReplyThread([
       reply('a', '2026-11-20T09:00:00Z'),
       reply('b', '2026-11-20T09:30:00Z'),
     ]);
     expect(rowShape(threadRows(thread))).toEqual([
-      ['a', 1, ['through'], false, null],
-      ['b', 1, ['end'], false, null],
+      ['a', 1, ['branch'], false, null],
+      ['b', 1, ['corner'], false, null],
     ]);
   });
 });

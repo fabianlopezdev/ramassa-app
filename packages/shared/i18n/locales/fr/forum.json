@@ -49,7 +49,6 @@
   "imageAlt": "Photo partagée par {{name}}",
   "openLink": "Ouvre le lien {{url}}",
   "flag": "Préviens l’équipe technique",
-  "flagShort": "Préviens",
   "flagPost": "Préviens l’équipe technique à propos de cette publication",
   "flagReply": "Préviens l’équipe technique à propos de cette réponse",
   "flagTitle": "Que se passe-t-il ?",

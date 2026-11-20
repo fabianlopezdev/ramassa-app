@@ -47,11 +47,15 @@ export function buildReplyThread(
 }
 
 /**
- * How the line of a message above passes beside a row: down the whole row,
- * down to the row's avatar and no further (its last answer), or not at all
- * (its answers ended in an earlier row).
+ * How the line of a message above passes beside a row (RAPP-884):
+ * - `branch`: the line of the message it answers runs on down, and a rounded
+ *   branch leaves it for this row's avatar (an answer with more after it);
+ * - `corner`: that line ends here, turning with a rounded corner into this
+ *   row's avatar (the last answer);
+ * - `through`: the line of a message further up passes straight beside it;
+ * - `none`: nothing passes beside it.
  */
-export type ForumThreadRail = 'through' | 'end' | 'none';
+export type ForumThreadRail = 'branch' | 'corner' | 'through' | 'none';
 
 /** One answer as one row of the post screen's list (RAPP-884). */
 export interface ForumThreadRow {
@@ -76,7 +80,7 @@ export function threadRows(thread: readonly ForumReplyThreadEntry[]): readonly F
     const answerRow: ForumThreadRow = {
       reply,
       level: 1,
-      rails: [isLastAnswer ? 'end' : 'through'],
+      rails: [isLastAnswer ? 'corner' : 'branch'],
       hasAnswersBelow: children.length > 0,
       answersTo: null,
     };
@@ -85,7 +89,7 @@ export function threadRows(thread: readonly ForumReplyThreadEntry[]): readonly F
       level: 2,
       rails: [
         isLastAnswer ? 'none' : 'through',
-        childIndex === children.length - 1 ? 'end' : 'through',
+        childIndex === children.length - 1 ? 'corner' : 'branch',
       ],
       hasAnswersBelow: false,
       answersTo: reply.author_first_name,
