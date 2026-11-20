@@ -162,9 +162,6 @@ function Exports({ permissions }: { readonly permissions: ReadonlySet<Permission
 
   return (
     <ScreenSection testID="data-exports" title={t('exportTitle')}>
-      <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-        {t('exportDescription')}
-      </Text>
       <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
         {t('exportDataset')}
       </Text>
@@ -298,9 +295,6 @@ function AuditLog() {
 
   return (
     <ScreenSection testID="data-audit" title={t('auditTitle')} isLast>
-      <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-        {t('auditRetention')}
-      </Text>
       <AuthTextField
         testID="audit-filter-action"
         label={t('auditAction')}

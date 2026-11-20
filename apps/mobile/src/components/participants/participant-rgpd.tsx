@@ -218,9 +218,6 @@ export function ParticipantRgpd({
 
   return (
     <ScreenSection testID="participant-rgpd" title={t('rgpdSectionTitle')}>
-      <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-        {t('rgpdSectionHint')}
-      </Text>
       {reason === undefined ? null : (
         <View
           testID="rgpd-open-request"

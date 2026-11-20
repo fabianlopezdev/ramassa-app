@@ -377,9 +377,6 @@ export default function TeamStaffScreen() {
           </View>
 
           <ScreenSection title={t('team.presetsTitle')} isLast>
-            <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-              {t('team.presetsIntro')}
-            </Text>
             <PressableScale
               testID="preset-new"
               accessibilityRole="button"

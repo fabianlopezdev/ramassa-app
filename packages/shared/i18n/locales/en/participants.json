@@ -399,9 +399,7 @@
       "player_kit": "Player kit",
       "team_equipment": "Team material"
     },
-    "kindHint": "Player kit is handed to players and gets unit codes. Team material is counted.",
     "sizesLabel": "Sizes",
-    "sizesHint": "Leave empty for an item without sizes. A size that still has stock cannot be removed.",
     "noSizes": "No sizes",
     "addSize": "Add the size",
     "newSize": "New size",
@@ -415,7 +413,6 @@
       "on": "In use",
       "off": "Switched off"
     },
-    "activeHint": "A switched-off item leaves the lists and keeps its history.",
     "save": "Save the item",
     "saving": "Saving",
     "saveFailed": "The item was not saved. Try again.",

@@ -399,9 +399,7 @@
       "player_kit": "Equipación de jugadora",
       "team_equipment": "Material de equipo"
     },
-    "kindHint": "La equipación de jugadora se entrega a las jugadoras y lleva código de unidad. El material de equipo se cuenta.",
     "sizesLabel": "Tallas",
-    "sizesHint": "Déjalo vacío para un artículo sin tallas. Una talla que aún tiene stock no se puede quitar.",
     "noSizes": "Sin tallas",
     "addSize": "Añadir la talla",
     "newSize": "Talla nueva",
@@ -415,7 +413,6 @@
       "on": "En uso",
       "off": "Desactivado"
     },
-    "activeHint": "Un artículo desactivado sale de las listas y conserva su historial.",
     "save": "Guardar el artículo",
     "saving": "Guardando",
     "saveFailed": "El artículo no se ha guardado. Vuelve a intentarlo.",

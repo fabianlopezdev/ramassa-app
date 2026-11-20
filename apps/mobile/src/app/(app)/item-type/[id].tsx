@@ -160,9 +160,6 @@ export default function ItemTypeScreen() {
                   />
                 ))}
               </View>
-              <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-                {t('items.kindHint')}
-              </Text>
             </ScreenSection>
           )}
 
@@ -218,9 +215,6 @@ export default function ItemTypeScreen() {
                 </Text>
               </PressableScale>
             </View>
-            <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-              {t('items.sizesHint')}
-            </Text>
           </ScreenSection>
 
           <AuthTextField
@@ -276,9 +270,6 @@ export default function ItemTypeScreen() {
                 />
               ))}
             </View>
-            <Text className={`text-start text-sm text-neutral-600 ${fontClass}`}>
-              {t('items.activeHint')}
-            </Text>
           </ScreenSection>
 
           {error === null || errorMessage === null ? null : (
