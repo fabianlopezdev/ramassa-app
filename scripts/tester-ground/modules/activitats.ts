@@ -1,16 +1,13 @@
 /**
  * Tester ground, Activitats (RAPP-885): the activity categories, the
- * activities the four testers share, the companions' sign-ups that make the
- * counts look alive, the testers' own starting sign-ups and their attendance
- * at past sessions.
+ * activities the four testers share and the companions' sign-ups that make the
+ * counts look alive.
  *
- * What a tester finds (the rules live in `activities-attention.ts` and
+ * A tester starts from Onboarding, so she has no sign-up and no attendance of
+ * her own. What she finds (the rules live in `activities-attention.ts` and
  * `home-attention.ts` in the app):
- *   - Inici shows her next signed-up activity, else the earliest upcoming one.
- *     Testers 1 and 3 start with no active sign-up, so Inici shows the cooking
- *     workshop, new, and it adds 1 to the Inici number. Testers 2 and 4 start
- *     signed up for the Catalan conversation group, so Inici shows that one
- *     with her sign-up and adds nothing.
+ *   - Inici shows the earliest upcoming activity, the cooking workshop, new,
+ *     and it adds 1 to the Inici number.
  *   - Activitats counts the new activities except the one Inici counts, and
  *     each new activity says "Nou" on its first upcoming card.
  *
@@ -27,7 +24,6 @@ import {
   minutesAgo,
   ORG,
   TEAM,
-  TESTERS,
   uid,
   type Account,
   type GroundModule,
@@ -36,22 +32,11 @@ import {
   ACTIVITIES,
   CATEGORIES,
   type ActivityData,
-  type AttendanceStatus,
   type Published,
   type SignupState,
 } from './activitats/data';
 
 const NAME = 'activitats';
-/** Training sessions that took place after the testers joined (30 days before the run). */
-const FIRST_ATTENDED_DAY = -29;
-const TRAINING_STATUSES: readonly AttendanceStatus[] = [
-  'present',
-  'present',
-  'absent',
-  'present',
-  'excused',
-  'present',
-];
 
 const categoryId = (key: string) => uid(`${NAME}:category:${key}`);
 const eventId = (key: string) => uid(`${NAME}:event:${key}`);
@@ -59,7 +44,7 @@ const eventIds = () => ACTIVITIES.map((activity) => eventId(activity.key)).join(
 
 function publishedAt(published: Published): string {
   if (published === 'old') return daysFromNow(-45, '10:00');
-  // After the testers joined, before the record of what is seen started.
+  // Ten days back: before the testers were invited, so it counts as seen.
   if (published === 'recent') return daysFromNow(-10, '10:00');
   return minutesAgo(published);
 }
@@ -96,20 +81,6 @@ function companionSignups(): Signup[] {
       state: activeState(activity),
     })),
   );
-}
-
-function testerNumber(tester: Account): 1 | 2 | 3 | 4 {
-  const index = TESTERS.findIndex((candidate) => candidate.id === tester.id);
-  if (index < 0) throw new Error(`Not a tester: ${tester.key}`);
-  return (index + 1) as 1 | 2 | 3 | 4;
-}
-
-function testerSignups(tester: Account): Signup[] {
-  const number = testerNumber(tester);
-  return ACTIVITIES.flatMap((activity) => {
-    const state = activity.testers?.[number];
-    return state === undefined ? [] : [{ activity, account: tester, state }];
-  });
 }
 
 /** Upserts sign-ups; the database trigger keeps each activity's count of places. */
@@ -199,100 +170,17 @@ on conflict (id) do update set
   expires_at = null;`;
 }
 
-interface Mark {
-  readonly activity: ActivityData;
-  readonly day: number;
-  readonly tester: Account;
-  readonly status: AttendanceStatus;
-}
-
-function attendanceMarks(): Mark[] {
-  const marks: Mark[] = [];
-  for (const activity of ACTIVITIES) {
-    const sessionDays = Array.from(
-      { length: activity.weeklyCount ?? 1 },
-      (_unused, week) => activity.day + week * 7,
-    );
-    TESTERS.forEach((tester, testerIndex) => {
-      const number = (testerIndex + 1) as 1 | 2 | 3 | 4;
-      const oneOff = activity.attendance?.[number];
-      if (oneOff !== undefined) {
-        marks.push({ activity, day: activity.day, tester, status: oneOff });
-        return;
-      }
-      if (activity.weeklyCount === undefined) return;
-      sessionDays
-        .filter((day) => day >= FIRST_ATTENDED_DAY && day < 0)
-        .forEach((day, session) => {
-          const status = TRAINING_STATUSES[(session + testerIndex) % TRAINING_STATUSES.length];
-          if (status !== undefined) marks.push({ activity, day, tester, status });
-        });
-    });
-  }
-  return marks;
-}
-
-/**
- * Attendance is marked the way the app marks it: by a staff member with the
- * `attendance.mark` permission, whose identity the attendance trigger reads
- * from the request claims. The claims are set for this block only and put
- * back afterwards. Without that permission the marks are skipped with a
- * notice, and everything else stays published.
- */
-function attendanceSql(): string {
-  const rows = attendanceMarks().map(
-    ({ activity, day, tester, status }) =>
-      `      (${uid(`${NAME}:attendance:${activity.key}:${day}:${tester.key}`)}, ${eventId(activity.key)}, ${daysFromNow(day, '00:00')}, ${lit(tester.id)}::uuid, ${lit(status)})`,
-  );
-  return `do $attendance$
-declare
-  previous_claims text := current_setting('request.jwt.claims', true);
-begin
-  perform set_config(
-    'request.jwt.claims',
-    jsonb_build_object(
-      'sub', ${lit(TEAM.id)},
-      'role', 'authenticated',
-      'aal', 'aal2',
-      'iat', floor(extract(epoch from now()))::bigint + 60
-    )::text,
-    true
-  );
-  if (select public.has_permission('attendance.mark')) then
-    insert into public.attendance (id, org_id, occurrence_id, player_id, status, marked_at)
-    select mark.id, occurrence.org_id, occurrence.id, mark.player_id, mark.status, now()
-    from (
-      values
-${rows.join(',\n')}
-    ) as mark (id, event_id, day_start, player_id, status)
-    -- Matched by day: weekly sessions keep their Barcelona time across the
-    -- change of summer time, so their UTC hour moves.
-    join public.event_occurrences as occurrence
-      on occurrence.event_id = mark.event_id
-     and occurrence.starts_at >= mark.day_start
-     and occurrence.starts_at < mark.day_start + interval '1 day'
-    on conflict (occurrence_id, player_id) do nothing;
-  else
-    raise notice 'activitats: % cannot mark attendance, so no attendance was recorded', ${lit(TEAM.email)};
-  end if;
-  perform set_config('request.jwt.claims', coalesce(previous_claims, ''), true);
-end;
-$attendance$;`;
-}
-
 const activitats: GroundModule = {
   name: NAME,
   order: 30,
 
   publish() {
     return [
-      `-- ${NAME}: categories, activities, sign-ups and attendance`,
+      `-- ${NAME}: categories, activities and the companions' sign-ups`,
       quietPushSql(),
       categoriesSql(),
       eventsSql(),
       signupsSql(companionSignups()),
-      ...TESTERS.map((tester) => signupsSql(testerSignups(tester))),
-      attendanceSql(),
     ]
       .filter((statement) => statement !== '')
       .join('\n\n');
@@ -312,14 +200,12 @@ delete from public.push_publications where content_type = 'event' and content_id
   },
 
   renew(tester) {
-    // Her answers go back to how publish() left them. The runner already
+    // Back to how publish() left her: no sign-up of her own. The runner already
     // deletes the records of what she opened and which lists she saw.
     return `-- ${NAME}: renew ${tester.key}
 delete from public.event_signups
 where player_id = ${lit(tester.id)}::uuid
-  and event_id in (${eventIds()});
-
-${signupsSql(testerSignups(tester))}`.trimEnd();
+  and event_id in (${eventIds()});`;
   },
 };
 

@@ -121,15 +121,13 @@ export const CATEGORIES: readonly CategoryData[] = [
 ];
 
 export type SignupState = 'interested' | 'confirmed' | 'cancelled';
-export type AttendanceStatus = 'present' | 'absent' | 'excused';
 
 /**
- * When an activity was published. `old` is before the testers joined, so it
- * never says "Nou". `recent` is after they joined and before the record of
- * what is seen started, which also counts as seen. A number is minutes before
- * the run: new to every tester who has not dealt with it. Keep these small:
- * on a database where the record of what is seen started minutes earlier,
- * anything published before that start counts as seen.
+ * When an activity was published. `old` (45 days back) and `recent` (10 days
+ * back) are before the testers were invited, so they never say "Nou". A
+ * number is minutes before the run: new to every tester who has not dealt
+ * with it. Keep these small: they must stay later than the moment the testers
+ * were invited (two hours before the run, see accounts.ts).
  */
 export type Published = 'old' | 'recent' | number;
 
@@ -151,14 +149,10 @@ export interface ActivityData {
   readonly published: Published;
   /** How many companions answered, in the activity's own signup state. */
   readonly companions: number;
-  /** Sign-ups of the testers by tester number (1 to 4). */
-  readonly testers?: Readonly<Partial<Record<1 | 2 | 3 | 4, SignupState>>>;
-  /** Attendance per tester for a past session, by tester number. */
-  readonly attendance?: Readonly<Record<1 | 2 | 3 | 4, AttendanceStatus>>;
 }
 
 export const ACTIVITIES: readonly ActivityData[] = [
-  // Past activities, with attendance in "La meva assistència".
+  // Past activities, before the testers were invited.
   {
     key: 'amistos',
     category: 'entrenaments',
@@ -186,8 +180,6 @@ export const ACTIVITIES: readonly ActivityData[] = [
     signupMode: 'confirm',
     published: 'old',
     companions: 6,
-    testers: { 1: 'confirmed', 2: 'confirmed', 3: 'confirmed', 4: 'confirmed' },
-    attendance: { 1: 'present', 2: 'present', 3: 'present', 4: 'present' },
   },
   {
     key: 'primers-auxilis',
@@ -216,8 +208,6 @@ export const ACTIVITIES: readonly ActivityData[] = [
     signupMode: 'confirm',
     published: 'old',
     companions: 4,
-    testers: { 1: 'confirmed', 2: 'confirmed', 3: 'confirmed', 4: 'confirmed' },
-    attendance: { 1: 'present', 2: 'excused', 3: 'absent', 4: 'present' },
   },
   {
     key: 'sopar',
@@ -246,11 +236,9 @@ export const ACTIVITIES: readonly ActivityData[] = [
     signupMode: 'interest',
     published: 'old',
     companions: 6,
-    testers: { 1: 'interested', 2: 'interested', 3: 'interested', 4: 'interested' },
-    attendance: { 1: 'present', 2: 'present', 3: 'present', 4: 'absent' },
   },
 
-  // The weekly training, published before the testers joined: never "Nou".
+  // The weekly training, published before the testers were invited: never "Nou".
   {
     key: 'entrenament-setmanal',
     category: 'entrenaments',
@@ -368,7 +356,6 @@ export const ACTIVITIES: readonly ActivityData[] = [
     signupMode: 'confirm',
     published: 'recent',
     companions: 3,
-    testers: { 2: 'confirmed', 4: 'confirmed' },
   },
   {
     key: 'portes-obertes',
@@ -455,7 +442,6 @@ export const ACTIVITIES: readonly ActivityData[] = [
     signupMode: 'interest',
     published: 5,
     companions: 2,
-    testers: { 2: 'interested', 4: 'interested' },
   },
   {
     // Four weekly sessions: one card per session, "Nou" on the first only.
@@ -515,7 +501,6 @@ export const ACTIVITIES: readonly ActivityData[] = [
     signupMode: 'confirm',
     published: 3,
     companions: 5,
-    testers: { 1: 'cancelled', 3: 'cancelled' },
   },
   {
     key: 'curriculum',

@@ -3,6 +3,7 @@
  *
  *   bun run tester-ground seed                 publish every module
  *   bun run tester-ground renew <1-4|all>      make things new again for a tester
+ *   bun run tester-ground restart <1-4|all>    a tester back to the start of Onboarding, things new again
  *   bun run tester-ground remove               delete everything the modules created
  *   bun run tester-ground print <command> ...  write that command's SQL to a file, run nothing
  *
@@ -22,6 +23,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { SQL } from 'bun';
 import { lit, TESTERS, type Account, type GroundModule } from './lib/ground';
+import { restartTester } from './modules/accounts';
 import { MODULES } from './modules/index';
 
 const STAGING_PROJECT_REF = 'lzxqzpwetvvmybzbigly';
@@ -46,7 +48,11 @@ const READ_TABLES = [
 type Command =
   | { readonly kind: 'seed' }
   | { readonly kind: 'remove' }
-  | { readonly kind: 'renew'; readonly testers: readonly Account[]; readonly label: string };
+  | {
+      readonly kind: 'renew' | 'restart';
+      readonly testers: readonly Account[];
+      readonly label: string;
+    };
 
 interface Options {
   readonly staging: boolean;
@@ -92,14 +98,16 @@ function parseArgs(argv: readonly string[]): {
 
 function parseCommand(name: string | undefined, target: string | undefined): Command {
   if (name === 'seed' || name === 'remove') return { kind: name };
-  if (name === 'renew') {
-    if (target === 'all') return { kind: 'renew', testers: TESTERS, label: 'all' };
+  if (name === 'renew' || name === 'restart') {
+    if (target === 'all') return { kind: name, testers: TESTERS, label: 'all' };
     const tester = TESTERS[Number(target) - 1];
     if (tester === undefined || !/^[1-4]$/.test(target ?? ''))
-      fail('renew takes 1, 2, 3, 4 or all');
-    return { kind: 'renew', testers: [tester], label: target as string };
+      fail(`${name} takes 1, 2, 3, 4 or all`);
+    return { kind: name, testers: [tester], label: target as string };
   }
-  return fail('usage: run.ts seed | renew <1-4|all> | remove | print <command> [flags]');
+  return fail(
+    'usage: run.ts seed | renew <1-4|all> | restart <1-4|all> | remove | print <command> [flags]',
+  );
 }
 
 // SQL --------------------------------------------------------------------------------------
@@ -128,12 +136,17 @@ function buildSql(command: Command): string {
     for (const m of modules.reverse()) parts.push(section(m, 'remove', m.remove()));
   } else {
     for (const tester of command.testers) {
+      // restart: first back to the start of Onboarding, then everything new again as renew.
+      if (command.kind === 'restart') parts.push(restartTester(tester));
       parts.push(forgetWhatSheSaw(tester));
       for (const m of modules)
         parts.push(section(m, `renew ${tester.key}`, m.renew?.(tester) ?? ''));
     }
   }
-  const title = command.kind === 'renew' ? `renew ${command.label}` : command.kind;
+  const title =
+    command.kind === 'renew' || command.kind === 'restart'
+      ? `${command.kind} ${command.label}`
+      : command.kind;
   return `-- Tester ground (RAPP-885): ${title}\n\n${parts.filter((p) => p !== '').join('\n')}`;
 }
 
@@ -251,7 +264,10 @@ const { print, command, options } = parseArgs(process.argv.slice(2));
 const sql = resolveImages(buildSql(command), options);
 
 if (print) {
-  const name = command.kind === 'renew' ? `renew-${command.label}` : command.kind;
+  const name =
+    command.kind === 'renew' || command.kind === 'restart'
+      ? `${command.kind}-${command.label}`
+      : command.kind;
   const out = resolve(options.out ?? `tester-ground-${name}.sql`);
   writeFileSync(out, sql);
   console.log(`tester-ground: wrote ${out}`);

@@ -6,11 +6,11 @@
  *   pill shows a number and every card says "Nou"; two published before she
  *   joined, so the list also shows avisos she has already seen.
  * - Per fer: three forms built on the form engine and sent to the four testers
- *   by name. Two wait in Per fer; the third is already put off with "Ara no",
- *   so it waits in her later list. A form keeps no half answers (RAPP-825), so
- *   the started state ("Continua") lives on a survey.
- * - Surveys: two, sent to a group that holds the four testers. One she has not
- *   opened, one she started and left half way.
+ *   by name. All three wait in Per fer: a tester starts from Onboarding, so she
+ *   has put nothing off with "Ara no" yet.
+ * - Surveys: two, sent to a group that holds the four testers. She has opened
+ *   neither. They reach her once she has finished Onboarding, because a survey
+ *   goes to players (private.matches_notification_audience).
  *
  * The next activity card belongs to the Activitats module.
  */

@@ -1052,11 +1052,3 @@ export const SERVICES: readonly ServiceSeed[] = [
     },
   },
 ];
-
-/** The service each tester has marked "Interès desat" on, by tester number. */
-export const SAVED_INTEREST_BY_TESTER: readonly string[] = [
-  'housing-shared-room',
-  'language-catalan-morning',
-  'job-cv-workshop',
-  'health-women-clinic',
-];

@@ -3,8 +3,8 @@
  * posts and replies, the gallery and the stories.
  *
  * What a tester sees as new (`my_tab_news()`): seven of the ten forum posts,
- * three new replies on the post she wrote herself, nine of the twelve photos
- * and three of the four stories. The rest is dated days back, before she could
+ * nine of the twelve photos and three of the four stories. A tester starts
+ * from Onboarding, so she has no post of her own. The rest is dated days back, before she could
  * count it as new, so the lists also show things she has already seen.
  */
 
@@ -29,16 +29,12 @@ import {
   GALLERY_ITEMS,
   STORIES,
   STORY_CATEGORY,
-  TESTER_POSTS,
   type AuthorKey,
-  type ReplySeed,
 } from './comunitat/content';
 
 const MODULE = 'comunitat';
 const GALLERY_CONSENT_VERSION = 'gallery-consent-v1';
 const STORY_CONSENT_VERSION = 'story-publication-v1';
-/** Her own post was written some days after she joined (accounts join 30 days before the run). */
-const TESTER_POST_DAYS_AGO = 20;
 
 const AUTHORS: Readonly<Record<AuthorKey, Account>> = Object.fromEntries(
   [TEAM, ...COMPANIONS].map((account) => [account.key, account]),
@@ -60,7 +56,6 @@ const ids = {
   post: (key: string) => `${MODULE}:post:${key}`,
   reply: (key: string) => `${MODULE}:reply:${key}`,
   testerPost: (tester: Account) => `${MODULE}:tester-post:${tester.key}`,
-  testerReply: (tester: Account, key: string) => `${MODULE}:tester-reply:${tester.key}:${key}`,
   gallery: (image: string) => `${MODULE}:gallery:${image}`,
   storyCategory: () => `${MODULE}:story-category`,
   story: (key: string) => `${MODULE}:story:${key}`,
@@ -170,35 +165,6 @@ function companionReplyRows(): ReplyRow[] {
   );
 }
 
-function testerPostSeed(tester: Account) {
-  const seed = TESTER_POSTS[TESTERS.indexOf(tester)];
-  if (seed === undefined) throw new Error(`No forum post written for ${tester.key}`);
-  return seed;
-}
-
-function testerPostRow(tester: Account): PostRow {
-  const seed = testerPostSeed(tester);
-  return {
-    id: ids.testerPost(tester),
-    category: seed.category,
-    author: tester,
-    content: seed.content,
-    imageKey: null,
-    pinned: false,
-    at: `(now() - interval '${TESTER_POST_DAYS_AGO} days')`,
-  };
-}
-
-function testerReplyRows(tester: Account): ReplyRow[] {
-  return testerPostSeed(tester).replies.map((reply: ReplySeed) => ({
-    id: ids.testerReply(tester, reply.key),
-    postId: ids.testerPost(tester),
-    author: author(reply.author),
-    content: reply.content,
-    at: moment(reply),
-  }));
-}
-
 // --- Gallery -----------------------------------------------------------------------------------
 
 function gallerySql(): string {
@@ -275,8 +241,8 @@ function publish(): string {
   return [
     `-- ${MODULE}: forum categories, posts and replies, gallery, stories`,
     forumCategoriesSql(),
-    postsSql([...companionPostRows(), ...TESTERS.map(testerPostRow)]),
-    repliesSql([...companionReplyRows(), ...TESTERS.flatMap(testerReplyRows)]),
+    postsSql(companionPostRows()),
+    repliesSql(companionReplyRows()),
     gallerySql(),
     storyCategorySql(),
     storiesSql(),
@@ -286,14 +252,20 @@ function publish(): string {
 }
 
 function remove(): string {
-  // Deleting a post deletes every reply on it, a tester's included, with its
-  // reports and read records. A category goes only when nothing else sits in
-  // it: a post a tester wrote herself stays, and keeps its category.
+  // What the testers made while testing goes first: their posts, photos and
+  // stories, and the staff bell entries their reports raised. Deleting a post
+  // deletes every reply on it, with its reports and read records. A category
+  // goes only when nothing else sits in it.
+  const testers = TESTERS.map((tester) => uid(tester.key)).join(', ');
   return [
     `-- ${MODULE}: remove`,
-    `delete from public.forum_posts where id in (${uuidList(postSlugs)});`,
-    `delete from public.media_items where id in (${uuidList(gallerySlugs)});`,
-    `delete from public.knowledge_articles where id in (${uuidList(storySlugs)});`,
+    "delete from public.staff_notifications where event in ('forum_report', 'gallery_report')",
+    `  and source_id in (select id from public.forum_flags where flagger_id in (${testers}));`,
+    `delete from public.forum_posts where id in (${uuidList(postSlugs)}) or author_id in (${testers});`,
+    `delete from public.forum_replies where author_id in (${testers});`,
+    `delete from public.media_items where id in (${uuidList(gallerySlugs)}) or uploaded_by in (${testers});`,
+    `delete from public.knowledge_articles where id in (${uuidList(storySlugs)})`,
+    `  or (author_id in (${testers}) and content_type = 'participant_story');`,
     `delete from public.forum_categories as category where category.id in (${uuidList(forumCategorySlugs)})`,
     '  and not exists (select 1 from public.forum_posts as post where post.category_id = category.id);',
     `delete from public.knowledge_categories as category where category.id = ${uid(ids.storyCategory())}`,
@@ -301,24 +273,9 @@ function remove(): string {
   ].join('\n');
 }
 
-function renew(tester: Account): string {
-  // The runner clears her read and visit records, which makes every post,
-  // photo and story new again. What else waits for her is her own post with
-  // its three new replies: it comes back as published, visible and unedited.
-  const post = testerPostRow(tester);
-  const replies = testerReplyRows(tester);
-  return [
-    `-- ${MODULE}: renew ${tester.key}`,
-    postsSql([post]),
-    repliesSql(replies),
-    `update public.forum_posts set visibility = 'visible', content = ${lit(post.content)}, image_url = null`,
-    `  where id = ${uid(post.id)};`,
-    ...replies.map(
-      (reply) =>
-        `update public.forum_replies set visibility = 'visible', content = ${lit(reply.content)} where id = ${uid(reply.id)};`,
-    ),
-  ].join('\n');
-}
+// No renew: the runner clears what she opened, which makes every post, photo
+// and story new again, and nothing here is hers. A tester starts from
+// Onboarding, so she has written no post of her own.
 
-const comunitat: GroundModule = { name: MODULE, order: 40, publish, remove, renew };
+const comunitat: GroundModule = { name: MODULE, order: 40, publish, remove };
 export default comunitat;

@@ -1,7 +1,7 @@
 /**
  * Ajuda for the tester ground (RAPP-885): the eight service categories with
- * twenty services, the four guide categories with ten guides, and one saved
- * interest per tester. Most items are published minutes before the run, so
+ * twenty services and the four guide categories with ten guides. A tester
+ * starts from Onboarding, so she has saved no interest yet. Most items are published minutes before the run, so
  * they raise the numbers on Ajuda and carry "Nou"; a few are weeks old and
  * count as seen.
  */
@@ -13,25 +13,18 @@ import {
   minutesAgo,
   ORG,
   TEAM,
-  TESTERS,
   uid,
   type Account,
   type GroundModule,
 } from '../lib/ground';
 import { GUIDE_CATEGORIES, GUIDES, storedBody, type GuideSeed } from './ajuda/guides';
-import {
-  SAVED_INTEREST_BY_TESTER,
-  SERVICE_CATEGORIES,
-  SERVICES,
-  type ServiceSeed,
-} from './ajuda/services';
+import { SERVICE_CATEGORIES, SERVICES, type ServiceSeed } from './ajuda/services';
 
 const serviceCategoryId = (slug: string) => uid(`ajuda:service-category:${slug}`);
 const serviceId = (key: string) => uid(`ajuda:service:${key}`);
 const serviceImageId = (key: string) => uid(`ajuda:service-image:${key}`);
 const guideCategoryId = (slug: string) => uid(`ajuda:guide-category:${slug}`);
 const guideId = (key: string) => uid(`ajuda:guide:${key}`);
-const interestId = (tester: Account) => uid(`ajuda:interest:${tester.key}`);
 
 function publishedAt(published: ServiceSeed['published'] | GuideSeed['published']): string {
   return 'minutesAgo' in published
@@ -134,15 +127,6 @@ on conflict (id) do update set
   image_url = excluded.image_url, content_type = excluded.content_type;`;
 }
 
-/** Her "Interès desat" on one service; inserting it also gives staff the usual notice. */
-function savedInterestSql(tester: Account, index: number): string {
-  const key = SAVED_INTEREST_BY_TESTER[index];
-  if (key === undefined) throw new Error(`No saved interest for ${tester.key}`);
-  return `insert into public.service_interests (id, org_id, service_id, user_id)
-values (${interestId(tester)}, ${ORG}, ${serviceId(key)}, ${uid(tester.key)})
-on conflict do nothing;`;
-}
-
 /** Drops her interests on these services and the staff notices they raised. */
 function clearInterestsSql(tester: Account): string {
   return `delete from public.service_submission_notifications
@@ -171,18 +155,13 @@ const ajuda: GroundModule = {
       '-- ajuda: guide categories and guides',
       guideCategoriesSql(),
       guidesSql(),
-      '-- ajuda: one saved interest per tester',
-      ...TESTERS.map(savedInterestSql),
     ].join('\n\n');
   },
 
   renew(tester) {
-    const index = TESTERS.findIndex((candidate) => candidate.id === tester.id);
-    return [
-      `-- ajuda: back to her saved interest only (${tester.key})`,
-      clearInterestsSql(tester),
-      savedInterestSql(tester, index),
-    ].join('\n\n');
+    // A tester starts from Onboarding with no saved interest, so renew takes
+    // away the ones she saved while testing.
+    return [`-- ajuda: no saved interest (${tester.key})`, clearInterestsSql(tester)].join('\n\n');
   },
 
   remove() {

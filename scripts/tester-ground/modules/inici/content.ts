@@ -432,7 +432,8 @@ export const FORMS: readonly Form[] = [
     key: 'season-party',
     section: 'support',
     mandatory: 'optional',
-    isPutOff: true,
+    // A tester starts from Onboarding, so she has put nothing off yet.
+    isPutOff: false,
     name: {
       ca: 'Idees per a la festa de final de temporada',
       es: 'Ideas para la fiesta de final de temporada',
@@ -718,7 +719,7 @@ export const SURVEYS: readonly Survey[] = [
         },
       },
     ],
-    startedAnswers: { rating: 4, 'brought-friend': true },
+    // A tester starts from Onboarding, so she has started no survey yet.
   },
 ];
 
