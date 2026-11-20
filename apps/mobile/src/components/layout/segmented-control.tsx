@@ -117,7 +117,10 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
       isSelected={isSelected}
       className="flex-1"
       faceStyle={faceStyle}
-      faceClassName={`relative flex-1 items-center justify-center overflow-hidden border-y border-s border-primary bg-white px-sm ${
+      // `grow`, with the height of its own content as the base: with `flex-1`
+      // the face could lose the height of an icon above its label when the
+      // list under the bar laid itself out again (RAPP-873).
+      faceClassName={`relative grow items-center justify-center overflow-hidden border-y border-s border-primary bg-white px-sm ${
         isStacked ? 'gap-md' : 'flex-row gap-sm py-xs'
       } ${isLast ? 'border-e' : ''}`}
       inlineOffset={isLast ? shadowInlineOffset : 0}
