@@ -11,13 +11,18 @@
  * above it (`rails`, decided by `threadRows`), and nothing pads the rows apart
  * from outside, so the pieces join into one continuous line from row to row.
  *
- * Under the text, at the end, the red report button and then reply: small
- * raised buttons that show only their icon (the owner's choice for this
- * screen), each a full tap target with its long label for the screen reader.
+ * Under the text, at the end, the red report button (the shared flag every
+ * report control uses, RAPP-892) and then reply: small raised buttons that
+ * show only their icon (the owner's choice for this screen), each a full tap
+ * target with its long label for the screen reader.
  */
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { ForumFlagButton } from '@/components/forum/forum-flag-button';
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
-import { raisedIconHitSlop, type RaisedIconFaceSize } from '@/components/layout/raised-surface';
+import {
+  raisedIconHitSlop,
+  raisedIconStartReachBeforeNeighbour,
+} from '@/components/layout/raised-surface';
 import { PERSON_AVATAR_SIZE, PersonAvatar } from '@/components/people/person-avatar';
 import type { ForumThreadRail } from '@/lib/forum-reply-thread';
 import { memo, useCallback, type ReactNode } from 'react';
@@ -53,24 +58,13 @@ const PAIR_HALF_GAP = tokens.spacing.sm / 2;
 // full tap target across.
 const TRIO_HALF_GAP = tokens.spacing.md / 2;
 
-/** The start reach of a small icon button whose only neighbour sits at its end. */
-function startReachBeforeNeighbour(face: RaisedIconFaceSize, halfGap: number): number {
-  const even = raisedIconHitSlop(face, 0);
-  return (even.left ?? 0) + (even.right ?? 0) - halfGap;
-}
-
 const REPLY_HIT_SLOP = raisedIconHitSlop('regular', PAIR_HALF_GAP, I18nManager.isRTL);
-const FLAG_HIT_SLOP = raisedIconHitSlop(
-  'small',
-  startReachBeforeNeighbour('small', PAIR_HALF_GAP),
-  I18nManager.isRTL,
-);
 const TRIO_REPLY_HIT_SLOP = raisedIconHitSlop('regular', TRIO_HALF_GAP, I18nManager.isRTL);
 /** Where the touch of her own post's delete and edit buttons reaches (RAPP-884). */
 export const OWN_POST_HIT_SLOPS = {
   delete: raisedIconHitSlop(
     'small',
-    startReachBeforeNeighbour('small', TRIO_HALF_GAP),
+    raisedIconStartReachBeforeNeighbour('small', TRIO_HALF_GAP),
     I18nManager.isRTL,
   ),
   edit: raisedIconHitSlop('regular', TRIO_HALF_GAP, I18nManager.isRTL),
@@ -225,15 +219,10 @@ export const ForumThreadMessage = memo(function ForumThreadMessage({
           >
             {startActions}
             {onFlag === null || startActions !== undefined ? null : (
-              <RaisedActionButton
+              <ForumFlagButton
                 testID={kind === 'post' ? 'forum-flag-post' : `forum-flag-reply-${id}`}
-                size="compact"
-                icon="flag"
-                tone="danger"
-                isLabelHidden
-                iconFace="small"
-                hitSlop={onReply === null ? undefined : FLAG_HIT_SLOP}
-                label={flagAccessibilityLabel}
+                endNeighbourHalfGap={onReply === null ? undefined : PAIR_HALF_GAP}
+                accessibilityLabel={flagAccessibilityLabel}
                 onPress={flag}
                 isDisabled={isFlagDisabled}
               />

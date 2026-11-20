@@ -125,6 +125,19 @@ export function raisedIconHitSlop(
 }
 
 /**
+ * The start reach of a small icon button whose only neighbour sits at its end,
+ * `halfGap` away: its touch reaches only half the gap towards the neighbour, and
+ * the rest of its full tap target reaches away from it, at the start.
+ */
+export function raisedIconStartReachBeforeNeighbour(
+  face: RaisedIconFaceSize,
+  halfGap: number,
+): number {
+  const even = raisedIconHitSlop(face, 0);
+  return (even.left ?? 0) + (even.right ?? 0) - halfGap;
+}
+
+/**
  * The face of a raised choice (a picker card, the segmented control): as tall
  * as a form field once its edge is added, and taller with larger text.
  */

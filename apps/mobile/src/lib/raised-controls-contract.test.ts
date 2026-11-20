@@ -120,3 +120,15 @@ test('the shared pieces carry the relief', () => {
   expect(read('components/equipment/choice-option.tsx')).toContain('<RaisedChip');
   expect(read('components/auth/selection-choice-card.tsx')).toContain('<SelectionChoiceSurface');
 });
+
+// A player reports something to the staff with one control (RAPP-892): the red
+// flag of the forum thread, also on a gallery photo or under a video. Only the
+// shared button draws the flag, so the screens that report cannot drift apart.
+test('every report control is the shared flag button', () => {
+  expect(read('components/forum/forum-thread-message.tsx')).toContain('<ForumFlagButton');
+  expect(read('app/(app)/gallery/[id].tsx')).toContain('<ForumFlagButton');
+  const drawFlag = [...sources('app'), ...sources('components')].filter((path) =>
+    read(path).includes('icon="flag"'),
+  );
+  expect(drawFlag).toEqual(['components/forum/forum-flag-button.tsx']);
+});

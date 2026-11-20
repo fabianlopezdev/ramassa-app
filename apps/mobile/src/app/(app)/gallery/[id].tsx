@@ -5,22 +5,32 @@ import {
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { ForumFlagButton } from '@/components/forum/forum-flag-button';
 import { ForumFlagDialog } from '@/components/forum/forum-flag-dialog';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { containedPictureCornerOffsets } from '@/lib/contained-picture-corner';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { useDeleteGalleryItem, useGalleryItem, useSetGalleryPrivacy } from '@/lib/player-gallery';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { Image } from 'expo-image';
+import { Image, type ImageLoadEventData } from 'expo-image';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type LayoutChangeEvent,
+  type ViewStyle,
+} from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import type { ForumFlagInput } from '@ramassa/shared/forum';
 import type { MediaPrivacy } from '@ramassa/shared/media';
@@ -28,6 +38,9 @@ import { tokens } from '@ramassa/shared/tokens';
 import { buildMediaObjectUrl } from '@ramassa/shared/upload-client';
 
 const GALLERY_MEDIA_ASPECT_RATIO = 4 / 3;
+// The report flag sits on the photo, this far in from its bottom-end corner, so
+// its whole raised edge stays inside the picture (RAPP-892).
+const FLAG_INSET_ON_PICTURE = tokens.spacing.sm;
 const MEDIA_PRIVACY_OPTIONS: readonly MediaPrivacy[] = ['community', 'staff_only'];
 const styles = StyleSheet.create({
   media: {
@@ -37,6 +50,21 @@ const styles = StyleSheet.create({
   },
   caption: { writingDirection: 'auto' },
 });
+
+/** The flag's place on the photo, once the frame's width and the photo's shape are known. */
+function flagOnPictureStyle(
+  frameWidth: number | null,
+  pictureAspectRatio: number | null,
+): ViewStyle | null {
+  if (frameWidth === null || pictureAspectRatio === null) return null;
+  const { end, bottom } = containedPictureCornerOffsets({
+    frameWidth,
+    frameAspectRatio: GALLERY_MEDIA_ASPECT_RATIO,
+    pictureAspectRatio,
+    inset: FLAG_INSET_ON_PICTURE,
+  });
+  return { position: 'absolute', end, bottom };
+}
 
 export default function GalleryItemScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -56,6 +84,26 @@ export default function GalleryItemScreen() {
     ForumFlagInput,
     'targetType' | 'targetId'
   > | null>(null);
+  // The photo is contained in a fixed frame, so the flag waits for the frame's
+  // width and the photo's own shape to find the photo's corner. A photo that
+  // fails to load is taken as filling the frame.
+  const [mediaFrameWidth, setMediaFrameWidth] = useState<number | null>(null);
+  const [pictureAspectRatio, setPictureAspectRatio] = useState<number | null>(null);
+  const measureMediaFrame = useCallback(
+    (event: LayoutChangeEvent) => setMediaFrameWidth(event.nativeEvent.layout.width),
+    [],
+  );
+  const recordPictureShape = useCallback(({ source }: ImageLoadEventData) => {
+    if (source.width > 0 && source.height > 0) setPictureAspectRatio(source.width / source.height);
+  }, []);
+  const fillFrameOnPictureError = useCallback(
+    () => setPictureAspectRatio(GALLERY_MEDIA_ASPECT_RATIO),
+    [],
+  );
+  const flagOnPicture = useMemo(
+    () => flagOnPictureStyle(mediaFrameWidth, pictureAspectRatio),
+    [mediaFrameWidth, pictureAspectRatio],
+  );
   const item = query.data;
   const accessToken = session?.access_token;
   const canManage =
@@ -168,25 +216,51 @@ export default function GalleryItemScreen() {
           ) : (
             <View className="gap-lg">
               {item.file_type === 'video' && videoUri !== null && accessToken !== undefined ? (
-                <VideoView
-                  player={videoPlayer}
-                  nativeControls
-                  accessibilityLabel={
-                    item.caption ?? t('gallery:mediaBy', { name: item.uploader_first_name })
-                  }
-                  contentFit="contain"
-                  style={styles.media}
-                />
+                <View className="gap-sm">
+                  <VideoView
+                    player={videoPlayer}
+                    nativeControls
+                    accessibilityLabel={
+                      item.caption ?? t('gallery:mediaBy', { name: item.uploader_first_name })
+                    }
+                    contentFit="contain"
+                    style={styles.media}
+                  />
+                  {/* The player's own controls cover the bottom of the video, so
+                      the flag sits under it, at its end (RAPP-892). */}
+                  {canManage ? null : (
+                    <View className="self-end">
+                      <ForumFlagButton
+                        testID="gallery-flag"
+                        accessibilityLabel={t('gallery:flag')}
+                        onPress={flagMedia}
+                      />
+                    </View>
+                  )}
+                </View>
               ) : imageSource === null ? null : (
-                <Image
-                  source={imageSource}
-                  accessibilityLabel={
-                    item.caption ?? t('gallery:mediaBy', { name: item.uploader_first_name })
-                  }
-                  cachePolicy="memory-disk"
-                  contentFit="contain"
-                  style={styles.media}
-                />
+                <View onLayout={measureMediaFrame}>
+                  <Image
+                    source={imageSource}
+                    accessibilityLabel={
+                      item.caption ?? t('gallery:mediaBy', { name: item.uploader_first_name })
+                    }
+                    cachePolicy="memory-disk"
+                    contentFit="contain"
+                    style={styles.media}
+                    onLoad={recordPictureShape}
+                    onError={fillFrameOnPictureError}
+                  />
+                  {canManage || flagOnPicture === null ? null : (
+                    <View style={flagOnPicture}>
+                      <ForumFlagButton
+                        testID="gallery-flag"
+                        accessibilityLabel={t('gallery:flag')}
+                        onPress={flagMedia}
+                      />
+                    </View>
+                  )}
+                </View>
               )}
               <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
                 {t('gallery:mediaBy', { name: item.uploader_first_name })}
@@ -217,13 +291,7 @@ export default function GalleryItemScreen() {
                   onPress={confirmDelete}
                   isDisabled={deleteMutation.isPending}
                 />
-              ) : (
-                <RaisedActionButton
-                  testID="gallery-flag"
-                  label={t('gallery:flag')}
-                  onPress={flagMedia}
-                />
-              )}
+              ) : null}
             </View>
           )}
         </PageWidth>
