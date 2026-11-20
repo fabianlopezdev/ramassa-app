@@ -1,9 +1,7 @@
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
-import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { FailureNotice } from '@/components/error-code-line';
 import { Icon } from '@/components/icons/icon';
 import { AppSheet } from '@/components/layout/app-sheet';
-import { RaisedToneWash } from '@/components/layout/raised-surface';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { SuccessPop } from '@/components/motion/success-pop';
 import { PersonAvatar } from '@/components/people/person-avatar';
@@ -52,7 +50,6 @@ export function ProfilePhotoEditor({
 }) {
   const { t } = useTranslation('profile');
   const font = useLanguageFontClass();
-  const brandColor = useBrandColor();
   const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -155,8 +152,7 @@ export function ProfilePhotoEditor({
         <View>
           {saved > 0 ? <SuccessPop key={saved}>{portrait}</SuccessPop> : portrait}
           {/* The way to change the photo (RAPP-888): a small pencil circle on
-              the photo's lower corner, a pale wash of the secondary colour
-              with the brand border, a full minimum tap target, named for
+              the photo's lower corner, a full minimum tap target, named for
               screen readers by what it does. */}
           <PressableScale
             testID="profile-photo-edit"
@@ -164,11 +160,10 @@ export function ProfilePhotoEditor({
             isDisabled={busy}
             onPress={() => setExpanded(true)}
             haptic="tapLight"
-            className="absolute items-center justify-center overflow-hidden rounded-full border border-primary bg-white"
+            className="absolute items-center justify-center rounded-full border-2 border-white bg-primary"
             style={EDIT_BADGE_STYLE}
           >
-            <RaisedToneWash tone="secondary" />
-            <Icon name="pen" weight="linear" size={EDIT_ICON_SIZE} color={brandColor} />
+            <Icon name="pen" weight="linear" size={EDIT_ICON_SIZE} color={tokens.colors.white} />
           </PressableScale>
         </View>
         {beside === undefined ? null : <View className="flex-1">{beside}</View>}

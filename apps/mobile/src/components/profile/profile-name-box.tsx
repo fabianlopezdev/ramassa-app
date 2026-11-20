@@ -1,9 +1,9 @@
 /**
- * The top of Les meves dades (RAPP-888): a box with the brand border on the
- * secondary colour, holding her photo with its button underneath and, beside
+ * The top of Les meves dades (RAPP-888): a box with the brand border on a
+ * pale wash of the secondary colour, holding her photo with its button underneath and, beside
  * them, her first and last name, large and bold.
  */
-import { RAISED_SHAPE_CLASS_NAME } from '@/components/layout/raised-surface';
+import { RAISED_SHAPE_CLASS_NAME, RaisedToneWash } from '@/components/layout/raised-surface';
 import { ProfilePhotoEditor } from '@/components/profile/profile-photo-editor';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -25,8 +25,9 @@ export function ProfileNameBox({ profile }: { readonly profile: ProfileRecordWit
     <View
       testID="profile-name-box"
       style={continuousCorners}
-      className={`${RAISED_SHAPE_CLASS_NAME} border border-primary bg-secondary p-md`}
+      className={`${RAISED_SHAPE_CLASS_NAME} overflow-hidden border border-primary bg-white p-md`}
     >
+      <RaisedToneWash tone="secondary" />
       <ProfilePhotoEditor
         profile={profile}
         beside={
