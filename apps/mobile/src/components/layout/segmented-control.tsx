@@ -1,4 +1,5 @@
 import { Icon, iconArtworkMargin, type IconName } from '@/components/icons/icon';
+import { EdgeMarks } from '@/components/layout/edge-marks';
 import {
   RaisedSurfaceEdge,
   raisedSurfaceWrapperStyle,
@@ -7,6 +8,7 @@ import {
 import { PressableDepth } from '@/components/motion/pressable-depth';
 import { SelectionTransition } from '@/components/motion/selection-transition';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { formatUnreadBadge } from '@/lib/unread-badge';
 import { useCapToBaselineTrim } from '@/lib/use-cap-to-baseline-trim';
 import { memo, useCallback, useMemo, type JSX } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
@@ -32,13 +34,21 @@ import { tokens } from '@ramassa/shared/tokens';
  * same breathing room at its edges. Every option has the same width and the
  * row stretches every option to the tallest one, so a label that wraps to two
  * lines keeps the row edge to edge with equal heights.
+ *
+ * An option's count is the circle cards and filter chips use for one
+ * (RAPP-873), on the option's top edge near the end, from `EdgeMarks`. The
+ * circles are drawn in a row laid over the bar, one cell per option, so the
+ * options keep the layout they have without a count: wrapping each option
+ * made the bar lose the height of an icon above its label. While any option
+ * has a count, the bar keeps room above itself, so the circle is never cut
+ * off by what holds it.
  */
 export interface SegmentedControlOption<Key extends string> {
   readonly key: Key;
   readonly label: string;
   /** Screen-reader name when it should say more than the visible label. */
   readonly accessibilityLabel?: string;
-  /** A count shown after the label when it is above zero. */
+  /** A count in a circle on the option's top edge when it is above zero. */
   readonly count?: number;
   /** Decorative icon before the label: players navigate by icon shape. */
   readonly symbol?: IconName;
@@ -53,7 +63,6 @@ const OPTION_ICON_SIZE = tokens.fontSize['2xl'];
 // The bar's outer corners belong to its first and last options, matching the
 // `rounded-lg` of the edge under the bar.
 const styles = StyleSheet.create({
-  count: { fontVariant: ['tabular-nums'] },
   stackedIcon: { marginVertical: -iconArtworkMargin(OPTION_ICON_SIZE) },
   startCorners: {
     ...continuousCorners,
@@ -85,7 +94,6 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
   optionKey,
   label,
   accessibilityLabel,
-  count,
   symbol,
   testID,
   isSelected,
@@ -97,7 +105,6 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
   onSelect,
 }: Omit<SegmentedControlOptionViewProps<Key>, 'key'> & { readonly optionKey: Key }) {
   const handlePress = useCallback(() => onSelect(optionKey), [onSelect, optionKey]);
-  const visibleCount = count !== undefined && count > 0 ? count : null;
   const contentColor = isSelected ? tokens.colors.neutral[900] : tokens.colors.primary.dark;
   const labelTrim = useCapToBaselineTrim();
   return (
@@ -110,7 +117,10 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
       isSelected={isSelected}
       className="flex-1"
       faceStyle={faceStyle}
-      faceClassName={`relative flex-1 items-center justify-center overflow-hidden border-y border-s border-primary bg-white px-sm ${
+      // `grow`, with the height of its own content as the base: with `flex-1`
+      // the face could lose the height of an icon above its label when the
+      // list under the bar laid itself out again (RAPP-873).
+      faceClassName={`relative grow items-center justify-center overflow-hidden border-y border-s border-primary bg-white px-sm ${
         isStacked ? 'gap-md' : 'flex-row gap-sm py-xs'
       } ${isLast ? 'border-e' : ''}`}
       inlineOffset={isLast ? shadowInlineOffset : 0}
@@ -144,19 +154,6 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
         >
           {label}
         </Text>
-        {visibleCount === null ? null : (
-          <View
-            accessible={false}
-            className="items-center justify-center rounded-full bg-primary-dark px-sm"
-          >
-            <Text
-              style={styles.count}
-              className={`text-sm font-bold text-white ${languageFontClass}`}
-            >
-              {visibleCount}
-            </Text>
-          </View>
-        )}
       </View>
     </PressableDepth>
   );
@@ -227,7 +224,10 @@ export function SegmentedControl<Key extends string>({
     [choiceFaceStyle, isStacked, stackedEdgeStyle],
   );
   const lastIndex = options.length - 1;
-  return (
+  const hasMarks = options.some(
+    (option) => option.count !== undefined && formatUnreadBadge(option.count) !== null,
+  );
+  const bar = (
     <View
       testID={testID}
       accessibilityRole="radiogroup"
@@ -242,7 +242,6 @@ export function SegmentedControl<Key extends string>({
           optionKey={option.key}
           label={option.label}
           accessibilityLabel={option.accessibilityLabel}
-          count={option.count}
           symbol={option.symbol}
           testID={option.testID}
           isSelected={selected === option.key}
@@ -253,6 +252,34 @@ export function SegmentedControl<Key extends string>({
           onSelect={onSelect}
         />
       ))}
+    </View>
+  );
+  if (!hasMarks) return bar;
+  // The circle rises above the room `EdgeMarks` keeps, and a scroll view or
+  // the screen above would cut it, so the bar keeps the rest, as the filter
+  // chips do. The inner room is the one `EdgeMarks` keeps in each cell, so a
+  // cell's top edge line is the bar's top edge.
+  return (
+    <View className="pt-sm">
+      <View className="relative pt-sm">
+        {bar}
+        <View
+          pointerEvents="none"
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          className="absolute inset-0 flex-row"
+        >
+          {options.map((option) => (
+            <EdgeMarks
+              key={option.key}
+              count={option.count === undefined ? null : formatUnreadBadge(option.count)}
+              className="flex-1"
+            >
+              <View className="flex-1" />
+            </EdgeMarks>
+          ))}
+        </View>
+      </View>
     </View>
   );
 }

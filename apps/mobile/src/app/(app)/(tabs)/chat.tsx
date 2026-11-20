@@ -8,6 +8,9 @@
  * it as a pair of half-width raised cards (RAPP-874). The unread count sits in a circle
  * on the top edge near the end, and the state of her request is a badge on the
  * top edge near the start, like "Nou". Both are in the brand colour.
+ * Mentoria and Suggeriments also count what the staff changed for her (RAPP-873),
+ * so the cards add up to the tab's number. Each change stays counted until she
+ * opens that request or taps that suggestion.
  */
 import { PageWidth } from '@/components/layout/content-width';
 import type { RaisedCardBadge } from '@/components/layout/raised-card';
@@ -16,12 +19,17 @@ import { RaisedIconCard } from '@/components/layout/raised-icon-card';
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { useUnreadMessages } from '@/lib/messaging';
-import { latestOpenMentoringRequest } from '@/lib/player-chat-tab';
+import {
+  contactCardAccessibilityLabel,
+  contactCardNewsCounts,
+  latestOpenMentoringRequest,
+} from '@/lib/player-chat-tab';
 import { usePlayerMentoringRequests } from '@/lib/player-mentoring';
 import { playerNavIcons } from '@/lib/player-nav-icons';
 import { formatUnreadBadge } from '@/lib/unread-badge';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
+import { useTabNews } from '@/lib/use-tab-news';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -46,9 +54,10 @@ function stateBadge(label: string | null): RaisedCardBadge | null {
 }
 
 function ChatTabScreen() {
-  const { t } = useTranslation(['nav', 'messaging', 'mentoring', 'feedback']);
+  const { t } = useTranslation(['nav', 'messaging', 'mentoring', 'feedback', 'common']);
   const { push } = useRouter();
   const unread = useUnreadMessages().data ?? 0;
+  const news = contactCardNewsCounts(useTabNews().data);
   const mentoring = usePlayerMentoringRequests();
   const openRequest = useMemo(
     () => latestOpenMentoringRequest(mentoring.data ?? []),
@@ -61,6 +70,10 @@ function ChatTabScreen() {
   const feedbackTitle = t('feedback:title');
   const unreadLabel = formatUnreadBadge(unread);
   const mentoringState = openRequest === null ? null : t(MENTORING_STATUS_KEYS[openRequest.status]);
+  const sayNewCount = useCallback(
+    (label: string, count: number) => t('common:newCount', { label, count }),
+    [t],
+  );
   const openTeamChat = useCallback(() => push('/team-chat' as Href), [push]);
   const openMentoring = useCallback(() => push('/mentoring' as Href), [push]);
   const openFeedback = useCallback(() => push('/feedback' as Href), [push]);
@@ -93,10 +106,14 @@ function ChatTabScreen() {
             testID="chat-open-mentoring"
             icon={playerNavIcons.mentoring}
             title={mentoringTitle}
-            accessibilityLabel={
-              mentoringState === null ? mentoringTitle : `${mentoringTitle}, ${mentoringState}`
-            }
+            accessibilityLabel={contactCardAccessibilityLabel(
+              mentoringTitle,
+              mentoringState,
+              news.mentoring,
+              sayNewCount,
+            )}
             badge={stateBadge(mentoringState)}
+            count={formatUnreadBadge(news.mentoring)}
             languageFontClass={languageFontClass}
             onOpen={openMentoring}
           />
@@ -104,7 +121,13 @@ function ChatTabScreen() {
             testID="chat-open-feedback"
             icon={playerNavIcons.feedback}
             title={feedbackTitle}
-            accessibilityLabel={feedbackTitle}
+            accessibilityLabel={contactCardAccessibilityLabel(
+              feedbackTitle,
+              null,
+              news.feedback,
+              sayNewCount,
+            )}
+            count={formatUnreadBadge(news.feedback)}
             languageFontClass={languageFontClass}
             onOpen={openFeedback}
           />

@@ -6,10 +6,12 @@ import {
 import { KnowledgeArticleCard } from '@/components/knowledge/knowledge-article-card';
 import { OwnStoryStatuses } from '@/components/knowledge/own-story-statuses';
 import { PageWidth } from '@/components/layout/content-width';
+import { NO_UNOPENED_IDS } from '@/lib/community-news';
 import { useCommunityStories } from '@/lib/community-stories';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useListSeen, useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
@@ -35,28 +37,38 @@ const keyExtractor = (story: KnowledgeArticleListRow) => story.id;
 export function CommunityStoryList({
   header,
   contentContainerStyle,
+  unopenedArticleIds = NO_UNOPENED_IDS,
 }: {
   readonly header: ReactElement;
   readonly contentContainerStyle: StyleProp<ViewStyle>;
+  /** Stories she has not opened yet, marked "Nou" until she does (RAPP-873). */
+  readonly unopenedArticleIds?: ReadonlySet<string>;
 }) {
-  const { t } = useTranslation('knowledge');
+  const { t } = useTranslation(['knowledge', 'home']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const { session } = useAuth();
   const isOnline = isNetworkStateOnline(useNetworkState());
   const query = useCommunityStories();
+  // Seeing the stories clears their number; a list still loading has shown
+  // nothing (RAPP-873).
+  useListSeen('stories', query.data !== undefined);
   const authorIds = useMemo(
     () => (query.data ?? EMPTY_STORIES).map((story) => story.author_id),
     [query.data],
   );
   const personCards = usePersonCards(authorIds);
   const refetchStories = query.refetch;
+  // Pull to refresh also asks again what is new for her (RAPP-873).
+  const refetchTabNews = useTabNews().refetch;
   const accessToken = session?.access_token;
   const openStory = useCallback(
     (id: string) => push({ pathname: '/knowledge/[id]', params: { id } } as unknown as Href),
     [push],
   );
-  const refresh = useCallback(() => void refetchStories(), [refetchStories]);
+  const refresh = useCallback(() => {
+    void Promise.all([refetchStories(), refetchTabNews()]);
+  }, [refetchStories, refetchTabNews]);
   const listHeader = (
     <View>
       {header}
@@ -75,10 +87,11 @@ export function CommunityStoryList({
           authorAvatarKey={
             item.author_id === null ? null : (personCards.get(item.author_id)?.avatarKey ?? null)
           }
+          unseenLabel={unopenedArticleIds.has(item.id) ? t('home:unseen') : null}
         />
       </PageWidth>
     ),
-    [accessToken, openStory, personCards],
+    [accessToken, openStory, personCards, t, unopenedArticleIds],
   );
 
   let emptyState: ReactElement;
@@ -113,6 +126,7 @@ export function CommunityStoryList({
       data={query.data ?? EMPTY_STORIES}
       renderItem={renderStory}
       keyExtractor={keyExtractor}
+      extraData={unopenedArticleIds}
       style={styles.screen}
       contentContainerStyle={contentContainerStyle}
       contentInsetAdjustmentBehavior="automatic"

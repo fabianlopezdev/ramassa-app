@@ -27,7 +27,9 @@
  * same face, block and divider with tighter padding and gaps, no arrow, and
  * it fills its cell so the tiles in a row share a height. A tile may stack
  * (RAPP-879): icon on top, name under it, no divider; the other tile of
- * its row then takes the stacked tile's height.
+ * its row then takes the stacked tile's height. A tile with a mark on its
+ * edge still fills its cell (RAPP-873): its marks grow from their own height
+ * like the tile does.
  */
 import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
@@ -184,7 +186,7 @@ export function RaisedCard({
   );
   if (badge === null && count === null) return card;
   return (
-    <EdgeMarks badge={badge} count={count}>
+    <EdgeMarks badge={badge} count={count} className={tile ? 'grow' : undefined}>
       {card}
     </EdgeMarks>
   );

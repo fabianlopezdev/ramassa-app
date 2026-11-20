@@ -6,11 +6,18 @@
  * it leaves Per fer and waits in her later list (RAPP-833). In that list the
  * same row has "Esborra" instead, which closes the form for good after she
  * confirms. A legal form has neither (RAPP-771).
+ *
+ * A form she left half way keeps her answers (RAPP-886), so its row says
+ * "Continua" with the same mark, word and label as a started survey.
  */
 
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ToDoRow } from '@/components/home/to-do-row';
-import { useDismissCustomForm, usePutOffCustomForm } from '@/lib/custom-forms';
+import {
+  useDismissCustomForm,
+  useMyStartedCustomFormIds,
+  usePutOffCustomForm,
+} from '@/lib/custom-forms';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { playerNavIcons } from '@/lib/player-nav-icons';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -28,12 +35,13 @@ interface PendingFormPromptProps {
 }
 
 export function PendingFormPrompt({ form, place = 'toDo' }: PendingFormPromptProps) {
-  const { t, i18n } = useTranslation('home');
+  const { t, i18n } = useTranslation(['home', 'surveys']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const putOff = usePutOffCustomForm();
   const dismiss = useDismissCustomForm();
+  const isStarted = useMyStartedCustomFormIds().has(form.responseId);
   const [isBusy, setIsBusy] = useState(false);
   const dateFormatter = useMemo(
     () =>
@@ -69,9 +77,9 @@ export function PendingFormPrompt({ form, place = 'toDo' }: PendingFormPromptPro
   const name = textIn(form.name, language);
   const isLater = place === 'later';
   const secondLabel = isLater ? t('later.delete') : t('pendingForm.dismiss');
+  const actionLabel = isStarted ? t('surveys:promptStarted') : t('pendingForm.answer');
   return (
     <View testID="pending-form-prompt" className="gap-sm">
-      {/* A half-answered form is not saved, so a form has no started state (RAPP-825). */}
       <ToDoRow
         testID="pending-form-answer"
         title={name}
@@ -82,8 +90,9 @@ export function PendingFormPrompt({ form, place = 'toDo' }: PendingFormPromptPro
                 date: dateFormatter.format(new Date(`${form.deadline}T12:00:00`)),
               })
         }
-        accessibilityLabel={`${t('pendingForm.answer')}: ${name}`}
-        markLabel={isLater ? undefined : t('unseen')}
+        accessibilityLabel={`${actionLabel}: ${name}`}
+        markLabel={isLater ? undefined : isStarted ? actionLabel : t('unseen')}
+        isStarted={isStarted}
         languageFontClass={languageFontClass}
         onOpen={open}
       />

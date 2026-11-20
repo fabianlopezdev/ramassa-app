@@ -25,6 +25,7 @@ import {
 import { mobileClientEnv } from '@/lib/supabase';
 import { useForumPostWash } from '@/lib/use-forum-post-wash';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useMarkForumPostSeen } from '@/lib/use-tab-news';
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { useNetworkState } from 'expo-network';
@@ -131,6 +132,7 @@ export default function ForumPostDetailScreen() {
   const post = postQuery.data;
   // The post opens onto the wash of its category's colour (RAPP-893).
   const { wash, screenStyle } = useForumPostWash(post?.category_id, styles.screen);
+  useMarkForumPostSeen(post?.id);
   const isOwnPost =
     post !== undefined && post.author_id === user?.id && post.visibility === 'visible';
   const replyMutationCode = createReply.error === null ? null : toAppError(createReply.error).code;

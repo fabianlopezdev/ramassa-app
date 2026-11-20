@@ -4,6 +4,7 @@ import { FailureNotice } from '@/components/error-code-line';
 import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { FormWidth } from '@/components/layout/content-width';
+import type { EdgeMarkBadge } from '@/components/layout/edge-marks';
 import { RaisedChip } from '@/components/layout/filter-chips';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
@@ -16,6 +17,7 @@ import { isNetworkStateOnline } from '@/lib/network-status';
 import { useCreateFeedback, usePlayerFeedback } from '@/lib/player-feedback';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useMarkSuggestionSeen, useTabNews } from '@/lib/use-tab-news';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useNetworkState } from 'expo-network';
@@ -59,6 +61,7 @@ const statusKey: Readonly<Record<FeedbackStatus, string>> = {
   in_progress: 'statusInProgress',
   resolved: 'statusResolved',
 };
+const NO_CHANGED_IDS: readonly string[] = [];
 
 interface FeedbackHistoryCardProps {
   readonly id: string;
@@ -66,7 +69,10 @@ interface FeedbackHistoryCardProps {
   readonly typeLabel: string;
   readonly statusAndDate: string;
   readonly languageFontClass: string;
-  readonly onOpenChat: () => void;
+  /** One shared callback for every row, given the row's id (RAPP-873). */
+  readonly onOpenChat: (id: string) => void;
+  /** Set while the staff's change of status is new to her (RAPP-873): the word on the top edge. */
+  readonly unseenLabel: string | null;
 }
 
 function FeedbackHistoryCard({
@@ -76,35 +82,44 @@ function FeedbackHistoryCard({
   statusAndDate,
   languageFontClass,
   onOpenChat,
+  unseenLabel,
 }: FeedbackHistoryCardProps) {
+  const handleOpen = useCallback(() => onOpenChat(id), [id, onOpenChat]);
+  const badge = useMemo<EdgeMarkBadge | null>(
+    () => (unseenLabel === null ? null : { label: unseenLabel, tone: 'brand' }),
+    [unseenLabel],
+  );
   return (
     <FormWidth className="pb-md">
       <OpenableCard
         testID={`feedback-history-${id}`}
-        accessibilityLabel={[typeLabel, content, statusAndDate].join('. ')}
-        onOpen={onOpenChat}
+        accessibilityLabel={[unseenLabel, typeLabel, content, statusAndDate]
+          .filter((part): part is string => part !== null)
+          .join('. ')}
+        onOpen={handleOpen}
+        badge={badge}
       >
-        <Text className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}>
-          {typeLabel}
-        </Text>
-        <Text
-          style={styles.mixedDirectionText}
-          className={`text-start text-md text-neutral-700 ${languageFontClass}`}
-        >
-          {content}
-        </Text>
-        <Text
-          className={`text-start text-sm font-medium tabular-nums text-primary ${languageFontClass}`}
-        >
-          {statusAndDate}
-        </Text>
+      <Text className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}>
+        {typeLabel}
+      </Text>
+      <Text
+        style={styles.mixedDirectionText}
+        className={`text-start text-md text-neutral-700 ${languageFontClass}`}
+      >
+        {content}
+      </Text>
+      <Text
+        className={`text-start text-sm font-medium tabular-nums text-primary ${languageFontClass}`}
+      >
+        {statusAndDate}
+      </Text>
       </OpenableCard>
     </FormWidth>
   );
 }
 
 export default function FeedbackScreen() {
-  const { t, i18n } = useTranslation(['feedback', 'common', 'errors']);
+  const { t, i18n } = useTranslation(['feedback', 'common', 'errors', 'home']);
   const languageFontClass = useLanguageFontClass();
   const { session } = useAuth();
   const { push } = useRouter();
@@ -113,6 +128,19 @@ export default function FeedbackScreen() {
   const networkState = useNetworkState();
   const isOnline = isNetworkStateOnline(networkState);
   const feedbackQuery = usePlayerFeedback();
+  // A status change the staff made is addressed to her, so the suggestion keeps
+  // "Nou" and its number until she taps its row; the tap is the opening (RAPP-873).
+  const changedSubmissionIds = useTabNews().data?.feedback.changedSubmissionIds ?? NO_CHANGED_IDS;
+  const markSuggestionSeen = useMarkSuggestionSeen();
+  const openSuggestion = useCallback(
+    (submissionId: string) => {
+      markSuggestionSeen(submissionId);
+      openChat();
+    },
+    [markSuggestionSeen, openChat],
+  );
+  const changedSubmissions = useMemo(() => new Set(changedSubmissionIds), [changedSubmissionIds]);
+  const unseenWord = t('home:unseen');
   const { error: createError, mutateAsync: createFeedbackAsync } = useCreateFeedback();
   const [type, setType] = useState<FeedbackType>('activity_proposal');
   const [content, setContent] = useState('');
@@ -257,7 +285,8 @@ export default function FeedbackScreen() {
                           new Date(item.createdAt),
                         )}`}
                         languageFontClass={languageFontClass}
-                        onOpenChat={openChat}
+                        onOpenChat={openSuggestion}
+                        unseenLabel={changedSubmissions.has(item.id) ? unseenWord : null}
                       />
                     ))}
                   </View>

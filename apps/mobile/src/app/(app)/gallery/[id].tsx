@@ -16,6 +16,7 @@ import { isNetworkStateOnline } from '@/lib/network-status';
 import { useDeleteGalleryItem, useGalleryItem, useSetGalleryPrivacy } from '@/lib/player-gallery';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useMarkGalleryItemSeen } from '@/lib/use-tab-news';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -62,6 +63,7 @@ export default function GalleryItemScreen() {
   // A long title shows three lines on the media; the whole text then goes under it.
   const [isTitleCut, setIsTitleCut] = useState(false);
   const item = query.data;
+  useMarkGalleryItemSeen(item?.id);
   const accessToken = session?.access_token;
   const canManage =
     item !== undefined && (item.uploaded_by === user?.id || role === 'staff' || role === 'admin');

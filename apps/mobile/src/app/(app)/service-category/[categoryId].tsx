@@ -18,6 +18,7 @@ import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { useSectionWash } from '@/components/layout/raised-surface';
 import { ServiceCard } from '@/components/services/service-card';
 import { ServiceFilterPanel } from '@/components/services/service-filter-panel';
+import { NO_UNOPENED_HELP_IDS, unopenedHelpIds } from '@/lib/help-news';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import {
   usePlayerServiceCategories,
@@ -25,6 +26,7 @@ import {
   type PlayerServiceFilterSelection,
 } from '@/lib/player-services';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useListSeen, useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
@@ -35,6 +37,7 @@ import { isCategoryColor } from '@ramassa/shared/category-colors';
 import { toAppError } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { type PlayerServiceRow } from '@ramassa/shared/services';
+import { servicesListKey } from '@ramassa/shared/tab-news';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_FILTERS: PlayerServiceFilterSelection = {};
@@ -79,7 +82,7 @@ function availabilityKey(value: PlayerServiceRow['availability']): string {
 
 export default function ServiceCategoryScreen() {
   const { categoryId } = useLocalSearchParams<{ categoryId: string }>();
-  const { t, i18n } = useTranslation(['playerServices', 'errors']);
+  const { t, i18n } = useTranslation(['playerServices', 'errors', 'home']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -93,6 +96,20 @@ export default function ServiceCategoryScreen() {
   const services = servicesQuery.data ?? EMPTY_SERVICES;
   const availableServices = baseServicesQuery.data ?? EMPTY_SERVICES;
   const selectedFilterCount = activeFilterCount(filters);
+  // A service keeps "Nou" until she opens it, also after she comes back (RAPP-873).
+  const { data: news, refetch: refetchNews } = useTabNews();
+  const newServiceIds = useMemo(
+    () =>
+      news === undefined ? NO_UNOPENED_HELP_IDS : unopenedHelpIds(news.services.unopenedServices),
+    [news],
+  );
+  // Seeing the category's services clears its numbers on the tile, the switch
+  // and the tab. A list still loading, or one a filter has cut down, has not
+  // shown every card, so it clears nothing yet (RAPP-873).
+  useListSeen(
+    categoryId === undefined ? undefined : servicesListKey(categoryId),
+    selectedFilterCount === 0 && servicesQuery.data !== undefined,
+  );
   const title =
     category === null ? '' : (resolveLocalizedText(category.name, language)?.text ?? '');
   // The screen reads its shade like every coloured screen (RAPP-893). Only
@@ -125,8 +142,9 @@ export default function ServiceCategoryScreen() {
       categoriesQuery.refetch(),
       baseServicesQuery.refetch(),
       servicesQuery.refetch(),
+      refetchNews(),
     ]);
-  }, [baseServicesQuery, categoriesQuery, servicesQuery]);
+  }, [baseServicesQuery, categoriesQuery, refetchNews, servicesQuery]);
   const renderService = useCallback(
     ({ item }: ListRenderItemInfo<PlayerServiceRow>) => {
       const serviceTitle = resolveLocalizedText(item.title, language);
@@ -139,6 +157,7 @@ export default function ServiceCategoryScreen() {
           ? t(`playerServices:cost${capitalize(item.cost_type)}`)
           : currencyFormatter.format(item.cost_amount);
       const availability = t(`playerServices:availability${availabilityKey(item.availability)}`);
+      const unseenLabel = newServiceIds.has(item.id) ? t('home:unseen') : null;
       return (
         <PageWidth className="pb-md">
           <ServiceCard
@@ -152,7 +171,9 @@ export default function ServiceCategoryScreen() {
             interestedLabel={t('playerServices:interestSaved')}
             imageObjectKey={firstImage?.url ?? null}
             imageAlt={imageAlt?.text ?? null}
+            unseenLabel={unseenLabel}
             accessibilityLabel={[
+              unseenLabel,
               t('playerServices:openService', { title: serviceTitle.text }),
               item.provider_name,
               item.location,
@@ -167,7 +188,7 @@ export default function ServiceCategoryScreen() {
         </PageWidth>
       );
     },
-    [currencyFormatter, language, languageFontClass, openService, t],
+    [currencyFormatter, language, languageFontClass, newServiceIds, openService, t],
   );
 
   const filterLabel =
@@ -222,6 +243,7 @@ export default function ServiceCategoryScreen() {
         data={services}
         renderItem={renderService}
         keyExtractor={keyExtractor}
+        extraData={newServiceIds}
         style={screenStyle}
         contentContainerStyle={styles.content}
         contentInsetAdjustmentBehavior="automatic"

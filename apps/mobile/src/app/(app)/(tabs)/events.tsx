@@ -31,8 +31,11 @@ import { logger } from '@/lib/observability';
 import { usePlayerEvents } from '@/lib/player-events';
 import { usePlayerMentoringRequests } from '@/lib/player-mentoring';
 import { playerNavIcons } from '@/lib/player-nav-icons';
+import { useActivitiesAttention } from '@/lib/use-activities-attention';
+import { useHomeSeen } from '@/lib/use-home-attention';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
+import { useListSeenWhen } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
@@ -67,7 +70,7 @@ const getItemType = (item: PlayerEventOccurrence) =>
     : 'event';
 
 function EventsScreen() {
-  const { t, i18n } = useTranslation(['events', 'common', 'mentoring', 'nav']);
+  const { t, i18n } = useTranslation(['events', 'common', 'mentoring', 'nav', 'home']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const brandColor = useBrandColor();
@@ -87,6 +90,17 @@ function EventsScreen() {
   const { data, isPending, isError, error, isRefetching, refetch } = usePlayerEvents();
   const mentoringQuery = usePlayerMentoringRequests();
   const refetchMentoring = mentoringQuery.refetch;
+  // New activities carry the same "Nou" mark as on Inici, one card per activity (RAPP-873).
+  const { newOccurrenceIds, count: newActivitiesCount } = useActivitiesAttention();
+  // Seeing the whole list clears the number: loaded, as a list, with every
+  // category showing. The calendar and a chosen category show only some of the
+  // cards. Each card keeps its "Nou" until she opens the activity (RAPP-873).
+  useListSeenWhen(
+    'activities',
+    data !== undefined && view === 'list' && category === 'all',
+    newActivitiesCount > 0,
+  );
+  const refetchSeen = useHomeSeen().refetch;
   const now = new Date();
   const events = useMemo(
     () => filterPlayerEventOccurrences(data ?? EMPTY_EVENTS, category, now),
@@ -204,6 +218,7 @@ function EventsScreen() {
       const time = timeFormatter.format(new Date(item.occurrence_starts_at));
       const capacity = playerEventCapacityLabel(item, t);
       const signup = playerEventSignupLabel(item.signup?.state, t);
+      const unseenLabel = newOccurrenceIds.has(item.occurrence_id) ? t('home:unseen') : null;
       return (
         <PageWidth className="pb-md">
           <EventCard
@@ -214,7 +229,9 @@ function EventsScreen() {
             locale={locale}
             location={item.event.location}
             signupLabel={signup}
+            unseenLabel={unseenLabel}
             accessibilityLabel={[
+              unseenLabel,
               t('playerOpenEvent', { title: title.text }),
               categoryName.text,
               date,
@@ -231,20 +248,29 @@ function EventsScreen() {
         </PageWidth>
       );
     },
-    [dateFormatter, language, languageFontClass, locale, openOccurrence, t, timeFormatter],
+    [
+      dateFormatter,
+      language,
+      languageFontClass,
+      locale,
+      newOccurrenceIds,
+      openOccurrence,
+      t,
+      timeFormatter,
+    ],
   );
 
   const tabInsets = usePlayerTabContentInsets();
   const contentContainerStyle = useMemo(() => [styles.content, tabInsets], [tabInsets]);
   const onRefresh = useCallback(
-    () => void Promise.all([refetch(), refetchMentoring()]),
-    [refetch, refetchMentoring],
+    () => void Promise.all([refetch(), refetchMentoring(), refetchSeen()]),
+    [refetch, refetchMentoring, refetchSeen],
   );
   // The day presses with its own selection haptic.
   const selectCalendarDay = useCallback((date: string) => setSelectedDate(date), []);
   const listExtraData = useMemo(
-    () => ({ category, effectiveSelectedDate, view: contentView }),
-    [category, effectiveSelectedDate, contentView],
+    () => ({ category, effectiveSelectedDate, newOccurrenceIds, view: contentView }),
+    [category, effectiveSelectedDate, newOccurrenceIds, contentView],
   );
   const onListLoad = useCallback(
     ({ elapsedTimeInMs }: { readonly elapsedTimeInMs: number }) => {

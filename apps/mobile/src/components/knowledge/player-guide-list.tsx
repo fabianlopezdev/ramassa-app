@@ -6,6 +6,7 @@ import {
 import { GuideCategoryGrid } from '@/components/knowledge/guide-category-grid';
 import { PageWidth } from '@/components/layout/content-width';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { countUnseenHelpItems, NO_HELP_NUMBERS } from '@/lib/help-news';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import {
   countPlayerGuidesByCategory,
@@ -14,6 +15,7 @@ import {
 } from '@/lib/player-guides';
 import { usePlayerKnowledgeArticles, usePlayerKnowledgeCategories } from '@/lib/player-knowledge';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useTabNews } from '@/lib/use-tab-news';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, type ReactElement } from 'react';
@@ -56,6 +58,12 @@ export function PlayerGuideList({
   const articlesQuery = usePlayerKnowledgeArticles();
   const { refetch: refetchCategories } = categoriesQuery;
   const { refetch: refetchArticles } = articlesQuery;
+  // A tile counts the guides she has not seen in its category's list (RAPP-873).
+  const { data: news, refetch: refetchNews } = useTabNews();
+  const guideNews = useMemo(
+    () => (news === undefined ? NO_HELP_NUMBERS : countUnseenHelpItems(news.guides.unseenArticles)),
+    [news],
+  );
   const guides = useMemo(() => selectPlayerGuides(articlesQuery.data), [articlesQuery.data]);
   const counts = useMemo(() => countPlayerGuidesByCategory(guides), [guides]);
   const guideCategories = useMemo(
@@ -68,8 +76,8 @@ export function PlayerGuideList({
     [push],
   );
   const refresh = useCallback(() => {
-    void Promise.all([refetchCategories(), refetchArticles()]);
-  }, [refetchArticles, refetchCategories]);
+    void Promise.all([refetchCategories(), refetchArticles(), refetchNews()]);
+  }, [refetchArticles, refetchCategories, refetchNews]);
 
   const isLoading =
     ((categoriesQuery.isPending && categoriesQuery.data === undefined) ||
@@ -105,7 +113,11 @@ export function PlayerGuideList({
     body = (
       <PageWidth>
         <ScreenSection title={t('categoriesHeading')} isLast>
-          <GuideCategoryGrid categories={guideCategories} onSelect={openCategory} />
+          <GuideCategoryGrid
+            categories={guideCategories}
+            newCounts={guideNews.countsByCategoryId}
+            onSelect={openCategory}
+          />
         </ScreenSection>
       </PageWidth>
     );

@@ -13,9 +13,11 @@ import {
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { ServiceCategoryGrid } from '@/components/services/service-category-grid';
+import { countUnseenHelpItems, NO_HELP_NUMBERS } from '@/lib/help-news';
 import { usePlayerServiceCategories } from '@/lib/player-services';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
+import { useTabNews } from '@/lib/use-tab-news';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -34,11 +36,20 @@ const styles = StyleSheet.create({
 type AjudaSegment = 'services' | 'guides';
 
 function ServicesScreen() {
-  const { t } = useTranslation(['playerServices', 'errors', 'nav']);
+  const { t } = useTranslation(['playerServices', 'errors', 'nav', 'common']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const categoriesQuery = usePlayerServiceCategories();
   const [segment, setSegment] = useState<AjudaSegment>('services');
+  // The numbers count what she has not seen in a category's list; the "Nou"
+  // stays until she opens that service or guide (RAPP-873).
+  const { data: news } = useTabNews();
+  const serviceNews = useMemo(
+    () =>
+      news === undefined ? NO_HELP_NUMBERS : countUnseenHelpItems(news.services.unseenServices),
+    [news],
+  );
+  const guideNewsCount = news?.guides.unseenArticles.length ?? 0;
   const tabInsets = usePlayerTabContentInsets();
   const contentContainerStyle = useMemo(() => [styles.listContent, tabInsets], [tabInsets]);
   const selectCategory = useCallback(
@@ -56,15 +67,31 @@ function ServicesScreen() {
         label: t('playerServices:segmentServices'),
         symbol: 'grid',
         testID: 'ajuda-segment-services',
+        count: serviceNews.total,
+        accessibilityLabel:
+          serviceNews.total > 0
+            ? t('common:newCount', {
+                label: t('playerServices:segmentServices'),
+                count: serviceNews.total,
+              })
+            : undefined,
       },
       {
         key: 'guides',
         label: t('playerServices:segmentGuides'),
         symbol: 'book',
         testID: 'ajuda-segment-guides',
+        count: guideNewsCount,
+        accessibilityLabel:
+          guideNewsCount > 0
+            ? t('common:newCount', {
+                label: t('playerServices:segmentGuides'),
+                count: guideNewsCount,
+              })
+            : undefined,
       },
     ],
-    [t],
+    [guideNewsCount, serviceNews.total, t],
   );
 
   // One header for both segments, so the switch stays in place while either loads.
@@ -125,7 +152,11 @@ function ServicesScreen() {
   return stateScreen(
     <PageWidth>
       <ScreenSection title={t('playerServices:chooseCategory')} isLast>
-        <ServiceCategoryGrid categories={categoriesQuery.data ?? []} onSelect={selectCategory} />
+        <ServiceCategoryGrid
+          categories={categoriesQuery.data ?? []}
+          newCounts={serviceNews.countsByCategoryId}
+          onSelect={selectCategory}
+        />
       </ScreenSection>
     </PageWidth>,
     'player-services-categories',

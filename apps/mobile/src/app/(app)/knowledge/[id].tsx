@@ -8,6 +8,7 @@ import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { usePlayerKnowledgeArticle } from '@/lib/player-knowledge';
 import { useStaffCards } from '@/lib/staff-cards';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useMarkArticleSeen } from '@/lib/use-tab-news';
 import { useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useMemo } from 'react';
@@ -28,6 +29,7 @@ export default function PlayerKnowledgeDetailScreen() {
   const { session } = useAuth();
   const query = usePlayerKnowledgeArticle(id);
   const article = query.data;
+  useMarkArticleSeen(article?.id);
   // A team article names its author with her photo; a story keeps the
   // player's first name with her initial (RAPP-639).
   const staffAuthorIds = useMemo(

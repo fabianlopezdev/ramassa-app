@@ -36,5 +36,7 @@
   "previewDraftTitle": "Borrador como lo verán las jugadoras. Todavía no lo ve nadie.",
   "previewDraftMissing": "Falta el texto en este idioma. Las jugadoras lo verán en otro idioma.",
   "previewOpening": "Abriendo la vista de jugadora.",
-  "characterCount": "{{count}} / {{limit}} caracteres"
+  "characterCount": "{{count}} / {{limit}} caracteres",
+  "newCount_one": "{{label}}, {{count}} nuevo",
+  "newCount_other": "{{label}}, {{count}} nuevos"
 }

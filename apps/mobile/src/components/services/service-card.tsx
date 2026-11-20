@@ -25,6 +25,11 @@ export interface ServiceCardProps {
   readonly accessibilityLabel: string;
   readonly languageFontClass: string;
   readonly onOpen: (id: string) => void;
+  /**
+   * Set while the service is new to her (RAPP-873): the word on the card's top
+   * edge, where every card carries it. The caller says it in the label.
+   */
+  readonly unseenLabel?: string | null;
 }
 
 export const ServiceCard = memo(function ServiceCard({
@@ -41,6 +46,7 @@ export const ServiceCard = memo(function ServiceCard({
   accessibilityLabel,
   languageFontClass,
   onOpen,
+  unseenLabel = null,
 }: ServiceCardProps) {
   const { session } = useAuth();
   const imageSource = resolveMediaImageSource({
@@ -49,11 +55,12 @@ export const ServiceCard = memo(function ServiceCard({
     accessToken: session?.access_token,
   });
   const handlePress = useCallback(() => onOpen(id), [id, onOpen]);
-  // Her saved interest sits on the card's edge, like her sign-up on an activity card.
-  const badge = useMemo<RaisedCardBadge | null>(
-    () => (interested ? { label: interestedLabel, tone: 'accent' } : null),
-    [interested, interestedLabel],
-  );
+  // Her saved interest sits on the card's edge, like her sign-up on an activity
+  // card. While the service is new to her, "Nou" takes that place (RAPP-873).
+  const badge = useMemo<RaisedCardBadge | null>(() => {
+    if (unseenLabel !== null) return { label: unseenLabel, tone: 'brand' };
+    return interested ? { label: interestedLabel, tone: 'accent' } : null;
+  }, [interested, interestedLabel, unseenLabel]);
   return (
     <RaisedCard
       testID={`service-card-${id}`}

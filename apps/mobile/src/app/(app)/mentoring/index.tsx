@@ -4,6 +4,7 @@ import { FailureNotice } from '@/components/error-code-line';
 import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { FormWidth } from '@/components/layout/content-width';
+import type { EdgeMarkBadge } from '@/components/layout/edge-marks';
 import { RaisedChip } from '@/components/layout/filter-chips';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
@@ -15,6 +16,7 @@ import { continuousCorners } from '@/lib/continuous-corners';
 import { MENTORING_STATUS_KEYS, MENTORING_TOPIC_KEYS } from '@/lib/mentoring-labels';
 import { useCreateMentoringRequest, usePlayerMentoringRequests } from '@/lib/player-mentoring';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useTabNews } from '@/lib/use-tab-news';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -43,11 +45,17 @@ const styles = StyleSheet.create({
 
 const topicKey = MENTORING_TOPIC_KEYS;
 const statusKey = MENTORING_STATUS_KEYS;
+const NO_CHANGED_IDS: readonly string[] = [];
 
 export default function MentoringScreen() {
-  const { t, i18n } = useTranslation(['mentoring', 'common']);
+  const { t, i18n } = useTranslation(['mentoring', 'common', 'home']);
   const languageFontClass = useLanguageFontClass();
   const requestsQuery = usePlayerMentoringRequests();
+  // A change the staff made to her request is addressed to her, so the request
+  // keeps "Nou" and its number until she opens its own screen (RAPP-873).
+  const changedRequestIds = useTabNews().data?.mentoring.changedRequestIds ?? NO_CHANGED_IDS;
+  const changedRequests = useMemo(() => new Set(changedRequestIds), [changedRequestIds]);
+  const unseenWord = t('home:unseen');
   const refetchRequests = requestsQuery.refetch;
   const {
     error: createError,
@@ -165,6 +173,7 @@ export default function MentoringScreen() {
                       dateTimeFormatter={dateTimeFormatter}
                       dateFormatter={dateFormatter}
                       languageFontClass={languageFontClass}
+                      unseenLabel={changedRequests.has(request.id) ? unseenWord : null}
                     />
                   ))}
                 </View>
@@ -276,11 +285,14 @@ function RequestStatusCard({
   dateTimeFormatter,
   dateFormatter,
   languageFontClass,
+  unseenLabel,
 }: {
   readonly request: MentoringRequest;
   readonly dateTimeFormatter: Intl.DateTimeFormat;
   readonly dateFormatter: Intl.DateTimeFormat;
   readonly languageFontClass: string;
+  /** Set while the staff's change is new to her (RAPP-873): the word on the top edge. */
+  readonly unseenLabel: string | null;
 }) {
   const { t } = useTranslation('mentoring');
   const { push } = useRouter();
@@ -291,11 +303,18 @@ function RequestStatusCard({
     () => push(`/mentoring/${request.id}` as Href),
     [push, request.id],
   );
+  const badge = useMemo<EdgeMarkBadge | null>(
+    () => (unseenLabel === null ? null : { label: unseenLabel, tone: 'brand' }),
+    [unseenLabel],
+  );
   return (
     <OpenableCard
       testID={`mentoring-request-${request.id}`}
-      accessibilityLabel={[status, topicLabel, requestedOn].join('. ')}
+      accessibilityLabel={[unseenLabel, status, topicLabel, requestedOn]
+        .filter((part): part is string => part !== null)
+        .join('. ')}
       onOpen={openDetail}
+      badge={badge}
     >
       <Text className={`text-start text-md font-bold text-primary ${languageFontClass}`}>
         {status}

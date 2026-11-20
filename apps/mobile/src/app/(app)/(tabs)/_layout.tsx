@@ -3,7 +3,9 @@ import { useUnreadMessages } from '@/lib/messaging';
 import { nativeTabsHostProps } from '@/lib/native-tabs-direction';
 import { tabIcons } from '@/lib/tab-icons';
 import { unreadBadgeProps } from '@/lib/unread-badge';
+import { useActivitiesAttention } from '@/lib/use-activities-attention';
 import { useHomeAttention } from '@/lib/use-home-attention';
+import { useTabNewsCounts } from '@/lib/use-tab-news';
 import { NativeTabs } from 'expo-router/native-tabs';
 import { useTranslation } from 'react-i18next';
 import { I18nManager } from 'react-native';
@@ -16,7 +18,11 @@ import { tokens } from '@ramassa/shared/tokens';
  * the staff and carries the unread badge. It was called Xat and sat third; it
  * is last now, where people look for a way to reach someone, and next to
  * Ajuda. Its route is still `chat`. Inici carries the count of what she has not dealt
- * with yet (RAPP-821), and her profile opens from her photo at the top of
+ * with yet (RAPP-821). Activitats counts the new activities Inici is not
+ * already counting. Comunitat counts new posts, replies on her posts, gallery
+ * items and stories by others; Ajuda counts new services and guides; Contacte
+ * counts unread messages plus a change the staff made to her mentoring or her
+ * suggestion (RAPP-873). Her profile opens from her photo at the top of
  * each tab (RAPP-794), because Android allows five tabs and no more.
  *
  * NativeTabs (not JS tabs) on purpose: the native tab bar gives platform-correct
@@ -42,9 +48,14 @@ import { tokens } from '@ramassa/shared/tokens';
 export default function TabsLayout() {
   const { t } = useTranslation('nav');
   const unread = useUnreadMessages().data ?? 0;
-  const unreadBadge = unreadBadgeProps(unread);
+  // Each new thing counts on one tab only (RAPP-873).
+  const tabNews = useTabNewsCounts();
+  const communityBadge = unreadBadgeProps(tabNews.community);
+  const helpBadge = unreadBadgeProps(tabNews.help);
+  const contactBadge = unreadBadgeProps(unread + tabNews.contact);
   // What on Inici she has not dealt with yet, the same count the screen shows (RAPP-821).
   const homeBadge = unreadBadgeProps(useHomeAttention().count);
+  const activitiesBadge = unreadBadgeProps(useActivitiesAttention().count);
   // Badges take the organization's brand colour, calmer than the system red (RAPP-823).
   const badgeColor = useBrandColor();
   return (
@@ -73,20 +84,29 @@ export default function TabsLayout() {
       <NativeTabs.Trigger name="events">
         <NativeTabs.Trigger.Icon src={tabIcons.calendar} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.events')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Badge hidden={activitiesBadge.hidden}>
+          {activitiesBadge.children}
+        </NativeTabs.Trigger.Badge>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="community" testID="player-tab-community">
         <NativeTabs.Trigger.Icon src={tabIcons.chats} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.community')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Badge hidden={communityBadge.hidden}>
+          {communityBadge.children}
+        </NativeTabs.Trigger.Badge>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="services">
         <NativeTabs.Trigger.Icon src={tabIcons.grid} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.services')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Badge hidden={helpBadge.hidden}>
+          {helpBadge.children}
+        </NativeTabs.Trigger.Badge>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="chat" testID="player-tab-chat">
         <NativeTabs.Trigger.Icon src={tabIcons.chat} renderingMode="template" />
         <NativeTabs.Trigger.Label>{t('nav:tabs.chat')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Badge hidden={unreadBadge.hidden}>
-          {unreadBadge.children}
+        <NativeTabs.Trigger.Badge hidden={contactBadge.hidden}>
+          {contactBadge.children}
         </NativeTabs.Trigger.Badge>
       </NativeTabs.Trigger>
     </NativeTabs>

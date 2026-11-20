@@ -8,12 +8,23 @@
  * sends everything through the Onboarding writers; until then her answers
  * stay on the form.
  *
+ * A form she left half way opens again where she left it, with her answers
+ * so far (RAPP-886). They are kept as she moves between screens and when she
+ * leaves. When they cannot be read (offline), the form opens from the start
+ * and keeps nothing, so a walk without them never replaces them.
+ *
  * Right after her Onboarding it can open as a form chained to it (RAPP-703):
  * an optional one she puts off with Back leaves the walk and stays on Home.
  */
 
 import { FormWalker } from '@/components/forms/form-walker';
-import { useAnswerCustomForm, useCustomFormSource, useMyCustomForms } from '@/lib/custom-forms';
+import {
+  useAnswerCustomForm,
+  useCustomFormProgress,
+  useCustomFormSource,
+  useKeepCustomFormProgress,
+  useMyCustomForms,
+} from '@/lib/custom-forms';
 import { useMyOnboardingChain, usePassChainedForm } from '@/lib/onboarding-chain';
 import { Redirect, useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -22,8 +33,10 @@ import { useLanguage } from '@ramassa/shared/i18n';
 import {
   customFormById,
   customFormRef,
+  formProgressOf,
   formWalkPayload,
   formWalkScreens,
+  resumedFormWalk,
 } from '@ramassa/shared/intake-builder';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -37,8 +50,10 @@ export default function CustomFormRoute() {
   const chain = useMyOnboardingChain(true);
   const passChainedForm = usePassChainedForm();
   const answer = useAnswerCustomForm();
+  const progress = useCustomFormProgress(responseId);
+  const keepProgress = useKeepCustomFormProgress(responseId, progress.data ?? null);
 
-  if (pending.isPending || source.isPending) {
+  if (pending.isPending || source.isPending || progress.isLoading) {
     return (
       <View
         className="flex-1 items-center justify-center bg-neutral-50"
@@ -63,6 +78,7 @@ export default function CustomFormRoute() {
     return <Redirect href={'/' as Href} />;
   }
   const { catalog, answers: saved } = source.data;
+  const resumed = resumedFormWalk(catalog, form, saved, progress.data ?? null);
   const ref = customFormRef(form.id);
   const isChained = chain.data?.includes(ref) === true;
   // A legal form is never put off (RAPP-771): Back on its first screen goes nowhere.
@@ -72,7 +88,14 @@ export default function CustomFormRoute() {
       key={responseId}
       catalog={catalog}
       form={form}
-      saved={saved}
+      saved={resumed.answers}
+      startScreenId={resumed.screenId}
+      onProgress={
+        progress.isSuccess
+          ? (answers, screenId) =>
+              keepProgress(formProgressOf(catalog, form, saved, answers, screenId))
+          : undefined
+      }
       sendLabel={t('customFormSend')}
       failureMessage={t('customFormFailed')}
       onSubmit={async (draft, screens) => {
