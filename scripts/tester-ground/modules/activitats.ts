@@ -233,7 +233,7 @@ function attendanceMarks(): Mark[] {
 }
 
 /**
- * Attendance is marked the way the app marks it: by a team member with the
+ * Attendance is marked the way the app marks it: by a staff member with the
  * `attendance.mark` permission, whose identity the attendance trigger reads
  * from the request claims. The claims are set for this block only and put
  * back afterwards. Without that permission the marks are skipped with a
