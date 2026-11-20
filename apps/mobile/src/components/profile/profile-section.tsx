@@ -10,11 +10,17 @@
  * nobody.
  */
 
+import { outlinedSurfaceClassName } from '@/components/layout/raised-surface';
+import { SectionTitle } from '@/components/layout/screen-section';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
+/**
+ * A titled card of the profile (RAPP-888): the title is the one every tab uses,
+ * and the card wears the brand border, like the other outlined surfaces.
+ */
 export function ProfileSection({
   title,
   children,
@@ -22,19 +28,10 @@ export function ProfileSection({
   readonly title: string;
   readonly children: ReactNode;
 }) {
-  const languageFontClass = useLanguageFontClass();
   return (
     <View className="gap-sm">
-      <Text
-        accessibilityRole="header"
-        className={`text-start text-form font-semibold text-neutral-900 ${languageFontClass}`}
-      >
-        {title}
-      </Text>
-      <View
-        style={continuousCorners}
-        className="gap-xs rounded-md border border-neutral-200 bg-white p-md"
-      >
+      <SectionTitle title={title} />
+      <View style={continuousCorners} className={`gap-xs p-md ${outlinedSurfaceClassName()}`}>
         {children}
       </View>
     </View>
