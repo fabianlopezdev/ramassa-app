@@ -83,7 +83,9 @@ export default function ProfilePrivacyScreen() {
         </>
       )}
 
-      <ProfileSection title={t('sectionData')}>
+      {/* Open: its only content is the call to ask for erasure, a red button
+          as wide as the page (RAPP-898). */}
+      <ProfileSection title={t('sectionData')} isOpen>
         {deletionRequest?.state === 'open' ? (
           // Already asked: say so rather than offering the button again.
           <View className="gap-xs">
@@ -103,6 +105,7 @@ export default function ProfilePrivacyScreen() {
           <RaisedActionButton
             testID="profile-open-delete-data"
             label={t('deleteTitle')}
+            tone="danger"
             onPress={handleDelete}
           />
         )}
