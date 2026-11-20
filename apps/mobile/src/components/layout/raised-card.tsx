@@ -25,7 +25,8 @@
  *
  * A card may be a tile in a grid (RAPP-854), such as an Ajuda category: the
  * same face, block and divider with tighter padding and gaps, no arrow, and
- * it fills its cell so the tiles in a row share a height.
+ * it fills its cell so the tiles in a row share a height. A tile with a mark
+ * on its edge still fills it (RAPP-873), since its marks grow with the cell.
  */
 import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
@@ -156,7 +157,7 @@ export function RaisedCard({
   );
   if (badge === null && count === null) return card;
   return (
-    <EdgeMarks badge={badge} count={count}>
+    <EdgeMarks badge={badge} count={count} fill={tile}>
       {card}
     </EdgeMarks>
   );

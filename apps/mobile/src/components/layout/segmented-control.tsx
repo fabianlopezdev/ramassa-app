@@ -1,4 +1,5 @@
 import { Icon, iconArtworkMargin, type IconName } from '@/components/icons/icon';
+import { EdgeMarks } from '@/components/layout/edge-marks';
 import {
   RaisedSurfaceEdge,
   raisedSurfaceWrapperStyle,
@@ -7,6 +8,7 @@ import {
 import { PressableDepth } from '@/components/motion/pressable-depth';
 import { SelectionTransition } from '@/components/motion/selection-transition';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { formatUnreadBadge } from '@/lib/unread-badge';
 import { useCapToBaselineTrim } from '@/lib/use-cap-to-baseline-trim';
 import { memo, useCallback, useMemo, type JSX } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
@@ -32,13 +34,20 @@ import { tokens } from '@ramassa/shared/tokens';
  * same breathing room at its edges. Every option has the same width and the
  * row stretches every option to the tallest one, so a label that wraps to two
  * lines keeps the row edge to edge with equal heights.
+ *
+ * An option's count is the circle cards and filter chips use for one
+ * (RAPP-873), on the option's top edge near the end, from `EdgeMarks`. While
+ * any option has one, every option keeps the room above it and so does the
+ * edge under the bar, so the faces stay level and sit on their edge; the bar
+ * also keeps room above itself, so the circle is never cut off by what holds
+ * it.
  */
 export interface SegmentedControlOption<Key extends string> {
   readonly key: Key;
   readonly label: string;
   /** Screen-reader name when it should say more than the visible label. */
   readonly accessibilityLabel?: string;
-  /** A count shown after the label when it is above zero. */
+  /** A count in a circle on the option's top edge when it is above zero. */
   readonly count?: number;
   /** Decorative icon before the label: players navigate by icon shape. */
   readonly symbol?: IconName;
@@ -53,7 +62,6 @@ const OPTION_ICON_SIZE = tokens.fontSize['2xl'];
 // The bar's outer corners belong to its first and last options, matching the
 // `rounded-lg` of the edge under the bar.
 const styles = StyleSheet.create({
-  count: { fontVariant: ['tabular-nums'] },
   stackedIcon: { marginVertical: -iconArtworkMargin(OPTION_ICON_SIZE) },
   startCorners: {
     ...continuousCorners,
@@ -73,6 +81,8 @@ interface SegmentedControlOptionViewProps<Key extends string> extends SegmentedC
   readonly isLast: boolean;
   /** The icon above the label, for a bar of three or more options. */
   readonly isStacked: boolean;
+  /** Some option has a count, so this one keeps the room above too. */
+  readonly hasMarks: boolean;
   /** The height of a raised choice, with the bar's outer corners where this option has them. */
   readonly faceStyle: StyleProp<ViewStyle>;
   /** Those outer corners alone, so the yellow fill keeps inside the border. */
@@ -91,16 +101,17 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
   isSelected,
   isLast,
   isStacked,
+  hasMarks,
   faceStyle,
   cornerStyle,
   languageFontClass,
   onSelect,
 }: Omit<SegmentedControlOptionViewProps<Key>, 'key'> & { readonly optionKey: Key }) {
   const handlePress = useCallback(() => onSelect(optionKey), [onSelect, optionKey]);
-  const visibleCount = count !== undefined && count > 0 ? count : null;
+  const countLabel = count === undefined ? null : formatUnreadBadge(count);
   const contentColor = isSelected ? tokens.colors.neutral[900] : tokens.colors.primary.dark;
   const labelTrim = useCapToBaselineTrim();
-  return (
+  const option = (
     <PressableDepth
       testID={testID}
       accessibilityRole="radio"
@@ -144,21 +155,14 @@ const SegmentedControlOptionView = memo(function SegmentedControlOptionView<Key 
         >
           {label}
         </Text>
-        {visibleCount === null ? null : (
-          <View
-            accessible={false}
-            className="items-center justify-center rounded-full bg-primary-dark px-sm"
-          >
-            <Text
-              style={styles.count}
-              className={`text-sm font-bold text-white ${languageFontClass}`}
-            >
-              {visibleCount}
-            </Text>
-          </View>
-        )}
       </View>
     </PressableDepth>
+  );
+  if (!hasMarks) return option;
+  return (
+    <EdgeMarks count={countLabel} fill>
+      {option}
+    </EdgeMarks>
   );
 }) as <Key extends string>(
   props: Omit<SegmentedControlOptionViewProps<Key>, 'key'> & { readonly optionKey: Key },
@@ -227,7 +231,10 @@ export function SegmentedControl<Key extends string>({
     [choiceFaceStyle, isStacked, stackedEdgeStyle],
   );
   const lastIndex = options.length - 1;
-  return (
+  const hasMarks = options.some(
+    (option) => option.count !== undefined && formatUnreadBadge(option.count) !== null,
+  );
+  const bar = (
     <View
       testID={testID}
       accessibilityRole="radiogroup"
@@ -235,7 +242,19 @@ export function SegmentedControl<Key extends string>({
       style={raisedSurfaceWrapperStyle}
       className="relative flex-row"
     >
-      <RaisedSurfaceEdge />
+      {hasMarks ? (
+        // The faces sit lower by the room `EdgeMarks` keeps above them, so the
+        // edge under the bar starts lower by the same room.
+        <View
+          pointerEvents="none"
+          accessible={false}
+          className="absolute inset-x-0 bottom-0 top-sm"
+        >
+          <RaisedSurfaceEdge />
+        </View>
+      ) : (
+        <RaisedSurfaceEdge />
+      )}
       {options.map((option, index) => (
         <SegmentedControlOptionView
           key={option.key}
@@ -248,6 +267,7 @@ export function SegmentedControl<Key extends string>({
           isSelected={selected === option.key}
           isLast={index === lastIndex}
           isStacked={isStacked}
+          hasMarks={hasMarks}
           {...positionStyles[optionPosition(index, lastIndex)]}
           languageFontClass={languageFontClass}
           onSelect={onSelect}
@@ -255,4 +275,9 @@ export function SegmentedControl<Key extends string>({
       ))}
     </View>
   );
+  if (!hasMarks) return bar;
+  // The circle rises above the room `EdgeMarks` keeps, and a scroll view or
+  // the screen above would cut it, so the bar keeps the rest, as the filter
+  // chips do.
+  return <View className="pt-sm">{bar}</View>;
 }
