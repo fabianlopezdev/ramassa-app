@@ -13,7 +13,7 @@ import { continuousCorners } from '@/lib/continuous-corners';
 import { MENTORING_STATUS_KEYS, MENTORING_TOPIC_KEYS } from '@/lib/mentoring-labels';
 import { useCreateMentoringRequest, usePlayerMentoringRequests } from '@/lib/player-mentoring';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useSectionVisit } from '@/lib/use-tab-news';
+import { useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -44,14 +44,15 @@ const styles = StyleSheet.create({
 const topicKey = MENTORING_TOPIC_KEYS;
 const statusKey = MENTORING_STATUS_KEYS;
 const mentoringKeyExtractor = (request: MentoringRequest) => request.id;
+const NO_CHANGED_IDS: readonly string[] = [];
 
 export default function MentoringScreen() {
   const { t, i18n } = useTranslation(['mentoring', 'common', 'home']);
   const languageFontClass = useLanguageFontClass();
   const requestsQuery = usePlayerMentoringRequests();
-  // Her requests the staff changed since her last visit keep "Nou" while she is
-  // here; opening the screen clears the number on Contacte (RAPP-873).
-  const { changedRequestIds } = useSectionVisit('mentoring', true);
+  // Her requests the staff changed keep "Nou" until she opens each one; opening
+  // this screen clears nothing (RAPP-873).
+  const changedRequestIds = useTabNews().data?.mentoring.changedRequestIds ?? NO_CHANGED_IDS;
   const changedRequests = useMemo(() => new Set(changedRequestIds), [changedRequestIds]);
   const unseenWord = t('home:unseen');
   const refetchRequests = requestsQuery.refetch;

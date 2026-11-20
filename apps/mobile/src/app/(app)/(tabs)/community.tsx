@@ -24,7 +24,7 @@ import { useForumCategories, useForumPosts } from '@/lib/player-forum';
 import { formatUnreadBadge } from '@/lib/unread-badge';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
-import { useSectionVisit, useTabNews } from '@/lib/use-tab-news';
+import { useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
@@ -38,6 +38,7 @@ import {
   type ForumCategoryRow,
   type ForumPostRow,
 } from '@ramassa/shared/forum';
+import { EMPTY_TAB_NEWS } from '@ramassa/shared/tab-news';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_POSTS: readonly ForumPostRow[] = [];
@@ -73,18 +74,17 @@ export default function CommunityScreen() {
   const refetchPosts = postsQuery.refetch;
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [segment, setSegment] = useState<CommunitySegment>('forum');
-  // The live news gives the numbers on the switch; each section's visit gives
-  // what was new when she arrived, so its cards keep "Nou" while she stays
-  // (RAPP-873). Opening a section clears its number at once.
+  // The live news gives the numbers on the switch and the "Nou" on each card. A
+  // thing stays new until she opens it; opening a section clears nothing (RAPP-873).
   const tabNewsQuery = useTabNews();
   const refetchTabNews = tabNewsQuery.refetch;
   const segmentCounts = useMemo(
     () => communitySegmentCounts(tabNewsQuery.data),
     [tabNewsQuery.data],
   );
-  const forumVisit = useSectionVisit('forum', segment === 'forum');
-  const galleryVisit = useSectionVisit('gallery', segment === 'gallery');
-  const storiesVisit = useSectionVisit('stories', segment === 'stories');
+  const forumVisit = tabNewsQuery.data?.forum ?? EMPTY_TAB_NEWS.forum;
+  const galleryVisit = tabNewsQuery.data?.gallery ?? EMPTY_TAB_NEWS.gallery;
+  const storiesVisit = tabNewsQuery.data?.stories ?? EMPTY_TAB_NEWS.stories;
   const galleryNewItemIds = useMemo(() => toNewIdSet(galleryVisit.newItemIds), [galleryVisit]);
   const storiesNewArticleIds = useMemo(
     () => toNewIdSet(storiesVisit.newArticleIds),

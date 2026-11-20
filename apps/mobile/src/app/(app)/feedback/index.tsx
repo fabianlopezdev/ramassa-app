@@ -14,7 +14,7 @@ import { isNetworkStateOnline } from '@/lib/network-status';
 import { useCreateFeedback, usePlayerFeedback } from '@/lib/player-feedback';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useSectionVisit } from '@/lib/use-tab-news';
+import { useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -60,6 +60,7 @@ const statusKey: Readonly<Record<FeedbackStatus, string>> = {
   resolved: 'statusResolved',
 };
 const feedbackKeyExtractor = (submission: FeedbackSubmission) => submission.id;
+const NO_CHANGED_IDS: readonly string[] = [];
 
 interface FeedbackHistoryCardProps {
   readonly id: string;
@@ -128,9 +129,9 @@ export default function FeedbackScreen() {
   const networkState = useNetworkState();
   const isOnline = isNetworkStateOnline(networkState);
   const feedbackQuery = usePlayerFeedback();
-  // Her suggestions whose status the staff changed since her last visit keep
-  // "Nou" while she is here; opening the screen clears the number on Contacte (RAPP-873).
-  const { changedSubmissionIds } = useSectionVisit('feedback', true);
+  // Her suggestions whose status the staff changed keep "Nou" until she taps
+  // each one; opening this screen clears nothing (RAPP-873).
+  const changedSubmissionIds = useTabNews().data?.feedback.changedSubmissionIds ?? NO_CHANGED_IDS;
   const changedSubmissions = useMemo(() => new Set(changedSubmissionIds), [changedSubmissionIds]);
   const unseenWord = t('home:unseen');
   const { error: createError, mutateAsync: createFeedbackAsync } = useCreateFeedback();
