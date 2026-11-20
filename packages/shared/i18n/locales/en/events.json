@@ -15,7 +15,7 @@
   "playerLoadFailed": "We could not load the activities.",
   "playerRetryAction": "Try again",
   "playerEmptyTitle": "No upcoming activities",
-  "playerEmptyBody": "When the technical team publishes an activity, you will find it here.",
+  "playerEmptyBody": "When the staff publishes an activity, you will find it here.",
   "playerSelectedDate": "Activities on {{date}}",
   "playerNoEventsDate": "There are no activities on this day.",
   "playerOpenEvent": "Open activity: {{title}}",
