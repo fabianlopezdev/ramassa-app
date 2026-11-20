@@ -7,8 +7,9 @@
  * are the raised card of Per fer (RAPP-842). The unread count sits in a circle
  * on the top edge near the end, and the state of her request is a badge on the
  * top edge near the start, like "Nou". Both are in the brand colour.
- * Mentoria and Suggeriments also count what the staff changed for her since she
- * last opened them (RAPP-873), so the cards add up to the tab's number.
+ * Mentoria and Suggeriments also count what the staff changed for her (RAPP-873),
+ * so the cards add up to the tab's number. Each change stays counted until she
+ * opens that request or taps that suggestion.
  */
 import { PageWidth } from '@/components/layout/content-width';
 import type { RaisedCardBadge } from '@/components/layout/raised-card';

@@ -33,7 +33,7 @@ const NO_CONTACT_CARD_NEWS: ContactCardNewsCounts = { mentoring: 0, feedback: 0 
 
 /**
  * The numbers on the Mentoria and Suggeriments cards (RAPP-873): her requests
- * and suggestions the staff changed since she last opened that screen. They
+ * and suggestions the staff changed that she has not opened yet. They
  * add up to the tab's number with the unread messages, and are zero until the
  * news has loaded.
  */
