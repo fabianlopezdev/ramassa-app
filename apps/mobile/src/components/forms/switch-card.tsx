@@ -10,19 +10,16 @@
  * the chosen colour.
  *
  * A card may carry a second line under its label, such as what a permission
- * allows. A locked card dims and a press does nothing, like a raised button
+ * allows. The switch turns on in the organization's brand colour, the colour
+ * of the card's border and edge. A locked card dims and a press does nothing, like a raised button
  * that waits. A bold label names a group, such as an area of permissions.
  */
+import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { RaisedPressable, useRaisedChoiceFaceStyle } from '@/components/layout/raised-surface';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Switch, Text, View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
-
-const switchTrackColor = {
-  false: tokens.colors.neutral[300],
-  true: tokens.colors.primary.DEFAULT,
-} as const;
 
 const labelWeightClasses = { medium: 'font-medium', bold: 'font-bold' } as const;
 
@@ -53,6 +50,11 @@ export function SwitchCard({
 }) {
   const fontClass = useLanguageFontClass();
   const faceStyle = useRaisedChoiceFaceStyle();
+  const brandColor = useBrandColor();
+  const trackColor = useMemo(
+    () => ({ false: tokens.colors.neutral[300], true: brandColor }),
+    [brandColor],
+  );
   const handlePress = useCallback(() => {
     if (!isDisabled) onValueChange(!value);
   }, [isDisabled, onValueChange, value]);
@@ -84,7 +86,7 @@ export function SwitchCard({
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       >
-        <Switch value={value} trackColor={switchTrackColor} />
+        <Switch value={value} trackColor={trackColor} />
       </View>
     </RaisedPressable>
   );
