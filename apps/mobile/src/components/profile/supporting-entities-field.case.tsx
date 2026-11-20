@@ -9,6 +9,7 @@ mock.module('react-i18next', () => ({
 }));
 mock.module('@/lib/use-language-font-class', () => ({ useLanguageFontClass: () => '' }));
 mock.module('@/lib/continuous-corners', () => ({ continuousCorners: {} }));
+mock.module('@/components/icons/icon', () => ({ Icon: () => null }));
 let fontScale = 1;
 mock.module('react-native', () => ({
   useWindowDimensions: () => ({ width: 402, fontScale }),

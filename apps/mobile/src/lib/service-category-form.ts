@@ -10,7 +10,13 @@
  */
 import { localizedTextFromReview } from '@ramassa/shared/announcements';
 import { type CategoryColor } from '@ramassa/shared/category-colors';
-import { serviceCategoryInputSchema, serviceMetadataFieldDefinitionSchema, type AdminServiceCategory, type ServiceCategoryInput, type ServiceMetadataFieldType } from '@ramassa/shared/services';
+import {
+  serviceCategoryInputSchema,
+  serviceMetadataFieldDefinitionSchema,
+  type AdminServiceCategory,
+  type ServiceCategoryInput,
+  type ServiceMetadataFieldType,
+} from '@ramassa/shared/services';
 import type { TranslationReview } from '@ramassa/shared/translation';
 
 export const SERVICE_CATEGORY_ICONS = [

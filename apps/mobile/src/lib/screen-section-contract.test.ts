@@ -41,10 +41,7 @@ test('no screen defines its own Section component', () => {
 
 // Headings that are not section titles: a notice card and the title of one
 // request. Anything else at these sizes is a section title.
-const notSectionTitles = new Set([
-  'app/(app)/mentoring/[id].tsx',
-  'app/(app)/mentoring/index.tsx',
-]);
+const notSectionTitles = new Set(['app/(app)/mentoring/[id].tsx', 'app/(app)/mentoring/index.tsx']);
 
 test('no screen draws a section title by hand', () => {
   const handMade =
@@ -59,13 +56,15 @@ test('no screen draws a section title by hand', () => {
 // own, and the scan above only reads route files. These headings are not
 // section titles: a block a staff member wrote into a form, three cards of one
 // service review, a numbered heading inside an article, the title of one
-// article card, and the places left on an event.
+// article card, the places left on an event, and the notice that asks her to
+// confirm deleting her own post (RAPP-884).
 const componentHeadingsThatAreNotSectionTitles = new Set([
   'components/forms/text-block.tsx',
   'components/content/service-review-detail.tsx',
   'components/knowledge/player-structured-content-shared.tsx',
   'components/knowledge/knowledge-article-card.tsx',
   'components/events/event-article.tsx',
+  'components/forum/forum-own-post-actions.tsx',
 ]);
 
 test('no component draws a section title by hand', () => {

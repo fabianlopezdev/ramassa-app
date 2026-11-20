@@ -63,8 +63,13 @@ describe('Phase 6 structural polish contract', () => {
     const galleryItem = await readMobileSource('app/(app)/gallery/[id].tsx');
     const forumPlainText = await readMobileSource('components/forum/forum-plain-text.tsx');
 
-    expect(galleryUpload).toContain("playHaptic('selection')");
-    expect(galleryUpload).toContain('onValueChange={toggleConsent}');
+    // The consent is the shared switch card (RAPP-894). Its press gives the
+    // selection haptic through the raised pressable every switch card is built on.
+    const switchCard = await readMobileSource('components/forms/switch-card.tsx');
+    const raisedSurface = await readMobileSource('components/layout/raised-surface.tsx');
+    expect(galleryUpload).toContain('onValueChange={setConsent}');
+    expect(switchCard).toContain('<RaisedPressable');
+    expect(raisedSurface).toContain("haptic = 'selection'");
     expect(galleryItem).toContain("playHaptic('warning')");
     expect(forumPlainText).toContain("playHaptic('tapLight')");
   });

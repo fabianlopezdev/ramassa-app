@@ -99,20 +99,20 @@ function FeedbackHistoryCard({
         onOpen={handleOpen}
         badge={badge}
       >
-      <Text className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}>
-        {typeLabel}
-      </Text>
-      <Text
-        style={styles.mixedDirectionText}
-        className={`text-start text-md text-neutral-700 ${languageFontClass}`}
-      >
-        {content}
-      </Text>
-      <Text
-        className={`text-start text-sm font-medium tabular-nums text-primary ${languageFontClass}`}
-      >
-        {statusAndDate}
-      </Text>
+        <Text className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}>
+          {typeLabel}
+        </Text>
+        <Text
+          style={styles.mixedDirectionText}
+          className={`text-start text-md text-neutral-700 ${languageFontClass}`}
+        >
+          {content}
+        </Text>
+        <Text
+          className={`text-start text-sm font-medium tabular-nums text-primary ${languageFontClass}`}
+        >
+          {statusAndDate}
+        </Text>
       </OpenableCard>
     </FormWidth>
   );

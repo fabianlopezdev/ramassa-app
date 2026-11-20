@@ -41,9 +41,13 @@ describe('Phase 6 accessibility and i18n contract', () => {
     expect(galleryGrid).toContain("t('openItem', { name: item.uploader_first_name })");
     // The screen title is the native header's (RAPP-806).
     expect(gallery).toContain("<NativeScreenHeader title={t('title')} />");
+    // The video is drawn by the media stage (RAPP-897): the screen names it and
+    // the stage hands that name to the player.
+    const galleryStage = await readMobileSource('components/gallery/gallery-media-stage.tsx');
     expect(galleryItem).toMatch(
-      /<VideoView[\s\S]*?accessibilityLabel=\{[\s\S]*?item\.caption \?\? t\('gallery:mediaBy'/,
+      /<GalleryVideoStage[\s\S]*?accessibilityLabel=\{[\s\S]*?item\.caption \?\? t\('gallery:mediaBy'/,
     );
+    expect(galleryStage).toMatch(/<VideoView[\s\S]*?accessibilityLabel=\{accessibilityLabel\}/);
   });
 
   test('stateful upload controls announce translated state and progress', async () => {
@@ -76,7 +80,7 @@ describe('Phase 6 accessibility and i18n contract', () => {
     const forumPostCard = await readMobileSource('components/forum/forum-post-card.tsx');
     const gallery = await readMobileSource('components/gallery/gallery-grid.tsx');
     const galleryTile = await readMobileSource('components/gallery/gallery-tile.tsx');
-    const galleryItem = await readMobileSource('app/(app)/gallery/[id].tsx');
+    const galleryStage = await readMobileSource('components/gallery/gallery-media-stage.tsx');
     const upload = await readMobileSource('app/(app)/gallery/upload.tsx');
 
     expect(composer).toContain('IMAGE_PICKER_ORIGINAL_QUALITY');
@@ -88,7 +92,9 @@ describe('Phase 6 accessibility and i18n contract', () => {
     expect(gallery).toContain('GALLERY_COLUMN_COUNT');
     expect(galleryTile).toContain('GALLERY_TILE_ASPECT_RATIO');
     expect(galleryTile).toContain('motionTokens.duration.fast');
-    expect(galleryItem).toContain('GALLERY_MEDIA_ASPECT_RATIO');
+    // An opened photo or video keeps its own shape (RAPP-897); the named value
+    // is the shape of its frame until the media has been measured.
+    expect(galleryStage).toContain('GALLERY_MEDIA_FALLBACK_ASPECT_RATIO');
     expect(upload).toContain('IMAGE_PICKER_ORIGINAL_QUALITY');
     expect(upload).toContain('MEDIA_CAPTION_MAX_LENGTH');
     expect(upload).toContain('PROGRESS_PERCENT_MAX');

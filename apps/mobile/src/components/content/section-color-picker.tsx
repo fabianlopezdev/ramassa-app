@@ -8,11 +8,12 @@
  */
 import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { ChoiceOption } from '@/components/equipment/choice-option';
+import { FieldLabel } from '@/components/forms/field-label';
 import { sectionColorChoices, sectionColorLabelKey } from '@/lib/section-color-choices';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { sectionHue } from '@ramassa/shared/section-colors';
 
 const Swatch = memo(function Swatch({ hue }: { readonly hue: string | undefined }) {
@@ -55,9 +56,7 @@ export function SectionColorPicker({
   );
   return (
     <View className="gap-xs">
-      <Text className={`text-start text-md font-medium text-neutral-800 ${fontClass}`}>
-        {label}
-      </Text>
+      <FieldLabel>{label}</FieldLabel>
       <View accessibilityRole="radiogroup" className="flex-row flex-wrap gap-sm">
         {offered.map((color) => {
           const key = sectionColorLabelKey(color, noColorValue);
