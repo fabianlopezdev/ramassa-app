@@ -156,7 +156,7 @@ export function RaisedCard({
           : `${isStackedTile ? TILE_STACK_CLASS_NAME : tile ? TILE_ROW_CLASS_NAME : ROW_CLASS_NAME} py-md`
       }
       className={tile ? 'grow' : undefined}
-      paddingClassName={tile ? 'px-sm' : undefined}
+      paddingClassName={tile ? 'px-md' : undefined}
       tone={tone}
     >
       {isStackedTile ? (
