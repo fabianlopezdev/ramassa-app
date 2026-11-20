@@ -29,7 +29,7 @@ export function EdgeMarks({
 }: {
   readonly badge?: EdgeMarkBadge | null;
   readonly count?: string | null;
-  /** Such as `flex-1`, so a card in a row fills its cell (RAPP-874). */
+  /** Such as `flex-1`, so a half card fills its cell (RAPP-874). */
   readonly className?: string;
   readonly children: ReactNode;
 }) {

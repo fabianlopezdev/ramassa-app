@@ -56,20 +56,16 @@ const TILE_ROW_CLASS_NAME = 'flex-1 flex-row items-stretch gap-xs';
 export function RaisedCardSymbol({
   name,
   color,
+  size = tokens.spacing['2xl'],
 }: {
   readonly name: IconName;
   /** In place of the brand colour, such as the error red of signing out. */
   readonly color?: string;
+  /** Larger on a half-width card (RAPP-874), where the icon sits above the name. */
+  readonly size?: number;
 }) {
   const brandColor = useBrandColor();
-  return (
-    <Icon
-      name={name}
-      weight="boldDuotone"
-      size={tokens.spacing['2xl']}
-      color={color ?? brandColor}
-    />
-  );
+  return <Icon name={name} weight="boldDuotone" size={size} color={color ?? brandColor} />;
 }
 
 interface RaisedCardProps {

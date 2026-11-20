@@ -1,7 +1,7 @@
 /**
  * El meu perfil (RAPP-22, RAPP-794): opened from her photo at the top of every
  * tab, as a short menu on the shared raised cards (RAPP-863). Her data and her
- * attendance come first, as a pair of square raised cards (RAPP-874); the
+ * attendance come first, as a pair of half-width raised cards (RAPP-874); the
  * other rows follow on the raised icon card. Each opens one screen, except the
  * last, which signs her out.
  *
@@ -16,8 +16,8 @@
  */
 
 import { ICON_LICENCE } from '@/components/icons/icon';
+import { RaisedHalfCard, RaisedHalfCardRow } from '@/components/layout/raised-half-card';
 import { RaisedIconCard } from '@/components/layout/raised-icon-card';
-import { RaisedSquareCard, RaisedSquareCardRow } from '@/components/layout/raised-square-card';
 import { ProfileScreenFrame } from '@/components/profile/profile-screen-frame';
 import { logout } from '@/lib/auth';
 import { playerNavIcons } from '@/lib/player-nav-icons';
@@ -47,8 +47,8 @@ export default function ProfileScreen() {
 
   return (
     <ProfileScreenFrame title={t('title')} testID="profile-menu">
-      <RaisedSquareCardRow>
-        <RaisedSquareCard
+      <RaisedHalfCardRow>
+        <RaisedHalfCard
           testID="profile-open-data"
           icon={playerNavIcons.myData}
           title={t('menu.data')}
@@ -56,7 +56,7 @@ export default function ProfileScreen() {
           languageFontClass={languageFontClass}
           onOpen={openData}
         />
-        <RaisedSquareCard
+        <RaisedHalfCard
           testID="profile-open-attendance"
           icon={playerNavIcons.attendance}
           title={t('menu.attendance')}
@@ -64,7 +64,7 @@ export default function ProfileScreen() {
           languageFontClass={languageFontClass}
           onOpen={openAttendance}
         />
-      </RaisedSquareCardRow>
+      </RaisedHalfCardRow>
       <RaisedIconCard
         testID="profile-open-language"
         icon={playerNavIcons.language}

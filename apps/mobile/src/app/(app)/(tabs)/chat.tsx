@@ -5,14 +5,14 @@
  * with the state of the request she is waiting on, and suggestions. Each opens
  * the screen it always opened (`team-chat`, `mentoring`, `feedback`). The chat
  * is the raised card of Per fer (RAPP-842); mentoring and suggestions sit under
- * it as a pair of square raised cards (RAPP-874). The unread count sits in a circle
+ * it as a pair of half-width raised cards (RAPP-874). The unread count sits in a circle
  * on the top edge near the end, and the state of her request is a badge on the
  * top edge near the start, like "Nou". Both are in the brand colour.
  */
 import { PageWidth } from '@/components/layout/content-width';
 import type { RaisedCardBadge } from '@/components/layout/raised-card';
+import { RaisedHalfCard, RaisedHalfCardRow } from '@/components/layout/raised-half-card';
 import { RaisedIconCard } from '@/components/layout/raised-icon-card';
-import { RaisedSquareCard, RaisedSquareCardRow } from '@/components/layout/raised-square-card';
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { useUnreadMessages } from '@/lib/messaging';
@@ -88,8 +88,8 @@ function ChatTabScreen() {
           languageFontClass={languageFontClass}
           onOpen={openTeamChat}
         />
-        <RaisedSquareCardRow>
-          <RaisedSquareCard
+        <RaisedHalfCardRow>
+          <RaisedHalfCard
             testID="chat-open-mentoring"
             icon={playerNavIcons.mentoring}
             title={mentoringTitle}
@@ -100,7 +100,7 @@ function ChatTabScreen() {
             languageFontClass={languageFontClass}
             onOpen={openMentoring}
           />
-          <RaisedSquareCard
+          <RaisedHalfCard
             testID="chat-open-feedback"
             icon={playerNavIcons.feedback}
             title={feedbackTitle}
@@ -108,7 +108,7 @@ function ChatTabScreen() {
             languageFontClass={languageFontClass}
             onOpen={openFeedback}
           />
-        </RaisedSquareCardRow>
+        </RaisedHalfCardRow>
       </PageWidth>
     </ScrollView>
   );
