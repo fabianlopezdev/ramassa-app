@@ -17,6 +17,7 @@ import {
   useServiceInterest,
 } from '@/lib/player-services';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useMarkServiceSeen } from '@/lib/use-tab-news';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -39,6 +40,7 @@ export default function ServiceDetailScreen() {
   const [contactErrorCode, setContactErrorCode] = useState<AppErrorCode | null>(null);
   const interestErrorCode = interest.error === null ? null : toAppError(interest.error).code;
   const service = serviceQuery.data;
+  useMarkServiceSeen(service?.id);
   const category = categoriesQuery.data?.find((candidate) => candidate.id === service?.category_id);
   const title = service === undefined ? undefined : resolveLocalizedText(service.title, language);
   const androidInsets = useMemo(

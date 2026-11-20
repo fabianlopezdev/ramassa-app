@@ -13,10 +13,12 @@ import { KnowledgeArticleCard } from '@/components/knowledge/knowledge-article-c
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
+import { NO_HELP_NEWS, summarizeHelpNews } from '@/lib/help-news';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { filterPlayerGuides, selectPlayerGuides } from '@/lib/player-guides';
 import { usePlayerKnowledgeArticles, usePlayerKnowledgeCategories } from '@/lib/player-knowledge';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
@@ -42,7 +44,7 @@ const keyExtractor = (article: KnowledgeArticleListRow) => article.id;
 
 export default function GuideCategoryScreen() {
   const { categoryId } = useLocalSearchParams<{ categoryId: string }>();
-  const { t } = useTranslation('knowledge');
+  const { t } = useTranslation(['knowledge', 'home']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -68,7 +70,15 @@ export default function GuideCategoryScreen() {
     [push],
   );
   const { refetch: refetchArticles } = articlesQuery;
-  const refresh = useCallback(() => void refetchArticles(), [refetchArticles]);
+  // A guide keeps "Nou" until she opens it, also after she comes back (RAPP-873).
+  const { data: news, refetch: refetchNews } = useTabNews();
+  const newGuideIds = useMemo(
+    () => (news === undefined ? NO_HELP_NEWS : summarizeHelpNews(news.guides.newArticles)).newIds,
+    [news],
+  );
+  const refresh = useCallback(() => {
+    void Promise.all([refetchArticles(), refetchNews()]);
+  }, [refetchArticles, refetchNews]);
   const renderGuide = useCallback(
     ({ item, index }: ListRenderItemInfo<KnowledgeArticleListRow>) => (
       <PageWidth className="pb-md">
@@ -78,11 +88,12 @@ export default function GuideCategoryScreen() {
             accessToken={accessToken}
             onOpen={openGuide}
             showsCategory={false}
+            unseenLabel={newGuideIds.has(item.id) ? t('home:unseen') : null}
           />
         </FadeSlideIn>
       </PageWidth>
     ),
-    [accessToken, openGuide],
+    [accessToken, newGuideIds, openGuide, t],
   );
 
   let emptyState: ReactElement;
@@ -119,6 +130,7 @@ export default function GuideCategoryScreen() {
         data={guides}
         renderItem={renderGuide}
         keyExtractor={keyExtractor}
+        extraData={newGuideIds}
         style={screenStyle}
         contentContainerStyle={styles.content}
         contentInsetAdjustmentBehavior="automatic"
