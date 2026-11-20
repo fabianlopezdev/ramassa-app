@@ -28,6 +28,8 @@ import { logger } from '@/lib/observability';
 import { usePlayerEvents } from '@/lib/player-events';
 import { usePlayerMentoringRequests } from '@/lib/player-mentoring';
 import { playerNavIcons } from '@/lib/player-nav-icons';
+import { useActivitiesAttention } from '@/lib/use-activities-attention';
+import { useHomeSeen } from '@/lib/use-home-attention';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
@@ -64,7 +66,7 @@ const getItemType = (item: PlayerEventOccurrence) =>
     : 'event';
 
 export default function EventsScreen() {
-  const { t, i18n } = useTranslation(['events', 'common', 'mentoring', 'nav']);
+  const { t, i18n } = useTranslation(['events', 'common', 'mentoring', 'nav', 'home']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -83,6 +85,9 @@ export default function EventsScreen() {
   const { data, isPending, isError, error, isRefetching, refetch } = usePlayerEvents();
   const mentoringQuery = usePlayerMentoringRequests();
   const refetchMentoring = mentoringQuery.refetch;
+  // New activities carry the same "Nou" mark as on Inici, one card per activity (RAPP-873).
+  const { newOccurrenceIds } = useActivitiesAttention();
+  const refetchSeen = useHomeSeen().refetch;
   const now = new Date();
   const events = useMemo(
     () => filterPlayerEventOccurrences(data ?? EMPTY_EVENTS, category, now),
@@ -186,6 +191,7 @@ export default function EventsScreen() {
       const time = timeFormatter.format(new Date(item.occurrence_starts_at));
       const capacity = playerEventCapacityLabel(item, t);
       const signup = playerEventSignupLabel(item.signup?.state, t);
+      const unseenLabel = newOccurrenceIds.has(item.occurrence_id) ? t('home:unseen') : null;
       return (
         <PageWidth className="pb-md">
           <EventCard
@@ -196,7 +202,9 @@ export default function EventsScreen() {
             locale={locale}
             location={item.event.location}
             signupLabel={signup}
+            unseenLabel={unseenLabel}
             accessibilityLabel={[
+              unseenLabel,
               t('playerOpenEvent', { title: title.text }),
               categoryName.text,
               date,
@@ -213,20 +221,29 @@ export default function EventsScreen() {
         </PageWidth>
       );
     },
-    [dateFormatter, language, languageFontClass, locale, openOccurrence, t, timeFormatter],
+    [
+      dateFormatter,
+      language,
+      languageFontClass,
+      locale,
+      newOccurrenceIds,
+      openOccurrence,
+      t,
+      timeFormatter,
+    ],
   );
 
   const tabInsets = usePlayerTabContentInsets();
   const contentContainerStyle = useMemo(() => [styles.content, tabInsets], [tabInsets]);
   const onRefresh = useCallback(
-    () => void Promise.all([refetch(), refetchMentoring()]),
-    [refetch, refetchMentoring],
+    () => void Promise.all([refetch(), refetchMentoring(), refetchSeen()]),
+    [refetch, refetchMentoring, refetchSeen],
   );
   // The day presses with its own selection haptic.
   const selectCalendarDay = useCallback((date: string) => setSelectedDate(date), []);
   const listExtraData = useMemo(
-    () => ({ category, effectiveSelectedDate, view: contentView }),
-    [category, effectiveSelectedDate, contentView],
+    () => ({ category, effectiveSelectedDate, newOccurrenceIds, view: contentView }),
+    [category, effectiveSelectedDate, newOccurrenceIds, contentView],
   );
   const onListLoad = useCallback(
     ({ elapsedTimeInMs }: { readonly elapsedTimeInMs: number }) => {
