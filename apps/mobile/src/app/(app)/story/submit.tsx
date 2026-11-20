@@ -441,14 +441,20 @@ export default function StorySubmissionScreen() {
                       ))}
                     </View>
                   </View>
-                  <SelectionChoiceCard
-                    testID="story-publication-consent"
-                    accessibilityRole="checkbox"
-                    label={t('knowledge:publicationConsent')}
-                    fontClass={languageFontClass}
-                    isSelected={hasConsent}
-                    onPress={toggleConsent}
-                  />
+                  <View className="gap-xs">
+                    <SelectionChoiceCard
+                      testID="story-publication-consent"
+                      accessibilityRole="checkbox"
+                      label={t('knowledge:publicationConsent')}
+                      fontClass={languageFontClass}
+                      isSelected={hasConsent}
+                      onPress={toggleConsent}
+                    />
+                    {/* What the consent means: who sees the story, and when. */}
+                    <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+                      {t('knowledge:publicationConsentHelp')}
+                    </Text>
+                  </View>
                 </>
               )}
               {!isOnline ? (
