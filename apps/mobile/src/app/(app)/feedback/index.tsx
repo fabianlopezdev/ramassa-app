@@ -2,6 +2,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
 import { FormWidth } from '@/components/layout/content-width';
+import { EdgeMarks, type EdgeMarkBadge } from '@/components/layout/edge-marks';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -13,6 +14,7 @@ import { isNetworkStateOnline } from '@/lib/network-status';
 import { useCreateFeedback, usePlayerFeedback } from '@/lib/player-feedback';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useSectionVisit } from '@/lib/use-tab-news';
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -66,6 +68,8 @@ interface FeedbackHistoryCardProps {
   readonly statusAndDate: string;
   readonly languageFontClass: string;
   readonly onOpenChat: () => void;
+  /** Set while the staff's change of status is new to her (RAPP-873): the word on the top edge. */
+  readonly unseenLabel: string | null;
 }
 
 function FeedbackHistoryCard({
@@ -75,36 +79,47 @@ function FeedbackHistoryCard({
   statusAndDate,
   languageFontClass,
   onOpenChat,
+  unseenLabel,
 }: FeedbackHistoryCardProps) {
+  const badge = useMemo<EdgeMarkBadge | null>(
+    () => (unseenLabel === null ? null : { label: unseenLabel, tone: 'brand' }),
+    [unseenLabel],
+  );
+  const card = (
+    <OpenableCard
+      testID={`feedback-history-${id}`}
+      accessibilityLabel={[unseenLabel, typeLabel, content, statusAndDate]
+        .filter((part): part is string => part !== null)
+        .join('. ')}
+      onOpen={onOpenChat}
+      className="rounded-lg border border-neutral-200 bg-white p-lg"
+    >
+      <Text className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}>
+        {typeLabel}
+      </Text>
+      <Text
+        style={styles.mixedDirectionText}
+        className={`text-start text-md text-neutral-700 ${languageFontClass}`}
+      >
+        {content}
+      </Text>
+      <Text
+        className={`text-start text-sm font-medium tabular-nums text-primary ${languageFontClass}`}
+      >
+        {statusAndDate}
+      </Text>
+    </OpenableCard>
+  );
   return (
     <FormWidth className="pb-md">
-      <OpenableCard
-        testID={`feedback-history-${id}`}
-        accessibilityLabel={[typeLabel, content, statusAndDate].join('. ')}
-        onOpen={onOpenChat}
-        className="rounded-lg border border-neutral-200 bg-white p-lg"
-      >
-        <Text className={`text-start text-md font-bold text-neutral-900 ${languageFontClass}`}>
-          {typeLabel}
-        </Text>
-        <Text
-          style={styles.mixedDirectionText}
-          className={`text-start text-md text-neutral-700 ${languageFontClass}`}
-        >
-          {content}
-        </Text>
-        <Text
-          className={`text-start text-sm font-medium tabular-nums text-primary ${languageFontClass}`}
-        >
-          {statusAndDate}
-        </Text>
-      </OpenableCard>
+      {/* The row is not a raised card, so the shared marks place the word. */}
+      {badge === null ? card : <EdgeMarks badge={badge}>{card}</EdgeMarks>}
     </FormWidth>
   );
 }
 
 export default function FeedbackScreen() {
-  const { t, i18n } = useTranslation(['feedback', 'common', 'errors']);
+  const { t, i18n } = useTranslation(['feedback', 'common', 'errors', 'home']);
   const languageFontClass = useLanguageFontClass();
   const { session } = useAuth();
   const { push } = useRouter();
@@ -113,6 +128,11 @@ export default function FeedbackScreen() {
   const networkState = useNetworkState();
   const isOnline = isNetworkStateOnline(networkState);
   const feedbackQuery = usePlayerFeedback();
+  // Her suggestions whose status the staff changed since her last visit keep
+  // "Nou" while she is here; opening the screen clears the number on Contacte (RAPP-873).
+  const { changedSubmissionIds } = useSectionVisit('feedback', true);
+  const changedSubmissions = useMemo(() => new Set(changedSubmissionIds), [changedSubmissionIds]);
+  const unseenWord = t('home:unseen');
   const { error: createError, mutateAsync: createFeedbackAsync } = useCreateFeedback();
   const [type, setType] = useState<FeedbackType>('activity_proposal');
   const [content, setContent] = useState('');
@@ -206,9 +226,10 @@ export default function FeedbackScreen() {
         )}`}
         languageFontClass={languageFontClass}
         onOpenChat={openChat}
+        unseenLabel={changedSubmissions.has(item.id) ? unseenWord : null}
       />
     ),
-    [dateFormatter, languageFontClass, openChat, t],
+    [changedSubmissions, dateFormatter, languageFontClass, openChat, t, unseenWord],
   );
   const submitAnother = useCallback(() => {
     setIsComplete(false);
@@ -226,6 +247,7 @@ export default function FeedbackScreen() {
         data={feedbackQuery.data ?? EMPTY_FEEDBACK}
         renderItem={renderFeedback}
         keyExtractor={feedbackKeyExtractor}
+        extraData={changedSubmissions}
         style={styles.screen}
         contentContainerStyle={contentContainerStyle}
         contentInsetAdjustmentBehavior="automatic"

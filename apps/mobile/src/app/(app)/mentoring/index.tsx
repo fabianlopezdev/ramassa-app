@@ -2,6 +2,7 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { FailureNotice } from '@/components/error-code-line';
 import { FormWidth } from '@/components/layout/content-width';
+import { EdgeMarks, type EdgeMarkBadge } from '@/components/layout/edge-marks';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
 import { MentoringPreferencePickers } from '@/components/mentoring/mentoring-preference-pickers';
@@ -12,6 +13,7 @@ import { continuousCorners } from '@/lib/continuous-corners';
 import { MENTORING_STATUS_KEYS, MENTORING_TOPIC_KEYS } from '@/lib/mentoring-labels';
 import { useCreateMentoringRequest, usePlayerMentoringRequests } from '@/lib/player-mentoring';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useSectionVisit } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -44,9 +46,14 @@ const statusKey = MENTORING_STATUS_KEYS;
 const mentoringKeyExtractor = (request: MentoringRequest) => request.id;
 
 export default function MentoringScreen() {
-  const { t, i18n } = useTranslation(['mentoring', 'common']);
+  const { t, i18n } = useTranslation(['mentoring', 'common', 'home']);
   const languageFontClass = useLanguageFontClass();
   const requestsQuery = usePlayerMentoringRequests();
+  // Her requests the staff changed since her last visit keep "Nou" while she is
+  // here; opening the screen clears the number on Contacte (RAPP-873).
+  const { changedRequestIds } = useSectionVisit('mentoring', true);
+  const changedRequests = useMemo(() => new Set(changedRequestIds), [changedRequestIds]);
+  const unseenWord = t('home:unseen');
   const refetchRequests = requestsQuery.refetch;
   const {
     error: createError,
@@ -123,10 +130,11 @@ export default function MentoringScreen() {
           dateTimeFormatter={dateTimeFormatter}
           dateFormatter={dateFormatter}
           languageFontClass={languageFontClass}
+          unseenLabel={changedRequests.has(item.id) ? unseenWord : null}
         />
       </FormWidth>
     ),
-    [dateFormatter, dateTimeFormatter, languageFontClass],
+    [changedRequests, dateFormatter, dateTimeFormatter, languageFontClass, unseenWord],
   );
 
   return (
@@ -137,6 +145,7 @@ export default function MentoringScreen() {
         data={requestsQuery.data ?? EMPTY_MENTORING_REQUESTS}
         renderItem={renderRequest}
         keyExtractor={mentoringKeyExtractor}
+        extraData={changedRequests}
         style={styles.screen}
         contentContainerStyle={contentContainerStyle}
         contentInsetAdjustmentBehavior="automatic"
@@ -333,11 +342,14 @@ function RequestStatusCard({
   dateTimeFormatter,
   dateFormatter,
   languageFontClass,
+  unseenLabel,
 }: {
   readonly request: MentoringRequest;
   readonly dateTimeFormatter: Intl.DateTimeFormat;
   readonly dateFormatter: Intl.DateTimeFormat;
   readonly languageFontClass: string;
+  /** Set while the staff's change is new to her (RAPP-873): the word on the top edge. */
+  readonly unseenLabel: string | null;
 }) {
   const { t } = useTranslation('mentoring');
   const { push } = useRouter();
@@ -348,10 +360,16 @@ function RequestStatusCard({
     () => push(`/mentoring/${request.id}` as Href),
     [push, request.id],
   );
-  return (
+  const badge = useMemo<EdgeMarkBadge | null>(
+    () => (unseenLabel === null ? null : { label: unseenLabel, tone: 'brand' }),
+    [unseenLabel],
+  );
+  const card = (
     <OpenableCard
       testID={`mentoring-request-${request.id}`}
-      accessibilityLabel={[status, topicLabel, requestedOn].join('. ')}
+      accessibilityLabel={[unseenLabel, status, topicLabel, requestedOn]
+        .filter((part): part is string => part !== null)
+        .join('. ')}
       onOpen={openDetail}
       className="rounded-lg border border-neutral-200 bg-white p-lg"
     >
@@ -381,4 +399,7 @@ function RequestStatusCard({
       )}
     </OpenableCard>
   );
+  if (badge === null) return card;
+  // The row is not a raised card, so the shared marks place the word.
+  return <EdgeMarks badge={badge}>{card}</EdgeMarks>;
 }
