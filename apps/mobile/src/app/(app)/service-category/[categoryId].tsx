@@ -15,6 +15,7 @@ import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { AppSheet } from '@/components/layout/app-sheet';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { useSectionWash } from '@/components/layout/raised-surface';
 import { ServiceCard } from '@/components/services/service-card';
 import { ServiceFilterPanel } from '@/components/services/service-filter-panel';
 import { isNetworkStateOnline } from '@/lib/network-status';
@@ -30,7 +31,7 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
-import { categoryWash } from '@ramassa/shared/category-colors';
+import { isCategoryColor } from '@ramassa/shared/category-colors';
 import { toAppError } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { type PlayerServiceRow } from '@ramassa/shared/services';
@@ -94,7 +95,12 @@ export default function ServiceCategoryScreen() {
   const selectedFilterCount = activeFilterCount(filters);
   const title =
     category === null ? '' : (resolveLocalizedText(category.name, language)?.text ?? '');
-  const wash = category === null ? undefined : categoryWash(category.color);
+  // The screen reads its shade like every coloured screen (RAPP-893). Only
+  // the eight hues wash it, the rule its tile follows, so a category left
+  // on an older name stays on the page colour like its tile.
+  const wash = useSectionWash(
+    category === null || !isCategoryColor(category.color) ? undefined : category.color,
+  );
   const screenStyle = useMemo(
     () => (wash === undefined ? styles.screen : { ...styles.screen, backgroundColor: wash }),
     [wash],
