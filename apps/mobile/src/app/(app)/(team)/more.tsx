@@ -8,9 +8,9 @@
  */
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PreviewStartFailed, useStartPreview } from '@/components/preview/preview-as-player';
-import { ProfileSection } from '@/components/profile/profile-section';
 import { useTeamLayout } from '@/components/team/team-layout-context';
 import { TeamListRow } from '@/components/team/team-list-row';
 import { useGuardedLogout } from '@/lib/sign-out-guard';
@@ -164,10 +164,14 @@ function TeamMoreScreen() {
           >
             {t('team.more')}
           </Text>
-          {groups.map(({ group, entries }) => (
-            <ProfileSection key={group} title={groupTitles[group]}>
+          {groups.map(({ group, entries }, index) => (
+            <ScreenSection
+              key={group}
+              title={groupTitles[group]}
+              isLast={index === groups.length - 1}
+            >
               {entries.map(renderEntry)}
-            </ProfileSection>
+            </ScreenSection>
           ))}
           <PreviewStartFailed isShown={preview.hasFailed} />
         </ScrollView>

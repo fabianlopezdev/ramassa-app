@@ -1,5 +1,5 @@
 /**
- * Avui's "Pendent" list (RAPP-795): one compact row per queue, its count at the
+ * Avui's "Pendent" list (RAPP-795): one raised card per queue, its count at the
  * end, each opening its queue. It replaces the large cards that once pushed
  * the day's sessions off a phone screen (RAPP-481).
  *
@@ -11,7 +11,7 @@
  * monthly count) list that item under the row while something is due.
  */
 import { useCheckoutDate } from '@/components/equipment/staff-checkouts';
-import { ProfileSection } from '@/components/profile/profile-section';
+import { ScreenSection } from '@/components/layout/screen-section';
 import { useContentKnowledge } from '@/lib/content-knowledge';
 import { useServiceReviewCount } from '@/lib/content-service-reviews';
 import { useStockAlerts } from '@/lib/handover';
@@ -104,7 +104,7 @@ function DetailLine({ testID, text }: { readonly testID?: string; readonly text:
   return (
     <Text
       testID={testID}
-      className={`pb-xs text-start text-md font-semibold text-neutral-800 ${fontClass}`}
+      className={`text-start text-md font-semibold text-neutral-800 ${fontClass}`}
     >
       {text}
     </Text>
@@ -274,7 +274,7 @@ export function TodayPendingList() {
   const queues = useMemo(() => pendingQueues(permissions), [permissions]);
   const hasStock = teamAreas(permissions).includes('stock');
   return (
-    <ProfileSection title={t('team.pending')}>
+    <ScreenSection title={t('team.pending')} isLast>
       {queues.map((queue) => {
         switch (queue) {
           case 'serviceReviews':
@@ -299,6 +299,6 @@ export function TodayPendingList() {
             return <MonthlyCountRow key={queue} />;
         }
       })}
-    </ProfileSection>
+    </ScreenSection>
   );
 }
