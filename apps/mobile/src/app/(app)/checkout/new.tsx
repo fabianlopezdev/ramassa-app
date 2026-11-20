@@ -4,11 +4,13 @@
  * when it comes back. The checkout's id is made once, so a second press after
  * a lost answer saves nothing twice.
  */
+import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { AuthTextField } from '@/components/auth/auth-text-field';
 import { ChoiceOption } from '@/components/equipment/choice-option';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { ActionScreen } from '@/components/layout/screen-action';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { clampQuantity } from '@/lib/arrival-form';
 import { continuousCorners } from '@/lib/continuous-corners';
@@ -135,165 +137,156 @@ export default function NewCheckoutScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right', 'bottom']}>
-      <NativeScreenHeader title={t('checkout.title')} />
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerClassName="pb-3xl"
-      >
-        <PageWidth className="gap-lg p-lg">
-          <View className="gap-xs">
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-              {t('checkout.intro')}
-            </Text>
-          </View>
-
-          <Group label={t('arrival.itemLabel')}>
-            {types.map((type) => (
-              <ChoiceOption
-                key={type.id}
-                testID={`checkout-item-${type.key}`}
-                value={type.id}
-                label={itemLabel(type.key)}
-                selected={type.id === itemTypeId}
-                onSelect={(id) => {
-                  setItemTypeId(id);
-                  setSize(null);
-                }}
-                languageFontClass={fontClass}
-              />
-            ))}
-          </Group>
-          {needsSize ? (
-            <Group label={t('arrival.sizeLabel')}>
-              {itemType.sizes.map((candidate) => (
-                <ChoiceOption
-                  key={candidate}
-                  testID={`checkout-size-${candidate}`}
-                  value={candidate}
-                  label={candidate}
-                  selected={candidate === size}
-                  onSelect={setSize}
-                  languageFontClass={fontClass}
-                />
-              ))}
-            </Group>
-          ) : null}
-
-          <View className="gap-sm">
-            <Text className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}>
-              {t('arrival.quantityLabel')}
-            </Text>
-            <View className="flex-row items-center gap-sm">
-              <StepButton
-                testID="checkout-quantity-less"
-                label="−"
-                accessibilityLabel={t('arrival.less')}
-                onPress={() => setQuantity((current) => clampQuantity(current - 1))}
-                disabled={quantity <= 1}
-              />
-              <TextInput
-                testID="checkout-quantity"
-                accessibilityLabel={t('arrival.quantityLabel')}
-                value={String(quantity)}
-                onChangeText={(text) =>
-                  setQuantity(Math.min(1000, clampQuantity(Number(text.replace(/\D/g, '')) || 1)))
-                }
-                keyboardType="number-pad"
-                selectTextOnFocus
-                style={continuousCorners}
-                className={`min-h-recommended w-3xl rounded-md border border-neutral-300 bg-white text-center text-lg text-neutral-900 ${fontClass}`}
-              />
-              <StepButton
-                testID="checkout-quantity-more"
-                label="+"
-                accessibilityLabel={t('arrival.more')}
-                onPress={() => setQuantity((current) => Math.min(1000, current + 1))}
-              />
-            </View>
-          </View>
-
-          <Group label={t('checkout.staffLabel')}>
-            {(recipients.data ?? []).map((person) => (
-              <ChoiceOption
-                key={person.id}
-                testID={`checkout-staff-${person.id}`}
-                value={person.id}
-                label={person.name}
-                selected={person.id === staffId}
-                onSelect={setStaffId}
-                languageFontClass={fontClass}
-              />
-            ))}
-          </Group>
-
-          <View className="gap-sm">
-            <Group label={t('checkout.returnLabel')}>
-              {RETURN_IN_DAYS.map((days) => (
-                <ChoiceOption
-                  key={days}
-                  testID={`checkout-return-${days}`}
-                  value={String(days)}
-                  label={t(`checkout.returnIn.d${days}`)}
-                  selected={String(days) === returnIn}
-                  onSelect={setReturnIn}
-                  languageFontClass={fontClass}
-                />
-              ))}
-            </Group>
-            <Text
-              testID="checkout-return-date"
-              className={`text-start text-md text-neutral-700 ${fontClass}`}
-            >
-              {t('checkout.returnOn', { date: dateText })}
-            </Text>
-          </View>
-
-          <AuthTextField
-            testID="checkout-note"
-            label={t('checkout.noteLabel')}
-            value={note}
-            onChangeText={setNote}
-            maxLength={500}
-          />
-
-          {saveError === null ? null : (
-            <FailureNotice code={saveError} message={t('checkout.saveFailed')} />
-          )}
-          {!isOnline ? (
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-              {t('checkout.needsConnection')}
-            </Text>
-          ) : !isReady ? (
-            <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
-              {t('checkout.chooseAll')}
-            </Text>
-          ) : null}
-          <PressableScale
+    <SafeAreaView className="flex-1 bg-neutral-50" edges={['left', 'right']}>
+      <ActionScreen
+        action={
+          <AuthSubmitButton
             testID="checkout-save"
-            accessibilityRole="button"
-            accessibilityLabel={
-              recordCheckout.isPending ? t('checkout.saving') : t('checkout.save')
-            }
+            label={recordCheckout.isPending ? t('checkout.saving') : t('checkout.save')}
             onPress={save}
-            isDisabled={!isReady || !isOnline}
-            isBusy={recordCheckout.isPending}
-            haptic="tapLight"
-            style={continuousCorners}
-            className={`min-h-recommended items-center justify-center rounded-md px-lg ${
-              isReady && isOnline ? 'bg-primary' : 'bg-neutral-300'
-            }`}
-          >
-            <Text
-              className={`text-center text-md font-bold ${isReady && isOnline ? 'text-white' : 'text-neutral-700'} ${fontClass}`}
-            >
-              {recordCheckout.isPending ? t('checkout.saving') : t('checkout.save')}
-            </Text>
-          </PressableScale>
-        </PageWidth>
-      </ScrollView>
+            isLoading={recordCheckout.isPending}
+            disabled={!isReady || !isOnline}
+          />
+        }
+      >
+        <NativeScreenHeader title={t('checkout.title')} />
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          contentInsetAdjustmentBehavior="automatic"
+          contentContainerClassName="pb-3xl"
+        >
+          <PageWidth className="gap-lg p-lg">
+            <View className="gap-xs">
+              <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
+                {t('checkout.intro')}
+              </Text>
+            </View>
+
+            <Group label={t('arrival.itemLabel')}>
+              {types.map((type) => (
+                <ChoiceOption
+                  key={type.id}
+                  testID={`checkout-item-${type.key}`}
+                  value={type.id}
+                  label={itemLabel(type.key)}
+                  selected={type.id === itemTypeId}
+                  onSelect={(id) => {
+                    setItemTypeId(id);
+                    setSize(null);
+                  }}
+                  languageFontClass={fontClass}
+                />
+              ))}
+            </Group>
+            {needsSize ? (
+              <Group label={t('arrival.sizeLabel')}>
+                {itemType.sizes.map((candidate) => (
+                  <ChoiceOption
+                    key={candidate}
+                    testID={`checkout-size-${candidate}`}
+                    value={candidate}
+                    label={candidate}
+                    selected={candidate === size}
+                    onSelect={setSize}
+                    languageFontClass={fontClass}
+                  />
+                ))}
+              </Group>
+            ) : null}
+
+            <View className="gap-sm">
+              <Text className={`text-start text-lg font-bold text-neutral-900 ${fontClass}`}>
+                {t('arrival.quantityLabel')}
+              </Text>
+              <View className="flex-row items-center gap-sm">
+                <StepButton
+                  testID="checkout-quantity-less"
+                  label="−"
+                  accessibilityLabel={t('arrival.less')}
+                  onPress={() => setQuantity((current) => clampQuantity(current - 1))}
+                  disabled={quantity <= 1}
+                />
+                <TextInput
+                  testID="checkout-quantity"
+                  accessibilityLabel={t('arrival.quantityLabel')}
+                  value={String(quantity)}
+                  onChangeText={(text) =>
+                    setQuantity(Math.min(1000, clampQuantity(Number(text.replace(/\D/g, '')) || 1)))
+                  }
+                  keyboardType="number-pad"
+                  selectTextOnFocus
+                  style={continuousCorners}
+                  className={`min-h-recommended w-3xl rounded-md border border-neutral-300 bg-white text-center text-lg text-neutral-900 ${fontClass}`}
+                />
+                <StepButton
+                  testID="checkout-quantity-more"
+                  label="+"
+                  accessibilityLabel={t('arrival.more')}
+                  onPress={() => setQuantity((current) => Math.min(1000, current + 1))}
+                />
+              </View>
+            </View>
+
+            <Group label={t('checkout.staffLabel')}>
+              {(recipients.data ?? []).map((person) => (
+                <ChoiceOption
+                  key={person.id}
+                  testID={`checkout-staff-${person.id}`}
+                  value={person.id}
+                  label={person.name}
+                  selected={person.id === staffId}
+                  onSelect={setStaffId}
+                  languageFontClass={fontClass}
+                />
+              ))}
+            </Group>
+
+            <View className="gap-sm">
+              <Group label={t('checkout.returnLabel')}>
+                {RETURN_IN_DAYS.map((days) => (
+                  <ChoiceOption
+                    key={days}
+                    testID={`checkout-return-${days}`}
+                    value={String(days)}
+                    label={t(`checkout.returnIn.d${days}`)}
+                    selected={String(days) === returnIn}
+                    onSelect={setReturnIn}
+                    languageFontClass={fontClass}
+                  />
+                ))}
+              </Group>
+              <Text
+                testID="checkout-return-date"
+                className={`text-start text-md text-neutral-700 ${fontClass}`}
+              >
+                {t('checkout.returnOn', { date: dateText })}
+              </Text>
+            </View>
+
+            <AuthTextField
+              testID="checkout-note"
+              label={t('checkout.noteLabel')}
+              value={note}
+              onChangeText={setNote}
+              maxLength={500}
+            />
+
+            {saveError === null ? null : (
+              <FailureNotice code={saveError} message={t('checkout.saveFailed')} />
+            )}
+            {!isOnline ? (
+              <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
+                {t('checkout.needsConnection')}
+              </Text>
+            ) : !isReady ? (
+              <Text className={`text-start text-md text-neutral-600 ${fontClass}`}>
+                {t('checkout.chooseAll')}
+              </Text>
+            ) : null}
+          </PageWidth>
+        </ScrollView>
+      </ActionScreen>
     </SafeAreaView>
   );
 }
