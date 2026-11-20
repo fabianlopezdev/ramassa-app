@@ -1,46 +1,43 @@
 import { describe, expect, it } from 'bun:test';
-import { summarizeHelpNews } from './help-news';
+import { countUnseenHelpItems, unopenedHelpIds } from './help-news';
 
-describe('summarizeHelpNews (RAPP-873)', () => {
-  it('gives nothing for an empty list', () => {
-    const summary = summarizeHelpNews([]);
-    expect(summary.total).toBe(0);
-    expect(summary.countsByCategoryId).toEqual({});
-    expect(summary.newIds.size).toBe(0);
+describe('countUnseenHelpItems (RAPP-873)', () => {
+  it('gives no numbers when she has seen every list', () => {
+    const numbers = countUnseenHelpItems([]);
+    expect(numbers.total).toBe(0);
+    expect(numbers.countsByCategoryId).toEqual({});
   });
 
-  it('counts each new item on its own category', () => {
-    const summary = summarizeHelpNews([
+  it('counts each unseen item on the tile of its category and in the total', () => {
+    const numbers = countUnseenHelpItems([
       { id: 'a', categoryId: 'housing' },
       { id: 'b', categoryId: 'health' },
       { id: 'c', categoryId: 'housing' },
     ]);
-    expect(summary.total).toBe(3);
-    expect(summary.countsByCategoryId).toEqual({ housing: 2, health: 1 });
-    expect([...summary.newIds].sort()).toEqual(['a', 'b', 'c']);
+    expect(numbers.total).toBe(3);
+    expect(numbers.countsByCategoryId).toEqual({ housing: 2, health: 1 });
   });
 
-  it('counts an item without a category in the total and the set, and on no tile', () => {
-    const summary = summarizeHelpNews([
+  it('counts an item without a category in the total and on no tile', () => {
+    const numbers = countUnseenHelpItems([
       { id: 'a', categoryId: null },
       { id: 'b', categoryId: 'health' },
     ]);
-    expect(summary.total).toBe(2);
-    expect(summary.countsByCategoryId).toEqual({ health: 1 });
-    expect(summary.newIds.has('a')).toBe(true);
-    expect(summary.newIds.has('b')).toBe(true);
+    expect(numbers.total).toBe(2);
+    expect(numbers.countsByCategoryId).toEqual({ health: 1 });
+  });
+});
+
+describe('unopenedHelpIds (RAPP-873)', () => {
+  it('marks every item she has not opened, with or without a category', () => {
+    const ids = unopenedHelpIds([
+      { id: 'a', categoryId: 'housing' },
+      { id: 'b', categoryId: null },
+    ]);
+    expect([...ids].sort()).toEqual(['a', 'b']);
   });
 
-  it('counts the unseen items and marks the unopened ones', () => {
-    const summary = summarizeHelpNews(
-      [{ id: 'a', categoryId: 'housing' }],
-      [
-        { id: 'a', categoryId: 'housing' },
-        { id: 'b', categoryId: 'housing' },
-      ],
-    );
-    expect(summary.total).toBe(1);
-    expect(summary.countsByCategoryId).toEqual({ housing: 1 });
-    expect([...summary.newIds].sort()).toEqual(['a', 'b']);
+  it('marks nothing when she has opened everything', () => {
+    expect(unopenedHelpIds([]).size).toBe(0);
   });
 });

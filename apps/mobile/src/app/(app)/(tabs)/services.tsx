@@ -11,7 +11,7 @@ import {
 } from '@/components/layout/segmented-control';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { ServiceCategoryGrid } from '@/components/services/service-category-grid';
-import { NO_HELP_NEWS, summarizeHelpNews } from '@/lib/help-news';
+import { countUnseenHelpItems, NO_HELP_NUMBERS } from '@/lib/help-news';
 import { usePlayerServiceCategories } from '@/lib/player-services';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
@@ -44,9 +44,7 @@ export default function ServicesScreen() {
   const { data: news } = useTabNews();
   const serviceNews = useMemo(
     () =>
-      news === undefined
-        ? NO_HELP_NEWS
-        : summarizeHelpNews(news.services.unseenServices, news.services.unopenedServices),
+      news === undefined ? NO_HELP_NUMBERS : countUnseenHelpItems(news.services.unseenServices),
     [news],
   );
   const guideNewsCount = news?.guides.unseenArticles.length ?? 0;

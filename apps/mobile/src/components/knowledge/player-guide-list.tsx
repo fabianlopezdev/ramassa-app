@@ -5,7 +5,7 @@ import {
 } from '@/components/announcements/feed-states';
 import { GuideCategoryGrid } from '@/components/knowledge/guide-category-grid';
 import { PageWidth } from '@/components/layout/content-width';
-import { NO_HELP_NEWS, summarizeHelpNews } from '@/lib/help-news';
+import { countUnseenHelpItems, NO_HELP_NUMBERS } from '@/lib/help-news';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import {
   countPlayerGuidesByCategory,
@@ -58,13 +58,10 @@ export function PlayerGuideList({
   const articlesQuery = usePlayerKnowledgeArticles();
   const { refetch: refetchCategories } = categoriesQuery;
   const { refetch: refetchArticles } = articlesQuery;
-  // A tile counts the new guides of its category until she opens each (RAPP-873).
+  // A tile counts the guides she has not seen in its category's list (RAPP-873).
   const { data: news, refetch: refetchNews } = useTabNews();
   const guideNews = useMemo(
-    () =>
-      news === undefined
-        ? NO_HELP_NEWS
-        : summarizeHelpNews(news.guides.unseenArticles, news.guides.unopenedArticles),
+    () => (news === undefined ? NO_HELP_NUMBERS : countUnseenHelpItems(news.guides.unseenArticles)),
     [news],
   );
   const guides = useMemo(() => selectPlayerGuides(articlesQuery.data), [articlesQuery.data]);
