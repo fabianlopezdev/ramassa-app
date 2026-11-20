@@ -44,13 +44,13 @@ const leadingBlockStyle = { minWidth: tokens.spacing['2xl'] } as const;
 const mediaBleedStyle = { marginHorizontal: -tokens.spacing.lg } as const;
 const ROW_CLASS_NAME = 'flex-row items-stretch gap-md';
 /** A tile is half the width of a card, so its row keeps a smaller gap. */
-const TILE_ROW_CLASS_NAME = 'flex-1 flex-row items-stretch gap-sm';
+const TILE_ROW_CLASS_NAME = 'grow flex-row items-stretch gap-sm';
 /**
  * A stacked tile (RAPP-879): the icon on top, the divider across, the name
  * under it, all on the start edge. The name keeps to the bottom, so when the
  * other tile of the row is taller the name still sits at its foot.
  */
-const TILE_STACK_CLASS_NAME = 'flex-1 items-stretch gap-sm';
+const TILE_STACK_CLASS_NAME = 'grow items-stretch gap-sm';
 
 /**
  * An icon for the block at the start of a card: as wide as the block, in the
@@ -125,7 +125,7 @@ export function RaisedCard({
           <View accessible={false} className="border-t-2 border-neutral-300" />
         </>
       )}
-      <View className="flex-1 justify-end gap-xs">{children}</View>
+      <View className="grow justify-end gap-xs">{children}</View>
     </>
   );
   const rowContent = (
@@ -160,7 +160,7 @@ export function RaisedCard({
           ? 'gap-md pb-md'
           : `${isStackedTile ? TILE_STACK_CLASS_NAME : tile ? TILE_ROW_CLASS_NAME : ROW_CLASS_NAME} py-md`
       }
-      className={tile ? 'flex-1' : undefined}
+      className={tile ? 'grow' : undefined}
       paddingClassName={tile ? 'px-sm' : undefined}
       tone={tone}
     >
