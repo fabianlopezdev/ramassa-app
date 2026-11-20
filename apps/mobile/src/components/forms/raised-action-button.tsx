@@ -4,7 +4,8 @@
  * `size="full"` (the default) runs the width of the screen. `size="compact"`
  * (RAPP-867) is sized to its words with an optional icon, for a secondary
  * action under something bigger, such as "Ara no" and "Elimina" under a form.
- * `tone="danger"` reads in red on the pale red face of an urgent announcement;
+ * A compact button sits on the left by default; `align="end"` puts it on the
+ * right (RAPP-876). `tone="danger"` reads in red on the pale red face of an urgent announcement;
  * the border and edge stay in the brand, like every raised control.
  */
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
@@ -32,6 +33,7 @@ export function RaisedActionButton({
   testID,
   accessibilityLabel,
   size = 'full',
+  align = 'start',
   icon,
   tone = 'brand',
   isDisabled = false,
@@ -41,6 +43,8 @@ export function RaisedActionButton({
   readonly testID?: string;
   readonly accessibilityLabel?: string;
   readonly size?: 'full' | 'compact';
+  /** Which side a compact button sits on. */
+  readonly align?: 'start' | 'end';
   /** An icon before the words. */
   readonly icon?: IconName;
   readonly tone?: keyof typeof toneStyles;
@@ -58,7 +62,7 @@ export function RaisedActionButton({
       label={accessibilityLabel ?? label}
       onPress={handlePress}
       testID={testID}
-      className={isCompact ? 'self-start' : undefined}
+      className={isCompact ? (align === 'end' ? 'self-end' : 'self-start') : undefined}
       paddingClassName={isCompact ? 'px-md' : undefined}
       rowStyle={isCompact ? compactFaceStyle : undefined}
       contentClassName="flex-row items-center justify-center gap-sm"
