@@ -93,11 +93,11 @@ test('a category is created in five languages, moved, edited, and deleted once e
 
   await page.getByTestId(`forum-category-edit-${slug}`).click();
   await page.getByTestId('forum-category-icon').fill('star');
-  await page.getByTestId('forum-category-color').fill('info');
+  await page.getByTestId('forum-category-color-sky').click();
   // The saved translations come back as drafts, to approve again.
   await page.getByTestId('forum-category-name-approve-all').click();
   await page.getByTestId('forum-category-save').click();
-  await expect.poll(row, { timeout: 30_000 }).toMatch(/^star\|info\|\d+\|5$/);
+  await expect.poll(row, { timeout: 30_000 }).toMatch(/^star\|sky\|\d+\|5$/);
 
   // A category with a post cannot be deleted.
   queryDatabase(`
