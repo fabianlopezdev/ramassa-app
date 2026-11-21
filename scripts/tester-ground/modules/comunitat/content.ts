@@ -55,7 +55,7 @@ export const FORUM_CATEGORIES: readonly ForumCategorySeed[] = [
       fa: 'کار و آموزش',
     },
     icon: 'briefcase',
-    color: 'secondary',
+    color: 'pink',
     sortOrder: 30,
   },
   {
@@ -69,7 +69,7 @@ export const FORUM_CATEGORIES: readonly ForumCategorySeed[] = [
       fa: 'خانه و محله',
     },
     icon: 'buildings',
-    color: 'info',
+    color: 'orange',
     sortOrder: 40,
   },
   {
@@ -83,7 +83,7 @@ export const FORUM_CATEGORIES: readonly ForumCategorySeed[] = [
       fa: 'پیشنهادها',
     },
     icon: 'lightbulb',
-    color: 'primary',
+    color: 'teal',
     sortOrder: 50,
   },
 ];
