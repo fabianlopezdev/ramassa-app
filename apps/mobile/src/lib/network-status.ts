@@ -52,18 +52,18 @@ export function isWaitingForNetwork(queries: readonly WaitingQuery[]): boolean {
   return queries.some((query) => query.data === undefined && query.fetchStatus === 'paused');
 }
 
+// The foreground listener comes from its own module: importing the whole
+// `react-native` package on demand stops an iPhone release build at launch
+// (RAPP-904).
 async function loadDeviceNetwork(): Promise<DeviceNetwork> {
-  const [Network, { AppState }] = await Promise.all([
+  const [Network, { addForegroundListener }] = await Promise.all([
     import('expo-network'),
-    import('react-native'),
+    import('@/lib/app-foreground'),
   ]);
   return {
     getNetworkStateAsync: () => Network.getNetworkStateAsync(),
     addNetworkStateListener: (listener) => Network.addNetworkStateListener(listener),
-    addForegroundListener: (listener) =>
-      AppState.addEventListener('change', (state) => {
-        if (state === 'active') listener();
-      }),
+    addForegroundListener,
   };
 }
 
