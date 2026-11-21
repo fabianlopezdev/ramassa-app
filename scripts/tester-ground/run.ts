@@ -2,8 +2,8 @@
  * Tester ground runner (RAPP-885). See README.md next to this file.
  *
  *   bun run tester-ground seed                 publish every module
- *   bun run tester-ground renew <1-4|all>      make things new again for a tester
- *   bun run tester-ground restart <1-4|all>    a tester back to the start of Onboarding, things new again
+ *   bun run tester-ground renew <1-5|all>      make things new again for a tester
+ *   bun run tester-ground restart <1-5|all>    a tester back to the start of Onboarding, things new again
  *   bun run tester-ground remove               delete everything the modules created
  *   bun run tester-ground print <command> ...  write that command's SQL to a file, run nothing
  *
@@ -100,13 +100,12 @@ function parseCommand(name: string | undefined, target: string | undefined): Com
   if (name === 'seed' || name === 'remove') return { kind: name };
   if (name === 'renew' || name === 'restart') {
     if (target === 'all') return { kind: name, testers: TESTERS, label: 'all' };
-    const tester = TESTERS[Number(target) - 1];
-    if (tester === undefined || !/^[1-4]$/.test(target ?? ''))
-      fail(`${name} takes 1, 2, 3, 4 or all`);
+    const tester = /^[1-9]$/.test(target ?? '') ? TESTERS[Number(target) - 1] : undefined;
+    if (tester === undefined) fail(`${name} takes a tester number (1 to ${TESTERS.length}) or all`);
     return { kind: name, testers: [tester], label: target as string };
   }
   return fail(
-    'usage: run.ts seed | renew <1-4|all> | restart <1-4|all> | remove | print <command> [flags]',
+    'usage: run.ts seed | renew <1-5|all> | restart <1-5|all> | remove | print <command> [flags]',
   );
 }
 

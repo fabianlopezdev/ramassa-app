@@ -1,6 +1,7 @@
 # Tester ground (RAPP-885)
 
-Four people at AE Ramassà try the player side of the app on staging. Each signs in with her own test
+Four people at AE Ramassà try the player side of the app on staging, and the app team has a fifth
+account to try it first. Each signs in with her own test
 account and starts from Onboarding, as a new player does. When she finishes it she lands on Inici, and
 every tab is full of dummy data, with numbers on the tabs and "Nou" on new cards. This tool creates the
 accounts, publishes the content, makes things new again for one tester, puts a tester back to the
@@ -16,7 +17,7 @@ From the repository root:
 | Command                                                  | What it does                                                                        |
 | -------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | `bun run tester-ground seed`                             | Creates the accounts and publishes every module's content.                          |
-| `bun run tester-ground renew 4`                          | Makes things new again for tester 4 (`1` to `4`, or `all`). She stays where she is. |
+| `bun run tester-ground renew 4`                          | Makes things new again for tester 4 (`1` to `5`, or `all`). She stays where she is. |
 | `bun run tester-ground restart 4`                        | Puts tester 4 back to the start of Onboarding, with everything new again.           |
 | `bun run tester-ground remove`                           | Deletes everything `seed` created and what the testers made, accounts last.         |
 | `bun run tester-ground print seed`                       | Writes the SQL of `seed` to `./tester-ground-seed.sql`, runs nothing.               |
@@ -56,7 +57,7 @@ with `--placeholders`.
 
 ## What `seed` creates
 
-The accounts module (order 10) creates eleven accounts in the `ramassa` organization, all of them test
+The accounts module (order 10) creates twelve accounts in the `ramassa` organization, all of them test
 accounts.
 
 | Account                                       | Role at seed | Sign-in address             |
@@ -65,6 +66,7 @@ accounts.
 | Leila Prova (tester 2)                        | invited      | `prova2@example.test`       |
 | Olena Prova (tester 3)                        | invited      | `prova3@example.test`       |
 | Mariama Prova (tester 4)                      | invited      | `prova4@example.test`       |
+| Noor Prova (tester 5, the app team's own)     | invited      | `prova5@example.test`       |
 | Samira, Yasmin, Oksana, Fatou, Carolina, Hawa | player       | `companya1..6@example.test` |
 | Júlia Soler (l'equip tècnic)                  | staff        | `equip.prova@example.test`  |
 

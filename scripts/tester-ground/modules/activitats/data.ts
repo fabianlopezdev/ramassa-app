@@ -1,6 +1,6 @@
 /**
  * The Activitats content for the tester ground (RAPP-885): the categories and
- * the activities the four test players share. Everything is fictional. Dates
+ * the activities the test players share. Everything is fictional. Dates
  * are days relative to the run, so the data reads right whenever it is loaded.
  *
  * Times are UTC, the database time: 17:00 is 18:00 in Barcelona in winter.

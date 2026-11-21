@@ -1,14 +1,14 @@
 /**
- * Tester ground, Inici (RAPP-885): what waits for the four testers on the
+ * Tester ground, Inici (RAPP-885): what waits for the testers on the
  * first tab.
  *
  * - Avisos: four published minutes before the run, one of each kind, so every
  *   pill shows a number and every card says "Nou"; two published before she
  *   joined, so the list also shows avisos she has already seen.
- * - Per fer: three forms built on the form engine and sent to the four testers
+ * - Per fer: three forms built on the form engine and sent to the testers
  *   by name. All three wait in Per fer: a tester starts from Onboarding, so she
  *   has put nothing off with "Ara no" yet.
- * - Surveys: two, sent to a group that holds the four testers. She has opened
+ * - Surveys: two, sent to a group that holds the testers. She has opened
  *   neither. They reach her once she has finished Onboarding, because a survey
  *   goes to players (private.matches_notification_audience).
  *

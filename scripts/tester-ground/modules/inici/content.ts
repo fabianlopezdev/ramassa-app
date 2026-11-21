@@ -723,5 +723,5 @@ export const SURVEYS: readonly Survey[] = [
   },
 ];
 
-/** The audience the two surveys are sent to: the four testers, by name. */
+/** The audience the two surveys are sent to: the testers, by name. */
 export const SURVEY_GROUP_NAME = 'Proves de l’aplicació (Inici)';

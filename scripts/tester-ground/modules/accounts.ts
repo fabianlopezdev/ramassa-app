@@ -1,7 +1,7 @@
 /**
  * Tester ground (RAPP-885): the eleven accounts every other module hangs from.
  *
- * The four testers start from Onboarding. Each is a test player invited by the
+ * The testers start from Onboarding. Each is a test player invited by the
  * equip tècnic, exactly as the invitation form makes one with "Test player"
  * ticked (public.create_participant_invite): a sign-in identity, an open
  * invitation, and a profile with role `invited`, her names and nothing else.
@@ -202,7 +202,7 @@ function testerProfiles(): string {
   const rows = TESTERS.map(
     (tester) => `  (${lit(tester.id)}::uuid, ${lit(tester.firstName)}, ${lit(tester.lastName)})`,
   ).join(',\n');
-  return `-- Accounts: the four testers, invited test players who have not started Onboarding.
+  return `-- Accounts: the testers, invited test players who have not started Onboarding.
 ${TESTERS.map(invitationSql).join('\n')}
 
 insert into public.profiles (
