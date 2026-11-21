@@ -23,7 +23,8 @@ export interface CategoryData {
     | 'footprints'
     | 'users';
   /** A name of the shared section palette (RAPP-893): one colour per topic across the app. */
-  readonly color: 'primary' | 'sky' | 'green' | 'purple' | 'orange' | 'pink' | 'teal' | 'amber' | 'indigo';
+  readonly color:
+    'primary' | 'sky' | 'green' | 'purple' | 'orange' | 'pink' | 'teal' | 'amber' | 'indigo';
 }
 
 /** Every icon of the app's catalog once, in the order the filters show them. */
