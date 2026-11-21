@@ -19,7 +19,7 @@ const PLACEHOLDER: Record<string, (name: string) => string> = {
 
 const [moduleName, action = 'publish', testerNumber = '1'] = process.argv.slice(2);
 if (!moduleName) {
-  console.error('Usage: print-module.ts <module> publish|remove|renew [tester 1-4]');
+  console.error('Usage: print-module.ts <module> publish|remove|renew [tester 1-5]');
   process.exit(1);
 }
 

@@ -231,7 +231,7 @@ const contacte: GroundModule = {
   },
 
   /**
-   * Everything of the four testers on this tab: the rows this module created
+   * Everything of the testers on this tab: the rows this module created
    * and whatever the testers or the team added while testing (her messages,
    * her own requests and suggestions, the team's replies, their push queue
    * entries and staff bell entries). Images attached to a suggestion stay in

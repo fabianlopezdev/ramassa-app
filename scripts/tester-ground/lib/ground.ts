@@ -1,5 +1,5 @@
 /**
- * Tester ground (RAPP-885): the shared contract for the modules that give four
+ * Tester ground (RAPP-885): the shared contract for the modules that give the
  * test players on staging a full app to try, with dummy data in every tab.
  *
  * Staging starts almost empty: one organization (`ramassa`), no season, no
@@ -63,12 +63,17 @@ function account(key: string, email: string, firstName: string, lastName: string
   return { key, id: gid(key), email, firstName, lastName };
 }
 
-/** The four accounts the people at Ramassà sign in with. All fictional. */
+/**
+ * The accounts people sign in with. The first four are for the people at
+ * Ramassà. The fifth is the app team's own (RAPP-902), to try the ground
+ * before the club does. All fictional.
+ */
 export const TESTERS: readonly Account[] = [
   account('tester:1', 'prova1@example.test', 'Amal', 'Prova'),
   account('tester:2', 'prova2@example.test', 'Leila', 'Prova'),
   account('tester:3', 'prova3@example.test', 'Olena', 'Prova'),
   account('tester:4', 'prova4@example.test', 'Mariama', 'Prova'),
+  account('tester:5', 'prova5@example.test', 'Noor', 'Prova'),
 ];
 
 /**
@@ -159,7 +164,7 @@ export interface GroundModule {
   readonly name: string;
   /** Run order of `publish()`. Accounts are 10; `remove()` runs in reverse. */
   readonly order: number;
-  /** SQL that creates this module's rows for all four testers. Safe to run twice. */
+  /** SQL that creates this module's rows for every tester. Safe to run twice. */
   publish(): string;
   /** SQL that deletes everything `publish()` created and every row hanging from it. */
   remove(): string;

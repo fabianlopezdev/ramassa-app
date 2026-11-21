@@ -1,6 +1,6 @@
 /**
  * Tester ground, Activitats (RAPP-885): the activity categories, the
- * activities the four testers share and the companions' sign-ups that make the
+ * activities the testers share and the companions' sign-ups that make the
  * counts look alive.
  *
  * A tester starts from Onboarding, so she has no sign-up and no attendance of
