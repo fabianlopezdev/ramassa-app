@@ -22,7 +22,8 @@ export interface CategoryData {
     | 'languages'
     | 'footprints'
     | 'users';
-  readonly color: 'primary' | 'secondary' | 'accent' | 'chart-1' | 'chart-2' | 'chart-3';
+  /** A name of the shared section palette (RAPP-893): one colour per topic across the app. */
+  readonly color: 'primary' | 'sky' | 'green' | 'purple' | 'orange' | 'pink' | 'teal' | 'amber' | 'indigo';
 }
 
 /** Every icon of the app's catalog once, in the order the filters show them. */
@@ -43,7 +44,7 @@ export const CATEGORIES: readonly CategoryData[] = [
   {
     key: 'cursos',
     icon: 'graduation-cap',
-    color: 'secondary',
+    color: 'sky',
     name: {
       ca: 'Cursos i tallers',
       es: 'Cursos y talleres',
@@ -56,7 +57,7 @@ export const CATEGORIES: readonly CategoryData[] = [
   {
     key: 'cultura',
     icon: 'theater',
-    color: 'accent',
+    color: 'amber',
     name: {
       ca: 'Activitats culturals',
       es: 'Actividades culturales',
@@ -69,7 +70,7 @@ export const CATEGORIES: readonly CategoryData[] = [
   {
     key: 'feina',
     icon: 'briefcase-business',
-    color: 'chart-1',
+    color: 'pink',
     name: {
       ca: 'Inserció laboral',
       es: 'Inserción laboral',
@@ -82,7 +83,7 @@ export const CATEGORIES: readonly CategoryData[] = [
   {
     key: 'idiomes',
     icon: 'languages',
-    color: 'chart-2',
+    color: 'purple',
     name: {
       ca: "Classes d'idiomes",
       es: 'Clases de idiomas',
@@ -95,7 +96,7 @@ export const CATEGORIES: readonly CategoryData[] = [
   {
     key: 'sortides',
     icon: 'footprints',
-    color: 'chart-3',
+    color: 'amber',
     name: {
       ca: 'Sortides',
       es: 'Salidas',
@@ -108,7 +109,7 @@ export const CATEGORIES: readonly CategoryData[] = [
   {
     key: 'trobades',
     icon: 'users',
-    color: 'secondary',
+    color: 'amber',
     name: {
       ca: 'Trobades',
       es: 'Encuentros',
