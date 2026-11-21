@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { onlineManager, QueryClient, QueryObserver } from '@tanstack/react-query';
+import { Glob } from 'bun';
 import { expect, test } from 'bun:test';
 import {
   configureNetworkStatus,
@@ -30,6 +31,18 @@ test('native network subscription starts after the root has mounted', async () =
   expect(rootLayout).toContain('useEffect(() => {\n    configureNetworkStatus({');
   expect(rootLayout).toContain('isDev: __DEV__');
   expect(rootLayout).toContain('backendUrl: mobileClientEnv.EXPO_PUBLIC_SUPABASE_URL');
+});
+
+// A dynamic import of the whole package makes Metro read every export, and on
+// iOS the retired `PushNotificationIOS` one throws at launch (RAPP-904).
+test('no app source imports the whole react-native package on demand', async () => {
+  const offenders: string[] = [];
+  for await (const path of new Glob('**/*.{ts,tsx}').scan({ cwd: mobileRoot })) {
+    if (path.includes('.test.') || path.includes('.case.')) continue;
+    const source = await readFile(`${mobileRoot}${path}`, 'utf8');
+    if (/import\(\s*['"]react-native['"]\s*\)/.test(source)) offenders.push(path);
+  }
+  expect(offenders).toEqual([]);
 });
 
 test('an offline radio does not pause a USB loopback development backend', () => {
