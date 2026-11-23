@@ -32,6 +32,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { markLaunchSplashDone, useLaunchSplashDone } from '@/lib/launch-splash-state';
 import { tokens } from '@ramassa/shared/tokens';
 
 const { backgroundColor, size, fadeMs, minDisplayMs, maxDisplayMs } = tokens.splash;
@@ -146,20 +147,14 @@ export function AnimatedSplash({
   );
 }
 
-// Set once the launch splash has faded out, so the app mounted again for the
-// player preview (RAPP-371) does not play it a second time.
-let launchSplashShown = false;
-
 /**
- * The launch splash once per cold start, on the phone (RAPP-955). The web
- * build has no native splash clip and shows the app as soon as it is ready.
+ * The launch splash once per cold start, on the phone (RAPP-955). Once it has
+ * faded out it stays done for the run, so the app mounted again for the player
+ * preview (RAPP-371) does not play it a second time; the web build has no
+ * launch splash and shows the app as soon as it is ready.
  */
 export function LaunchSplash({ appReady }: { readonly appReady: boolean }) {
-  const [shown, setShown] = useState(launchSplashShown);
-  const finish = useCallback(() => {
-    launchSplashShown = true;
-    setShown(true);
-  }, []);
-  if (Platform.OS === 'web' || shown) return null;
-  return <AnimatedSplash appReady={appReady} onFinish={finish} />;
+  const done = useLaunchSplashDone();
+  if (done) return null;
+  return <AnimatedSplash appReady={appReady} onFinish={markLaunchSplashDone} />;
 }

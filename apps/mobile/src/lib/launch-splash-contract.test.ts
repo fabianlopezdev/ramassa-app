@@ -44,15 +44,25 @@ describe('the launch splash: the shield builds itself (RAPP-955)', () => {
   });
 
   test('it plays once on the phone, and the web hides the native splash on its own', async () => {
-    const [splash, layout] = await Promise.all([
+    const [splash, layout, state] = await Promise.all([
       read('../components/branding/animated-splash.tsx'),
       read('../app/_layout.tsx'),
+      read('./launch-splash-state.ts'),
     ]);
 
-    expect(splash).toContain("if (Platform.OS === 'web' || shown) return null;");
-    expect(splash).toContain('launchSplashShown = true;');
+    expect(splash).toContain('if (done) return null;');
+    expect(splash).toContain('onFinish={markLaunchSplashDone}');
+    expect(state).toContain("let done = Platform.OS === 'web';");
     expect(layout).toContain('<LaunchSplash appReady={!isLoading} />');
     expect(layout).toContain("if (Platform.OS === 'web' && !isLoading) {");
     expect(layout).toContain('void SplashScreen.preventAutoHideAsync();');
+  });
+
+  test('the notifications question waits until the splash has gone (RAPP-955)', async () => {
+    const appLayout = await read('../app/(app)/_layout.tsx');
+
+    // It is a Modal, which draws over every view, the splash included.
+    expect(appLayout).toContain('const launchSplashDone = useLaunchSplashDone();');
+    expect(appLayout).toContain('canPrompt && launchSplashDone,');
   });
 });
