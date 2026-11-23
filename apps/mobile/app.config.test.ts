@@ -7,6 +7,7 @@ import resolveDynamicConfig, {
   resolveAppConfig,
   STAGING_ANDROID_PACKAGE,
   STAGING_APP_NAME,
+  STAGING_IOS_PROJECT_NAME,
 } from './app.config';
 
 const PROJECT_ID = '8c8deaa4-cc83-42e4-9572-6f0f0d933969';
@@ -139,6 +140,22 @@ describe('iOS staging waits for the Apple account decision', () => {
     expect(resolved.ios?.bundleIdentifier).toBe('dev.fabapps.ramassa.staging');
     expect(resolved.ios?.appleTeamId).toBe(baseConfig().ios?.appleTeamId);
     expect((resolved as { mods?: unknown }).mods).toBeUndefined();
+  });
+
+  // EAS derives the Xcode target from the name with an older library than the
+  // prebuild, and the two disagree on an accented letter (RAPP-906).
+  test('the iPhone project is generated from a name without the accent, and the home screen keeps it', () => {
+    const resolved = resolveAppConfig(baseConfig(), {
+      APP_VARIANT: 'staging',
+      STAGING_IOS_BUNDLE_ID: 'dev.fabapps.ramassa.staging',
+    });
+    expect(STAGING_IOS_PROJECT_NAME).toBe('Ramassa Staging');
+    expect(/^[\x20-\x7E]+$/.test(STAGING_IOS_PROJECT_NAME)).toBe(true);
+    expect(resolved.name).toBe(STAGING_IOS_PROJECT_NAME);
+    expect(resolved.ios?.infoPlist).toEqual({
+      ...baseConfig().ios?.infoPlist,
+      CFBundleDisplayName: STAGING_APP_NAME,
+    });
   });
 
   test('STAGING_APPLE_TEAM_ID replaces the Apple team for the staging identifier', () => {

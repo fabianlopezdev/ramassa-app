@@ -28,6 +28,15 @@ export type AppVariantEnv = Readonly<Record<string, string | undefined>>;
 export const STAGING_VARIANT = 'staging';
 export const STAGING_APP_NAME = 'Ramassà Staging';
 export const STAGING_ANDROID_PACKAGE = 'com.ramassa.app.staging';
+/**
+ * The name the iPhone staging project is generated from (RAPP-906). Plain
+ * ASCII on purpose. EAS derives the Xcode target from the app name with an
+ * older `@expo/config-plugins` than SDK 58: it drops an accented letter
+ * ("RamassStaging"), while the prebuild on the build server keeps its base
+ * letter ("RamassaStaging"), and the build stops at "Configure Xcode project".
+ * The home screen keeps the accent through `CFBundleDisplayName`.
+ */
+export const STAGING_IOS_PROJECT_NAME = 'Ramassa Staging';
 
 /** Created only under Ramassà's own Apple and Google accounts (RAPP-83). */
 const PRODUCTION_IDENTIFIER = 'com.ramassa.app';
@@ -102,11 +111,14 @@ export function resolveAppConfig(config: ExpoConfig, env: AppVariantEnv): ExpoCo
   if (iosBundleIdentifier !== undefined) {
     ios.bundleIdentifier = iosBundleIdentifier;
     ios.appleTeamId = env['STAGING_APPLE_TEAM_ID']?.trim() || config.ios?.appleTeamId;
+    ios.infoPlist = { ...ios.infoPlist, CFBundleDisplayName: STAGING_APP_NAME };
   }
 
   const staging: ExpoConfig = {
     ...config,
-    name: STAGING_APP_NAME,
+    // The identifier is set by the `staging-ios` build profile only, so the
+    // Android staging app keeps its name with the accent.
+    name: iosBundleIdentifier === undefined ? STAGING_APP_NAME : STAGING_IOS_PROJECT_NAME,
     android,
     ios,
     // https://docs.expo.dev/versions/latest/sdk/updates/ (Configuration):
