@@ -185,6 +185,21 @@ describe('EAS has a staging profile for an internal Android build (RAPP-620)', (
     });
   });
 
+  // The iPhone build of the same variant goes to TestFlight (RAPP-906): store
+  // distribution, and the temporary identifier of the test app. The identifier
+  // `com.ramassa.app` stays with the real app.
+  test('the staging-ios profile is the staging profile for the App Store, with the test identifier', () => {
+    expect(eas.build['staging-ios']).toEqual({
+      extends: 'staging',
+      distribution: 'store',
+      env: {
+        APP_VARIANT: 'staging',
+        SENTRY_DISABLE_AUTO_UPLOAD: 'true',
+        STAGING_IOS_BUNDLE_ID: 'dev.fabapps.ramassa.staging',
+      },
+    });
+  });
+
   test('the other profiles are unchanged and never pick the staging variant', () => {
     expect(eas.build.development).toEqual({ developmentClient: true, distribution: 'internal' });
     expect(eas.build.preview).toEqual({ distribution: 'internal' });
@@ -198,6 +213,12 @@ describe('EAS has a staging profile for an internal Android build (RAPP-620)', (
     );
     expect(manifest.scripts['update:staging:android']).toBe(
       'APP_VARIANT=staging bunx eas-cli update --channel staging --environment preview --platform android',
+    );
+    expect(manifest.scripts['build:staging:ios']).toBe(
+      'bunx eas-cli build --platform ios --profile staging-ios',
+    );
+    expect(manifest.scripts['update:staging:ios']).toBe(
+      'APP_VARIANT=staging STAGING_IOS_BUNDLE_ID=dev.fabapps.ramassa.staging bunx eas-cli update --channel staging --environment preview --platform ios',
     );
   });
 
