@@ -135,7 +135,12 @@ export function FormSettingsSheet({ form }: { readonly form: CustomForm }) {
           {t('customForms.tab.settings')}
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-full gap-0 sm:max-w-lg" data-testid="custom-form-settings">
+      {/* The board stays sharp behind the panel, so she sees the form she is setting up. */}
+      <SheetContent
+        className="w-full gap-0 sm:max-w-lg"
+        overlayClassName="supports-backdrop-filter:backdrop-blur-none"
+        data-testid="custom-form-settings"
+      >
         <SheetHeader className="border-b">
           <SheetTitle>{t('customForms.tab.settings')}</SheetTitle>
           <SheetDescription className="sr-only">{textIn(form.name, language)}</SheetDescription>

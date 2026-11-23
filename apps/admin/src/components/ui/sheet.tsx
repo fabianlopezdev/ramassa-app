@@ -42,17 +42,20 @@ function SheetContent({
   children,
   side = 'right',
   showCloseButton = true,
+  overlayClassName,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: 'top' | 'right' | 'bottom' | 'left';
   showCloseButton?: boolean;
+  /** Classes for the backdrop, such as a panel that leaves the page sharp behind it. */
+  overlayClassName?: string;
 }) {
   // Translated so the close button's screen-reader label is not English-only
   // for ar/fa users (RAPP-16 a11y + RAPP-11 i18n).
   const { t } = useTranslation('common');
   return (
     <SheetPortal>
-      <SheetOverlay />
+      <SheetOverlay className={overlayClassName} />
       <SheetPrimitive.Content
         data-slot="sheet-content"
         data-side={side}
