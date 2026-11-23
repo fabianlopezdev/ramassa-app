@@ -1,20 +1,13 @@
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
 import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
+import { RaisedCardPhoto, useRaisedCardPhotoSource } from '@/components/layout/raised-card-photo';
 import type { RaisedTone } from '@/components/layout/raised-surface';
 import { PersonAvatar } from '@/components/people/person-avatar';
-import { resolveMediaImageSource } from '@/lib/media-source';
-import { mobileClientEnv } from '@/lib/supabase';
-import { Image } from 'expo-image';
 import { memo, useCallback, useMemo } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 import type { ForumPostRow } from '@ramassa/shared/forum';
-import { tokens } from '@ramassa/shared/tokens';
 
-const FORUM_POST_IMAGE_HEIGHT = tokens.spacing['3xl'] * 3;
 const FORUM_POST_PREVIEW_LINES = 5;
-const styles = StyleSheet.create({
-  image: { width: '100%', height: FORUM_POST_IMAGE_HEIGHT },
-});
 
 /**
  * A forum post on Comunitat as the shared raised card (RAPP-852): its photo
@@ -65,15 +58,7 @@ export const ForumPostCard = memo(function ForumPostCard({
   /** The replies she has not read, already formatted, in the circle on the edge. */
   readonly newRepliesCount?: string | null;
 }) {
-  const imageSource = useMemo(
-    () =>
-      resolveMediaImageSource({
-        objectKeyOrUrl: post.image_url,
-        mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
-        accessToken,
-      }),
-    [accessToken, post.image_url],
-  );
+  const imageSource = useRaisedCardPhotoSource(post.image_url, accessToken);
   const open = useCallback(() => onOpen(post.id), [onOpen, post.id]);
   const badge = useMemo<RaisedCardBadge | null>(() => {
     if (unseenLabel !== null) return { label: unseenLabel, tone: 'brand' };
@@ -104,13 +89,10 @@ export const ForumPostCard = memo(function ForumPostCard({
       }
       media={
         imageSource === null ? null : (
-          <Image
+          <RaisedCardPhoto
             source={imageSource}
             accessibilityLabel={imageAlt}
-            contentFit="cover"
-            cachePolicy="memory-disk"
             recyclingKey={post.image_url ?? post.id}
-            style={styles.image}
           />
         )
       }

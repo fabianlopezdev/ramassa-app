@@ -87,7 +87,8 @@ describe('Phase 6 accessibility and i18n contract', () => {
     expect(composer).toContain('FORUM_COMPOSER_TEXT_LINES');
     expect(composer).toContain('FORUM_PREVIEW_HEIGHT');
     expect(forumDetail).toContain('FORUM_DETAIL_IMAGE_HEIGHT');
-    expect(forumPostCard).toContain('FORUM_POST_IMAGE_HEIGHT');
+    // The post's photo is the shared card photo, like an avís's (RAPP-911).
+    expect(forumPostCard).toContain('<RaisedCardPhoto');
     expect(forumPostCard).toContain('FORUM_POST_PREVIEW_LINES');
     expect(gallery).toContain('GALLERY_COLUMN_COUNT');
     expect(galleryTile).toContain('GALLERY_TILE_ASPECT_RATIO');
