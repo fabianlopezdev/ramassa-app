@@ -9,6 +9,7 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { HomeGreeting } from '@/components/home/home-greeting';
 import { HomeNextActivity } from '@/components/home/home-next-activity';
 import { HomeToDo } from '@/components/home/home-to-do';
 import { PageWidth } from '@/components/layout/content-width';
@@ -54,7 +55,7 @@ const styles = StyleSheet.create({
 const keyExtractor = (item: AnnouncementListRow) => item.id;
 
 function HomeScreen() {
-  const { t, i18n } = useTranslation(['home', 'common', 'nav']);
+  const { t, i18n } = useTranslation(['home', 'common']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
@@ -165,7 +166,7 @@ function HomeScreen() {
 
   if (isPending && data === undefined) {
     return (
-      <PlayerTabStateFrame title={t('nav:tabs.home')}>
+      <PlayerTabStateFrame title={<HomeGreeting />}>
         <AnnouncementFeedSkeleton accessibilityLabel={t('loading')} />
       </PlayerTabStateFrame>
     );
@@ -173,7 +174,7 @@ function HomeScreen() {
 
   if (isError && data === undefined) {
     return (
-      <PlayerTabStateFrame title={t('nav:tabs.home')}>
+      <PlayerTabStateFrame title={<HomeGreeting />}>
         <AnnouncementFeedError
           message={t('loadFailed')}
           retryLabel={t('retryAction')}
@@ -200,7 +201,8 @@ function HomeScreen() {
       onLoad={onListLoad}
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
-          <PlayerTabHeader title={t('nav:tabs.home')} />
+          {/* The logo, "Hola," and her name in place of the tab's name (RAPP-907). */}
+          <PlayerTabHeader title={<HomeGreeting />} />
           {/*
             Her next activity, then the forms and surveys that wait, then the
             announcements (RAPP-790). The activity comes first because it is
