@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNetworkState } from 'expo-network';
+import type { Href } from 'expo-router';
 import { useAuth } from '@ramassa/shared/auth';
 import { AppError } from '@ramassa/shared/errors';
 import {
@@ -21,6 +22,21 @@ const galleryQueryRoot = 'player-gallery';
 const galleryListKey = (userId: string) => [galleryQueryRoot, 'items', userId] as const;
 const galleryItemKey = (userId: string, itemId: string) =>
   [galleryQueryRoot, 'item', userId, itemId] as const;
+
+/** Everything in the gallery that is not a video is a photo. */
+export function isGalleryPhoto(item: Pick<MediaItemRow, 'file_type'>): boolean {
+  return item.file_type !== 'video';
+}
+
+/** A photo at full screen in the lightbox, where she swipes to the photos around it (RAPP-931). */
+export function galleryPhotoHref(itemId: string): Href {
+  return `/gallery/photo/${itemId}` as Href;
+}
+
+/** What a gallery tile opens: a photo straight in the lightbox, a video on its own screen. */
+export function galleryItemHref(item: Pick<MediaItemRow, 'id' | 'file_type'>): Href {
+  return isGalleryPhoto(item) ? galleryPhotoHref(item.id) : (`/gallery/${item.id}` as Href);
+}
 
 export function useGalleryItems() {
   const { user } = useAuth();

@@ -14,6 +14,7 @@ const playerFacingSources = [
   'app/(app)/gallery/index.tsx',
   'app/(app)/gallery/upload.tsx',
   'components/gallery/gallery-tile.tsx',
+  'components/gallery/gallery-item-actions.tsx',
   'components/forum/forum-category-tabs.tsx',
 ] as const;
 
@@ -68,7 +69,7 @@ describe('Phase 6 structural polish contract', () => {
 
   test('native gallery and forum interactions use the shared haptic vocabulary', async () => {
     const galleryUpload = await readMobileSource('app/(app)/gallery/upload.tsx');
-    const galleryItem = await readMobileSource('app/(app)/gallery/[id].tsx');
+    const galleryItem = await readMobileSource('components/gallery/gallery-item-actions.tsx');
     const forumPlainText = await readMobileSource('components/forum/forum-plain-text.tsx');
 
     // The consent is the shared switch card (RAPP-894). Its press gives the

@@ -14,7 +14,7 @@ describe('Phase 6 component architecture contract', () => {
       'components/forum/forum-own-post-actions.tsx',
     );
     const gallery = await readMobileSource('components/gallery/gallery-grid.tsx');
-    const galleryItem = await readMobileSource('app/(app)/gallery/[id].tsx');
+    const galleryItem = await readMobileSource('components/gallery/gallery-item-actions.tsx');
     const galleryUpload = await readMobileSource('app/(app)/gallery/upload.tsx');
 
     expect(forumDetail).toContain('onPress={saveEdit}');
