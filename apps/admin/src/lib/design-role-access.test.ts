@@ -29,6 +29,8 @@ describe('the onboarding design role reaches its two areas only (RAPP-615)', () 
       '/forms/custom',
       '/forms/custom/5eed0000-0000-4000-8100-000000000001',
       '/forms/custom/5eed0000-0000-4000-8100-000000000001/screens/5eed0000-0000-4000-8101-000000000001',
+      // Enquestes, the surveys' list (RAPP-929).
+      '/surveys',
     ]) {
       expect(designRoleRedirect(path, DESIGN)).toBeNull();
     }
@@ -56,6 +58,8 @@ describe('the onboarding design role reaches its two areas only (RAPP-615)', () 
       '/participants/walk-ins',
       '/photo-handoff/abc',
       '/somewhere-new',
+      // The surveys made before the form engine are not hers (RAPP-929).
+      '/surveys/archive',
     ]) {
       expect(designRoleRedirect(path, DESIGN)).toBe('/onboarding');
     }

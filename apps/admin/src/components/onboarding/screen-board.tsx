@@ -120,7 +120,7 @@ import {
 } from './board-steps';
 import { CardFrame, ScreenCardFrame } from './card-frame';
 import { ConfirmDialog } from './confirm-dialog';
-import { FormMiniature, PhoneMiniature } from './phone-preview';
+import { FormMiniature, PHONE_ASPECT, PhoneMiniature } from './phone-preview';
 import {
   completeCondition,
   ConditionFields,
@@ -373,7 +373,6 @@ export function ScreenBoard({
         movable={cards(initial)}
         trailing={cards(BOARD_LOCKED_STEPS)}
         addCard={<AddScreenCard sources={sources} catalog={catalog} onCreate={createScreen} />}
-        isAddCardFirst
         onReorder={async (next) => {
           // The same call the old order list used (`saveWizardFlowOrder`): each
           // screen goes with every follow-up below it (RAPP-715).
@@ -551,7 +550,6 @@ function ChainBoard({
             }}
           />
         }
-        isAddCardFirst
         onReorder={async (next) => save(next as readonly ChainedFormRef[])}
       />
     </section>
@@ -733,7 +731,6 @@ export function FormBoard({
   movable,
   trailing = [],
   addCard = null,
-  isAddCardFirst = false,
   numberLabelKey = 'onboardingBoard.step',
   onReorder,
 }: {
@@ -744,10 +741,12 @@ export function FormBoard({
   readonly movable: readonly BoardCard[];
   /** Locked cards after the movable ones. */
   readonly trailing?: readonly BoardCard[];
-  /** A card after the last movable one, such as a form's add card. */
+  /**
+   * The add card. It is always the first card, on every board (RAPP-926): it
+   * is found in one place, however long the board is. Where the new screen
+   * goes is the add card's own business.
+   */
   readonly addCard?: ReactNode;
-  /** The add card comes first, before every other card (Onboarding's, RAPP-703). */
-  readonly isAddCardFirst?: boolean;
   /** How a card's number reads, "Pas 3" by default. */
   readonly numberLabelKey?: string;
   readonly onReorder: (keys: readonly string[]) => Promise<void>;
@@ -809,7 +808,7 @@ export function FormBoard({
     >
       <SortableContext items={[...order]} strategy={rectSortingStrategy}>
         <ol className={BOARD_GRID} aria-label={label} data-testid="screen-board">
-          {isAddCardFirst ? addItem : null}
+          {addItem}
           {leading.map((card, index) => lockedCard(card, index + 1))}
           {order.map((key, index) => {
             const card = byKey.get(key);
@@ -826,7 +825,6 @@ export function FormBoard({
               </SortableCard>
             );
           })}
-          {isAddCardFirst ? null : addItem}
           {trailing.map((card, index) =>
             lockedCard(card, leading.length + order.length + index + 1),
           )}
@@ -1309,13 +1307,19 @@ function AddCard({
       className="group/add flex w-full rounded-2xl text-start outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       data-testid={testId}
     >
-      <CardFrame className="h-full min-h-40 border-dashed border-foreground/20 bg-muted transition-colors group-hover/add:border-primary/60 group-hover/add:bg-primary/5">
-        <span className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-sm font-medium text-muted-foreground transition-colors group-hover/add:text-primary">
+      {/* The rows of a screen card, so it stands as tall and its phone is a phone (RAPP-936). */}
+      <CardFrame className="h-full border-dashed border-foreground/20 bg-muted/40 transition-colors group-hover/add:border-primary/60 group-hover/add:bg-primary/5">
+        <span aria-hidden className="min-h-7" />
+        <span
+          className="flex w-full flex-col items-center justify-center gap-3 rounded-[1.6rem] border-2 border-dashed border-foreground/25 text-sm font-medium text-muted-foreground transition-colors group-hover/add:border-primary/60 group-hover/add:text-primary"
+          style={{ aspectRatio: PHONE_ASPECT }}
+        >
           <span className="flex size-11 items-center justify-center rounded-full border border-dashed border-current">
             <Plus aria-hidden className="size-5" />
           </span>
           {label}
         </span>
+        <span aria-hidden className="h-7" />
       </CardFrame>
     </button>
   );

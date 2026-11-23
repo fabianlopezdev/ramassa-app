@@ -104,6 +104,8 @@ test('the onboarding design role sees the test players, the onboarding, the lega
     '/forms/authorization',
     '/forms/terms',
     '/forms/custom',
+    // Surveys are forms of the engine (RAPP-929).
+    '/surveys',
     '/profile-layout',
     '/legal-data',
   ]);
@@ -117,6 +119,7 @@ test('Settings holds the organization tabs only; the team, entities and Fitxa ha
     '/forms/authorization',
     '/forms/terms',
     '/forms/custom',
+    '/surveys',
     '/entities/referral-form',
     '/profile-layout',
     '/legal-data',
@@ -152,6 +155,8 @@ test('the menu groups by audience in the agreed order (RAPP-654)', () => {
       '/forms/custom',
       '/entities/referral-form',
     ],
+    // Surveys, one item of their own (RAPP-934).
+    surveys: ['/surveys'],
     data: ['/profile-layout', '/legal-data'],
     app: [
       '/content',
@@ -161,7 +166,6 @@ test('the menu groups by audience in the agreed order (RAPP-654)', () => {
       '/gallery',
       '/mentoring',
       '/feedback',
-      '/surveys',
       '/notifications',
     ],
     entities: ['/participants/referrals', '/entities'],

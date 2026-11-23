@@ -9,6 +9,7 @@
  * and whether it was a Correcció or is the one in force.
  */
 
+import { Link } from '@tanstack/react-router';
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -33,11 +34,17 @@ export interface FormVersionGroup {
 
 export function FormVersions({
   title,
+  description,
+  formId,
   draft,
   groups,
   testId,
 }: {
   readonly title: string;
+  /** One line under the title saying what the panel is for (RAPP-923). */
+  readonly description?: string;
+  /** The form whose versions these are: each row opens its version (RAPP-924). */
+  readonly formId?: string;
   /** The draft waiting to be published; null when there is none. */
   readonly draft: {
     /** When it was last saved; null when the form does not keep it. */
@@ -70,11 +77,26 @@ export function FormVersions({
             })}
         {version.isCorrection ? <VersionBadge label={t('saveDialog.correction')} /> : null}
         {version.isCurrent ? <VersionBadge label={t('authorizationCurrentBadge')} /> : null}
+        {formId === undefined ? null : (
+          <Link
+            to="/forms/custom/$formId/versions/$versionKey"
+            params={{ formId, versionKey: version.key }}
+            className="ms-2 font-medium text-primary underline-offset-4 hover:underline"
+            data-testid={`${testId}-${version.number}-view`}
+          >
+            {t('formVersionView')}
+          </Link>
+        )}
       </li>
     ));
   return (
     <section className="flex flex-col gap-2 rounded-xl border bg-card p-5" data-testid={testId}>
-      <h2 className="text-start text-base font-semibold">{title}</h2>
+      <div className="flex flex-col gap-1">
+        <h2 className="text-start text-base font-semibold">{title}</h2>
+        {description === undefined ? null : (
+          <p className="text-start text-sm text-muted-foreground">{description}</p>
+        )}
+      </div>
       {isEmpty ? (
         <p className="text-start text-sm text-muted-foreground">{t('authorizationNoVersions')}</p>
       ) : (

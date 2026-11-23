@@ -8,6 +8,7 @@ import { useMyCustomFormsByPlace } from '@/lib/custom-forms';
 import { buildHomeAttention, type HomeAttention } from '@/lib/home-attention';
 import { usePlayerEvents } from '@/lib/player-events';
 import { usePlayerSurveys } from '@/lib/player-surveys';
+import { useMySurveySource } from '@/lib/survey-forms';
 import { useTabNews } from '@/lib/use-tab-news';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
@@ -82,6 +83,7 @@ export function useHomeAttention(): HomeAttention {
   // A form she put off with "Ara no" is in her later list, out of Per fer and the count (RAPP-833).
   const { waiting: forms } = useMyCustomFormsByPlace();
   const { data: surveys } = usePlayerSurveys();
+  const surveyForms = useMySurveySource().data?.surveys;
   const { data: events } = usePlayerEvents();
   const { data: announcements } = usePlayerAnnouncements();
   const { data: seen } = useHomeSeen();
@@ -89,7 +91,8 @@ export function useHomeAttention(): HomeAttention {
   const { data: news } = useTabNews();
   const homeSeenAt = news === undefined ? undefined : (news.listSeenAt.home ?? null);
   return useMemo(
-    () => buildHomeAttention({ forms, surveys, events, announcements, seen, homeSeenAt }),
-    [announcements, events, forms, homeSeenAt, seen, surveys],
+    () =>
+      buildHomeAttention({ forms, surveys, surveyForms, events, announcements, seen, homeSeenAt }),
+    [announcements, events, forms, homeSeenAt, seen, surveyForms, surveys],
   );
 }

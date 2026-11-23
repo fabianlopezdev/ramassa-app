@@ -71,5 +71,6 @@
   "averageRating": "Media {{value}} de 5",
   "choiceLabel": "Opción {{number}} en catalán",
   "datesInvalid": "La fecha de cierre debe ser posterior a la de publicación.",
-  "publishAtRequired": "Elige cuándo se publica la encuesta."
+  "publishAtRequired": "Elige cuándo se publica la encuesta.",
+  "archiveTitle": "Encuestas anteriores"
 }

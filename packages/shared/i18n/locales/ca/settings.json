@@ -320,6 +320,25 @@
   "colorInvalid": "Fes servir un color hexadecimal de sis xifres, com #0077B6.",
   "authorizationIntro": "El text que cada jugadora signa per a la temporada: participació, assegurança, dades, imatge, obligacions i codi de conducta.",
   "authorizationVersionsTitle": "Versions publicades",
+  "formVersionsIntro": "Cada cop que publiques es guarda una versió. Obre-la per veure les pantalles tal com eren.",
+  "authorizationOverview": {
+    "currentTitle": "Temporada vigent: {{season}}",
+    "noCurrent": "Encara no hi ha cap temporada vigent.",
+    "nextTitle": "Temporada {{season}}",
+    "notPublished": "Encara no s'ha publicat per a aquesta temporada.",
+    "versionPublished": "Versió {{number}} · publicada el {{date}}",
+    "signatures_one": "{{count}} signatura",
+    "signatures_other": "{{count}} signatures",
+    "edit": "Edita",
+    "unpublishedChanges": "Hi ha canvis sense publicar.",
+    "prepare": "Prepara la temporada {{season}}",
+    "prepareBody": "Comença el {{date}}. Després edites l'autorització i la publiques per a aquesta temporada.",
+    "prepareConfirm": "Crea-la i edita",
+    "previousTitle": "Temporades anteriors"
+  },
+  "formVersionView": "Veure",
+  "formVersionPublishedOn": "Publicada el {{date}}",
+  "formVersionNoCopy": "Aquesta versió no va guardar una còpia de les pantalles.",
   "authorizationNoVersions": "Encara no s'ha publicat cap versió.",
   "authorizationVersionInSeason": "Versió {{number}}, publicada el {{date}}",
   "authorizationCurrentBadge": "Vigent",
@@ -330,14 +349,6 @@
   "authorizationAddAttachment": "Afegeix un document",
   "authorizationRemoveAttachment": "Treu el document",
   "authorizationAttachmentInvalid": "Cada document necessita el nom en català i un enllaç que comenci per https://.",
-  "seasonsTitle": "Temporades",
-  "seasonsIntro": "Publicar l'autorització de la temporada vigent fa que les jugadores que tornen es tornin a inscriure.",
-  "seasonName": "Nom (per exemple 2027/28)",
-  "seasonStartsOn": "Comença el",
-  "seasonMakeCurrent": "Fes-la vigent",
-  "seasonCreate": "Crea la temporada",
-  "seasonCreated": "Temporada creada.",
-  "seasonCreateFailed": "No s'ha pogut crear la temporada.",
   "seasonSetCurrent": "Fes-la vigent",
   "tabQuestions": "Preguntes",
   "questions": {
@@ -361,6 +372,7 @@
       "file_upload": "Foto o fitxer",
       "country": "País",
       "municipality": "Municipi de Catalunya",
+      "rating": "Valoració de l'1 al 5",
       "signature": "Signatura",
       "text_block": "Text",
       "points_block": "Punts",
@@ -432,7 +444,8 @@
       "item_list": "S’hi afegeixen elements un per un, com les entitats que donen suport.",
       "file_upload": "Una foto o un PDF. És privat: només el veu l’equip que pot llegir aquest nivell.",
       "country": "Un país de la llista de tots els països.",
-      "municipality": "Un municipi de Catalunya, de la llista oficial."
+      "municipality": "Un municipi de Catalunya, de la llista oficial.",
+      "rating": "Cinc botons de l'1 al 5 per valorar una cosa. Només a les enquestes."
     },
     "tooManyOptions": "Hi ha massa opcions per a aquest tipus. Per a una llista llarga, tria \"Una opció d’una llista llarga\".",
     "settingsInvalid": "Revisa els ajustos: el mínim no pot ser més gran que el màxim, i les edats són anys sencers.",
@@ -487,7 +500,6 @@
     "intro": "Les pantalles que veu una jugadora la primera vegada que obre l'app."
   },
   "onboardingChain": {
-    "count": "En total, {{total}} pantalles: {{onboarding}} d'Onboarding · {{terms}} de condicions de l'app · {{forms}} de formularis",
     "termsLine": "Cal acceptar-les per fer servir l'app.",
     "divider": "Després de l'onboarding",
     "listLabel": "Formularis després de l'onboarding",
@@ -503,8 +515,7 @@
     "addForm": "Afegeix un formulari",
     "nothingToAdd": "No hi ha cap formulari per afegir.",
     "saveFailed": "No s'ha pogut desar. Torna-ho a provar.",
-    "openForm": "Obre el formulari",
-    "countWithConditional": "En total, {{total}} pantalles: {{onboarding}} d'Onboarding (+{{conditional}} condicionals) · {{terms}} de condicions de l'app · {{forms}} de formularis"
+    "openForm": "Obre el formulari"
   },
   "appTerms": {
     "versionsTitle": "Versions",
@@ -925,6 +936,9 @@
     },
     "repeats": "Es repeteix cada temporada?",
     "repeatsYes": "Sí",
+    "repeatsEverySeason": "Cada temporada",
+    "choosePlayersTitle": "Escull les jugadores",
+    "choosePlayersLater": "Ara no",
     "repeatsNo": "No",
     "repeatsLine": "Sí: cada temporada et recordarem que el revisis. No arriba a les jugadores fins que algú publiqui la versió de la nova temporada.",
     "saveDraft": "Desa l'esborrany",
@@ -965,5 +979,36 @@
       "ar": "àrab",
       "fa": "persa"
     }
+  },
+  "surveyQuestion": {
+    "new": "Nova pregunta",
+    "edit": "Edita la pregunta",
+    "add": "Afegeix una pregunta",
+    "label": "La pregunta",
+    "save": "Desa la pregunta",
+    "saved": "Pregunta desada."
+  },
+  "surveyList": {
+    "new": "Nova enquesta",
+    "listLabel": "Enquestes",
+    "empty": "Encara no hi ha cap enquesta.",
+    "archive": "Enquestes anteriors"
+  },
+  "surveySettings": {
+    "event": "Activitat",
+    "noEvent": "Cap activitat",
+    "closesAt": "Es tanca el"
+  },
+  "surveyResults": {
+    "title": "Resultats",
+    "answered_one": "{{count}} resposta",
+    "answered_other": "{{count}} respostes",
+    "average_one": "Mitjana {{average}} · {{count}} resposta",
+    "average_other": "Mitjana {{average}} · {{count}} respostes",
+    "csv": "Descarrega CSV",
+    "noQuestions": "Aquesta enquesta encara no té preguntes.",
+    "noAnswers": "Encara no hi ha respostes.",
+    "player": "Jugadora",
+    "answeredAt": "Data de resposta"
   }
 }

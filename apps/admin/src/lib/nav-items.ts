@@ -10,6 +10,7 @@
  */
 
 import {
+  BarChart3,
   BellRing,
   Building2,
   CalendarCheck,
@@ -63,7 +64,8 @@ export interface NavItem {
  * collected (Dades, RAPP-696), what the players see in their app, what the
  * partner entities use, and how the organization itself is run.
  */
-export type StaffNavGroupId = 'top' | 'forms' | 'data' | 'app' | 'entities' | 'organisation';
+export type StaffNavGroupId =
+  'top' | 'forms' | 'surveys' | 'data' | 'app' | 'entities' | 'organisation';
 
 /** A menu row that holds other items under it (RAPP-696): Condicions legals. */
 export type StaffNavParentId = 'legal';
@@ -87,6 +89,8 @@ export const STAFF_NAV_PARENTS = {
 export const STAFF_NAV_GROUPS = [
   { id: 'top', labelKey: null, icon: null },
   { id: 'forms', labelKey: 'nav:staff.groups.forms', icon: Files },
+  // Surveys, one item of their own with nothing to open (RAPP-934).
+  { id: 'surveys', labelKey: null, icon: null },
   { id: 'data', labelKey: 'nav:staff.groups.data', icon: Table2 },
   { id: 'app', labelKey: 'nav:staff.groups.app', icon: Smartphone },
   { id: 'entities', labelKey: 'nav:staff.groups.entities', icon: Handshake },
@@ -219,6 +223,14 @@ export const STAFF_NAV_ITEMS = [
     anyPermission: CUSTOM_FORMS_PERMISSIONS,
   },
   {
+    // Surveys are forms of the engine (RAPP-929), for whoever builds forms or had surveys.
+    to: '/surveys',
+    icon: BarChart3,
+    labelKey: 'nav:staff.surveys',
+    group: 'surveys',
+    anyPermission: [...CUSTOM_FORMS_PERMISSIONS, 'surveys.manage', 'surveys.results'],
+  },
+  {
     // The entity referral form keeps its URL under the entities (RAPP-696).
     to: '/entities/referral-form',
     icon: ClipboardPen,
@@ -299,13 +311,6 @@ export const STAFF_NAV_ITEMS = [
     labelKey: 'nav:staff.feedback',
     group: 'app',
     anyPermission: ['feedback.view'],
-  },
-  {
-    to: '/surveys',
-    icon: ClipboardList,
-    labelKey: 'nav:staff.surveys',
-    group: 'app',
-    anyPermission: ['surveys.manage', 'surveys.results'],
   },
   {
     to: '/notifications',

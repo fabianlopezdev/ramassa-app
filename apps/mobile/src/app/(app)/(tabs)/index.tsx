@@ -22,6 +22,7 @@ import { isNetworkStateOnline } from '@/lib/network-status';
 import { logger } from '@/lib/observability';
 import { usePlayerEvents } from '@/lib/player-events';
 import { usePlayerSurveys } from '@/lib/player-surveys';
+import { useMySurveySource } from '@/lib/survey-forms';
 import { useHomeAttention, useHomeSeen } from '@/lib/use-home-attention';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
@@ -65,6 +66,8 @@ function HomeScreen() {
   const { data, isPending, isError, error, isRefetching, refetch } = usePlayerAnnouncements();
   const formsQuery = useMyCustomForms(true);
   const surveysQuery = usePlayerSurveys();
+  // Her surveys on the form engine (RAPP-929).
+  const refetchSurveyForms = useMySurveySource().refetch;
   const eventsQuery = usePlayerEvents();
   const refetchForms = formsQuery.refetch;
   const refetchSurveys = surveysQuery.refetch;
@@ -153,9 +156,10 @@ function HomeScreen() {
     void refetch();
     void refetchForms();
     void refetchSurveys();
+    void refetchSurveyForms();
     void refetchEvents();
     void refetchSeen();
-  }, [refetch, refetchEvents, refetchForms, refetchSeen, refetchSurveys]);
+  }, [refetch, refetchEvents, refetchForms, refetchSeen, refetchSurveyForms, refetchSurveys]);
 
   const onListLoad = useCallback(
     ({ elapsedTimeInMs }: { readonly elapsedTimeInMs: number }) => {

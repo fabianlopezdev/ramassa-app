@@ -79,6 +79,7 @@ describe('the types', () => {
       'file_upload',
       'country',
       'municipality',
+      'rating',
     ]);
   });
 

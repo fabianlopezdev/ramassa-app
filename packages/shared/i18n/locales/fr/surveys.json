@@ -71,5 +71,6 @@
   "averageRating": "Moyenne : {{value}} sur 5",
   "choiceLabel": "Option {{number}} en catalan",
   "datesInvalid": "La date de clôture doit être après la date de publication.",
-  "publishAtRequired": "Choisis quand l’enquête est publiée."
+  "publishAtRequired": "Choisis quand l’enquête est publiée.",
+  "archiveTitle": "Enquêtes précédentes"
 }

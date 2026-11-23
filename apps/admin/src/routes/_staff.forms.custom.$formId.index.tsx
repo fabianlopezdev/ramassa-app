@@ -12,6 +12,9 @@ import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_staff/forms/custom/$formId/')({
   ssr: false,
+  // The season the authorization's Publica starts on, from its overview's Edita (RAPP-927).
+  validateSearch: (search: Record<string, unknown>): { season?: string } =>
+    typeof search.season === 'string' ? { season: search.season } : {},
   loader: ({ params }) => loadCustomForm(params.formId),
   component: CustomFormRoute,
 });
@@ -26,5 +29,6 @@ function CustomFormRoute() {
 
 function Form() {
   const { formId } = Route.useParams();
-  return <CustomFormPage data={Route.useLoaderData()} formId={formId} />;
+  const { season } = Route.useSearch();
+  return <CustomFormPage data={Route.useLoaderData()} formId={formId} publishSeasonId={season} />;
 }

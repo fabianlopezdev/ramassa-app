@@ -25,6 +25,7 @@
  * Type and privacy belong to the field, so this list never asks them.
  */
 
+import { SurveyQuestionDialog } from '@/components/custom-forms/survey-question-dialog';
 import { FieldPicker, type FieldPickState } from '@/components/fields/field-picker';
 import { AddBlockMenu, FormBlockRow } from '@/components/fields/form-block-row';
 import { PlacementRow } from '@/components/fields/placement-row';
@@ -176,6 +177,8 @@ type FieldsSurface = 'onboarding' | 'custom_form';
 export interface ScreenFieldsForm {
   readonly id: string;
   readonly filledBy: CustomFormFiller;
+  /** A survey asks its own questions only, and no signature or consent (RAPP-929). */
+  readonly isSurvey?: boolean;
   /** Its live screens in order, to say on which one a field already is. */
   readonly screenIds: readonly string[];
 }
@@ -216,11 +219,14 @@ export function ScreenFieldsSection({
   const layout = profileLayoutOf(catalog);
   const actions = useProfileLayoutActions();
   const [isPicking, setIsPicking] = useState(false);
+  const [isAddingQuestion, setIsAddingQuestion] = useState(false);
   const offTheirControl = questionsOffTheirControl(layout);
   const isOnboarding = surface === 'onboarding';
   const isForm = surface === 'custom_form';
+  const isSurvey = isForm && form?.isSurvey === true;
   // A form she fills in asks consents and signatures too; a team form, fields only (RAPP-700).
-  const isHerForm = isForm && form?.filledBy === 'player';
+  // A survey asks its own questions only (RAPP-929).
+  const isHerForm = isForm && form?.filledBy === 'player' && !isSurvey;
   const placementKey = screenKey;
   const orderSurface = surface;
   const placed = placedFields(layout, orderSurface, placementKey, offTheirControl);
@@ -535,16 +541,24 @@ export function ScreenFieldsSection({
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => setIsPicking(true)}
+          onClick={() => (isSurvey ? setIsAddingQuestion(true) : setIsPicking(true))}
           data-testid="screen-questions-add"
         >
           <Plus aria-hidden data-icon="inline-start" />
-          {t('profileLayout.addField')}
+          {isSurvey ? t('surveyQuestion.add') : t('profileLayout.addField')}
         </Button>
         {blockSurface === null ? null : (
           <AddBlockMenu surface={blockSurface} screenKey={screenKey} onAdded={(id) => toggle(id)} />
         )}
       </div>
+      {isSurvey ? (
+        <SurveyQuestionDialog
+          screenId={screenKey}
+          field={null}
+          isOpen={isAddingQuestion}
+          onOpenChange={setIsAddingQuestion}
+        />
+      ) : null}
       <FieldPicker
         layout={layout}
         isOpen={isPicking}
@@ -749,7 +763,8 @@ function CustomPlacementRow({
         name={name}
         detail={sectionName}
         type={field.type}
-        privacy={field.privacy}
+        // A survey's answers are not her record: no privacy level (RAPP-929).
+        privacy={field.kind === 'survey' ? null : field.privacy}
         handle={handle}
         required={{
           id: `required-${field.id}`,
@@ -784,7 +799,7 @@ function CustomPlacementRow({
           }
           onCancel={onClose}
           secondaryAction={
-            section === undefined ? undefined : (
+            section === undefined && field.kind !== 'survey' ? undefined : (
               <Button
                 type="button"
                 variant="ghost"
@@ -792,7 +807,7 @@ function CustomPlacementRow({
                 onClick={() => setIsEditingField(true)}
                 data-testid={`placement-row-${field.id}-field`}
               >
-                {t('profileLayout.editField')}
+                {field.kind === 'survey' ? t('surveyQuestion.edit') : t('profileLayout.editField')}
               </Button>
             )
           }
@@ -806,7 +821,14 @@ function CustomPlacementRow({
         action={t('placement.remove')}
         onConfirm={() => void run(() => actions.removePlacement(placement.id))}
       />
-      {section === undefined ? null : (
+      {field.kind === 'survey' ? (
+        <SurveyQuestionDialog
+          screenId={screenKey}
+          field={field}
+          isOpen={isEditingField}
+          onOpenChange={setIsEditingField}
+        />
+      ) : section === undefined ? null : (
         <FieldDialog
           section={section}
           field={field}

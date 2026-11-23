@@ -43,6 +43,25 @@
   "colorInvalid": "از یک رنگ هگز شش رقمی مانند #0077B6 استفاده کنید.",
   "authorizationIntro": "متنی که هر بازیکن برای فصل امضا می‌کند: مشارکت، بیمه، داده‌ها، تصویر، تعهدات و آیین‌نامه رفتاری.",
   "authorizationVersionsTitle": "نسخه‌های منتشرشده",
+  "formVersionsIntro": "هر بار که منتشر می‌کنید یک نسخه ذخیره می‌شود. آن را باز کنید تا صفحه‌ها را همان‌طور که بودند ببینید.",
+  "authorizationOverview": {
+    "currentTitle": "فصل جاری: {{season}}",
+    "noCurrent": "هنوز فصل جاری وجود ندارد.",
+    "nextTitle": "فصل {{season}}",
+    "notPublished": "هنوز برای این فصل منتشر نشده است.",
+    "versionPublished": "نسخهٔ {{number}} · منتشرشده در {{date}}",
+    "signatures_one": "{{count}} امضا",
+    "signatures_other": "{{count}} امضا",
+    "edit": "ویرایش",
+    "unpublishedChanges": "تغییرات منتشرنشده وجود دارد.",
+    "prepare": "آماده‌سازی فصل {{season}}",
+    "prepareBody": "از {{date}} شروع می‌شود. سپس مجوز را ویرایش و برای این فصل منتشر می‌کنید.",
+    "prepareConfirm": "ایجاد و ویرایش",
+    "previousTitle": "فصل‌های قبلی"
+  },
+  "formVersionView": "مشاهده",
+  "formVersionPublishedOn": "منتشرشده در {{date}}",
+  "formVersionNoCopy": "این نسخه رونوشتی از صفحه‌ها نگه نداشته است.",
   "authorizationNoVersions": "هنوز هیچ نسخه‌ای منتشر نشده است.",
   "authorizationCurrentBadge": "فعلی",
   "authorizationDocumentTitle": "عنوان سند",
@@ -56,14 +75,6 @@
   "authorizationAttachmentUrl": "پیوند (https://)",
   "authorizationAddAttachment": "افزودن سند",
   "authorizationPublishFailed": "انتشار انجام نشد. دوباره تلاش کنید.",
-  "seasonsTitle": "فصل‌ها",
-  "seasonsIntro": "انتشار مجوز فصل فعلی باعث می‌شود بازیکنانی که برمی‌گردند دوباره ثبت‌نام کنند.",
-  "seasonName": "نام (برای مثال 2027/28)",
-  "seasonStartsOn": "شروع در",
-  "seasonMakeCurrent": "فعلی شود",
-  "seasonCreate": "ساخت فصل",
-  "seasonCreated": "فصل ساخته شد.",
-  "seasonCreateFailed": "فصل ساخته نشد.",
   "seasonSetCurrent": "فعلی شود",
   "onboardingChain": {
     "remove": "حذف {{form}} از بعد از ثبت‌نام",
@@ -359,6 +370,9 @@
     },
     "repeats": "آیا هر فصل تکرار می‌شود؟",
     "repeatsYes": "بله",
+    "repeatsEverySeason": "هر فصل",
+    "choosePlayersTitle": "بازیکنان را انتخاب کنید",
+    "choosePlayersLater": "فعلاً نه",
     "repeatsNo": "خیر",
     "repeatsLine": "بله: هر فصل به شما یادآوری می‌کنیم آن را بازبینی کنید. تا کسی نسخه فصل جدید را منتشر نکند به بازیکنان نمی‌رسد.",
     "saveDraft": "ذخیره پیش‌نویس",
@@ -378,5 +392,36 @@
       "ar": "ترجمه به عربی",
       "fa": "ترجمه به فارسی"
     }
+  },
+  "surveyQuestion": {
+    "new": "پرسش تازه",
+    "edit": "ویرایش پرسش",
+    "add": "افزودن پرسش",
+    "label": "پرسش",
+    "save": "ذخیرهٔ پرسش",
+    "saved": "پرسش ذخیره شد."
+  },
+  "surveyList": {
+    "new": "نظرسنجی تازه",
+    "listLabel": "نظرسنجی‌ها",
+    "empty": "هنوز نظرسنجی‌ای نیست.",
+    "archive": "نظرسنجی‌های پیشین"
+  },
+  "surveySettings": {
+    "event": "فعالیت",
+    "noEvent": "بدون فعالیت",
+    "closesAt": "بسته می‌شود در"
+  },
+  "surveyResults": {
+    "title": "نتایج",
+    "answered_one": "{{count}} پاسخ",
+    "answered_other": "{{count}} پاسخ",
+    "average_one": "میانگین {{average}} · {{count}} پاسخ",
+    "average_other": "میانگین {{average}} · {{count}} پاسخ",
+    "csv": "دانلود CSV",
+    "noQuestions": "این نظرسنجی هنوز پرسشی ندارد.",
+    "noAnswers": "هنوز پاسخی نیست.",
+    "player": "بازیکن",
+    "answeredAt": "تاریخ پاسخ"
   }
 }

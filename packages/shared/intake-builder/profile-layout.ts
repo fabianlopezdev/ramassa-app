@@ -74,7 +74,8 @@ export const AUTHORIZATION_FIELD_KEYS = [
 export type AuthorizationFieldKey = (typeof AUTHORIZATION_FIELD_KEYS)[number];
 export type ProfileSurface = (typeof PROFILE_SURFACES)[number];
 
-export const PROFILE_FIELD_KINDS = ['builtin', 'custom'] as const;
+// A survey's question (RAPP-929): of one survey, in no section, never her record.
+export const PROFILE_FIELD_KINDS = ['builtin', 'custom', 'survey'] as const;
 export type ProfileFieldKind = (typeof PROFILE_FIELD_KINDS)[number];
 
 // The catalog ----------------------------------------------------------------------------------
@@ -98,7 +99,9 @@ const fieldOptionSchema = z.object({
 
 const fieldSchema = z.object({
   id: z.uuid(),
-  section_id: z.uuid(),
+  // A survey question has no section (RAPP-929).
+  section_id: z.uuid().nullable(),
+  survey_form_id: z.uuid().nullable().optional(),
   kind: z.enum(PROFILE_FIELD_KINDS),
   system_key: z.string().nullable(),
   question_type: z.enum(CUSTOM_QUESTION_TYPES),
@@ -159,7 +162,10 @@ export interface ProfileFieldOption {
 
 export interface ProfileField {
   readonly id: string;
-  readonly sectionId: string;
+  /** Null for a survey's question, which belongs to no section (RAPP-929). */
+  readonly sectionId: string | null;
+  /** The survey a survey question belongs to; null for every other field. */
+  readonly surveyFormId?: string | null;
   readonly kind: ProfileFieldKind;
   /**
    * The stable name features and the app's screens find the field by (D1):
@@ -283,6 +289,7 @@ export function parseProfileLayout(raw: {
     fields: byOrder(layout.fields).map((field) => ({
       id: field.id,
       sectionId: field.section_id,
+      surveyFormId: field.survey_form_id ?? null,
       kind: field.kind,
       systemKey: systemKeyOf(field.system_key),
       builtinKey: questionOfSystemKey(systemKeyOf(field.system_key)),

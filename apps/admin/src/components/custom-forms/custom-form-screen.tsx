@@ -300,6 +300,7 @@ function FormScreenBody({
               form={{
                 id: form.id,
                 filledBy: form.filledBy,
+                isSurvey: form.kind === 'survey',
                 screenIds: form.screens.map((each) => each.id),
               }}
               catalog={catalog}

@@ -57,6 +57,8 @@ import {
   liveOptions,
   LONG_TEXT_MAX_LENGTH,
   numberSettings,
+  RATING_MAX,
+  RATING_MIN,
   SHORT_TEXT_MAX_LENGTH,
   textIn,
   updateCustomAnswer,
@@ -352,6 +354,33 @@ export function CustomQuestionField(props: CustomQuestionFieldProps) {
           />
         </View>
       );
+    case 'rating': {
+      // A survey's 1 to 5 (RAPP-929): five buttons in one row; a second tap clears it.
+      const score = typeof value === 'number' ? value : null;
+      return (
+        <View testID={testID} className="gap-sm">
+          <FieldLabel>{label}</FieldLabel>
+          <QuestionHelp text={help} />
+          <View className="flex-row gap-sm">
+            {Array.from(
+              { length: RATING_MAX - RATING_MIN + 1 },
+              (_, index) => RATING_MIN + index,
+            ).map((each) => (
+              <View key={each} className="flex-1">
+                <OptionChip
+                  testID={`${testID}-${each}`}
+                  label={String(each)}
+                  accessibilityHint={label}
+                  isSelected={score === each}
+                  onPress={() => onChange(score === each ? '' : each)}
+                />
+              </View>
+            ))}
+          </View>
+          <FieldErrorText message={errorMessage} />
+        </View>
+      );
+    }
     case 'number':
       return (
         <View testID={testID}>

@@ -336,6 +336,8 @@ function AppNavigator() {
               <Stack.Screen name="mentoring/[id]" />
               <Stack.Screen name="feedback/index" />
               <Stack.Screen name="survey/[id]" />
+              {/* A survey on the form engine (RAPP-929): a signature-free walk, so swipe back stays. */}
+              <Stack.Screen name="survey-form/[responseId]" />
             </Stack.Protected>
             {/* The team shell (RAPP-245): tabs, large buttons or a tablet sidebar,
             holding the areas the person's permissions open. A session sheet or
