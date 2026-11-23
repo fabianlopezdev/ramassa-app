@@ -78,6 +78,7 @@ export function GalleryGrid({
         <GalleryTile
           id={item.id}
           objectKeyOrUrl={item.thumbnail_url ?? item.file_url}
+          photoKey={item.file_url}
           accessToken={accessToken}
           accessibilityLabel={accessibilityLabel}
           imageAlt={item.caption ?? t('mediaBy', { name: item.uploader_first_name })}

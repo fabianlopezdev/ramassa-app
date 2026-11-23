@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, test } from 'bun:test';
 
 function readSource(path: string): string {
@@ -128,18 +128,18 @@ describe('a card photo grows into the photo of the screen it opens (RAPP-916)', 
     expect(photoZoom).toContain('<Link.AppleZoom>');
     expect(photoZoom).toContain('<Link.AppleZoomTarget>');
     expect(photoZoom).toContain("process.env.EXPO_OS === 'ios'");
-    expect(photoZoom).toContain('hasPhoto && !isReducedMotion');
-    // Android and the web keep the push the cards always made.
+    expect(photoZoom).toContain('const movesPhoto = hasPhoto && !isReducedMotion;');
+    // The web keeps the push the cards always made; Android moves the photo itself (RAPP-920).
     expect(photoZoom).toContain('if (!ZOOMS_ON_THIS_PLATFORM) return children(open);');
   });
 
   test('every card photo is the zoom source, inside the link of its card', () => {
-    expect(raisedCardPhoto).toMatch(/<PhotoZoomSource>\s*<Image/);
+    expect(raisedCardPhoto).toMatch(/<PhotoZoomSource photoKey=\{recyclingKey\}>\s*<Image/);
     // The source copies its child, which must not carry a style array.
     expect(raisedCardPhoto).toContain('style={shapeStyle}');
     expect(raisedCardPhoto).toContain('useMemo<ImageStyle>(() => ({ ...photoStyle, aspectRatio })');
     expect(raisedCard).toContain('<PhotoZoomLink href={props.href} hasPhoto={hasMedia}>');
-    expect(galleryTile).toMatch(/<PhotoZoomSource>\s*<Image/);
+    expect(galleryTile).toMatch(/<PhotoZoomSource photoKey=\{photoKey\}>\s*<Image/);
     expect(galleryTile).toContain(
       '<PhotoZoomLink href={href} hasPhoto={isPhoto && source !== null}>',
     );
@@ -162,7 +162,9 @@ describe('a card photo grows into the photo of the screen it opens (RAPP-916)', 
   });
 
   test('the target is the photo of the shared hero alone, with no fade of its own', () => {
-    expect(photoHero).toMatch(/<PhotoZoomTarget>\s*<Image[\s\S]*?transition=\{0\}/);
+    expect(photoHero).toMatch(
+      /<PhotoZoomTarget photoKey=\{photoKey\}>\s*<Image[\s\S]*?transition=\{0\}/,
+    );
     expect(photoHero).not.toMatch(/<PhotoZoomTarget>\s*<(View|Pressable)/);
   });
 
@@ -170,5 +172,134 @@ describe('a card photo grows into the photo of the screen it opens (RAPP-916)', 
     const entrance = readSource('components/motion/screen-entrance.tsx');
     expect(entrance).toContain('arrivesByZoom={arrivesByPhotoZoom(route.params)}');
     expect(entrance).toContain("skip: mode === 'none' || isTakenOver || arrivesByZoom");
+  });
+});
+
+/** Every card that opens a screen with a photo, and the key its photo goes by on both screens. */
+const sharedPhotoKeys = [
+  {
+    card: 'components/forum/forum-post-card.tsx',
+    cardKey: 'recyclingKey={post.image_url ?? post.id}',
+    hero: 'app/(app)/forum/[id].tsx',
+    heroKey: 'photoKey={post.image_url ?? post.id}',
+  },
+  {
+    card: 'components/knowledge/knowledge-article-card.tsx',
+    cardKey: 'recyclingKey={article.image_url ?? article.id}',
+    hero: 'app/(app)/knowledge/[id].tsx',
+    heroKey: 'photoKey={article.image_url ?? article.id}',
+  },
+  {
+    card: 'app/(app)/(tabs)/index.tsx',
+    cardKey: 'imageObjectKey={item.image_url}',
+    hero: 'app/(app)/announcement/[id].tsx',
+    heroKey: 'photoKey={announcement.image_url ?? announcement.id}',
+  },
+  {
+    card: 'app/(app)/service-category/[categoryId].tsx',
+    cardKey: 'imageObjectKey={firstImage?.url ?? null}',
+    hero: 'app/(app)/service/[id].tsx',
+    heroKey: 'photoKey={heroImage.url}',
+  },
+  {
+    card: 'components/gallery/gallery-grid.tsx',
+    cardKey: 'photoKey={item.file_url}',
+    hero: 'app/(app)/gallery/[id].tsx',
+    heroKey: 'photoKey={item.file_url}',
+  },
+] as const;
+
+const screenEntrance = readSource('components/motion/screen-entrance.tsx');
+
+describe('on Android too, a card photo moves into the photo of the screen it opens (RAPP-920)', () => {
+  test('Android moves the photo with a Reanimated shared transition, and iOS keeps its zoom', () => {
+    expect(photoZoom).toContain(
+      "const MOVES_PHOTO_ON_THIS_PLATFORM = process.env.EXPO_OS === 'android';",
+    );
+    expect(photoZoom).toContain(
+      'const SharedPhotoImage = Animated.createAnimatedComponent(Image);',
+    );
+    expect(photoZoom).toContain('sharedTransitionTag={tag}');
+    expect(photoZoom).toContain('sharedTransitionStyle={sharedPhotoTransition}');
+    // The source and the target are the same native image, both ends tagged by the same key.
+    expect(photoZoom.match(/<SharedPhoto\b/g)?.length).toBe(2);
+    expect(photoZoom).toContain('tag={movesPhoto ? sharedPhotoTag(photoKey) : undefined}');
+    expect(photoZoom).toContain('tag={isReducedMotion ? undefined : sharedPhotoTag(photoKey)}');
+    // The timing comes from the motion tokens, and reduce motion turns the move off.
+    expect(photoZoom).toMatch(
+      /SharedTransition\.duration\(motionTokens\.duration\.slow\)\.reduceMotion\(\s*ReduceMotion\.System,?\s*\)/,
+    );
+    expect(photoZoom).toContain('<Link.AppleZoom>{children}</Link.AppleZoom>');
+    expect(photoZoom).toContain('<Link.AppleZoomTarget>{children}</Link.AppleZoomTarget>');
+  });
+
+  test('a card photo and its hero go by the same key on both screens', () => {
+    for (const { card, cardKey, hero, heroKey } of sharedPhotoKeys) {
+      expect(readSource(card), card).toContain(cardKey);
+      expect(readSource(hero), hero).toContain(heroKey);
+    }
+    expect(readSource('components/announcements/announcement-card.tsx')).toContain(
+      'recyclingKey={imageObjectKey ?? id}',
+    );
+    expect(readSource('components/services/service-card.tsx')).toContain(
+      'recyclingKey={imageObjectKey ?? id}',
+    );
+    expect(readSource('app/(app)/service/[id].tsx')).toContain(
+      'const heroImage = service?.images[0];',
+    );
+    expect(readSource('app/(app)/service-category/[categoryId].tsx')).toContain(
+      'const firstImage = item.images[0];',
+    );
+  });
+
+  test('the press of a card sinks its face and never dims the photo that moves', () => {
+    const depth = readSource('components/motion/pressable-depth.tsx');
+    expect(depth).toContain(
+      'opacity: reduced ? 1 - pressed.get() * (1 - motionTokens.press.opacity) : 1',
+    );
+  });
+
+  test('the Android push marks the screen, so its first-visit entrance does not fade the photo', () => {
+    expect(photoZoom).toContain('push(withPhotoZoomArrival(href))');
+  });
+
+  test('every screen sits inside its own boundary, active while it is in front', () => {
+    expect(photoZoom).toContain('<SharedTransitionBoundary isActive={isFocused}>');
+    expect(photoZoom).toContain(
+      "import { Link, useIsFocused, useRouter, type Href } from 'expo-router';",
+    );
+    // The stack wraps each screen; a group of tabs leaves it to its tabs.
+    expect(screenEntrance).toContain(
+      'isNavigatorGroup(route.name) ? screen : <PhotoZoomBoundary>{screen}</PhotoZoomBoundary>',
+    );
+    expect(screenEntrance).toMatch(/<PhotoZoomBoundary>\s*<ScreenEntrance screenId=\{screenId\}>/);
+    expect(readSource('app/(app)/_layout.tsx')).toContain('screenLayout={screenEntranceLayout}');
+  });
+
+  test('every nested navigator of the signed-in stack is a group of tabs, or shows no photo to move', () => {
+    const appDirectory = new URL('../app/(app)/', import.meta.url);
+    const nestedNavigators = readdirSync(appDirectory, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .filter((name) => existsSync(new URL(`${name}/_layout.tsx`, appDirectory)));
+    expect(nestedNavigators.length).toBeGreaterThan(0);
+    for (const name of nestedNavigators) {
+      if (/^\(.+\)$/.test(name)) continue;
+      const screens = readdirSync(new URL(`${name}/`, appDirectory), { recursive: true })
+        .map(String)
+        .filter((file) => file.endsWith('.tsx'));
+      for (const screen of screens) {
+        const source = readFileSync(new URL(`${name}/${screen}`, appDirectory), 'utf8');
+        expect(source, `${name}/${screen}`).not.toMatch(
+          /PhotoHero|RaisedCardPhoto|GalleryGrid|PhotoZoom/,
+        );
+      }
+    }
+  });
+
+  test('every tab that lists photo cards is a screen with the entrance, and so its own boundary', () => {
+    for (const tab of ['index', 'community']) {
+      expect(readSource(`app/(app)/(tabs)/${tab}.tsx`)).toContain(`withScreenEntrance('${tab}',`);
+    }
   });
 });

@@ -11,7 +11,8 @@
  * remembered, so a card scrolled back into view opens at its real size.
  *
  * On a card that opens through an `href`, the photo is the source of the zoom
- * that grows it into the photo of the opened screen (RAPP-916).
+ * that grows it into the photo of the opened screen (RAPP-916), on Android too
+ * (RAPP-920). Its stored key is the key the opened screen shows it under.
  */
 import { PhotoZoomSource } from '@/components/media/photo-zoom';
 import { resolveMediaImageSource } from '@/lib/media-source';
@@ -64,7 +65,7 @@ export const RaisedCardPhoto = memo(function RaisedCardPhoto({
   // One flat style object: the zoom source refuses a style array (RAPP-916).
   const shapeStyle = useMemo<ImageStyle>(() => ({ ...photoStyle, aspectRatio }), [aspectRatio]);
   return (
-    <PhotoZoomSource>
+    <PhotoZoomSource photoKey={recyclingKey}>
       <Image
         source={source}
         accessibilityLabel={accessibilityLabel}
