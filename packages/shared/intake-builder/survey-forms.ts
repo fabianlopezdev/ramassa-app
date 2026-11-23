@@ -93,6 +93,8 @@ export interface MySurvey {
   readonly askedAt: string;
   /** The version's content: its screens, placements and blocks, as `custom_form_versions` keeps them. */
   readonly content: unknown;
+  /** She left it half way and her answers so far are kept (RAPP-945). */
+  readonly isStarted: boolean;
 }
 
 const mySurveyRowSchema = z.object({
@@ -104,6 +106,8 @@ const mySurveyRowSchema = z.object({
   closes_at: z.string().nullable(),
   asked_at: z.string(),
   content: z.unknown(),
+  // Older databases send no started flag: the survey then reads as not started.
+  is_started: z.boolean().catch(false),
 });
 
 export async function fetchMySurveys(client: Client): Promise<readonly MySurvey[]> {
@@ -123,6 +127,7 @@ export async function fetchMySurveys(client: Client): Promise<readonly MySurvey[
         closesAt: survey.closes_at,
         askedAt: survey.asked_at,
         content: survey.content,
+        isStarted: survey.is_started,
       },
     ];
   });
@@ -189,6 +194,44 @@ export async function fetchSurveyResults(
 }
 
 /** One question's answers, counted: by option, by rating, yes and no, or the texts. */
+const surveyExportSchema = z.object({
+  version: z.literal(1),
+  export_id: z.uuid(),
+  rows: z.array(z.unknown()),
+});
+
+/**
+ * The rows of a survey's CSV (RAPP-946). It names every player who answered,
+ * so the database asks for a recent authenticator code (AUTH-9 when it is
+ * missing, so the step-up prompt can ask it) and writes the export to the
+ * audit log, as the old survey export did (RAPP-402).
+ */
+export async function createSurveyResultsExport(
+  client: Client,
+  formId: string,
+): Promise<readonly SurveyResultRow[]> {
+  const { data, error } = await client.rpc('create_survey_results_export', {
+    p_form_id: z.uuid().parse(formId),
+  });
+  if (error) throw failed(error);
+  return surveyExportSchema.parse(data).rows.flatMap((row): SurveyResultRow[] => {
+    const parsed = resultRowSchema.safeParse(row);
+    if (!parsed.success) return [];
+    const result = parsed.data;
+    return [
+      {
+        responseId: result.response_id,
+        profileId: result.profile_id,
+        displayName: result.display_name,
+        memberNumber: result.member_number,
+        version: result.version,
+        answeredAt: result.answered_at,
+        answers: result.answers,
+      },
+    ];
+  });
+}
+
 export interface SurveyQuestionSummary {
   readonly fieldId: string;
   readonly answered: number;

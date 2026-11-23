@@ -1417,6 +1417,7 @@ export type Database = {
           kind: string;
           system_key: string | null;
           audience: string;
+          audience_rule: Json | null;
           created_at: string;
           created_by: string | null;
           deadline: string | null;
@@ -1437,6 +1438,7 @@ export type Database = {
           kind?: string;
           system_key?: string | null;
           audience?: string;
+          audience_rule?: Json | null;
           created_at?: string;
           created_by?: string | null;
           deadline?: string | null;
@@ -1457,6 +1459,7 @@ export type Database = {
           kind?: string;
           system_key?: string | null;
           audience?: string;
+          audience_rule?: Json | null;
           created_at?: string;
           created_by?: string | null;
           deadline?: string | null;
@@ -5787,21 +5790,21 @@ export type Database = {
           org_id: string;
           profile_id: string;
           response_id: string;
-          value: Json;
+          value_encrypted: string;
         };
         Insert: {
           field_id: string;
           org_id: string;
           profile_id: string;
           response_id: string;
-          value: Json;
+          value_encrypted: string;
         };
         Update: {
           field_id?: string;
           org_id?: string;
           profile_id?: string;
           response_id?: string;
-          value?: Json;
+          value_encrypted?: string;
         };
         Relationships: [
           {
@@ -6910,6 +6913,7 @@ export type Database = {
         Returns: string;
       };
       create_survey_export: { Args: { p_survey_id: string }; Returns: Json };
+      create_survey_results_export: { Args: { p_form_id: string }; Returns: Json };
       create_targeted_notification_send: {
         Args: {
           p_audience_config: Json;
@@ -7164,6 +7168,7 @@ export type Database = {
           content: Json;
           event_id: string;
           form_id: string;
+          is_started: boolean;
           name: Json;
           response_id: string;
           version: number;

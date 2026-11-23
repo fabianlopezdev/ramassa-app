@@ -1830,6 +1830,7 @@ export function buildCustomForm(overrides: Partial<CustomFormRow> = {}): CustomF
     system_key: null,
     event_id: null,
     closes_at: null,
+    audience_rule: null,
     org_id: SEED_ORGANIZATION_ID,
     name: {
       ca: 'Com véns als entrenaments',
