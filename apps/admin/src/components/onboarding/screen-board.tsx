@@ -373,7 +373,6 @@ export function ScreenBoard({
         movable={cards(initial)}
         trailing={cards(BOARD_LOCKED_STEPS)}
         addCard={<AddScreenCard sources={sources} catalog={catalog} onCreate={createScreen} />}
-        isAddCardFirst
         onReorder={async (next) => {
           // The same call the old order list used (`saveWizardFlowOrder`): each
           // screen goes with every follow-up below it (RAPP-715).
@@ -551,7 +550,6 @@ function ChainBoard({
             }}
           />
         }
-        isAddCardFirst
         onReorder={async (next) => save(next as readonly ChainedFormRef[])}
       />
     </section>
@@ -733,7 +731,6 @@ export function FormBoard({
   movable,
   trailing = [],
   addCard = null,
-  isAddCardFirst = false,
   numberLabelKey = 'onboardingBoard.step',
   onReorder,
 }: {
@@ -744,10 +741,12 @@ export function FormBoard({
   readonly movable: readonly BoardCard[];
   /** Locked cards after the movable ones. */
   readonly trailing?: readonly BoardCard[];
-  /** A card after the last movable one, such as a form's add card. */
+  /**
+   * The add card. It is always the first card, on every board (RAPP-926): it
+   * is found in one place, however long the board is. Where the new screen
+   * goes is the add card's own business.
+   */
   readonly addCard?: ReactNode;
-  /** The add card comes first, before every other card (Onboarding's, RAPP-703). */
-  readonly isAddCardFirst?: boolean;
   /** How a card's number reads, "Pas 3" by default. */
   readonly numberLabelKey?: string;
   readonly onReorder: (keys: readonly string[]) => Promise<void>;
@@ -809,7 +808,7 @@ export function FormBoard({
     >
       <SortableContext items={[...order]} strategy={rectSortingStrategy}>
         <ol className={BOARD_GRID} aria-label={label} data-testid="screen-board">
-          {isAddCardFirst ? addItem : null}
+          {addItem}
           {leading.map((card, index) => lockedCard(card, index + 1))}
           {order.map((key, index) => {
             const card = byKey.get(key);
@@ -826,7 +825,6 @@ export function FormBoard({
               </SortableCard>
             );
           })}
-          {isAddCardFirst ? null : addItem}
           {trailing.map((card, index) =>
             lockedCard(card, leading.length + order.length + index + 1),
           )}

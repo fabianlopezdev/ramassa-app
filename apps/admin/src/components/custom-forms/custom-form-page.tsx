@@ -911,7 +911,7 @@ function FormScreensBoard({
         label={textIn(form.name, language)}
         leading={opening.map((screen) => screenCard(screen))}
         movable={cards}
-        // The add card comes before the screen she signs: a new screen goes there (RAPP-772).
+        // The add card is first, as on every board (RAPP-926); a new screen still goes before the screen she signs (RAPP-772).
         addCard={<AddScreenCard catalog={catalog} sources={sources} onCreate={createScreen} />}
         trailing={closing.map((screen) => screenCard(screen))}
         onReorder={async (keys) => {
