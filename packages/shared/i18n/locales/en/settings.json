@@ -487,7 +487,6 @@
     "intro": "The screens a player sees the first time she opens the app."
   },
   "onboardingChain": {
-    "count": "{{total}} screens in total: {{onboarding}} in Onboarding · {{terms}} in the app terms · {{forms}} in forms",
     "termsLine": "Required to use the app.",
     "divider": "After onboarding",
     "listLabel": "Forms after onboarding",
@@ -503,8 +502,7 @@
     "addForm": "Add a form",
     "nothingToAdd": "There are no forms to add.",
     "saveFailed": "Could not save. Try again.",
-    "openForm": "Open form",
-    "countWithConditional": "{{total}} screens in total: {{onboarding}} in Onboarding (+{{conditional}} conditional) · {{terms}} in the app terms · {{forms}} in forms"
+    "openForm": "Open form"
   },
   "appTerms": {
     "versionsTitle": "Versions",
