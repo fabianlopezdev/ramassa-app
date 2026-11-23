@@ -88,6 +88,12 @@ const TILE_STACK_CLASS_NAME = 'grow items-stretch gap-sm';
  * badge and the title sit inside it, so they always have the fade under them.
  */
 const PHOTO_FADE_HEIGHT = tokens.spacing['2xl'] + tokens.spacing['3xl'];
+/**
+ * The fade when nothing sits on the photo (no badge, the title at the foot):
+ * a short blend into the panel, so no empty band of colour opens between the
+ * photo and the foot row (RAPP-930).
+ */
+const PHOTO_BLEND_HEIGHT = tokens.spacing['2xl'];
 const PHOTO_TITLE_LINES = 2;
 
 /**
@@ -96,7 +102,14 @@ const PHOTO_TITLE_LINES = 2;
  * top, mostly panel behind the badge, solid under the title, so the panel's
  * ink reads on any photo.
  */
-function photoFadeStyle(panelColor: string): ViewStyle {
+function photoFadeStyle(panelColor: string, holdsText: boolean): ViewStyle {
+  if (!holdsText) {
+    return {
+      marginTop: -PHOTO_BLEND_HEIGHT,
+      minHeight: PHOTO_BLEND_HEIGHT,
+      backgroundImage: `linear-gradient(to bottom, ${panelColor}00, ${panelColor})`,
+    };
+  }
   return {
     marginTop: -PHOTO_FADE_HEIGHT,
     minHeight: PHOTO_FADE_HEIGHT,
@@ -231,7 +244,6 @@ export function RaisedCard(props: RaisedCardProps) {
     () => ({ ...defaultFaceStyle, backgroundColor: panelColor }),
     [defaultFaceStyle, panelColor],
   );
-  const fadeStyle = useMemo(() => photoFadeStyle(panelColor), [panelColor]);
   const isStackedTile = tile && stacked && !hasMedia;
   const stackedContent = (
     <>
@@ -266,6 +278,8 @@ export function RaisedCard(props: RaisedCardProps) {
   const hasMediaTitle = mediaTitle !== null && mediaTitle.length > 0;
   // Nothing for the foot row: the title takes the author's place there (RAPP-930).
   const titleInFooter = hasMediaTitle && footerPieces.length === 0;
+  const fadeHoldsText = badge !== null || (hasMediaTitle && !titleInFooter);
+  const fadeStyle = photoFadeStyle(panelColor, fadeHoldsText);
   const photoContent = hasMedia ? (
     <RaisedCardPanelInkContext.Provider value={panelInkName}>
       <View style={mediaBleedStyle}>

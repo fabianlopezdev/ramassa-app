@@ -68,7 +68,8 @@ describe('a photo card in the colour of its topic, with its title at the foot (R
   test('the panel and the fade take the wash of the tone, and the brand without one', () => {
     expect(raisedCard).toContain('const panelWash = useSectionWash(hasMedia ? tone : undefined);');
     expect(raisedCard).toContain('const panelColor = panelWash ?? brandColor;');
-    expect(raisedCard).toContain('photoFadeStyle(panelColor)');
+    expect(raisedCard).toContain('photoFadeStyle(panelColor, fadeHoldsText)');
+    expect(raisedCard).toContain('PHOTO_BLEND_HEIGHT');
     expect(raisedCard).not.toContain('photoFadeStyle(brandColor)');
     // A tone with a colour puts the panel on its wash; no tone keeps the brand.
     expect(footer).toContain(
