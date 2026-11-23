@@ -1,13 +1,10 @@
 /**
- * One form the team created (RAPP-700, RAPP-701): its board of screens, its
- * settings and its responses, in tabs.
- *
- *   - Pantalles: Onboarding's own board (`FormBoard`), each card opening its
- *     screen in the shared screen editor, with the add card after the last.
- *   - Configuració: the name and the choices, saved as a draft (Desa
- *     l'esborrany), and the players it is for when the team picks them.
- *   - Respostes: who answered, who is pending and the deadline, each row
- *     opening her page.
+ * One form (RAPP-700, RAPP-701): its board of screens, as Onboarding is
+ * (RAPP-919). Onboarding's own board (`FormBoard`), each card opening its
+ * screen in the shared screen editor, with the add card after the last; the
+ * versions (and the seasons, for the season authorization) under it. The
+ * header opens Configuració in a side panel (`FormSettingsSheet`) and, for a
+ * team form, its Respostes on their own page (`CustomFormResponsesPage`).
  *
  * Every save is a draft: players see the version published last. Publica
  * makes the draft a version and asks its players; once a version exists it
@@ -33,15 +30,13 @@
  */
 
 import { useStepUp } from '@/components/auth/step-up';
-import { choicesProblem, FormChoicesFields } from '@/components/custom-forms/form-choices';
+import { FormSettingsSheet } from '@/components/custom-forms/form-settings-sheet';
 import {
   FormVersions,
   type FormVersionGroup,
   type FormVersionRow,
 } from '@/components/custom-forms/form-versions';
-import { EditorSection } from '@/components/layout/editor-section';
 import { Page, PageHeader } from '@/components/layout/page';
-import { AudiencePicker } from '@/components/notifications/audience-picker';
 import { PhoneMiniature } from '@/components/onboarding/phone-preview';
 import { useSaveKind } from '@/components/onboarding/save-kind-dialog';
 import {
@@ -74,20 +69,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { CustomFormData } from '@/lib/custom-forms';
 import { supabase } from '@/lib/supabase';
-import { Link, useNavigate } from '@tanstack/react-router';
-import { ChevronLeft } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Link, Navigate, useNavigate } from '@tanstack/react-router';
+import { ChevronLeft, Inbox } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
@@ -105,26 +91,14 @@ import {
   formScreensInOrder,
   publishCustomForm,
   reorderCustomFormScreens,
-  saveCustomForm,
   saveCustomFormScreen,
   saveScreenCondition,
-  setCustomFormRecipients,
   setScreenHidden,
   textIn,
   withSeasonName,
   type CustomForm,
-  type CustomFormChoices,
-  type CustomFormRecipients,
-  type CustomFormResponse,
   type CustomFormScreen,
 } from '@ramassa/shared/intake-builder';
-import {
-  fetchCustomNotificationGroups,
-  fetchNotificationAudienceOptions,
-  type CustomNotificationGroup,
-  type NotificationAudience,
-  type NotificationAudienceOptions,
-} from '@ramassa/shared/notifications';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 import {
   createSeason,
@@ -190,7 +164,10 @@ export function CustomFormPage({
   // The app's legal forms are answered in their ledgers: no responses here (RAPP-772, RAPP-773).
   const isSystemForm = form !== undefined && form.systemKey !== null;
   const hasResponses = data.canReadResponses && !isSystemForm;
-  const firstTab = data.canDesign ? 'screens' : 'responses';
+  // Whoever reads the responses without designing the form opens them directly.
+  if (!data.canDesign && hasResponses) {
+    return <Navigate to="/forms/custom/$formId/responses" params={{ formId }} replace />;
+  }
   return (
     <Page data-testid="custom-form-page">
       <div className="flex flex-col gap-2">
@@ -218,59 +195,44 @@ export function CustomFormPage({
               </span>
             )
           }
-          actions={form === undefined ? undefined : <FormActions data={data} form={form} />}
+          actions={
+            form === undefined ? undefined : (
+              <>
+                {data.canDesign && hasResponses ? (
+                  <Button asChild variant="outline" data-testid="custom-form-responses-open">
+                    <Link to="/forms/custom/$formId/responses" params={{ formId }}>
+                      <Inbox aria-hidden data-icon="inline-start" />
+                      {t('customForms.tab.responses')}
+                    </Link>
+                  </Button>
+                ) : null}
+                {data.canDesign ? <FormSettingsSheet form={form} /> : null}
+                <FormActions data={data} form={form} />
+              </>
+            )
+          }
         />
       </div>
-      {form === undefined ? null : (
+      {form === undefined || !data.canDesign ? null : (
         // Keyed by the form's version: a Publica starts from what the database holds.
-        <Tabs key={`${form.id}-${form.version}`} defaultValue={firstTab} className="gap-6">
-          <TabsList className="max-w-full overflow-x-auto" variant="line">
-            {data.canDesign ? (
-              <>
-                <TabsTrigger value="screens">{t('customForms.tab.screens')}</TabsTrigger>
-                <TabsTrigger value="settings">{t('customForms.tab.settings')}</TabsTrigger>
-              </>
-            ) : null}
-            {hasResponses ? (
-              <TabsTrigger value="responses" data-testid="custom-form-responses-tab">
-                {t('customForms.tab.responses')}
-              </TabsTrigger>
-            ) : null}
-          </TabsList>
-          {data.canDesign ? (
-            <>
-              <TabsContent value="screens" className="flex flex-col gap-6">
-                <FormScreensBoard data={data} form={form} />
-                {form.systemKey === 'season_authorization' ? (
-                  <div className="grid gap-6 lg:grid-cols-2">
-                    <CustomFormVersions data={data} form={form} />
-                    <AuthorizationSeasons seasons={data.seasons} />
-                  </div>
-                ) : (
-                  <CustomFormVersions data={data} form={form} />
-                )}
-              </TabsContent>
-              <TabsContent value="settings" className="flex flex-col gap-6">
-                <FormSettings form={form} />
-                {form.audience === 'chosen' && !isSystemForm ? (
-                  <FormRecipients form={form} />
-                ) : null}
-              </TabsContent>
-            </>
-          ) : null}
-          {hasResponses ? (
-            <TabsContent value="responses">
-              <FormResponses form={form} responses={data.responses} />
-            </TabsContent>
-          ) : null}
-        </Tabs>
+        <div key={`${form.id}-${form.version}`} className="flex flex-col gap-6">
+          <FormScreensBoard data={data} form={form} />
+          {form.systemKey === 'season_authorization' ? (
+            <div className="grid gap-6 lg:grid-cols-2">
+              <CustomFormVersions data={data} form={form} />
+              <AuthorizationSeasons seasons={data.seasons} />
+            </div>
+          ) : (
+            <CustomFormVersions data={data} form={form} />
+          )}
+        </div>
       )}
     </Page>
   );
 }
 
 /** The page that lists a form: Condicions legals for a legal one (RAPP-771). */
-function formListPath(
+export function formListPath(
   form: Pick<CustomForm, 'kind'> | undefined,
 ): '/forms/legal' | '/forms/custom' {
   return form?.kind === 'legal' ? '/forms/legal' : '/forms/custom';
@@ -1017,236 +979,4 @@ export function formBoardNumbers(
       }
     });
   return numbers;
-}
-
-// Configuració ----------------------------------------------------------------------------------------
-
-function FormSettings({ form }: { readonly form: CustomForm }) {
-  const { t } = useTranslation('settings');
-  const reload = useReload();
-  const [choices, setChoices] = useState<CustomFormChoices>({
-    kind: form.kind,
-    name: form.name,
-    filledBy: form.filledBy,
-    mandatory: form.mandatory,
-    deadline: form.deadline,
-    audience: form.audience,
-    repeatsEachSeason: form.repeatsEachSeason,
-  });
-  const [error, setError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-
-  async function saveDraft() {
-    const problem = choicesProblem(choices);
-    setError(problem === null ? null : t(problem));
-    if (problem !== null) return;
-    setIsSaving(true);
-    try {
-      await saveCustomForm(supabase, form.id, choices);
-      await reload();
-      toast.success(t('customForms.draftSaved'));
-    } catch {
-      toast.error(t('customForms.actionFailed'));
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  return (
-    <EditorSection
-      title={t('customForms.tab.settings')}
-      testId="custom-form-settings"
-      footer={
-        <Button
-          type="button"
-          disabled={isSaving}
-          onClick={() => void saveDraft()}
-          data-testid="custom-form-settings-save"
-        >
-          {t('customForms.saveDraft')}
-        </Button>
-      }
-    >
-      <FormChoicesFields
-        choices={choices}
-        onChange={setChoices}
-        error={error}
-        hasLanguages
-        isRepeatLocked={form.publishedAt !== null}
-        isKindLocked={form.publishedAt !== null || form.systemKey !== null}
-        // The app's legal forms are asked as they always were: only their name changes (RAPP-772, RAPP-773).
-        isNameOnly={form.systemKey !== null}
-        idPrefix="form-settings"
-      />
-    </EditorSection>
-  );
-}
-
-/** The players a form is for when the team picks them: one by one or by group. */
-function FormRecipients({ form }: { readonly form: CustomForm }) {
-  const { t } = useTranslation('settings');
-  const reload = useReload();
-  const [audience, setAudience] = useState<NotificationAudience | null>(null);
-  const [players, setPlayers] = useState<readonly string[] | null>(null);
-  const [groups, setGroups] = useState<readonly CustomNotificationGroup[]>([]);
-  const [options, setOptions] = useState<NotificationAudienceOptions>({
-    serviceCategories: [],
-    events: [],
-    entities: [],
-    participants: [],
-  });
-  const [isBusy, setIsBusy] = useState(false);
-  const picked: CustomFormRecipients | null =
-    players !== null ? { kind: 'players', participantIds: players } : audience;
-
-  // The same lists the notifications page picks from.
-  useEffect(() => {
-    const controller = new AbortController();
-    void Promise.all([
-      fetchCustomNotificationGroups(supabase, controller.signal).catch(() => []),
-      fetchNotificationAudienceOptions(supabase, controller.signal),
-    ])
-      .then(([loadedGroups, loadedOptions]) => {
-        setGroups(loadedGroups);
-        setOptions(loadedOptions);
-      })
-      .catch(() => undefined);
-    return () => controller.abort();
-  }, []);
-
-  async function save() {
-    if (picked === null) return;
-    setIsBusy(true);
-    try {
-      const count = await setCustomFormRecipients(supabase, form.id, picked);
-      toast.success(t('customForms.recipientsSaved', { count }));
-      await reload();
-    } catch {
-      toast.error(t('customForms.actionFailed'));
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  return (
-    <EditorSection
-      title={
-        <span className="flex flex-wrap items-center gap-x-4 gap-y-1 text-start">
-          <span className="text-base font-semibold">{t('customForms.recipients')}</span>
-          <span className="text-sm text-muted-foreground">
-            {t('customForms.recipientCount', { count: form.recipientCount ?? 0 })}
-          </span>
-        </span>
-      }
-      testId="custom-form-recipients"
-      footer={
-        <Button
-          type="button"
-          disabled={picked === null || isBusy}
-          onClick={() => void save()}
-          data-testid="custom-form-recipients-save"
-        >
-          {t('customForms.saveDraft')}
-        </Button>
-      }
-    >
-      <AudiencePicker
-        idPrefix="custom-form-recipients"
-        audience={audience}
-        groups={groups}
-        options={options}
-        onChange={setAudience}
-        players={{ chosen: players ?? [], onChange: setPlayers }}
-      />
-    </EditorSection>
-  );
-}
-
-// Respostes -------------------------------------------------------------------------------------------
-
-function FormResponses({
-  form,
-  responses,
-}: {
-  readonly form: CustomForm;
-  readonly responses: readonly CustomFormResponse[];
-}) {
-  const { t, i18n } = useTranslation('settings');
-  const locale = i18n.resolvedLanguage ?? 'ca';
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
-  const done = responses.filter((response) => response.status === 'done').length;
-  const pending = responses.filter((response) => response.status === 'pending').length;
-  return (
-    <EditorSection
-      title={
-        <span className="flex flex-wrap items-center gap-x-4 gap-y-1 text-start">
-          <span className="text-base font-semibold">{t('customForms.tab.responses')}</span>
-          <span className="text-sm text-muted-foreground">
-            {t('customForms.responsesSummary', { done, pending })}
-          </span>
-          {form.deadline === null ? null : (
-            <span className="text-sm text-muted-foreground">
-              {t('customForms.deadlineOn', { date: date.format(new Date(form.deadline)) })}
-            </span>
-          )}
-        </span>
-      }
-      isFlush
-      testId="custom-form-responses"
-    >
-      {responses.length === 0 ? (
-        <p className="px-5 py-5 text-start text-sm text-muted-foreground">
-          {t('customForms.noResponses')}
-        </p>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('customForms.column.player')}</TableHead>
-              <TableHead>{t('customForms.column.status')}</TableHead>
-              <TableHead>{t('customForms.column.asked')}</TableHead>
-              <TableHead>{t('customForms.column.answered')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {responses.map((response) => (
-              <TableRow key={response.responseId} data-testid={`response-${response.responseId}`}>
-                <TableCell>
-                  <Link
-                    to="/participants/$participantId"
-                    params={{ participantId: response.profileId }}
-                    className="font-medium underline-offset-4 hover:underline"
-                  >
-                    {response.displayName ??
-                      t('customForms.playerNumber', { number: response.memberNumber ?? '' })}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={response.status === 'pending' ? 'outline' : 'secondary'}>
-                    {t(`customForms.response.${response.status}`)}
-                  </Badge>
-                  <span className="ms-2 text-xs text-muted-foreground">
-                    {[
-                      t('customForms.versionOf', { version: response.version }),
-                      response.seasonName,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </span>
-                </TableCell>
-                <TableCell>{date.format(new Date(response.askedAt))}</TableCell>
-                <TableCell>
-                  {response.answeredAt === null
-                    ? null
-                    : [date.format(new Date(response.answeredAt)), response.answeredByName]
-                        .filter(Boolean)
-                        .join(' · ')}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-    </EditorSection>
-  );
 }
