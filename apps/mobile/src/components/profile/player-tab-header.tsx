@@ -4,6 +4,9 @@
  * always read the same. The row follows the reading direction: the title at
  * the start and the photo at the end, mirrored in Arabic and Farsi.
  *
+ * Inici passes its greeting as the title instead (RAPP-907): the club's logo
+ * with "Hola," and her name, in the same place and beside the same photo.
+ *
  * `PlayerTabStateFrame` keeps the same header above a tab's loading and error
  * states, so her photo never disappears while a tab waits for its data.
  */
@@ -16,7 +19,7 @@ import {
 import { ProfilePhotoButton } from '@/components/profile/profile-photo-button';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { PLAYER_TAB_TOP_GAP } from '@/lib/use-player-tab-content-insets';
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, type ReactElement, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tokens } from '@ramassa/shared/tokens';
@@ -35,18 +38,23 @@ export function PlayerTabHeader({
   title,
   children,
 }: {
-  readonly title: string;
+  /** The tab's name, or a whole heading that takes its place. */
+  readonly title: string | ReactElement;
   readonly children?: ReactNode;
 }) {
   const languageFontClass = useLanguageFontClass();
   const titleRow = (
     <View testID="player-tab-header" className="flex-row items-center gap-md">
-      <Text
-        accessibilityRole="header"
-        className={`flex-1 text-start text-4xl font-extrabold text-neutral-900 ${languageFontClass}`}
-      >
-        {title}
-      </Text>
+      {typeof title === 'string' ? (
+        <Text
+          accessibilityRole="header"
+          className={`flex-1 text-start text-4xl font-extrabold text-neutral-900 ${languageFontClass}`}
+        >
+          {title}
+        </Text>
+      ) : (
+        title
+      )}
       <ProfilePhotoButton />
     </View>
   );
@@ -67,7 +75,7 @@ export function PlayerTabStateFrame({
   title,
   children,
 }: {
-  readonly title: string;
+  readonly title: string | ReactElement;
   readonly children: ReactNode;
 }) {
   const insets = useSafeAreaInsets();

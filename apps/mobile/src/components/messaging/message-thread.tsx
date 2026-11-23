@@ -1,4 +1,5 @@
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
+import { PublicOrganizationLogo } from '@/components/branding/public-organization-logo';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
@@ -543,30 +544,37 @@ function MessageThreadView({
               </Text>
             ) : null}
           </View>
-          {rows.length === 0 ? (
-            <MessageThreadEmptyState
-              title={t('emptyTitle')}
-              body={t('emptyBody')}
-              languageClass={fontClass}
-            />
-          ) : (
-            <FlashList
-              ref={listRef}
-              onLoad={showNewest}
-              onContentSizeChange={showNewest}
-              onScrollBeginDrag={stopFollowing}
-              data={rows}
-              renderItem={renderItem}
-              keyExtractor={timelineKeyExtractor}
-              getItemType={timelineItemType}
-              keyboardDismissMode={messageListKeyboardDismissMode(process.env.EXPO_OS)}
-              keyboardShouldPersistTaps="handled"
-              contentInsetAdjustmentBehavior="automatic"
-              contentContainerStyle={listContentStyle}
-              style={listStyle}
-              maintainVisibleContentPosition={timelineVisibleContentPosition}
-            />
-          )}
+          {/*
+            The club's logo, large and faint, behind the messages (RAPP-907).
+            It stays still while the messages scroll over it.
+          */}
+          <View style={listStyle}>
+            <PublicOrganizationLogo variant="backdrop" />
+            {rows.length === 0 ? (
+              <MessageThreadEmptyState
+                title={t('emptyTitle')}
+                body={t('emptyBody')}
+                languageClass={fontClass}
+              />
+            ) : (
+              <FlashList
+                ref={listRef}
+                onLoad={showNewest}
+                onContentSizeChange={showNewest}
+                onScrollBeginDrag={stopFollowing}
+                data={rows}
+                renderItem={renderItem}
+                keyExtractor={timelineKeyExtractor}
+                getItemType={timelineItemType}
+                keyboardDismissMode={messageListKeyboardDismissMode(process.env.EXPO_OS)}
+                keyboardShouldPersistTaps="handled"
+                contentInsetAdjustmentBehavior="automatic"
+                contentContainerStyle={listContentStyle}
+                style={listStyle}
+                maintainVisibleContentPosition={timelineVisibleContentPosition}
+              />
+            )}
+          </View>
           <MessageComposer
             languageClass={fontClass}
             placeholder={t('composerPlaceholder')}

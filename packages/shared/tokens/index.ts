@@ -115,6 +115,16 @@ export const tokens = {
     footerBlurIntensity: 50,
   },
 
+  // The club's logo inside the app (RAPP-907): beside "Hola" at the top of
+  // Inici, above the credits at the foot of the profile, and large and faint
+  // behind a chat, faint enough that the bubbles and their text stay clear.
+  brandLogo: {
+    headerSize: 64,
+    footerHeight: 96,
+    backdropHeight: 320,
+    backdropOpacity: 0.07,
+  },
+
   // The login title sits just above a centred block of this height, so every
   // login step puts its title in the same place on a tall screen.
   authForm: { titleAnchorBlockHeight: 276 },
