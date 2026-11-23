@@ -24,6 +24,7 @@ import type { AnnouncementListRow } from '@ramassa/shared/announcements';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
+import { photoFocusFromColumns } from '@ramassa/shared/photo-focus';
 import { tokens } from '@ramassa/shared/tokens';
 
 export default function AnnouncementDetailScreen() {
@@ -102,6 +103,7 @@ export default function AnnouncementDetailScreen() {
         testID="announcement-detail-screen"
         source={imageSource}
         photoKey={announcement.image_url ?? announcement.id}
+        focus={photoFocusFromColumns(announcement.image_focus_x, announcement.image_focus_y)}
         accessibilityLabel={
           (announcement.image_alt === null
             ? undefined

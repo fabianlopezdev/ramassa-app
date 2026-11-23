@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import type { KnowledgeArticleListRow, KnowledgeContentType } from '@ramassa/shared/knowledge';
+import { photoFocusFromColumns } from '@ramassa/shared/photo-focus';
 
 function typeTranslationKey(contentType: KnowledgeContentType) {
   if (contentType === 'tutorial') return 'knowledge:typeTutorial' as const;
@@ -105,6 +106,7 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
             source={imageSource}
             accessibilityLabel={title.text}
             recyclingKey={article.image_url ?? article.id}
+            focus={photoFocusFromColumns(article.image_focus_x, article.image_focus_y)}
           />
         )
       }

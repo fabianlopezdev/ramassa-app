@@ -44,6 +44,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import type { ForumFlagTargetType, ForumReplyRow } from '@ramassa/shared/forum';
+import { photoFocusFromColumns } from '@ramassa/shared/photo-focus';
 import { FORUM_POST_MAX_LENGTH } from '@ramassa/shared/schemas';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -559,6 +560,7 @@ export default function ForumPostDetailScreen() {
             <PhotoHero
               source={imageSource}
               photoKey={post.image_url ?? post.id}
+              focus={photoFocusFromColumns(post.image_focus_x, post.image_focus_y)}
               accessibilityLabel={t('forum:imageAlt', { name: post.author_first_name })}
               sheetColor={wash ?? tokens.colors.neutral[50]}
             >

@@ -40,6 +40,7 @@ import {
 } from '@ramassa/shared/announcements';
 import { toAppError } from '@ramassa/shared/errors';
 import { DEFAULT_LANGUAGE, resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
+import { photoFocusFromColumns } from '@ramassa/shared/photo-focus';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_ANNOUNCEMENTS: readonly AnnouncementListRow[] = [];
@@ -132,6 +133,7 @@ function HomeScreen() {
             category={item.category}
             accessibilityLabel={accessibilityLabel}
             imageObjectKey={item.image_url}
+            imageFocus={photoFocusFromColumns(item.image_focus_x, item.image_focus_y)}
             imageAlt={
               item.image_alt === null
                 ? undefined
