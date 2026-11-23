@@ -22,6 +22,7 @@ import {
   type KnowledgeContentType,
   type LocalizedKnowledgeBody,
 } from '@ramassa/shared/knowledge';
+import { photoFocusFromColumns } from '@ramassa/shared/photo-focus';
 import { languageCodeSchema } from '@ramassa/shared/schemas';
 import {
   isTranslationReviewPublishable,
@@ -382,6 +383,8 @@ export function toKnowledgeInput(
     },
     body,
     imageUrl: stored?.image_url ?? null,
+    // The phone keeps the cover and its focus as stored (RAPP-932).
+    imageFocus: photoFocusFromColumns(stored?.image_focus_x, stored?.image_focus_y),
     videoUrl: form.videoUrl.trim() || null,
     externalUrl: form.externalUrl.trim() || null,
     contentType: (isStory ? 'participant_story' : form.contentType) as KnowledgeContentType,

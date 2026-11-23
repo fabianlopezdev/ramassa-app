@@ -22,6 +22,7 @@ const draft: AnnouncementDraft = {
   body: 'Dijous a les 18:00',
   imageAlt: '',
   imageUrl: null,
+  imageFocus: null,
   isPinned: false,
   mode: 'draft',
   publishedAt: null,

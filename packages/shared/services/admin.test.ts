@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   applyAdminServiceQuery,
   createAdminServiceInputSchema,
+  createAdminServiceRpcPayload,
   fetchAdminServices,
   getServiceLifecycle,
   parseServiceCategoryRow,
@@ -77,7 +78,7 @@ describe('admin service category boundary', () => {
       status: 'published',
       publishedAt: '2026-08-12T10:00:00.000Z',
       expiresAt: null,
-      images: [{ url: 'org/services/image.webp', altText: completeText }],
+      images: [{ url: 'org/services/image.webp', altText: completeText, focus: null }],
     } as const;
 
     expect(schema.safeParse(valid).success).toBe(true);
@@ -87,6 +88,17 @@ describe('admin service category boundary', () => {
     expect(schema.safeParse({ ...valid, title: { ca: 'Només català' } }).success).toBe(false);
     expect(
       schema.safeParse({ ...valid, images: [{ ...valid.images[0], altText: { ca: 'Foto' } }] })
+        .success,
+    ).toBe(false);
+
+    // Each photo carries the part cards keep (RAPP-932), inside the photo or none.
+    const focused = { ...valid, images: [{ ...valid.images[0], focus: { x: 0.5, y: 0.2 } }] };
+    const parsed = schema.parse(focused);
+    expect(createAdminServiceRpcPayload(parsed, null)).toMatchObject({
+      images: [{ url: 'org/services/image.webp', focus: { x: 0.5, y: 0.2 } }],
+    });
+    expect(
+      schema.safeParse({ ...valid, images: [{ ...valid.images[0], focus: { x: 2, y: 0.2 } }] })
         .success,
     ).toBe(false);
   });

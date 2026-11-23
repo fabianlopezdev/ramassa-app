@@ -131,6 +131,7 @@ export default function ForumPostComposerScreen() {
         categoryId: parsed.data.categoryId,
         content: parsed.data.content,
         image,
+        imageFocus: null,
       });
       replace(`/forum/${postId}` as Href);
     } catch {

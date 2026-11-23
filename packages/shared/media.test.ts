@@ -25,6 +25,7 @@ const validInput = {
   privacyLevel: 'community',
   consentAcknowledged: true,
   consentVersion: 'gallery-consent-v1',
+  focus: { x: 0.5, y: 0.2 },
 } as const;
 
 const row = {
@@ -42,6 +43,8 @@ const row = {
   flag_count: 0,
   consent_acknowledged_at: '2026-08-12T20:00:00.000Z',
   consent_version: 'gallery-consent-v1',
+  focus_x: 0.5,
+  focus_y: 0.2,
   created_at: '2026-08-12T20:00:00.000Z',
   updated_at: '2026-08-12T20:00:00.000Z',
 } as const;
@@ -173,6 +176,8 @@ describe('media data boundaries', () => {
           p_privacy_level: 'community',
           p_consent_acknowledged: true,
           p_consent_version: 'gallery-consent-v1',
+          p_focus_x: 0.5,
+          p_focus_y: 0.2,
         },
       ],
       ['set_media_item_privacy', { p_media_item_id: mediaId, p_privacy_level: 'staff_only' }],

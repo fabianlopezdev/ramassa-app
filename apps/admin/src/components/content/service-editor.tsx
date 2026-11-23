@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { localizedTextFromReview } from '@ramassa/shared/announcements';
 import { AppError, type AppErrorCode } from '@ramassa/shared/errors';
 import { compressBrowserImage } from '@ramassa/shared/image-compression';
+import { photoFocusFromColumns, type PhotoFocus } from '@ramassa/shared/photo-focus';
 import { uploadContentTypeSchema } from '@ramassa/shared/schemas';
 import {
   approveEntityService,
@@ -43,6 +44,8 @@ interface ServiceImageDraft {
   readonly alt: string;
   readonly review: TranslationReview | undefined;
   readonly state: ImageUploadState;
+  /** The part of the photo cards keep (RAPP-932); null keeps the default crop. */
+  readonly focus: PhotoFocus | null;
 }
 
 export interface ServiceEditorProps {
@@ -159,6 +162,7 @@ function ServiceEditorForm({
       alt: image.alt_text.ca,
       review: initialReview(image.alt_text.ca, image.alt_text),
       state: 'stored',
+      focus: photoFocusFromColumns(image.focus_x, image.focus_y),
     })),
   );
   const [mode, setMode] = useState<PublishMode>(() =>
@@ -344,6 +348,7 @@ function ServiceEditorForm({
       images: images.map((image) => ({
         url: image.url ?? 'pending-upload',
         altText: localizedTextFromReview(image.alt, image.review),
+        focus: image.focus,
       })),
     });
     if (!preview.success) {
@@ -362,6 +367,7 @@ function ServiceEditorForm({
           images: images.map((image, index) => ({
             url: urls[index]!,
             altText: localizedTextFromReview(image.alt, image.review),
+            focus: image.focus,
           })),
         };
         return workflow.kind === 'submission-approval'
@@ -499,7 +505,13 @@ function ServiceEditorForm({
                 state={image.state}
                 translationNamespace="services"
                 onSelect={(file) =>
-                  updateImage(image.key, (current) => ({ ...current, file, state: 'ready' }))
+                  // A new photo starts from the default crop (RAPP-932).
+                  updateImage(image.key, (current) => ({
+                    ...current,
+                    file,
+                    state: 'ready',
+                    focus: null,
+                  }))
                 }
                 onRemove={() =>
                   setImages((previous) => previous.filter((item) => item.key !== image.key))
@@ -595,6 +607,7 @@ function ServiceEditorForm({
                   alt: '',
                   review: undefined,
                   state: 'empty',
+                  focus: null,
                 },
               ])
             }

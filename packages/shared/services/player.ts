@@ -19,6 +19,9 @@ export interface PlayerServiceImageRow {
   readonly url: string;
   readonly alt_text: ServiceLocalizedLabel;
   readonly position: number;
+  /** The photo's focus (RAPP-932): both set, or both null for the default crop. */
+  readonly focus_x: number | null;
+  readonly focus_y: number | null;
 }
 
 export interface PlayerServiceRow {
@@ -81,13 +84,15 @@ const playerServiceDatabaseRowSchema = z.object({
       url: z.string().min(1),
       alt_text: completeLocalizedTextSchema,
       position: z.number().int().nonnegative(),
+      focus_x: z.number().nullable(),
+      focus_y: z.number().nullable(),
     }),
   ),
   interests: z.array(z.object({ id: z.uuid() })),
 });
 
 const PLAYER_SERVICE_COLUMNS =
-  'id, category_id, title, description, provider_name, location, zone, cost_type, cost_amount, cost_details, contact_name, contact_phone, contact_email, contact_role, schedule, external_url, availability, metadata, updated_at, images:service_images(id, url, alt_text, position), interests:service_interests(id)';
+  'id, category_id, title, description, provider_name, location, zone, cost_type, cost_amount, cost_details, contact_name, contact_phone, contact_email, contact_role, schedule, external_url, availability, metadata, updated_at, images:service_images(id, url, alt_text, position, focus_x, focus_y), interests:service_interests(id)';
 
 function parsePlayerService(raw: unknown): PlayerServiceRow {
   const row = playerServiceDatabaseRowSchema.parse(raw);

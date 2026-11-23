@@ -26,6 +26,7 @@ describe('forum online write policy', () => {
         categoryId: '5eed0000-0000-4000-8006-000000000002',
         content: 'Busco feina',
         image,
+        imageFocus: { x: 0.5, y: 0.2 },
       },
       {
         upload: async (options) => {
@@ -56,6 +57,7 @@ describe('forum online write policy', () => {
           content: 'Busco feina',
           imageObjectKey:
             '5eed0000-0000-4000-8000-000000000000/forum/5eed0000-0000-4000-8000-000000000011/2026/08/photo.jpg',
+          imageFocus: { x: 0.5, y: 0.2 },
         },
       ],
     ]);

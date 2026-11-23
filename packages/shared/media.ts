@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from './errors';
+import { photoFocusSchema } from './photo-focus';
 import { tokens } from './tokens';
 import type { Database } from './types/database';
 
@@ -43,6 +44,8 @@ export const mediaItemInputSchema = z
     privacyLevel: mediaPrivacySchema,
     consentAcknowledged: z.literal(true),
     consentVersion: z.string().trim().min(1).max(64),
+    /** The part of the photo tiles keep (RAPP-932); null keeps the default crop. */
+    focus: photoFocusSchema.nullable(),
   })
   .superRefine((value, context) => {
     const maximum =
@@ -76,6 +79,8 @@ const mediaItemRowSchema = z.object({
   flag_count: z.number().int().nonnegative(),
   consent_acknowledged_at: z.iso.datetime({ offset: true }),
   consent_version: z.string().min(1),
+  focus_x: z.number().nullable(),
+  focus_y: z.number().nullable(),
   created_at: z.iso.datetime({ offset: true }),
   updated_at: z.iso.datetime({ offset: true }),
 });
@@ -83,7 +88,7 @@ const mediaItemRowSchema = z.object({
 export type MediaItemRow = z.infer<typeof mediaItemRowSchema>;
 
 const MEDIA_ITEM_COLUMNS =
-  'id, org_id, uploaded_by, uploader_first_name, file_url, thumbnail_url, file_type, file_size, caption, privacy_level, moderation_state, flag_count, consent_acknowledged_at, consent_version, created_at, updated_at';
+  'id, org_id, uploaded_by, uploader_first_name, file_url, thumbnail_url, file_type, file_size, caption, privacy_level, moderation_state, flag_count, consent_acknowledged_at, consent_version, focus_x, focus_y, created_at, updated_at';
 
 /** The gallery moderation filters (RAPP-381, RAPP-387): hidden includes pending review. */
 export type GalleryFilter = 'all' | 'visible' | 'hidden';
@@ -146,6 +151,8 @@ export async function createMediaItem(
     p_privacy_level: input.privacyLevel,
     p_consent_acknowledged: input.consentAcknowledged,
     p_consent_version: input.consentVersion,
+    p_focus_x: input.focus?.x ?? null,
+    p_focus_y: input.focus?.y ?? null,
   } as never);
   if (error !== null) throw new AppError('DB-1', { message: error.message });
   return z.uuid().parse(data);

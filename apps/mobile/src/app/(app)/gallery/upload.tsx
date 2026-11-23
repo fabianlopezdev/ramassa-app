@@ -150,6 +150,7 @@ export default function GalleryUploadScreen() {
         draft: state.draft,
         caption,
         privacyLevel: privacy,
+        focus: null,
         consentAcknowledged: consent,
         accessToken: session.access_token,
         mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,

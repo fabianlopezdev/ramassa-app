@@ -10,7 +10,7 @@ select ok(
 );
 select has_function(
   'public', 'create_media_item',
-  array['text', 'text', 'text', 'integer', 'text', 'text', 'boolean', 'text'],
+  array['text', 'text', 'text', 'integer', 'text', 'text', 'boolean', 'text', 'real', 'real'],
   'media creation crosses one consent-aware boundary'
 );
 select has_function(

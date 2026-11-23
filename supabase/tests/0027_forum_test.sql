@@ -18,7 +18,7 @@ select ok(
   (select relrowsecurity and relforcerowsecurity from pg_class where oid = 'public.forum_replies'::regclass),
   'forum reply RLS is enabled and forced'
 );
-select has_function('public', 'create_forum_post', array['uuid', 'text', 'text'], 'post creation crosses one validated boundary');
+select has_function('public', 'create_forum_post', array['uuid', 'text', 'text', 'real', 'real'], 'post creation crosses one validated boundary');
 select has_function('public', 'create_forum_reply', array['uuid', 'text', 'uuid'], 'reply creation crosses one validated boundary');
 select has_function('public', 'edit_own_forum_post', array['uuid', 'text'], 'post editing has one ownership boundary');
 select has_function('public', 'delete_own_forum_post', array['uuid'], 'post deletion has one tombstone boundary');

@@ -17,6 +17,7 @@ import {
   type ForumPostRow,
   type ForumReplyRow,
 } from '@ramassa/shared/forum';
+import type { PhotoFocus } from '@ramassa/shared/photo-focus';
 import { requireForumWriteOnline, submitForumPostWithDependencies } from './forum-write';
 import type { CompressedNativeStoryImage } from './native-image-compression-core';
 import { isNetworkStateOnline } from './network-status';
@@ -133,6 +134,8 @@ export interface CreateForumPostVariables {
   readonly categoryId: string;
   readonly content: string;
   readonly image: CompressedNativeStoryImage | null;
+  /** The part of the photo cards keep (RAPP-932); null keeps the default crop. */
+  readonly imageFocus: PhotoFocus | null;
 }
 
 export function useCreateForumPost() {

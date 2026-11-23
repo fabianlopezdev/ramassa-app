@@ -5,6 +5,7 @@
  */
 import { z } from 'zod';
 import { ANNOUNCEMENT_CATEGORIES } from '@ramassa/shared/announcements';
+import { photoFocusSchema } from '@ramassa/shared/photo-focus';
 import { createDraftStore } from './content-draft';
 
 export const PUBLISH_MODES = ['draft', 'now', 'scheduled'] as const;
@@ -18,6 +19,8 @@ const announcementDraftSchema = z.object({
   body: z.string(),
   imageAlt: z.string(),
   imageUrl: z.string().nullable(),
+  /** The part of the photo cards keep (RAPP-932); a draft kept before it has none. */
+  imageFocus: photoFocusSchema.nullable().default(null),
   isPinned: z.boolean(),
   mode: z.enum(PUBLISH_MODES),
   publishedAt: z.string().nullable(),

@@ -509,7 +509,9 @@ export function ServiceForm({
         handlers={imageHandlers}
         onAdd={() => {
           if (form.images.length >= MAX_SERVICE_IMAGES) return;
-          set({ images: [...form.images, { key: newImageKey(), url: null, alt: '' }] });
+          set({
+            images: [...form.images, { key: newImageKey(), url: null, alt: '', focus: null }],
+          });
         }}
         onPick={(key, photo) => {
           touch();
