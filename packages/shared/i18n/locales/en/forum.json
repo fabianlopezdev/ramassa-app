@@ -10,6 +10,8 @@
   "postBy": "Posted by {{name}}",
   "openPost": "Open {{name}}'s post",
   "repliesCount": "{{count}} replies",
+  "repliesCount_one": "{{count}} reply",
+  "repliesCount_other": "{{count}} replies",
   "newReplies": "{{count}} new replies",
   "newReplies_one": "{{count}} new reply",
   "newReplies_other": "{{count}} new replies",

@@ -10,6 +10,8 @@
   "postBy": "نشرت بواسطة {{name}}",
   "openPost": "افتحي منشور {{name}}",
   "repliesCount": "{{count}} ردود",
+  "repliesCount_one": "{{count}} رد",
+  "repliesCount_other": "{{count}} ردود",
   "newReplies": "{{count}} ردود جديدة",
   "newReplies_one": "{{count}} رد جديد",
   "newReplies_other": "{{count}} رد جديد",

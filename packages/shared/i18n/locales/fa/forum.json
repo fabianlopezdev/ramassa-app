@@ -10,6 +10,8 @@
   "postBy": "نوشتهٔ {{name}}",
   "openPost": "پست {{name}} را باز کنید",
   "repliesCount": "{{count}} پاسخ",
+  "repliesCount_one": "{{count}} پاسخ",
+  "repliesCount_other": "{{count}} پاسخ",
   "newReplies": "{{count}} پاسخ جدید",
   "newReplies_one": "{{count}} پاسخ جدید",
   "newReplies_other": "{{count}} پاسخ جدید",

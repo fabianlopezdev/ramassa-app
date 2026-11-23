@@ -44,7 +44,8 @@ export const ForumPostCard = memo(function ForumPostCard({
   readonly tone?: RaisedTone;
   /** The author's photo (RAPP-639); without one, the person icon. */
   readonly authorAvatarKey: string | null;
-  readonly repliesLabel: string;
+  /** Such as "2 respostes"; null when the post has no replies (RAPP-922). */
+  readonly repliesLabel: string | null;
   readonly pinnedLabel: string;
   readonly imageAlt: string;
   readonly accessibilityLabel: string;
@@ -107,9 +108,11 @@ export const ForumPostCard = memo(function ForumPostCard({
           numberOfLines={FORUM_POST_PREVIEW_LINES}
         />
       )}
-      <Text className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}>
-        {repliesLabel}
-      </Text>
+      {repliesLabel === null ? null : (
+        <Text className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}>
+          {repliesLabel}
+        </Text>
+      )}
     </RaisedCard>
   );
 });

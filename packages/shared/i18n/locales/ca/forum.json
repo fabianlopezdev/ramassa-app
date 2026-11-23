@@ -10,6 +10,8 @@
   "postBy": "Publicat per {{name}}",
   "openPost": "Obre la publicació de {{name}}",
   "repliesCount": "{{count}} respostes",
+  "repliesCount_one": "{{count}} resposta",
+  "repliesCount_other": "{{count}} respostes",
   "newReplies": "{{count}} respostes noves",
   "newReplies_one": "{{count}} resposta nova",
   "newReplies_other": "{{count}} respostes noves",

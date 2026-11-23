@@ -10,6 +10,8 @@
   "postBy": "Publié par {{name}}",
   "openPost": "Ouvre la publication de {{name}}",
   "repliesCount": "{{count}} réponses",
+  "repliesCount_one": "{{count}} réponse",
+  "repliesCount_other": "{{count}} réponses",
   "newReplies": "{{count}} nouvelles réponses",
   "newReplies_one": "{{count}} nouvelle réponse",
   "newReplies_other": "{{count}} nouvelles réponses",

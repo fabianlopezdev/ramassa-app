@@ -22,6 +22,7 @@ import { communityUnseenCounts, forumPostMarks, toUnopenedIdSet } from '@/lib/co
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
 import { useForumCategories, useForumPosts } from '@/lib/player-forum';
+import { repliesCountLabel } from '@/lib/replies-count-label';
 import { formatUnreadBadge } from '@/lib/unread-badge';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
@@ -180,6 +181,10 @@ function CommunityScreen() {
     ];
   }, [segmentCounts, t]);
   const openLinkLabel = useCallback((url: string) => t('forum:openLink', { url }), [t]);
+  const formatRepliesCount = useCallback(
+    (count: number) => t('forum:repliesCount', { count }),
+    [t],
+  );
   const refresh = useCallback(() => {
     void Promise.all([refetchCategories(), refetchPosts(), refetchTabNews()]);
   }, [refetchCategories, refetchPosts, refetchTabNews]);
@@ -201,7 +206,7 @@ function CommunityScreen() {
             post={item}
             tone={toneByCategoryId[item.category_id]}
             authorAvatarKey={personCards.get(item.author_id)?.avatarKey ?? null}
-            repliesLabel={t('forum:repliesCount', { count: item.reply_count })}
+            repliesLabel={repliesCountLabel(item.reply_count, formatRepliesCount)}
             pinnedLabel={t('forum:pinned')}
             imageAlt={t('forum:imageAlt', { name: item.author_first_name })}
             accessibilityLabel={accessibilityLabel}
@@ -216,6 +221,7 @@ function CommunityScreen() {
       );
     },
     [
+      formatRepliesCount,
       languageFontClass,
       newRepliesByPostId,
       openLinkLabel,
