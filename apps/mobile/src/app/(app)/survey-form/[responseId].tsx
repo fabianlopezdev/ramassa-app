@@ -7,10 +7,15 @@
  * screen sends her answers with `complete_survey`: they stay with her
  * response and never reach her record. A survey is always optional, so Back
  * on its first screen leaves it for later.
+ *
+ * Her answers so far are kept as she goes, the way a form's are (RAPP-945):
+ * she comes back to the screen she left with what she had answered. When
+ * they cannot be read (offline), the survey opens from the start.
  */
 
 import { FormWalker } from '@/components/forms/form-walker';
-import { useAnswerSurvey, useMySurveySource } from '@/lib/survey-forms';
+import { useCustomFormProgress, useKeepCustomFormProgress } from '@/lib/custom-forms';
+import { useAnswerSurvey, useMySurveySource, useRefreshMySurveys } from '@/lib/survey-forms';
 import { Redirect, useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,8 +23,10 @@ import { ActivityIndicator, View } from 'react-native';
 import { useLanguage } from '@ramassa/shared/i18n';
 import {
   customFormById,
+  formProgressOf,
   formWalkPayload,
   formWalkScreens,
+  resumedFormWalk,
   surveyCatalog,
   type CustomAnswerValue,
 } from '@ramassa/shared/intake-builder';
@@ -35,6 +42,9 @@ export default function SurveyFormRoute() {
   const { responseId = '' } = useLocalSearchParams<{ responseId: string }>();
   const source = useMySurveySource();
   const answer = useAnswerSurvey();
+  const leave = useRefreshMySurveys();
+  const progress = useCustomFormProgress(responseId);
+  const keepProgress = useKeepCustomFormProgress(responseId, progress.data ?? null);
   const survey = source.data?.surveys.find((each) => each.responseId === responseId);
   const catalog = useMemo(
     () =>
@@ -44,7 +54,7 @@ export default function SurveyFormRoute() {
     [source.data, survey],
   );
 
-  if (source.isPending) {
+  if (source.isPending || progress.isLoading) {
     return (
       <View
         className="flex-1 items-center justify-center bg-neutral-50"
@@ -67,12 +77,20 @@ export default function SurveyFormRoute() {
   ) {
     return <Redirect href={'/' as Href} />;
   }
+  const resumed = resumedFormWalk(catalog, form, NO_ANSWERS, progress.data ?? null);
   return (
     <FormWalker
       key={responseId}
       catalog={catalog}
       form={form}
-      saved={NO_ANSWERS}
+      saved={resumed.answers}
+      startScreenId={resumed.screenId}
+      onProgress={
+        progress.isSuccess
+          ? (answers, screenId) =>
+              keepProgress(formProgressOf(catalog, form, NO_ANSWERS, answers, screenId))
+          : undefined
+      }
       sendLabel={t('surveys:submit')}
       failureMessage={t('onboarding:customFormFailed')}
       onSubmit={async (draft, screens) => {
@@ -81,7 +99,11 @@ export default function SurveyFormRoute() {
         if (code === null) router.replace('/' as Href);
         return code;
       }}
-      onLeave={() => router.back()}
+      onLeave={() => {
+        // Home reads her surveys again, so a started one says so.
+        leave();
+        router.back();
+      }}
     />
   );
 }

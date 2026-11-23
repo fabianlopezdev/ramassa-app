@@ -30,7 +30,8 @@ export function SurveyFormPrompt({ survey }: { readonly survey: MySurvey }) {
     [push, survey.responseId],
   );
   const title = textIn(survey.name, language);
-  const actionLabel = t('promptAction');
+  // One she left half way says so, as the old surveys did (RAPP-945).
+  const actionLabel = survey.isStarted ? t('promptStarted') : t('promptAction');
   return (
     <ToDoRow
       testID="survey-form-prompt"
@@ -41,8 +42,8 @@ export function SurveyFormPrompt({ survey }: { readonly survey: MySurvey }) {
           : t('closes', { date: dateFormatter.format(new Date(survey.closesAt)) })
       }
       accessibilityLabel={`${actionLabel}: ${title}`}
-      markLabel={t('home:unseen')}
-      isStarted={false}
+      markLabel={survey.isStarted ? actionLabel : t('home:unseen')}
+      isStarted={survey.isStarted}
       languageFontClass={languageFontClass}
       onOpen={open}
     />
