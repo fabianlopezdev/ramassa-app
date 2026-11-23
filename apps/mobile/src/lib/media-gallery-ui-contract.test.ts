@@ -31,6 +31,15 @@ const photoRoute = readFileSync(
   new URL('../app/(app)/gallery/photo/[id].tsx', import.meta.url),
   'utf8',
 );
+const itemActions = readFileSync(
+  new URL('../components/gallery/gallery-item-actions.tsx', import.meta.url),
+  'utf8',
+);
+const photoFade = readFileSync(
+  new URL('../components/media/photo-fade.tsx', import.meta.url),
+  'utf8',
+);
+const playerGallery = readFileSync(new URL('./player-gallery.ts', import.meta.url), 'utf8');
 const appLayout = readFileSync(new URL('../app/(app)/_layout.tsx', import.meta.url), 'utf8');
 const sharedMedia = readFileSync(
   new URL('../../../../packages/shared/media.ts', import.meta.url),
@@ -44,19 +53,95 @@ test('gallery uses FlashList with recycled lazy thumbnails', () => {
   expect(galleryTile).toContain('cachePolicy="memory-disk"');
 });
 
-test('a gallery tile shows the title in two lines at most and the date, at one height per row (RAPP-913)', () => {
+test('a gallery tile carries its title and date on the photo, in white on a fade (RAPP-931)', () => {
   expect(galleryTile).toContain('testID="gallery-tile-title"');
   expect(galleryTile).toContain('numberOfLines={TILE_TITLE_MAX_LINES}');
   expect(galleryTile).toContain('const TILE_TITLE_MAX_LINES = 2;');
   expect(galleryTile).toContain('testID="gallery-tile-date"');
   // A tile without a title shows only the date.
   expect(galleryTile).toMatch(/title === null \? null : \(\s*<Text\s+testID="gallery-tile-title"/);
-  // Unseen room for two title lines and the date keeps every tile the same height.
-  expect(galleryTile).toContain('aria-hidden');
-  expect(galleryTile).toContain('opacity-0');
+  // The text sits on the foot of the photo, on the shared fade of the card photos
+  // in the brand colour, in white.
+  expect(galleryTile).toMatch(
+    /<PhotoFade\s+testID="gallery-tile-caption"\s+color=\{brandColor\}\s+className="absolute bottom-0 end-0 start-0/,
+  );
+  expect(galleryTile).toContain(
+    "const TILE_TITLE_CLASS = 'text-start text-md font-semibold text-white';",
+  );
+  expect(galleryTile).toContain("const TILE_DATE_CLASS = 'text-start text-sm text-white';");
+  expect(galleryTile).toMatch(/style=\{styles\.tile\}>[\s\S]*?<Image[\s\S]*?<GalleryTileCaption/);
+  expect(photoFade).toContain(
+    'linear-gradient(to bottom, ${color}00, ${color}B3 45%, ${color} 85%)',
+  );
+  // Every tile is square, so a row stays even, and the old room under the photo is gone.
+  expect(galleryTile).toContain('aspectRatio: GALLERY_TILE_ASPECT_RATIO');
+  expect(galleryTile).not.toContain('opacity-0');
+  // The screen reader hears the title and the date in the tile's label.
+  expect(gallery).toMatch(/const accessibilityLabel = \[\s*unseenLabel,\s*item\.caption,\s*date,/);
   // The date is written in her language.
   expect(gallery).toContain('const locale = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;');
   expect(gallery).toContain('formatGalleryDate(item.created_at, locale)');
+});
+
+test('a tap on a photo tile opens the lightbox at that photo; a video opens its own screen (RAPP-931)', () => {
+  expect(gallery).toContain('href={galleryItemHref(item)}');
+  expect(playerGallery).toContain('return `/gallery/photo/${itemId}` as Href;');
+  expect(playerGallery).toContain(
+    'return isGalleryPhoto(item) ? galleryPhotoHref(item.id) : (`/gallery/${item.id}` as Href);',
+  );
+  expect(playerGallery).toContain("return item.file_type !== 'video';");
+  expect(galleryTile).toContain('onPress={open}');
+  expect(galleryTile).toContain('const open = useCallback(() => push(href), [href, push]);');
+  // A link or a notification that names a photo goes on to the lightbox.
+  expect(item).toContain('if (isPhoto) return <Redirect href={galleryPhotoHref(item.id)} />;');
+});
+
+test('the lightbox pages through the gallery photos in order, leaving videos out (RAPP-931)', () => {
+  expect(photoRoute).toContain('const galleryPhotos = useGalleryItems().data ?? NO_GALLERY_ITEMS;');
+  expect(photoRoute).toContain('galleryPhotos.filter(isGalleryPhoto)');
+  // Opened before the gallery has loaded, the photo stands alone.
+  expect(photoRoute).toContain('useGalleryItem(shownId)');
+  expect(photoRoute).toContain('currentKey={shownId}');
+  expect(photoRoute).toContain('onCurrentKeyChange={setShownId}');
+  expect(photoRoute).toContain('useMarkGalleryItemSeen(shownItem?.id)');
+  // One row of photos: the current one and one on each side, each at its own place.
+  expect(photoLightbox).toContain('photos.slice(firstDrawn, currentIndex + 2)');
+  expect(photoLightbox).toContain('key={photo.key}');
+  // The fitted photo pages sideways and closes up or down; a zoomed photo only pans.
+  expect(photoLightbox).toMatch(
+    /if \(current <= LIGHTBOX_MIN_SCALE\) \{\s*let axis = dragAxis\.get\(\);/,
+  );
+  expect(photoLightbox).toContain('lightboxDragPosition({');
+  expect(photoLightbox).toContain('lightboxPageAfterDrag({');
+  expect(photoLightbox).toMatch(/current > LIGHTBOX_MIN_SCALE\s*\?\s*shown/);
+  expect(photoLightbox).toContain('lightboxPageDirection(I18nManager.isRTL)');
+  // The screen reader turns the pages by swiping up or down on the photo.
+  expect(photoLightbox).toContain("accessibilityRole={isAdjustable ? 'adjustable' : 'image'}");
+  expect(photoLightbox).toContain('isAdjustable={pageCount > 1}');
+  // The turn of a page follows reduce motion.
+  expect(photoLightbox).toContain("resolveDurationMs('base', isReducedMotion)");
+  expect(photoLightbox).toContain('withTiming(target, settle,');
+});
+
+test('the lightbox shows what the item screen showed, and a single tap hides it (RAPP-931)', () => {
+  expect(photoRoute).toContain('testID="gallery-lightbox-title"');
+  expect(photoRoute).toContain('testID="gallery-lightbox-date"');
+  expect(photoRoute).toContain(
+    '<GalleryItemActions item={item} surface="photo" onDeleted={back} />',
+  );
+  expect(photoRoute).toContain('overlay={overlay}');
+  expect(photoLightbox).toContain('Gesture.Exclusive(doubleTap, singleTap)');
+  expect(photoLightbox).toContain('runOnJS(toggleOverlay)()');
+  expect(photoLightbox).toContain("pointerEvents={isOverlayShown ? 'box-none' : 'none'}");
+  expect(photoLightbox).toContain('accessibilityElementsHidden={!isOverlayShown}');
+  expect(photoLightbox).toContain('<PhotoFade color={tokens.colors.black}');
+  // The flag, who shared it, privacy and delete are one piece for the photo and the video.
+  expect(itemActions).toContain("t('gallery:mediaBy', { name: item.uploader_first_name })");
+  expect(itemActions).toMatch(/canManage \? null : \(\s*<ForumFlagButton\s+testID="gallery-flag"/);
+  expect(itemActions).toContain('gallery-privacy-picker');
+  expect(itemActions).toContain('gallery-delete');
+  expect(itemActions).toContain('<ForumFlagDialog');
+  expect(item).toContain('<GalleryItemActions item={item} surface="page" onDeleted={back} />');
 });
 
 test('upload requires consent and exposes determinate progress plus retry', () => {
@@ -90,18 +175,18 @@ test('item view exposes privacy editing, deletion, flagging, and video playback'
   expect(mediaStage).toContain('VideoView');
   expect(mediaStage).toContain('nativeControls');
   expect(item).toContain('<NativeScreenHeader');
-  expect(item).toContain('gallery-privacy-picker');
-  expect(item).toContain('gallery-delete');
-  expect(item).toContain('gallery-flag');
+  expect(item).toContain('<GalleryItemActions');
+  expect(itemActions).toContain('gallery-privacy-picker');
+  expect(itemActions).toContain('gallery-delete');
+  expect(itemActions).toContain('gallery-flag');
 });
 
 test('an opened photo or video runs across the full screen width, in its own shape (RAPP-897)', () => {
   // The scroll content has no side padding; the text under the media brings its own.
   expect(item).not.toContain('contentContainerClassName="grow px-lg py-lg"');
-  // A photo opens on the shared story layout, its title and date on the sheet (RAPP-915).
-  expect(item).toContain('<PhotoHeroScreen');
-  expect(item).toContain('testID="gallery-detail-date"');
-  expect(item).toContain('formatGalleryDate(item.created_at');
+  // A photo opens in the lightbox, with its title and date on it (RAPP-931).
+  expect(item).not.toContain('<PhotoHeroScreen');
+  expect(photoRoute).toContain('formatGalleryDate(item.created_at');
   expect(item).not.toContain('GalleryPhotoStage');
   expect(item).toContain('<GalleryVideoStage');
   expect(item).toMatch(/<View className="gap-lg px-lg[^"]*">/);
@@ -131,8 +216,8 @@ test('a tap on an opened photo opens it at full screen in the lightbox (RAPP-913
   expect(photoHero).toContain('accessibilityRole="imagebutton"');
   expect(photoHero).toContain('onPress={onOpenPhoto}');
   expect(mediaStage).not.toContain('toggleTitle');
-  expect(item).toContain("pathname: '/gallery/photo/[id]'");
-  expect(item).toContain('onOpenPhoto={openPhoto}');
+  // A photo tile opens the lightbox directly now (RAPP-931).
+  expect(playerGallery).toContain('/gallery/photo/${itemId}');
   expect(appLayout).toContain(
     '<Stack.Screen name="gallery/photo/[id]" options={photoLightboxOptions} />',
   );
@@ -155,12 +240,21 @@ test('a tap on an opened photo opens it at full screen in the lightbox (RAPP-913
 
 test('the item keeps the report flag, the labels and the right-to-left layout (RAPP-897)', () => {
   // The flag ends the line of who shared it, under a photo or a video (RAPP-915).
-  expect(item).toContain('testID="gallery-flag"');
+  expect(itemActions).toContain('testID="gallery-flag"');
   expect(mediaStage).toContain('containedPictureCornerOffsets');
   expect(mediaStage).toContain('accessibilityLabel={accessibilityLabel}');
   // The tap layers are not screen reader stops; the photo, the player and the flag are.
   expect(mediaStage).toContain('accessible={false}');
-  for (const source of [mediaStage, mediaTitle, galleryTile, photoLightbox, photoHero]) {
+  for (const source of [
+    mediaStage,
+    mediaTitle,
+    galleryTile,
+    photoLightbox,
+    photoHero,
+    photoRoute,
+    itemActions,
+    photoFade,
+  ]) {
     expect(source).not.toMatch(
       /\b(left|right|marginLeft|marginRight|paddingLeft|paddingRight)\b\s*:/,
     );

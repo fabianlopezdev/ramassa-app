@@ -28,6 +28,8 @@ describe('Phase 6 general React performance contract', () => {
       readMobileSource('app/(app)/gallery/index.tsx'),
       readMobileSource('app/(app)/gallery/upload.tsx'),
       readMobileSource('components/gallery/gallery-tile.tsx'),
+      readMobileSource('components/gallery/gallery-item-actions.tsx'),
+      readMobileSource('app/(app)/gallery/photo/[id].tsx'),
       readMobileSource('components/forum/forum-category-tabs.tsx'),
       readMobileSource('components/forum/forum-flag-dialog.tsx'),
       readMobileSource('components/forum/forum-plain-text.tsx'),

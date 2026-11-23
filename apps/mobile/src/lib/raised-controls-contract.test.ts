@@ -129,7 +129,8 @@ test('the shared pieces carry the relief', () => {
 // shared button draws the flag, so the screens that report cannot drift apart.
 test('every report control is the shared flag button', () => {
   expect(read('components/forum/forum-thread-message.tsx')).toContain('<ForumFlagButton');
-  expect(read('app/(app)/gallery/[id].tsx')).toContain('<ForumFlagButton');
+  // The photo in the lightbox and the video screen share one piece for it (RAPP-931).
+  expect(read('components/gallery/gallery-item-actions.tsx')).toContain('<ForumFlagButton');
   const drawFlag = [...sources('app'), ...sources('components')].filter((path) =>
     read(path).includes('icon="flag"'),
   );

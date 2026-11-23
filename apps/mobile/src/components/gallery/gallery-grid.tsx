@@ -7,12 +7,11 @@ import { GalleryTile } from '@/components/gallery/gallery-tile';
 import { NO_UNOPENED_IDS } from '@/lib/community-news';
 import { formatGalleryDate } from '@/lib/gallery-date';
 import { isNetworkStateOnline } from '@/lib/network-status';
-import { useGalleryItems } from '@/lib/player-gallery';
+import { galleryItemHref, useGalleryItems } from '@/lib/player-gallery';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useListSeen, useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
-import type { Href } from 'expo-router';
 import { useCallback, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
@@ -84,8 +83,7 @@ export function GalleryGrid({
           title={item.caption}
           date={date}
           fontClass={languageFontClass}
-          href={`/gallery/${item.id}` as Href}
-          isPhoto={item.file_type !== 'video'}
+          href={galleryItemHref(item)}
           unseenLabel={unseenLabel}
         />
       );
