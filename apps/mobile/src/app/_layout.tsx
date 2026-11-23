@@ -3,6 +3,7 @@
 import { AppLockProvider } from '@/components/auth/app-lock';
 import { SessionFreshness } from '@/components/auth/session-freshness';
 import { StepUpProvider } from '@/components/auth/step-up';
+import { LaunchSplash } from '@/components/branding/animated-splash';
 import { OrganizationBrandingProvider } from '@/components/branding/organization-branding-provider';
 import { ErrorFallback, type ErrorFallbackProps } from '@/components/error-fallback';
 import { PlayerPreviewFrame } from '@/components/preview/player-preview-frame';
@@ -180,8 +181,10 @@ function RootNavigator({ isPreview }: { readonly isPreview: boolean }) {
     [isReducedMotion],
   );
 
+  // On the phone the launch splash hides the native splash (RAPP-955); the web
+  // build hides it as soon as the stored session has resolved.
   useEffect(() => {
-    if (!isLoading) {
+    if (Platform.OS === 'web' && !isLoading) {
       void SplashScreen.hideAsync();
     }
   }, [isLoading]);
@@ -201,6 +204,7 @@ function RootNavigator({ isPreview }: { readonly isPreview: boolean }) {
 }
 
 function AppForSession({ isPreview }: { readonly isPreview: boolean }) {
+  const { isLoading } = useAuth();
   return (
     <>
       {/* Every screen is light, so the clock and icons above it are dark. Android
@@ -224,6 +228,8 @@ function AppForSession({ isPreview }: { readonly isPreview: boolean }) {
           </AppLockProvider>
         </AuthFlowStatusProvider>
       </OrganizationBrandingProvider>
+      {/* Over everything until it fades into the app (RAPP-955). */}
+      <LaunchSplash appReady={!isLoading} />
     </>
   );
 }

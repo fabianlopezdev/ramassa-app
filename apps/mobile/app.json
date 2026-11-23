@@ -41,9 +41,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#F7F5EE",
-          "image": "./assets/images/ramassa-splash.png",
-          "imageWidth": 200
+          "backgroundColor": "#DBE0E9",
+          "image": "./assets/images/splash-shield-start.png",
+          "imageWidth": 220
         }
       ],
       "expo-localization",
