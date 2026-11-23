@@ -1,22 +1,26 @@
 import { AppError } from '@ramassa/shared/errors';
+import type { EventSignupAnswer } from '@ramassa/shared/events';
 
-export interface EventSignupActionAvailability {
-  readonly hasEvent: boolean;
-  readonly hasNextState: boolean;
+export interface EventAnswerAvailability {
+  /** The answer the button gives. */
+  readonly answer: EventSignupAnswer;
+  /** The answer she has given, or null before she answers. */
+  readonly currentAnswer: EventSignupAnswer | null;
   readonly isFull: boolean;
-  readonly hasActiveSignup: boolean;
 }
 
 /**
- * A full activity turns the action off for a player who has not joined
- * (RAPP-883), so she is not invited to tap and then refused. One who has
- * joined keeps it, to cancel. The screen keeps its places fresh
+ * A full activity turns "yes" off for a player who has not said yes
+ * (RAPP-883), so she is not invited to tap and then refused. "No" stays on,
+ * because a no takes no place (RAPP-908); one who said yes keeps both, to
+ * change her answer. The screen keeps its places fresh
  * (`useFreshPlayerEvents`); the database still has the last word when two
  * players tap in the same seconds, and answers `EVENTS-1`.
  */
-export function isEventSignupActionDisabled(availability: EventSignupActionAvailability): boolean {
-  if (!availability.hasEvent || !availability.hasNextState) return true;
-  return availability.isFull && !availability.hasActiveSignup;
+export function isEventAnswerDisabled(availability: EventAnswerAvailability): boolean {
+  return (
+    availability.answer === 'yes' && availability.isFull && availability.currentAnswer !== 'yes'
+  );
 }
 
 /** Signup changes are never queued because capacity can change while offline. */

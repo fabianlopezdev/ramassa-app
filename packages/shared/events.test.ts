@@ -10,12 +10,13 @@ import {
   eventCategoryInputSchema,
   eventCategoryPaletteColor,
   eventInputSchema,
+  eventSignupAnswer,
+  eventSignupStateForAnswer,
   filterPlayerEventOccurrences,
   formatEventCapacity,
   mapEventSignupError,
   materializeEventOccurrences,
   moveCategory,
-  nextEventSignupState,
   parseWeeklyRecurrenceRule,
   toMadridLocalInput,
   toUtcInstant,
@@ -350,11 +351,27 @@ describe('player event signup state', () => {
     expect(formatEventCapacity(7, null, 'Unlimited')).toBe('7 / Unlimited');
   });
 
-  test('maps signup modes to the one active state and toggles active rows to cancelled', () => {
-    expect(nextEventSignupState('confirm', null)).toBe('confirmed');
-    expect(nextEventSignupState('interest', null)).toBe('interested');
-    expect(nextEventSignupState('none', null)).toBeNull();
-    expect(nextEventSignupState('confirm', 'confirmed')).toBe('cancelled');
+  test('stores her yes as the mode active state and her no as cancelled (RAPP-908)', () => {
+    expect(eventSignupStateForAnswer('confirm', 'yes')).toBe('confirmed');
+    expect(eventSignupStateForAnswer('interest', 'yes')).toBe('interested');
+    expect(eventSignupStateForAnswer('confirm', 'no')).toBe('cancelled');
+    expect(eventSignupStateForAnswer('interest', 'no')).toBe('cancelled');
+    expect(eventSignupStateForAnswer('none', 'yes')).toBeNull();
+    expect(eventSignupStateForAnswer('none', 'no')).toBeNull();
+  });
+
+  test('reads her answer back from the stored state, and no row as no answer', () => {
+    expect(eventSignupAnswer('confirmed')).toBe('yes');
+    expect(eventSignupAnswer('interested')).toBe('yes');
+    expect(eventSignupAnswer('cancelled')).toBe('no');
+    expect(eventSignupAnswer(null)).toBeNull();
+    expect(eventSignupAnswer(undefined)).toBeNull();
+  });
+
+  test('a no she gives first takes no place', () => {
+    const rows = applyOptimisticEventSignup([playerEvent()], 'event-1', 'cancelled');
+    expect(rows[0]?.signup?.state).toBe('cancelled');
+    expect(rows[0]?.event.active_signup_count).toBe(0);
   });
 
   test('optimistically updates every occurrence in the series and its capacity count', () => {

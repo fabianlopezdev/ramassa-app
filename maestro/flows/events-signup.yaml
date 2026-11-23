@@ -14,8 +14,7 @@ env:
   CALENDAR_VIEW_ACTION: '{{events:playerCalendarViewAction}}'
   CALENDAR_LABEL: '{{events:playerCalendarLabel}}'
   CONFIRM_ACTION: '{{events:playerConfirmAction}}'
-  CANCEL_ACTION: '{{events:playerCancelAction}}'
-  CONFIRMED_STATUS: '{{events:playerConfirmed}}'
+  DECLINE_ACTION: '{{events:playerDeclineAction}}'
   CAPACITY_ERROR: '{{errors:EVENTS-1}}'
   BACK: '{{events:playerBack}}'
   OFFLINE_BANNER: '{{common:offline}}'
@@ -225,7 +224,9 @@ env:
           timeout: 1000
 - tapOn: '^${CONFIRM_ACTION}$'
 - extendedWaitUntil:
-    visible: '.*${CONFIRMED_STATUS}.*'
+    visible:
+      text: '^${CONFIRM_ACTION}$'
+      selected: true
     timeout: 30000
 - waitForAnimationToEnd:
     timeout: 1500
@@ -234,7 +235,7 @@ env:
 - repeat:
     times: 4
     while:
-      notVisible: '^${CANCEL_ACTION}$'
+      notVisible: '^${DECLINE_ACTION}$'
     commands:
       - swipe:
           start: 50%, 80%
@@ -242,9 +243,11 @@ env:
           duration: 600
       - waitForAnimationToEnd:
           timeout: 1000
-- tapOn: '^${CANCEL_ACTION}$'
+- tapOn: '^${DECLINE_ACTION}$'
 - extendedWaitUntil:
-    visible: '^${CONFIRM_ACTION}$'
+    visible:
+      text: '^${DECLINE_ACTION}$'
+      selected: true
     timeout: 30000
 - waitForAnimationToEnd:
     timeout: 1500

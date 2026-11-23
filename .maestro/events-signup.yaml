@@ -10,8 +10,7 @@ env:
   CALENDAR_VIEW_ACTION: '{{events:playerCalendarViewAction}}'
   CALENDAR_LABEL: '{{events:playerCalendarLabel}}'
   CONFIRM_ACTION: '{{events:playerConfirmAction}}'
-  CANCEL_ACTION: '{{events:playerCancelAction}}'
-  CONFIRMED_STATUS: '{{events:playerConfirmed}}'
+  DECLINE_ACTION: '{{events:playerDeclineAction}}'
 ---
 - runFlow: _open-app.yaml
 - runFlow: _sign-in.yaml
@@ -58,15 +57,19 @@ env:
     id: 'event-card-.*'
     index: 0
 # The selected calendar day is intentionally seeded with an active signup so
-# the same flow proves both transitions. If a future fixture starts unsigned,
-# this branch simply skips and confirmation remains the tested outcome.
+# the same flow proves both answers. If a future fixture starts unanswered,
+# this branch simply skips and the yes remains the tested outcome.
 - runFlow:
     when:
-      notVisible: '^${CONFIRM_ACTION}$'
+      visible:
+        text: '^${CONFIRM_ACTION}$'
+        selected: true
     commands:
-      - tapOn: '^${CANCEL_ACTION}$'
+      - tapOn: '^${DECLINE_ACTION}$'
       - extendedWaitUntil:
-          visible: '^${CONFIRM_ACTION}$'
+          visible:
+            text: '^${DECLINE_ACTION}$'
+            selected: true
           timeout: 30000
 - repeat:
     times: 6
@@ -81,7 +84,9 @@ env:
           timeout: 1200
 - tapOn: '^${CONFIRM_ACTION}$'
 - extendedWaitUntil:
-    visible: '.*${CONFIRMED_STATUS}.*'
+    visible:
+      text: '^${CONFIRM_ACTION}$'
+      selected: true
     timeout: 30000
 
 # A cold process start discards optimistic UI. Reaching the occurrence again
@@ -125,7 +130,7 @@ env:
 - repeat:
     times: 6
     while:
-      notVisible: '.*${CONFIRMED_STATUS}.*'
+      notVisible: '^${CONFIRM_ACTION}$'
     commands:
       - swipe:
           start: 50%, 78%
@@ -133,4 +138,6 @@ env:
           duration: 800
       - waitForAnimationToEnd:
           timeout: 1200
-- assertVisible: '.*${CONFIRMED_STATUS}.*'
+- assertVisible:
+    text: '^${CONFIRM_ACTION}$'
+    selected: true

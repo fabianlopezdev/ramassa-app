@@ -19,13 +19,17 @@ export function eventCategoryColor(color: string, brandColor: string): string {
   return sectionHue(eventCategoryPaletteColor(color), brandColor) ?? brandColor;
 }
 
-/** Her sign-up chip on an activity card; `t` resolves the `events` namespace. */
+/**
+ * Her answer chip on an activity card, yes or no (RAPP-908), and nothing
+ * before she answers; `t` resolves the `events` namespace.
+ */
 export function playerEventSignupLabel(
   state: EventSignupState | undefined,
   t: TFunction,
 ): string | null {
   if (state === 'confirmed') return t('events:playerConfirmed');
   if (state === 'interested') return t('events:playerInterested');
+  if (state === 'cancelled') return t('events:playerDeclined');
   return null;
 }
 
@@ -130,7 +134,7 @@ export const EventCard = memo(function EventCard({
     [eventId, occurrenceId, onOpen],
   );
   const { day, month, time } = eventCardDateParts(startsAt, locale);
-  // One badge on the card's edge: her sign-up once she has one, else "Nou" while it is new to her.
+  // One badge on the card's edge: her answer once she gives one, else "Nou" while it is new to her.
   const badge = useMemo<RaisedCardBadge | null>(() => {
     if (signupLabel !== null) return { label: signupLabel, tone: 'accent' };
     return unseenLabel === null ? null : { label: unseenLabel, tone: 'brand' };
