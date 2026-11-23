@@ -36,9 +36,12 @@
       "data": "داده‌ها",
       "app": "اپ بازیکنان",
       "entities": "نهادها",
-      "organisation": "سازمان"
+      "organisation": "سازمان",
+      "surveys": "نظرسنجی‌ها"
     },
-    "customForms": "فرم‌های دیگر"
+    "customForms": "فرم‌های دیگر",
+    "allSurveys": "همهٔ نظرسنجی‌ها",
+    "previousSurveys": "نظرسنجی‌های پیشین"
   },
   "entity": {
     "dashboard": "تأثیر",

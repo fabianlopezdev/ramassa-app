@@ -151,11 +151,12 @@ test('the menu groups by audience in the agreed order (RAPP-654)', () => {
       '/onboarding',
       '/forms/authorization',
       '/forms/terms',
-      // The forms the team creates (RAPP-700), then the surveys (RAPP-929).
+      // The forms the team creates (RAPP-700).
       '/forms/custom',
-      '/surveys',
       '/entities/referral-form',
     ],
+    // Surveys, their own section (RAPP-929).
+    surveys: ['/surveys', '/surveys/archive'],
     data: ['/profile-layout', '/legal-data'],
     app: [
       '/content',

@@ -30,7 +30,6 @@ import {
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { useAuth } from '@ramassa/shared/auth';
 import {
   createCustomForm,
   setCustomFormRecipients,
@@ -67,9 +66,6 @@ export function CustomFormsList({
         )
       : [];
   const isSurveys = kind === 'survey';
-  // The surveys made before are read by the people who had surveys (RAPP-929).
-  const { permissions } = useAuth();
-  const readsOldSurveys = permissions.has('surveys.manage') || permissions.has('surveys.results');
   const title =
     kind === 'legal'
       ? t('nav:staff.legal')
@@ -86,14 +82,6 @@ export function CustomFormsList({
         title={title}
         actions={
           <>
-            {/* The surveys made before they moved to the form engine (RAPP-929). */}
-            {isSurveys && readsOldSurveys ? (
-              <Button asChild variant="outline">
-                <Link to="/surveys/archive" data-testid="surveys-archive">
-                  {t('surveyList.archive')}
-                </Link>
-              </Button>
-            ) : null}
             {data.canDesign ? (
               <Button
                 type="button"

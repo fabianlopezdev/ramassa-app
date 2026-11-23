@@ -36,9 +36,12 @@
       "data": "Data",
       "app": "Players' app",
       "entities": "Entities",
-      "organisation": "Organization"
+      "organisation": "Organization",
+      "surveys": "Surveys"
     },
-    "customForms": "Other forms"
+    "customForms": "Other forms",
+    "allSurveys": "All surveys",
+    "previousSurveys": "Previous surveys"
   },
   "entity": {
     "dashboard": "Impact",

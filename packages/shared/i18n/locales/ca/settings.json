@@ -990,7 +990,6 @@
   },
   "surveyList": {
     "new": "Nova enquesta",
-    "archive": "Enquestes anteriors",
     "listLabel": "Enquestes",
     "empty": "Encara no hi ha cap enquesta."
   },

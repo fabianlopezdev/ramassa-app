@@ -36,9 +36,12 @@
       "data": "Dades",
       "app": "App de les jugadores",
       "entities": "Entitats",
-      "organisation": "Organització"
+      "organisation": "Organització",
+      "surveys": "Enquestes"
     },
-    "customForms": "Altres formularis"
+    "customForms": "Altres formularis",
+    "allSurveys": "Totes les enquestes",
+    "previousSurveys": "Enquestes anteriors"
   },
   "entity": {
     "dashboard": "Impacte",

@@ -990,7 +990,6 @@
   },
   "surveyList": {
     "new": "Nueva encuesta",
-    "archive": "Encuestas anteriores",
     "listLabel": "Encuestas",
     "empty": "Todavía no hay ninguna encuesta."
   },

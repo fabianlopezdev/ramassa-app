@@ -36,9 +36,12 @@
       "data": "Datos",
       "app": "App de las jugadoras",
       "entities": "Entidades",
-      "organisation": "Organización"
+      "organisation": "Organización",
+      "surveys": "Encuestas"
     },
-    "customForms": "Otros formularios"
+    "customForms": "Otros formularios",
+    "allSurveys": "Todas las encuestas",
+    "previousSurveys": "Encuestas anteriores"
   },
   "entity": {
     "dashboard": "Impacto",
