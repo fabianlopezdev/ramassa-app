@@ -65,10 +65,14 @@ describe('a screen with a photo opens on the story layout (RAPP-915)', () => {
 
   test('the photo keeps its own shape, and a tall one fits inside a share of the screen', () => {
     expect(photoHero).toContain('useRememberedPhotoShape(photoKey)');
-    // A card photo has one fixed shape (RAPP-921), so only the hero measures.
-    expect(raisedCardPhoto).not.toContain('useRememberedPhotoShape');
+    // A card photo has one fixed shape (RAPP-921) and only measures the photo
+    // for the screen it opens (RAPP-920): its own style never reads the shape.
+    expect(raisedCardPhoto).toContain(
+      'const { rememberShape } = useRememberedPhotoShape(recyclingKey);',
+    );
+    expect(raisedCardPhoto).not.toContain('aspectRatio }');
     expect(photoHero).toContain('PHOTO_HERO_MAX_SHARE_OF_SCREEN');
-    expect(photoHero).toContain("contentFit={isTall ? 'contain' : 'cover'}");
+    expect(photoHero).toContain("contentFit={isTall && !fillsFrame ? 'contain' : 'cover'}");
     expect(photoHero).toContain('blurRadius={BACKDROP_BLUR_RADIUS}');
   });
 
@@ -227,7 +231,7 @@ describe('on Android too, a card photo moves into the photo of the screen it ope
     expect(photoZoom).toContain('tag={isReducedMotion ? undefined : sharedPhotoTag(photoKey)}');
     // The timing comes from the motion tokens, and reduce motion turns the move off.
     expect(photoZoom).toMatch(
-      /SharedTransition\.duration\(motionTokens\.duration\.slow\)\.reduceMotion\(\s*ReduceMotion\.System,?\s*\)/,
+      /SharedTransition\.duration\(motionTokens\.duration\.slow\)\s*\.reduceMotion\(\s*ReduceMotion\.System,?\s*\)/,
     );
     expect(photoZoom).toContain('<Link.AppleZoom>{children}</Link.AppleZoom>');
     expect(photoZoom).toContain('<Link.AppleZoomTarget>{children}</Link.AppleZoomTarget>');
@@ -265,9 +269,7 @@ describe('on Android too, a card photo moves into the photo of the screen it ope
 
   test('every screen sits inside its own boundary, active while it is in front', () => {
     expect(photoZoom).toContain('<SharedTransitionBoundary isActive={isFocused}>');
-    expect(photoZoom).toContain(
-      "import { Link, useIsFocused, useRouter, type Href } from 'expo-router';",
-    );
+    expect(photoZoom).toContain('useIsFocused,');
     // The stack wraps each screen; a group of tabs leaves it to its tabs.
     expect(screenEntrance).toContain(
       'isNavigatorGroup(route.name) ? screen : <PhotoZoomBoundary>{screen}</PhotoZoomBoundary>',
@@ -301,5 +303,63 @@ describe('on Android too, a card photo moves into the photo of the screen it ope
     for (const tab of ['index', 'community']) {
       expect(readSource(`app/(app)/(tabs)/${tab}.tsx`)).toContain(`withScreenEntrance('${tab}',`);
     }
+  });
+});
+
+describe('on Android the sheet of the opened screen waits for the photo and leaves first (RAPP-920)', () => {
+  const fadeSlideIn = readSource('components/motion/fade-slide-in.tsx');
+
+  test('the end of every photo move is counted on the UI thread', () => {
+    expect(photoZoom).toContain('const endedPhotoMoves = makeMutable(0);');
+    expect(photoZoom).toMatch(
+      /\.withCallback\(\(\) => \{\s*'worklet';\s*endedPhotoMoves\.set\(endedPhotoMoves\.get\(\) \+ 1\);/,
+    );
+  });
+
+  test('only an Android screen reached by the photo, without reduce motion, holds its sheet back', () => {
+    expect(photoZoom).toContain(
+      'MOVES_PHOTO_ON_THIS_PLATFORM && !isReducedMotion && arrivesByPhotoZoom(params)',
+    );
+    expect(photoHero).toContain('const zoomSheet = usePhotoZoomSheet();');
+    // iOS and a screen opened another way keep the plain sheet.
+    expect(photoHero).toContain('<View style={sheetStyle}>{children}</View>');
+  });
+
+  test('the sheet rises with the shared entrance the moment the photo lands, with a time limit', () => {
+    expect(photoZoom).toContain('ready: hasLanded,');
+    expect(photoZoom).toContain('continuesMove: true,');
+    expect(photoZoom).toContain(
+      'const PHOTO_LANDING_WAIT_LIMIT_MS = motionTokens.entrance.durationMs + motionTokens.duration.slow;',
+    );
+    expect(fadeSlideIn).toContain("isReducedMotion || preset !== 'default' || continuesMove");
+    expect(photoHero).toMatch(
+      /<Animated\.View style=\{\[sheetStyle, zoomSheet\.sheetStyle\]\} onLayout=\{zoomSheet\.onLayout\}>/,
+    );
+  });
+
+  test('while the photo travels, its empty frame and the blurred backdrop stay out of view', () => {
+    expect(photoHero).toContain('arrivesByZoom ? styles.frameAwaitingPhoto : styles.frame');
+    expect(photoHero).toContain('<Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>');
+  });
+
+  test('on the way back the sheet leaves first, then the photo moves', () => {
+    // The Android back button and gesture reach BackHandler first, while the screen is in front.
+    expect(photoZoom).toContain("BackHandler.addEventListener('hardwareBackPress', () => {");
+    expect(photoZoom).toContain('if (!arrivesByZoom || !isFocused) return;');
+    expect(photoZoom).toMatch(
+      /withTiming\(0, \{ duration: motionTokens\.duration\.fast \}, \(\) => \{\s*runOnJS\(back\)\(\);/,
+    );
+    // A tall photo goes back filled to its frame, the way the card shows it.
+    expect(photoZoom).toContain('setFillsFrameToLeave(true);');
+    expect(photoHero).toContain('fillsFrame={zoomSheet.fillsFrameToLeave}');
+    // usePreventRemove changes the screen's native options as it goes, and on
+    // Android that update reached the header of a screen being removed.
+    expect(photoZoom).not.toContain('usePreventRemove(');
+  });
+
+  test('the card and the gallery tile measure the photo, so it lands on the final frame', () => {
+    expect(galleryTile).toContain('const { rememberShape } = useRememberedPhotoShape(photoKey);');
+    expect(galleryTile).toContain('onLoad={rememberShape}');
+    expect(raisedCardPhoto).toContain('onLoad={rememberShape}');
   });
 });

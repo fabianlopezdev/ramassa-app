@@ -3,6 +3,7 @@ import { Badge } from '@/components/layout/badge';
 import { PhotoZoomLink, PhotoZoomSource } from '@/components/media/photo-zoom';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
+import { useRememberedPhotoShape } from '@/lib/remembered-photo-shape';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { Image } from 'expo-image';
@@ -126,6 +127,8 @@ export const GalleryTile = memo(function GalleryTile({
   /** Set while the photo is new to her: the word over its top start corner. */
   readonly unseenLabel?: string | null;
 }) {
+  // The tile measures the photo, so the screen it opens starts at the photo's own shape.
+  const { rememberShape } = useRememberedPhotoShape(photoKey);
   const source = useMemo(
     () =>
       resolveMediaImageSource({
@@ -157,6 +160,7 @@ export const GalleryTile = memo(function GalleryTile({
                 cachePolicy="memory-disk"
                 contentFit="cover"
                 transition={motionTokens.duration.fast}
+                onLoad={rememberShape}
                 style={StyleSheet.absoluteFill}
               />
             </PhotoZoomSource>
@@ -166,7 +170,18 @@ export const GalleryTile = memo(function GalleryTile({
         <GalleryTileCaption title={title} date={date} fontClass={fontClass} />
       </SelectionChoiceSurface>
     ),
-    [accessibilityLabel, date, fontClass, id, imageAlt, photoKey, source, title, unseenLabel],
+    [
+      accessibilityLabel,
+      date,
+      fontClass,
+      id,
+      imageAlt,
+      photoKey,
+      rememberShape,
+      source,
+      title,
+      unseenLabel,
+    ],
   );
 
   return (

@@ -26,15 +26,31 @@
  *
  * With reduce motion on, the card opens with the plain push.
  */
-import { withPhotoZoomArrival } from '@/lib/photo-zoom-arrival';
+import { useEntrance } from '@/components/motion/fade-slide-in';
+import { arrivesByPhotoZoom, withPhotoZoomArrival } from '@/lib/photo-zoom-arrival';
 import { Image, type ImageProps } from 'expo-image';
-import { Link, useIsFocused, useRouter, type Href } from 'expo-router';
-import { createContext, use, useCallback, type ReactElement, type ReactNode } from 'react';
+import { Link, useIsFocused, useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import {
+  createContext,
+  use,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
+import { BackHandler } from 'react-native';
 import Animated, {
+  makeMutable,
   ReduceMotion,
+  runOnJS,
   SharedTransition,
   SharedTransitionBoundary,
+  useAnimatedReaction,
+  useAnimatedStyle,
   useReducedMotion,
+  withTiming,
 } from 'react-native-reanimated';
 import { motionTokens } from '@ramassa/shared/tokens/motion';
 
@@ -102,10 +118,19 @@ export function PhotoZoomLink({
 /** The one Android image both ends of the move draw, so Reanimated pairs them. */
 const SharedPhotoImage = Animated.createAnimatedComponent(Image);
 
+/**
+ * How many moves of a photo have ended, kept on the UI thread. The screen a
+ * photo moves into watches it, so its sheet rises as the photo lands.
+ */
+const endedPhotoMoves = makeMutable(0);
+
 /** The move of the photo, and back, in the time of an entrance. */
-const sharedPhotoTransition = SharedTransition.duration(motionTokens.duration.slow).reduceMotion(
-  ReduceMotion.System,
-);
+const sharedPhotoTransition = SharedTransition.duration(motionTokens.duration.slow)
+  .reduceMotion(ReduceMotion.System)
+  .withCallback(() => {
+    'worklet';
+    endedPhotoMoves.set(endedPhotoMoves.get() + 1);
+  });
 
 /** One tag per photo: the card and the screen it opens show the photo under the same key. */
 function sharedPhotoTag(photoKey: string): string {
@@ -189,4 +214,78 @@ function FocusedScreenBoundary({ children }: { readonly children: ReactNode }) {
 export function PhotoZoomBoundary({ children }: { readonly children: ReactNode }) {
   if (!MOVES_PHOTO_ON_THIS_PLATFORM) return children;
   return <FocusedScreenBoundary>{children}</FocusedScreenBoundary>;
+}
+
+/**
+ * The longest the sheet waits for its photo: a move that never starts, such as
+ * a card scrolled away meanwhile, must not leave the screen empty.
+ */
+const PHOTO_LANDING_WAIT_LIMIT_MS = motionTokens.entrance.durationMs + motionTokens.duration.slow;
+
+/** True once the photo that opened this screen has landed in it. */
+function usePhotoLanded(waitsForPhoto: boolean): boolean {
+  const [hasLanded, setHasLanded] = useState(!waitsForPhoto);
+  const [movesBeforeArrival] = useState(() => endedPhotoMoves.get());
+  useAnimatedReaction(
+    () => endedPhotoMoves.get(),
+    (endedMoves) => {
+      if (waitsForPhoto && endedMoves !== movesBeforeArrival) runOnJS(setHasLanded)(true);
+    },
+    [waitsForPhoto, movesBeforeArrival],
+  );
+  useEffect(() => {
+    if (!waitsForPhoto) return;
+    const limit = setTimeout(() => setHasLanded(true), PHOTO_LANDING_WAIT_LIMIT_MS);
+    return () => clearTimeout(limit);
+  }, [waitsForPhoto]);
+  return hasLanded;
+}
+
+/**
+ * The sheet under a photo the card's photo moved into, on Android (RAPP-920).
+ * The moving photo draws above the whole screen, so the sheet that overlaps
+ * the photo's bottom edge stays out of view while the photo travels, then
+ * rises and fades in over it as it lands. On the way back the sheet leaves
+ * first, and the photo then shrinks into the card. With reduce motion, or on
+ * a screen opened another way, the sheet is simply there.
+ */
+export function usePhotoZoomSheet() {
+  const params = useLocalSearchParams();
+  const isReducedMotion = useReducedMotion();
+  const arrivesByZoom =
+    MOVES_PHOTO_ON_THIS_PLATFORM && !isReducedMotion && arrivesByPhotoZoom(params);
+  const hasLanded = usePhotoLanded(arrivesByZoom);
+  const { progress, travel, onLayout } = useEntrance({
+    ready: hasLanded,
+    skip: !arrivesByZoom,
+    continuesMove: true,
+  });
+  // The Android back button and back gesture reach the app here first: the
+  // sheet leaves, then the screen goes back and the photo shrinks into its card.
+  const isFocused = useIsFocused();
+  const { back } = useRouter();
+  const isLeaving = useRef(false);
+  // The photo goes back filled to its frame, the way the card shows it.
+  const [fillsFrameToLeave, setFillsFrameToLeave] = useState(false);
+  useEffect(() => {
+    if (!arrivesByZoom || !isFocused) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (isLeaving.current) return true;
+      isLeaving.current = true;
+      setFillsFrameToLeave(true);
+      progress.set(
+        withTiming(0, { duration: motionTokens.duration.fast }, () => {
+          runOnJS(back)();
+        }),
+      );
+      return true;
+    });
+    return () => subscription.remove();
+  }, [arrivesByZoom, back, isFocused, progress]);
+  const sheetStyle = useAnimatedStyle(() => ({
+    opacity: progress.get(),
+    transform: [{ translateY: (1 - progress.get()) * travel }],
+  }));
+  const backdropStyle = useAnimatedStyle(() => ({ opacity: progress.get() }));
+  return { arrivesByZoom, sheetStyle, backdropStyle, onLayout, fillsFrameToLeave };
 }

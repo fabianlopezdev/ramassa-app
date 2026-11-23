@@ -14,6 +14,7 @@
  */
 import { PhotoZoomSource } from '@/components/media/photo-zoom';
 import { resolveMediaImageSource } from '@/lib/media-source';
+import { useRememberedPhotoShape } from '@/lib/remembered-photo-shape';
 import { mobileClientEnv } from '@/lib/supabase';
 import { Image, type ImageSource } from 'expo-image';
 import { memo, useMemo } from 'react';
@@ -56,6 +57,9 @@ export const RaisedCardPhoto = memo(function RaisedCardPhoto({
   /** The photo's alt text. The card's own label is what a screen reader says. */
   readonly accessibilityLabel?: string;
 }) {
+  // The card shows a crop, but measures the whole photo, so the screen it opens
+  // starts at the photo's own shape and the photo lands on its final frame.
+  const { rememberShape } = useRememberedPhotoShape(recyclingKey);
   return (
     <PhotoZoomSource photoKey={recyclingKey}>
       <Image
@@ -64,6 +68,7 @@ export const RaisedCardPhoto = memo(function RaisedCardPhoto({
         contentFit="cover"
         cachePolicy="memory-disk"
         recyclingKey={recyclingKey}
+        onLoad={rememberShape}
         style={photoStyle}
       />
     </PhotoZoomSource>

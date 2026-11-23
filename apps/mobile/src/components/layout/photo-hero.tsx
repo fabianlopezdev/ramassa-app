@@ -20,7 +20,7 @@
  * list and passes `overPhoto` to its header itself.
  */
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { PhotoZoomTarget } from '@/components/media/photo-zoom';
+import { PhotoZoomTarget, usePhotoZoomSheet } from '@/components/media/photo-zoom';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useRememberedPhotoShape } from '@/lib/remembered-photo-shape';
 import { Image, type ImageSource } from 'expo-image';
@@ -34,6 +34,7 @@ import {
   type ImageStyle,
   type ViewStyle,
 } from 'react-native';
+import Animated, { type AnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -45,6 +46,8 @@ const SHEET_CORNER_RADIUS = tokens.radius.xl;
 
 const styles = StyleSheet.create({
   frame: { width: '100%', overflow: 'hidden', backgroundColor: tokens.colors.neutral[900] },
+  // While a card's photo flies in (RAPP-920), the empty frame shows the screen behind it.
+  frameAwaitingPhoto: { width: '100%', overflow: 'hidden' },
   sheet: {
     ...continuousCorners,
     flexGrow: 1,
@@ -74,28 +77,46 @@ function PhotoHeroPhoto({
   photoKey,
   accessibilityLabel,
   onOpenPhoto,
-}: Omit<PhotoHeroProps, 'sheetColor' | 'children'>) {
+  arrivesByZoom,
+  backdropStyle,
+  fillsFrame,
+}: Omit<PhotoHeroProps, 'sheetColor' | 'children'> & {
+  /** A card's photo flies into this one on Android (RAPP-920). */
+  readonly arrivesByZoom: boolean;
+  /** The backdrop of a tall photo fades in with the sheet once the photo has landed. */
+  readonly backdropStyle: AnimatedStyle<ViewStyle>;
+  /** It shrinks back into the card, which shows it filled and cropped. */
+  readonly fillsFrame: boolean;
+}) {
   const { width, height: screenHeight } = useWindowDimensions();
   const { aspectRatio, rememberShape } = useRememberedPhotoShape(photoKey);
   const ownHeight = width / aspectRatio;
   const maxHeight = screenHeight * PHOTO_HERO_MAX_SHARE_OF_SCREEN;
   const isTall = ownHeight > maxHeight;
   const frameStyle = useMemo<ViewStyle>(
-    () => ({ ...styles.frame, height: Math.min(ownHeight, maxHeight) }),
-    [maxHeight, ownHeight],
+    () => ({
+      ...(arrivesByZoom ? styles.frameAwaitingPhoto : styles.frame),
+      height: Math.min(ownHeight, maxHeight),
+    }),
+    [arrivesByZoom, maxHeight, ownHeight],
+  );
+  const backdrop = (
+    <Image
+      source={source}
+      accessible={false}
+      cachePolicy="memory-disk"
+      contentFit="cover"
+      blurRadius={BACKDROP_BLUR_RADIUS}
+      style={photoFillStyle}
+    />
   );
   const photo = (
     <>
-      {isTall ? (
-        <Image
-          source={source}
-          accessible={false}
-          cachePolicy="memory-disk"
-          contentFit="cover"
-          blurRadius={BACKDROP_BLUR_RADIUS}
-          style={photoFillStyle}
-        />
-      ) : null}
+      {!isTall ? null : arrivesByZoom ? (
+        <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>{backdrop}</Animated.View>
+      ) : (
+        backdrop
+      )}
       {/* The photo of the card that opened the screen grows into this one (RAPP-916). */}
       <PhotoZoomTarget photoKey={photoKey}>
         <Image
@@ -103,7 +124,7 @@ function PhotoHeroPhoto({
           accessible={onOpenPhoto === undefined}
           accessibilityLabel={accessibilityLabel}
           cachePolicy="memory-disk"
-          contentFit={isTall ? 'contain' : 'cover'}
+          contentFit={isTall && !fillsFrame ? 'contain' : 'cover'}
           recyclingKey={photoKey}
           onLoad={rememberShape}
           // No fade of its own: a fade competing with the zoom reads as a web page.
@@ -133,10 +154,23 @@ export function PhotoHero({ sheetColor, children, ...photo }: PhotoHeroProps) {
     () => ({ ...styles.sheet, backgroundColor: sheetColor ?? tokens.colors.white }),
     [sheetColor],
   );
+  // On Android the sheet waits for the card's photo to land, then rises over it (RAPP-920).
+  const zoomSheet = usePhotoZoomSheet();
   return (
     <View testID="photo-hero" className="grow">
-      <PhotoHeroPhoto {...photo} />
-      <View style={sheetStyle}>{children}</View>
+      <PhotoHeroPhoto
+        {...photo}
+        arrivesByZoom={zoomSheet.arrivesByZoom}
+        backdropStyle={zoomSheet.backdropStyle}
+        fillsFrame={zoomSheet.fillsFrameToLeave}
+      />
+      {zoomSheet.arrivesByZoom ? (
+        <Animated.View style={[sheetStyle, zoomSheet.sheetStyle]} onLayout={zoomSheet.onLayout}>
+          {children}
+        </Animated.View>
+      ) : (
+        <View style={sheetStyle}>{children}</View>
+      )}
     </View>
   );
 }

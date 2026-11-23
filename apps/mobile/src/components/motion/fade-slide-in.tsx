@@ -54,6 +54,11 @@ interface EntranceOptions {
   readonly skip?: boolean;
   /** Learn when the entrance is over, at the cost of one more render. */
   readonly watchFinish?: boolean;
+  /**
+   * It continues a move that just ended, such as a card's photo landing at the
+   * top of a screen (RAPP-920), so it starts at once with no lead-in.
+   */
+  readonly continuesMove?: boolean;
 }
 
 /**
@@ -67,6 +72,7 @@ export function useEntrance({
   ready = true,
   skip = false,
   watchFinish = false,
+  continuesMove = false,
 }: EntranceOptions) {
   const isReducedMotion = useReducedMotion();
   const progress = useSharedValue(isReducedMotion || skip ? 1 : 0);
@@ -81,7 +87,7 @@ export function useEntrance({
       ? motionTokens.logoEntrance.durationMs
       : entrance.durationMs;
   const delayMs =
-    isReducedMotion || preset !== 'default'
+    isReducedMotion || preset !== 'default' || continuesMove
       ? 0
       : entrance.leadInMs + resolveStaggerMs(index, false);
 
