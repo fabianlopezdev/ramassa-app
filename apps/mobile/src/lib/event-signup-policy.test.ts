@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { AppError } from '@ramassa/shared/errors';
-import { isEventSignupActionDisabled, requireEventSignupOnline } from './event-signup-policy';
+import { isEventAnswerDisabled, requireEventSignupOnline } from './event-signup-policy';
 
 test('offline signup attempts fail immediately with NETWORK-1', () => {
   expect(() => requireEventSignupOnline(false)).toThrow(AppError);
@@ -15,54 +15,21 @@ test('online signup attempts proceed', () => {
   expect(() => requireEventSignupOnline(true)).not.toThrow();
 });
 
-test('a full event she has not joined turns the action off (RAPP-883)', () => {
-  expect(
-    isEventSignupActionDisabled({
-      hasEvent: true,
-      hasNextState: true,
-      isFull: true,
-      hasActiveSignup: false,
-    }),
-  ).toBe(true);
+test('a full activity turns yes off for a player who has not said yes (RAPP-883)', () => {
+  expect(isEventAnswerDisabled({ answer: 'yes', currentAnswer: null, isFull: true })).toBe(true);
+  expect(isEventAnswerDisabled({ answer: 'yes', currentAnswer: 'no', isFull: true })).toBe(true);
 });
 
-test('a full event she has joined keeps the action on, so she can cancel', () => {
-  expect(
-    isEventSignupActionDisabled({
-      hasEvent: true,
-      hasNextState: true,
-      isFull: true,
-      hasActiveSignup: true,
-    }),
-  ).toBe(false);
+test('a full activity keeps no on, because a no takes no place (RAPP-908)', () => {
+  expect(isEventAnswerDisabled({ answer: 'no', currentAnswer: null, isFull: true })).toBe(false);
+  expect(isEventAnswerDisabled({ answer: 'no', currentAnswer: 'yes', isFull: true })).toBe(false);
 });
 
-test('an event with places keeps the action on', () => {
-  expect(
-    isEventSignupActionDisabled({
-      hasEvent: true,
-      hasNextState: true,
-      isFull: false,
-      hasActiveSignup: false,
-    }),
-  ).toBe(false);
+test('a full activity she said yes to keeps both answers on, so she can change it', () => {
+  expect(isEventAnswerDisabled({ answer: 'yes', currentAnswer: 'yes', isFull: true })).toBe(false);
 });
 
-test('an unavailable event or closed signup remains disabled', () => {
-  expect(
-    isEventSignupActionDisabled({
-      hasEvent: false,
-      hasNextState: true,
-      isFull: false,
-      hasActiveSignup: false,
-    }),
-  ).toBe(true);
-  expect(
-    isEventSignupActionDisabled({
-      hasEvent: true,
-      hasNextState: false,
-      isFull: false,
-      hasActiveSignup: false,
-    }),
-  ).toBe(true);
+test('an activity with places keeps both answers on', () => {
+  expect(isEventAnswerDisabled({ answer: 'yes', currentAnswer: null, isFull: false })).toBe(false);
+  expect(isEventAnswerDisabled({ answer: 'no', currentAnswer: null, isFull: false })).toBe(false);
 });

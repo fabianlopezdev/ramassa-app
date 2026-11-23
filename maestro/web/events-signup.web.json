@@ -41,9 +41,9 @@
       "waitFor": "text={{events:playerSignupSuccessConfirmed}} >> visible=true"
     },
     {
-      "label": "cancelled",
-      "click": "[aria-label=\"{{events:playerCancelAction}}\"]",
-      "waitFor": "text={{events:playerSignupSuccessCancelled}} >> visible=true"
+      "label": "declined",
+      "click": "[aria-label=\"{{events:playerDeclineAction}}\"]",
+      "waitFor": "text={{events:playerSignupSuccessDeclined}} >> visible=true"
     },
     {
       "label": "events-return",
