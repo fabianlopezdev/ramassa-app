@@ -1,24 +1,23 @@
 /**
- * The organization's brand block (RAPP-631): its logo on a white tile beside
- * its name, at the top of the staff sidebar and the entity portal bar. The
- * tile keeps any logo legible on the brand-coloured navigation, and an
- * organization without a logo shows its initials in the same tile. The logo
- * comes from Settings through the authenticated media worker, as before.
+ * The organization's brand block (RAPP-631): the club shield on a white tile
+ * beside its name, at the top of the staff sidebar and the entity portal bar.
+ * The tile keeps the shield legible on the brand-coloured navigation.
+ *
+ * The Control Center shows the shield alone, shipped with the dashboard
+ * (RAPP-918). The club logo in Settings carries the name under the shield,
+ * which the name beside the tile already says, and the phone app keeps using
+ * that one.
  */
 import { useAdminBranding } from '@/components/branding/organization-branding-provider';
-import { AuthenticatedMediaImage } from '@/components/content/authenticated-media-image';
-import { organizationInitials } from '@/lib/initials';
-import { mediaWorkerUrl } from '@/lib/media-worker';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '@ramassa/shared/auth';
+
+const CLUB_SHIELD_SRC = '/images/club-shield.png';
 
 function OrganizationLogoTile({ className }: { readonly className?: string }) {
   const { t } = useTranslation('common');
-  const { session } = useAuth();
   const organization = useAdminBranding();
   const name = organization?.name ?? t('appName');
-  const logoUrl = organization?.logo_url ?? null;
   return (
     <span
       data-testid="organization-logo-tile"
@@ -27,19 +26,7 @@ function OrganizationLogoTile({ className }: { readonly className?: string }) {
         className,
       )}
     >
-      {logoUrl !== null && session !== null ? (
-        <AuthenticatedMediaImage
-          objectKeyOrUrl={logoUrl}
-          mediaWorkerUrl={mediaWorkerUrl}
-          accessToken={session.access_token}
-          alt={name}
-          className="size-full object-contain"
-        />
-      ) : (
-        <span aria-hidden="true" className="text-sm font-bold text-primary">
-          {organizationInitials(name)}
-        </span>
-      )}
+      <img src={CLUB_SHIELD_SRC} alt={name} className="size-full object-contain" />
     </span>
   );
 }
