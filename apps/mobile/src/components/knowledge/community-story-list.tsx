@@ -14,7 +14,7 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useListSeen, useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
-import { useRouter, type Href } from 'expo-router';
+import type { Href } from 'expo-router';
 import { useCallback, useMemo, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
@@ -46,7 +46,6 @@ export function CommunityStoryList({
 }) {
   const { t } = useTranslation(['knowledge', 'home']);
   const languageFontClass = useLanguageFontClass();
-  const { push } = useRouter();
   const { session } = useAuth();
   const isOnline = isNetworkStateOnline(useNetworkState());
   const query = useCommunityStories();
@@ -62,10 +61,6 @@ export function CommunityStoryList({
   // Pull to refresh also asks again what is new for her (RAPP-873).
   const refetchTabNews = useTabNews().refetch;
   const accessToken = session?.access_token;
-  const openStory = useCallback(
-    (id: string) => push({ pathname: '/knowledge/[id]', params: { id } } as unknown as Href),
-    [push],
-  );
   const refresh = useCallback(() => {
     void Promise.all([refetchStories(), refetchTabNews()]);
   }, [refetchStories, refetchTabNews]);
@@ -83,7 +78,7 @@ export function CommunityStoryList({
         <KnowledgeArticleCard
           article={item}
           accessToken={accessToken}
-          onOpen={openStory}
+          href={`/knowledge/${item.id}` as Href}
           authorAvatarKey={
             item.author_id === null ? null : (personCards.get(item.author_id)?.avatarKey ?? null)
           }
@@ -91,7 +86,7 @@ export function CommunityStoryList({
         />
       </PageWidth>
     ),
-    [accessToken, openStory, personCards, t, unopenedArticleIds],
+    [accessToken, personCards, t, unopenedArticleIds],
   );
 
   let emptyState: ReactElement;

@@ -1,10 +1,12 @@
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
 import { Badge } from '@/components/layout/badge';
+import { PhotoZoomLink, PhotoZoomSource } from '@/components/media/photo-zoom';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { Image } from 'expo-image';
+import type { Href } from 'expo-router';
 import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { motionTokens } from '@ramassa/shared/tokens/motion';
@@ -94,7 +96,8 @@ export const GalleryTile = memo(function GalleryTile({
   title,
   date,
   fontClass,
-  onOpen,
+  href,
+  isPhoto,
   unseenLabel = null,
 }: {
   readonly id: string;
@@ -107,7 +110,13 @@ export const GalleryTile = memo(function GalleryTile({
   /** When it was shared, already written in her language. */
   readonly date: string;
   readonly fontClass: string;
-  readonly onOpen: (id: string) => void;
+  /** The item's own screen. */
+  readonly href: Href;
+  /**
+   * A photo, which opens on the story layout: the tile's photo grows into the
+   * photo at the top of that screen (RAPP-916). A video opens with a push.
+   */
+  readonly isPhoto: boolean;
   /** Set while the photo is new to her: the word over its top start corner. */
   readonly unseenLabel?: string | null;
 }) {
@@ -120,10 +129,8 @@ export const GalleryTile = memo(function GalleryTile({
       }),
     [accessToken, objectKeyOrUrl],
   );
-  const open = useCallback(() => onOpen(id), [id, onOpen]);
-
-  return (
-    <View className="p-xs">
+  const renderSurface = useCallback(
+    (open: () => void) => (
       <SelectionChoiceSurface
         testID={`gallery-item-${id}`}
         label={accessibilityLabel}
@@ -136,20 +143,31 @@ export const GalleryTile = memo(function GalleryTile({
         {/* Grey while the photo loads, or when it has no source. */}
         <View className="bg-neutral-200" style={styles.tile}>
           {source === null ? null : (
-            <Image
-              recyclingKey={id}
-              source={source}
-              accessibilityLabel={imageAlt}
-              cachePolicy="memory-disk"
-              contentFit="cover"
-              transition={motionTokens.duration.fast}
-              style={StyleSheet.absoluteFill}
-            />
+            <PhotoZoomSource>
+              <Image
+                recyclingKey={id}
+                source={source}
+                accessibilityLabel={imageAlt}
+                cachePolicy="memory-disk"
+                contentFit="cover"
+                transition={motionTokens.duration.fast}
+                style={StyleSheet.absoluteFill}
+              />
+            </PhotoZoomSource>
           )}
           {unseenLabel === null ? null : <GalleryTileUnseenMark label={unseenLabel} />}
         </View>
         <GalleryTileCaption title={title} date={date} fontClass={fontClass} />
       </SelectionChoiceSurface>
+    ),
+    [accessibilityLabel, date, fontClass, id, imageAlt, source, title, unseenLabel],
+  );
+
+  return (
+    <View className="p-xs">
+      <PhotoZoomLink href={href} hasPhoto={isPhoto && source !== null}>
+        {renderSurface}
+      </PhotoZoomLink>
     </View>
   );
 });

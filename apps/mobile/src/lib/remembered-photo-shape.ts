@@ -12,7 +12,7 @@ import type { ImageLoadEventData } from 'expo-image';
 import { useCallback, useState } from 'react';
 
 /** A common camera shape, held until the photo has loaded once. */
-export const PHOTO_PLACEHOLDER_ASPECT_RATIO = 4 / 3;
+const PHOTO_PLACEHOLDER_ASPECT_RATIO = 4 / 3;
 
 /** Each photo's width over height once it has loaded, by its stored key. */
 const loadedAspectRatios = new Map<string, number>();

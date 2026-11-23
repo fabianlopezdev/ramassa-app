@@ -28,7 +28,7 @@ import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
 import { useListSeenWhen } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
-import { useRouter, type Href } from 'expo-router';
+import type { Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
@@ -58,7 +58,6 @@ function HomeScreen() {
   const { t, i18n } = useTranslation(['home', 'common']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
-  const { push } = useRouter();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
   const [category, setCategory] = useState<PlayerAnnouncementCategoryFilter>('all');
@@ -109,7 +108,6 @@ function HomeScreen() {
       }),
     [i18n.resolvedLanguage],
   );
-  const openAnnouncement = useCallback((id: string) => push(`/announcement/${id}` as Href), [push]);
 
   const renderAnnouncement = useCallback(
     ({ item }: ListRenderItemInfo<AnnouncementListRow>) => {
@@ -141,12 +139,12 @@ function HomeScreen() {
             }
             unseenLabel={unseenLabel}
             languageFontClass={languageFontClass}
-            onOpen={openAnnouncement}
+            href={`/announcement/${item.id}` as Href}
           />
         </PageWidth>
       );
     },
-    [dateFormatter, language, languageFontClass, unseenAnnouncementIds, openAnnouncement, t],
+    [dateFormatter, language, languageFontClass, unseenAnnouncementIds, t],
   );
 
   const onRefresh = useCallback(() => {

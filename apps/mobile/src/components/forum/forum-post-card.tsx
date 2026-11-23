@@ -3,7 +3,8 @@ import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-car
 import { RaisedCardPhoto, useRaisedCardPhotoSource } from '@/components/layout/raised-card-photo';
 import type { RaisedTone } from '@/components/layout/raised-surface';
 import { PersonAvatar } from '@/components/people/person-avatar';
-import { memo, useCallback, useMemo } from 'react';
+import type { Href } from 'expo-router';
+import { memo, useMemo } from 'react';
 import { Text } from 'react-native';
 import type { ForumPostRow } from '@ramassa/shared/forum';
 
@@ -34,7 +35,7 @@ export const ForumPostCard = memo(function ForumPostCard({
   languageFontClass,
   accessToken,
   openLinkLabel,
-  onOpen,
+  href,
   unseenLabel = null,
   newRepliesCount = null,
 }: {
@@ -50,14 +51,14 @@ export const ForumPostCard = memo(function ForumPostCard({
   readonly languageFontClass: string;
   readonly accessToken: string | undefined;
   readonly openLinkLabel: (url: string) => string;
-  readonly onOpen: (id: string) => void;
+  /** The post's own screen; its photo grows into that screen's photo (RAPP-916). */
+  readonly href: Href;
   /** Set while the post is new to her: the word on the card's edge, ahead of pinned. */
   readonly unseenLabel?: string | null;
   /** The replies she has not read, already formatted, in the circle on the edge. */
   readonly newRepliesCount?: string | null;
 }) {
   const imageSource = useRaisedCardPhotoSource(post.image_url, accessToken);
-  const open = useCallback(() => onOpen(post.id), [onOpen, post.id]);
   const badge = useMemo<RaisedCardBadge | null>(() => {
     if (unseenLabel !== null) return { label: unseenLabel, tone: 'brand' };
     return post.is_pinned ? { label: pinnedLabel, tone: 'accent' } : null;
@@ -73,7 +74,7 @@ export const ForumPostCard = memo(function ForumPostCard({
     <RaisedCard
       testID={`forum-post-${post.id}`}
       accessibilityLabel={cardAccessibilityLabel}
-      onOpen={open}
+      href={href}
       badge={badge}
       count={newRepliesCount}
       tone={tone}

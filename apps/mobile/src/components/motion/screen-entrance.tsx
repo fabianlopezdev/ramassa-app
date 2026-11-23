@@ -16,12 +16,16 @@
  * onboarding step does: the column is inside the scroll view, so nothing that
  * measures the safe area ever moves.
  *
+ * A screen that grows out of a card's photo (RAPP-916) has that zoom as its
+ * entrance, so it does not fade or rise on top of it.
+ *
  * The entrance waits until the screen is in front of her. A tab bar prepares
  * its tabs before she opens them, and a screen can load under another one; an
  * entrance that ran then would be over before she looked.
  */
 import { useEntrance } from '@/components/motion/fade-slide-in';
 import { NativeWindAnimatedView } from '@/components/motion/nativewind-animated-view';
+import { arrivesByPhotoZoom } from '@/lib/photo-zoom-arrival';
 import {
   RouteEntranceContext,
   useEntranceRise,
@@ -38,10 +42,12 @@ import { useAnimatedStyle } from 'react-native-reanimated';
 interface ScreenEntranceProps {
   /** The route name: one identity for a screen, whichever record it shows. */
   readonly screenId: string;
+  /** It grows out of a card's photo on iOS (RAPP-916), which is its entrance. */
+  readonly arrivesByZoom?: boolean;
   readonly children: ReactNode;
 }
 
-function ScreenEntrance({ screenId, children }: ScreenEntranceProps) {
+function ScreenEntrance({ screenId, arrivesByZoom = false, children }: ScreenEntranceProps) {
   // A screen inside a group: the group stands still and this screen moves.
   useOwnEntrance();
   const mode = useScreenEntrance(`route:${screenId}`, true);
@@ -52,7 +58,7 @@ function ScreenEntrance({ screenId, children }: ScreenEntranceProps) {
   const takeOver = useCallback(() => setIsTakenOver(true), []);
   const { progress, travel, isMoving, onLayout } = useEntrance({
     ready: hasBeenInFront,
-    skip: mode === 'none' || isTakenOver,
+    skip: mode === 'none' || isTakenOver || arrivesByZoom,
     watchFinish: true,
   });
   const route = useMemo<RouteEntrance>(
@@ -112,10 +118,14 @@ export function screenEntranceLayout({
   route,
   children,
 }: {
-  readonly route: { readonly name: string };
+  readonly route: { readonly name: string; readonly params?: object };
   readonly children: ReactNode;
 }) {
-  return <ScreenEntrance screenId={route.name}>{children}</ScreenEntrance>;
+  return (
+    <ScreenEntrance screenId={route.name} arrivesByZoom={arrivesByPhotoZoom(route.params)}>
+      {children}
+    </ScreenEntrance>
+  );
 }
 
 /** For a tab's default export, where no navigator layout reaches. */

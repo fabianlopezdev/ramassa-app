@@ -9,7 +9,11 @@
  * and fits inside it, so one card never fills the screen. Until the photo has
  * loaded once, the card holds a common camera shape; after that its shape is
  * remembered, so a card scrolled back into view opens at its real size.
+ *
+ * On a card that opens through an `href`, the photo is the source of the zoom
+ * that grows it into the photo of the opened screen (RAPP-916).
  */
+import { PhotoZoomSource } from '@/components/media/photo-zoom';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { useRememberedPhotoShape } from '@/lib/remembered-photo-shape';
 import { mobileClientEnv } from '@/lib/supabase';
@@ -18,7 +22,7 @@ import { memo, useMemo } from 'react';
 import type { ImageStyle } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
-export const RAISED_CARD_PHOTO_MAX_HEIGHT = tokens.spacing['3xl'] * 6;
+const RAISED_CARD_PHOTO_MAX_HEIGHT = tokens.spacing['3xl'] * 6;
 
 const photoStyle: ImageStyle = {
   width: '100%',
@@ -57,16 +61,19 @@ export const RaisedCardPhoto = memo(function RaisedCardPhoto({
   readonly accessibilityLabel?: string;
 }) {
   const { aspectRatio, rememberShape } = useRememberedPhotoShape(recyclingKey);
+  // One flat style object: the zoom source refuses a style array (RAPP-916).
   const shapeStyle = useMemo<ImageStyle>(() => ({ ...photoStyle, aspectRatio }), [aspectRatio]);
   return (
-    <Image
-      source={source}
-      accessibilityLabel={accessibilityLabel}
-      contentFit="contain"
-      cachePolicy="memory-disk"
-      recyclingKey={recyclingKey}
-      onLoad={rememberShape}
-      style={shapeStyle}
-    />
+    <PhotoZoomSource>
+      <Image
+        source={source}
+        accessibilityLabel={accessibilityLabel}
+        contentFit="contain"
+        cachePolicy="memory-disk"
+        recyclingKey={recyclingKey}
+        onLoad={rememberShape}
+        style={shapeStyle}
+      />
+    </PhotoZoomSource>
   );
 });

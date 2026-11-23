@@ -29,7 +29,7 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useListSeen, useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
-import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useLocalSearchParams, type Href } from 'expo-router';
 import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
@@ -85,7 +85,6 @@ export default function ServiceCategoryScreen() {
   const { t, i18n } = useTranslation(['playerServices', 'errors', 'home']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
-  const { push } = useRouter();
   const isOffline = !isNetworkStateOnline(useNetworkState());
   const categoriesQuery = usePlayerServiceCategories();
   const category = categoriesQuery.data?.find((candidate) => candidate.id === categoryId) ?? null;
@@ -133,10 +132,6 @@ export default function ServiceCategoryScreen() {
   const clearFilters = useCallback(() => setFilters(EMPTY_FILTERS), []);
   const openFilters = useCallback(() => setFiltersVisible(true), []);
   const closeFilters = useCallback(() => setFiltersVisible(false), []);
-  const openService = useCallback(
-    (id: string) => push({ pathname: '/service/[id]', params: { id } } as unknown as Href),
-    [push],
-  );
   const refresh = useCallback(() => {
     void Promise.all([
       categoriesQuery.refetch(),
@@ -183,12 +178,12 @@ export default function ServiceCategoryScreen() {
               .filter((value): value is string => typeof value === 'string')
               .join('. ')}
             languageFontClass={languageFontClass}
-            onOpen={openService}
+            href={`/service/${item.id}` as Href}
           />
         </PageWidth>
       );
     },
-    [currencyFormatter, language, languageFontClass, newServiceIds, openService, t],
+    [currencyFormatter, language, languageFontClass, newServiceIds, t],
   );
 
   const filterLabel =

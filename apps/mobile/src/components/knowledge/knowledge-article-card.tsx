@@ -3,7 +3,8 @@ import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-car
 import { RaisedCardPhoto, useRaisedCardPhotoSource } from '@/components/layout/raised-card-photo';
 import { PersonAvatar } from '@/components/people/person-avatar';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { memo, useCallback, useMemo } from 'react';
+import type { Href } from 'expo-router';
+import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
@@ -30,7 +31,7 @@ function typeTranslationKey(contentType: KnowledgeContentType) {
 export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
   article,
   accessToken,
-  onOpen,
+  href,
   compact = false,
   authorAvatarKey = null,
   showsCategory = true,
@@ -38,7 +39,8 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
 }: {
   readonly article: KnowledgeArticleListRow;
   readonly accessToken: string | undefined;
-  readonly onOpen: (id: string) => void;
+  /** The guide's or story's own screen; its cover grows into that screen's photo (RAPP-916). */
+  readonly href: Href;
   /** Without the cover image, for short lists above other content. */
   readonly compact?: boolean;
   /** A story author's photo; without one, the person icon. */
@@ -58,7 +60,6 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
   const category = resolveLocalizedText(article.category.name, language);
   const coverSource = useRaisedCardPhotoSource(article.image_url, accessToken);
   const imageSource = compact ? null : coverSource;
-  const handlePress = useCallback(() => onOpen(article.id), [article.id, onOpen]);
   const badge = useMemo<RaisedCardBadge | null>(
     () => (unseenLabel === null ? null : { label: unseenLabel, tone: 'brand' }),
     [unseenLabel],
@@ -80,7 +81,7 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
       )
         .filter(Boolean)
         .join('. ')}
-      onOpen={handlePress}
+      href={href}
       badge={badge}
       leading={
         isStory ? (

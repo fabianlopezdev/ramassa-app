@@ -1,7 +1,8 @@
 import { announcementCategoryTone } from '@/components/announcements/category-filters';
 import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
 import { RaisedCardPhoto, useRaisedCardPhotoSource } from '@/components/layout/raised-card-photo';
-import { memo, useCallback, useMemo } from 'react';
+import type { Href } from 'expo-router';
+import { memo, useMemo } from 'react';
 import { Text } from 'react-native';
 import type { AnnouncementCategory } from '@ramassa/shared/announcements';
 import { useAuth } from '@ramassa/shared/auth';
@@ -19,7 +20,8 @@ export interface AnnouncementCardProps {
   /** Set while she has not seen the announcement (RAPP-821): the word shown on its mark. */
   readonly unseenLabel?: string | null;
   readonly languageFontClass: string;
-  readonly onOpen: (id: string) => void;
+  /** The avís's own screen; its photo grows into that screen's photo (RAPP-916). */
+  readonly href: Href;
 }
 
 /**
@@ -38,11 +40,10 @@ export const AnnouncementCard = memo(function AnnouncementCard({
   imageAlt,
   unseenLabel = null,
   languageFontClass,
-  onOpen,
+  href,
 }: AnnouncementCardProps) {
   const { session } = useAuth();
   const imageSource = useRaisedCardPhotoSource(imageObjectKey, session?.access_token);
-  const handleOpen = useCallback(() => onOpen(id), [id, onOpen]);
   const badge = useMemo<RaisedCardBadge | null>(
     () => (unseenLabel === null ? null : { label: unseenLabel, tone: 'brand' }),
     [unseenLabel],
@@ -50,7 +51,7 @@ export const AnnouncementCard = memo(function AnnouncementCard({
   return (
     <RaisedCard
       accessibilityLabel={accessibilityLabel}
-      onOpen={handleOpen}
+      href={href}
       badge={badge}
       tone={announcementCategoryTone(category)}
       media={

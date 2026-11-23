@@ -87,3 +87,88 @@ describe('a screen with a photo opens on the story layout (RAPP-915)', () => {
     }
   });
 });
+
+const photoZoom = readSource('components/media/photo-zoom.tsx');
+const raisedCard = readSource('components/layout/raised-card.tsx');
+const galleryTile = readSource('components/gallery/gallery-tile.tsx');
+
+/** Every list that shows the photo cards above, and the screen each card opens. */
+const photoCardCallers = [
+  { path: 'app/(app)/(tabs)/community.tsx', card: '<ForumPostCard', href: '`/forum/${item.id}`' },
+  {
+    path: 'app/(app)/(tabs)/index.tsx',
+    card: '<AnnouncementCard',
+    href: '`/announcement/${item.id}`',
+  },
+  {
+    path: 'components/knowledge/community-story-list.tsx',
+    card: '<KnowledgeArticleCard',
+    href: '`/knowledge/${item.id}`',
+  },
+  {
+    path: 'app/(app)/guides/[categoryId].tsx',
+    card: '<KnowledgeArticleCard',
+    href: '`/knowledge/${item.id}`',
+  },
+  {
+    path: 'app/(app)/service-category/[categoryId].tsx',
+    card: '<ServiceCard',
+    href: '`/service/${item.id}`',
+  },
+  {
+    path: 'components/gallery/gallery-grid.tsx',
+    card: '<GalleryTile',
+    href: '`/gallery/${item.id}`',
+  },
+] as const;
+
+describe('a card photo grows into the photo of the screen it opens (RAPP-916)', () => {
+  test('the zoom is expo-router’s native one, on iOS only, and never with reduce motion', () => {
+    expect(photoZoom).toMatch(/<Link href=\{href\} push asChild>/);
+    expect(photoZoom).toContain('<Link.AppleZoom>');
+    expect(photoZoom).toContain('<Link.AppleZoomTarget>');
+    expect(photoZoom).toContain("process.env.EXPO_OS === 'ios'");
+    expect(photoZoom).toContain('hasPhoto && !isReducedMotion');
+    // Android and the web keep the push the cards always made.
+    expect(photoZoom).toContain('if (!ZOOMS_ON_THIS_PLATFORM) return children(open);');
+  });
+
+  test('every card photo is the zoom source, inside the link of its card', () => {
+    expect(raisedCardPhoto).toMatch(/<PhotoZoomSource>\s*<Image/);
+    // The source copies its child, which must not carry a style array.
+    expect(raisedCardPhoto).toContain('style={shapeStyle}');
+    expect(raisedCardPhoto).toContain('useMemo<ImageStyle>(() => ({ ...photoStyle, aspectRatio })');
+    expect(raisedCard).toContain('<PhotoZoomLink href={props.href} hasPhoto={hasMedia}>');
+    expect(galleryTile).toMatch(/<PhotoZoomSource>\s*<Image/);
+    expect(galleryTile).toContain(
+      '<PhotoZoomLink href={href} hasPhoto={isPhoto && source !== null}>',
+    );
+    for (const path of photoCards) {
+      const source = readSource(path);
+      expect(source, path).toContain('href={href}');
+      expect(source, path).not.toContain('onOpen');
+    }
+  });
+
+  test('every list opens its photo cards by the screen they open', () => {
+    for (const { path, card, href } of photoCardCallers) {
+      const source = readSource(path);
+      expect(source, path).toContain(card);
+      expect(source, path).toContain(`href={${href} as Href}`);
+    }
+    expect(readSource('components/gallery/gallery-grid.tsx')).toContain(
+      "isPhoto={item.file_type !== 'video'}",
+    );
+  });
+
+  test('the target is the photo of the shared hero alone, with no fade of its own', () => {
+    expect(photoHero).toMatch(/<PhotoZoomTarget>\s*<Image[\s\S]*?transition=\{0\}/);
+    expect(photoHero).not.toMatch(/<PhotoZoomTarget>\s*<(View|Pressable)/);
+  });
+
+  test('a screen that grows out of a photo skips the first-visit entrance (RAPP-875)', () => {
+    const entrance = readSource('components/motion/screen-entrance.tsx');
+    expect(entrance).toContain('arrivesByZoom={arrivesByPhotoZoom(route.params)}');
+    expect(entrance).toContain("skip: mode === 'none' || isTakenOver || arrivesByZoom");
+  });
+});

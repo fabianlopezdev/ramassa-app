@@ -12,11 +12,15 @@
  * of the screen's height and fits inside it, over a blurred copy of itself,
  * so nothing of it is cut and the top of the screen stays filled.
  *
+ * The card that opened the screen grows its photo into this one on iOS
+ * (RAPP-916): the photo alone is the zoom's target.
+ *
  * `PhotoHeroScreen` is the whole scrolling screen. A screen that scrolls a
  * list of its own, such as a forum thread, puts `PhotoHero` at the top of its
  * list and passes `overPhoto` to its header itself.
  */
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { PhotoZoomTarget } from '@/components/media/photo-zoom';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useRememberedPhotoShape } from '@/lib/remembered-photo-shape';
 import { Image, type ImageSource } from 'expo-image';
@@ -92,16 +96,21 @@ function PhotoHeroPhoto({
           style={photoFillStyle}
         />
       ) : null}
-      <Image
-        source={source}
-        accessible={onOpenPhoto === undefined}
-        accessibilityLabel={accessibilityLabel}
-        cachePolicy="memory-disk"
-        contentFit={isTall ? 'contain' : 'cover'}
-        recyclingKey={photoKey}
-        onLoad={rememberShape}
-        style={photoFillStyle}
-      />
+      {/* The photo of the card that opened the screen grows into this one (RAPP-916). */}
+      <PhotoZoomTarget>
+        <Image
+          source={source}
+          accessible={onOpenPhoto === undefined}
+          accessibilityLabel={accessibilityLabel}
+          cachePolicy="memory-disk"
+          contentFit={isTall ? 'contain' : 'cover'}
+          recyclingKey={photoKey}
+          onLoad={rememberShape}
+          // No fade of its own: a fade competing with the zoom reads as a web page.
+          transition={0}
+          style={photoFillStyle}
+        />
+      </PhotoZoomTarget>
     </>
   );
   if (onOpenPhoto === undefined) return <View style={frameStyle}>{photo}</View>;

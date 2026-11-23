@@ -145,10 +145,6 @@ function CommunityScreen() {
     ],
     [shareActionHeight, tabInsets],
   );
-  const openPost = useCallback(
-    (id: string) => push({ pathname: '/forum/[id]', params: { id } } as unknown as Href),
-    [push],
-  );
   const share = useCallback(() => push(shareActions[segment].route), [push, segment]);
   const segmentOptions = useMemo<readonly SegmentedControlOption<CommunitySegment>[]>(() => {
     const newCountLabel = (label: string, count: number) =>
@@ -212,7 +208,7 @@ function CommunityScreen() {
             languageFontClass={languageFontClass}
             accessToken={session?.access_token}
             openLinkLabel={openLinkLabel}
-            onOpen={openPost}
+            href={`/forum/${item.id}` as Href}
             unseenLabel={unseenLabel}
             newRepliesCount={formatUnreadBadge(marks.newReplies)}
           />
@@ -223,7 +219,6 @@ function CommunityScreen() {
       languageFontClass,
       newRepliesByPostId,
       openLinkLabel,
-      openPost,
       session?.access_token,
       personCards,
       t,

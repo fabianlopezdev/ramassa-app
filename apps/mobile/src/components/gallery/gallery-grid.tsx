@@ -12,7 +12,7 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useListSeen, useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
-import { useRouter, type Href } from 'expo-router';
+import type { Href } from 'expo-router';
 import { useCallback, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
@@ -46,7 +46,6 @@ export function GalleryGrid({
 }) {
   const { t, i18n } = useTranslation(['gallery', 'home']);
   const languageFontClass = useLanguageFontClass();
-  const { push } = useRouter();
   const { session } = useAuth();
   const isOnline = isNetworkStateOnline(useNetworkState());
   const query = useGalleryItems();
@@ -58,10 +57,6 @@ export function GalleryGrid({
   const refetchTabNews = useTabNews().refetch;
   const accessToken = session?.access_token;
   const locale = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;
-  const openItem = useCallback(
-    (id: string) => push({ pathname: '/gallery/[id]', params: { id } } as unknown as Href),
-    [push],
-  );
   const refresh = useCallback(() => {
     void Promise.all([refetchGallery(), refetchTabNews()]);
   }, [refetchGallery, refetchTabNews]);
@@ -89,12 +84,13 @@ export function GalleryGrid({
           title={item.caption}
           date={date}
           fontClass={languageFontClass}
-          onOpen={openItem}
+          href={`/gallery/${item.id}` as Href}
+          isPhoto={item.file_type !== 'video'}
           unseenLabel={unseenLabel}
         />
       );
     },
-    [accessToken, languageFontClass, locale, openItem, t, unopenedItemIds],
+    [accessToken, languageFontClass, locale, t, unopenedItemIds],
   );
 
   const hasNoData = query.data === undefined && isOnline;

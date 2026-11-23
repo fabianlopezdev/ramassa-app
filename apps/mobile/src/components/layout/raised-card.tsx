@@ -30,6 +30,10 @@
  * its row then takes the stacked tile's height. A tile with a mark on its
  * edge still fills its cell (RAPP-873): its marks grow from their own height
  * like the tile does.
+ *
+ * A card that opens a screen by its `href` (RAPP-916) and shows a photo grows
+ * that photo into the photo at the top of the screen it opens, on iOS. A card
+ * that opens anything else keeps its `onOpen`.
  */
 import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
@@ -37,6 +41,8 @@ import { FORWARD_CHEVRON } from '@/components/icons/direction';
 import { Icon, type IconName } from '@/components/icons/icon';
 import { EdgeMarks, type EdgeMarkBadge } from '@/components/layout/edge-marks';
 import type { RaisedTone } from '@/components/layout/raised-surface';
+import { PhotoZoomLink } from '@/components/media/photo-zoom';
+import type { Href } from 'expo-router';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
@@ -74,10 +80,21 @@ export function RaisedCardSymbol({
   return <Icon name={name} weight="boldDuotone" size={size} color={color ?? brandColor} />;
 }
 
-interface RaisedCardProps {
+/** What the card opens: a screen by its `href`, or anything else through `onOpen`. */
+type RaisedCardOpening =
+  | { readonly onOpen: () => void; readonly href?: undefined }
+  | {
+      /**
+       * The screen the card opens (RAPP-916). With a photo in `media`, the
+       * photo grows into the photo at the top of that screen on iOS.
+       */
+      readonly href: Href;
+      readonly onOpen?: undefined;
+    };
+
+type RaisedCardProps = RaisedCardOpening & {
   readonly testID?: string;
   readonly accessibilityLabel: string;
-  readonly onOpen: () => void;
   /** The block at the start, before a divider: a date or an icon. */
   readonly leading?: ReactNode;
   /** The forward arrow at the end. Off for a card whose content already fills the row. */
@@ -105,26 +122,26 @@ interface RaisedCardProps {
   /** Read after the label, such as how many messages are unread. */
   readonly accessibilityHint?: string;
   readonly children: ReactNode;
-}
+};
 
 export type RaisedCardBadge = EdgeMarkBadge;
 
-export function RaisedCard({
-  testID,
-  accessibilityLabel,
-  onOpen,
-  leading,
-  showsArrow = true,
-  badge = null,
-  count = null,
-  tone,
-  media,
-  tile = false,
-  stacked = false,
-  isSelected,
-  accessibilityHint,
-  children,
-}: RaisedCardProps) {
+export function RaisedCard(props: RaisedCardProps) {
+  const {
+    testID,
+    accessibilityLabel,
+    leading,
+    showsArrow = true,
+    badge = null,
+    count = null,
+    tone,
+    media,
+    tile = false,
+    stacked = false,
+    isSelected,
+    accessibilityHint,
+    children,
+  } = props;
   const brandColor = useBrandColor();
   const hasMedia = media !== undefined && media !== null;
   const isStackedTile = tile && stacked && !hasMedia;
@@ -155,14 +172,14 @@ export function RaisedCard({
       ) : null}
     </>
   );
-  const card = (
+  const renderSurface = (open: () => void) => (
     <SelectionChoiceSurface
       testID={testID}
       label={accessibilityLabel}
       accessibilityHint={accessibilityHint}
       accessibilityRole="link"
       isSelected={isSelected}
-      onPress={onOpen}
+      onPress={open}
       contentClassName={
         hasMedia
           ? 'gap-md pb-md'
@@ -184,6 +201,14 @@ export function RaisedCard({
       )}
     </SelectionChoiceSurface>
   );
+  const card =
+    props.href === undefined ? (
+      renderSurface(props.onOpen)
+    ) : (
+      <PhotoZoomLink href={props.href} hasPhoto={hasMedia}>
+        {renderSurface}
+      </PhotoZoomLink>
+    );
   if (badge === null && count === null) return card;
   return (
     <EdgeMarks badge={badge} count={count} className={tile ? 'grow' : undefined}>

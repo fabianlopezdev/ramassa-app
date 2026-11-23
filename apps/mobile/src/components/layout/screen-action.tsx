@@ -18,7 +18,7 @@ const BOTTOM_EDGE = ['bottom'] as const;
 const fillStyle = { flex: 1 } as const;
 const KEYBOARD_BEHAVIOR = process.env.EXPO_OS === 'ios' ? 'padding' : 'height';
 
-export function ScreenAction({
+function ScreenAction({
   children,
   testID,
 }: {
