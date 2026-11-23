@@ -117,3 +117,21 @@ test('no route or component computes a section wash by another road', () => {
 test('the list of places that compute a wash only shrinks', () => {
   expect([...mayComputeAWash].filter((path) => !computingAWash.includes(path))).toEqual([]);
 });
+
+// The category filters of Avisos, Comunitat and Activitats tint each chip by
+// its category's colour through the shared chips' `tone` (RAPP-909), so a
+// filter, its cards and the screen they open share one colour.
+const colouredFilterRows = [
+  'components/announcements/category-filters.tsx',
+  'components/forum/forum-category-tabs.tsx',
+  'components/events/event-filters.tsx',
+] as const;
+
+test('every category filter row tints its chips through the shared filter chips', () => {
+  expect(
+    colouredFilterRows.filter((path) => {
+      const source = read(path);
+      return !source.includes('<FilterChips') || !/\btone:/.test(source);
+    }),
+  ).toEqual([]);
+});

@@ -1,14 +1,20 @@
 import { FilterChips } from '@/components/layout/filter-chips';
 import { SegmentedControl } from '@/components/layout/segmented-control';
 import { useMemo } from 'react';
-import type { PlayerEventCategoryFilter } from '@ramassa/shared/events';
+import { eventCategoryPaletteColor, type PlayerEventCategoryFilter } from '@ramassa/shared/events';
 
 export interface PlayerEventFilterOption {
   readonly id: string;
   readonly label: string;
+  /** The category's stored colour, as `event_categories.color` holds it. */
+  readonly color: string;
 }
 
-/** The activity categories on Activitats, as the shared filter chips (RAPP-829). */
+/**
+ * The activity categories on Activitats, as the shared filter chips (RAPP-829),
+ * each tinted by its category's colour on the shared palette like the Avisos
+ * and Comunitat filters (RAPP-909). "Tot" stays white.
+ */
 export function EventCategoryFilters({
   categories,
   selected,
@@ -25,11 +31,15 @@ export function EventCategoryFilters({
   readonly onSelect: (category: PlayerEventCategoryFilter) => void;
 }) {
   const options = useMemo(
-    () =>
-      [{ id: 'all', label: allLabel }, ...categories].map((option) => ({
-        ...option,
-        testID: `event-filter-${option.id}`,
+    () => [
+      { id: 'all', label: allLabel, testID: 'event-filter-all' },
+      ...categories.map(({ id, label, color }) => ({
+        id,
+        label,
+        tone: eventCategoryPaletteColor(color),
+        testID: `event-filter-${id}`,
       })),
+    ],
     [allLabel, categories],
   );
   return (

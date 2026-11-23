@@ -120,6 +120,7 @@ function EventsScreen() {
         byId.set(row.event.category.id, {
           id: row.event.category.id,
           label: name.text,
+          color: row.event.category.color,
         });
       }
     }
