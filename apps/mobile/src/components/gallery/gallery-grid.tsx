@@ -5,6 +5,7 @@ import {
 } from '@/components/announcements/feed-states';
 import { GalleryTile } from '@/components/gallery/gallery-tile';
 import { NO_UNOPENED_IDS } from '@/lib/community-news';
+import { formatGalleryDate } from '@/lib/gallery-date';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { useGalleryItems } from '@/lib/player-gallery';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -17,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
+import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
 import type { MediaItemRow } from '@ramassa/shared/media';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -42,7 +44,7 @@ export function GalleryGrid({
   /** Photos she has not opened yet, marked "Nou" until she does (RAPP-873). */
   readonly unopenedItemIds?: ReadonlySet<string>;
 }) {
-  const { t } = useTranslation(['gallery', 'home']);
+  const { t, i18n } = useTranslation(['gallery', 'home']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const { session } = useAuth();
@@ -55,6 +57,7 @@ export function GalleryGrid({
   // Pull to refresh also asks again what is new for her (RAPP-873).
   const refetchTabNews = useTabNews().refetch;
   const accessToken = session?.access_token;
+  const locale = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;
   const openItem = useCallback(
     (id: string) => push({ pathname: '/gallery/[id]', params: { id } } as unknown as Href),
     [push],
@@ -65,21 +68,33 @@ export function GalleryGrid({
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<MediaItemRow>) => {
       const unseenLabel = unopenedItemIds.has(item.id) ? t('home:unseen') : null;
-      // The tile does not read its mark aloud, so its label says the word first.
-      const openLabel = t('openItem', { name: item.uploader_first_name });
+      // The day it was shared, in her language (RAPP-913).
+      const date = formatGalleryDate(item.created_at, locale);
+      // The tile does not read its mark or its text aloud, so its label says them first.
+      const accessibilityLabel = [
+        unseenLabel,
+        item.caption,
+        date,
+        t('openItem', { name: item.uploader_first_name }),
+      ]
+        .filter((part) => part !== null)
+        .join('. ');
       return (
         <GalleryTile
           id={item.id}
           objectKeyOrUrl={item.thumbnail_url ?? item.file_url}
           accessToken={accessToken}
-          accessibilityLabel={unseenLabel === null ? openLabel : `${unseenLabel}. ${openLabel}`}
+          accessibilityLabel={accessibilityLabel}
           imageAlt={item.caption ?? t('mediaBy', { name: item.uploader_first_name })}
+          title={item.caption}
+          date={date}
+          fontClass={languageFontClass}
           onOpen={openItem}
           unseenLabel={unseenLabel}
         />
       );
     },
-    [accessToken, openItem, t, unopenedItemIds],
+    [accessToken, languageFontClass, locale, openItem, t, unopenedItemIds],
   );
 
   const hasNoData = query.data === undefined && isOnline;
