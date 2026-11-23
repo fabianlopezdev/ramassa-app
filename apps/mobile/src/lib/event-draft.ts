@@ -12,6 +12,7 @@ import { localizedTextFromReview } from '@ramassa/shared/announcements';
 import {
   buildWeeklyRecurrenceRule,
   EVENT_SIGNUP_MODES,
+  editableEventSignupMode,
   MAX_EVENT_RECURRENCE_INTERVAL,
   parseWeeklyRecurrenceRule,
   type EventInput,
@@ -81,7 +82,7 @@ export function startingEventDraft(
     interval: weekly?.kind === 'weekly' ? weekly.interval : 1,
     count: weekly?.kind === 'weekly' ? String(weekly.count) : '6',
     capacity: event?.max_participants == null ? '' : String(event.max_participants),
-    signupMode: event?.signup_mode ?? 'none',
+    signupMode: editableEventSignupMode(event?.signup_mode),
     mode: initialEventMode(event, now),
     publishedAt: event?.published_at ?? null,
     expiresAt: event?.expires_at ?? null,

@@ -71,7 +71,6 @@
   "recurrenceWeekly": "أسبوعي",
   "recurrenceWeeklySummary": "كل {{interval}} أسابيع، {{count}} جلسات",
   "signupNone": "بلا تسجيل",
-  "signupInterest": "إظهار الاهتمام",
   "signupConfirm": "تأكيد",
   "fieldCategory": "الفئة",
   "fieldTitle": "العنوان بالكتالانية",

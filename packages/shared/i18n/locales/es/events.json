@@ -71,7 +71,6 @@
   "recurrenceWeekly": "Semanal",
   "recurrenceWeeklySummary": "Cada {{interval}} semanas, {{count}} sesiones",
   "signupNone": "Sin inscripción",
-  "signupInterest": "Mostrar interés",
   "signupConfirm": "Confirmación",
   "fieldCategory": "Categoría",
   "fieldTitle": "Título en catalán",

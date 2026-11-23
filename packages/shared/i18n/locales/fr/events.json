@@ -71,7 +71,6 @@
   "recurrenceWeekly": "Hebdomadaire",
   "recurrenceWeeklySummary": "Toutes les {{interval}} semaines, {{count}} séances",
   "signupNone": "Sans inscription",
-  "signupInterest": "Intérêt",
   "signupConfirm": "Confirmation",
   "fieldCategory": "Catégorie",
   "fieldTitle": "Titre en catalan",

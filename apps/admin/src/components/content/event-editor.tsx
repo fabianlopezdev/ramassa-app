@@ -12,7 +12,8 @@ import {
   areEventTranslationsApproved,
   buildWeeklyRecurrenceRule,
   createEvent,
-  EVENT_SIGNUP_MODES,
+  EVENT_SIGNUP_CHOICES,
+  editableEventSignupMode,
   eventInputSchema,
   MAX_EVENT_LOCATION_LENGTH,
   MAX_EVENT_TITLE_LENGTH,
@@ -79,7 +80,7 @@ export function EventEditor({ categories, event, onSaved }: EventEditorProps) {
   const [capacity, setCapacity] = useState(
     event?.max_participants === null || event === undefined ? '' : String(event.max_participants),
   );
-  const [signupMode, setSignupMode] = useState<EventSignupMode>(event?.signup_mode ?? 'none');
+  const [signupMode, setSignupMode] = useState<EventSignupMode>(editableEventSignupMode(event?.signup_mode));
   const [mode, setMode] = useState<PublishMode>(() => initialMode(event));
   const [publishedAt, setPublishedAt] = useState(
     event?.published_at === null || event === undefined
@@ -366,7 +367,7 @@ export function EventEditor({ categories, event, onSaved }: EventEditorProps) {
             data-testid="event-signup-mode"
             onChange={(changeEvent) => setSignupMode(changeEvent.target.value as EventSignupMode)}
           >
-            {EVENT_SIGNUP_MODES.map((value) => (
+            {EVENT_SIGNUP_CHOICES.map((value) => (
               <option key={value} value={value}>
                 {t(`events:signup${capitalize(value)}`)}
               </option>
