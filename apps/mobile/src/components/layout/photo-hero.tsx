@@ -22,10 +22,8 @@
  * list of its own, such as a forum thread, puts `PhotoHero` at the top of its
  * list and passes `overPhoto` to its header itself.
  *
- * A screen may put a title on the bottom of the photo through `overlay`, with
- * `PhotoHeroTitle`, such as her name on her profile (RAPP-960). With no photo,
- * `PanelHeroScreen` keeps the same layout over a coloured panel of a wide
- * photo's height, such as her initials on the soft brand blue.
+ * `PhotoHeroTitle` puts a large title on the bottom of a photo, such as her
+ * name on the collapsing header of her profile (RAPP-960).
  */
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PhotoZoomTarget, usePhotoZoomSheet } from '@/components/media/photo-zoom';
@@ -49,12 +47,12 @@ import type { PhotoFocus } from '@ramassa/shared/photo-focus';
 import { tokens } from '@ramassa/shared/tokens';
 
 /** The most of the screen's height the photo takes, so the title shows under it. */
-const PHOTO_HERO_MAX_SHARE_OF_SCREEN = 0.6;
+export const PHOTO_HERO_MAX_SHARE_OF_SCREEN = 0.6;
 /** How soft the copy behind a tall photo is, enough to read as colour only. */
 const BACKDROP_BLUR_RADIUS = tokens.spacing.xl;
 const SHEET_CORNER_RADIUS = tokens.radius.xl;
-/** A panel with no photo is at least as tall as a common landscape photo. */
-const PANEL_HERO_ASPECT_RATIO = 4 / 3;
+/** The rounded top of the sheet, which overlaps the bottom of the photo. */
+export const PHOTO_HERO_SHEET_RADIUS = SHEET_CORNER_RADIUS;
 
 const styles = StyleSheet.create({
   frame: { width: '100%', overflow: 'hidden', backgroundColor: tokens.colors.neutral[900] },
@@ -83,13 +81,11 @@ const titleOnPhotoStyle: ViewStyle = {
   paddingBottom: SHEET_CORNER_RADIUS + tokens.spacing.md,
   backgroundImage: `linear-gradient(to bottom, ${tokens.colors.black}00, ${tokens.colors.black}99)`,
 };
-// On a panel the title follows the panel's content, so the two never overlap.
-const titleOnPanelStyle: ViewStyle = {
-  alignSelf: 'stretch',
-  paddingHorizontal: tokens.spacing.lg,
-  paddingTop: tokens.spacing.lg,
-  paddingBottom: SHEET_CORNER_RADIUS + tokens.spacing.md,
+const titleEndRoom: ViewStyle = {
+  paddingEnd: tokens.spacing.lg + tokens.tapTarget.min + tokens.spacing.md,
 };
+// On a plain colour panel the title needs no fade.
+const titleOnPanelStyle: ViewStyle = { ...titleOnPhotoStyle, backgroundImage: undefined };
 
 export interface PhotoHeroProps {
   readonly source: ImageSource;
@@ -103,8 +99,6 @@ export interface PhotoHeroProps {
   readonly onOpenPhoto?: () => void;
   /** The sheet's colour, such as the wash of the item's kind (RAPP-893); white by default. */
   readonly sheetColor?: string;
-  /** Drawn over the bottom of the photo, such as a `PhotoHeroTitle` (RAPP-960). */
-  readonly overlay?: ReactNode;
   readonly children: ReactNode;
 }
 
@@ -115,20 +109,28 @@ export interface PhotoHeroProps {
 export function PhotoHeroTitle({
   title,
   onPanel = false,
+  numberOfLines = 2,
+  reserveEnd = false,
   languageFontClass = '',
   testID,
 }: {
   readonly title: string;
   readonly onPanel?: boolean;
+  readonly numberOfLines?: number;
+  /** Keeps clear of a round button on the bottom end, such as the photo pencil. */
+  readonly reserveEnd?: boolean;
   readonly languageFontClass?: string;
   readonly testID?: string;
 }) {
   return (
-    <View pointerEvents="none" style={onPanel ? titleOnPanelStyle : titleOnPhotoStyle}>
+    <View
+      pointerEvents="none"
+      style={[onPanel ? titleOnPanelStyle : titleOnPhotoStyle, reserveEnd ? titleEndRoom : null]}
+    >
       <Text
         testID={testID}
         accessibilityRole="header"
-        numberOfLines={2}
+        numberOfLines={numberOfLines}
         className={`text-3xl font-bold ${onPanel ? 'text-primary' : 'text-white'} ${languageFontClass}`}
       >
         {title}
@@ -143,7 +145,6 @@ function PhotoHeroPhoto({
   focus,
   accessibilityLabel,
   onOpenPhoto,
-  overlay,
   arrivesByZoom,
   backdropStyle,
   fillsFrame,
@@ -200,7 +201,6 @@ function PhotoHeroPhoto({
           style={photoFillStyle}
         />
       </PhotoZoomTarget>
-      {overlay}
     </>
   );
   if (onOpenPhoto === undefined) return <View style={frameStyle}>{photo}</View>;
@@ -301,59 +301,6 @@ export function PhotoHeroScreen({
       <PhotoHero sheetColor={sheetColor} {...photo}>
         <View className="px-lg">{children}</View>
       </PhotoHero>
-    </HeroScreenScroll>
-  );
-}
-
-/**
- * The same screen with no photo (RAPP-960): a panel in `panelColor`, at least a
- * wide photo's height, holding `panel` under the floating back button and
- * `overlay` (a `PhotoHeroTitle` with `onPanel`) under it, then the same sheet.
- */
-export function PanelHeroScreen({
-  testID,
-  panelColor,
-  panel,
-  overlay,
-  sheetColor,
-  children,
-}: {
-  readonly testID?: string;
-  readonly panelColor: string;
-  readonly panel: ReactNode;
-  readonly overlay?: ReactNode;
-  readonly sheetColor?: string;
-  readonly children: ReactNode;
-}) {
-  const { width } = useWindowDimensions();
-  const { top } = useSafeAreaInsets();
-  const panelStyle = useMemo<ViewStyle>(
-    () => ({
-      width: '100%',
-      minHeight: width / PANEL_HERO_ASPECT_RATIO + SHEET_CORNER_RADIUS,
-      alignItems: 'center',
-      justifyContent: 'flex-end',
-      // Clear of the status bar and the floating back button.
-      paddingTop: top + tokens.tapTarget.min + tokens.spacing.md,
-      backgroundColor: panelColor,
-    }),
-    [panelColor, top, width],
-  );
-  const sheetStyle = useMemo<ViewStyle>(
-    () => ({ ...styles.sheet, backgroundColor: sheetColor ?? tokens.colors.white }),
-    [sheetColor],
-  );
-  return (
-    <HeroScreenScroll testID={testID} hasBottomAction={false} sheetColor={sheetColor}>
-      <View testID="panel-hero" className="grow">
-        <View style={panelStyle}>
-          {panel}
-          {overlay}
-        </View>
-        <View style={sheetStyle}>
-          <View className="px-lg">{children}</View>
-        </View>
-      </View>
     </HeroScreenScroll>
   );
 }
