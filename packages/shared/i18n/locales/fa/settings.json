@@ -392,5 +392,36 @@
       "ar": "ترجمه به عربی",
       "fa": "ترجمه به فارسی"
     }
+  },
+  "surveyQuestion": {
+    "new": "پرسش تازه",
+    "edit": "ویرایش پرسش",
+    "add": "افزودن پرسش",
+    "label": "پرسش",
+    "save": "ذخیرهٔ پرسش",
+    "saved": "پرسش ذخیره شد."
+  },
+  "surveyList": {
+    "new": "نظرسنجی تازه",
+    "archive": "نظرسنجی‌های پیشین",
+    "listLabel": "نظرسنجی‌ها",
+    "empty": "هنوز نظرسنجی‌ای نیست."
+  },
+  "surveySettings": {
+    "event": "فعالیت",
+    "noEvent": "بدون فعالیت",
+    "closesAt": "بسته می‌شود در"
+  },
+  "surveyResults": {
+    "title": "نتایج",
+    "answered_one": "{{count}} پاسخ",
+    "answered_other": "{{count}} پاسخ",
+    "average_one": "میانگین {{average}} · {{count}} پاسخ",
+    "average_other": "میانگین {{average}} · {{count}} پاسخ",
+    "csv": "دانلود CSV",
+    "noQuestions": "این نظرسنجی هنوز پرسشی ندارد.",
+    "noAnswers": "هنوز پاسخی نیست.",
+    "player": "بازیکن",
+    "answeredAt": "تاریخ پاسخ"
   }
 }

@@ -307,16 +307,23 @@ const raisedClass =
   'flex min-h-11 min-w-0 items-center rounded-md border border-primary bg-white px-4 py-2 text-sm text-primary shadow-[2px_3px_0_0_var(--color-primary)] rtl:shadow-[-2px_3px_0_0_var(--color-primary)]';
 const chosenClass = 'bg-secondary text-foreground';
 const subLabelClass = 'text-start text-sm font-medium';
-const GRID_COLUMNS = ['grid-cols-1', 'grid-cols-2', 'grid-cols-3'] as const;
+const GRID_COLUMNS = [
+  'grid-cols-1',
+  'grid-cols-2',
+  'grid-cols-3',
+  'grid-cols-4',
+  // A survey's 1 to 5 rating (RAPP-929).
+  'grid-cols-5',
+] as const;
 
-/** The app's choice grid: equal cells, at most two columns, or three for yes, no and maybe. */
+/** The app's choice grid: equal cells, at most two columns, three for yes, no and maybe, five for a rating. */
 function ChoiceGrid({
   labels,
   maximumColumns,
   chosen,
 }: {
   readonly labels: readonly string[];
-  readonly maximumColumns: 2 | 3;
+  readonly maximumColumns: 2 | 3 | 5;
   readonly chosen: ReadonlySet<number>;
 }) {
   const columns = Math.min(maximumColumns, Math.max(1, labels.length));
@@ -472,6 +479,15 @@ export function QuestionControl({
           ).map((key) => phone(key))}
           maximumColumns={3}
           chosen={isExample ? new Set([0]) : nothing}
+        />
+      );
+    case 'rating':
+      // A survey's 1 to 5 (RAPP-929): five buttons in a row, as her phone shows them.
+      return (
+        <ChoiceGrid
+          labels={['1', '2', '3', '4', '5']}
+          maximumColumns={5}
+          chosen={isExample ? new Set([3]) : nothing}
         />
       );
     case 'single_choice':

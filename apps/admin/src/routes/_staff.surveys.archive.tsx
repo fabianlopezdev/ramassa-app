@@ -7,7 +7,7 @@ import {
 } from '@ramassa/shared/notifications';
 import { fetchStaffSurveys } from '@ramassa/shared/surveys';
 
-export const Route = createFileRoute('/_staff/surveys')({
+export const Route = createFileRoute('/_staff/surveys/archive')({
   ssr: false,
   loader: async ({ abortController }) => {
     const [surveys, groups, options] = await Promise.all([
@@ -20,8 +20,12 @@ export const Route = createFileRoute('/_staff/surveys')({
   component: StaffSurveysPage,
 });
 
+/**
+ * Enquestes anteriors (RAPP-929): the surveys made before surveys moved to the
+ * form engine, read and exported here. New surveys are made in Enquestes.
+ */
 function StaffSurveysPage() {
   const router = useRouter();
   const data = Route.useLoaderData();
-  return <SurveyWorkspace {...data} onRefresh={() => router.invalidate()} />;
+  return <SurveyWorkspace {...data} onRefresh={() => router.invalidate()} isArchive />;
 }

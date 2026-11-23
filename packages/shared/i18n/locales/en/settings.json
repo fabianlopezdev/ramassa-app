@@ -372,6 +372,7 @@
       "file_upload": "Photo or file",
       "country": "Country",
       "municipality": "Municipality of Catalonia",
+      "rating": "Rating from 1 to 5",
       "signature": "Signature",
       "text_block": "Text",
       "points_block": "Points",
@@ -443,7 +444,8 @@
       "item_list": "Items are added one by one, like the organizations that give support.",
       "file_upload": "A photo or a PDF. It is private: only staff who may read this level see it.",
       "country": "A country from the list of every country.",
-      "municipality": "A municipality of Catalonia, from the official list."
+      "municipality": "A municipality of Catalonia, from the official list.",
+      "rating": "Five buttons from 1 to 5 to rate something. Surveys only."
     },
     "tooManyOptions": "There are too many options for this type. For a long list, choose \"One choice from a long list\".",
     "settingsInvalid": "Check the settings: the lowest cannot be above the highest, and ages are whole years.",
@@ -977,5 +979,36 @@
       "ar": "Arabic",
       "fa": "Persian"
     }
+  },
+  "surveyQuestion": {
+    "new": "New question",
+    "edit": "Edit the question",
+    "add": "Add a question",
+    "label": "The question",
+    "save": "Save the question",
+    "saved": "Question saved."
+  },
+  "surveyList": {
+    "new": "New survey",
+    "archive": "Previous surveys",
+    "listLabel": "Surveys",
+    "empty": "There are no surveys yet."
+  },
+  "surveySettings": {
+    "event": "Activity",
+    "noEvent": "No activity",
+    "closesAt": "Closes on"
+  },
+  "surveyResults": {
+    "title": "Results",
+    "answered_one": "{{count}} answer",
+    "answered_other": "{{count}} answers",
+    "average_one": "Average {{average}} · {{count}} answer",
+    "average_other": "Average {{average}} · {{count}} answers",
+    "csv": "Download CSV",
+    "noQuestions": "This survey has no questions yet.",
+    "noAnswers": "No answers yet.",
+    "player": "Player",
+    "answeredAt": "Answered on"
   }
 }

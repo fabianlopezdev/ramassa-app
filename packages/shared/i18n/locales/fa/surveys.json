@@ -71,5 +71,6 @@
   "averageRating": "میانگین {{value}} از 5",
   "choiceLabel": "گزینه {{number}} به کاتالان",
   "datesInvalid": "تاریخ بسته شدن باید بعد از تاریخ انتشار باشد.",
-  "publishAtRequired": "زمان انتشار نظرسنجی را انتخاب کنید."
+  "publishAtRequired": "زمان انتشار نظرسنجی را انتخاب کنید.",
+  "archiveTitle": "نظرسنجی‌های پیشین"
 }

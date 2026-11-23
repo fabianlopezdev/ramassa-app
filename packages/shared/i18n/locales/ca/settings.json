@@ -372,6 +372,7 @@
       "file_upload": "Foto o fitxer",
       "country": "País",
       "municipality": "Municipi de Catalunya",
+      "rating": "Valoració de l'1 al 5",
       "signature": "Signatura",
       "text_block": "Text",
       "points_block": "Punts",
@@ -443,7 +444,8 @@
       "item_list": "S’hi afegeixen elements un per un, com les entitats que donen suport.",
       "file_upload": "Una foto o un PDF. És privat: només el veu l’equip que pot llegir aquest nivell.",
       "country": "Un país de la llista de tots els països.",
-      "municipality": "Un municipi de Catalunya, de la llista oficial."
+      "municipality": "Un municipi de Catalunya, de la llista oficial.",
+      "rating": "Cinc botons de l'1 al 5 per valorar una cosa. Només a les enquestes."
     },
     "tooManyOptions": "Hi ha massa opcions per a aquest tipus. Per a una llista llarga, tria \"Una opció d’una llista llarga\".",
     "settingsInvalid": "Revisa els ajustos: el mínim no pot ser més gran que el màxim, i les edats són anys sencers.",
@@ -977,5 +979,36 @@
       "ar": "àrab",
       "fa": "persa"
     }
+  },
+  "surveyQuestion": {
+    "new": "Nova pregunta",
+    "edit": "Edita la pregunta",
+    "add": "Afegeix una pregunta",
+    "label": "La pregunta",
+    "save": "Desa la pregunta",
+    "saved": "Pregunta desada."
+  },
+  "surveyList": {
+    "new": "Nova enquesta",
+    "archive": "Enquestes anteriors",
+    "listLabel": "Enquestes",
+    "empty": "Encara no hi ha cap enquesta."
+  },
+  "surveySettings": {
+    "event": "Activitat",
+    "noEvent": "Cap activitat",
+    "closesAt": "Es tanca el"
+  },
+  "surveyResults": {
+    "title": "Resultats",
+    "answered_one": "{{count}} resposta",
+    "answered_other": "{{count}} respostes",
+    "average_one": "Mitjana {{average}} · {{count}} resposta",
+    "average_other": "Mitjana {{average}} · {{count}} respostes",
+    "csv": "Descarrega CSV",
+    "noQuestions": "Aquesta enquesta encara no té preguntes.",
+    "noAnswers": "Encara no hi ha respostes.",
+    "player": "Jugadora",
+    "answeredAt": "Data de resposta"
   }
 }

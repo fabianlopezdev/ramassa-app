@@ -5,6 +5,7 @@
  * reads responses but does not design forms lands here.
  */
 import { formListPath } from '@/components/custom-forms/custom-form-page';
+import { SurveyResults } from '@/components/custom-forms/survey-results';
 import { EditorSection } from '@/components/layout/editor-section';
 import { Page, PageHeader } from '@/components/layout/page';
 import { Badge } from '@/components/ui/badge';
@@ -21,15 +22,23 @@ import type { CustomFormData } from '@/lib/custom-forms';
 import { Link } from '@tanstack/react-router';
 import { ChevronLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { textIn, type CustomForm, type CustomFormResponse } from '@ramassa/shared/intake-builder';
+import {
+  textIn,
+  type CustomForm,
+  type CustomFormResponse,
+  type SurveyResultRow,
+} from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
 export function CustomFormResponsesPage({
   data,
   formId,
+  surveyRows = [],
 }: {
   readonly data: CustomFormData;
   readonly formId: string;
+  /** A survey's answered responses, for its results (RAPP-929). */
+  readonly surveyRows?: readonly SurveyResultRow[];
 }) {
   const { t, i18n } = useTranslation(['settings', 'nav']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
@@ -61,6 +70,9 @@ export function CustomFormResponsesPage({
           title={form === undefined ? t('customForms.notFound') : textIn(form.name, language)}
         />
       </div>
+      {hasResponses && form.kind === 'survey' ? (
+        <SurveyResults catalog={data.intakeCatalog} form={form} rows={surveyRows} />
+      ) : null}
       {hasResponses ? <FormResponses form={form} responses={data.responses} /> : null}
     </Page>
   );

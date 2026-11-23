@@ -30,13 +30,19 @@ import {
 } from '@/lib/nav-items';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Link, useLocation } from '@tanstack/react-router';
+import { Link, useLocation, useMatches } from '@tanstack/react-router';
 import { ChevronRight, Scale, type LucideIcon } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
 import type { LayoutDirection } from '@ramassa/shared/i18n';
-import { fetchLegalFormEntries, textIn, type LegalFormEntry } from '@ramassa/shared/intake-builder';
+import {
+  customFormById,
+  fetchLegalFormEntries,
+  textIn,
+  type IntakeCatalog,
+  type LegalFormEntry,
+} from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
 /**
@@ -100,11 +106,15 @@ export function StaffSidebar() {
   // The authorization's board, screens and versions light its overview's row (RAPP-927).
   const authorizationId = systemFormIds['/forms/authorization'] ?? null;
   const authorizationPath = authorizationId === null ? null : legalFormPath(authorizationId);
+  // A survey's board, screens, responses and versions light Enquestes (RAPP-929).
+  const isSurveyPage = useMatches({ select: (matches) => matches.some(isSurveyMatch) });
   const navPathname =
     authorizationPath !== null &&
     (pathname === authorizationPath || pathname.startsWith(`${authorizationPath}/`))
       ? '/forms/authorization'
-      : pathname;
+      : isSurveyPage
+        ? '/surveys'
+        : pathname;
   const activePath = activeStaffNavPath(navPathname, [
     ...groups.flatMap((group) => group.items),
     ...Object.values(STAFF_NAV_PARENTS),
@@ -149,6 +159,27 @@ export function StaffSidebar() {
       <SidebarRail />
     </Sidebar>
   );
+}
+
+/**
+ * Whether a matched route shows a survey: its `formId` is a survey of the
+ * catalog it loaded (RAPP-929). A form page's loader returns the catalog, or
+ * holds it under `data`.
+ */
+function isSurveyMatch(match: {
+  readonly params: unknown;
+  readonly loaderData?: unknown;
+}): boolean {
+  const formId = (match.params as { readonly formId?: unknown }).formId;
+  if (typeof formId !== 'string') return false;
+  const loaded = match.loaderData as
+    | {
+        readonly intakeCatalog?: IntakeCatalog;
+        readonly data?: { readonly intakeCatalog?: IntakeCatalog };
+      }
+    | undefined;
+  const catalog = loaded?.intakeCatalog ?? loaded?.data?.intakeCatalog;
+  return catalog !== undefined && customFormById(catalog, formId)?.kind === 'survey';
 }
 
 /** Where a created legal form opens: its board, the engine of every form (RAPP-771). */

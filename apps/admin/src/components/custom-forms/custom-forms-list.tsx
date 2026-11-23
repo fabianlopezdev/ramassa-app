@@ -19,6 +19,7 @@ import type { CustomFormsData } from '@/lib/custom-forms';
 import { supabase } from '@/lib/supabase';
 import { Link, useNavigate } from '@tanstack/react-router';
 import {
+  BarChart3,
   ClipboardList,
   FileSignature,
   Plus,
@@ -64,27 +65,58 @@ export function CustomFormsList({
           (data.intakeCatalog.customForms ?? []).filter((form) => form.systemKey === key),
         )
       : [];
-  const title = kind === 'legal' ? t('nav:staff.legal') : t('customForms.title');
+  const isSurveys = kind === 'survey';
+  const title =
+    kind === 'legal'
+      ? t('nav:staff.legal')
+      : isSurveys
+        ? t('nav:staff.surveys')
+        : t('customForms.title');
   return (
-    <Page data-testid={kind === 'legal' ? 'legal-forms-page' : 'custom-forms-page'}>
+    <Page
+      data-testid={
+        kind === 'legal' ? 'legal-forms-page' : isSurveys ? 'surveys-page' : 'custom-forms-page'
+      }
+    >
       <PageHeader
         title={title}
         actions={
-          data.canDesign ? (
-            <Button type="button" onClick={() => setIsCreating(true)} data-testid="custom-form-new">
-              <Plus aria-hidden data-icon="inline-start" />
-              {t('customForms.newForm')}
-            </Button>
-          ) : undefined
+          <>
+            {/* The surveys made before they moved to the form engine (RAPP-929). */}
+            {isSurveys ? (
+              <Button asChild variant="outline">
+                <Link to="/surveys/archive" data-testid="surveys-archive">
+                  {t('surveyList.archive')}
+                </Link>
+              </Button>
+            ) : null}
+            {data.canDesign ? (
+              <Button
+                type="button"
+                onClick={() => setIsCreating(true)}
+                data-testid="custom-form-new"
+              >
+                <Plus aria-hidden data-icon="inline-start" />
+                {isSurveys ? t('surveyList.new') : t('customForms.newForm')}
+              </Button>
+            ) : null}
+          </>
         }
       />
-      <EditorSection title={t('customForms.listLabel')} isFlush testId="custom-forms-list">
+      <EditorSection
+        title={isSurveys ? t('surveyList.listLabel') : t('customForms.listLabel')}
+        isFlush
+        testId="custom-forms-list"
+      >
         {forms.length + systemForms.length === 0 ? (
           <p className="px-5 py-5 text-start text-sm text-muted-foreground">
-            {t('customForms.empty')}
+            {isSurveys ? t('surveyList.empty') : t('customForms.empty')}
           </p>
         ) : (
-          <ol className="flex flex-col divide-y" aria-label={t('customForms.listLabel')}>
+          <ol
+            className="flex flex-col divide-y"
+            aria-label={isSurveys ? t('surveyList.listLabel') : t('customForms.listLabel')}
+          >
             {systemForms.map((form) => (
               <li key={form.id} className="bg-card">
                 <Link
@@ -111,10 +143,10 @@ export function CustomFormsList({
                   data-testid={`custom-form-row-${form.id}`}
                 >
                   <FormRowContent
-                    icon={kind === 'legal' ? Scale : ClipboardList}
+                    icon={kind === 'legal' ? Scale : isSurveys ? BarChart3 : ClipboardList}
                     name={textIn(form.name, language)}
                     line={[
-                      t(`customForms.level.${form.mandatory}`),
+                      ...(isSurveys ? [] : [t(`customForms.level.${form.mandatory}`)]),
                       t(`customForms.audienceOption.${form.audience}`),
                       ...(form.repeatsEachSeason ? [t('customForms.repeatsEverySeason')] : []),
                     ].join(' · ')}
@@ -236,13 +268,16 @@ function NewFormDialog({
         }}
       >
         <DialogContent className="max-w-md">
-          <DialogTitle>{t('customForms.newForm')}</DialogTitle>
+          <DialogTitle>
+            {kind === 'survey' ? t('surveyList.new') : t('customForms.newForm')}
+          </DialogTitle>
           <DialogDescription className="sr-only">{t('customForms.newForm')}</DialogDescription>
           <form className="flex flex-col gap-6" onSubmit={(event) => void submit(event)} noValidate>
             <FormChoicesFields
               choices={choices}
               onChange={setChoices}
               error={error}
+              isSurvey={kind === 'survey'}
               idPrefix="new-form"
             />
             <div className="flex justify-end gap-2">

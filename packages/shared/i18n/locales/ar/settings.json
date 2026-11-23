@@ -404,5 +404,44 @@
       "ar": "ترجم إلى العربية",
       "fa": "ترجم إلى الفارسية"
     }
+  },
+  "surveyQuestion": {
+    "new": "سؤال جديد",
+    "edit": "تعديل السؤال",
+    "add": "إضافة سؤال",
+    "label": "السؤال",
+    "save": "حفظ السؤال",
+    "saved": "تم حفظ السؤال."
+  },
+  "surveyList": {
+    "new": "استبيان جديد",
+    "archive": "الاستبيانات السابقة",
+    "listLabel": "الاستبيانات",
+    "empty": "لا توجد استبيانات بعد."
+  },
+  "surveySettings": {
+    "event": "النشاط",
+    "noEvent": "بدون نشاط",
+    "closesAt": "يُغلق في"
+  },
+  "surveyResults": {
+    "title": "النتائج",
+    "answered_zero": "{{count}} إجابات",
+    "answered_one": "{{count}} إجابة",
+    "answered_two": "{{count}} إجابات",
+    "answered_few": "{{count}} إجابات",
+    "answered_many": "{{count}} إجابات",
+    "answered_other": "{{count}} إجابات",
+    "average_zero": "المتوسط {{average}} · {{count}} إجابات",
+    "average_one": "المتوسط {{average}} · {{count}} إجابة",
+    "average_two": "المتوسط {{average}} · {{count}} إجابات",
+    "average_few": "المتوسط {{average}} · {{count}} إجابات",
+    "average_many": "المتوسط {{average}} · {{count}} إجابات",
+    "average_other": "المتوسط {{average}} · {{count}} إجابات",
+    "csv": "تنزيل CSV",
+    "noQuestions": "لا يحتوي هذا الاستبيان على أسئلة بعد.",
+    "noAnswers": "لا توجد إجابات بعد.",
+    "player": "اللاعبة",
+    "answeredAt": "تاريخ الإجابة"
   }
 }

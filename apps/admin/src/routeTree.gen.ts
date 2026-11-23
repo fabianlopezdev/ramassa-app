@@ -28,7 +28,6 @@ import { Route as StaffMessagesRouteImport } from './routes/_staff.messages'
 import { Route as StaffNotificationsRouteImport } from './routes/_staff.notifications'
 import { Route as StaffProfileLayoutRouteImport } from './routes/_staff.profile-layout'
 import { Route as StaffSettingsRouteImport } from './routes/_staff.settings'
-import { Route as StaffSurveysRouteImport } from './routes/_staff.surveys'
 import { Route as StaffTeamRouteImport } from './routes/_staff.team'
 import { Route as EntityPortalIndexRouteImport } from './routes/_entity.portal.index'
 import { Route as EntityPortalEventsRouteImport } from './routes/_entity.portal.events'
@@ -52,6 +51,8 @@ import { Route as StaffParticipantsReferralsRouteImport } from './routes/_staff.
 import { Route as StaffParticipantsSeasonRouteImport } from './routes/_staff.participants.season'
 import { Route as StaffParticipantsWalkInsRouteImport } from './routes/_staff.participants.walk-ins'
 import { Route as StaffPhotoHandoffHandoffIdRouteImport } from './routes/_staff.photo-handoff.$handoffId'
+import { Route as StaffSurveysIndexRouteImport } from './routes/_staff.surveys.index'
+import { Route as StaffSurveysArchiveRouteImport } from './routes/_staff.surveys.archive'
 import { Route as EntityPortalReferralsIndexRouteImport } from './routes/_entity.portal.referrals.index'
 import { Route as EntityPortalReferralsReferralIdRouteImport } from './routes/_entity.portal.referrals.$referralId'
 import { Route as EntityPortalReferralsNewRouteImport } from './routes/_entity.portal.referrals.new'
@@ -180,11 +181,6 @@ const StaffSettingsRoute = StaffSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => StaffRoute,
 } as any)
-const StaffSurveysRoute = StaffSurveysRouteImport.update({
-  id: '/surveys',
-  path: '/surveys',
-  getParentRoute: () => StaffRoute,
-} as any)
 const StaffTeamRoute = StaffTeamRouteImport.update({
   id: '/team',
   path: '/team',
@@ -309,6 +305,16 @@ const StaffPhotoHandoffHandoffIdRoute =
     path: '/photo-handoff/$handoffId',
     getParentRoute: () => StaffRoute,
   } as any)
+const StaffSurveysIndexRoute = StaffSurveysIndexRouteImport.update({
+  id: '/surveys/',
+  path: '/surveys/',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffSurveysArchiveRoute = StaffSurveysArchiveRouteImport.update({
+  id: '/surveys/archive',
+  path: '/surveys/archive',
+  getParentRoute: () => StaffRoute,
+} as any)
 const EntityPortalReferralsIndexRoute =
   EntityPortalReferralsIndexRouteImport.update({
     id: '/',
@@ -524,7 +530,6 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof StaffNotificationsRoute
   '/profile-layout': typeof StaffProfileLayoutRoute
   '/settings': typeof StaffSettingsRoute
-  '/surveys': typeof StaffSurveysRoute
   '/team': typeof StaffTeamRoute
   '/portal/events': typeof EntityPortalEventsRoute
   '/portal/messages': typeof EntityPortalMessagesRoute
@@ -541,6 +546,7 @@ export interface FileRoutesByFullPath {
   '/participants/season': typeof StaffParticipantsSeasonRoute
   '/participants/walk-ins': typeof StaffParticipantsWalkInsRoute
   '/photo-handoff/$handoffId': typeof StaffPhotoHandoffHandoffIdRoute
+  '/surveys/archive': typeof StaffSurveysArchiveRoute
   '/portal/': typeof EntityPortalIndexRoute
   '/attendance/': typeof StaffAttendanceIndexRoute
   '/content/': typeof StaffContentIndexRoute
@@ -548,6 +554,7 @@ export interface FileRoutesByFullPath {
   '/messages/': typeof StaffMessagesIndexRoute
   '/onboarding/': typeof StaffOnboardingIndexRoute
   '/participants/': typeof StaffParticipantsIndexRoute
+  '/surveys/': typeof StaffSurveysIndexRoute
   '/portal/referrals/$referralId': typeof EntityPortalReferralsReferralIdRoute
   '/portal/referrals/new': typeof EntityPortalReferralsNewRoute
   '/portal/services/$serviceId': typeof EntityPortalServicesServiceIdRoute
@@ -598,7 +605,6 @@ export interface FileRoutesByTo {
   '/notifications': typeof StaffNotificationsRoute
   '/profile-layout': typeof StaffProfileLayoutRoute
   '/settings': typeof StaffSettingsRoute
-  '/surveys': typeof StaffSurveysRoute
   '/team': typeof StaffTeamRoute
   '/portal/events': typeof EntityPortalEventsRoute
   '/portal/messages': typeof EntityPortalMessagesRoute
@@ -613,6 +619,7 @@ export interface FileRoutesByTo {
   '/participants/season': typeof StaffParticipantsSeasonRoute
   '/participants/walk-ins': typeof StaffParticipantsWalkInsRoute
   '/photo-handoff/$handoffId': typeof StaffPhotoHandoffHandoffIdRoute
+  '/surveys/archive': typeof StaffSurveysArchiveRoute
   '/portal': typeof EntityPortalIndexRoute
   '/attendance': typeof StaffAttendanceIndexRoute
   '/content': typeof StaffContentIndexRoute
@@ -620,6 +627,7 @@ export interface FileRoutesByTo {
   '/messages': typeof StaffMessagesIndexRoute
   '/onboarding': typeof StaffOnboardingIndexRoute
   '/participants': typeof StaffParticipantsIndexRoute
+  '/surveys': typeof StaffSurveysIndexRoute
   '/portal/referrals/$referralId': typeof EntityPortalReferralsReferralIdRoute
   '/portal/referrals/new': typeof EntityPortalReferralsNewRoute
   '/portal/services/$serviceId': typeof EntityPortalServicesServiceIdRoute
@@ -676,7 +684,6 @@ export interface FileRoutesById {
   '/_staff/notifications': typeof StaffNotificationsRoute
   '/_staff/profile-layout': typeof StaffProfileLayoutRoute
   '/_staff/settings': typeof StaffSettingsRoute
-  '/_staff/surveys': typeof StaffSurveysRoute
   '/_staff/team': typeof StaffTeamRoute
   '/_entity/portal/events': typeof EntityPortalEventsRoute
   '/_entity/portal/messages': typeof EntityPortalMessagesRoute
@@ -693,6 +700,7 @@ export interface FileRoutesById {
   '/_staff/participants/season': typeof StaffParticipantsSeasonRoute
   '/_staff/participants/walk-ins': typeof StaffParticipantsWalkInsRoute
   '/_staff/photo-handoff/$handoffId': typeof StaffPhotoHandoffHandoffIdRoute
+  '/_staff/surveys/archive': typeof StaffSurveysArchiveRoute
   '/_entity/portal/': typeof EntityPortalIndexRoute
   '/_staff/attendance/': typeof StaffAttendanceIndexRoute
   '/_staff/content/': typeof StaffContentIndexRoute
@@ -700,6 +708,7 @@ export interface FileRoutesById {
   '/_staff/messages/': typeof StaffMessagesIndexRoute
   '/_staff/onboarding/': typeof StaffOnboardingIndexRoute
   '/_staff/participants/': typeof StaffParticipantsIndexRoute
+  '/_staff/surveys/': typeof StaffSurveysIndexRoute
   '/_entity/portal/referrals/$referralId': typeof EntityPortalReferralsReferralIdRoute
   '/_entity/portal/referrals/new': typeof EntityPortalReferralsNewRoute
   '/_entity/portal/services/$serviceId': typeof EntityPortalServicesServiceIdRoute
@@ -755,7 +764,6 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/profile-layout'
     | '/settings'
-    | '/surveys'
     | '/team'
     | '/portal/events'
     | '/portal/messages'
@@ -772,6 +780,7 @@ export interface FileRouteTypes {
     | '/participants/season'
     | '/participants/walk-ins'
     | '/photo-handoff/$handoffId'
+    | '/surveys/archive'
     | '/portal/'
     | '/attendance/'
     | '/content/'
@@ -779,6 +788,7 @@ export interface FileRouteTypes {
     | '/messages/'
     | '/onboarding/'
     | '/participants/'
+    | '/surveys/'
     | '/portal/referrals/$referralId'
     | '/portal/referrals/new'
     | '/portal/services/$serviceId'
@@ -829,7 +839,6 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/profile-layout'
     | '/settings'
-    | '/surveys'
     | '/team'
     | '/portal/events'
     | '/portal/messages'
@@ -844,6 +853,7 @@ export interface FileRouteTypes {
     | '/participants/season'
     | '/participants/walk-ins'
     | '/photo-handoff/$handoffId'
+    | '/surveys/archive'
     | '/portal'
     | '/attendance'
     | '/content'
@@ -851,6 +861,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/onboarding'
     | '/participants'
+    | '/surveys'
     | '/portal/referrals/$referralId'
     | '/portal/referrals/new'
     | '/portal/services/$serviceId'
@@ -906,7 +917,6 @@ export interface FileRouteTypes {
     | '/_staff/notifications'
     | '/_staff/profile-layout'
     | '/_staff/settings'
-    | '/_staff/surveys'
     | '/_staff/team'
     | '/_entity/portal/events'
     | '/_entity/portal/messages'
@@ -923,6 +933,7 @@ export interface FileRouteTypes {
     | '/_staff/participants/season'
     | '/_staff/participants/walk-ins'
     | '/_staff/photo-handoff/$handoffId'
+    | '/_staff/surveys/archive'
     | '/_entity/portal/'
     | '/_staff/attendance/'
     | '/_staff/content/'
@@ -930,6 +941,7 @@ export interface FileRouteTypes {
     | '/_staff/messages/'
     | '/_staff/onboarding/'
     | '/_staff/participants/'
+    | '/_staff/surveys/'
     | '/_entity/portal/referrals/$referralId'
     | '/_entity/portal/referrals/new'
     | '/_entity/portal/services/$serviceId'
@@ -1108,13 +1120,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffSettingsRouteImport
       parentRoute: typeof StaffRoute
     }
-    '/_staff/surveys': {
-      id: '/_staff/surveys'
-      path: '/surveys'
-      fullPath: '/surveys'
-      preLoaderRoute: typeof StaffSurveysRouteImport
-      parentRoute: typeof StaffRoute
-    }
     '/_staff/team': {
       id: '/_staff/team'
       path: '/team'
@@ -1274,6 +1279,20 @@ declare module '@tanstack/react-router' {
       path: '/photo-handoff/$handoffId'
       fullPath: '/photo-handoff/$handoffId'
       preLoaderRoute: typeof StaffPhotoHandoffHandoffIdRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/surveys/': {
+      id: '/_staff/surveys/'
+      path: '/surveys'
+      fullPath: '/surveys/'
+      preLoaderRoute: typeof StaffSurveysIndexRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/surveys/archive': {
+      id: '/_staff/surveys/archive'
+      path: '/surveys/archive'
+      fullPath: '/surveys/archive'
+      preLoaderRoute: typeof StaffSurveysArchiveRouteImport
       parentRoute: typeof StaffRoute
     }
     '/_entity/portal/referrals/': {
@@ -1660,7 +1679,6 @@ interface StaffRouteChildren {
   StaffNotificationsRoute: typeof StaffNotificationsRoute
   StaffProfileLayoutRoute: typeof StaffProfileLayoutRoute
   StaffSettingsRoute: typeof StaffSettingsRoute
-  StaffSurveysRoute: typeof StaffSurveysRoute
   StaffTeamRoute: typeof StaffTeamRoute
   StaffEntitiesReferralFormRoute: typeof StaffEntitiesReferralFormRoute
   StaffParticipantsParticipantIdRoute: typeof StaffParticipantsParticipantIdRoute
@@ -1671,9 +1689,11 @@ interface StaffRouteChildren {
   StaffParticipantsSeasonRoute: typeof StaffParticipantsSeasonRoute
   StaffParticipantsWalkInsRoute: typeof StaffParticipantsWalkInsRoute
   StaffPhotoHandoffHandoffIdRoute: typeof StaffPhotoHandoffHandoffIdRoute
+  StaffSurveysArchiveRoute: typeof StaffSurveysArchiveRoute
   StaffEntitiesIndexRoute: typeof StaffEntitiesIndexRoute
   StaffOnboardingIndexRoute: typeof StaffOnboardingIndexRoute
   StaffParticipantsIndexRoute: typeof StaffParticipantsIndexRoute
+  StaffSurveysIndexRoute: typeof StaffSurveysIndexRoute
   StaffFormsAuthorizationStepRoute: typeof StaffFormsAuthorizationStepRoute
   StaffFormsTermsStepRoute: typeof StaffFormsTermsStepRoute
   StaffOnboardingScreensScreenIdRoute: typeof StaffOnboardingScreensScreenIdRoute
@@ -1703,7 +1723,6 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffNotificationsRoute: StaffNotificationsRoute,
   StaffProfileLayoutRoute: StaffProfileLayoutRoute,
   StaffSettingsRoute: StaffSettingsRoute,
-  StaffSurveysRoute: StaffSurveysRoute,
   StaffTeamRoute: StaffTeamRoute,
   StaffEntitiesReferralFormRoute: StaffEntitiesReferralFormRoute,
   StaffParticipantsParticipantIdRoute: StaffParticipantsParticipantIdRoute,
@@ -1715,9 +1734,11 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffParticipantsSeasonRoute: StaffParticipantsSeasonRoute,
   StaffParticipantsWalkInsRoute: StaffParticipantsWalkInsRoute,
   StaffPhotoHandoffHandoffIdRoute: StaffPhotoHandoffHandoffIdRoute,
+  StaffSurveysArchiveRoute: StaffSurveysArchiveRoute,
   StaffEntitiesIndexRoute: StaffEntitiesIndexRoute,
   StaffOnboardingIndexRoute: StaffOnboardingIndexRoute,
   StaffParticipantsIndexRoute: StaffParticipantsIndexRoute,
+  StaffSurveysIndexRoute: StaffSurveysIndexRoute,
   StaffFormsAuthorizationStepRoute: StaffFormsAuthorizationStepRoute,
   StaffFormsTermsStepRoute: StaffFormsTermsStepRoute,
   StaffOnboardingScreensScreenIdRoute: StaffOnboardingScreensScreenIdRoute,

@@ -19,7 +19,7 @@ import {
   customFormById,
   EMPTY_INTAKE_CATALOG,
   fetchCustomFormResponses,
-  fetchIntakeCatalog,
+  fetchIntakeCatalogWithSurveys,
   type CustomFormResponse,
   type CustomFormSystemKey,
 } from '@ramassa/shared/intake-builder';
@@ -39,7 +39,8 @@ export async function loadCustomForms() {
   }
   // The seasons a repeating form is published to (RAPP-701).
   const [intakeCatalog, seasons] = await Promise.all([
-    fetchIntakeCatalog(supabase),
+    // With the surveys, which only the dashboard reads (RAPP-929).
+    fetchIntakeCatalogWithSurveys(supabase),
     fetchSeasons(supabase),
   ]);
   return { intakeCatalog, seasons, ...access };

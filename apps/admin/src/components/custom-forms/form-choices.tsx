@@ -107,6 +107,9 @@ export function ChoiceCards<Value extends string>({
   );
 }
 
+/** The kinds a form takes in Formularis; a survey is made in Enquestes (RAPP-929). */
+const FORM_KINDS = CUSTOM_FORM_KINDS.filter((kind) => kind !== 'survey');
+
 export function FormChoicesFields({
   choices,
   onChange,
@@ -114,6 +117,7 @@ export function FormChoicesFields({
   isRepeatLocked = false,
   isKindLocked = false,
   hasLanguages = false,
+  isSurvey = false,
   idPrefix,
 }: {
   readonly choices: CustomFormChoices;
@@ -125,6 +129,11 @@ export function FormChoicesFields({
   readonly isKindLocked?: boolean;
   /** The name in every language; the new form dialog asks it in Catalan. */
   readonly hasLanguages?: boolean;
+  /**
+   * A survey's choices (RAPP-929): its name and who it is for. A survey is
+   * always hers to fill in, optional and never repeating.
+   */
+  readonly isSurvey?: boolean;
   readonly idPrefix: string;
 }) {
   const { t } = useTranslation('settings');
@@ -158,6 +167,27 @@ export function FormChoicesFields({
       {error === null ? null : <FieldError>{error}</FieldError>}
     </Field>
   );
+  const audienceField = (
+    <ChoiceCards
+      legend={t('customForms.audience')}
+      name={`${idPrefix}-audience`}
+      value={choices.audience}
+      options={CUSTOM_FORM_AUDIENCES.map((audience) => ({
+        value: audience,
+        title: t(`customForms.audienceOption.${audience}`),
+      }))}
+      onChange={(audience) => onChange({ ...choices, audience })}
+      testId={`${idPrefix}-audience`}
+    />
+  );
+  if (isSurvey) {
+    return (
+      <FieldGroup>
+        {nameField}
+        {audienceField}
+      </FieldGroup>
+    );
+  }
   return (
     <FieldGroup>
       <ChoiceCards
@@ -165,7 +195,8 @@ export function FormChoicesFields({
         name={`${idPrefix}-kind`}
         value={choices.kind}
         isDisabled={isKindLocked}
-        options={CUSTOM_FORM_KINDS.map((kind) => ({
+        // A survey is made in Enquestes (RAPP-929).
+        options={FORM_KINDS.map((kind) => ({
           value: kind,
           title: t(`customForms.kindOption.${kind}`),
         }))}
@@ -218,17 +249,7 @@ export function FormChoicesFields({
           />
         </Field>
       ) : null}
-      <ChoiceCards
-        legend={t('customForms.audience')}
-        name={`${idPrefix}-audience`}
-        value={choices.audience}
-        options={CUSTOM_FORM_AUDIENCES.map((audience) => ({
-          value: audience,
-          title: t(`customForms.audienceOption.${audience}`),
-        }))}
-        onChange={(audience) => onChange({ ...choices, audience })}
-        testId={`${idPrefix}-audience`}
-      />
+      {audienceField}
       <ChoiceCards
         legend={t('customForms.repeats')}
         name={`${idPrefix}-repeats`}

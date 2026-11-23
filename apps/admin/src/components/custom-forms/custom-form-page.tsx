@@ -220,7 +220,11 @@ export function CustomFormPage({
           ) : (
             <Link to={formListPath(form)} data-testid="custom-form-back">
               <ChevronLeft aria-hidden data-icon="inline-start" className="rtl:rotate-180" />
-              {form?.kind === 'legal' ? t('nav:staff.legal') : t('nav:staff.customForms')}
+              {form?.kind === 'legal'
+                ? t('nav:staff.legal')
+                : form?.kind === 'survey'
+                  ? t('nav:staff.surveys')
+                  : t('nav:staff.customForms')}
             </Link>
           )}
         </Button>
@@ -231,7 +235,8 @@ export function CustomFormPage({
               <span className="flex flex-wrap items-center gap-2">
                 <FormStatusBadge form={form} />
                 {[
-                  t(`customForms.level.${form.mandatory}`),
+                  // Every survey is optional (RAPP-929).
+                  ...(form.kind === 'survey' ? [] : [t(`customForms.level.${form.mandatory}`)]),
                   t(`customForms.audienceOption.${form.audience}`),
                   ...(form.repeatsEachSeason ? [t('customForms.repeatsEverySeason')] : []),
                   ...(form.publishedAt === null
@@ -279,8 +284,10 @@ export function CustomFormPage({
 /** The page that lists a form: Condicions legals for a legal one (RAPP-771). */
 export function formListPath(
   form: Pick<CustomForm, 'kind'> | undefined,
-): '/forms/legal' | '/forms/custom' {
-  return form?.kind === 'legal' ? '/forms/legal' : '/forms/custom';
+): '/forms/legal' | '/forms/custom' | '/surveys' {
+  if (form?.kind === 'legal') return '/forms/legal';
+  // A survey is listed in Enquestes (RAPP-929).
+  return form?.kind === 'survey' ? '/surveys' : '/forms/custom';
 }
 
 /** What each Publica published, in the one versions panel (RAPP-771). */

@@ -18,7 +18,7 @@ import { TriangleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getLanguageDirection, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
 import {
-  CUSTOM_QUESTION_TYPES,
+  FIELD_QUESTION_TYPES,
   type BuilderText,
   type CustomQuestionType,
 } from '@ramassa/shared/intake-builder';
@@ -88,10 +88,13 @@ function TypeMiniature({
 export function QuestionTypePicker({
   value,
   onChange,
+  types = FIELD_QUESTION_TYPES,
   disabled = {},
   warnings = {},
 }: {
   readonly value: CustomQuestionType;
+  /** The types offered: a field's by default, a survey's on a survey (RAPP-929). */
+  readonly types?: readonly CustomQuestionType[];
   readonly onChange: (type: CustomQuestionType) => void;
   readonly disabled?: TypeNotes;
   readonly warnings?: TypeNotes;
@@ -115,7 +118,7 @@ export function QuestionTypePicker({
       hiddenName="question-type"
       renderGroup={({ cardRefs, pick }) => (
         <CardRadioGroup
-          values={CUSTOM_QUESTION_TYPES}
+          values={types}
           value={value}
           label={t('questions.type')}
           disabled={disabled}

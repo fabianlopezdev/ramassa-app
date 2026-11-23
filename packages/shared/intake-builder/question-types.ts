@@ -49,6 +49,23 @@ export const CUSTOM_QUESTION_TYPES = [
 ] as const;
 export type CustomQuestionType = (typeof CUSTOM_QUESTION_TYPES)[number];
 
+/** The types a field of her record takes: every one but a survey's rating (RAPP-929). */
+export const FIELD_QUESTION_TYPES: readonly CustomQuestionType[] = CUSTOM_QUESTION_TYPES.filter(
+  (type) => type !== 'rating',
+);
+
+/** The types a survey question takes (RAPP-929): opinions, never personal data. */
+export const SURVEY_QUESTION_TYPES = [
+  'rating',
+  'single_choice',
+  'multiple_choice',
+  'yes_no',
+  'yes_no_maybe',
+  'short_text',
+  'long_text',
+  'number',
+] as const satisfies readonly CustomQuestionType[];
+
 /** A survey's rating runs from 1 to 5 (RAPP-929). */
 export const RATING_MIN = 1;
 export const RATING_MAX = 5;

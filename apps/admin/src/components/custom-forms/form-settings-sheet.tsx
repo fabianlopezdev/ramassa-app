@@ -11,6 +11,8 @@ import { choicesProblem, FormChoicesFields } from '@/components/custom-forms/for
 import { AudiencePicker } from '@/components/notifications/audience-picker';
 import { useReload } from '@/components/settings/onboarding-design-sections';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Sheet,
   SheetContent,
@@ -27,6 +29,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
   saveCustomForm,
+  saveSurveySettings,
   setCustomFormRecipients,
   textIn,
   type CustomForm,
@@ -54,6 +57,14 @@ function choicesOf(form: CustomForm): CustomFormChoices {
   };
 }
 
+/** A stored time as the value of a datetime-local input, in her clock; empty for none. */
+function localDateTime(iso: string | null): string {
+  if (iso === null) return '';
+  const date = new Date(iso);
+  const offset = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+}
+
 const NO_OPTIONS: NotificationAudienceOptions = {
   serviceCategories: [],
   events: [],
@@ -73,6 +84,10 @@ export function FormSettingsSheet({ form }: { readonly form: CustomForm }) {
   const [players, setPlayers] = useState<readonly string[] | null>(null);
   const [groups, setGroups] = useState<readonly CustomNotificationGroup[]>([]);
   const [options, setOptions] = useState<NotificationAudienceOptions>(NO_OPTIONS);
+  // A survey's activity and closing time (RAPP-929).
+  const isSurvey = form.kind === 'survey';
+  const [eventId, setEventId] = useState<string>(form.eventId ?? '');
+  const [closesAt, setClosesAt] = useState<string>(localDateTime(form.closesAt ?? null));
   // The players are picked as soon as "A qui va dirigit" says the team picks them.
   const picksPlayers = choices.audience === 'chosen';
   const recipients: CustomFormRecipients | null =
@@ -80,7 +95,7 @@ export function FormSettingsSheet({ form }: { readonly form: CustomForm }) {
 
   // The same lists the notifications page picks from, once the panel needs them.
   useEffect(() => {
-    if (!isOpen || !picksPlayers) return;
+    if (!isOpen || !(picksPlayers || isSurvey)) return;
     const controller = new AbortController();
     void Promise.all([
       fetchCustomNotificationGroups(supabase, controller.signal).catch(() => []),
@@ -92,7 +107,7 @@ export function FormSettingsSheet({ form }: { readonly form: CustomForm }) {
       })
       .catch(() => undefined);
     return () => controller.abort();
-  }, [isOpen, picksPlayers]);
+  }, [isOpen, picksPlayers, isSurvey]);
 
   // Each opening starts from what the database holds.
   function onOpenChange(next: boolean) {
@@ -101,6 +116,8 @@ export function FormSettingsSheet({ form }: { readonly form: CustomForm }) {
       setError(null);
       setAudience(null);
       setPlayers(null);
+      setEventId(form.eventId ?? '');
+      setClosesAt(localDateTime(form.closesAt ?? null));
     }
     setIsOpen(next);
   }
@@ -112,6 +129,12 @@ export function FormSettingsSheet({ form }: { readonly form: CustomForm }) {
     setIsSaving(true);
     try {
       await saveCustomForm(supabase, form.id, choices);
+      if (isSurvey) {
+        await saveSurveySettings(supabase, form.id, {
+          eventId: eventId === '' ? null : eventId,
+          closesAt: closesAt === '' ? null : new Date(closesAt).toISOString(),
+        });
+      }
       if (picksPlayers && recipients !== null) {
         const count = await setCustomFormRecipients(supabase, form.id, recipients);
         toast.success(t('customForms.recipientsSaved', { count }));
@@ -153,8 +176,40 @@ export function FormSettingsSheet({ form }: { readonly form: CustomForm }) {
             hasLanguages
             isRepeatLocked={form.publishedAt !== null}
             isKindLocked={form.publishedAt !== null}
+            isSurvey={isSurvey}
             idPrefix="form-settings"
           />
+          {isSurvey ? (
+            <>
+              <div className="grid gap-2">
+                <Label htmlFor="form-settings-event">{t('surveySettings.event')}</Label>
+                <select
+                  id="form-settings-event"
+                  value={eventId}
+                  onChange={(event) => setEventId(event.target.value)}
+                  className="min-h-11 rounded-lg border border-input bg-background px-3 text-sm"
+                  data-testid="form-settings-event"
+                >
+                  <option value="">{t('surveySettings.noEvent')}</option>
+                  {options.events.map((each) => (
+                    <option key={each.id} value={each.id}>
+                      {each.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="form-settings-closes">{t('surveySettings.closesAt')}</Label>
+                <Input
+                  id="form-settings-closes"
+                  type="datetime-local"
+                  value={closesAt}
+                  onChange={(event) => setClosesAt(event.target.value)}
+                  data-testid="form-settings-closes"
+                />
+              </div>
+            </>
+          ) : null}
           {picksPlayers ? (
             <section className="flex flex-col gap-3" data-testid="custom-form-recipients">
               <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">

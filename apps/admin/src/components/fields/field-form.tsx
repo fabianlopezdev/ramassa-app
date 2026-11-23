@@ -30,6 +30,7 @@ import { getErrorMessageKey, isAppError } from '@ramassa/shared/errors';
 import {
   isChoiceType,
   profileFieldDraftSchema,
+  SURVEY_QUESTION_TYPES,
   textIn,
   type BuilderText,
   type CustomQuestionType,
@@ -105,6 +106,7 @@ export function FieldForm({
   onPreviewChange,
   isFramed = true,
   secondaryAction,
+  isSurveyQuestion = false,
   testId = 'field-form',
 }: {
   /** Null for a new one. */
@@ -125,13 +127,22 @@ export function FieldForm({
   readonly isFramed?: boolean;
   /** A button at the start of the button row, such as Archive. */
   readonly secondaryAction?: ReactNode;
+  /**
+   * A survey's question (RAPP-929): a survey's types, rating first, and no
+   * privacy, since her answers there are not her record.
+   */
+  readonly isSurveyQuestion?: boolean;
   readonly testId?: string;
 }) {
   const { t } = useTranslation('settings');
   const action = useAction();
   const isNew = value === null;
-  const [type, setType] = useState<CustomQuestionType>(value?.type ?? 'short_text');
-  const [privacy, setPrivacy] = useState<QuestionPrivacy>(value?.privacy ?? 'personal');
+  const [type, setType] = useState<CustomQuestionType>(
+    value?.type ?? (isSurveyQuestion ? 'rating' : 'short_text'),
+  );
+  const [privacy, setPrivacy] = useState<QuestionPrivacy>(
+    value?.privacy ?? (isSurveyQuestion ? 'normal' : 'personal'),
+  );
   const kept = value?.options ?? [];
   const [newOptions, setNewOptions] = useState(isNew ? 2 : 0);
   const formRef = useRef<HTMLFormElement>(null);
@@ -231,6 +242,7 @@ export function FieldForm({
         />
         <QuestionTypePicker
           value={type}
+          {...(isSurveyQuestion ? { types: SURVEY_QUESTION_TYPES } : {})}
           onChange={(next) => {
             setType(next);
             // A field that becomes a choice starts with two empty options.
@@ -241,7 +253,7 @@ export function FieldForm({
             canStoreFiles ? {} : { file_upload: t('questions.settings.uploadsUnavailable') }
           }
         />
-        <QuestionPrivacyPicker value={privacy} onChange={setPrivacy} />
+        {isSurveyQuestion ? null : <QuestionPrivacyPicker value={privacy} onChange={setPrivacy} />}
         {value?.readPermission === 'participants.view_health' ? (
           <p
             className="text-start text-sm text-muted-foreground"
