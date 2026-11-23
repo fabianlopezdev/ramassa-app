@@ -3,7 +3,8 @@
  *
  * A person whose only access is `onboarding.design` and `test_players.manage`
  * reaches the onboarding page, the two legal forms (RAPP-694, their own
- * boards since RAPP-696), the forms the team creates (RAPP-700), Dades de les jugadores (RAPP-650, its own page
+ * boards since RAPP-696), the forms the team creates (RAPP-700) and the surveys
+ * (RAPP-929), Dades de les jugadores (RAPP-650, its own page
  * since RAPP-654), the test players and her own account page (RAPP-634),
  * and every other admin URL sends her back. This is the screen half: the
  * database refuses her every other read and write on its own
@@ -50,9 +51,17 @@ function isLegalPath(pathname: string): boolean {
 
 const LEGAL_FORM_PATHS = ['/forms/authorization', '/forms/terms', '/forms/legal'] as const;
 
-/** The forms the team creates (RAPP-700): the list, each form and its screens. */
+/**
+ * The forms the team creates (RAPP-700): the list, each form and its screens,
+ * and Enquestes, the surveys' list (RAPP-929), whose surveys open as forms.
+ */
 function isCustomFormPath(pathname: string): boolean {
-  return pathname === '/forms/custom' || pathname.startsWith('/forms/custom/');
+  return (
+    pathname === '/forms/custom' ||
+    pathname.startsWith('/forms/custom/') ||
+    pathname === '/surveys' ||
+    pathname === '/surveys/'
+  );
 }
 
 /** Dades de les jugadores (RAPP-650, RAPP-654) and Dades legals (RAPP-699). */

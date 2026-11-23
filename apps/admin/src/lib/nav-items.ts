@@ -10,6 +10,7 @@
  */
 
 import {
+  BarChart3,
   BellRing,
   Building2,
   CalendarCheck,
@@ -219,6 +220,14 @@ export const STAFF_NAV_ITEMS = [
     anyPermission: CUSTOM_FORMS_PERMISSIONS,
   },
   {
+    // Surveys are forms of the engine (RAPP-929): listed with the forms, for whoever builds them.
+    to: '/surveys',
+    icon: BarChart3,
+    labelKey: 'nav:staff.surveys',
+    group: 'forms',
+    anyPermission: [...CUSTOM_FORMS_PERMISSIONS, 'surveys.manage', 'surveys.results'],
+  },
+  {
     // The entity referral form keeps its URL under the entities (RAPP-696).
     to: '/entities/referral-form',
     icon: ClipboardPen,
@@ -299,13 +308,6 @@ export const STAFF_NAV_ITEMS = [
     labelKey: 'nav:staff.feedback',
     group: 'app',
     anyPermission: ['feedback.view'],
-  },
-  {
-    to: '/surveys',
-    icon: ClipboardList,
-    labelKey: 'nav:staff.surveys',
-    group: 'app',
-    anyPermission: ['surveys.manage', 'surveys.results'],
   },
   {
     to: '/notifications',
