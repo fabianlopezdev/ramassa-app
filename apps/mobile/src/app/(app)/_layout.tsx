@@ -315,6 +315,7 @@ function AppNavigator() {
               <Stack.Screen name="guides/[categoryId]" />
               <Stack.Screen name="service-category/[categoryId]" />
               <Stack.Screen name="profile-language" />
+              <Stack.Screen name="profile-notifications" />
               <Stack.Screen name="profile-privacy" />
               <Stack.Screen name="profile-delete-data" />
               <Stack.Screen name="announcement/[id]" />

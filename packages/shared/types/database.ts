@@ -7149,6 +7149,10 @@ export type Database = {
         Args: { p_profile_id: string; p_object_key: string | null };
         Returns: undefined;
       };
+      set_own_push_notifications: {
+        Args: { p_enabled: boolean };
+        Returns: boolean;
+      };
       get_staff_cards: {
         Args: { p_profile_ids: string[] };
         Returns: {

@@ -59,7 +59,11 @@
     "data": "My details",
     "attendance": "My attendance",
     "language": "Language",
+    "notifications": "Notifications",
     "appLock": "App lock",
     "privacy": "Privacy and permissions"
-  }
+  },
+  "notificationsSwitch": "Get notifications",
+  "notificationsBlocked": "Notifications are turned off in your phone settings.",
+  "notificationsOpenSettings": "Open settings"
 }

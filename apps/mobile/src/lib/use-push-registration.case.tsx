@@ -12,6 +12,7 @@ const register = mock(async (id: string) => {
   void id;
 });
 const request = mock(async () => 'granted');
+const turnOn = mock(async () => undefined);
 mock.module('@ramassa/shared/auth', () => ({
   useAuth: () => ({ session: userId ? {} : null, user: userId ? { id: userId } : null }),
 }));
@@ -19,6 +20,7 @@ mock.module('./push-notifications', () => ({
   resolvePushRegistrationDecision: resolveDecision,
   registerPushToken: register,
   requestPushPermission: request,
+  turnOnOwnPushNotifications: turnOn,
 }));
 mock.module('./preview-mode', () => ({ usePreviewModeActive: () => preview }));
 mock.module('./preview-handover', () => ({ takePreviewHandover: () => false }));
@@ -38,6 +40,7 @@ beforeEach(() => {
   resolveDecision.mockImplementation(async () => ({ kind: 'request-permission' }));
   register.mockClear();
   request.mockClear();
+  turnOn.mockClear();
 });
 
 test('onboarding never prompts; arriving at Home explains first, acceptance asks the OS', async () => {
@@ -53,6 +56,8 @@ test('onboarding never prompts; arriving at Home explains first, acceptance asks
   expect(request).not.toHaveBeenCalled();
   await act(async () => result.current.acceptRationale());
   expect(request).toHaveBeenCalledTimes(1);
+  // Her yes also turns on the switch in her profile (RAPP-956).
+  expect(turnOn).toHaveBeenCalledTimes(1);
   expect(register).toHaveBeenCalledWith('player-1');
   expect(result.current.shouldShowRationale).toBe(false);
 });

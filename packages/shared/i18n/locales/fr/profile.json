@@ -59,7 +59,11 @@
     "data": "Mes données",
     "attendance": "Ma présence",
     "language": "Langue",
+    "notifications": "Notifications",
     "appLock": "Verrouillage de l’app",
     "privacy": "Confidentialité et autorisations"
-  }
+  },
+  "notificationsSwitch": "Recevoir des notifications",
+  "notificationsBlocked": "Les notifications sont désactivées dans les réglages du téléphone.",
+  "notificationsOpenSettings": "Ouvre les réglages"
 }

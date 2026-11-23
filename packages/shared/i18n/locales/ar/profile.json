@@ -59,7 +59,11 @@
     "data": "بياناتي",
     "attendance": "حضوري",
     "language": "اللغة",
+    "notifications": "التنبيهات",
     "appLock": "قفل التطبيق",
     "privacy": "الخصوصية والأذونات"
-  }
+  },
+  "notificationsSwitch": "تلقي التنبيهات",
+  "notificationsBlocked": "التنبيهات متوقفة في إعدادات الهاتف.",
+  "notificationsOpenSettings": "فتح الإعدادات"
 }

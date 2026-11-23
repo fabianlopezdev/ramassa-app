@@ -60,6 +60,7 @@ const LICENCE = {
  * ("clipboard") and never the job ("to do").
  */
 const ICONS: Readonly<Record<string, string>> = {
+  bell: 'bell',
   book: 'book',
   briefcase: 'case',
   buildings: 'buildings',
