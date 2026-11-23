@@ -5,8 +5,11 @@ import {
 import { KnowledgeArticle } from '@/components/knowledge/knowledge-article';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { PhotoHeroScreen } from '@/components/layout/photo-hero';
+import { resolveMediaImageSource } from '@/lib/media-source';
 import { usePlayerKnowledgeArticle } from '@/lib/player-knowledge';
 import { useStaffCards } from '@/lib/staff-cards';
+import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useMarkArticleSeen } from '@/lib/use-tab-news';
 import { useLocalSearchParams } from 'expo-router';
@@ -51,6 +54,16 @@ export default function PlayerKnowledgeDetailScreen() {
       void WebBrowser.openBrowserAsync(article.external_url);
     }
   }, [article?.external_url]);
+  const accessToken = session?.access_token;
+  const coverSource = useMemo(
+    () =>
+      resolveMediaImageSource({
+        objectKeyOrUrl: article?.image_url ?? null,
+        mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
+        accessToken,
+      }),
+    [accessToken, article?.image_url],
+  );
   const { refetch } = query;
   const retry = useCallback(() => void refetch(), [refetch]);
   const insets = useSafeAreaInsets();
@@ -88,6 +101,42 @@ export default function PlayerKnowledgeDetailScreen() {
     );
   }
 
+  const hasArticle =
+    article !== undefined && title !== undefined && category !== undefined && body !== undefined;
+  const articleView = hasArticle ? (
+    <KnowledgeArticle
+      article={{
+        title: article.title,
+        categoryName: article.content_type === 'participant_story' ? null : article.category.name,
+        authorFirstName: article.author_first_name ?? staffAuthor?.firstName ?? null,
+        authorAvatarKey: staffAuthor?.avatarKey ?? null,
+        body: article.body,
+        // A cover opens the screen as its photo, so the text does not repeat it (RAPP-915).
+        imageUrl: coverSource === null ? article.image_url : null,
+        videoUrl: article.video_url,
+        externalUrl: article.external_url,
+        storyImageUrls: article.story_image_urls,
+      }}
+      accessToken={accessToken}
+      onOpenExternal={openExternalResource}
+    />
+  ) : null;
+
+  // A story or a guide with a cover opens on it, the reference of the story
+  // layout every screen with a photo shares (RAPP-915).
+  if (hasArticle && coverSource !== null) {
+    return (
+      <PhotoHeroScreen
+        testID="knowledge-detail-screen"
+        source={coverSource}
+        photoKey={article.image_url ?? article.id}
+        accessibilityLabel={title.text}
+      >
+        <PageWidth className="gap-lg">{articleView}</PageWidth>
+      </PhotoHeroScreen>
+    );
+  }
+
   return (
     <>
       <NativeScreenHeader surface="white" />
@@ -99,10 +148,7 @@ export default function PlayerKnowledgeDetailScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         <PageWidth className="gap-lg">
-          {article === undefined ||
-          title === undefined ||
-          category === undefined ||
-          body === undefined ? (
+          {articleView ?? (
             <View className="items-center gap-md py-3xl">
               <Text
                 accessibilityRole="header"
@@ -114,23 +160,6 @@ export default function PlayerKnowledgeDetailScreen() {
                 {t('knowledge:playerEmptyBody')}
               </Text>
             </View>
-          ) : (
-            <KnowledgeArticle
-              article={{
-                title: article.title,
-                categoryName:
-                  article.content_type === 'participant_story' ? null : article.category.name,
-                authorFirstName: article.author_first_name ?? staffAuthor?.firstName ?? null,
-                authorAvatarKey: staffAuthor?.avatarKey ?? null,
-                body: article.body,
-                imageUrl: article.image_url,
-                videoUrl: article.video_url,
-                externalUrl: article.external_url,
-                storyImageUrls: article.story_image_urls,
-              }}
-              accessToken={session?.access_token}
-              onOpenExternal={openExternalResource}
-            />
           )}
         </PageWidth>
       </ScrollView>

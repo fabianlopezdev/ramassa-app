@@ -8,6 +8,10 @@
  * The header has no line under it and takes the colour of the screen below,
  * so the two read as one surface (RAPP-820). Most pushed screens sit on the
  * page colour; a screen on white passes `surface="white"`.
+ *
+ * A screen that opens on a photo (RAPP-915) passes `overPhoto`: the header
+ * draws no bar and no title, so the photo runs up under it and its back
+ * button floats on the photo.
  */
 import { Stack } from 'expo-router/stack';
 import { useMemo } from 'react';
@@ -17,17 +21,29 @@ const headerStyles = {
   page: { backgroundColor: tokens.colors.surface.page },
   white: { backgroundColor: tokens.colors.white },
 } as const;
+const overPhotoOptions = {
+  headerShown: true,
+  headerBackButtonDisplayMode: 'minimal' as const,
+  headerShadowVisible: false,
+  headerTransparent: true,
+  title: '',
+  // No soft edge under the bar on iOS 26, which would blur the top of the photo.
+  scrollEdgeEffects: { top: 'hidden' as const },
+};
 
 export function NativeScreenHeader({
   title = '',
   surface = 'page',
   backgroundColor,
+  overPhoto = false,
 }: {
   readonly title?: string;
   /** The background of the screen under the header. */
   readonly surface?: keyof typeof headerStyles;
   /** A screen on its own colour, such as an open Ajuda category's wash (RAPP-870). */
   readonly backgroundColor?: string;
+  /** The screen starts with a photo at the very top, under the header. */
+  readonly overPhoto?: boolean;
 }) {
   const options = useMemo(
     () => ({
@@ -39,5 +55,5 @@ export function NativeScreenHeader({
     }),
     [backgroundColor, surface, title],
   );
-  return <Stack.Screen options={options} />;
+  return <Stack.Screen options={overPhoto ? overPhotoOptions : options} />;
 }

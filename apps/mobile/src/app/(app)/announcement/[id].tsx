@@ -1,4 +1,7 @@
-import { AnnouncementArticle } from '@/components/announcements/announcement-article';
+import {
+  AnnouncementArticle,
+  type AnnouncementArticleContent,
+} from '@/components/announcements/announcement-article';
 import { useAnnouncementWash } from '@/components/announcements/category-filters';
 import {
   AnnouncementFeedError,
@@ -6,6 +9,7 @@ import {
 } from '@/components/announcements/feed-states';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { PhotoHeroScreen } from '@/components/layout/photo-hero';
 import { usePlayerAnnouncements } from '@/lib/announcement-feed';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
@@ -16,6 +20,7 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { AnnouncementListRow } from '@ramassa/shared/announcements';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
@@ -88,6 +93,32 @@ export default function AnnouncementDetailScreen() {
     );
   }
 
+  const hasArticle = announcement !== undefined && title !== undefined && body !== undefined;
+  // An avís with a photo opens on it, its text on a sheet in the wash of its
+  // kind, and the text no longer repeats the photo (RAPP-915).
+  if (hasArticle && imageSource !== null) {
+    return (
+      <PhotoHeroScreen
+        testID="announcement-detail-screen"
+        source={imageSource}
+        photoKey={announcement.image_url ?? announcement.id}
+        accessibilityLabel={
+          (announcement.image_alt === null
+            ? undefined
+            : resolveLocalizedText(announcement.image_alt, language)?.text) ?? title.text
+        }
+        sheetColor={wash}
+      >
+        <PageWidth className="gap-lg">
+          <AnnouncementArticle
+            announcement={announcementArticleContent(announcement)}
+            imageSource={null}
+          />
+        </PageWidth>
+      </PhotoHeroScreen>
+    );
+  }
+
   return (
     <>
       <NativeScreenHeader surface="white" backgroundColor={wash} />
@@ -100,7 +131,12 @@ export default function AnnouncementDetailScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         <PageWidth className="gap-lg">
-          {announcement === undefined || title === undefined || body === undefined ? (
+          {hasArticle ? (
+            <AnnouncementArticle
+              announcement={announcementArticleContent(announcement)}
+              imageSource={imageSource}
+            />
+          ) : (
             <View className="flex-1 items-center justify-center gap-md py-3xl">
               <Text
                 accessibilityRole="header"
@@ -112,21 +148,20 @@ export default function AnnouncementDetailScreen() {
                 {t('emptyBody')}
               </Text>
             </View>
-          ) : (
-            <AnnouncementArticle
-              announcement={{
-                category: announcement.category,
-                isPinned: announcement.is_pinned,
-                title: announcement.title,
-                body: announcement.body,
-                imageAlt: announcement.image_alt,
-                shownAt: announcement.published_at ?? announcement.created_at,
-              }}
-              imageSource={imageSource}
-            />
           )}
         </PageWidth>
       </ScrollView>
     </>
   );
+}
+
+function announcementArticleContent(announcement: AnnouncementListRow): AnnouncementArticleContent {
+  return {
+    category: announcement.category,
+    isPinned: announcement.is_pinned,
+    title: announcement.title,
+    body: announcement.body,
+    imageAlt: announcement.image_alt,
+    shownAt: announcement.published_at ?? announcement.created_at,
+  };
 }

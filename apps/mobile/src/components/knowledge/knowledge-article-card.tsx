@@ -1,18 +1,13 @@
 import { Badge } from '@/components/layout/badge';
 import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
+import { RaisedCardPhoto, useRaisedCardPhotoSource } from '@/components/layout/raised-card-photo';
 import { PersonAvatar } from '@/components/people/person-avatar';
-import { resolveMediaImageSource } from '@/lib/media-source';
-import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { Image } from 'expo-image';
 import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import type { KnowledgeArticleListRow, KnowledgeContentType } from '@ramassa/shared/knowledge';
-import { tokens } from '@ramassa/shared/tokens';
-
-const imageStyle = { height: tokens.contentWidth.form / 3, width: '100%' } as const;
 
 function typeTranslationKey(contentType: KnowledgeContentType) {
   if (contentType === 'tutorial') return 'knowledge:typeTutorial' as const;
@@ -61,17 +56,8 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
   const languageFontClass = useLanguageFontClass();
   const title = resolveLocalizedText(article.title, language);
   const category = resolveLocalizedText(article.category.name, language);
-  const imageSource = useMemo(
-    () =>
-      compact
-        ? null
-        : resolveMediaImageSource({
-            objectKeyOrUrl: article.image_url,
-            mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
-            accessToken,
-          }),
-    [accessToken, article.image_url, compact],
-  );
+  const coverSource = useRaisedCardPhotoSource(article.image_url, accessToken);
+  const imageSource = compact ? null : coverSource;
   const handlePress = useCallback(() => onOpen(article.id), [article.id, onOpen]);
   const badge = useMemo<RaisedCardBadge | null>(
     () => (unseenLabel === null ? null : { label: unseenLabel, tone: 'brand' }),
@@ -108,13 +94,10 @@ export const KnowledgeArticleCard = memo(function KnowledgeArticleCard({
       }
       media={
         imageSource === null ? null : (
-          <Image
+          <RaisedCardPhoto
             source={imageSource}
             accessibilityLabel={title.text}
-            cachePolicy="memory-disk"
-            contentFit="cover"
-            recyclingKey={article.id}
-            style={imageStyle}
+            recyclingKey={article.image_url ?? article.id}
           />
         )
       }

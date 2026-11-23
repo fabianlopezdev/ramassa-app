@@ -7,9 +7,11 @@ import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { ForumFlagButton } from '@/components/forum/forum-flag-button';
 import { ForumFlagDialog } from '@/components/forum/forum-flag-dialog';
-import { GalleryPhotoStage, GalleryVideoStage } from '@/components/gallery/gallery-media-stage';
+import { GalleryVideoStage } from '@/components/gallery/gallery-media-stage';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { PhotoHeroScreen } from '@/components/layout/photo-hero';
+import { formatGalleryDate } from '@/lib/gallery-date';
 import { playHaptic } from '@/lib/haptics/haptics';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { isNetworkStateOnline } from '@/lib/network-status';
@@ -25,6 +27,7 @@ import { Alert, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } fro
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import type { ForumFlagInput } from '@ramassa/shared/forum';
+import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
 import type { MediaPrivacy } from '@ramassa/shared/media';
 import { buildMediaObjectUrl } from '@ramassa/shared/upload-client';
 
@@ -36,7 +39,7 @@ const styles = StyleSheet.create({
 export default function GalleryItemScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { back, push } = useRouter();
-  const { t } = useTranslation(['gallery', 'forum']);
+  const { t, i18n } = useTranslation(['gallery', 'forum']);
   const languageFontClass = useLanguageFontClass();
   const { user, role, session } = useAuth();
   const isOnline = isNetworkStateOnline(useNetworkState());
@@ -145,6 +148,89 @@ export default function GalleryItemScreen() {
     );
   }
 
+  const flagDialog = (
+    <ForumFlagDialog target={flagTarget} onClose={closeFlagDialog} onConfirmed={confirmFlag} />
+  );
+  // Who shared it, with the report flag at the end of the line for anyone who
+  // may report it (RAPP-892).
+  const sharedByLine =
+    item === undefined ? null : canManage ? (
+      <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+        {t('gallery:mediaBy', { name: item.uploader_first_name })}
+      </Text>
+    ) : (
+      <View className="flex-row items-center gap-sm">
+        <Text className={`flex-1 text-start text-sm text-neutral-600 ${languageFontClass}`}>
+          {t('gallery:mediaBy', { name: item.uploader_first_name })}
+        </Text>
+        <ForumFlagButton
+          testID="gallery-flag"
+          accessibilityLabel={t('gallery:flag')}
+          onPress={flagMedia}
+        />
+      </View>
+    );
+  const ownerControls = canManage ? (
+    <>
+      <View
+        testID="gallery-privacy-picker"
+        accessibilityRole="radiogroup"
+        accessibilityLabel={t('gallery:privacy')}
+        className="gap-sm"
+      >
+        {MEDIA_PRIVACY_OPTIONS.map(renderPrivacyOption)}
+      </View>
+      <RaisedActionButton
+        testID="gallery-delete"
+        tone="danger"
+        label={t('gallery:delete')}
+        onPress={confirmDelete}
+        isDisabled={deleteMutation.isPending}
+      />
+    </>
+  ) : null;
+
+  // A photo opens on the story layout (RAPP-915): the photo at the top, a tap
+  // on it opens the lightbox, and its title and date are on the sheet under it.
+  if (item !== undefined && item.file_type !== 'video' && imageSource !== null) {
+    const photoLabel = item.caption ?? t('gallery:mediaBy', { name: item.uploader_first_name });
+    return (
+      <>
+        <PhotoHeroScreen
+          testID="gallery-detail-screen"
+          source={imageSource}
+          photoKey={item.file_url}
+          accessibilityLabel={photoLabel}
+          onOpenPhoto={openPhoto}
+        >
+          <PageWidth className="gap-lg">
+            <View className="gap-xs">
+              {item.caption === null ? null : (
+                <Text
+                  testID="gallery-full-title"
+                  accessibilityRole="header"
+                  style={styles.caption}
+                  className={`text-start text-2xl font-bold text-neutral-900 ${languageFontClass}`}
+                >
+                  {item.caption}
+                </Text>
+              )}
+              <Text
+                testID="gallery-detail-date"
+                className={`text-start text-sm text-neutral-600 ${languageFontClass}`}
+              >
+                {formatGalleryDate(item.created_at, i18n.resolvedLanguage ?? DEFAULT_LANGUAGE)}
+              </Text>
+            </View>
+            {sharedByLine}
+            {ownerControls}
+          </PageWidth>
+        </PhotoHeroScreen>
+        {flagDialog}
+      </>
+    );
+  }
+
   return (
     <>
       <NativeScreenHeader surface="white" />
@@ -183,8 +269,8 @@ export default function GalleryItemScreen() {
             </View>
           ) : (
             <>
-              {/* The photo or video runs from edge to edge; the text under it
-                  keeps the screen's side margins (RAPP-897). */}
+              {/* A video runs from edge to edge with its title on it; the text
+                  under it keeps the screen's side margins (RAPP-897). */}
               {isPlayableVideo && videoSource !== null ? (
                 <GalleryVideoStage
                   source={videoSource}
@@ -196,42 +282,11 @@ export default function GalleryItemScreen() {
                   maxHeight={mediaMaxHeight}
                   onTitleCutChange={setIsTitleCut}
                 />
-              ) : imageSource === null ? null : (
-                <GalleryPhotoStage
-                  source={imageSource}
-                  accessibilityLabel={
-                    item.caption ?? t('gallery:mediaBy', { name: item.uploader_first_name })
-                  }
-                  title={item.caption}
-                  fontClass={languageFontClass}
-                  maxHeight={mediaMaxHeight}
-                  onTitleCutChange={setIsTitleCut}
-                  flagAccessibilityLabel={canManage ? null : t('gallery:flag')}
-                  onFlag={flagMedia}
-                  onOpen={openPhoto}
-                />
-              )}
+              ) : null}
               <View className="gap-lg px-lg">
                 {/* The player's own controls cover the bottom of a video, so its
                   flag ends the line of who shared it, under the video (RAPP-892). */}
-                {isPlayableVideo && !canManage ? (
-                  <View className="flex-row items-center gap-sm">
-                    <Text
-                      className={`flex-1 text-start text-sm text-neutral-600 ${languageFontClass}`}
-                    >
-                      {t('gallery:mediaBy', { name: item.uploader_first_name })}
-                    </Text>
-                    <ForumFlagButton
-                      testID="gallery-flag"
-                      accessibilityLabel={t('gallery:flag')}
-                      onPress={flagMedia}
-                    />
-                  </View>
-                ) : (
-                  <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-                    {t('gallery:mediaBy', { name: item.uploader_first_name })}
-                  </Text>
-                )}
+                {sharedByLine}
                 {item.caption === null || !isTitleCut ? null : (
                   <Text
                     testID="gallery-full-title"
@@ -241,30 +296,12 @@ export default function GalleryItemScreen() {
                     {item.caption}
                   </Text>
                 )}
-                {canManage ? (
-                  <View
-                    testID="gallery-privacy-picker"
-                    accessibilityRole="radiogroup"
-                    accessibilityLabel={t('gallery:privacy')}
-                    className="gap-sm"
-                  >
-                    {MEDIA_PRIVACY_OPTIONS.map(renderPrivacyOption)}
-                  </View>
-                ) : null}
-                {canManage ? (
-                  <RaisedActionButton
-                    testID="gallery-delete"
-                    tone="danger"
-                    label={t('gallery:delete')}
-                    onPress={confirmDelete}
-                    isDisabled={deleteMutation.isPending}
-                  />
-                ) : null}
+                {ownerControls}
               </View>
             </>
           )}
         </PageWidth>
-        <ForumFlagDialog target={flagTarget} onClose={closeFlagDialog} onConfirmed={confirmFlag} />
+        {flagDialog}
       </ScrollView>
     </>
   );

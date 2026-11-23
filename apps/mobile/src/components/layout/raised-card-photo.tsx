@@ -1,7 +1,8 @@
 /**
- * The photo across the top of a raised card, for its `media` slot. A forum
- * post and an avís with a photo share it (RAPP-911), so both cards show their
- * photo the same way and reuse the same cached image as a list scrolls.
+ * The photo across the top of a raised card, for its `media` slot. Every card
+ * with a photo shows it through this piece: a forum post and an avís
+ * (RAPP-911), a guide, a story and a service (RAPP-915), so they all show
+ * their photo the same way and reuse the same cached image as a list scrolls.
  *
  * The photo keeps its own shape (RAPP-914): it spans the card's width at its
  * own aspect ratio, uncropped. A tall portrait photo stops at a maximum height
@@ -10,25 +11,20 @@
  * remembered, so a card scrolled back into view opens at its real size.
  */
 import { resolveMediaImageSource } from '@/lib/media-source';
+import { useRememberedPhotoShape } from '@/lib/remembered-photo-shape';
 import { mobileClientEnv } from '@/lib/supabase';
-import { Image, type ImageLoadEventData, type ImageSource } from 'expo-image';
-import { memo, useCallback, useMemo, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { Image, type ImageSource } from 'expo-image';
+import { memo, useMemo } from 'react';
+import type { ImageStyle } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 export const RAISED_CARD_PHOTO_MAX_HEIGHT = tokens.spacing['3xl'] * 6;
-const PLACEHOLDER_ASPECT_RATIO = 4 / 3;
 
-/** Each photo's width over height once it has loaded, by its recycling key. */
-const loadedAspectRatios = new Map<string, number>();
-
-const styles = StyleSheet.create({
-  photo: {
-    width: '100%',
-    maxHeight: RAISED_CARD_PHOTO_MAX_HEIGHT,
-    alignSelf: 'center',
-  },
-});
+const photoStyle: ImageStyle = {
+  width: '100%',
+  maxHeight: RAISED_CARD_PHOTO_MAX_HEIGHT,
+  alignSelf: 'center',
+};
 
 /**
  * The stored key or link of a card's photo as an image source. Null when there
@@ -49,11 +45,6 @@ export function useRaisedCardPhotoSource(
   );
 }
 
-interface MeasuredShape {
-  readonly recyclingKey: string;
-  readonly aspectRatio: number;
-}
-
 export const RaisedCardPhoto = memo(function RaisedCardPhoto({
   source,
   recyclingKey,
@@ -65,23 +56,8 @@ export const RaisedCardPhoto = memo(function RaisedCardPhoto({
   /** The photo's alt text. The card's own label is what a screen reader says. */
   readonly accessibilityLabel?: string;
 }) {
-  const [measured, setMeasured] = useState<MeasuredShape | null>(null);
-  // A recycled list cell keeps its state from the photo it showed before, so
-  // the shape only counts while it belongs to this photo.
-  const aspectRatio =
-    measured?.recyclingKey === recyclingKey
-      ? measured.aspectRatio
-      : (loadedAspectRatios.get(recyclingKey) ?? PLACEHOLDER_ASPECT_RATIO);
-  const shapeStyle = useMemo(() => [styles.photo, { aspectRatio }], [aspectRatio]);
-  const rememberShape = useCallback(
-    ({ source: loaded }: ImageLoadEventData) => {
-      if (loaded.width <= 0 || loaded.height <= 0) return;
-      const loadedAspectRatio = loaded.width / loaded.height;
-      loadedAspectRatios.set(recyclingKey, loadedAspectRatio);
-      setMeasured({ recyclingKey, aspectRatio: loadedAspectRatio });
-    },
-    [recyclingKey],
-  );
+  const { aspectRatio, rememberShape } = useRememberedPhotoShape(recyclingKey);
+  const shapeStyle = useMemo<ImageStyle>(() => ({ ...photoStyle, aspectRatio }), [aspectRatio]);
   return (
     <Image
       source={source}

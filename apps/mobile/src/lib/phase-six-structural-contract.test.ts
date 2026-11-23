@@ -33,6 +33,14 @@ describe('Phase 6 structural polish contract', () => {
   test('every player-facing scrollable uses automatic native insets', async () => {
     for (const path of scrollableSources) {
       const source = await readMobileSource(path);
+      // A list that opens on the shared photo hero (RAPP-915) starts under the
+      // status bar only while it has the photo; otherwise it keeps the native insets.
+      if (source.includes('<PhotoHero\n') || source.includes('<PhotoHero ')) {
+        expect(source, path).toContain(
+          "contentInsetAdjustmentBehavior={hasPhotoHero ? 'never' : 'automatic'}",
+        );
+        continue;
+      }
       expect(source, path).toContain('contentInsetAdjustmentBehavior="automatic"');
     }
   });

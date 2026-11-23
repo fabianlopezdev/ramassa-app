@@ -4,13 +4,12 @@
  * It sits at the bottom-start of the picture in white, on a dark fade that
  * covers only the band behind the text, so it reads on any picture. A long
  * title shows three lines; `onCutChange` tells the screen when it was cut, so
- * the screen can print the whole text under the media. A control at the end,
- * such as the report flag on a photo, takes its own touches; every other touch
- * passes through to the media under it.
+ * the screen can print the whole text under the media. Every touch passes
+ * through to the media under it.
  */
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { GALLERY_MEDIA_TITLE_MAX_LINES } from '@/lib/gallery-media-frame';
-import { memo, useCallback, type ReactNode } from 'react';
+import { memo, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -40,16 +39,13 @@ export const GalleryMediaTitle = memo(function GalleryMediaTitle({
   title,
   fontClass,
   onCutChange,
-  endAction = null,
   style,
 }: {
-  /** Null for an item without a title: only the control at the end is drawn. */
+  /** Null for an item without a title: nothing is drawn. */
   readonly title: string | null;
   readonly fontClass: string;
   /** Called with whether the whole title needs more than the lines shown. */
   readonly onCutChange: (isCut: boolean) => void;
-  /** A control at the bottom-end corner, such as the report flag on a photo. */
-  readonly endAction?: ReactNode;
   /** Where the picture's own bottom edge is inside its frame. */
   readonly style?: StyleProp<ViewStyle>;
 }) {
@@ -95,7 +91,6 @@ export const GalleryMediaTitle = memo(function GalleryMediaTitle({
             </View>
           )}
         </View>
-        {endAction}
       </View>
     </View>
   );

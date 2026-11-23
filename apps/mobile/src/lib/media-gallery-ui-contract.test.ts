@@ -23,6 +23,10 @@ const photoLightbox = readFileSync(
   new URL('../components/media/photo-lightbox.tsx', import.meta.url),
   'utf8',
 );
+const photoHero = readFileSync(
+  new URL('../components/layout/photo-hero.tsx', import.meta.url),
+  'utf8',
+);
 const photoRoute = readFileSync(
   new URL('../app/(app)/gallery/photo/[id].tsx', import.meta.url),
   'utf8',
@@ -94,7 +98,11 @@ test('item view exposes privacy editing, deletion, flagging, and video playback'
 test('an opened photo or video runs across the full screen width, in its own shape (RAPP-897)', () => {
   // The scroll content has no side padding; the text under the media brings its own.
   expect(item).not.toContain('contentContainerClassName="grow px-lg py-lg"');
-  expect(item).toContain('<GalleryPhotoStage');
+  // A photo opens on the shared story layout, its title and date on the sheet (RAPP-915).
+  expect(item).toContain('<PhotoHeroScreen');
+  expect(item).toContain('testID="gallery-detail-date"');
+  expect(item).toContain('formatGalleryDate(item.created_at');
+  expect(item).not.toContain('GalleryPhotoStage');
   expect(item).toContain('<GalleryVideoStage');
   expect(item).toMatch(/<View className="gap-lg px-lg[^"]*">/);
   expect(mediaStage).toContain('galleryMediaFrameHeight');
@@ -118,12 +126,13 @@ test('the title sits on the media, at most three lines; the first tap on a video
 });
 
 test('a tap on an opened photo opens it at full screen in the lightbox (RAPP-913)', () => {
-  expect(mediaStage).toContain('testID="gallery-photo-open"');
-  expect(mediaStage).toContain('accessibilityRole="imagebutton"');
-  expect(mediaStage).toContain('onPress={onOpen}');
+  // The photo at the top of the story layout opens it (RAPP-915).
+  expect(photoHero).toContain('testID="photo-hero-open"');
+  expect(photoHero).toContain('accessibilityRole="imagebutton"');
+  expect(photoHero).toContain('onPress={onOpenPhoto}');
   expect(mediaStage).not.toContain('toggleTitle');
   expect(item).toContain("pathname: '/gallery/photo/[id]'");
-  expect(item).toContain('onOpen={openPhoto}');
+  expect(item).toContain('onOpenPhoto={openPhoto}');
   expect(appLayout).toContain(
     '<Stack.Screen name="gallery/photo/[id]" options={photoLightboxOptions} />',
   );
@@ -144,13 +153,14 @@ test('a tap on an opened photo opens it at full screen in the lightbox (RAPP-913
   expect(photoLightbox).toContain('tokens.colors.black');
 });
 
-test('the media stage keeps the report flag on a photo, the labels and the right-to-left layout (RAPP-897)', () => {
-  expect(mediaStage).toContain('testID="gallery-flag"');
+test('the item keeps the report flag, the labels and the right-to-left layout (RAPP-897)', () => {
+  // The flag ends the line of who shared it, under a photo or a video (RAPP-915).
+  expect(item).toContain('testID="gallery-flag"');
   expect(mediaStage).toContain('containedPictureCornerOffsets');
   expect(mediaStage).toContain('accessibilityLabel={accessibilityLabel}');
   // The tap layers are not screen reader stops; the photo, the player and the flag are.
   expect(mediaStage).toContain('accessible={false}');
-  for (const source of [mediaStage, mediaTitle, galleryTile, photoLightbox]) {
+  for (const source of [mediaStage, mediaTitle, galleryTile, photoLightbox, photoHero]) {
     expect(source).not.toMatch(
       /\b(left|right|marginLeft|marginRight|paddingLeft|paddingRight)\b\s*:/,
     );

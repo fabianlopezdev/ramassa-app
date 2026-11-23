@@ -1,15 +1,8 @@
 import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
-import { resolveMediaImageSource } from '@/lib/media-source';
-import { mobileClientEnv } from '@/lib/supabase';
-import { Image } from 'expo-image';
+import { RaisedCardPhoto, useRaisedCardPhotoSource } from '@/components/layout/raised-card-photo';
 import { memo, useCallback, useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
-import { tokens } from '@ramassa/shared/tokens';
-
-const styles = StyleSheet.create({
-  image: { width: '100%', height: tokens.spacing['3xl'] * 3 },
-});
 
 export interface ServiceCardProps {
   readonly id: string;
@@ -49,11 +42,7 @@ export const ServiceCard = memo(function ServiceCard({
   unseenLabel = null,
 }: ServiceCardProps) {
   const { session } = useAuth();
-  const imageSource = resolveMediaImageSource({
-    objectKeyOrUrl: imageObjectKey,
-    mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
-    accessToken: session?.access_token,
-  });
+  const imageSource = useRaisedCardPhotoSource(imageObjectKey, session?.access_token);
   const handlePress = useCallback(() => onOpen(id), [id, onOpen]);
   // Her saved interest sits on the card's edge, like her sign-up on an activity
   // card. While the service is new to her, "Nou" takes that place (RAPP-873).
@@ -69,13 +58,10 @@ export const ServiceCard = memo(function ServiceCard({
       badge={badge}
       media={
         imageSource === null ? undefined : (
-          <Image
+          <RaisedCardPhoto
             source={imageSource}
             accessibilityLabel={imageAlt ?? title}
-            contentFit="cover"
-            cachePolicy="memory-disk"
             recyclingKey={imageObjectKey ?? id}
-            style={styles.image}
           />
         )
       }

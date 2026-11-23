@@ -40,6 +40,7 @@ export function ActionScreen({
   actionTestID,
   className,
   backgroundColor,
+  isUnderFloatingHeader = false,
   children,
 }: {
   /** The call to action, or nothing when the screen has none right now. */
@@ -49,12 +50,19 @@ export function ActionScreen({
   readonly className?: string;
   /** A screen on its own colour, such as a forum post on its category's wash (RAPP-893). */
   readonly backgroundColor?: string;
+  /**
+   * The screen opens on a photo under a header with no bar (RAPP-915), so
+   * this view starts at the top of the screen.
+   */
+  readonly isUnderFloatingHeader?: boolean;
   readonly children: ReactNode;
 }) {
   // The keyboard is measured from the top of the screen and this view starts
-  // under the native header. With the keyboard up the home indicator's room
-  // under the action is not needed, so on iOS the action sits right on the keys.
-  const headerHeight = use(HeaderHeightContext) ?? 0;
+  // under the native header, or at the top under a floating one. With the
+  // keyboard up the home indicator's room under the action is not needed, so
+  // on iOS the action sits right on the keys.
+  const nativeHeaderHeight = use(HeaderHeightContext) ?? 0;
+  const headerHeight = isUnderFloatingHeader ? 0 : nativeHeaderHeight;
   const { bottom } = useSafeAreaInsets();
   const keyboardOffset = headerHeight - (process.env.EXPO_OS === 'ios' ? bottom : 0);
   const hasAction = action !== null && action !== undefined && action !== false;
