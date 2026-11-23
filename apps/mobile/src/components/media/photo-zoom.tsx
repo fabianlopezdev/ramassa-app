@@ -29,18 +29,23 @@
 import { useEntrance } from '@/components/motion/fade-slide-in';
 import { arrivesByPhotoZoom, withPhotoZoomArrival } from '@/lib/photo-zoom-arrival';
 import { Image, type ImageProps } from 'expo-image';
-import { Link, useIsFocused, useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import {
+  Link,
+  useIsFocused,
+  useLocalSearchParams,
+  usePreventRemove,
+  useRouter,
+  type Href,
+} from 'expo-router';
 import {
   createContext,
   use,
   useCallback,
   useEffect,
-  useRef,
   useState,
   type ReactElement,
   type ReactNode,
 } from 'react';
-import { BackHandler } from 'react-native';
 import Animated, {
   makeMutable,
   ReduceMotion,
@@ -260,28 +265,25 @@ export function usePhotoZoomSheet() {
     skip: !arrivesByZoom,
     continuesMove: true,
   });
-  // The Android back button and back gesture reach the app here first: the
-  // sheet leaves, then the screen goes back and the photo shrinks into its card.
-  const isFocused = useIsFocused();
-  const { back } = useRouter();
-  const isLeaving = useRef(false);
+  // Every way back holds the screen while its sheet leaves: the back arrow
+  // over the photo, the Android back button and the back gesture all remove
+  // the screen, so all of them meet here and run the one exit below.
+  const [isLeaving, setIsLeaving] = useState(false);
   // The photo goes back filled to its frame, the way the card shows it.
   const [fillsFrameToLeave, setFillsFrameToLeave] = useState(false);
-  useEffect(() => {
-    if (!arrivesByZoom || !isFocused) return;
-    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (isLeaving.current) return true;
-      isLeaving.current = true;
-      setFillsFrameToLeave(true);
-      progress.set(
-        withTiming(0, { duration: motionTokens.duration.fast }, () => {
-          runOnJS(back)();
-        }),
-      );
-      return true;
-    });
-    return () => subscription.remove();
-  }, [arrivesByZoom, back, isFocused, progress]);
+  const disablePrevention = usePreventRemove(arrivesByZoom && !isLeaving, ({ repeat }) => {
+    // The screen's native options change when the hold ends. Ending it before
+    // the sheet leaves lets that change land while the screen is still there:
+    // landing with the removal crashed Android's header (RAPP-920).
+    disablePrevention();
+    setIsLeaving(true);
+    setFillsFrameToLeave(true);
+    progress.set(
+      withTiming(0, { duration: motionTokens.duration.fast }, () => {
+        runOnJS(repeat)();
+      }),
+    );
+  });
   const sheetStyle = useAnimatedStyle(() => ({
     opacity: progress.get(),
     transform: [{ translateY: (1 - progress.get()) * travel }],

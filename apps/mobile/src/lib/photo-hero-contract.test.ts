@@ -342,19 +342,19 @@ describe('on Android the sheet of the opened screen waits for the photo and leav
     expect(photoHero).toContain('<Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>');
   });
 
-  test('on the way back the sheet leaves first, then the photo moves', () => {
-    // The Android back button and gesture reach BackHandler first, while the screen is in front.
-    expect(photoZoom).toContain("BackHandler.addEventListener('hardwareBackPress', () => {");
-    expect(photoZoom).toContain('if (!arrivesByZoom || !isFocused) return;');
+  test('every way back runs one exit: the sheet leaves first, then the photo moves', () => {
+    // The back arrow over the photo, the Android back button and the gesture
+    // all remove the screen, so one hold catches every one of them.
+    expect(photoZoom.match(/usePreventRemove\(/g)?.length).toBe(1);
+    expect(photoZoom).toContain('usePreventRemove(arrivesByZoom && !isLeaving,');
+    expect(photoZoom).not.toContain('BackHandler');
+    // The hold ends before the sheet leaves, so the native options change
+    // lands while the screen is still there; the removal comes after.
     expect(photoZoom).toMatch(
-      /withTiming\(0, \{ duration: motionTokens\.duration\.fast \}, \(\) => \{\s*runOnJS\(back\)\(\);/,
+      /disablePrevention\(\);\s*setIsLeaving\(true\);\s*setFillsFrameToLeave\(true\);\s*progress\.set\(\s*withTiming\(0, \{ duration: motionTokens\.duration\.fast \}, \(\) => \{\s*runOnJS\(repeat\)\(\);/,
     );
     // A tall photo goes back filled to its frame, the way the card shows it.
-    expect(photoZoom).toContain('setFillsFrameToLeave(true);');
     expect(photoHero).toContain('fillsFrame={zoomSheet.fillsFrameToLeave}');
-    // usePreventRemove changes the screen's native options as it goes, and on
-    // Android that update reached the header of a screen being removed.
-    expect(photoZoom).not.toContain('usePreventRemove(');
   });
 
   test('the card and the gallery tile measure the photo, so it lands on the final frame', () => {
