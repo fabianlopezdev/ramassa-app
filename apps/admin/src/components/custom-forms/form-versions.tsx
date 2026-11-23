@@ -33,11 +33,14 @@ export interface FormVersionGroup {
 
 export function FormVersions({
   title,
+  description,
   draft,
   groups,
   testId,
 }: {
   readonly title: string;
+  /** One line under the title saying what the panel is for (RAPP-923). */
+  readonly description?: string;
   /** The draft waiting to be published; null when there is none. */
   readonly draft: {
     /** When it was last saved; null when the form does not keep it. */
@@ -74,7 +77,12 @@ export function FormVersions({
     ));
   return (
     <section className="flex flex-col gap-2 rounded-xl border bg-card p-5" data-testid={testId}>
-      <h2 className="text-start text-base font-semibold">{title}</h2>
+      <div className="flex flex-col gap-1">
+        <h2 className="text-start text-base font-semibold">{title}</h2>
+        {description === undefined ? null : (
+          <p className="text-start text-sm text-muted-foreground">{description}</p>
+        )}
+      </div>
       {isEmpty ? (
         <p className="text-start text-sm text-muted-foreground">{t('authorizationNoVersions')}</p>
       ) : (

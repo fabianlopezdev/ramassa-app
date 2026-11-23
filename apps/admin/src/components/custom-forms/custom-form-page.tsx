@@ -2,8 +2,8 @@
  * One form (RAPP-700, RAPP-701): its board of screens, as Onboarding is
  * (RAPP-919). Onboarding's own board (`FormBoard`), each card opening its
  * screen in the shared screen editor, with the add card after the last; the
- * versions (and the seasons, for the season authorization) under it. The
- * header opens Configuració in a side panel (`FormSettingsSheet`) and, for a
+ * versions (and the seasons, for the season authorization) in a row above it
+ * (RAPP-923). The header opens Configuració in a side panel (`FormSettingsSheet`) and, for a
  * team form, its Respostes on their own page (`CustomFormResponsesPage`).
  *
  * Every save is a draft: players see the version published last. Publica
@@ -216,7 +216,7 @@ export function CustomFormPage({
       {form === undefined || !data.canDesign ? null : (
         // Keyed by the form's version: a Publica starts from what the database holds.
         <div key={`${form.id}-${form.version}`} className="flex flex-col gap-6">
-          <FormScreensBoard data={data} form={form} />
+          {/* Its versions (and seasons) come first, in their own row (RAPP-923). */}
           {form.systemKey === 'season_authorization' ? (
             <div className="grid gap-6 lg:grid-cols-2">
               <CustomFormVersions data={data} form={form} />
@@ -225,6 +225,7 @@ export function CustomFormPage({
           ) : (
             <CustomFormVersions data={data} form={form} />
           )}
+          <FormScreensBoard data={data} form={form} />
         </div>
       )}
     </Page>
@@ -269,6 +270,7 @@ function CustomFormVersions({
   return (
     <FormVersions
       title={t('authorizationVersionsTitle')}
+      description={t('formVersionsIntro')}
       // Every save is a draft; a legal form's reaches the test players.
       draft={{ updatedAt: null, isSeenByTestPlayers: form.kind === 'legal' }}
       groups={groups.map((group) => {
@@ -317,6 +319,7 @@ function AppTermsVersions({ data }: { readonly data: CustomFormData }) {
   return (
     <FormVersions
       title={t('appTerms.versionsTitle')}
+      description={t('formVersionsIntro')}
       draft={draft === null ? null : { updatedAt: draft.updatedAt, isSeenByTestPlayers: true }}
       groups={[{ key: 'all', season: null, versions: published }]}
       testId="custom-form-versions"
@@ -366,6 +369,7 @@ function AuthorizationVersions({
   return (
     <FormVersions
       title={t('authorizationVersionsTitle')}
+      description={t('formVersionsIntro')}
       draft={
         draft === null
           ? null
