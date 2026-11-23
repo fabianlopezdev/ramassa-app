@@ -32,8 +32,7 @@ import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
 
 function successKey(state: EventSignupState): string {
-  if (state === 'confirmed') return 'playerSignupSuccessConfirmed';
-  if (state === 'interested') return 'playerSignupSuccessInterested';
+  if (state === 'confirmed' || state === 'interested') return 'playerSignupSuccessConfirmed';
   return 'playerSignupSuccessDeclined';
 }
 
@@ -168,7 +167,6 @@ export default function EventDetailScreen() {
                   </Text>
                 ) : (
                   <EventAnswerButtons
-                    signupMode={signupMode}
                     answer={currentAnswer}
                     isYesDisabled={isYesDisabled}
                     onAnswer={submitAnswer}

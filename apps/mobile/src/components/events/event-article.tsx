@@ -159,12 +159,10 @@ const ANSWER_ICONS = { yes: 'check-circle', no: 'close-circle' } as const;
  * starts. Without `onAnswer` the buttons only show, for a draft's preview.
  */
 export function EventAnswerButtons({
-  signupMode,
   answer,
   isYesDisabled = false,
   onAnswer,
 }: {
-  readonly signupMode: Exclude<EventSignupMode, 'none'>;
   readonly answer: EventSignupAnswer | null;
   readonly isYesDisabled?: boolean;
   readonly onAnswer?: (answer: EventSignupAnswer) => void;
@@ -180,7 +178,7 @@ export function EventAnswerButtons({
           testID="event-answer-yes"
           accessibilityRole="radio"
           icon={ANSWER_ICONS.yes}
-          label={signupMode === 'interest' ? t('playerInterestAction') : t('playerConfirmAction')}
+          label={t('playerConfirmAction')}
           isSelected={answer === 'yes'}
           isDisabled={isPreview || isYesDisabled}
           onPress={answerYes}
@@ -212,5 +210,5 @@ export function EventSignupPreview({ signupMode }: { readonly signupMode: EventS
       </Text>
     );
   }
-  return <EventAnswerButtons signupMode={signupMode} answer={null} />;
+  return <EventAnswerButtons answer={null} />;
 }

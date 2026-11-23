@@ -27,8 +27,8 @@ export function playerEventSignupLabel(
   state: EventSignupState | undefined,
   t: TFunction,
 ): string | null {
-  if (state === 'confirmed') return t('events:playerConfirmed');
-  if (state === 'interested') return t('events:playerInterested');
+  // Every activity asks whether she will go, so a sign-up of either mode reads as going.
+  if (state === 'confirmed' || state === 'interested') return t('events:playerConfirmed');
   if (state === 'cancelled') return t('events:playerDeclined');
   return null;
 }
