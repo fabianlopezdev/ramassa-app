@@ -90,6 +90,7 @@ function GalleryTileUnseenMark({ label }: { readonly label: string }) {
 export const GalleryTile = memo(function GalleryTile({
   id,
   objectKeyOrUrl,
+  photoKey,
   accessToken,
   accessibilityLabel,
   imageAlt,
@@ -102,6 +103,11 @@ export const GalleryTile = memo(function GalleryTile({
 }: {
   readonly id: string;
   readonly objectKeyOrUrl: string;
+  /**
+   * The photo's stored key, the one the screen it opens shows its photo under
+   * (RAPP-920). The tile itself may show a smaller copy.
+   */
+  readonly photoKey: string;
   readonly accessToken: string | undefined;
   readonly accessibilityLabel: string;
   readonly imageAlt: string;
@@ -143,7 +149,7 @@ export const GalleryTile = memo(function GalleryTile({
         {/* Grey while the photo loads, or when it has no source. */}
         <View className="bg-neutral-200" style={styles.tile}>
           {source === null ? null : (
-            <PhotoZoomSource>
+            <PhotoZoomSource photoKey={photoKey}>
               <Image
                 recyclingKey={id}
                 source={source}
@@ -160,7 +166,7 @@ export const GalleryTile = memo(function GalleryTile({
         <GalleryTileCaption title={title} date={date} fontClass={fontClass} />
       </SelectionChoiceSurface>
     ),
-    [accessibilityLabel, date, fontClass, id, imageAlt, source, title, unseenLabel],
+    [accessibilityLabel, date, fontClass, id, imageAlt, photoKey, source, title, unseenLabel],
   );
 
   return (

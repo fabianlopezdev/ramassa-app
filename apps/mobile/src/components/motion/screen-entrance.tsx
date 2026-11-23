@@ -16,13 +16,14 @@
  * onboarding step does: the column is inside the scroll view, so nothing that
  * measures the safe area ever moves.
  *
- * A screen that grows out of a card's photo (RAPP-916) has that zoom as its
- * entrance, so it does not fade or rise on top of it.
+ * A screen that grows out of a card's photo (RAPP-916, RAPP-920) has that
+ * zoom as its entrance, so it does not fade or rise on top of it.
  *
  * The entrance waits until the screen is in front of her. A tab bar prepares
  * its tabs before she opens them, and a screen can load under another one; an
  * entrance that ran then would be over before she looked.
  */
+import { PhotoZoomBoundary } from '@/components/media/photo-zoom';
 import { useEntrance } from '@/components/motion/fade-slide-in';
 import { NativeWindAnimatedView } from '@/components/motion/nativewind-animated-view';
 import { arrivesByPhotoZoom } from '@/lib/photo-zoom-arrival';
@@ -42,7 +43,7 @@ import { useAnimatedStyle } from 'react-native-reanimated';
 interface ScreenEntranceProps {
   /** The route name: one identity for a screen, whichever record it shows. */
   readonly screenId: string;
-  /** It grows out of a card's photo on iOS (RAPP-916), which is its entrance. */
+  /** It grows out of a card's photo (RAPP-916, RAPP-920), which is its entrance. */
   readonly arrivesByZoom?: boolean;
   readonly children: ReactNode;
 }
@@ -113,7 +114,16 @@ function RisingColumn({
   );
 }
 
-/** A navigator's `screenLayout`: every screen it opens gets the entrance. */
+/** A group of tabs, such as `(tabs)`: a navigator whose tabs bring their own boundary. */
+function isNavigatorGroup(routeName: string): boolean {
+  return routeName.startsWith('(') && routeName.endsWith(')');
+}
+
+/**
+ * A navigator's `screenLayout`: every screen it opens gets the entrance, and
+ * the boundary a card's photo moves across on Android (RAPP-920). A group of
+ * tabs gets no boundary of its own, so the boundaries of its tabs count.
+ */
 export function screenEntranceLayout({
   route,
   children,
@@ -121,20 +131,23 @@ export function screenEntranceLayout({
   readonly route: { readonly name: string; readonly params?: object };
   readonly children: ReactNode;
 }) {
-  return (
+  const screen = (
     <ScreenEntrance screenId={route.name} arrivesByZoom={arrivesByPhotoZoom(route.params)}>
       {children}
     </ScreenEntrance>
   );
+  return isNavigatorGroup(route.name) ? screen : <PhotoZoomBoundary>{screen}</PhotoZoomBoundary>;
 }
 
 /** For a tab's default export, where no navigator layout reaches. */
 export function withScreenEntrance(screenId: string, Screen: ComponentType) {
   function ScreenWithEntrance() {
     return (
-      <ScreenEntrance screenId={screenId}>
-        <Screen />
-      </ScreenEntrance>
+      <PhotoZoomBoundary>
+        <ScreenEntrance screenId={screenId}>
+          <Screen />
+        </ScreenEntrance>
+      </PhotoZoomBoundary>
     );
   }
   ScreenWithEntrance.displayName = `ScreenEntrance(${screenId})`;

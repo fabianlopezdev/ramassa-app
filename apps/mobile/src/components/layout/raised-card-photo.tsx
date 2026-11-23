@@ -9,7 +9,8 @@
  * whole photo is on the screen the card opens.
  *
  * On a card that opens through an `href`, the photo is the source of the zoom
- * that grows it into the photo of the opened screen (RAPP-916).
+ * that grows it into the photo of the opened screen (RAPP-916), on Android too
+ * (RAPP-920). Its stored key is the key the opened screen shows it under.
  */
 import { PhotoZoomSource } from '@/components/media/photo-zoom';
 import { resolveMediaImageSource } from '@/lib/media-source';
@@ -56,7 +57,7 @@ export const RaisedCardPhoto = memo(function RaisedCardPhoto({
   readonly accessibilityLabel?: string;
 }) {
   return (
-    <PhotoZoomSource>
+    <PhotoZoomSource photoKey={recyclingKey}>
       <Image
         source={source}
         accessibilityLabel={accessibilityLabel}

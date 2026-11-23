@@ -12,8 +12,8 @@
  * of the screen's height and fits inside it, over a blurred copy of itself,
  * so nothing of it is cut and the top of the screen stays filled.
  *
- * The card that opened the screen grows its photo into this one on iOS
- * (RAPP-916): the photo alone is the zoom's target.
+ * The card that opened the screen grows its photo into this one (RAPP-916,
+ * RAPP-920): the photo alone is the zoom's target.
  *
  * `PhotoHeroScreen` is the whole scrolling screen. A screen that scrolls a
  * list of its own, such as a forum thread, puts `PhotoHero` at the top of its
@@ -97,7 +97,7 @@ function PhotoHeroPhoto({
         />
       ) : null}
       {/* The photo of the card that opened the screen grows into this one (RAPP-916). */}
-      <PhotoZoomTarget>
+      <PhotoZoomTarget photoKey={photoKey}>
         <Image
           source={source}
           accessible={onOpenPhoto === undefined}
