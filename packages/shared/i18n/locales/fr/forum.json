@@ -27,7 +27,6 @@
   "addPhoto": "Ajoute une photo",
   "changePhoto": "Change la photo",
   "removePhoto": "Retire la photo",
-  "photoReady": "Photo prête",
   "photoPermission": "Donne l’autorisation pour choisir une photo.",
   "photoTooLarge": "La photo est encore trop lourde après la compression.",
   "processingPhoto": "Compression de la photo",

@@ -6,7 +6,6 @@
   "pickMedia": "Choisis une photo ou une vidéo",
   "changeMedia": "Change le contenu",
   "selectedMediaPreview": "Contenu sélectionné",
-  "selectedPhotoPreview": "Aperçu de la photo sélectionnée",
   "selectedVideoPreview": "Aperçu de la vidéo sélectionnée",
   "removeMedia": "Retire-le",
   "mediaPermissionDenied": "Pour choisir une photo ou une vidéo, autorise l’accès aux photos dans les réglages du téléphone.",

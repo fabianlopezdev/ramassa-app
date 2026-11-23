@@ -21,6 +21,7 @@ import { FailureNotice } from '@/components/error-code-line';
 import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { SwitchCard } from '@/components/forms/switch-card';
+import { PhotoFocusPicker } from '@/components/media/photo-focus-picker';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { DraftPreviewSheet } from '@/components/preview/draft-preview-sheet';
@@ -384,6 +385,15 @@ function AnnouncementForm({
           ) : null}
         </View>
       </View>
+      {hasImage && previewImage !== null ? (
+        <PhotoFocusPicker
+          testID="announcement-image-focus"
+          source={previewImage}
+          aspectRatio={photo === null ? null : photo.width / photo.height}
+          focus={form.imageFocus}
+          onChange={(imageFocus) => set({ imageFocus })}
+        />
+      ) : null}
       {hasImage ? (
         <MultilingualField
           testIDPrefix="image-alt"

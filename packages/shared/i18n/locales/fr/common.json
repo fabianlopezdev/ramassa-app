@@ -38,5 +38,9 @@
   "previewOpening": "Ouverture de la vue joueuse.",
   "characterCount": "{{count}} / {{limit}} caractères",
   "newCount_one": "{{label}}, {{count}} nouveau",
-  "newCount_other": "{{label}}, {{count}} nouveaux"
+  "newCount_other": "{{label}}, {{count}} nouveaux",
+  "photoFocus": {
+    "label": "Partie visible",
+    "reset": "Réinitialiser"
+  }
 }

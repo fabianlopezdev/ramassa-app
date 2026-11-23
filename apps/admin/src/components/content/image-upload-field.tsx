@@ -1,6 +1,8 @@
+import { PhotoFocusField } from '@/components/content/photo-focus-field';
 import { Button } from '@/components/ui/button';
 import type { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { PhotoFocus } from '@ramassa/shared/photo-focus';
 
 export type ImageUploadState = 'empty' | 'ready' | 'stored' | 'uploading';
 
@@ -10,6 +12,16 @@ export interface ImageUploadFieldProps {
   readonly onRemove: () => void;
   readonly fieldId?: string;
   readonly translationNamespace?: 'announcements' | 'knowledge' | 'services';
+  /**
+   * The part of the photo cards keep (RAPP-932): the photo picked or stored,
+   * the chosen point and its change. Left out, the field shows no picker.
+   */
+  readonly focus?: {
+    readonly file: File | null;
+    readonly objectKey: string | null;
+    readonly value: PhotoFocus | null;
+    readonly onChange: (focus: PhotoFocus | null) => void;
+  };
 }
 
 export function ImageUploadField({
@@ -18,6 +30,7 @@ export function ImageUploadField({
   onRemove,
   fieldId = 'announcement',
   translationNamespace = 'announcements',
+  focus,
 }: ImageUploadFieldProps) {
   const { t } = useTranslation(translationNamespace);
 
@@ -48,6 +61,15 @@ export function ImageUploadField({
       ) : null}
       {state === 'stored' ? (
         <p className="text-sm text-muted-foreground">{t('imageStored')}</p>
+      ) : null}
+      {focus !== undefined && (state === 'ready' || state === 'stored') ? (
+        <PhotoFocusField
+          file={focus.file}
+          objectKey={focus.objectKey}
+          focus={focus.value}
+          onChange={focus.onChange}
+          fieldId={fieldId}
+        />
       ) : null}
       {state === 'ready' || state === 'stored' ? (
         <Button type="button" variant="outline" onClick={onRemove}>

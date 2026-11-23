@@ -14,7 +14,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { PhotoFocus } from '@ramassa/shared/photo-focus';
 import { motionTokens } from '@ramassa/shared/tokens/motion';
 
-const GALLERY_TILE_ASPECT_RATIO = 1;
+export const GALLERY_TILE_ASPECT_RATIO = 1;
 const styles = StyleSheet.create({
   tile: { width: '100%', aspectRatio: GALLERY_TILE_ASPECT_RATIO },
   title: { writingDirection: 'auto' },

@@ -27,7 +27,6 @@
   "addPhoto": "Add a photo",
   "changePhoto": "Change the photo",
   "removePhoto": "Remove the photo",
-  "photoReady": "Photo ready",
   "photoPermission": "Allow photo access to choose a photo.",
   "photoTooLarge": "The photo is still too large after compression.",
   "processingPhoto": "Compressing the photo",

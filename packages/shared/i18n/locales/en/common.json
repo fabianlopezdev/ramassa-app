@@ -38,5 +38,9 @@
   "previewOpening": "Opening the player view.",
   "characterCount": "{{count}} / {{limit}} characters",
   "newCount_one": "{{label}}, {{count}} new",
-  "newCount_other": "{{label}}, {{count}} new"
+  "newCount_other": "{{label}}, {{count}} new",
+  "photoFocus": {
+    "label": "Visible part",
+    "reset": "Reset"
+  }
 }

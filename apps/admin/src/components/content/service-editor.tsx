@@ -504,6 +504,12 @@ function ServiceEditorForm({
                 fieldId={`service-${index}`}
                 state={image.state}
                 translationNamespace="services"
+                focus={{
+                  file: image.file,
+                  objectKey: image.url,
+                  value: image.focus,
+                  onChange: (focus) => updateImage(image.key, (current) => ({ ...current, focus })),
+                }}
                 onSelect={(file) =>
                   // A new photo starts from the default crop (RAPP-932).
                   updateImage(image.key, (current) => ({

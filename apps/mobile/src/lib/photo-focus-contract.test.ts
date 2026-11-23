@@ -76,3 +76,44 @@ describe('a cropped photo keeps the part its uploader chose (RAPP-932)', () => {
     expect(hero).toContain('<PhotoZoomTarget>');
   });
 });
+
+describe('whoever adds a photo chooses its focus (RAPP-932)', () => {
+  const picker = readSource('components/media/photo-focus-picker.tsx');
+
+  test('one shared picker: the whole photo, the card frame from the shared rules, a reset', () => {
+    expect(picker).toContain('contentFit="contain"');
+    expect(picker).toContain('photoCropWindow(shownFocus, boxAspectRatio, frameAspectRatio)');
+    expect(picker).toContain('photoFocusFromPoint(x, y, boxWidth, boxHeight)');
+    expect(picker).toContain('frameAspectRatio = tokens.photoCard.aspectRatio');
+    expect(picker).toContain("t('photoFocus.reset')");
+    expect(picker).toContain('accessibilityRole="adjustable"');
+    // The photo is never mirrored: its box runs left to right in every language.
+    expect(picker).toContain("direction: 'ltr'");
+  });
+
+  test('every phone screen that adds or replaces a stored photo shows the picker', () => {
+    for (const path of [
+      'app/(app)/content-announcement-edit/[id].tsx',
+      'components/content/service-images-field.tsx',
+      'app/(app)/forum/create.tsx',
+      'app/(app)/gallery/upload.tsx',
+    ]) {
+      expect(readSource(path), path).toContain('<PhotoFocusPicker');
+    }
+    // A gallery tile is square, so its frame is too.
+    expect(readSource('app/(app)/gallery/upload.tsx')).toContain(
+      'frameAspectRatio={GALLERY_TILE_ASPECT_RATIO}',
+    );
+  });
+
+  test('a new photo starts again from the default crop', () => {
+    for (const path of [
+      'app/(app)/content-announcement-edit/[id].tsx',
+      'components/content/service-form.tsx',
+      'app/(app)/forum/create.tsx',
+      'app/(app)/gallery/upload.tsx',
+    ]) {
+      expect(readSource(path), path).toContain('A new photo starts from the default crop');
+    }
+  });
+});

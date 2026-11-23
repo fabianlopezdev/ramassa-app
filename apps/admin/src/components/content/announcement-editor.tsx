@@ -314,6 +314,12 @@ export function AnnouncementEditor({ announcement, onSaved }: AnnouncementEditor
 
       <ImageUploadField
         state={imageState}
+        focus={{
+          file: imageFile,
+          objectKey: imageUrl,
+          value: imageFocus,
+          onChange: setImageFocus,
+        }}
         onSelect={(file) => {
           setImageFile(file);
           setImageFocus(null);

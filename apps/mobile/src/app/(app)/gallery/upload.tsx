@@ -3,10 +3,12 @@ import { AuthTextField } from '@/components/auth/auth-text-field';
 import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { SwitchCard } from '@/components/forms/switch-card';
+import { GALLERY_TILE_ASPECT_RATIO } from '@/components/gallery/gallery-tile';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { PhotoFocusPicker } from '@/components/media/photo-focus-picker';
 import { uploadGalleryMedia } from '@/lib/gallery-upload';
 import {
   initialMediaUploadState,
@@ -18,7 +20,6 @@ import { isNetworkStateOnline } from '@/lib/network-status';
 import { useCreateGalleryItem } from '@/lib/player-gallery';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as Linking from 'expo-linking';
 import { useNetworkState } from 'expo-network';
@@ -30,6 +31,7 @@ import { ScrollView, StyleSheet, Text, View, type TextStyle } from 'react-native
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import { MEDIA_CAPTION_MAX_LENGTH, type MediaPrivacy } from '@ramassa/shared/media';
+import type { PhotoFocus } from '@ramassa/shared/photo-focus';
 import { uploadContentTypeSchema } from '@ramassa/shared/schemas';
 
 const IMAGE_PICKER_ORIGINAL_QUALITY = 1;
@@ -52,6 +54,7 @@ export default function GalleryUploadScreen() {
   const createItem = useCreateGalleryItem();
   const createGalleryItem = createItem.mutateAsync;
   const [state, dispatch] = useReducer(mediaUploadReducer, initialMediaUploadState);
+  const [photoFocus, setPhotoFocus] = useState<PhotoFocus | null>(null);
   const [caption, setCaption] = useState('');
   const [privacy, setPrivacy] = useState<MediaPrivacy>('community');
   const [consent, setConsent] = useState(false);
@@ -123,6 +126,8 @@ export default function GalleryUploadScreen() {
       height: asset.height,
       pickerFileSize: asset.fileSize ?? null,
     };
+    // A new photo starts from the default crop (RAPP-932).
+    setPhotoFocus(null);
     dispatch({ type: 'selected', draft });
   }, []);
   const removeSelectedMedia = useCallback(() => {
@@ -150,7 +155,7 @@ export default function GalleryUploadScreen() {
         draft: state.draft,
         caption,
         privacyLevel: privacy,
-        focus: null,
+        focus: photoFocus,
         consentAcknowledged: consent,
         accessToken: session.access_token,
         mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
@@ -162,7 +167,17 @@ export default function GalleryUploadScreen() {
     } catch (error) {
       dispatch({ type: 'failed', errorCode: toAppError(error, 'UPLOAD-1').code });
     }
-  }, [caption, consent, createGalleryItem, isOnline, privacy, replace, session, state.draft]);
+  }, [
+    caption,
+    consent,
+    createGalleryItem,
+    isOnline,
+    photoFocus,
+    privacy,
+    replace,
+    session,
+    state.draft,
+  ]);
   const retry = useCallback(() => {
     dispatch({ type: 'retry' });
     void submit();
@@ -208,12 +223,13 @@ export default function GalleryUploadScreen() {
                   style={styles.preview}
                 />
               ) : selectedImageSource === null ? null : (
-                <Image
+                <PhotoFocusPicker
+                  testID="gallery-photo-focus"
                   source={selectedImageSource}
-                  accessibilityLabel={t('gallery:selectedPhotoPreview')}
-                  contentFit="contain"
-                  style={styles.preview}
-                  className="rounded-md bg-neutral-100"
+                  aspectRatio={selectedDraft.width / selectedDraft.height}
+                  focus={photoFocus}
+                  onChange={setPhotoFocus}
+                  frameAspectRatio={GALLERY_TILE_ASPECT_RATIO}
                 />
               )}
               <View className="flex-row gap-sm">

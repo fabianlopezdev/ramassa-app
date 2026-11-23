@@ -2,18 +2,24 @@
  * A service's photos on the phone (RAPP-344): up to twelve, in the order
  * players see them, each with a description in Catalan and its translation
  * review, Move up and Move down, and Remove. A chosen photo is uploaded when
- * the service is saved.
+ * the service is saved. Each photo shows the part its card keeps, which she
+ * can move (RAPP-932).
  */
 import { FieldLabel } from '@/components/forms/field-label';
+import { PhotoFocusPicker } from '@/components/media/photo-focus-picker';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import type { PickedPhoto } from '@/lib/content-upload';
 import { continuousCorners } from '@/lib/continuous-corners';
+import { resolveMediaImageSource } from '@/lib/media-source';
 import { MAX_SERVICE_IMAGES, type FormImage } from '@/lib/service-draft';
+import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
+import { useAuth } from '@ramassa/shared/auth';
 import type { SupportedLanguage } from '@ramassa/shared/i18n';
+import type { PhotoFocus } from '@ramassa/shared/photo-focus';
 import type { TranslationReview } from '@ramassa/shared/translation';
 import { MultilingualField } from './multilingual-field';
 
@@ -68,23 +74,26 @@ export function ServiceImagesField({
   handlers,
   onAdd,
   onPick,
+  onFocusChange,
   onAltChange,
   onMove,
   onRemove,
 }: {
   readonly images: readonly FormImage[];
-  /** Keys of images with a photo chosen and not uploaded yet. */
-  readonly pendingPhotos: ReadonlySet<string>;
+  /** The photos chosen and not uploaded yet, by image key. */
+  readonly pendingPhotos: Readonly<Record<string, PickedPhoto>>;
   readonly reviews: Readonly<Record<string, TranslationReview | undefined>>;
   readonly handlers: ImageReviewHandlers;
   readonly onAdd: () => void;
   readonly onPick: (key: string, photo: PickedPhoto) => void;
+  readonly onFocusChange: (key: string, focus: PhotoFocus | null) => void;
   readonly onAltChange: (key: string, alt: string) => void;
   readonly onMove: (index: number, offset: -1 | 1) => void;
   readonly onRemove: (key: string) => void;
 }) {
   const { t } = useTranslation('services');
   const fontClass = useLanguageFontClass();
+  const { session } = useAuth();
 
   const pick = async (key: string) => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -100,7 +109,15 @@ export function ServiceImagesField({
     <View className="gap-sm" testID="service-images">
       <FieldLabel>{t('fieldImage')}</FieldLabel>
       {images.map((image, index) => {
-        const isPending = pendingPhotos.has(image.key);
+        const pendingPhoto = pendingPhotos[image.key];
+        const isPending = pendingPhoto !== undefined;
+        const photoSource = isPending
+          ? { uri: pendingPhoto.uri }
+          : resolveMediaImageSource({
+              objectKeyOrUrl: image.url,
+              mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
+              accessToken: session?.access_token,
+            });
         return (
           <View
             key={image.key}
@@ -120,6 +137,15 @@ export function ServiceImagesField({
               label={t('imageChoose')}
               onPress={() => void pick(image.key)}
             />
+            {photoSource === null ? null : (
+              <PhotoFocusPicker
+                testID={`service-image-focus-${index}`}
+                source={photoSource}
+                aspectRatio={isPending ? pendingPhoto.width / pendingPhoto.height : null}
+                focus={image.focus}
+                onChange={(focus) => onFocusChange(image.key, focus)}
+              />
+            )}
             <MultilingualField
               testIDPrefix={`service-image-alt-${index}`}
               label={t('imageAlt')}
