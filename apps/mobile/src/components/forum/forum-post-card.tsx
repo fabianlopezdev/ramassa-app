@@ -3,6 +3,7 @@ import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-car
 import {
   RaisedCardFooterAuthor,
   RaisedCardFooterReplies,
+  raisedCardPanelInk,
 } from '@/components/layout/raised-card-footer';
 import { RaisedCardPhoto, useRaisedCardPhotoSource } from '@/components/layout/raised-card-photo';
 import type { RaisedTone } from '@/components/layout/raised-surface';
@@ -32,7 +33,9 @@ const FORUM_POST_PREVIEW_LINES = 5;
  * A post with a photo takes the photo layout of the shared card (RAPP-921):
  * its first sentence is the title on the photo, the rest is the preview on the
  * panel, and the author and the replies share the row at its foot. The replies
- * show only when there is at least one (RAPP-922).
+ * show only when there is at least one (RAPP-922). A post in a coloured
+ * category sits on the wash of that colour, so its preview takes the dark ink
+ * of the plain cards (RAPP-930).
  */
 export const ForumPostCard = memo(function ForumPostCard({
   post,
@@ -127,7 +130,7 @@ export const ForumPostCard = memo(function ForumPostCard({
             languageFontClass={languageFontClass}
             openLinkLabel={openLinkLabel}
             numberOfLines={FORUM_POST_PREVIEW_LINES}
-            ink="onBrand"
+            ink={raisedCardPanelInk(tone) === 'onWash' ? 'default' : 'onBrand'}
           />
         )
       ) : (

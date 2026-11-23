@@ -3,9 +3,9 @@
  * runs from edge to edge and from the very top of the screen, under the
  * status bar, with the round back button floating on it. The content sits on
  * a sheet with large rounded top corners that overlaps the bottom of the
- * photo. A forum post, an avís, a guide, a story, a service and an opened
- * gallery photo all open this way when they have a photo; without one they
- * keep their own layout.
+ * photo. A forum post, an avís, a guide, a story and a service all open this
+ * way when they have a photo; without one they keep their own layout. A
+ * gallery photo opens in the lightbox instead (RAPP-931).
  *
  * The photo keeps its own shape, like a card photo (RAPP-914), and starts at
  * the shape the card already measured. A tall portrait photo stops at a share

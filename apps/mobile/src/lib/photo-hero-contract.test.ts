@@ -14,7 +14,6 @@ const heroScreens = [
   { path: 'app/(app)/announcement/[id].tsx', piece: '<PhotoHeroScreen' },
   { path: 'app/(app)/knowledge/[id].tsx', piece: '<PhotoHeroScreen' },
   { path: 'app/(app)/service/[id].tsx', piece: '<PhotoHeroScreen' },
-  { path: 'app/(app)/gallery/[id].tsx', piece: '<PhotoHeroScreen' },
   // The thread scrolls a list of its own, so the hero heads its list.
   { path: 'app/(app)/forum/[id].tsx', piece: '<PhotoHero\n' },
 ] as const;
@@ -120,11 +119,6 @@ const photoCardCallers = [
     card: '<ServiceCard',
     href: '`/service/${item.id}`',
   },
-  {
-    path: 'components/gallery/gallery-grid.tsx',
-    card: '<GalleryTile',
-    href: '`/gallery/${item.id}`',
-  },
 ] as const;
 
 describe('a card photo grows into the photo of the screen it opens (RAPP-916)', () => {
@@ -143,10 +137,10 @@ describe('a card photo grows into the photo of the screen it opens (RAPP-916)', 
     // The source copies its child, which must not carry a style array.
     expect(raisedCardPhoto).toContain('style={photoStyle}');
     expect(raisedCard).toContain('<PhotoZoomLink href={props.href} hasPhoto={hasMedia}>');
-    expect(galleryTile).toMatch(/<PhotoZoomSource photoKey=\{photoKey\}>\s*<Image/);
-    expect(galleryTile).toContain(
-      '<PhotoZoomLink href={href} hasPhoto={isPhoto && source !== null}>',
-    );
+    // A gallery photo opens in the lightbox with its fade (RAPP-931): the
+    // native zoom would bring its own drag to close and return to the first
+    // photo after a swipe, so the tile is no zoom source.
+    expect(galleryTile).not.toContain('PhotoZoom');
     for (const path of photoCards) {
       const source = readSource(path);
       expect(source, path).toContain('href={href}');
@@ -161,7 +155,7 @@ describe('a card photo grows into the photo of the screen it opens (RAPP-916)', 
       expect(source, path).toContain(`href={${href} as Href}`);
     }
     expect(readSource('components/gallery/gallery-grid.tsx')).toContain(
-      "isPhoto={item.file_type !== 'video'}",
+      'href={galleryItemHref(item)}',
     );
   });
 
@@ -205,12 +199,8 @@ const sharedPhotoKeys = [
     hero: 'app/(app)/service/[id].tsx',
     heroKey: 'photoKey={heroImage.url}',
   },
-  {
-    card: 'components/gallery/gallery-grid.tsx',
-    cardKey: 'photoKey={item.file_url}',
-    hero: 'app/(app)/gallery/[id].tsx',
-    heroKey: 'photoKey={item.file_url}',
-  },
+  // Gallery photos open in the lightbox with its fade (RAPP-931), so the
+  // gallery tile is no zoom source and has no pair here.
 ] as const;
 
 const screenEntrance = readSource('components/motion/screen-entrance.tsx');
@@ -357,9 +347,7 @@ describe('on Android the sheet of the opened screen waits for the photo and leav
     expect(photoHero).toContain('fillsFrame={zoomSheet.fillsFrameToLeave}');
   });
 
-  test('the card and the gallery tile measure the photo, so it lands on the final frame', () => {
-    expect(galleryTile).toContain('const { rememberShape } = useRememberedPhotoShape(photoKey);');
-    expect(galleryTile).toContain('onLoad={rememberShape}');
+  test('the card measures the photo, so it lands on the final frame', () => {
     expect(raisedCardPhoto).toContain('onLoad={rememberShape}');
   });
 });
