@@ -9,8 +9,12 @@
  *   decoration only: screen readers skip it and touches pass through it.
  *
  * Inside the app the logo is kept in memory for the session, so a tab or a
- * chat that opens again shows it without a new download or a blink.
+ * chat that opens again shows it without a new download or a blink. The three
+ * in-app places start on the club shield bundled with the app, so the logo is
+ * there at once and with no connection; the dashboard's logo replaces it when
+ * it loads.
  */
+import bundledClubLogo from '@/assets/images/ramassa-splash.png';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { mobileClientEnv } from '@/lib/supabase';
 import { Image, type ImageContentPosition, type ImageProps } from 'expo-image';
@@ -66,6 +70,8 @@ const headerContentPosition: ImageContentPosition = I18nManager.isRTL
   ? { right: 0, top: '50%' }
   : { left: 0, top: '50%' };
 
+const BUNDLED_CLUB_LOGO = bundledClubLogo;
+
 const organizationSlug = process.env.EXPO_PUBLIC_ORGANIZATION_SLUG?.trim() || 'ramassa';
 
 export function PublicOrganizationLogo({
@@ -87,14 +93,21 @@ export function PublicOrganizationLogo({
   const origin = mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL;
   if (origin === undefined) return null;
   const look = VARIANT_LOOKS[variant];
+  const startsOnBundledLogo = variant !== 'onboarding';
   const logo = (
-    <FadeSlideIn preset="logo" ready={loaded} className={variant === 'backdrop' ? 'w-full' : ''}>
+    <FadeSlideIn
+      preset="logo"
+      ready={loaded || startsOnBundledLogo}
+      className={variant === 'backdrop' ? 'w-full' : ''}
+    >
       <Image
         key={revision}
         source={`${origin.replace(/\/+$/, '')}/branding/${encodeURIComponent(organizationSlug)}/logo`}
         accessible={!look.decorative}
         accessibilityLabel={look.decorative ? undefined : t('appName')}
         onLoad={() => setLoaded(true)}
+        placeholder={startsOnBundledLogo ? BUNDLED_CLUB_LOGO : undefined}
+        placeholderContentFit="contain"
         contentFit="contain"
         contentPosition={variant === 'header' ? headerContentPosition : 'center'}
         cachePolicy={look.cachePolicy}
