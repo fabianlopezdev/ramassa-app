@@ -991,7 +991,8 @@
   "surveyList": {
     "new": "Nova enquesta",
     "listLabel": "Enquestes",
-    "empty": "Encara no hi ha cap enquesta."
+    "empty": "Encara no hi ha cap enquesta.",
+    "archive": "Enquestes anteriors"
   },
   "surveySettings": {
     "event": "Activitat",

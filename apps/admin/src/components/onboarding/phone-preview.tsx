@@ -330,7 +330,8 @@ function PhoneTick({
 const PHONE_WIDTH = 320;
 // 10px of frame on each side, the screen 9:19 inside it.
 const PHONE_HEIGHT = ((PHONE_WIDTH - 20) * 19) / 9 + 20;
-const PHONE_ASPECT = `${PHONE_WIDTH} / ${PHONE_HEIGHT}`;
+/** A phone's shape, for anything drawn beside the screen cards (RAPP-936). */
+export const PHONE_ASPECT = `${PHONE_WIDTH} / ${PHONE_HEIGHT}`;
 
 /**
  * The card's picture of a screen (RAPP-706): the very same `PhoneFrame` the

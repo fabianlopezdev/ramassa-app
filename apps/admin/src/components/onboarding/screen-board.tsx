@@ -120,7 +120,7 @@ import {
 } from './board-steps';
 import { CardFrame, ScreenCardFrame } from './card-frame';
 import { ConfirmDialog } from './confirm-dialog';
-import { FormMiniature, PhoneMiniature } from './phone-preview';
+import { FormMiniature, PHONE_ASPECT, PhoneMiniature } from './phone-preview';
 import {
   completeCondition,
   ConditionFields,
@@ -1307,13 +1307,19 @@ function AddCard({
       className="group/add flex w-full rounded-2xl text-start outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       data-testid={testId}
     >
-      <CardFrame className="h-full min-h-40 border-dashed border-foreground/20 bg-muted transition-colors group-hover/add:border-primary/60 group-hover/add:bg-primary/5">
-        <span className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-sm font-medium text-muted-foreground transition-colors group-hover/add:text-primary">
+      {/* The rows of a screen card, so it stands as tall and its phone is a phone (RAPP-936). */}
+      <CardFrame className="h-full border-dashed border-foreground/20 bg-muted/40 transition-colors group-hover/add:border-primary/60 group-hover/add:bg-primary/5">
+        <span aria-hidden className="min-h-7" />
+        <span
+          className="flex w-full flex-col items-center justify-center gap-3 rounded-[1.6rem] border-2 border-dashed border-foreground/25 text-sm font-medium text-muted-foreground transition-colors group-hover/add:border-primary/60 group-hover/add:text-primary"
+          style={{ aspectRatio: PHONE_ASPECT }}
+        >
           <span className="flex size-11 items-center justify-center rounded-full border border-dashed border-current">
             <Plus aria-hidden className="size-5" />
           </span>
           {label}
         </span>
+        <span aria-hidden className="h-7" />
       </CardFrame>
     </button>
   );

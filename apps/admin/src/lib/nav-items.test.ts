@@ -155,8 +155,8 @@ test('the menu groups by audience in the agreed order (RAPP-654)', () => {
       '/forms/custom',
       '/entities/referral-form',
     ],
-    // Surveys, their own section (RAPP-929).
-    surveys: ['/surveys', '/surveys/archive'],
+    // Surveys, one item of their own (RAPP-934).
+    surveys: ['/surveys'],
     data: ['/profile-layout', '/legal-data'],
     app: [
       '/content',

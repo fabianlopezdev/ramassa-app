@@ -15,6 +15,7 @@
 import { CardPickerField, CardRadioGroup } from '@/components/settings/card-picker';
 import { QuestionControl, TypeDescription } from '@/components/settings/question-type-fields';
 import { TriangleAlert } from 'lucide-react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getLanguageDirection, SUPPORTED_LANGUAGES } from '@ramassa/shared/i18n/languages';
 import {
@@ -89,18 +90,62 @@ export function QuestionTypePicker({
   value,
   onChange,
   types = FIELD_QUESTION_TYPES,
+  isInline = false,
   disabled = {},
   warnings = {},
 }: {
   readonly value: CustomQuestionType;
   /** The types offered: a field's by default, a survey's on a survey (RAPP-929). */
   readonly types?: readonly CustomQuestionType[];
+  /**
+   * Every type in view, picked with one click, with no Canvia dialog: a
+   * survey's short list (RAPP-935).
+   */
+  readonly isInline?: boolean;
   readonly onChange: (type: CustomQuestionType) => void;
   readonly disabled?: TypeNotes;
   readonly warnings?: TypeNotes;
 }) {
   const { t } = useTranslation('settings');
   const language = useUiLanguage();
+  const inlineRefs = useRef(new Map<CustomQuestionType, HTMLButtonElement>());
+  const typeCard = (type: CustomQuestionType) => (
+    <>
+      <span className="relative block w-full">
+        <TypeMiniature type={type} language={language} />
+        {warnings[type] === undefined && disabled[type] === undefined ? null : (
+          <TriangleAlert
+            aria-hidden
+            className="absolute end-1.5 top-1.5 size-4 rounded-full bg-card p-0.5 text-destructive"
+          />
+        )}
+      </span>
+      <span className="line-clamp-3 min-h-15 text-sm leading-5 font-medium md:line-clamp-2 md:min-h-10">
+        {t(`questions.types.${type}`)}
+      </span>
+    </>
+  );
+  if (isInline) {
+    return (
+      <div className="flex flex-col gap-2" data-testid="question-type">
+        <span className="text-start text-sm font-medium">{t('questions.type')}</span>
+        <input type="hidden" name="question-type" value={value} />
+        <CardRadioGroup
+          values={types}
+          value={value}
+          label={t('questions.type')}
+          disabled={disabled}
+          describe={(type) => t(`questions.typeHelp.${type}`)}
+          onPick={onChange}
+          cardRefs={inlineRefs}
+          className="grid-cols-3 sm:grid-cols-5"
+          testId="question-type-option"
+        >
+          {typeCard}
+        </CardRadioGroup>
+      </div>
+    );
+  }
   return (
     <CardPickerField
       label={t('questions.type')}
@@ -131,22 +176,7 @@ export function QuestionTypePicker({
           className="grid-cols-3 md:grid-cols-5"
           testId="question-type-option"
         >
-          {(type) => (
-            <>
-              <span className="relative block w-full">
-                <TypeMiniature type={type} language={language} />
-                {warnings[type] === undefined && disabled[type] === undefined ? null : (
-                  <TriangleAlert
-                    aria-hidden
-                    className="absolute end-1.5 top-1.5 size-4 rounded-full bg-card p-0.5 text-destructive"
-                  />
-                )}
-              </span>
-              <span className="line-clamp-3 min-h-15 text-sm leading-5 font-medium md:line-clamp-2 md:min-h-10">
-                {t(`questions.types.${type}`)}
-              </span>
-            </>
-          )}
+          {typeCard}
         </CardRadioGroup>
       )}
     />

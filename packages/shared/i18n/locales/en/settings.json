@@ -991,7 +991,8 @@
   "surveyList": {
     "new": "New survey",
     "listLabel": "Surveys",
-    "empty": "There are no surveys yet."
+    "empty": "There are no surveys yet.",
+    "archive": "Previous surveys"
   },
   "surveySettings": {
     "event": "Activity",

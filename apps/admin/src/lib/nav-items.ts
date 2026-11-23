@@ -10,7 +10,6 @@
  */
 
 import {
-  Archive,
   BarChart3,
   BellRing,
   Building2,
@@ -90,8 +89,8 @@ export const STAFF_NAV_PARENTS = {
 export const STAFF_NAV_GROUPS = [
   { id: 'top', labelKey: null, icon: null },
   { id: 'forms', labelKey: 'nav:staff.groups.forms', icon: Files },
-  // Surveys, their own section (RAPP-929).
-  { id: 'surveys', labelKey: 'nav:staff.groups.surveys', icon: BarChart3 },
+  // Surveys, one item of their own with nothing to open (RAPP-934).
+  { id: 'surveys', labelKey: null, icon: null },
   { id: 'data', labelKey: 'nav:staff.groups.data', icon: Table2 },
   { id: 'app', labelKey: 'nav:staff.groups.app', icon: Smartphone },
   { id: 'entities', labelKey: 'nav:staff.groups.entities', icon: Handshake },
@@ -227,17 +226,9 @@ export const STAFF_NAV_ITEMS = [
     // Surveys are forms of the engine (RAPP-929), for whoever builds forms or had surveys.
     to: '/surveys',
     icon: BarChart3,
-    labelKey: 'nav:staff.allSurveys',
+    labelKey: 'nav:staff.surveys',
     group: 'surveys',
     anyPermission: [...CUSTOM_FORMS_PERMISSIONS, 'surveys.manage', 'surveys.results'],
-  },
-  {
-    // The surveys made before the form engine, read and exported (RAPP-929).
-    to: '/surveys/archive',
-    icon: Archive,
-    labelKey: 'nav:staff.previousSurveys',
-    group: 'surveys',
-    anyPermission: ['surveys.manage', 'surveys.results'],
   },
   {
     // The entity referral form keeps its URL under the entities (RAPP-696).

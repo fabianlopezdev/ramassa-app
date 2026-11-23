@@ -64,6 +64,8 @@ export const SURVEY_QUESTION_TYPES = [
   'short_text',
   'long_text',
   'number',
+  // A day she picks (RAPP-935); two days to choose between are a one-choice question.
+  'date',
 ] as const satisfies readonly CustomQuestionType[];
 
 /** A survey's rating runs from 1 to 5 (RAPP-929). */

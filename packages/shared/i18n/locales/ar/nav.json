@@ -36,12 +36,9 @@
       "data": "البيانات",
       "app": "تطبيق اللاعبات",
       "entities": "الجهات",
-      "organisation": "المؤسسة",
-      "surveys": "الاستبيانات"
+      "organisation": "المؤسسة"
     },
-    "customForms": "نماذج أخرى",
-    "allSurveys": "كل الاستبيانات",
-    "previousSurveys": "الاستبيانات السابقة"
+    "customForms": "نماذج أخرى"
   },
   "entity": {
     "dashboard": "الأثر",

@@ -36,12 +36,9 @@
       "data": "Données",
       "app": "App des joueuses",
       "entities": "Associations",
-      "organisation": "Organisation",
-      "surveys": "Enquêtes"
+      "organisation": "Organisation"
     },
-    "customForms": "Autres formulaires",
-    "allSurveys": "Toutes les enquêtes",
-    "previousSurveys": "Enquêtes précédentes"
+    "customForms": "Autres formulaires"
   },
   "entity": {
     "dashboard": "Impact",

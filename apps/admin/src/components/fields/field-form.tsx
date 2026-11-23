@@ -242,7 +242,7 @@ export function FieldForm({
         />
         <QuestionTypePicker
           value={type}
-          {...(isSurveyQuestion ? { types: SURVEY_QUESTION_TYPES } : {})}
+          {...(isSurveyQuestion ? { types: SURVEY_QUESTION_TYPES, isInline: true } : {})}
           onChange={(next) => {
             setType(next);
             // A field that becomes a choice starts with two empty options.
