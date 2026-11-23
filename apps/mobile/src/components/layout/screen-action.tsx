@@ -27,8 +27,9 @@ export function ScreenAction({
 }) {
   return (
     <SafeAreaView edges={BOTTOM_EDGE}>
-      <View testID={testID} className="gap-sm border-t border-neutral-200 px-lg pb-md pt-md">
-        <PageWidth>{children}</PageWidth>
+      <View testID={testID} className="border-t border-neutral-200 px-lg pb-md pt-md">
+        {/* The gap sits on the column that holds the buttons, so stacked actions keep it (RAPP-910). */}
+        <PageWidth className="gap-sm">{children}</PageWidth>
       </View>
     </SafeAreaView>
   );
