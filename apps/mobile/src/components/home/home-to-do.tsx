@@ -10,6 +10,7 @@
 import { PendingFormPrompt } from '@/components/forms/pending-form-prompt';
 import { LaterFormsLink } from '@/components/home/later-forms-link';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { SurveyFormPrompt } from '@/components/surveys/survey-form-prompt';
 import { SurveyPromptCard } from '@/components/surveys/survey-prompt';
 import { useMyCustomFormsByPlace } from '@/lib/custom-forms';
 import type { HomeToDoItem } from '@/lib/home-to-do';
@@ -32,6 +33,8 @@ export function HomeToDo({ items, languageFontClass }: HomeToDoProps) {
         {items.map((item) =>
           item.kind === 'form' ? (
             <PendingFormPrompt key={item.key} form={item.form} />
+          ) : item.kind === 'survey-form' ? (
+            <SurveyFormPrompt key={item.key} survey={item.survey} />
           ) : (
             <SurveyPromptCard key={item.key} survey={item.survey} />
           ),

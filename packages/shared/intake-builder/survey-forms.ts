@@ -237,3 +237,102 @@ export function summarizeSurveyAnswers(
     };
   });
 }
+
+// Her phone walks a survey -----------------------------------------------------------------------
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * The catalog her phone walks a survey with: the catalog `intake_catalog` sent
+ * (`raw`, which never holds a survey), with the survey as the version she was
+ * asked. Its questions come from the version too, since a survey's questions
+ * never reach that catalog either. Each frozen placement names its question's
+ * type, settings, wording and options.
+ */
+export function surveyCatalog(raw: unknown, survey: MySurvey): IntakeCatalog {
+  const base = isRecord(raw) ? raw : {};
+  const content = isRecord(survey.content) ? survey.content : {};
+  const screens = Array.isArray(content.screens) ? content.screens : [];
+  const placements = Array.isArray(content.placements) ? content.placements.filter(isRecord) : [];
+  const form = {
+    id: survey.formId,
+    name: survey.name,
+    filled_by: 'player',
+    mandatory: 'optional',
+    deadline: null,
+    audience: 'all',
+    repeats_each_season: false,
+    kind: 'survey',
+    system_key: null,
+    event_id: survey.eventId,
+    closes_at: survey.closesAt,
+    version: survey.version,
+    published_at: survey.askedAt,
+    is_archived: false,
+    screens: screens.map((screen: unknown) =>
+      isRecord(screen) ? { ...screen, is_hidden: false } : screen,
+    ),
+  };
+  const fields = placements.flatMap((placement) => {
+    const field = isRecord(placement.field) ? placement.field : null;
+    if (field === null || typeof placement.field_id !== 'string') return [];
+    const options = Array.isArray(field.options) ? field.options.filter(isRecord) : [];
+    return [
+      {
+        id: placement.field_id,
+        section_id: null,
+        survey_form_id: survey.formId,
+        kind: 'survey',
+        system_key: null,
+        question_type: field.question_type,
+        label: field.label,
+        help: field.help ?? null,
+        privacy: 'normal',
+        read_permission: null,
+        default_required: placement.required === true,
+        settings: field.settings ?? {},
+        show_when_field_id: null,
+        show_when_option_id: null,
+        sort_order: typeof placement.sort_order === 'number' ? placement.sort_order : 0,
+        is_archived: false,
+        created_at: survey.askedAt,
+        options: options.map((option, index) => ({
+          id: option.id,
+          key: option.key ?? null,
+          label: option.label,
+          sort_order: typeof option.sort_order === 'number' ? option.sort_order : index,
+          is_archived: false,
+        })),
+      },
+    ];
+  });
+  const listOf = (key: string): unknown[] =>
+    Array.isArray(base[key]) ? (base[key] as unknown[]) : [];
+  return parseIntakeCatalog({
+    ...base,
+    fields: [...listOf('fields'), ...fields],
+    custom_forms: [...listOf('custom_forms'), form],
+    custom_form_placements: [
+      ...listOf('custom_form_placements'),
+      ...placements.map((placement) => ({
+        ...placement,
+        surface: 'custom_form',
+        custom_form_id: survey.formId,
+      })),
+    ],
+  });
+}
+
+/** What her phone needs to walk her surveys: the catalog as sent, and each survey waiting for her. */
+export async function fetchMySurveySource(
+  client: Client,
+): Promise<{ readonly raw: unknown; readonly surveys: readonly MySurvey[] }> {
+  const [catalog, surveys] = await Promise.all([
+    client.rpc('intake_catalog'),
+    fetchMySurveys(client),
+  ]);
+  if (catalog.error) throw failed(catalog.error);
+  return { raw: catalog.data, surveys };
+}
