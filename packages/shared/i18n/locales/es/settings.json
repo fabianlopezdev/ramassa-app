@@ -487,7 +487,6 @@
     "intro": "Las pantallas que ve una jugadora la primera vez que abre la app."
   },
   "onboardingChain": {
-    "count": "En total, {{total}} pantallas: {{onboarding}} de Onboarding · {{terms}} de condiciones de la app · {{forms}} de formularios",
     "termsLine": "Hay que aceptarlas para usar la app.",
     "divider": "Después del onboarding",
     "listLabel": "Formularios después del onboarding",
@@ -503,8 +502,7 @@
     "addForm": "Añadir un formulario",
     "nothingToAdd": "No hay ningún formulario para añadir.",
     "saveFailed": "No se ha podido guardar. Vuelve a intentarlo.",
-    "openForm": "Abrir el formulario",
-    "countWithConditional": "En total, {{total}} pantallas: {{onboarding}} de Onboarding (+{{conditional}} condicionales) · {{terms}} de condiciones de la app · {{forms}} de formularios"
+    "openForm": "Abrir el formulario"
   },
   "appTerms": {
     "versionsTitle": "Versiones",

@@ -487,7 +487,6 @@
     "intro": "Les pantalles que veu una jugadora la primera vegada que obre l'app."
   },
   "onboardingChain": {
-    "count": "En total, {{total}} pantalles: {{onboarding}} d'Onboarding · {{terms}} de condicions de l'app · {{forms}} de formularis",
     "termsLine": "Cal acceptar-les per fer servir l'app.",
     "divider": "Després de l'onboarding",
     "listLabel": "Formularis després de l'onboarding",
@@ -503,8 +502,7 @@
     "addForm": "Afegeix un formulari",
     "nothingToAdd": "No hi ha cap formulari per afegir.",
     "saveFailed": "No s'ha pogut desar. Torna-ho a provar.",
-    "openForm": "Obre el formulari",
-    "countWithConditional": "En total, {{total}} pantalles: {{onboarding}} d'Onboarding (+{{conditional}} condicionals) · {{terms}} de condicions de l'app · {{forms}} de formularis"
+    "openForm": "Obre el formulari"
   },
   "appTerms": {
     "versionsTitle": "Versions",
