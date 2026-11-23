@@ -38,5 +38,9 @@
   "previewOpening": "Abriendo la vista de jugadora.",
   "characterCount": "{{count}} / {{limit}} caracteres",
   "newCount_one": "{{label}}, {{count}} nuevo",
-  "newCount_other": "{{label}}, {{count}} nuevos"
+  "newCount_other": "{{label}}, {{count}} nuevos",
+  "photoFocus": {
+    "label": "Parte visible",
+    "reset": "Restablecer"
+  }
 }

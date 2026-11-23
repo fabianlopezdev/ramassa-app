@@ -63,13 +63,17 @@ describe('a screen with a photo opens on the story layout (RAPP-915)', () => {
   });
 
   test('the photo keeps its own shape, and a tall one fits inside a share of the screen', () => {
-    expect(photoHero).toContain('useRememberedPhotoShape(photoKey)');
-    // A card photo has one fixed shape (RAPP-921) and only measures the photo
-    // for the screen it opens (RAPP-920): its own style never reads the shape.
+    // The hero measures through the focus position, which remembers the shape (RAPP-932).
+    expect(photoHero).toContain('usePhotoFocusPosition(photoKey, focus)');
+    // A card photo has one fixed shape (RAPP-921). It measures the photo for its
+    // default crop and for the screen it opens (RAPP-920), but its own style
+    // never reads the shape.
     expect(raisedCardPhoto).toContain(
-      'const { rememberShape } = useRememberedPhotoShape(recyclingKey);',
+      'const { contentPosition, rememberShape } = usePhotoFocusPosition(recyclingKey, focus);',
     );
+    expect(raisedCardPhoto).not.toContain('aspectRatio}');
     expect(raisedCardPhoto).not.toContain('aspectRatio }');
+    expect(raisedCardPhoto).toContain('aspectRatio: tokens.photoCard.aspectRatio');
     expect(photoHero).toContain('PHOTO_HERO_MAX_SHARE_OF_SCREEN');
     expect(photoHero).toContain("contentFit={isTall && !fillsFrame ? 'contain' : 'cover'}");
     expect(photoHero).toContain('blurRadius={BACKDROP_BLUR_RADIUS}');

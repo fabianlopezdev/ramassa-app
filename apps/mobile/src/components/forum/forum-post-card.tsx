@@ -13,6 +13,7 @@ import type { Href } from 'expo-router';
 import { memo, useMemo } from 'react';
 import { Text } from 'react-native';
 import type { ForumPostRow } from '@ramassa/shared/forum';
+import { photoFocusFromColumns } from '@ramassa/shared/photo-focus';
 
 const FORUM_POST_PREVIEW_LINES = 5;
 
@@ -108,6 +109,7 @@ export const ForumPostCard = memo(function ForumPostCard({
             source={imageSource}
             accessibilityLabel={imageAlt}
             recyclingKey={post.image_url ?? post.id}
+            focus={photoFocusFromColumns(post.image_focus_x, post.image_focus_y)}
           />
         )
       }

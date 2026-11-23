@@ -6,7 +6,6 @@
   "pickMedia": "Tria una foto o un vídeo",
   "changeMedia": "Canvia el contingut",
   "selectedMediaPreview": "Contingut seleccionat",
-  "selectedPhotoPreview": "Previsualització de la foto seleccionada",
   "selectedVideoPreview": "Previsualització del vídeo seleccionat",
   "removeMedia": "Treu-lo",
   "mediaPermissionDenied": "Per triar una foto o un vídeo, permet l'accés a les fotos des dels ajustos del telèfon.",

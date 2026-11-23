@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from '../errors';
+import { photoFocusSchema } from '../photo-focus';
 import {
   draftTranslationsSchema,
   publishedTranslationsSchema,
@@ -170,6 +171,8 @@ const adminServiceInputBaseSchema = z.object({
       z.object({
         url: z.string().trim().min(1),
         altText: draftLocalizedTextSchema,
+        /** The part of the photo cards keep (RAPP-932); null keeps the default crop. */
+        focus: photoFocusSchema.nullable(),
       }),
     )
     .max(12),
@@ -220,6 +223,8 @@ const serviceImageDatabaseRowSchema = z.object({
   url: z.string().min(1),
   alt_text: draftLocalizedTextSchema,
   position: z.number().int().nonnegative(),
+  focus_x: z.number().nullable(),
+  focus_y: z.number().nullable(),
   created_at: z.string(),
 });
 
@@ -317,7 +322,8 @@ const SERVICE_CATEGORY_COLUMNS =
   'id, name, slug, icon, color, sort_order, metadata_schema, created_at, updated_at';
 const ADMIN_SERVICE_COLUMNS =
   'id, category_id, title, description, provider_name, location, zone, cost_type, cost_amount, cost_details, contact_name, contact_phone, contact_email, contact_role, schedule, external_url, availability, metadata, interests:service_interests(count), status, published_at, expires_at, submitted_by, created_by, reviewed_by, reviewed_at, rejection_reason, created_at, updated_at';
-const SERVICE_IMAGE_COLUMNS = 'id, service_id, url, alt_text, position, created_at';
+const SERVICE_IMAGE_COLUMNS =
+  'id, service_id, url, alt_text, position, focus_x, focus_y, created_at';
 
 export async function fetchServiceCategories(
   client: Client,
@@ -399,7 +405,11 @@ export function createAdminServiceRpcPayload(
     status: input.status,
     publishedAt: input.publishedAt,
     expiresAt: input.expiresAt,
-    images: input.images.map((image) => ({ url: image.url, altText: image.altText })),
+    images: input.images.map((image) => ({
+      url: image.url,
+      altText: image.altText,
+      focus: image.focus,
+    })),
   };
 }
 

@@ -283,7 +283,6 @@ test('all gallery locales cover preview, permission recovery, and load recovery 
     ) as Record<string, unknown>;
     for (const key of [
       'selectedMediaPreview',
-      'selectedPhotoPreview',
       'selectedVideoPreview',
       'removeMedia',
       'mediaPermissionDenied',

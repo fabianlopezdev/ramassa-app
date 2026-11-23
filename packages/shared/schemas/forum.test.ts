@@ -18,6 +18,7 @@ describe('forum writing contracts', () => {
       categoryId: '5eed0000-0000-4000-8006-000000000001',
       content: 'Busco una habitació',
       imageObjectKey: '5eed/org/forum/user/2026/08/photo.jpg',
+      imageFocus: null,
     });
   });
 

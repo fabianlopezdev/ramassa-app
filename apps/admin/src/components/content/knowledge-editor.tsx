@@ -32,6 +32,7 @@ import {
   type LocalizedKnowledgeBody,
   type StoryStatus,
 } from '@ramassa/shared/knowledge';
+import { photoFocusFromColumns } from '@ramassa/shared/photo-focus';
 import { uploadContentTypeSchema } from '@ramassa/shared/schemas';
 import {
   isTranslationReviewPublishable,
@@ -218,6 +219,8 @@ export function KnowledgeEditor({ article, categories, onSaved }: KnowledgeEdito
           },
           body: storedBody,
           imageUrl: article?.image_url ?? null,
+          // The cover is not edited here, so it keeps its focus (RAPP-932).
+          imageFocus: photoFocusFromColumns(article?.image_focus_x, article?.image_focus_y),
           videoUrl: videoUrl.trim() || null,
           externalUrl: externalUrl.trim() || null,
           contentType,

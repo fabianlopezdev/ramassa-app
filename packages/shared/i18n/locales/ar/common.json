@@ -42,5 +42,9 @@
   "newCount_two": "{{label}}، عنصران جديدان",
   "newCount_few": "{{label}}، {{count}} عناصر جديدة",
   "newCount_many": "{{label}}، {{count}} عنصرًا جديدًا",
-  "newCount_other": "{{label}}، {{count}} عنصر جديد"
+  "newCount_other": "{{label}}، {{count}} عنصر جديد",
+  "photoFocus": {
+    "label": "الجزء الظاهر",
+    "reset": "إعادة الضبط"
+  }
 }

@@ -6,7 +6,9 @@
  *
  * Every card photo has one landscape shape (RAPP-921), filled and cropped, so
  * a tall photo never makes a tall card and the cards of a list line up. The
- * whole photo is on the screen the card opens.
+ * whole photo is on the screen the card opens. The crop keeps the focus its
+ * uploader chose, or by default the top third of a tall photo and the middle
+ * of a wide one (RAPP-932).
  *
  * On a card that opens through an `href`, the photo is the source of the zoom
  * that grows it into the photo of the opened screen (RAPP-916), on Android too
@@ -14,11 +16,12 @@
  */
 import { PhotoZoomSource } from '@/components/media/photo-zoom';
 import { resolveMediaImageSource } from '@/lib/media-source';
-import { useRememberedPhotoShape } from '@/lib/remembered-photo-shape';
+import { usePhotoFocusPosition } from '@/lib/photo-focus-position';
 import { mobileClientEnv } from '@/lib/supabase';
 import { Image, type ImageSource } from 'expo-image';
 import { memo, useMemo } from 'react';
 import type { ImageStyle } from 'react-native';
+import type { PhotoFocus } from '@ramassa/shared/photo-focus';
 import { tokens } from '@ramassa/shared/tokens';
 
 // One flat style object: the zoom source refuses a style array (RAPP-916).
@@ -49,26 +52,30 @@ export function useRaisedCardPhotoSource(
 export const RaisedCardPhoto = memo(function RaisedCardPhoto({
   source,
   recyclingKey,
+  focus,
   accessibilityLabel,
 }: {
   readonly source: ImageSource;
   /** The photo's stored key, so a recycled list cell drops the last photo at once. */
   readonly recyclingKey: string;
+  /** The part of the photo to keep; null keeps the default crop for its shape. */
+  readonly focus: PhotoFocus | null;
   /** The photo's alt text. The card's own label is what a screen reader says. */
   readonly accessibilityLabel?: string;
 }) {
   // The card shows a crop, but measures the whole photo, so the screen it opens
   // starts at the photo's own shape and the photo lands on its final frame.
-  const { rememberShape } = useRememberedPhotoShape(recyclingKey);
+  const { contentPosition, rememberShape } = usePhotoFocusPosition(recyclingKey, focus);
   return (
     <PhotoZoomSource photoKey={recyclingKey}>
       <Image
         source={source}
         accessibilityLabel={accessibilityLabel}
         contentFit="cover"
+        contentPosition={contentPosition}
+        onLoad={rememberShape}
         cachePolicy="memory-disk"
         recyclingKey={recyclingKey}
-        onLoad={rememberShape}
         style={photoStyle}
       />
     </PhotoZoomSource>

@@ -26,6 +26,8 @@ const post = (id: string, categoryId: string): ForumPostRow => ({
   author_first_name: 'Amina',
   content: 'Text',
   image_url: null,
+  image_focus_x: null,
+  image_focus_y: null,
   visibility: 'visible',
   is_pinned: false,
   reply_count: 0,
@@ -176,6 +178,7 @@ describe('forum category board', () => {
       categoryId: '5eed0000-0000-4000-8006-000000000002',
       content: '  Busco feina  ',
       imageObjectKey: null,
+      imageFocus: { x: 0.5, y: 0.2 },
     });
     await createForumReply(client as never, {
       postId,
@@ -196,6 +199,8 @@ describe('forum category board', () => {
           p_category_id: '5eed0000-0000-4000-8006-000000000002',
           p_content: 'Busco feina',
           p_image_url: null,
+          p_image_focus_x: null,
+          p_image_focus_y: null,
         },
       ],
       ['create_forum_reply', { p_post_id: postId, p_content: 'Jo en conec una' }],

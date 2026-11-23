@@ -6,6 +6,7 @@ import { memo, useMemo } from 'react';
 import { Text } from 'react-native';
 import type { AnnouncementCategory } from '@ramassa/shared/announcements';
 import { useAuth } from '@ramassa/shared/auth';
+import type { PhotoFocus } from '@ramassa/shared/photo-focus';
 
 export interface AnnouncementCardProps {
   readonly id: string;
@@ -15,6 +16,8 @@ export interface AnnouncementCardProps {
   readonly accessibilityLabel: string;
   /** The stored key of its photo (RAPP-911), shown across the top of the card. */
   readonly imageObjectKey: string | null;
+  /** The part of the photo the card keeps (RAPP-932); null keeps the default crop. */
+  readonly imageFocus: PhotoFocus | null;
   /** The photo's alt text in her language, as the announcement's own screen reads it. */
   readonly imageAlt?: string;
   /** Set while she has not seen the announcement (RAPP-821): the word shown on its mark. */
@@ -39,6 +42,7 @@ export const AnnouncementCard = memo(function AnnouncementCard({
   category,
   accessibilityLabel,
   imageObjectKey,
+  imageFocus,
   imageAlt,
   unseenLabel = null,
   languageFontClass,
@@ -62,6 +66,7 @@ export const AnnouncementCard = memo(function AnnouncementCard({
             source={imageSource}
             accessibilityLabel={imageAlt}
             recyclingKey={imageObjectKey ?? id}
+            focus={imageFocus}
           />
         )
       }

@@ -85,7 +85,8 @@ describe('Phase 6 accessibility and i18n contract', () => {
 
     expect(composer).toContain('IMAGE_PICKER_ORIGINAL_QUALITY');
     expect(composer).toContain('FORUM_COMPOSER_TEXT_LINES');
-    expect(composer).toContain('FORUM_PREVIEW_HEIGHT');
+    // The chosen photo shows whole, with the card's frame to choose what it keeps (RAPP-932).
+    expect(composer).toContain('<PhotoFocusPicker');
     // An opened post with a photo opens on the shared photo hero (RAPP-915).
     expect(forumDetail).toContain('<PhotoHero');
     expect(forumDetail).not.toContain('FORUM_DETAIL_IMAGE_HEIGHT');

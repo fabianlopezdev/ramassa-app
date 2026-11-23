@@ -64,7 +64,8 @@
     "./structured-content": "./structured-content/index.ts",
     "./image-compression": "./lib/image-compression.ts",
     "./organization-settings": "./organization-settings.ts",
-    "./photo-handoff": "./photo-handoff.ts"
+    "./photo-handoff": "./photo-handoff.ts",
+    "./photo-focus": "./photo-focus.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

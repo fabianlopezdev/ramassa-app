@@ -4,6 +4,7 @@ import { createVideoPlayer } from 'expo-video';
 import { AppError } from '@ramassa/shared/errors';
 import type { MediaItemInput, MediaPrivacy } from '@ramassa/shared/media';
 import { MEDIA_CONSENT_VERSION } from '@ramassa/shared/media';
+import type { PhotoFocus } from '@ramassa/shared/photo-focus';
 import { tokens } from '@ramassa/shared/tokens';
 import { uploadFile, type UploadFileContent } from '@ramassa/shared/upload-client';
 import type { MediaUploadDraft } from './media-upload-policy';
@@ -25,6 +26,8 @@ export interface GalleryUploadRequest {
   readonly draft: MediaUploadDraft;
   readonly caption: string;
   readonly privacyLevel: MediaPrivacy;
+  /** The part of the photo tiles keep (RAPP-932); null keeps the default crop. */
+  readonly focus: PhotoFocus | null;
   readonly consentAcknowledged: boolean;
   readonly accessToken: string;
   readonly mediaWorkerUrl: string;
@@ -110,5 +113,6 @@ export async function uploadGalleryMedia(request: GalleryUploadRequest): Promise
     privacyLevel: request.privacyLevel,
     consentAcknowledged: true,
     consentVersion: MEDIA_CONSENT_VERSION,
+    focus: request.draft.sourceKind === 'image' ? request.focus : null,
   };
 }

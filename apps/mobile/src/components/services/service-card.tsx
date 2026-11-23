@@ -5,6 +5,7 @@ import type { Href } from 'expo-router';
 import { memo, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
+import type { PhotoFocus } from '@ramassa/shared/photo-focus';
 
 export interface ServiceCardProps {
   readonly id: string;
@@ -16,6 +17,8 @@ export interface ServiceCardProps {
   readonly interested: boolean;
   readonly interestedLabel: string;
   readonly imageObjectKey: string | null;
+  /** The part of the photo the card keeps (RAPP-932); null keeps the default crop. */
+  readonly imageFocus: PhotoFocus | null;
   readonly imageAlt: string | null;
   readonly accessibilityLabel: string;
   readonly languageFontClass: string;
@@ -38,6 +41,7 @@ export const ServiceCard = memo(function ServiceCard({
   interested,
   interestedLabel,
   imageObjectKey,
+  imageFocus,
   imageAlt,
   accessibilityLabel,
   languageFontClass,
@@ -64,6 +68,7 @@ export const ServiceCard = memo(function ServiceCard({
             source={imageSource}
             accessibilityLabel={imageAlt ?? title}
             recyclingKey={imageObjectKey ?? id}
+            focus={imageFocus}
           />
         )
       }

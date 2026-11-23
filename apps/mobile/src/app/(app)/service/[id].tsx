@@ -30,6 +30,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
+import { photoFocusFromColumns } from '@ramassa/shared/photo-focus';
 import { tokens } from '@ramassa/shared/tokens';
 
 export default function ServiceDetailScreen() {
@@ -181,6 +182,7 @@ export default function ServiceDetailScreen() {
           testID="player-service-detail"
           source={heroSource}
           photoKey={heroImage.url}
+          focus={photoFocusFromColumns(heroImage.focus_x, heroImage.focus_y)}
           accessibilityLabel={
             resolveLocalizedText(heroImage.alt_text, language)?.text ?? title.text
           }

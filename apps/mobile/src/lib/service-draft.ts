@@ -11,6 +11,7 @@
  */
 import { z } from 'zod';
 import { localizedTextFromReview } from '@ramassa/shared/announcements';
+import { photoFocusFromColumns, photoFocusSchema } from '@ramassa/shared/photo-focus';
 import {
   normalizedServiceMetadata,
   SERVICE_AVAILABILITIES,
@@ -34,6 +35,8 @@ const formImageSchema = z.object({
   url: z.string().nullable(),
   alt: z.string(),
   altTranslations: translationsSchema.optional(),
+  /** The part of the photo cards keep (RAPP-932); a draft kept before it has none. */
+  focus: photoFocusSchema.nullable().default(null),
 });
 
 export type FormImage = z.infer<typeof formImageSchema>;
@@ -114,6 +117,7 @@ export function startingServiceDraft(
       key: image.id,
       url: image.url,
       alt: image.alt_text.ca,
+      focus: photoFocusFromColumns(image.focus_x, image.focus_y),
     })),
     mode: initialServiceMode(detail, now),
     publishedAt: service?.published_at ?? null,
@@ -246,6 +250,7 @@ export function toServiceInput(
     images: form.images.map((image) => ({
       url: context.imageUrls?.[image.key] ?? image.url ?? '',
       altText: localizedTextFromReview(image.alt, reviews.images[image.key]),
+      focus: image.focus,
     })),
   };
 }

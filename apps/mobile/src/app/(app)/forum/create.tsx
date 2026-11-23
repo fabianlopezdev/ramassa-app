@@ -5,6 +5,7 @@ import { ForumCategoryOption } from '@/components/forum/forum-category-tabs';
 import { FormWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { ActionScreen } from '@/components/layout/screen-action';
+import { PhotoFocusPicker } from '@/components/media/photo-focus-picker';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { compressNativeStoryImage } from '@/lib/native-image-compression';
 import type { CompressedNativeStoryImage } from '@/lib/native-image-compression-core';
@@ -15,7 +16,6 @@ import {
   useOwnForumPostingStatus,
 } from '@/lib/player-forum';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useNetworkState } from 'expo-network';
 import { useRouter, type Href } from 'expo-router';
@@ -26,17 +26,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import type { ForumCategoryRow } from '@ramassa/shared/forum';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
+import type { PhotoFocus } from '@ramassa/shared/photo-focus';
 import { FORUM_POST_MAX_LENGTH, forumPostInputSchema } from '@ramassa/shared/schemas';
 import { tokens } from '@ramassa/shared/tokens';
 
-const FORUM_PREVIEW_HEIGHT = tokens.spacing['3xl'] * 4;
 const FORUM_COMPOSER_INPUT_MIN_HEIGHT = tokens.spacing['3xl'] * 2;
 const IMAGE_PICKER_ORIGINAL_QUALITY = 1;
 const FORUM_COMPOSER_TEXT_LINES = 7;
 const EMPTY_CATEGORIES: readonly ForumCategoryRow[] = [];
 const styles = StyleSheet.create({
   input: { minHeight: FORUM_COMPOSER_INPUT_MIN_HEIGHT, writingDirection: 'auto' },
-  preview: { width: '100%', height: FORUM_PREVIEW_HEIGHT },
 });
 
 export default function ForumPostComposerScreen() {
@@ -53,6 +52,7 @@ export default function ForumPostComposerScreen() {
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [content, setContent] = useState('');
   const [image, setImage] = useState<CompressedNativeStoryImage | null>(null);
+  const [imageFocus, setImageFocus] = useState<PhotoFocus | null>(null);
   const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
   const [localErrorCode, setLocalErrorCode] = useState<AppErrorCode | null>(null);
@@ -92,6 +92,8 @@ export default function ForumPostComposerScreen() {
     if (asset === undefined) return;
     setIsProcessingPhoto(true);
     try {
+      // A new photo starts from the default crop (RAPP-932).
+      setImageFocus(null);
       setImage(
         await compressNativeStoryImage({
           uri: asset.uri,
@@ -109,7 +111,10 @@ export default function ForumPostComposerScreen() {
       setIsProcessingPhoto(false);
     }
   }, [t]);
-  const removePhoto = useCallback(() => setImage(null), []);
+  const removePhoto = useCallback(() => {
+    setImage(null);
+    setImageFocus(null);
+  }, []);
 
   const submit = useCallback(async () => {
     setValidationMessage(null);
@@ -131,6 +136,7 @@ export default function ForumPostComposerScreen() {
         categoryId: parsed.data.categoryId,
         content: parsed.data.content,
         image,
+        imageFocus,
       });
       replace(`/forum/${postId}` as Href);
     } catch {
@@ -245,11 +251,12 @@ export default function ForumPostComposerScreen() {
             ) : null}
             {imageSource === null ? null : (
               <View className="gap-sm">
-                <Image
+                <PhotoFocusPicker
+                  testID="forum-photo-focus"
                   source={imageSource}
-                  accessibilityLabel={t('forum:photoReady')}
-                  contentFit="cover"
-                  style={styles.preview}
+                  aspectRatio={image === null ? null : image.width / image.height}
+                  focus={imageFocus}
+                  onChange={setImageFocus}
                 />
                 <RaisedActionButton label={t('forum:removePhoto')} onPress={removePhoto} />
               </View>

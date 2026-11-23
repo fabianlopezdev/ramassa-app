@@ -36,6 +36,7 @@ import { StyleSheet } from 'react-native';
 import { isCategoryColor } from '@ramassa/shared/category-colors';
 import { toAppError } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
+import { photoFocusFromColumns } from '@ramassa/shared/photo-focus';
 import { type PlayerServiceRow } from '@ramassa/shared/services';
 import { servicesListKey } from '@ramassa/shared/tab-news';
 import { tokens } from '@ramassa/shared/tokens';
@@ -165,6 +166,7 @@ export default function ServiceCategoryScreen() {
             interested={item.interested}
             interestedLabel={t('playerServices:interestSaved')}
             imageObjectKey={firstImage?.url ?? null}
+            imageFocus={photoFocusFromColumns(firstImage?.focus_x, firstImage?.focus_y)}
             imageAlt={imageAlt?.text ?? null}
             unseenLabel={unseenLabel}
             accessibilityLabel={[

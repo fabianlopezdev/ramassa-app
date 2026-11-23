@@ -19,6 +19,7 @@ import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
 import type { MediaItemRow } from '@ramassa/shared/media';
+import { photoFocusFromColumns } from '@ramassa/shared/photo-focus';
 import { tokens } from '@ramassa/shared/tokens';
 
 const GALLERY_COLUMN_COUNT = 2;
@@ -77,6 +78,7 @@ export function GalleryGrid({
         <GalleryTile
           id={item.id}
           objectKeyOrUrl={item.thumbnail_url ?? item.file_url}
+          focus={photoFocusFromColumns(item.focus_x, item.focus_y)}
           accessToken={accessToken}
           accessibilityLabel={accessibilityLabel}
           imageAlt={item.caption ?? t('mediaBy', { name: item.uploader_first_name })}

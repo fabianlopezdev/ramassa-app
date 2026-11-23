@@ -38,5 +38,9 @@
   "previewOpening": "در حال باز کردن نمای بازیکن.",
   "characterCount": "{{count}} / {{limit}} نویسه",
   "newCount_one": "{{label}}، {{count}} مورد جدید",
-  "newCount_other": "{{label}}، {{count}} مورد جدید"
+  "newCount_other": "{{label}}، {{count}} مورد جدید",
+  "photoFocus": {
+    "label": "بخش نمایان",
+    "reset": "بازنشانی"
+  }
 }

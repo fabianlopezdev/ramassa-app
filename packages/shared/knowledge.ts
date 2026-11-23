@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { isCategoryColor } from './category-colors';
 import { AppError } from './errors';
 import { getContentLanguageFallbacks } from './i18n/localized-content';
+import { photoFocusSchema } from './photo-focus';
 import {
   languageCodeSchema,
   publishedTranslationsSchema,
@@ -187,6 +188,8 @@ export const knowledgeArticleInputSchema = z
     title: knowledgeTitleSchema,
     body: localizedKnowledgeBodySchema,
     imageUrl: optionalObjectKey,
+    /** The part of the cover cards keep (RAPP-932); null keeps the default crop. */
+    imageFocus: photoFocusSchema.nullable(),
     videoUrl: z.string().trim().min(1).max(2_000).nullable(),
     externalUrl: z.url().nullable(),
     contentType: z.enum(KNOWLEDGE_CONTENT_TYPES),
@@ -337,6 +340,9 @@ export interface KnowledgeArticleListRow {
   readonly title: KnowledgeLocalizedText;
   readonly body: LocalizedKnowledgeBody;
   readonly image_url: string | null;
+  /** The cover's focus (RAPP-932): both set, or both null for the default crop. */
+  readonly image_focus_x: number | null;
+  readonly image_focus_y: number | null;
   readonly video_url: string | null;
   readonly external_url: string | null;
   readonly content_type: KnowledgeContentType;
@@ -365,7 +371,7 @@ export interface KnowledgeArticlePage {
 
 type Client = SupabaseClient<Database>;
 const KNOWLEDGE_COLUMNS =
-  'id, category_id, category:knowledge_categories!knowledge_articles_category_same_org(id, name, slug, icon, color, sort_order), title, body, image_url, video_url, external_url, content_type, story_status, submission_language, story_image_urls, publication_consent, publication_consent_at, publication_consent_version, author_id, author_first_name, created_by, reviewer_note, is_published, published_at, expires_at, created_at, updated_at';
+  'id, category_id, category:knowledge_categories!knowledge_articles_category_same_org(id, name, slug, icon, color, sort_order), title, body, image_url, image_focus_x, image_focus_y, video_url, external_url, content_type, story_status, submission_language, story_image_urls, publication_consent, publication_consent_at, publication_consent_version, author_id, author_first_name, created_by, reviewer_note, is_published, published_at, expires_at, created_at, updated_at';
 
 const KNOWLEDGE_CATEGORY_COLUMNS = 'id, name, slug, icon, color, sort_order';
 
@@ -634,6 +640,8 @@ function toDatabaseValues(input: KnowledgeArticleInput, includeAuthorId = true) 
     title: input.title,
     body: input.body,
     image_url: input.imageUrl,
+    image_focus_x: input.imageUrl === null ? null : (input.imageFocus?.x ?? null),
+    image_focus_y: input.imageUrl === null ? null : (input.imageFocus?.y ?? null),
     video_url: input.videoUrl === null ? null : normalizeVideoEmbedUrl(input.videoUrl),
     external_url: input.externalUrl,
     content_type: input.contentType,

@@ -21,6 +21,7 @@ import { FailureNotice } from '@/components/error-code-line';
 import { FieldLabel } from '@/components/forms/field-label';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { SwitchCard } from '@/components/forms/switch-card';
+import { PhotoFocusPicker } from '@/components/media/photo-focus-picker';
 import { PressableScale } from '@/components/motion/pressable-scale';
 import { WizardFrame } from '@/components/onboarding/wizard-frame';
 import { DraftPreviewSheet } from '@/components/preview/draft-preview-sheet';
@@ -67,6 +68,7 @@ import {
 } from '@ramassa/shared/announcements';
 import { useAuth } from '@ramassa/shared/auth';
 import { getErrorMessageKey, type AppErrorCode } from '@ramassa/shared/errors';
+import { photoFocusFromColumns } from '@ramassa/shared/photo-focus';
 import { MAX_TRANSLATION_TEXT_LENGTH } from '@ramassa/shared/translation';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 
@@ -87,6 +89,7 @@ function startingDraft(announcement: AnnouncementListRow | undefined): Announcem
     body: announcement?.body.ca ?? '',
     imageAlt: announcement?.image_alt?.ca ?? '',
     imageUrl: announcement?.image_url ?? null,
+    imageFocus: photoFocusFromColumns(announcement?.image_focus_x, announcement?.image_focus_y),
     isPinned: announcement?.is_pinned ?? false,
     mode: initialMode(announcement),
     publishedAt: announcement?.published_at ?? null,
@@ -155,16 +158,24 @@ function AnnouncementForm({
     if (userId.length === 0 || !isTouched) return;
     writeAnnouncementDraft(privateStorage, userId, announcementId, {
       ...form,
+      // A picked photo is not kept on the device, so neither is its focus.
+      imageFocus:
+        photo === null
+          ? form.imageFocus
+          : photoFocusFromColumns(announcement?.image_focus_x, announcement?.image_focus_y),
       titleTranslations: reviewTexts(titleReview.review),
       bodyTranslations: reviewTexts(bodyReview.review),
       imageAltTranslations: reviewTexts(imageAltReview.review),
     });
   }, [
+    announcement?.image_focus_x,
+    announcement?.image_focus_y,
     announcementId,
     bodyReview.review,
     form,
     imageAltReview.review,
     isTouched,
+    photo,
     titleReview.review,
     userId,
   ]);
@@ -189,7 +200,10 @@ function AnnouncementForm({
       quality: 1,
     });
     const asset = result.canceled ? undefined : result.assets[0];
-    if (asset !== undefined) setPhoto({ uri: asset.uri, width: asset.width, height: asset.height });
+    if (asset === undefined) return;
+    setPhoto({ uri: asset.uri, width: asset.width, height: asset.height });
+    // A new photo starts from the default crop (RAPP-932).
+    set({ imageFocus: null });
   };
 
   const publicationTime = (): string | null => {
@@ -231,6 +245,7 @@ function AnnouncementForm({
           title: localizedTextFromReview(form.title, titleReview.review),
           body: localizedTextFromReview(form.body, bodyReview.review),
           imageUrl,
+          imageFocus: imageUrl === null ? null : form.imageFocus,
           imageAlt:
             imageUrl === null
               ? null
@@ -359,7 +374,7 @@ function AnnouncementForm({
               accessibilityLabel={t('imageRemove')}
               onPress={() => {
                 setPhoto(null);
-                set({ imageUrl: null, imageAlt: '' });
+                set({ imageUrl: null, imageAlt: '', imageFocus: null });
                 imageAltReview.reset();
               }}
               haptic="tapLight"
@@ -370,6 +385,15 @@ function AnnouncementForm({
           ) : null}
         </View>
       </View>
+      {hasImage && previewImage !== null ? (
+        <PhotoFocusPicker
+          testID="announcement-image-focus"
+          source={previewImage}
+          aspectRatio={photo === null ? null : photo.width / photo.height}
+          focus={form.imageFocus}
+          onChange={(imageFocus) => set({ imageFocus })}
+        />
+      ) : null}
       {hasImage ? (
         <MultilingualField
           testIDPrefix="image-alt"

@@ -22,6 +22,7 @@ import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { resolveLocalizedKnowledgeBlocks } from '@ramassa/shared/knowledge';
+import { photoFocusFromColumns } from '@ramassa/shared/photo-focus';
 import { tokens } from '@ramassa/shared/tokens';
 
 export default function PlayerKnowledgeDetailScreen() {
@@ -130,6 +131,7 @@ export default function PlayerKnowledgeDetailScreen() {
         testID="knowledge-detail-screen"
         source={coverSource}
         photoKey={article.image_url ?? article.id}
+        focus={photoFocusFromColumns(article.image_focus_x, article.image_focus_y)}
         accessibilityLabel={title.text}
       >
         <PageWidth className="gap-lg">{articleView}</PageWidth>

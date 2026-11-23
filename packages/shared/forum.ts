@@ -65,6 +65,9 @@ export interface ForumPostRow {
   readonly author_first_name: string;
   readonly content: string | null;
   readonly image_url: string | null;
+  /** The photo's focus (RAPP-932): both set, or both null for the default crop. */
+  readonly image_focus_x: number | null;
+  readonly image_focus_y: number | null;
   readonly visibility: ForumVisibility;
   readonly is_pinned: boolean;
   readonly reply_count: number;
@@ -104,6 +107,8 @@ const forumPostDatabaseRowSchema = z.object({
   author_first_name: z.string().min(1),
   content: z.string().nullable(),
   image_url: z.string().nullable(),
+  image_focus_x: z.number().nullable(),
+  image_focus_y: z.number().nullable(),
   visibility: forumVisibilitySchema,
   is_pinned: z.boolean(),
   reply_count: z.number().int().nonnegative(),
@@ -145,7 +150,7 @@ export type ForumModerationQueueRow = z.infer<typeof forumModerationQueueRowSche
 
 const FORUM_CATEGORY_COLUMNS = 'id, name, slug, icon, color, sort_order';
 const FORUM_POST_COLUMNS =
-  'id, org_id, category_id, author_id, author_first_name, content, image_url, visibility, is_pinned, reply_count, created_at, updated_at';
+  'id, org_id, category_id, author_id, author_first_name, content, image_url, image_focus_x, image_focus_y, visibility, is_pinned, reply_count, created_at, updated_at';
 const FORUM_REPLY_COLUMNS =
   'id, org_id, post_id, parent_reply_id, author_id, author_first_name, content, visibility, created_at, updated_at';
 
@@ -217,7 +222,7 @@ async function callForumRpc(
   client: SupabaseClient<Database>,
   name:
     'create_forum_post' | 'create_forum_reply' | 'edit_own_forum_post' | 'delete_own_forum_post',
-  args: Record<string, string | null>,
+  args: Record<string, string | number | null>,
 ): Promise<unknown> {
   const { data, error } = await client.rpc(name, args as never);
   if (error !== null) throw new AppError('DB-1', { message: error.message });
@@ -250,6 +255,8 @@ export async function createForumPost(
       p_category_id: input.categoryId,
       p_content: input.content,
       p_image_url: input.imageObjectKey,
+      p_image_focus_x: input.imageObjectKey === null ? null : (input.imageFocus?.x ?? null),
+      p_image_focus_y: input.imageObjectKey === null ? null : (input.imageFocus?.y ?? null),
     }),
   );
 }

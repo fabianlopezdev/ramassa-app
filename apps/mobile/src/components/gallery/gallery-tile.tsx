@@ -4,15 +4,17 @@ import { Badge } from '@/components/layout/badge';
 import { PhotoFade } from '@/components/media/photo-fade';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
+import { usePhotoFocusPosition } from '@/lib/photo-focus-position';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { Image } from 'expo-image';
 import { useRouter, type Href } from 'expo-router';
 import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import type { PhotoFocus } from '@ramassa/shared/photo-focus';
 import { motionTokens } from '@ramassa/shared/tokens/motion';
 
-const GALLERY_TILE_ASPECT_RATIO = 1;
+export const GALLERY_TILE_ASPECT_RATIO = 1;
 const styles = StyleSheet.create({
   tile: { width: '100%', aspectRatio: GALLERY_TILE_ASPECT_RATIO },
   title: { writingDirection: 'auto' },
@@ -86,6 +88,7 @@ function GalleryTileUnseenMark({ label }: { readonly label: string }) {
 export const GalleryTile = memo(function GalleryTile({
   id,
   objectKeyOrUrl,
+  focus,
   accessToken,
   accessibilityLabel,
   imageAlt,
@@ -97,6 +100,8 @@ export const GalleryTile = memo(function GalleryTile({
 }: {
   readonly id: string;
   readonly objectKeyOrUrl: string;
+  /** The part of the photo the square tile keeps (RAPP-932); null keeps the default crop. */
+  readonly focus: PhotoFocus | null;
   readonly accessToken: string | undefined;
   /** Says the title and the date too: the text on the photo is not read on its own. */
   readonly accessibilityLabel: string;
@@ -122,6 +127,7 @@ export const GalleryTile = memo(function GalleryTile({
       }),
     [accessToken, objectKeyOrUrl],
   );
+  const { contentPosition, rememberShape } = usePhotoFocusPosition(objectKeyOrUrl, focus);
 
   return (
     <View className="p-xs">
@@ -143,6 +149,8 @@ export const GalleryTile = memo(function GalleryTile({
               accessibilityLabel={imageAlt}
               cachePolicy="memory-disk"
               contentFit="cover"
+              contentPosition={contentPosition}
+              onLoad={rememberShape}
               transition={motionTokens.duration.fast}
               style={StyleSheet.absoluteFill}
             />

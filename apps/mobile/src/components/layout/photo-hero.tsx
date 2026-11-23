@@ -12,6 +12,9 @@
  * of the screen's height and fits inside it, over a blurred copy of itself,
  * so nothing of it is cut and the top of the screen stays filled.
  *
+ * Until its shape is known the photo is cropped, around the focus its
+ * uploader chose or the default for its shape (RAPP-932).
+ *
  * The card that opened the screen grows its photo into this one (RAPP-916,
  * RAPP-920): the photo alone is the zoom's target.
  *
@@ -22,7 +25,7 @@
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PhotoZoomTarget, usePhotoZoomSheet } from '@/components/media/photo-zoom';
 import { continuousCorners } from '@/lib/continuous-corners';
-import { useRememberedPhotoShape } from '@/lib/remembered-photo-shape';
+import { usePhotoFocusPosition } from '@/lib/photo-focus-position';
 import { Image, type ImageSource } from 'expo-image';
 import { useMemo, type ReactNode } from 'react';
 import {
@@ -36,6 +39,7 @@ import {
 } from 'react-native';
 import Animated, { type AnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { PhotoFocus } from '@ramassa/shared/photo-focus';
 import { tokens } from '@ramassa/shared/tokens';
 
 /** The most of the screen's height the photo takes, so the title shows under it. */
@@ -63,6 +67,8 @@ export interface PhotoHeroProps {
   readonly source: ImageSource;
   /** The photo's stored key: the card that opened the screen measured its shape under it. */
   readonly photoKey: string;
+  /** The part of the photo to keep while it is cropped; null keeps the default crop. */
+  readonly focus: PhotoFocus | null;
   /** The photo's alt text. */
   readonly accessibilityLabel: string;
   /** Opens the photo at full screen, such as a gallery photo's lightbox (RAPP-913). */
@@ -75,6 +81,7 @@ export interface PhotoHeroProps {
 function PhotoHeroPhoto({
   source,
   photoKey,
+  focus,
   accessibilityLabel,
   onOpenPhoto,
   arrivesByZoom,
@@ -89,7 +96,7 @@ function PhotoHeroPhoto({
   readonly fillsFrame: boolean;
 }) {
   const { width, height: screenHeight } = useWindowDimensions();
-  const { aspectRatio, rememberShape } = useRememberedPhotoShape(photoKey);
+  const { aspectRatio, contentPosition, rememberShape } = usePhotoFocusPosition(photoKey, focus);
   const ownHeight = width / aspectRatio;
   const maxHeight = screenHeight * PHOTO_HERO_MAX_SHARE_OF_SCREEN;
   const isTall = ownHeight > maxHeight;
@@ -125,6 +132,7 @@ function PhotoHeroPhoto({
           accessibilityLabel={accessibilityLabel}
           cachePolicy="memory-disk"
           contentFit={isTall && !fillsFrame ? 'contain' : 'cover'}
+          contentPosition={contentPosition}
           recyclingKey={photoKey}
           onLoad={rememberShape}
           // No fade of its own: a fade competing with the zoom reads as a web page.
