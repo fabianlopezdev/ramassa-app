@@ -5,11 +5,17 @@
  * yes and no their counts, a text question the answers written. Descarrega CSV
  * gives one row per response with every answer in words.
  */
+import { useStepUp } from '@/components/auth/step-up';
 import { EditorSection } from '@/components/layout/editor-section';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/lib/supabase';
 import { Download } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
+import { isAppError } from '@ramassa/shared/errors';
 import {
+  createSurveyResultsExport,
   customFormScreenQuestions,
   formScreensInOrder,
   RATING_MAX,
@@ -98,7 +104,9 @@ export function SurveyResults({
   readonly form: CustomForm;
   readonly rows: readonly SurveyResultRow[];
 }) {
-  const { t, i18n } = useTranslation(['settings', 'onboarding']);
+  const { t, i18n } = useTranslation(['settings', 'onboarding', 'admin', 'errors']);
+  const withStepUp = useStepUp();
+  const [isExporting, setExporting] = useState(false);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const words = {
     yes: t('onboarding:yesOption'),
@@ -112,13 +120,27 @@ export function SurveyResults({
   );
   const number = new Intl.NumberFormat(language, { maximumFractionDigits: 1 });
 
-  function downloadCsv() {
+  // The CSV names every player who answered, so it comes from the server after
+  // a recent authenticator code, with an audit row per export (RAPP-946).
+  async function downloadCsv() {
+    setExporting(true);
+    let exported: readonly SurveyResultRow[];
+    try {
+      exported = await withStepUp(() => createSurveyResultsExport(supabase, form.id));
+    } catch (thrown) {
+      toast.error(
+        isAppError(thrown) && thrown.code === 'AUTH-9' ? t('errors:AUTH-9') : t('admin:exportFailed'),
+      );
+      return;
+    } finally {
+      setExporting(false);
+    }
     const header = [
       t('surveyResults.player'),
       t('surveyResults.answeredAt'),
       ...questions.map((question) => textIn(question.label, language)),
     ];
-    const lines = rows.map((row) => [
+    const lines = exported.map((row) => [
       row.displayName ?? '',
       row.answeredAt === null ? '' : new Date(row.answeredAt).toLocaleString(language),
       ...questions.map((question) =>
@@ -149,8 +171,8 @@ export function SurveyResults({
           type="button"
           variant="outline"
           size="sm"
-          disabled={rows.length === 0}
-          onClick={downloadCsv}
+          disabled={rows.length === 0 || isExporting}
+          onClick={() => void downloadCsv()}
           data-testid="survey-results-csv"
         >
           <Download aria-hidden data-icon="inline-start" />

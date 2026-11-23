@@ -46,3 +46,13 @@ export function useAnswerSurvey() {
     return null;
   };
 }
+
+/** Reads her surveys again, so Home shows one she left half way as started (RAPP-945). */
+export function useRefreshMySurveys() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return () =>
+    void queryClient.invalidateQueries({
+      queryKey: [SURVEY_FORMS_QUERY_ROOT, user?.id ?? 'signed-out'],
+    });
+}
