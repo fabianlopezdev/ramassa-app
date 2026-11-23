@@ -20,8 +20,12 @@
  * wash; its border, edge and arrow stay in the brand.
  *
  * A card may open with a photo (RAPP-852), such as a forum post's or a
- * story's: full width across the top of the face, clipped by its corners,
- * with the row under it.
+ * story's. Such a card takes the photo layout (RAPP-921): the photo edge to
+ * edge across the top in one landscape shape, fading into a panel in the
+ * brand colour. Its badge and title sit in white on the lower part of the
+ * photo, its other content in white on the panel, and a row at its foot holds
+ * the pieces it has (an author, the replies) with a thin line between them and
+ * the arrow at the end. The block at the start and the tone are left out.
  *
  * A card may be a tile in a grid (RAPP-854), such as an Ajuda category: the
  * same face, block and divider with tighter padding and gaps, no arrow, and
@@ -39,12 +43,14 @@ import { useBrandColor } from '@/components/branding/organization-branding-provi
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
 import { FORWARD_CHEVRON } from '@/components/icons/direction';
 import { Icon, type IconName } from '@/components/icons/icon';
+import { Badge, type BadgeTone } from '@/components/layout/badge';
 import { EdgeMarks, type EdgeMarkBadge } from '@/components/layout/edge-marks';
-import type { RaisedTone } from '@/components/layout/raised-surface';
+import { useRaisedChoiceFaceStyle, type RaisedTone } from '@/components/layout/raised-surface';
 import { PhotoZoomLink } from '@/components/media/photo-zoom';
+import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import type { Href } from 'expo-router';
-import type { ReactNode } from 'react';
-import { View } from 'react-native';
+import { Children, Fragment, useMemo, type ReactNode } from 'react';
+import { Text, View, type ViewStyle } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 const leadingBlockStyle = { minWidth: tokens.spacing['2xl'] } as const;
@@ -59,6 +65,32 @@ const TILE_ROW_CLASS_NAME = 'grow flex-row items-stretch gap-sm';
  * other tile of the row is taller the name still sits at its foot.
  */
 const TILE_STACK_CLASS_NAME = 'grow items-stretch gap-sm';
+
+/**
+ * How far up the photo the fade into the brand panel starts (RAPP-921). The
+ * badge and the title sit inside it, so they always have the fade under them.
+ */
+const PHOTO_FADE_HEIGHT = tokens.spacing['2xl'] + tokens.spacing['3xl'];
+const PHOTO_TITLE_LINES = 2;
+
+/**
+ * The fade from the photo into the panel, in the brand colour with two hex
+ * digits of opacity: clear at the top, mostly brand behind the badge, solid
+ * under the title, so white text reads on any photo.
+ */
+function photoFadeStyle(brandColor: string): ViewStyle {
+  return {
+    marginTop: -PHOTO_FADE_HEIGHT,
+    minHeight: PHOTO_FADE_HEIGHT,
+    paddingTop: tokens.spacing.xl,
+    backgroundImage: `linear-gradient(to bottom, ${brandColor}00, ${brandColor}B3 45%, ${brandColor} 85%)`,
+  };
+}
+
+/** The dark "Nou" would sink into the brand fade, so on the photo it turns white. */
+function badgeToneOnPhoto(tone: BadgeTone): BadgeTone {
+  return tone === 'brand' ? 'inverse' : tone;
+}
 
 /**
  * An icon for the block at the start of a card: as wide as the block, in the
@@ -105,8 +137,19 @@ type RaisedCardProps = RaisedCardOpening & {
   readonly count?: string | null;
   /** The colour of the card's kind, as a wash on its face. */
   readonly tone?: RaisedTone;
-  /** A full-width photo above the row, such as a post's image. */
+  /**
+   * The card's photo from `RaisedCardPhoto`, such as a post's image. With it
+   * the card takes the photo layout (RAPP-921): `children` go on the brand
+   * panel in white, and `leading` and `tone` are left out.
+   */
   readonly media?: ReactNode;
+  /** With a photo: the title, in white on the lower part of the photo. */
+  readonly mediaTitle?: string | null;
+  /**
+   * With a photo: the pieces of the row at the panel's foot, from
+   * `raised-card-footer`, before the arrow. A missing piece is null.
+   */
+  readonly footer?: readonly ReactNode[];
   /** A tile in a grid: tighter, no arrow, fills its cell. */
   readonly tile?: boolean;
   /**
@@ -121,7 +164,7 @@ type RaisedCardProps = RaisedCardOpening & {
   readonly isSelected?: boolean;
   /** Read after the label, such as how many messages are unread. */
   readonly accessibilityHint?: string;
-  readonly children: ReactNode;
+  readonly children?: ReactNode;
 };
 
 export type RaisedCardBadge = EdgeMarkBadge;
@@ -136,6 +179,8 @@ export function RaisedCard(props: RaisedCardProps) {
     count = null,
     tone,
     media,
+    mediaTitle = null,
+    footer,
     tile = false,
     stacked = false,
     isSelected,
@@ -143,7 +188,16 @@ export function RaisedCard(props: RaisedCardProps) {
     children,
   } = props;
   const brandColor = useBrandColor();
+  const languageFontClass = useLanguageFontClass();
+  const defaultFaceStyle = useRaisedChoiceFaceStyle();
   const hasMedia = media !== undefined && media !== null;
+  // The whole face takes the brand colour, so the fade below a tall title
+  // still meets the panel.
+  const brandFaceStyle = useMemo<ViewStyle>(
+    () => ({ ...defaultFaceStyle, backgroundColor: brandColor }),
+    [brandColor, defaultFaceStyle],
+  );
+  const fadeStyle = useMemo(() => photoFadeStyle(brandColor), [brandColor]);
   const isStackedTile = tile && stacked && !hasMedia;
   const stackedContent = (
     <>
@@ -172,6 +226,50 @@ export function RaisedCard(props: RaisedCardProps) {
       ) : null}
     </>
   );
+  const footerPieces = (footer ?? []).filter(
+    (piece) => piece !== null && piece !== undefined && piece !== false,
+  );
+  const photoContent = hasMedia ? (
+    <>
+      <View style={mediaBleedStyle}>
+        {media}
+        <View pointerEvents="none" style={fadeStyle} className="justify-end gap-sm px-lg pb-xs">
+          {badge === null ? null : (
+            <Badge
+              label={badge.label}
+              tone={badgeToneOnPhoto(badge.tone)}
+              languageFontClass={languageFontClass}
+              className="self-start"
+            />
+          )}
+          {mediaTitle === null || mediaTitle.length === 0 ? null : (
+            <Text
+              numberOfLines={PHOTO_TITLE_LINES}
+              className={`text-start text-2xl font-bold text-white ${languageFontClass}`}
+            >
+              {mediaTitle}
+            </Text>
+          )}
+        </View>
+      </View>
+      {Children.toArray(children).length === 0 ? null : <View className="gap-sm">{children}</View>}
+      <View className="flex-row items-center gap-md">
+        <View className="flex-1 flex-row flex-wrap items-center gap-x-md gap-y-xs">
+          {footerPieces.map((piece, index) => (
+            <Fragment key={index}>
+              {index === 0 ? null : (
+                <View accessible={false} className="self-stretch border-s border-white/50" />
+              )}
+              {piece}
+            </Fragment>
+          ))}
+        </View>
+        {showsArrow ? (
+          <Icon name={FORWARD_CHEVRON} size={tokens.fontSize['2xl']} color={tokens.colors.white} />
+        ) : null}
+      </View>
+    </>
+  ) : null;
   const renderSurface = (open: () => void) => (
     <SelectionChoiceSurface
       testID={testID}
@@ -185,20 +283,12 @@ export function RaisedCard(props: RaisedCardProps) {
           ? 'gap-md pb-md'
           : `${isStackedTile ? TILE_STACK_CLASS_NAME : tile ? TILE_ROW_CLASS_NAME : ROW_CLASS_NAME} py-md`
       }
+      rowStyle={hasMedia ? brandFaceStyle : undefined}
       className={tile ? 'grow' : undefined}
       paddingClassName={tile ? 'px-md' : undefined}
-      tone={tone}
+      tone={hasMedia ? undefined : tone}
     >
-      {isStackedTile ? (
-        stackedContent
-      ) : hasMedia ? (
-        <>
-          <View style={mediaBleedStyle}>{media}</View>
-          <View className={ROW_CLASS_NAME}>{rowContent}</View>
-        </>
-      ) : (
-        rowContent
-      )}
+      {isStackedTile ? stackedContent : hasMedia ? photoContent : rowContent}
     </SelectionChoiceSurface>
   );
   const card =
@@ -209,9 +299,11 @@ export function RaisedCard(props: RaisedCardProps) {
         {renderSurface}
       </PhotoZoomLink>
     );
-  if (badge === null && count === null) return card;
+  // With a photo, the badge sits on the photo over the title.
+  const edgeBadge = hasMedia ? null : badge;
+  if (edgeBadge === null && count === null) return card;
   return (
-    <EdgeMarks badge={badge} count={count} className={tile ? 'grow' : undefined}>
+    <EdgeMarks badge={edgeBadge} count={count} className={tile ? 'grow' : undefined}>
       {card}
     </EdgeMarks>
   );

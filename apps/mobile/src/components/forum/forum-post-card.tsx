@@ -1,8 +1,13 @@
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
 import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
+import {
+  RaisedCardFooterAuthor,
+  RaisedCardFooterReplies,
+} from '@/components/layout/raised-card-footer';
 import { RaisedCardPhoto, useRaisedCardPhotoSource } from '@/components/layout/raised-card-photo';
 import type { RaisedTone } from '@/components/layout/raised-surface';
 import { PersonAvatar } from '@/components/people/person-avatar';
+import { splitForumPostTitle } from '@/lib/forum-post-title';
 import type { Href } from 'expo-router';
 import { memo, useMemo } from 'react';
 import { Text } from 'react-native';
@@ -23,6 +28,11 @@ const FORUM_POST_PREVIEW_LINES = 5;
  *
  * Without a photo the avatar shows the person icon in place of the initial,
  * so a photo is what makes her card hers.
+ *
+ * A post with a photo takes the photo layout of the shared card (RAPP-921):
+ * its first sentence is the title on the photo, the rest is the preview on the
+ * panel, and the author and the replies share the row at its foot. The replies
+ * show only when there is at least one (RAPP-922).
  */
 export const ForumPostCard = memo(function ForumPostCard({
   post,
@@ -60,6 +70,8 @@ export const ForumPostCard = memo(function ForumPostCard({
   readonly newRepliesCount?: string | null;
 }) {
   const imageSource = useRaisedCardPhotoSource(post.image_url, accessToken);
+  const hasPhoto = imageSource !== null;
+  const { title, preview } = useMemo(() => splitForumPostTitle(post.content), [post.content]);
   const badge = useMemo<RaisedCardBadge | null>(() => {
     if (unseenLabel !== null) return { label: unseenLabel, tone: 'brand' };
     return post.is_pinned ? { label: pinnedLabel, tone: 'accent' } : null;
@@ -96,22 +108,49 @@ export const ForumPostCard = memo(function ForumPostCard({
           />
         )
       }
+      mediaTitle={title}
+      footer={[
+        <RaisedCardFooterAuthor
+          key="author"
+          name={post.author_first_name}
+          avatarKey={authorAvatarKey}
+        />,
+        repliesLabel === null ? null : (
+          <RaisedCardFooterReplies key="replies" label={repliesLabel} />
+        ),
+      ]}
     >
-      <Text className={`text-start text-md font-bold text-primary-dark ${languageFontClass}`}>
-        {post.author_first_name}
-      </Text>
-      {post.content === null ? null : (
-        <ForumPlainText
-          content={post.content}
-          languageFontClass={languageFontClass}
-          openLinkLabel={openLinkLabel}
-          numberOfLines={FORUM_POST_PREVIEW_LINES}
-        />
-      )}
-      {repliesLabel === null ? null : (
-        <Text className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}>
-          {repliesLabel}
-        </Text>
+      {hasPhoto ? (
+        preview === null ? null : (
+          <ForumPlainText
+            content={preview}
+            languageFontClass={languageFontClass}
+            openLinkLabel={openLinkLabel}
+            numberOfLines={FORUM_POST_PREVIEW_LINES}
+            ink="onBrand"
+          />
+        )
+      ) : (
+        <>
+          <Text className={`text-start text-md font-bold text-primary-dark ${languageFontClass}`}>
+            {post.author_first_name}
+          </Text>
+          {post.content === null ? null : (
+            <ForumPlainText
+              content={post.content}
+              languageFontClass={languageFontClass}
+              openLinkLabel={openLinkLabel}
+              numberOfLines={FORUM_POST_PREVIEW_LINES}
+            />
+          )}
+          {repliesLabel === null ? null : (
+            <Text
+              className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}
+            >
+              {repliesLabel}
+            </Text>
+          )}
+        </>
       )}
     </RaisedCard>
   );

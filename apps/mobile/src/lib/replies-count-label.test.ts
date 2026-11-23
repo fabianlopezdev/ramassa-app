@@ -36,6 +36,7 @@ describe('a card says nothing about replies when there are none (RAPP-922)', () 
 
   test('without a label the card draws neither the bubble nor the line', () => {
     expect(forumPostCard).toMatch(/\{repliesLabel === null \? null : \(\s*<Text/);
+    expect(forumPostCard).toMatch(/repliesLabel === null \? null : \(\s*<RaisedCardFooterReplies/);
   });
 
   test('one reply reads in the singular in every language', () => {

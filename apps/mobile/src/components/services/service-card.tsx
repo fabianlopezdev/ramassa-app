@@ -1,4 +1,5 @@
 import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
+import { RaisedCardFooterText } from '@/components/layout/raised-card-footer';
 import { RaisedCardPhoto, useRaisedCardPhotoSource } from '@/components/layout/raised-card-photo';
 import type { Href } from 'expo-router';
 import { memo, useMemo } from 'react';
@@ -66,38 +67,53 @@ export const ServiceCard = memo(function ServiceCard({
           />
         )
       }
+      mediaTitle={title}
+      footer={[
+        <RaisedCardFooterText key="cost" text={cost} emphasis />,
+        <RaisedCardFooterText key="availability" text={availability} />,
+      ]}
     >
-      <View className="gap-sm">
-        <Text
-          className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-          numberOfLines={2}
-        >
-          {title}
-        </Text>
-        {provider === null ? null : (
-          <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
-            {provider}
-          </Text>
-        )}
-        {location === null ? null : (
+      {imageSource === null ? (
+        <View className="gap-sm">
           <Text
-            className={`text-start text-sm text-neutral-600 ${languageFontClass}`}
+            className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
             numberOfLines={2}
           >
-            {location}
+            {title}
           </Text>
-        )}
-        <View className="flex-row flex-wrap gap-sm">
-          <Text
-            className={`text-start text-sm font-semibold text-primary-dark ${languageFontClass}`}
-          >
-            {cost}
-          </Text>
-          <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-            {availability}
-          </Text>
+          {provider === null ? null : (
+            <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
+              {provider}
+            </Text>
+          )}
+          {location === null ? null : (
+            <Text
+              className={`text-start text-sm text-neutral-600 ${languageFontClass}`}
+              numberOfLines={2}
+            >
+              {location}
+            </Text>
+          )}
+          <View className="flex-row flex-wrap gap-sm">
+            <Text
+              className={`text-start text-sm font-semibold text-primary-dark ${languageFontClass}`}
+            >
+              {cost}
+            </Text>
+            <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+              {availability}
+            </Text>
+          </View>
         </View>
-      </View>
+      ) : null}
+      {imageSource === null || provider === null ? null : (
+        <Text className={`text-start text-md text-white ${languageFontClass}`}>{provider}</Text>
+      )}
+      {imageSource === null || location === null ? null : (
+        <Text className={`text-start text-sm text-white ${languageFontClass}`} numberOfLines={2}>
+          {location}
+        </Text>
+      )}
     </RaisedCard>
   );
 });

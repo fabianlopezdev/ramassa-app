@@ -164,6 +164,10 @@ export const tokens = {
   // Number of flags that auto-hides a forum post pending moderation (ADR-014).
   // `threadLineWidth` (RAPP-884): the line that joins a forum post to its answers.
   forum: { autoHideFlagThreshold: 3, threadLineWidth: 2 },
+
+  // The photo of a preview card (RAPP-921): one landscape shape for every
+  // card, cropped to fill it, so a tall photo never makes a tall card.
+  photoCard: { aspectRatio: 16 / 9 },
 } as const;
 
 export type Tokens = typeof tokens;

@@ -28,8 +28,8 @@ export interface AnnouncementCardProps {
  * An announcement on Inici as a raised row (RAPP-829): its title and an arrow,
  * plus the mark while she has not seen it, in the colour of its kind
  * (RAPP-845). An announcement with a photo shows it across the top of the
- * card, like a forum post (RAPP-911). Its text and date are on the
- * announcement's own screen.
+ * card, like a forum post (RAPP-911), with its title on the photo (RAPP-921).
+ * Its text and date are on the announcement's own screen.
  */
 export const AnnouncementCard = memo(function AnnouncementCard({
   id,
@@ -63,13 +63,16 @@ export const AnnouncementCard = memo(function AnnouncementCard({
           />
         )
       }
+      mediaTitle={title}
     >
-      <Text
-        className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
-        numberOfLines={2}
-      >
-        {title}
-      </Text>
+      {imageSource === null ? (
+        <Text
+          className={`text-start text-lg font-bold text-neutral-900 ${languageFontClass}`}
+          numberOfLines={2}
+        >
+          {title}
+        </Text>
+      ) : null}
     </RaisedCard>
   );
 });

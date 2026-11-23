@@ -1,12 +1,11 @@
 /**
- * The shape of a photo, remembered once it has loaded (RAPP-914, RAPP-915).
+ * The shape of a photo, remembered once it has loaded (RAPP-915).
  *
- * A card photo and the photo at the top of the screen it opens show the same
- * picture at its own shape. Media rows store no dimensions, so the shape is
- * only known after the first load. It is kept here by the photo's stored key:
- * a card scrolled back into view opens at its real size, and the screen a
- * card opens starts at the shape the card already measured, so the photo
- * does not jump when it arrives.
+ * The photo at the top of a detail screen shows the picture at its own shape.
+ * Media rows store no dimensions, so the shape is only known after the first
+ * load. It is kept here by the photo's stored key, so the screen opened again
+ * starts at the right size and the photo does not jump when it arrives. Card
+ * photos have one fixed shape (RAPP-921) and do not measure.
  */
 import type { ImageLoadEventData } from 'expo-image';
 import { useCallback, useState } from 'react';

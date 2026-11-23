@@ -4,30 +4,25 @@
  * (RAPP-911), a guide, a story and a service (RAPP-915), so they all show
  * their photo the same way and reuse the same cached image as a list scrolls.
  *
- * The photo keeps its own shape (RAPP-914): it spans the card's width at its
- * own aspect ratio, uncropped. A tall portrait photo stops at a maximum height
- * and fits inside it, so one card never fills the screen. Until the photo has
- * loaded once, the card holds a common camera shape; after that its shape is
- * remembered, so a card scrolled back into view opens at its real size.
+ * Every card photo has one landscape shape (RAPP-921), filled and cropped, so
+ * a tall photo never makes a tall card and the cards of a list line up. The
+ * whole photo is on the screen the card opens.
  *
  * On a card that opens through an `href`, the photo is the source of the zoom
  * that grows it into the photo of the opened screen (RAPP-916).
  */
 import { PhotoZoomSource } from '@/components/media/photo-zoom';
 import { resolveMediaImageSource } from '@/lib/media-source';
-import { useRememberedPhotoShape } from '@/lib/remembered-photo-shape';
 import { mobileClientEnv } from '@/lib/supabase';
 import { Image, type ImageSource } from 'expo-image';
 import { memo, useMemo } from 'react';
 import type { ImageStyle } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
-const RAISED_CARD_PHOTO_MAX_HEIGHT = tokens.spacing['3xl'] * 6;
-
+// One flat style object: the zoom source refuses a style array (RAPP-916).
 const photoStyle: ImageStyle = {
   width: '100%',
-  maxHeight: RAISED_CARD_PHOTO_MAX_HEIGHT,
-  alignSelf: 'center',
+  aspectRatio: tokens.photoCard.aspectRatio,
 };
 
 /**
@@ -60,19 +55,15 @@ export const RaisedCardPhoto = memo(function RaisedCardPhoto({
   /** The photo's alt text. The card's own label is what a screen reader says. */
   readonly accessibilityLabel?: string;
 }) {
-  const { aspectRatio, rememberShape } = useRememberedPhotoShape(recyclingKey);
-  // One flat style object: the zoom source refuses a style array (RAPP-916).
-  const shapeStyle = useMemo<ImageStyle>(() => ({ ...photoStyle, aspectRatio }), [aspectRatio]);
   return (
     <PhotoZoomSource>
       <Image
         source={source}
         accessibilityLabel={accessibilityLabel}
-        contentFit="contain"
+        contentFit="cover"
         cachePolicy="memory-disk"
         recyclingKey={recyclingKey}
-        onLoad={rememberShape}
-        style={shapeStyle}
+        style={photoStyle}
       />
     </PhotoZoomSource>
   );

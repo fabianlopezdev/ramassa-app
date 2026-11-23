@@ -23,6 +23,10 @@ const toneClasses = {
   danger: { box: 'bg-error', text: 'text-white' },
   /** On top of a photo. */
   overlay: { box: 'bg-neutral-900/80', text: 'text-white' },
+  /** "Nou" on the brand fade of a card photo (RAPP-921), where the dark tone would sink. */
+  inverse: { box: 'bg-white', text: 'text-primary-dark' },
+  /** A category on the brand panel of a card with a photo (RAPP-921). */
+  onBrand: { box: 'bg-white/15', text: 'text-white' },
 } as const;
 
 export type BadgeTone = keyof typeof toneClasses;

@@ -65,7 +65,8 @@ describe('a screen with a photo opens on the story layout (RAPP-915)', () => {
 
   test('the photo keeps its own shape, and a tall one fits inside a share of the screen', () => {
     expect(photoHero).toContain('useRememberedPhotoShape(photoKey)');
-    expect(raisedCardPhoto).toContain('useRememberedPhotoShape(recyclingKey)');
+    // A card photo has one fixed shape (RAPP-921), so only the hero measures.
+    expect(raisedCardPhoto).not.toContain('useRememberedPhotoShape');
     expect(photoHero).toContain('PHOTO_HERO_MAX_SHARE_OF_SCREEN');
     expect(photoHero).toContain("contentFit={isTall ? 'contain' : 'cover'}");
     expect(photoHero).toContain('blurRadius={BACKDROP_BLUR_RADIUS}');
@@ -136,8 +137,7 @@ describe('a card photo grows into the photo of the screen it opens (RAPP-916)', 
   test('every card photo is the zoom source, inside the link of its card', () => {
     expect(raisedCardPhoto).toMatch(/<PhotoZoomSource>\s*<Image/);
     // The source copies its child, which must not carry a style array.
-    expect(raisedCardPhoto).toContain('style={shapeStyle}');
-    expect(raisedCardPhoto).toContain('useMemo<ImageStyle>(() => ({ ...photoStyle, aspectRatio })');
+    expect(raisedCardPhoto).toContain('style={photoStyle}');
     expect(raisedCard).toContain('<PhotoZoomLink href={props.href} hasPhoto={hasMedia}>');
     expect(galleryTile).toMatch(/<PhotoZoomSource>\s*<Image/);
     expect(galleryTile).toContain(
