@@ -1702,6 +1702,7 @@ export function buildProfileField(overrides: Partial<ProfileFieldRow> = {}): Pro
     org_id: SEED_ORGANIZATION_ID,
     section_id: '5eed0000-0000-4000-8047-000000000007',
     kind: 'custom',
+    survey_form_id: null,
     system_key: null,
     question_type: 'yes_no_maybe',
     label: { ca: 'Vens amb transport públic?' },
@@ -1827,6 +1828,8 @@ export function buildCustomForm(overrides: Partial<CustomFormRow> = {}): CustomF
     id: '5eed0000-0000-4000-8100-000000000001',
     kind: 'other',
     system_key: null,
+    event_id: null,
+    closes_at: null,
     org_id: SEED_ORGANIZATION_ID,
     name: {
       ca: 'Com véns als entrenaments',

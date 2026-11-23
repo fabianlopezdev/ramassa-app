@@ -44,8 +44,14 @@ export const CUSTOM_QUESTION_TYPES = [
   'file_upload',
   'country',
   'municipality',
+  // A survey's 1 to 5 rating (RAPP-929): a survey question only, never a field of her record.
+  'rating',
 ] as const;
 export type CustomQuestionType = (typeof CUSTOM_QUESTION_TYPES)[number];
+
+/** A survey's rating runs from 1 to 5 (RAPP-929). */
+export const RATING_MIN = 1;
+export const RATING_MAX = 5;
 
 /**
  * The two lists the app ships (D6, RAPP-660): every country and every
@@ -347,6 +353,8 @@ export function customAnswerSchema(question: AnswerQuestionShape): z.ZodType<Cus
       return z.string().refine(isCanonicalCountry);
     case 'municipality':
       return z.string().refine(isCanonicalMunicipality);
+    case 'rating':
+      return z.int().min(RATING_MIN).max(RATING_MAX);
   }
 }
 
@@ -446,6 +454,8 @@ export function sampleCustomAnswer(
       return 'Espanya';
     case 'municipality':
       return 'Vic';
+    case 'rating':
+      return RATING_MAX - 1;
     case 'file_upload': {
       const isPhoto = fileSettings(question.settings).accept === 'photo';
       return {
