@@ -18,7 +18,7 @@ import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useMarkGalleryItemSeen } from '@/lib/use-tab-news';
 import { useNetworkState } from 'expo-network';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
 
 export default function GalleryItemScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { back } = useRouter();
+  const { back, push } = useRouter();
   const { t } = useTranslation(['gallery', 'forum']);
   const languageFontClass = useLanguageFontClass();
   const { user, role, session } = useAuth();
@@ -108,6 +108,11 @@ export default function GalleryItemScreen() {
       />
     ),
     [languageFontClass, privacyActions, selectedPrivacy, t],
+  );
+  // A tap on the photo opens it at full screen, over this screen (RAPP-913).
+  const openPhoto = useCallback(
+    () => push({ pathname: '/gallery/photo/[id]', params: { id } } as unknown as Href),
+    [id, push],
   );
   const flagMedia = useCallback(() => {
     if (item !== undefined) setFlagTarget({ targetType: 'media', targetId: item.id });
@@ -203,6 +208,7 @@ export default function GalleryItemScreen() {
                   onTitleCutChange={setIsTitleCut}
                   flagAccessibilityLabel={canManage ? null : t('gallery:flag')}
                   onFlag={flagMedia}
+                  onOpen={openPhoto}
                 />
               )}
               <View className="gap-lg px-lg">

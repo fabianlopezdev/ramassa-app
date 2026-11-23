@@ -19,6 +19,15 @@ const mediaTitle = readFileSync(
   new URL('../components/gallery/gallery-media-title.tsx', import.meta.url),
   'utf8',
 );
+const photoLightbox = readFileSync(
+  new URL('../components/media/photo-lightbox.tsx', import.meta.url),
+  'utf8',
+);
+const photoRoute = readFileSync(
+  new URL('../app/(app)/gallery/photo/[id].tsx', import.meta.url),
+  'utf8',
+);
+const appLayout = readFileSync(new URL('../app/(app)/_layout.tsx', import.meta.url), 'utf8');
 const sharedMedia = readFileSync(
   new URL('../../../../packages/shared/media.ts', import.meta.url),
   'utf8',
@@ -29,6 +38,21 @@ test('gallery uses FlashList with recycled lazy thumbnails', () => {
   expect(gallery).toContain('GalleryTile');
   expect(galleryTile).toContain('recyclingKey');
   expect(galleryTile).toContain('cachePolicy="memory-disk"');
+});
+
+test('a gallery tile shows the title in two lines at most and the date, at one height per row (RAPP-913)', () => {
+  expect(galleryTile).toContain('testID="gallery-tile-title"');
+  expect(galleryTile).toContain('numberOfLines={TILE_TITLE_MAX_LINES}');
+  expect(galleryTile).toContain('const TILE_TITLE_MAX_LINES = 2;');
+  expect(galleryTile).toContain('testID="gallery-tile-date"');
+  // A tile without a title shows only the date.
+  expect(galleryTile).toMatch(/title === null \? null : \(\s*<Text\s+testID="gallery-tile-title"/);
+  // Unseen room for two title lines and the date keeps every tile the same height.
+  expect(galleryTile).toContain('aria-hidden');
+  expect(galleryTile).toContain('opacity-0');
+  // The date is written in her language.
+  expect(gallery).toContain('const locale = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;');
+  expect(gallery).toContain('formatGalleryDate(item.created_at, locale)');
 });
 
 test('upload requires consent and exposes determinate progress plus retry', () => {
@@ -79,16 +103,45 @@ test('an opened photo or video runs across the full screen width, in its own sha
   expect(item).toContain('<PageWidth');
 });
 
-test('the title sits on the media, at most three lines, and a tap hides it (RAPP-897)', () => {
+test('the title sits on the media, at most three lines; the first tap on a video hides it (RAPP-897)', () => {
   expect(mediaTitle).toContain('testID="gallery-media-title"');
   expect(mediaTitle).toContain('numberOfLines={GALLERY_MEDIA_TITLE_MAX_LINES}');
   expect(mediaTitle).toContain('onTextLayout');
   expect(mediaStage).toContain('<GalleryMediaTitle');
-  expect(mediaStage).toContain('testID="gallery-photo-frame"');
   expect(mediaStage).toContain('testID="gallery-video-first-tap"');
   expect(mediaStage).toContain('galleryVideoTitleVisibility');
+  // The title lets touches through to the media; only the control at its end takes them.
+  expect(mediaTitle).toContain('pointerEvents="box-none"');
+  expect(mediaTitle).not.toContain('isVisible');
   // The full text is printed under the media only when the title was cut.
   expect(item).toMatch(/item\.caption === null \|\| !isTitleCut \? null : \(/);
+});
+
+test('a tap on an opened photo opens it at full screen in the lightbox (RAPP-913)', () => {
+  expect(mediaStage).toContain('testID="gallery-photo-open"');
+  expect(mediaStage).toContain('accessibilityRole="imagebutton"');
+  expect(mediaStage).toContain('onPress={onOpen}');
+  expect(mediaStage).not.toContain('toggleTitle');
+  expect(item).toContain("pathname: '/gallery/photo/[id]'");
+  expect(item).toContain('onOpen={openPhoto}');
+  expect(appLayout).toContain(
+    '<Stack.Screen name="gallery/photo/[id]" options={photoLightboxOptions} />',
+  );
+  expect(appLayout).toContain("presentation: 'transparentModal', animation: 'fade'");
+  expect(photoRoute).toContain('<PhotoLightbox');
+  expect(photoRoute).toContain("closeLabel={t('common:close')}");
+  // Pinch, double tap and drag, on the UI thread; a close button the screen reader reaches.
+  expect(photoLightbox).toContain('Gesture.Pinch()');
+  expect(photoLightbox).toContain('.numberOfTaps(2)');
+  expect(photoLightbox).toContain('Gesture.Pan()');
+  expect(photoLightbox).toContain('shouldDismissLightbox');
+  expect(photoLightbox).toContain('testID="photo-lightbox-close"');
+  expect(photoLightbox).toContain('label={closeLabel}');
+  expect(photoLightbox).toContain('onAccessibilityEscape={onClose}');
+  expect(photoLightbox).toContain('<StatusBar style="light" hidden');
+  expect(photoLightbox).toContain('useSafeAreaInsets');
+  expect(photoLightbox).toContain('useReducedMotion');
+  expect(photoLightbox).toContain('tokens.colors.black');
 });
 
 test('the media stage keeps the report flag on a photo, the labels and the right-to-left layout (RAPP-897)', () => {
@@ -97,7 +150,7 @@ test('the media stage keeps the report flag on a photo, the labels and the right
   expect(mediaStage).toContain('accessibilityLabel={accessibilityLabel}');
   // The tap layers are not screen reader stops; the photo, the player and the flag are.
   expect(mediaStage).toContain('accessible={false}');
-  for (const source of [mediaStage, mediaTitle]) {
+  for (const source of [mediaStage, mediaTitle, galleryTile, photoLightbox]) {
     expect(source).not.toMatch(
       /\b(left|right|marginLeft|marginRight|paddingLeft|paddingRight)\b\s*:/,
     );

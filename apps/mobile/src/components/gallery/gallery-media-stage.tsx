@@ -2,8 +2,8 @@
  * An opened gallery photo or video (RAPP-897).
  *
  * It runs across the full width of its column, in the shape of what it shows,
- * with the title drawn on it. One tap on a photo hides the title and the next
- * tap brings it back. On a video the first tap hides the title and starts the
+ * with the title drawn on it. A tap on a photo opens it at full screen in the
+ * lightbox (RAPP-913). On a video the first tap hides the title and starts the
  * video; from then on the taps belong to the player, and the title returns
  * while the video is paused.
  */
@@ -88,43 +88,44 @@ export const GalleryPhotoStage = memo(function GalleryPhotoStage({
   onTitleCutChange,
   flagAccessibilityLabel,
   onFlag,
+  onOpen,
 }: GalleryMediaStageProps & {
   readonly source: ImageSource;
   /** The report flag's label; null when she cannot report this photo (her own). */
   readonly flagAccessibilityLabel: string | null;
   readonly onFlag: () => void;
+  /** Opens the photo at full screen in the lightbox. */
+  readonly onOpen: () => void;
 }) {
   const [pictureAspectRatio, setPictureAspectRatio] = useState<number | null>(null);
-  const [isTitleVisible, setIsTitleVisible] = useState(true);
   const { measureFrame, frameStyle, onPictureStyle } = useMediaFrame(pictureAspectRatio, maxHeight);
   const recordPictureShape = useCallback(
     ({ source: loaded }: ImageLoadEventData) => setPictureAspectRatio(mediaAspectRatioOf(loaded)),
     [],
   );
-  const toggleTitle = useCallback(() => setIsTitleVisible((isVisible) => !isVisible), []);
   const frame = useMemo(() => [styles.frame, frameStyle], [frameStyle]);
   return (
-    <Pressable
-      testID="gallery-photo-frame"
-      accessible={false}
-      disabled={title === null}
-      onPress={toggleTitle}
-      onLayout={measureFrame}
-      style={frame}
-    >
-      <Image
-        source={source}
+    <View onLayout={measureFrame} style={frame}>
+      <Pressable
+        testID="gallery-photo-open"
+        accessibilityRole="imagebutton"
         accessibilityLabel={accessibilityLabel}
-        cachePolicy="memory-disk"
-        contentFit="contain"
+        onPress={onOpen}
         style={styles.media}
-        onLoad={recordPictureShape}
-      />
+      >
+        <Image
+          source={source}
+          accessible={false}
+          cachePolicy="memory-disk"
+          contentFit="contain"
+          style={styles.media}
+          onLoad={recordPictureShape}
+        />
+      </Pressable>
       {title === null && flagAccessibilityLabel === null ? null : (
         <GalleryMediaTitle
           style={onPictureStyle}
           title={title}
-          isVisible={isTitleVisible}
           fontClass={fontClass}
           onCutChange={onTitleCutChange}
           endAction={
@@ -138,7 +139,7 @@ export const GalleryPhotoStage = memo(function GalleryPhotoStage({
           }
         />
       )}
-    </Pressable>
+    </View>
   );
 });
 
@@ -197,7 +198,6 @@ export const GalleryVideoStage = memo(function GalleryVideoStage({
           <GalleryMediaTitle
             style={onPictureStyle}
             title={title}
-            isVisible
             fontClass={fontClass}
             onCutChange={onTitleCutChange}
           />
