@@ -24,6 +24,15 @@
         "buildType": "apk"
       }
     },
+    "staging-ios": {
+      "extends": "staging",
+      "distribution": "store",
+      "env": {
+        "APP_VARIANT": "staging",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true",
+        "STAGING_IOS_BUNDLE_ID": "dev.fabapps.ramassa.staging"
+      }
+    },
     "production": {
       "autoIncrement": true
     }

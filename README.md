@@ -229,6 +229,11 @@ How it is wired:
 - `apps/mobile/eas.json` profile `staging`: internal distribution, an APK on
   Android, channel `staging`, `APP_VARIANT=staging`, and the EAS environment
   `preview`.
+- `apps/mobile/eas.json` profile `staging-ios` (RAPP-906): the same variant for
+  iPhone, with store distribution for TestFlight and the temporary identifier
+  `dev.fabapps.ramassa.staging`. Build it with
+  `bun run --cwd apps/mobile build:staging:ios`. The identifier `com.ramassa.app`
+  stays with the real app.
 - Only the staging variant has an update URL, so `expo-updates` stays switched off
   in every other build.
 - The `eas-build-pre-install` hook refuses `APP_VARIANT` and

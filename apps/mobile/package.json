@@ -78,7 +78,9 @@
     "ios:ramassa": "expo run:ios --device \"Ramassa — iPhone 18 Pro\"",
     "eas-build-pre-install": "bun scripts/check-eas-build-env.ts",
     "build:staging:android": "bunx eas-cli build --platform android --profile staging",
-    "update:staging:android": "APP_VARIANT=staging bunx eas-cli update --channel staging --environment preview --platform android"
+    "build:staging:ios": "bunx eas-cli build --platform ios --profile staging-ios",
+    "update:staging:android": "APP_VARIANT=staging bunx eas-cli update --channel staging --environment preview --platform android",
+    "update:staging:ios": "APP_VARIANT=staging STAGING_IOS_BUNDLE_ID=dev.fabapps.ramassa.staging bunx eas-cli update --channel staging --environment preview --platform ios"
   },
   "private": true,
   "expo": {
