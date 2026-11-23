@@ -64,7 +64,7 @@ function toPermissionStatus(status: Notifications.PermissionStatus): PushPermiss
 }
 
 /** Current OS permission, without prompting. */
-async function getPushPermissionStatus(): Promise<PushPermissionStatus> {
+export async function getPushPermissionStatus(): Promise<PushPermissionStatus> {
   const { status, canAskAgain } = await Notifications.getPermissionsAsync();
   return normalizePushPermissionStatus(toPermissionStatus(status), canAskAgain);
 }
@@ -164,4 +164,37 @@ export async function removePushToken(userId: string): Promise<void> {
     },
     { code: 'NETWORK-1', context: { operation: 'removePushToken' } },
   );
+}
+
+/**
+ * Her own notifications switch, on every device (RAPP-956): the column every
+ * send reads. Throws on failure, so the screen can put the switch back.
+ */
+export async function fetchOwnPushNotifications(userId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('push_notifications_enabled')
+    .eq('id', userId)
+    .single();
+  if (error) throw error;
+  return data.push_notifications_enabled;
+}
+
+export async function saveOwnPushNotifications(enabled: boolean): Promise<boolean> {
+  const { data, error } = await supabase.rpc('set_own_push_notifications', {
+    p_enabled: enabled,
+  });
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Her yes to the launch question also turns on her profile switch (RAPP-956).
+ * Quiet on failure like the rest of registration: push must never block her.
+ */
+export async function turnOnOwnPushNotifications(): Promise<void> {
+  await safeAsync(() => saveOwnPushNotifications(true), {
+    code: 'NETWORK-1',
+    context: { operation: 'turnOnOwnPushNotifications' },
+  });
 }

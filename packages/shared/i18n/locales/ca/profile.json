@@ -59,7 +59,11 @@
     "data": "Les meves dades",
     "attendance": "La meva assistència",
     "language": "Idioma",
+    "notifications": "Notificacions",
     "appLock": "Bloqueig de l'app",
     "privacy": "Privacitat i permisos"
-  }
+  },
+  "notificationsSwitch": "Rebre notificacions",
+  "notificationsBlocked": "Les notificacions estan desactivades als ajustos del telèfon.",
+  "notificationsOpenSettings": "Obre els ajustos"
 }

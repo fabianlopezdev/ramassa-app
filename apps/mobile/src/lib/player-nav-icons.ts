@@ -15,6 +15,7 @@ export const playerNavIcons = {
   attendance: 'calendar-check',
   formsLater: 'clock',
   language: 'globe',
+  notifications: 'bell',
   appLock: 'lock',
   privacy: 'shield',
   signOut: 'logout',

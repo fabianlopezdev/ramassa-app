@@ -6,6 +6,7 @@ import {
   registerPushToken,
   requestPushPermission,
   resolvePushRegistrationDecision,
+  turnOnOwnPushNotifications,
 } from './push-notifications';
 import { declinePushRationale, hasDeclinedPushRationale } from './push-rationale-memory';
 import { previewMode } from './supabase';
@@ -73,6 +74,9 @@ export function usePushRegistration(canPrompt: boolean): {
       // Only now does the real OS dialog appear.
       const status = await requestPushPermission();
       if (status === 'granted' && userId) {
+        // Her yes here is her latest word, so it also turns on the switch in
+        // her profile, in case she had turned it off there (RAPP-956).
+        await turnOnOwnPushNotifications();
         await registerPushToken(userId);
       }
     })();

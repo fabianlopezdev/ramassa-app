@@ -59,7 +59,11 @@
     "data": "اطلاعات من",
     "attendance": "حضور من",
     "language": "زبان",
+    "notifications": "اعلان‌ها",
     "appLock": "قفل برنامه",
     "privacy": "حریم خصوصی و مجوزها"
-  }
+  },
+  "notificationsSwitch": "دریافت اعلان‌ها",
+  "notificationsBlocked": "اعلان‌ها در تنظیمات تلفن خاموش هستند.",
+  "notificationsOpenSettings": "باز کردن تنظیمات"
 }

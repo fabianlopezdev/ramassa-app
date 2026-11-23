@@ -3,7 +3,8 @@
  * tab, as a short menu on the shared raised cards (RAPP-863). Her data and her
  * attendance come first, as a pair of half-width raised cards (RAPP-874); the
  * other rows follow on the raised icon card. Each opens one screen, except the
- * last, which signs her out.
+ * last, which signs her out. Notificacions holds her one notifications switch
+ * (RAPP-956).
  *
  * It stays the RGPD self-service surface. She sees and corrects her data under
  * "Les meves dades", and gives or withdraws her consents and asks for erasure
@@ -41,6 +42,7 @@ export default function ProfileScreen() {
   const openData = useCallback(() => push('/profile-data' as Href), [push]);
   const openAttendance = useCallback(() => push('/profile-attendance' as Href), [push]);
   const openLanguage = useCallback(() => push('/profile-language' as Href), [push]);
+  const openNotifications = useCallback(() => push('/profile-notifications' as Href), [push]);
   const openAppLock = useCallback(() => push('/app-lock' as Href), [push]);
   const openPrivacy = useCallback(() => push('/profile-privacy' as Href), [push]);
   const signOut = useCallback(() => void logout(), []);
@@ -97,7 +99,17 @@ export default function ProfileScreen() {
         languageFontClass={languageFontClass}
         onOpen={openLanguage}
       />
-      {/* The lock does not exist on the web. */}
+      {/* Notifications and the lock do not exist on the web. */}
+      {Platform.OS === 'web' ? null : (
+        <RaisedIconCard
+          testID="profile-open-notifications"
+          icon={playerNavIcons.notifications}
+          title={t('menu.notifications')}
+          accessibilityLabel={t('menu.notifications')}
+          languageFontClass={languageFontClass}
+          onOpen={openNotifications}
+        />
+      )}
       {Platform.OS === 'web' ? null : (
         <RaisedIconCard
           testID="open-app-lock"
