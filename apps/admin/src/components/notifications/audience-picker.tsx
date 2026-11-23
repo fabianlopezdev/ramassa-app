@@ -7,6 +7,7 @@ import {
   type NotificationAudienceKind,
   type NotificationAudienceOptions,
 } from '@ramassa/shared/notifications';
+import { ParticipantChecklist } from './participant-checklist';
 
 function audienceValue(audience: NotificationAudience | null): string {
   if (audience === null || audience.kind === 'all') return '';
@@ -101,31 +102,12 @@ export function AudiencePicker({
         </select>
       </label>
       {kind === 'players' && players !== undefined ? (
-        <fieldset
-          className="grid max-h-64 gap-1 overflow-y-auto rounded-lg border border-neutral-300 p-3"
-          data-testid={`${idPrefix}-audience-players`}
-        >
-          <legend className="sr-only">{t('audiencePlayers')}</legend>
-          {options.participants.map((participant) => {
-            const isChosen = players.chosen.includes(participant.id);
-            return (
-              <label key={participant.id} className="flex min-h-9 items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={isChosen}
-                  onChange={() =>
-                    players.onChange(
-                      isChosen
-                        ? players.chosen.filter((id) => id !== participant.id)
-                        : [...players.chosen, participant.id],
-                    )
-                  }
-                />
-                {participant.fullName}
-              </label>
-            );
-          })}
-        </fieldset>
+        <ParticipantChecklist
+          participants={options.participants}
+          chosen={players.chosen}
+          onChange={players.onChange}
+          idPrefix={`${idPrefix}-audience-players`}
+        />
       ) : null}
       {kind !== '' && kind !== 'all' && kind !== 'players' ? (
         <select

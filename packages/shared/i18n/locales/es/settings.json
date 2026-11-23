@@ -933,7 +933,10 @@
       "chosen": "Elegir jugadoras"
     },
     "repeats": "¿Se repite cada temporada?",
-    "repeatsYes": "Cada temporada",
+    "repeatsYes": "Sí",
+    "repeatsEverySeason": "Cada temporada",
+    "choosePlayersTitle": "Elige las jugadoras",
+    "choosePlayersLater": "Ahora no",
     "repeatsNo": "No",
     "repeatsLine": "Sí: cada temporada te recordaremos que lo revises. No llega a las jugadoras hasta que alguien publique la versión de la nueva temporada.",
     "saveDraft": "Guardar el borrador",

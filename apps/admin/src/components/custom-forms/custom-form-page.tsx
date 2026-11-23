@@ -233,7 +233,7 @@ export function CustomFormPage({
                 {[
                   t(`customForms.level.${form.mandatory}`),
                   t(`customForms.audienceOption.${form.audience}`),
-                  ...(form.repeatsEachSeason ? [t('customForms.repeatsYes')] : []),
+                  ...(form.repeatsEachSeason ? [t('customForms.repeatsEverySeason')] : []),
                   ...(form.publishedAt === null
                     ? []
                     : [t('customForms.versionOf', { version: form.version })]),

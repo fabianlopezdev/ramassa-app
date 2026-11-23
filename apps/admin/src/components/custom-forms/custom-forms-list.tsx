@@ -12,6 +12,7 @@ import { FormStatusBadge } from '@/components/custom-forms/custom-form-page';
 import { choicesProblem, FormChoicesFields } from '@/components/custom-forms/form-choices';
 import { EditorSection } from '@/components/layout/editor-section';
 import { Page, PageHeader } from '@/components/layout/page';
+import { ParticipantChecklist } from '@/components/notifications/participant-checklist';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import type { CustomFormsData } from '@/lib/custom-forms';
@@ -25,14 +26,20 @@ import {
   ScrollText,
   type LucideIcon,
 } from 'lucide-react';
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import {
   createCustomForm,
+  setCustomFormRecipients,
   textIn,
   type CustomFormChoices,
   type CustomFormKind,
 } from '@ramassa/shared/intake-builder';
+import {
+  fetchNotificationAudienceOptions,
+  type NotificationAudienceOptions,
+} from '@ramassa/shared/notifications';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
 const SYSTEM_FORM_ORDER = ['season_authorization', 'app_terms'] as const;
@@ -109,7 +116,7 @@ export function CustomFormsList({
                     line={[
                       t(`customForms.level.${form.mandatory}`),
                       t(`customForms.audienceOption.${form.audience}`),
-                      ...(form.repeatsEachSeason ? [t('customForms.repeatsYes')] : []),
+                      ...(form.repeatsEachSeason ? [t('customForms.repeatsEverySeason')] : []),
                     ].join(' · ')}
                     badge={<FormStatusBadge form={form} />}
                   />
@@ -182,6 +189,10 @@ function NewFormDialog({
   const [choices, setChoices] = useState<CustomFormChoices>(() => newForm(kind));
   const [error, setError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
+  // A form for chosen players asks them right after Crea (RAPP-928).
+  const [choosingFor, setChoosingFor] = useState<string | null>(null);
+  const openForm = (formId: string) =>
+    void navigate({ to: '/forms/custom/$formId', params: { formId } });
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -199,7 +210,8 @@ function NewFormDialog({
       });
       onOpenChange(false);
       setChoices(newForm(kind));
-      await navigate({ to: '/forms/custom/$formId', params: { formId: id } });
+      if (choices.audience === 'chosen') setChoosingFor(id);
+      else openForm(id);
     } catch {
       setError(t('customForms.createFailed'));
     } finally {
@@ -208,32 +220,128 @@ function NewFormDialog({
   }
 
   return (
+    <>
+      <ChoosePlayersDialog
+        formId={choosingFor}
+        onDone={(formId) => {
+          setChoosingFor(null);
+          openForm(formId);
+        }}
+      />
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => {
+          setError(null);
+          onOpenChange(open);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogTitle>{t('customForms.newForm')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('customForms.newForm')}</DialogDescription>
+          <form className="flex flex-col gap-6" onSubmit={(event) => void submit(event)} noValidate>
+            <FormChoicesFields
+              choices={choices}
+              onChange={setChoices}
+              error={error}
+              idPrefix="new-form"
+            />
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                {t('customForms.cancel')}
+              </Button>
+              <Button type="submit" disabled={isBusy} data-testid="new-form-create">
+                {t('customForms.create')}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+/**
+ * Escull les jugadores (RAPP-928): right after Crea, for a form whose players
+ * the team picks, a search box and a list to tick. Desa saves them as the
+ * form's players (a draft, as every change: they are asked at Publica); Ara no
+ * leaves them for Configuració.
+ */
+function ChoosePlayersDialog({
+  formId,
+  onDone,
+}: {
+  readonly formId: string | null;
+  readonly onDone: (formId: string) => void;
+}) {
+  const { t } = useTranslation('settings');
+  const [participants, setParticipants] = useState<NotificationAudienceOptions['participants']>([]);
+  const [chosen, setChosen] = useState<readonly string[]>([]);
+  const [isBusy, setIsBusy] = useState(false);
+
+  useEffect(() => {
+    if (formId === null) return;
+    setChosen([]);
+    const controller = new AbortController();
+    void fetchNotificationAudienceOptions(supabase, controller.signal)
+      .then((options) => setParticipants(options.participants))
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [formId]);
+
+  async function save() {
+    if (formId === null) return;
+    setIsBusy(true);
+    try {
+      const count = await setCustomFormRecipients(supabase, formId, {
+        kind: 'players',
+        participantIds: chosen,
+      });
+      toast.success(t('customForms.recipientsSaved', { count }));
+      onDone(formId);
+    } catch {
+      toast.error(t('customForms.actionFailed'));
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  return (
     <Dialog
-      open={isOpen}
+      open={formId !== null}
       onOpenChange={(open) => {
-        setError(null);
-        onOpenChange(open);
+        if (!open && formId !== null) onDone(formId);
       }}
     >
-      <DialogContent className="max-w-md">
-        <DialogTitle>{t('customForms.newForm')}</DialogTitle>
-        <DialogDescription className="sr-only">{t('customForms.newForm')}</DialogDescription>
-        <form className="flex flex-col gap-6" onSubmit={(event) => void submit(event)} noValidate>
-          <FormChoicesFields
-            choices={choices}
-            onChange={setChoices}
-            error={error}
-            idPrefix="new-form"
-          />
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              {t('customForms.cancel')}
-            </Button>
-            <Button type="submit" disabled={isBusy} data-testid="new-form-create">
-              {t('customForms.create')}
-            </Button>
-          </div>
-        </form>
+      <DialogContent className="max-w-md" data-testid="choose-players-dialog">
+        <DialogTitle>{t('customForms.choosePlayersTitle')}</DialogTitle>
+        <DialogDescription className="sr-only">
+          {t('customForms.choosePlayersTitle')}
+        </DialogDescription>
+        <ParticipantChecklist
+          participants={participants}
+          chosen={chosen}
+          onChange={setChosen}
+          idPrefix="choose-players"
+          autoFocus
+        />
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => (formId === null ? undefined : onDone(formId))}
+            data-testid="choose-players-later"
+          >
+            {t('customForms.choosePlayersLater')}
+          </Button>
+          <Button
+            type="button"
+            disabled={isBusy || chosen.length === 0}
+            onClick={() => void save()}
+            data-testid="choose-players-save"
+          >
+            {t('customForms.saveDraft')}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

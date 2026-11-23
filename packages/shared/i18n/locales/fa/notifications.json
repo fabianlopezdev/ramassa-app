@@ -44,6 +44,8 @@
   "groupSearch": "جستجوی شرکت‌کنندگان",
   "groupEmpty": "هیچ شرکت‌کننده‌ای با این جستجو مطابقت ندارد.",
   "groupMembers": "شرکت‌کنندگان",
+  "chosenCount_one": "{{count}} انتخاب‌شده",
+  "chosenCount_other": "{{count}} انتخاب‌شده",
   "saveGroup": "ذخیره گروه",
   "groupSaved": "گروه ذخیره شد.",
   "editGroup": "ویرایش",

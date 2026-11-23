@@ -933,7 +933,10 @@
       "chosen": "Escollir jugadores"
     },
     "repeats": "Es repeteix cada temporada?",
-    "repeatsYes": "Cada temporada",
+    "repeatsYes": "Sí",
+    "repeatsEverySeason": "Cada temporada",
+    "choosePlayersTitle": "Escull les jugadores",
+    "choosePlayersLater": "Ara no",
     "repeatsNo": "No",
     "repeatsLine": "Sí: cada temporada et recordarem que el revisis. No arriba a les jugadores fins que algú publiqui la versió de la nova temporada.",
     "saveDraft": "Desa l'esborrany",

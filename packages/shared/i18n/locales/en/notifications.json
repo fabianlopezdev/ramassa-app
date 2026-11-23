@@ -44,6 +44,8 @@
   "groupSearch": "Search participants",
   "groupEmpty": "No participants match this search.",
   "groupMembers": "Participants",
+  "chosenCount_one": "{{count}} chosen",
+  "chosenCount_other": "{{count}} chosen",
   "saveGroup": "Save group",
   "groupSaved": "Group saved.",
   "editGroup": "Edit",

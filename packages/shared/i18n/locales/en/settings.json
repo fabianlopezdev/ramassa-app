@@ -933,7 +933,10 @@
       "chosen": "Choose players"
     },
     "repeats": "Does it repeat every season?",
-    "repeatsYes": "Every season",
+    "repeatsYes": "Yes",
+    "repeatsEverySeason": "Every season",
+    "choosePlayersTitle": "Choose the players",
+    "choosePlayersLater": "Not now",
     "repeatsNo": "No",
     "repeatsLine": "Yes: every season we will remind you to review it. It does not reach the players until someone publishes the new season’s version.",
     "saveDraft": "Save draft",

@@ -44,6 +44,8 @@
   "groupSearch": "Cerca participants",
   "groupEmpty": "Cap participant coincideix amb aquesta cerca.",
   "groupMembers": "Participants",
+  "chosenCount_one": "{{count}} escollida",
+  "chosenCount_other": "{{count}} escollides",
   "saveGroup": "Desa el grup",
   "groupSaved": "Grup desat.",
   "editGroup": "Edita",

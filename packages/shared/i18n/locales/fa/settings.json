@@ -369,7 +369,10 @@
       "chosen": "انتخاب بازیکنان"
     },
     "repeats": "آیا هر فصل تکرار می‌شود؟",
-    "repeatsYes": "هر فصل",
+    "repeatsYes": "بله",
+    "repeatsEverySeason": "هر فصل",
+    "choosePlayersTitle": "بازیکنان را انتخاب کنید",
+    "choosePlayersLater": "فعلاً نه",
     "repeatsNo": "خیر",
     "repeatsLine": "بله: هر فصل به شما یادآوری می‌کنیم آن را بازبینی کنید. تا کسی نسخه فصل جدید را منتشر نکند به بازیکنان نمی‌رسد.",
     "saveDraft": "ذخیره پیش‌نویس",

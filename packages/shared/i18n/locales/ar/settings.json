@@ -381,7 +381,10 @@
       "chosen": "اختيار لاعبات"
     },
     "repeats": "هل يتكرر كل موسم؟",
-    "repeatsYes": "كل موسم",
+    "repeatsYes": "نعم",
+    "repeatsEverySeason": "كل موسم",
+    "choosePlayersTitle": "اختر اللاعبات",
+    "choosePlayersLater": "ليس الآن",
     "repeatsNo": "لا",
     "repeatsLine": "نعم: سنذكّرك كل موسم بمراجعته. لا يصل إلى اللاعبات حتى ينشر أحدهم نسخة الموسم الجديد.",
     "saveDraft": "حفظ المسودة",

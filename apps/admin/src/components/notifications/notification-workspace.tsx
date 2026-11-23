@@ -10,7 +10,6 @@ import { useTranslation } from 'react-i18next';
 import type { SupportedLanguage } from '@ramassa/shared/i18n';
 import {
   createTargetedNotificationSend,
-  filterNotificationGroupParticipants,
   NOTIFICATION_TEMPLATE_CATEGORIES,
   notificationContentSchema,
   previewNotificationAudience,
@@ -31,6 +30,7 @@ import type {
 import { CATALAN_TRANSLATION_TARGETS } from '@ramassa/shared/translation/client';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 import { AudiencePicker } from './audience-picker';
+import { ParticipantChecklist } from './participant-checklist';
 
 const TARGET_LANGUAGES = CATALAN_TRANSLATION_TARGETS;
 
@@ -112,7 +112,6 @@ export function NotificationWorkspace({
     useState<NotificationTemplateCategory>('engagement');
   const [groupId, setGroupId] = useState<string | undefined>();
   const [groupName, setGroupName] = useState('');
-  const [groupSearch, setGroupSearch] = useState('');
   const [groupParticipantIds, setGroupParticipantIds] = useState<readonly string[]>([]);
 
   const titleReview = useTranslationReview();
@@ -121,9 +120,6 @@ export function NotificationWorkspace({
     () => audience.reduce((total, member) => total + member.deviceCount, 0),
     [audience],
   );
-  const visibleGroupParticipants = useMemo(() => {
-    return filterNotificationGroupParticipants(options.participants, groupSearch);
-  }, [groupSearch, options.participants]);
 
   useEffect(() => {
     let cancelled = false;
@@ -252,7 +248,6 @@ export function NotificationWorkspace({
       setNotice('group');
       setGroupId(undefined);
       setGroupName('');
-      setGroupSearch('');
       setGroupParticipantIds([]);
       await onRefresh();
     } catch {
@@ -460,45 +455,13 @@ export function NotificationWorkspace({
             placeholder={t('groupName')}
             aria-label={t('groupName')}
           />
-          <Input
-            id="notification-group-search"
-            name="notification-group-search"
-            value={groupSearch}
-            onChange={(event) => setGroupSearch(event.target.value)}
-            placeholder={t('groupSearch')}
-            aria-label={t('groupSearch')}
-            data-testid="notification-group-search"
+          <ParticipantChecklist
+            participants={options.participants}
+            chosen={groupParticipantIds}
+            onChange={setGroupParticipantIds}
+            idPrefix="notification-group"
+            withLanguage
           />
-          <fieldset className="max-h-72 space-y-2 overflow-y-auto rounded-lg border border-neutral-200 p-3">
-            <legend className="px-2 text-sm font-medium">{t('groupMembers')}</legend>
-            {visibleGroupParticipants.map((participant) => (
-              <label key={participant.id} className="flex min-h-11 items-center gap-3 text-sm">
-                <input
-                  id={`notification-group-member-${participant.id}`}
-                  name="notification-group-member"
-                  value={participant.id}
-                  type="checkbox"
-                  data-testid={`notification-group-member-${participant.id}`}
-                  checked={groupParticipantIds.includes(participant.id)}
-                  onChange={(event) =>
-                    setGroupParticipantIds((current) =>
-                      event.target.checked
-                        ? [...current, participant.id]
-                        : current.filter((id) => id !== participant.id),
-                    )
-                  }
-                />
-                <span>
-                  {participant.fullName} ({participant.language})
-                </span>
-              </label>
-            ))}
-            {visibleGroupParticipants.length === 0 ? (
-              <p data-testid="notification-group-empty" className="text-sm text-neutral-600">
-                {t('groupEmpty')}
-              </p>
-            ) : null}
-          </fieldset>
           <Button type="submit" disabled={groupName.trim().length === 0}>
             {t('saveGroup')}
           </Button>
@@ -525,7 +488,6 @@ export function NotificationWorkspace({
                   onClick={() => {
                     setGroupId(group.id);
                     setGroupName(group.name);
-                    setGroupSearch('');
                     setGroupParticipantIds(group.participantIds);
                   }}
                 >
