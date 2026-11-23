@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
 /**
  * A forum post on Comunitat as the shared raised card (RAPP-852): its photo
  * across the top, the author's avatar in the block before the divider
- * (RAPP-859), the author's name, a preview of the text and the number of
+ * (RAPP-859), the author's first name alone (RAPP-912), a preview of the text and the number of
  * replies, in the colour of its category. A pinned post carries the word on
  * the card's top edge, like "Nou" on an avis.
  *
@@ -33,7 +33,6 @@ const styles = StyleSheet.create({
 export const ForumPostCard = memo(function ForumPostCard({
   post,
   tone,
-  authorLabel,
   authorAvatarKey,
   repliesLabel,
   pinnedLabel,
@@ -49,7 +48,6 @@ export const ForumPostCard = memo(function ForumPostCard({
   readonly post: ForumPostRow;
   /** The colour of the post's category, as a wash on the card. */
   readonly tone?: RaisedTone;
-  readonly authorLabel: string;
   /** The author's photo (RAPP-639); without one, the person icon. */
   readonly authorAvatarKey: string | null;
   readonly repliesLabel: string;
@@ -116,7 +114,7 @@ export const ForumPostCard = memo(function ForumPostCard({
       }
     >
       <Text className={`text-start text-md font-bold text-primary-dark ${languageFontClass}`}>
-        {authorLabel}
+        {post.author_first_name}
       </Text>
       {post.content === null ? null : (
         <ForumPlainText

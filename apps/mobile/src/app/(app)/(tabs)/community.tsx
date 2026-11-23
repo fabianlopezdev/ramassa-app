@@ -204,7 +204,6 @@ function CommunityScreen() {
           <ForumPostCard
             post={item}
             tone={toneByCategoryId[item.category_id]}
-            authorLabel={t('forum:postBy', { name: item.author_first_name })}
             authorAvatarKey={personCards.get(item.author_id)?.avatarKey ?? null}
             repliesLabel={t('forum:repliesCount', { count: item.reply_count })}
             pinnedLabel={t('forum:pinned')}

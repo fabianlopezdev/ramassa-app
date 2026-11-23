@@ -320,7 +320,7 @@ export default function ForumPostDetailScreen() {
             kind="reply"
             name={reply.author_first_name}
             avatarKey={personCards.get(reply.author_id)?.avatarKey ?? null}
-            authorLabel={
+            authorAccessibilityLabel={
               item.answersTo === null
                 ? postBy
                 : `${postBy}. ${t('forum:replyTo', { name: item.answersTo })}`
@@ -466,7 +466,7 @@ export default function ForumPostDetailScreen() {
               testID="forum-thread-post"
               name={post.author_first_name}
               avatarKey={personCards.get(post.author_id)?.avatarKey ?? null}
-              authorLabel={t('forum:postBy', { name: post.author_first_name })}
+              authorAccessibilityLabel={t('forum:postBy', { name: post.author_first_name })}
               content={post.content}
               tombstone={t('forum:deletedTombstone')}
               rails={NO_RAILS}
