@@ -84,7 +84,8 @@ export function StaffSidebar() {
   const groups = visibleStaffNavGroups(permissions).map((group) => ({
     ...group,
     items: group.items.map((item) => {
-      const formId = systemFormIds[item.to] ?? null;
+      // The season authorization opens on its overview (RAPP-927); the app terms on their board.
+      const formId = item.to === '/forms/authorization' ? null : (systemFormIds[item.to] ?? null);
       return formId === null
         ? item
         : // The row's own address, read at run time: the menu links by string.
@@ -96,7 +97,15 @@ export function StaffSidebar() {
     holdsAnyPermission(permissions, CUSTOM_FORMS_PERMISSIONS) && hasLegalRows,
     pathname,
   );
-  const activePath = activeStaffNavPath(pathname, [
+  // The authorization's board, screens and versions light its overview's row (RAPP-927).
+  const authorizationId = systemFormIds['/forms/authorization'] ?? null;
+  const authorizationPath = authorizationId === null ? null : legalFormPath(authorizationId);
+  const navPathname =
+    authorizationPath !== null &&
+    (pathname === authorizationPath || pathname.startsWith(`${authorizationPath}/`))
+      ? '/forms/authorization'
+      : pathname;
+  const activePath = activeStaffNavPath(navPathname, [
     ...groups.flatMap((group) => group.items),
     ...Object.values(STAFF_NAV_PARENTS),
     ...legalForms.map((form) => ({ to: legalFormPath(form.id) })),

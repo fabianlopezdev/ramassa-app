@@ -114,7 +114,6 @@ export function FormChoicesFields({
   isRepeatLocked = false,
   isKindLocked = false,
   hasLanguages = false,
-  isNameOnly = false,
   idPrefix,
 }: {
   readonly choices: CustomFormChoices;
@@ -126,8 +125,6 @@ export function FormChoicesFields({
   readonly isKindLocked?: boolean;
   /** The name in every language; the new form dialog asks it in Catalan. */
   readonly hasLanguages?: boolean;
-  /** Only the name: the app terms' choices are fixed (RAPP-772). */
-  readonly isNameOnly?: boolean;
   readonly idPrefix: string;
 }) {
   const { t } = useTranslation('settings');
@@ -161,7 +158,6 @@ export function FormChoicesFields({
       {error === null ? null : <FieldError>{error}</FieldError>}
     </Field>
   );
-  if (isNameOnly) return <FieldGroup>{nameField}</FieldGroup>;
   return (
     <FieldGroup>
       <ChoiceCards

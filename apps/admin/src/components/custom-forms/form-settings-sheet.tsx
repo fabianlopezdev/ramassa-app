@@ -3,9 +3,9 @@
  * form's header, so the board stays the page as it is on Onboarding.
  *
  * It holds the name and the choices (RAPP-701) and, when the team picks the
- * players itself, the players it is for. The app's legal forms change their
- * name only (RAPP-772, RAPP-773). One Desa l'esborrany saves it all: players
- * see it with the next Publica.
+ * players itself, the players it is for. Only the team's forms have it: the
+ * app's legal forms have nothing to set (RAPP-927). One Desa l'esborrany saves
+ * it all: players see it with the next Publica.
  */
 import { choicesProblem, FormChoicesFields } from '@/components/custom-forms/form-choices';
 import { AudiencePicker } from '@/components/notifications/audience-picker';
@@ -74,7 +74,7 @@ export function FormSettingsSheet({ form }: { readonly form: CustomForm }) {
   const [groups, setGroups] = useState<readonly CustomNotificationGroup[]>([]);
   const [options, setOptions] = useState<NotificationAudienceOptions>(NO_OPTIONS);
   // The players are picked as soon as "A qui va dirigit" says the team picks them.
-  const picksPlayers = choices.audience === 'chosen' && form.systemKey === null;
+  const picksPlayers = choices.audience === 'chosen';
   const recipients: CustomFormRecipients | null =
     players !== null ? { kind: 'players', participantIds: players } : audience;
 
@@ -152,9 +152,7 @@ export function FormSettingsSheet({ form }: { readonly form: CustomForm }) {
             error={error}
             hasLanguages
             isRepeatLocked={form.publishedAt !== null}
-            isKindLocked={form.publishedAt !== null || form.systemKey !== null}
-            // The app's legal forms are asked as they always were: only their name changes (RAPP-772, RAPP-773).
-            isNameOnly={form.systemKey !== null}
+            isKindLocked={form.publishedAt !== null}
             idPrefix="form-settings"
           />
           {picksPlayers ? (

@@ -59,7 +59,6 @@ import {
 import { customFormDeletion } from '@/components/onboarding/screen-deletion';
 import { fixedScreenLockKeys, teamHideLockKey } from '@/components/onboarding/screen-hiding';
 import { useReload } from '@/components/settings/onboarding-design-sections';
-import { SeasonsPanel } from '@/components/settings/seasons-panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -100,24 +99,22 @@ import {
   type CustomFormScreen,
 } from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
-import {
-  createSeason,
-  previewSeasonName,
-  setCurrentSeason,
-  type Season,
-} from '@ramassa/shared/seasons';
+import { previewSeasonName, type Season } from '@ramassa/shared/seasons';
 
 /**
  * How her phone fills a form's texts (RAPP-785): the authorization writes the
- * current season's name for `{{season}}`; every other form shows its texts as
- * written.
+ * season's name for `{{season}}`, the season it is being edited for when one
+ * is picked (RAPP-927), else the current one; every other form shows its
+ * texts as written.
  */
 export function formTextFill(
   form: Pick<CustomForm, 'systemKey'>,
   seasons: readonly Season[],
+  seasonId?: string,
 ): ((text: string) => string) | undefined {
   if (form.systemKey !== 'season_authorization') return undefined;
-  const seasonName = previewSeasonName(seasons);
+  const seasonName =
+    seasons.find((season) => season.id === seasonId)?.name ?? previewSeasonName(seasons);
   return (text) => withSeasonName(text, seasonName);
 }
 
@@ -193,9 +190,12 @@ export const DRAFT_SAVE = {
 export function CustomFormPage({
   data,
   formId,
+  publishSeasonId,
 }: {
   readonly data: CustomFormData;
   readonly formId: string;
+  /** The season Publica starts on, when the authorization's overview picked it (RAPP-927). */
+  readonly publishSeasonId?: string;
 }) {
   const { t, i18n } = useTranslation(['settings', 'nav']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
@@ -211,11 +211,18 @@ export function CustomFormPage({
     <Page data-testid="custom-form-page">
       <div className="flex flex-col gap-2">
         <Button asChild variant="ghost" size="sm" className="-ms-2.5 w-fit text-muted-foreground">
-          {/* A legal form is listed under Condicions legals (RAPP-771). */}
-          <Link to={formListPath(form)} data-testid="custom-form-back">
-            <ChevronLeft aria-hidden data-icon="inline-start" className="rtl:rotate-180" />
-            {form?.kind === 'legal' ? t('nav:staff.legal') : t('nav:staff.customForms')}
-          </Link>
+          {/* The authorization goes back to its overview (RAPP-927); a legal form to Condicions legals (RAPP-771). */}
+          {form?.systemKey === 'season_authorization' ? (
+            <Link to="/forms/authorization" data-testid="custom-form-back">
+              <ChevronLeft aria-hidden data-icon="inline-start" className="rtl:rotate-180" />
+              {textIn(form.name, language)}
+            </Link>
+          ) : (
+            <Link to={formListPath(form)} data-testid="custom-form-back">
+              <ChevronLeft aria-hidden data-icon="inline-start" className="rtl:rotate-180" />
+              {form?.kind === 'legal' ? t('nav:staff.legal') : t('nav:staff.customForms')}
+            </Link>
+          )}
         </Button>
         <PageHeader
           title={form === undefined ? t('customForms.notFound') : textIn(form.name, language)}
@@ -245,8 +252,11 @@ export function CustomFormPage({
                     </Link>
                   </Button>
                 ) : null}
-                {data.canDesign ? <FormSettingsSheet form={form} /> : null}
-                <FormActions data={data} form={form} />
+                {/* The app's legal forms have nothing to set: their name stays (RAPP-927). */}
+                {data.canDesign && form.systemKey === null ? (
+                  <FormSettingsSheet form={form} />
+                ) : null}
+                <FormActions data={data} form={form} publishSeasonId={publishSeasonId} />
               </>
             )
           }
@@ -255,16 +265,11 @@ export function CustomFormPage({
       {form === undefined || !data.canDesign ? null : (
         // Keyed by the form's version: a Publica starts from what the database holds.
         <div key={`${form.id}-${form.version}`} className="flex flex-col gap-6">
-          {/* Its versions (and seasons) come first, in their own row (RAPP-923). */}
-          {form.systemKey === 'season_authorization' ? (
-            <div className="grid gap-6 lg:grid-cols-2">
-              <CustomFormVersions data={data} form={form} />
-              <AuthorizationSeasons seasons={data.seasons} />
-            </div>
-          ) : (
+          {/* Its versions come first (RAPP-923); the authorization keeps them on its overview (RAPP-927). */}
+          {form.systemKey === 'season_authorization' ? null : (
             <CustomFormVersions data={data} form={form} />
           )}
-          <FormScreensBoard data={data} form={form} />
+          <FormScreensBoard data={data} form={form} seasonId={publishSeasonId} />
         </div>
       )}
     </Page>
@@ -437,29 +442,18 @@ function AuthorizationVersions({
   );
 }
 
-/** The organization's seasons (RAPP-306), where the authorization is published to. */
-function AuthorizationSeasons({ seasons }: { readonly seasons: readonly Season[] }) {
-  const reload = useReload();
-  const withStepUp = useStepUp();
-  return (
-    <SeasonsPanel
-      seasons={seasons}
-      onCreate={async (input) => {
-        await withStepUp(() => createSeason(supabase, input));
-        await reload();
-      }}
-      onSetCurrent={async (seasonId) => {
-        await withStepUp(() => setCurrentSeason(supabase, seasonId));
-        await reload();
-      }}
-    />
-  );
-}
-
-function FormActions({ data, form }: { readonly data: CustomFormData; readonly form: CustomForm }) {
+function FormActions({
+  data,
+  form,
+  publishSeasonId,
+}: {
+  readonly data: CustomFormData;
+  readonly form: CustomForm;
+  readonly publishSeasonId?: string;
+}) {
   if (form.systemKey === 'app_terms') return <AppTermsActions data={data} form={form} />;
   if (form.systemKey === 'season_authorization') {
-    return <AuthorizationActions data={data} form={form} />;
+    return <AuthorizationActions data={data} form={form} publishSeasonId={publishSeasonId} />;
   }
   return <TeamFormActions data={data} form={form} />;
 }
@@ -468,12 +462,16 @@ function FormActions({ data, form }: { readonly data: CustomFormData; readonly f
  * The seasons a repeating form is published to (RAPP-701): the current one
  * and the future ones, the current one first picked.
  */
-function usePublishSeason(seasons: readonly Season[]) {
+function usePublishSeason(seasons: readonly Season[], picked?: string) {
   const current = seasons.find((season) => season.isCurrent);
   const targets = seasons.filter(
     (season) => season.isCurrent || current === undefined || season.startsOn > current.startsOn,
   );
-  const [seasonId, setSeasonId] = useState<string | null>(current?.id ?? targets[0]?.id ?? null);
+  const [seasonId, setSeasonId] = useState<string | null>(
+    targets.some((season) => season.id === picked)
+      ? (picked ?? null)
+      : (current?.id ?? targets[0]?.id ?? null),
+  );
   return { targets, seasonId, setSeasonId };
 }
 
@@ -518,15 +516,18 @@ function PublishSeasonPicker({
 function AuthorizationActions({
   data,
   form,
+  publishSeasonId,
 }: {
   readonly data: CustomFormData;
   readonly form: CustomForm;
+  readonly publishSeasonId?: string;
 }) {
   const { t } = useTranslation('settings');
   const reload = useReload();
   const withStepUp = useStepUp();
+  const navigate = useNavigate();
   const [isBusy, setIsBusy] = useState(false);
-  const { targets, seasonId, setSeasonId } = usePublishSeason(data.seasons);
+  const { targets, seasonId, setSeasonId } = usePublishSeason(data.seasons, publishSeasonId);
   const draft = data.authorizationVersions.find((version) => version.publishedAt === null) ?? null;
   const signed = data.authorizationVersions
     .filter((version) => version.publishedAt !== null && version.seasonId === seasonId)
@@ -558,7 +559,20 @@ function AuthorizationActions({
   return (
     <>
       {saveKind.dialog}
-      <PublishSeasonPicker targets={targets} seasonId={seasonId} onChange={setSeasonId} />
+      <PublishSeasonPicker
+        targets={targets}
+        seasonId={seasonId}
+        onChange={(picked) => {
+          setSeasonId(picked);
+          // The address keeps the season, so the previews name it (RAPP-927).
+          void navigate({
+            to: '/forms/custom/$formId',
+            params: { formId: form.id },
+            search: { season: picked },
+            replace: true,
+          });
+        }}
+      />
       {draft === null ? null : (
         <Button
           type="button"
@@ -786,8 +800,11 @@ function TeamFormActions({
 function FormScreensBoard({
   data,
   form,
+  seasonId,
 }: {
   readonly data: CustomFormData;
+  /** The season the authorization is edited for, from its overview (RAPP-927). */
+  readonly seasonId?: string;
   readonly form: CustomForm;
 }) {
   const { t, i18n } = useTranslation(['settings', 'onboarding']);
@@ -801,7 +818,7 @@ function FormScreensBoard({
   const sources = formConditionSources(catalog, form, language);
   const createScreen = useCreateFormScreen(form);
   const dependent = useAddDependentScreen({ catalog, sources, onCreate: createScreen });
-  const fill = formTextFill(form, data.seasons);
+  const fill = formTextFill(form, data.seasons, seasonId);
   const hidingAncestor = (screen: CustomFormScreen): CustomFormScreen | null => {
     let parent = formScreenParent(catalog, form, screen);
     for (let depth = 0; parent !== null && depth < 64; depth += 1) {

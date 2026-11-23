@@ -94,6 +94,25 @@ export function seasonNameOn(now: Date): string {
 }
 
 /**
+ * The season that follows `season` in Ramassà's format (RAPP-927): it starts
+ * on 1 September of the next year, as every season does. With no season yet,
+ * the season running on `now`.
+ */
+export function seasonAfter(
+  season: Pick<Season, 'startsOn'> | null,
+  now: Date = new Date(),
+): { readonly name: string; readonly startsOn: string } {
+  const year =
+    season === null
+      ? Number(seasonNameOn(now).slice(0, 4))
+      : Number(season.startsOn.slice(0, 4)) + 1;
+  return {
+    name: `${year}/${String((year + 1) % 100).padStart(2, '0')}`,
+    startsOn: `${year}-09-01`,
+  };
+}
+
+/**
  * The season name a preview of the authorization shows for `{{season}}`
  * (RAPP-785): the current season's, as her phone shows it. Her phone opens
  * no authorization without a current season, so with none the preview shows

@@ -56,10 +56,18 @@ export function FormVersionPage({
     <Page data-testid="form-version-page">
       <div className="flex flex-col gap-2">
         <Button asChild variant="ghost" size="sm" className="-ms-2.5 w-fit text-muted-foreground">
-          <Link to="/forms/custom/$formId" params={{ formId }} data-testid="form-version-back">
-            <ChevronLeft aria-hidden data-icon="inline-start" className="rtl:rotate-180" />
-            {form === undefined ? t('customForms.notFound') : textIn(form.name, language)}
-          </Link>
+          {/* The authorization's versions are listed on its overview (RAPP-927). */}
+          {form?.systemKey === 'season_authorization' ? (
+            <Link to="/forms/authorization" data-testid="form-version-back">
+              <ChevronLeft aria-hidden data-icon="inline-start" className="rtl:rotate-180" />
+              {textIn(form.name, language)}
+            </Link>
+          ) : (
+            <Link to="/forms/custom/$formId" params={{ formId }} data-testid="form-version-back">
+              <ChevronLeft aria-hidden data-icon="inline-start" className="rtl:rotate-180" />
+              {form === undefined ? t('customForms.notFound') : textIn(form.name, language)}
+            </Link>
+          )}
         </Button>
         <PageHeader
           title={title}
