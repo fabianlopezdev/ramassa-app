@@ -44,9 +44,13 @@ import type { LanguageCode } from '@ramassa/shared/schemas';
  * hover, and for the current page a yellow marker at the start edge with a
  * yellow icon. Yellow only ever sits on the navy, never on white. A long name
  * wraps to a second line, with no ellipsis (RAPP-702).
+ *
+ * The current page keeps the same font weight as every other row (RAPP-925):
+ * bold letters are wider, so a name that fits would wrap when it is picked
+ * and the menu would jump.
  */
 const NAV_BUTTON_CLASS =
-  'relative h-auto min-h-9 leading-snug [&>span:last-child]:text-clip before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-full before:bg-sidebar-primary before:opacity-0 data-active:font-semibold data-active:before:opacity-100 data-active:[&>svg]:text-sidebar-primary group-data-[collapsible=icon]:before:inset-y-1.5';
+  'relative h-auto min-h-9 leading-snug [&>span:last-child]:text-clip before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-full before:bg-sidebar-primary before:opacity-0 data-active:font-normal data-active:before:opacity-100 data-active:[&>svg]:text-sidebar-primary group-data-[collapsible=icon]:before:inset-y-1.5';
 
 export function sidebarSideForDirection(direction: LayoutDirection): 'left' | 'right' {
   return direction === 'rtl' ? 'right' : 'left';

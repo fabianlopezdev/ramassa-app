@@ -50,6 +50,7 @@ bunx supabase studio                           # Local DB admin
 - RTL-ready: always `start`/`end`, never `left`/`right` in styles
 - Shared form fields (RAPP-564): new typed fields use `FormTextField` from `components/forms/form-text-field`. `AuthTextField` is a compatibility export of that component. Field-style picker openers reuse `useFormFieldAppearance`; do not duplicate height, border or corner styles. Field height and language/document choice height come from `tokens.formField.minHeight`, grow with text size, and fields omit the choice card shadow/fill.
 - Onboarding typography (RAPP-562): use `text-form` (18-point base) for all readable form content, including labels, values, help/privacy notices, errors, choices, picker sheets, progress and review rows. Keep headings larger, system text scaling enabled and text wrapping. Do not shrink secondary text to fit. Shared login/form components use the same token.
+- No layout shift on state (RAPP-925): a selected, active, hovered or open item keeps the same font weight, size and padding as at rest. Mark it with colour, a background or an absolutely placed marker (`before:` with `absolute`). Bold letters are wider, so a label that fits wraps once it is picked and the list jumps.
 - Never hardcode user-facing strings — always use i18n translation keys
 - Apply RLS policies on every new database table
 - Encrypt sensitive fields (document_number) via pgcrypto
