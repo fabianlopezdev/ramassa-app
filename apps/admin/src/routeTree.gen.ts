@@ -85,6 +85,7 @@ import { Route as StaffContentServicesReviewsServiceIdRouteImport } from './rout
 import { Route as StaffFormsCustomFormIdIndexRouteImport } from './routes/_staff.forms.custom.$formId.index'
 import { Route as StaffFormsCustomFormIdResponsesRouteImport } from './routes/_staff.forms.custom.$formId.responses'
 import { Route as StaffFormsCustomFormIdScreensScreenIdRouteImport } from './routes/_staff.forms.custom.$formId.screens.$screenId'
+import { Route as StaffFormsCustomFormIdVersionsVersionKeyRouteImport } from './routes/_staff.forms.custom.$formId.versions.$versionKey'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -498,6 +499,12 @@ const StaffFormsCustomFormIdScreensScreenIdRoute =
     path: '/forms/custom/$formId/screens/$screenId',
     getParentRoute: () => StaffRoute,
   } as any)
+const StaffFormsCustomFormIdVersionsVersionKeyRoute =
+  StaffFormsCustomFormIdVersionsVersionKeyRouteImport.update({
+    id: '/forms/custom/$formId/versions/$versionKey',
+    path: '/forms/custom/$formId/versions/$versionKey',
+    getParentRoute: () => StaffRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -574,6 +581,7 @@ export interface FileRoutesByFullPath {
   '/content/services/reviews/': typeof StaffContentServicesReviewsIndexRoute
   '/forms/custom/$formId/': typeof StaffFormsCustomFormIdIndexRoute
   '/forms/custom/$formId/screens/$screenId': typeof StaffFormsCustomFormIdScreensScreenIdRoute
+  '/forms/custom/$formId/versions/$versionKey': typeof StaffFormsCustomFormIdVersionsVersionKeyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -645,6 +653,7 @@ export interface FileRoutesByTo {
   '/content/services/reviews': typeof StaffContentServicesReviewsIndexRoute
   '/forms/custom/$formId': typeof StaffFormsCustomFormIdIndexRoute
   '/forms/custom/$formId/screens/$screenId': typeof StaffFormsCustomFormIdScreensScreenIdRoute
+  '/forms/custom/$formId/versions/$versionKey': typeof StaffFormsCustomFormIdVersionsVersionKeyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -724,6 +733,7 @@ export interface FileRoutesById {
   '/_staff/content/services/reviews/': typeof StaffContentServicesReviewsIndexRoute
   '/_staff/forms/custom/$formId/': typeof StaffFormsCustomFormIdIndexRoute
   '/_staff/forms/custom/$formId/screens/$screenId': typeof StaffFormsCustomFormIdScreensScreenIdRoute
+  '/_staff/forms/custom/$formId/versions/$versionKey': typeof StaffFormsCustomFormIdVersionsVersionKeyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -802,6 +812,7 @@ export interface FileRouteTypes {
     | '/content/services/reviews/'
     | '/forms/custom/$formId/'
     | '/forms/custom/$formId/screens/$screenId'
+    | '/forms/custom/$formId/versions/$versionKey'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -873,6 +884,7 @@ export interface FileRouteTypes {
     | '/content/services/reviews'
     | '/forms/custom/$formId'
     | '/forms/custom/$formId/screens/$screenId'
+    | '/forms/custom/$formId/versions/$versionKey'
   id:
     | '__root__'
     | '/'
@@ -951,6 +963,7 @@ export interface FileRouteTypes {
     | '/_staff/content/services/reviews/'
     | '/_staff/forms/custom/$formId/'
     | '/_staff/forms/custom/$formId/screens/$screenId'
+    | '/_staff/forms/custom/$formId/versions/$versionKey'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1494,6 +1507,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffFormsCustomFormIdScreensScreenIdRouteImport
       parentRoute: typeof StaffRoute
     }
+    '/_staff/forms/custom/$formId/versions/$versionKey': {
+      id: '/_staff/forms/custom/$formId/versions/$versionKey'
+      path: '/forms/custom/$formId/versions/$versionKey'
+      fullPath: '/forms/custom/$formId/versions/$versionKey'
+      preLoaderRoute: typeof StaffFormsCustomFormIdVersionsVersionKeyRouteImport
+      parentRoute: typeof StaffRoute
+    }
   }
 }
 
@@ -1664,6 +1684,7 @@ interface StaffRouteChildren {
   StaffFormsCustomFormIdResponsesRoute: typeof StaffFormsCustomFormIdResponsesRoute
   StaffFormsCustomFormIdIndexRoute: typeof StaffFormsCustomFormIdIndexRoute
   StaffFormsCustomFormIdScreensScreenIdRoute: typeof StaffFormsCustomFormIdScreensScreenIdRoute
+  StaffFormsCustomFormIdVersionsVersionKeyRoute: typeof StaffFormsCustomFormIdVersionsVersionKeyRoute
 }
 
 const StaffRouteChildren: StaffRouteChildren = {
@@ -1708,6 +1729,8 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffFormsCustomFormIdIndexRoute: StaffFormsCustomFormIdIndexRoute,
   StaffFormsCustomFormIdScreensScreenIdRoute:
     StaffFormsCustomFormIdScreensScreenIdRoute,
+  StaffFormsCustomFormIdVersionsVersionKeyRoute:
+    StaffFormsCustomFormIdVersionsVersionKeyRoute,
 }
 
 const StaffRouteWithChildren = StaffRoute._addFileChildren(StaffRouteChildren)

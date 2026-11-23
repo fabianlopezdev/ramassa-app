@@ -121,6 +121,45 @@ export function formTextFill(
   return (text) => withSeasonName(text, seasonName);
 }
 
+/**
+ * One screen of a form as her phone shows it, on the board and on a published
+ * version's page (RAPP-924): its texts, what it asks and its buttons, with the
+ * form's fill (the season's name in the authorization).
+ */
+export function FormScreenPhone({
+  catalog,
+  screen,
+  fill,
+  isDimmed,
+}: {
+  readonly catalog: CustomFormData['intakeCatalog'];
+  readonly screen: CustomFormScreen;
+  readonly fill: ((text: string) => string) | undefined;
+  readonly isDimmed?: boolean;
+}) {
+  const { t, i18n } = useTranslation(['settings', 'onboarding']);
+  const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
+  return (
+    <PhoneMiniature
+      content={filledContent(
+        staffScreenContent(
+          screen.title,
+          screen.intro,
+          placedPhoneQuestions(catalog, screen.id, language, null, 'custom_form'),
+          language,
+          t,
+          screen.texts,
+          formScreenButtons(screen),
+          screen.attachments,
+        ),
+        fill,
+      )}
+      language={language}
+      isDimmed={isDimmed}
+    />
+  );
+}
+
 /** Draft, live or archived, as a badge. */
 export function FormStatusBadge({
   form,
@@ -248,9 +287,15 @@ function CustomFormVersions({
   readonly form: CustomForm;
 }) {
   const { t } = useTranslation('settings');
-  if (form.systemKey === 'app_terms') return <AppTermsVersions data={data} />;
+  if (form.systemKey === 'app_terms') return <AppTermsVersions data={data} formId={form.id} />;
   if (form.systemKey === 'season_authorization') {
-    return <AuthorizationVersions versions={data.authorizationVersions} seasons={data.seasons} />;
+    return (
+      <AuthorizationVersions
+        versions={data.authorizationVersions}
+        seasons={data.seasons}
+        formId={form.id}
+      />
+    );
   }
   const current = data.seasons.find((season) => season.isCurrent);
   const groups = form.repeatsEachSeason
@@ -271,6 +316,7 @@ function CustomFormVersions({
     <FormVersions
       title={t('authorizationVersionsTitle')}
       description={t('formVersionsIntro')}
+      formId={form.id}
       // Every save is a draft; a legal form's reaches the test players.
       draft={{ updatedAt: null, isSeenByTestPlayers: form.kind === 'legal' }}
       groups={groups.map((group) => {
@@ -297,7 +343,13 @@ function CustomFormVersions({
  * The app terms' versions (RAPP-772): their ledger's, newest first, each with
  * how many accepted it, and the draft when there is one.
  */
-function AppTermsVersions({ data }: { readonly data: CustomFormData }) {
+function AppTermsVersions({
+  data,
+  formId,
+}: {
+  readonly data: CustomFormData;
+  readonly formId: string;
+}) {
   const { t } = useTranslation('settings');
   const draft = data.termsVersions.find((version) => version.versionNumber === null) ?? null;
   const newest = data.termsVersions.find((version) => version.versionNumber !== null);
@@ -320,6 +372,7 @@ function AppTermsVersions({ data }: { readonly data: CustomFormData }) {
     <FormVersions
       title={t('appTerms.versionsTitle')}
       description={t('formVersionsIntro')}
+      formId={formId}
       draft={draft === null ? null : { updatedAt: draft.updatedAt, isSeenByTestPlayers: true }}
       groups={[{ key: 'all', season: null, versions: published }]}
       testId="custom-form-versions"
@@ -335,9 +388,11 @@ function AppTermsVersions({ data }: { readonly data: CustomFormData }) {
 function AuthorizationVersions({
   versions,
   seasons,
+  formId,
 }: {
   readonly versions: readonly AuthorizationVersion[];
   readonly seasons: readonly Season[];
+  readonly formId: string;
 }) {
   const { t } = useTranslation('settings');
   const draft = versions.find((version) => version.publishedAt === null) ?? null;
@@ -370,6 +425,7 @@ function AuthorizationVersions({
     <FormVersions
       title={t('authorizationVersionsTitle')}
       description={t('formVersionsIntro')}
+      formId={formId}
       draft={
         draft === null
           ? null
@@ -769,21 +825,10 @@ function FormScreensBoard({
       ...(suffix === undefined ? {} : { suffix }),
       name: textIn(screen.title, language),
       miniature: (
-        <PhoneMiniature
-          content={filledContent(
-            staffScreenContent(
-              screen.title,
-              screen.intro,
-              placedPhoneQuestions(catalog, screen.id, language, null, 'custom_form'),
-              language,
-              t,
-              screen.texts,
-              formScreenButtons(screen),
-              screen.attachments,
-            ),
-            fill,
-          )}
-          language={language}
+        <FormScreenPhone
+          catalog={catalog}
+          screen={screen}
+          fill={fill}
           isDimmed={isHidden || isOrphan}
         />
       ),
@@ -835,24 +880,7 @@ function FormScreensBoard({
   const fixedScreenCard = (screen: CustomFormScreen): BoardCard => ({
     key: screen.id,
     name: textIn(screen.title, language),
-    miniature: (
-      <PhoneMiniature
-        content={filledContent(
-          staffScreenContent(
-            screen.title,
-            screen.intro,
-            placedPhoneQuestions(catalog, screen.id, language, null, 'custom_form'),
-            language,
-            t,
-            screen.texts,
-            formScreenButtons(screen),
-            screen.attachments,
-          ),
-          fill,
-        )}
-        language={language}
-      />
-    ),
+    miniature: <FormScreenPhone catalog={catalog} screen={screen} fill={fill} />,
     status: null,
     hide: lockedHide(t(fixedScreenLockKeys(screen).hide)),
     addDependent: lockedAddDependent(t(fixedScreenLockKeys(screen).addDependent)),

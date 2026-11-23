@@ -23,3 +23,4 @@ export * from './form-walk';
 export * from './form-progress';
 export * from './terms-form';
 export * from './authorization-form';
+export * from './published-version';
