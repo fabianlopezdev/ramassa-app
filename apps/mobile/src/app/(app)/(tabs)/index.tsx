@@ -132,6 +132,12 @@ function HomeScreen() {
             title={title.text}
             category={item.category}
             accessibilityLabel={accessibilityLabel}
+            imageObjectKey={item.image_url}
+            imageAlt={
+              item.image_alt === null
+                ? undefined
+                : resolveLocalizedText(item.image_alt, language)?.text
+            }
             unseenLabel={unseenLabel}
             languageFontClass={languageFontClass}
             onOpen={openAnnouncement}
