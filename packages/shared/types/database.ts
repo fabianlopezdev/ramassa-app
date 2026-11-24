@@ -3797,6 +3797,7 @@ export type Database = {
       };
       mentoring_requests: {
         Row: {
+          answers_encrypted: string | null;
           assigned_staff_id: string | null;
           completed_at: string | null;
           created_at: string;
@@ -3813,6 +3814,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          answers_encrypted?: string | null;
           assigned_staff_id?: string | null;
           completed_at?: string | null;
           created_at?: string;
@@ -3829,6 +3831,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          answers_encrypted?: string | null;
           assigned_staff_id?: string | null;
           completed_at?: string | null;
           created_at?: string;
@@ -6900,6 +6903,17 @@ export type Database = {
         };
         Returns: string;
       };
+      send_mentoring_request: {
+        Args: {
+          p_answers?: Json;
+          p_preferred_date: string;
+          p_preferred_time: string;
+          p_topic: string;
+          p_topic_detail: string;
+        };
+        Returns: string;
+      };
+      my_mentoring_form: { Args: never; Returns: Json };
       create_participant_invite: {
         Args: { payload: Json };
         Returns: {
@@ -7671,6 +7685,7 @@ export type Database = {
       list_staff_mentoring_requests: {
         Args: never;
         Returns: {
+          answers: Json;
           assigned_staff_id: string;
           assigned_staff_name: string;
           completed_at: string;

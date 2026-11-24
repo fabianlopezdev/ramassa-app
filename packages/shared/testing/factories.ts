@@ -893,6 +893,8 @@ export function buildMentoringRequest(
     player_id: seedUserId(player.ordinal),
     topic: 'labor_orientation',
     topic_detail_encrypted: 'Synthetic private mentoring note',
+    // Answers to the questions staff added to the mentoring form (RAPP-940); none here.
+    answers_encrypted: null,
     preferred_date: '2026-01-20',
     preferred_time: '10:30:00',
     status: 'scheduled',

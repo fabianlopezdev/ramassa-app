@@ -1,6 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
+import type { IntakeCatalog } from './intake-builder/builder';
+import {
+  fetchMyOnDemandForm,
+  fetchMyOnDemandFormSource,
+  formAnswersSchema,
+  onDemandFormCatalog,
+  type FormAnswer,
+  type OnDemandForm,
+} from './on-demand-form';
 import type { Database } from './types/database';
 
 export const MENTORING_TOPICS = [
@@ -63,6 +72,8 @@ const staffRequestRowSchema = ownRequestRowSchema.extend({
   player_last_name: z.string(),
   assigned_staff_id: z.uuid().nullable(),
   staff_notes: z.string().nullable(),
+  // A server before RAPP-940 sends none.
+  answers: formAnswersSchema.optional(),
 });
 
 export interface MentoringRequest {
@@ -85,6 +96,8 @@ export interface StaffMentoringRequest extends MentoringRequest {
   readonly playerLastName: string;
   readonly assignedStaffId: string | null;
   readonly staffNotes: string | null;
+  /** Her answers to the questions staff added to the mentoring form (RAPP-940), in the form's order. */
+  readonly answers: readonly FormAnswer[];
 }
 
 export interface PrivateMentoringCalendarEntry {
@@ -135,6 +148,67 @@ export async function createMentoringRequest(
   return z.uuid().parse(data);
 }
 
+// The mentoring form on her phone (RAPP-940) ------------------------------------------------------
+
+/**
+ * The screen that holds a request's topic, detail and preferred date and
+ * time: the form's fixed parts. Staff add screens and questions around it.
+ */
+export const MENTORING_REQUEST_SCREEN = 'mentoring_request';
+
+/** The mentoring form as she fills it in now: its screens and its questions. */
+export type MentoringForm = OnDemandForm;
+
+/** The mentoring form; null from a server before it. */
+export async function fetchMyMentoringForm(client: RpcClient): Promise<MentoringForm | null> {
+  return fetchMyOnDemandForm(client, 'mentoring');
+}
+
+/**
+ * The catalog her phone walks the mentoring form with: the catalog
+ * `intake_catalog` sent, with the form laid over it. Its fixed screen is the
+ * one whose `systemScreen` is `MENTORING_REQUEST_SCREEN`.
+ */
+export function mentoringFormCatalog(
+  raw: unknown,
+  form: MentoringForm,
+  readAt: string = new Date().toISOString(),
+): IntakeCatalog {
+  return onDemandFormCatalog(raw, 'mentoring', form, readAt);
+}
+
+/** What her phone needs to walk the mentoring form: the catalog as sent, and the form. */
+export async function fetchMyMentoringFormSource(
+  client: RpcClient,
+): Promise<{ readonly raw: unknown; readonly form: MentoringForm | null }> {
+  return fetchMyOnDemandFormSource(client, 'mentoring');
+}
+
+/**
+ * A mentoring request with her answers to the questions staff added, by
+ * question id; an unanswered optional question is left out. The database
+ * checks the answers against the form as it is now, a required one included.
+ */
+export async function sendMentoringRequest(
+  client: RpcClient,
+  input: MentoringRequestValues,
+  answers: Readonly<Record<string, unknown>>,
+): Promise<string> {
+  const request = mentoringRequestSchema.parse(input);
+  const { data, error } = await client.rpc(
+    'send_mentoring_request' as never,
+    {
+      p_topic: request.topic,
+      p_topic_detail: request.topicDetail,
+      p_preferred_date: request.preferredDate,
+      p_preferred_time: request.preferredTime,
+      p_answers: answers,
+    } as never,
+  );
+  if (error) databaseFailure(error.message);
+  return z.uuid().parse(data);
+}
+
 export async function fetchOwnMentoringRequests(
   client: RpcClient,
   signal?: AbortSignal,
@@ -167,6 +241,7 @@ export async function fetchStaffMentoringRequests(
       playerLastName: row.player_last_name,
       assignedStaffId: row.assigned_staff_id,
       staffNotes: row.staff_notes,
+      answers: row.answers ?? [],
     }));
 }
 

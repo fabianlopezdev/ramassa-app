@@ -69,6 +69,7 @@ import {
   type CustomForm,
   type EntityReferralForm,
   type FormScreenTexts,
+  type OnDemandFormKey,
 } from './custom-form-model';
 import { systemFieldIndexFromCatalog, type SystemFieldIndex } from './field-answers';
 import { parseFormBlocks, type FormBlock } from './form-blocks';
@@ -236,8 +237,10 @@ export const intakeCatalogSchema = z.object({
   custom_form_consent_placements: z.unknown().optional(),
   // The referral form's screens (RAPP-938), apart for the same reason.
   entity_form: z.unknown().optional(),
-  // The suggestions form (RAPP-939), sent to the dashboard only, apart from the lists of forms.
+  // The suggestions form (RAPP-939) and the mentoring form (RAPP-940), sent to
+  // the dashboard only, apart from the lists of forms.
   feedback_form: z.unknown().optional(),
+  mentoring_form: z.unknown().optional(),
 });
 
 export interface CustomOption {
@@ -344,6 +347,8 @@ export interface IntakeCatalog {
    * questions are among the fields and its placements among the forms' rows.
    */
   readonly feedbackForm?: CustomForm;
+  /** The mentoring form (RAPP-940), sent and read as the suggestions form is. */
+  readonly mentoringForm?: CustomForm;
 }
 
 export const EMPTY_INTAKE_CATALOG: IntakeCatalog = {
@@ -414,12 +419,26 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
     ),
     customForms: parseCustomForms(raw.custom_forms),
     ...withEntityForm(parseEntityReferralForm(raw.entity_form)),
-    ...withFeedbackForm(parseCustomForms(raw.feedback_form == null ? [] : [raw.feedback_form])[0]),
+    ...withOnDemandForm('feedbackForm', raw.feedback_form),
+    ...withOnDemandForm('mentoringForm', raw.mentoring_form),
   };
 }
 
-function withFeedbackForm(form: CustomForm | undefined): { readonly feedbackForm?: CustomForm } {
-  return form === undefined ? {} : { feedbackForm: form };
+/** A form she sends when she wants (RAPP-939, RAPP-940), under its key; absent stays absent. */
+function withOnDemandForm<Key extends 'feedbackForm' | 'mentoringForm'>(
+  key: Key,
+  raw: unknown,
+): { readonly [K in Key]?: CustomForm } {
+  const form = parseCustomForms(raw == null ? [] : [raw])[0];
+  return (form === undefined ? {} : { [key]: form }) as { readonly [K in Key]?: CustomForm };
+}
+
+/** The dashboard's form of an on-demand key (RAPP-939, RAPP-940); absent from a server before it. */
+export function onDemandFormOf(
+  catalog: IntakeCatalog,
+  key: OnDemandFormKey,
+): CustomForm | undefined {
+  return key === 'feedback' ? catalog.feedbackForm : catalog.mentoringForm;
 }
 
 function withEntityForm(form: EntityReferralForm | undefined): {
