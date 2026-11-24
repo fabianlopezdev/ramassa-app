@@ -1,3 +1,4 @@
+import { FormAnswerList } from '@/components/custom-forms/form-answer-list';
 import { Page } from '@/components/layout/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -195,6 +196,11 @@ export function StaffMentoringQueue({
                       <p className="mt-1 whitespace-pre-wrap text-sm">{request.topicDetail}</p>
                     </div>
                   )}
+                  {/* Her answers to the questions staff added to the form (RAPP-940). */}
+                  <FormAnswerList
+                    testId={`mentoring-answers-${request.id}`}
+                    answers={request.answers}
+                  />
                   <p className="text-sm text-muted-foreground">
                     {t('adminPreferred', {
                       value:
