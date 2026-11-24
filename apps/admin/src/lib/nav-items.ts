@@ -130,9 +130,13 @@ export const CUSTOM_FORMS_PERMISSIONS = [
   'participants.view_personal',
 ] as const satisfies readonly PermissionCode[];
 
-/** The entity referral form (RAPP-652): the organization's own settings. */
+/**
+ * The entity referral form (RAPP-652): the organization's own settings, and
+ * the people who design the forms, who build it on the same board (RAPP-965).
+ */
 export const REFERRAL_FORM_PERMISSIONS = [
   'settings.organization',
+  'onboarding.design',
 ] as const satisfies readonly PermissionCode[];
 
 /** The Data area: exports and the audit log. */

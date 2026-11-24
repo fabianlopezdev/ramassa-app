@@ -4,8 +4,9 @@
  * A person whose only access is `onboarding.design` and `test_players.manage`
  * reaches the onboarding page, the two legal forms (RAPP-694, their own
  * boards since RAPP-696), the forms the team creates (RAPP-700) and the surveys
- * (RAPP-929), Dades de les jugadores (RAPP-650, its own page
- * since RAPP-654), the test players and her own account page (RAPP-634),
+ * (RAPP-929), the entity referral form and its screens (RAPP-965), Dades de
+ * les jugadores (RAPP-650, its own page since RAPP-654), the test players and
+ * her own account page (RAPP-634),
  * and every other admin URL sends her back. This is the screen half: the
  * database refuses her every other read and write on its own
  * (`private.limited_to_test_players`).
@@ -64,6 +65,14 @@ function isCustomFormPath(pathname: string): boolean {
   );
 }
 
+/**
+ * The entity referral form and its screens (RAPP-965). The referrals an
+ * entity sent and every other entity page stay closed to her.
+ */
+function isReferralFormPath(pathname: string): boolean {
+  return pathname === '/entities/referral-form' || pathname.startsWith('/entities/referral-form/');
+}
+
 /** Dades de les jugadores (RAPP-650, RAPP-654) and Dades legals (RAPP-699). */
 function isProfileLayoutPath(pathname: string): boolean {
   return ['/profile-layout', '/legal-data'].some(
@@ -85,6 +94,7 @@ export function designRoleRedirect(
   if (permissions.has('onboarding.design') && isOnboardingPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isLegalPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isCustomFormPath(pathname)) return null;
+  if (permissions.has('onboarding.design') && isReferralFormPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isProfileLayoutPath(pathname)) return null;
   if (permissions.has('test_players.manage') && isTestPlayerPath(pathname)) return null;
   return designRoleLanding(permissions);

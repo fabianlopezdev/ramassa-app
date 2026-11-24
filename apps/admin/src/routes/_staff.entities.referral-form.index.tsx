@@ -4,8 +4,8 @@
  * form. Linked from the Entitats group of the menu (RAPP-654);
  * `/settings?tab=referral-form` still forwards here.
  *
- * Staff who hold settings.organization edit it; the database checks every
- * change again. `ssr: false` for the reason every staff screen gives (the
+ * Staff who hold settings.organization or onboarding.design edit it
+ * (RAPP-965); the database checks every change again. `ssr: false` for the reason every staff screen gives (the
  * session lives in localStorage, ADR-005).
  */
 
