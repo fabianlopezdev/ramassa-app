@@ -31,51 +31,34 @@ env:
     visible:
       id: feedback-screen
     timeout: 30000
+# Each suggestion opens the form in a sheet from the bottom button (RAPP-961).
+- tapOn:
+    id: feedback-new
+- extendedWaitUntil:
+    visible:
+      id: feedback-form-sheet
+    timeout: 10000
 - tapOn:
     id: feedback-type-activity_proposal
 - tapOn:
     id: feedback-content
 - inputText: rapp61-activity-proposal
 - hideKeyboard
-- repeat:
-    times: 4
-    while:
-      notVisible:
-        id: feedback-confirmation
-    commands:
-      - tapOn:
-          id: feedback-submit
-      - waitForAnimationToEnd:
-          timeout: 2500
+- tapOn:
+    id: feedback-submit
+- extendedWaitUntil:
+    notVisible:
+      id: feedback-form-sheet
+    timeout: 30000
 - extendedWaitUntil:
     visible:
       id: feedback-confirmation
     timeout: 30000
-- repeat:
-    times: 4
-    while:
-      visible:
-        id: feedback-confirmation
-    commands:
-      - tapOn:
-          id: feedback-submit-another
-      - waitForAnimationToEnd:
-          timeout: 2500
-- repeat:
-    times: 8
-    while:
-      notVisible:
-        id: feedback-type-idea
-    commands:
-      - swipe:
-          start: 50%, 35%
-          end: 50%, 70%
-          duration: 700
-      - waitForAnimationToEnd:
-          timeout: 1800
+- tapOn:
+    id: feedback-new
 - extendedWaitUntil:
     visible:
-      id: feedback-type-idea
+      id: feedback-form-sheet
     timeout: 10000
 - tapOn:
     id: feedback-type-idea
@@ -83,45 +66,21 @@ env:
     id: feedback-content
 - inputText: rapp61-idea
 - hideKeyboard
-- repeat:
-    times: 4
-    while:
-      notVisible:
-        id: feedback-confirmation
-    commands:
-      - tapOn:
-          id: feedback-submit
-      - waitForAnimationToEnd:
-          timeout: 2500
+- tapOn:
+    id: feedback-submit
+- extendedWaitUntil:
+    notVisible:
+      id: feedback-form-sheet
+    timeout: 30000
 - extendedWaitUntil:
     visible:
       id: feedback-confirmation
     timeout: 30000
-- repeat:
-    times: 4
-    while:
-      visible:
-        id: feedback-confirmation
-    commands:
-      - tapOn:
-          id: feedback-submit-another
-      - waitForAnimationToEnd:
-          timeout: 2500
-- repeat:
-    times: 8
-    while:
-      notVisible:
-        id: feedback-type-problem
-    commands:
-      - swipe:
-          start: 50%, 35%
-          end: 50%, 70%
-          duration: 700
-      - waitForAnimationToEnd:
-          timeout: 1800
+- tapOn:
+    id: feedback-new
 - extendedWaitUntil:
     visible:
-      id: feedback-type-problem
+      id: feedback-form-sheet
     timeout: 10000
 - tapOn:
     id: feedback-type-problem
@@ -129,45 +88,21 @@ env:
     id: feedback-content
 - inputText: rapp61-problem
 - hideKeyboard
-- repeat:
-    times: 4
-    while:
-      notVisible:
-        id: feedback-confirmation
-    commands:
-      - tapOn:
-          id: feedback-submit
-      - waitForAnimationToEnd:
-          timeout: 2500
+- tapOn:
+    id: feedback-submit
+- extendedWaitUntil:
+    notVisible:
+      id: feedback-form-sheet
+    timeout: 30000
 - extendedWaitUntil:
     visible:
       id: feedback-confirmation
     timeout: 30000
-- repeat:
-    times: 4
-    while:
-      visible:
-        id: feedback-confirmation
-    commands:
-      - tapOn:
-          id: feedback-submit-another
-      - waitForAnimationToEnd:
-          timeout: 2500
-- repeat:
-    times: 8
-    while:
-      notVisible:
-        id: feedback-type-general
-    commands:
-      - swipe:
-          start: 50%, 35%
-          end: 50%, 70%
-          duration: 700
-      - waitForAnimationToEnd:
-          timeout: 1800
+- tapOn:
+    id: feedback-new
 - extendedWaitUntil:
     visible:
-      id: feedback-type-general
+      id: feedback-form-sheet
     timeout: 10000
 - tapOn:
     id: feedback-type-general
@@ -175,16 +110,12 @@ env:
     id: feedback-content
 - inputText: rapp61-general
 - hideKeyboard
-- repeat:
-    times: 4
-    while:
-      notVisible:
-        id: feedback-confirmation
-    commands:
-      - tapOn:
-          id: feedback-submit
-      - waitForAnimationToEnd:
-          timeout: 2500
+- tapOn:
+    id: feedback-submit
+- extendedWaitUntil:
+    notVisible:
+      id: feedback-form-sheet
+    timeout: 30000
 - extendedWaitUntil:
     visible:
       id: feedback-confirmation

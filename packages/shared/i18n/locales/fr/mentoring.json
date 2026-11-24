@@ -28,7 +28,6 @@
   "submitting": "Envoi...",
   "submitFailed": "Nous n’avons pas pu envoyer la demande.",
   "invalidRequest": "Vérifie le sujet, la date et l’heure.",
-  "submitAnother": "Faire une autre demande",
   "successTitle": "Demande envoyée",
   "successBody": "L’équipe technique va la regarder et te prévenir quand le rendez-vous sera fixé.",
   "statusTitle": "Tes demandes",

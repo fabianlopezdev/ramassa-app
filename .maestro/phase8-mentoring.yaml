@@ -31,6 +31,13 @@ env:
     visible:
       id: mentoring-screen
     timeout: 30000
+# The form opens in a sheet from the bottom button (RAPP-961).
+- tapOn:
+    id: mentoring-new
+- extendedWaitUntil:
+    visible:
+      id: mentoring-form-sheet
+    timeout: 10000
 - tapOn:
     id: mentoring-topic-digital_skills
 - repeat:
@@ -77,16 +84,6 @@ env:
     id: mentoring-preferred-time
 - inputText: '10:30'
 - hideKeyboard
-- repeat:
-    times: 8
-    while:
-      notVisible:
-        id: mentoring-submit
-    commands:
-      - swipe:
-          start: 50%, 70%
-          end: 50%, 45%
-          duration: 700
 - tapOn:
     id: mentoring-submit
 - extendedWaitUntil:
