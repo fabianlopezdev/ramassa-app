@@ -28,7 +28,6 @@
   "submitting": "Enviando...",
   "submitFailed": "No hemos podido enviar la solicitud.",
   "invalidRequest": "Revisa el tema, la fecha y la hora.",
-  "submitAnother": "Hacer otra solicitud",
   "successTitle": "Solicitud enviada",
   "successBody": "El equipo técnico la revisará y te avisará cuando programe la cita.",
   "statusTitle": "Tus solicitudes",
