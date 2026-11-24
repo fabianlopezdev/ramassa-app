@@ -21,6 +21,11 @@ interface SelectionChoiceSurfaceProps {
   readonly accessibilityRole?: AccessibilityRole;
   readonly testID?: string;
   readonly isSelected?: boolean;
+  /**
+   * The yellow wash that marks the chosen face. Off where the content shows
+   * the choice itself, such as a rating's filled stars (RAPP-963).
+   */
+  readonly isWashedWhenSelected?: boolean;
   readonly onPress: () => void;
   readonly className?: string;
   /** The face's side padding; a grid tile takes less (RAPP-854). */
@@ -44,6 +49,7 @@ export function SelectionChoiceSurface({
   accessibilityRole = 'button',
   testID,
   isSelected,
+  isWashedWhenSelected = true,
   onPress,
   className,
   paddingClassName = 'px-lg',
@@ -75,7 +81,7 @@ export function SelectionChoiceSurface({
     >
       <RaisedToneWash tone={tone} />
       <SelectionTransition
-        active={isSelected === true}
+        active={isSelected === true && isWashedWhenSelected}
         duration="base"
         className="absolute inset-0 bg-secondary"
         style={continuousCorners}

@@ -54,6 +54,11 @@ export const motionTokens = {
   },
   logoEntrance: { durationMs: 700 },
   selection: { initialScale: 0.82, peakScale: 1.04, riseMs: 120, settleMs: 100 },
+  /**
+   * A rating's stars (RAPP-963): tapped, each star up to the one chosen fills
+   * and pops in turn, a quick swell and tilt that springs back.
+   */
+  ratingFill: { staggerMs: 70, peakScale: 1.35, peakTiltDeg: 14, riseMs: 140 },
   checkDraw: { durationMs: 320, shortStrokeFraction: 0.35 },
 
   /** Validation-error nudge, paired with the translated message, never alone. */
