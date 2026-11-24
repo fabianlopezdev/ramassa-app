@@ -36,7 +36,9 @@ export type CustomFormMandatory = (typeof CUSTOM_FORM_MANDATORY_LEVELS)[number];
  * or other (under Altres formularis), RAPP-771.
  */
 // A survey (RAPP-929): her answers kept with the response, never on her record.
-export const CUSTOM_FORM_KINDS = ['legal', 'other', 'survey'] as const;
+// An activity's sign-up form (RAPP-941): the questions she answers when she
+// signs up, her answers kept with the sign-up. Only the dashboard's catalog sends one.
+export const CUSTOM_FORM_KINDS = ['legal', 'other', 'survey', 'signup'] as const;
 export type CustomFormKind = (typeof CUSTOM_FORM_KINDS)[number];
 
 /**
@@ -178,8 +180,10 @@ export interface CustomForm {
   readonly kind: CustomFormKind;
   /** One of the app's own legal forms (RAPP-771); null for every form the team created. */
   readonly systemKey: CustomFormSystemKey | null;
-  /** A survey's activity (RAPP-929); null for every other form. */
+  /** The activity of a survey (RAPP-929) or of a sign-up form (RAPP-941); null for every other form. */
   readonly eventId?: string | null;
+  /** A sign-up form's activity title (RAPP-941); null for every other form. */
+  readonly eventTitle?: BuilderText | null;
   /** When a survey stops taking answers (RAPP-929); null: open. */
   readonly closesAt?: string | null;
   /** How many players were picked, for the team; null on her phone. */
@@ -227,6 +231,8 @@ const formSchema = z.object({
   kind: z.enum(CUSTOM_FORM_KINDS).optional().catch('other'),
   system_key: z.enum(CUSTOM_FORM_SYSTEM_KEYS).nullable().optional().catch(null),
   event_id: z.uuid().nullable().optional(),
+  // A sign-up form's activity title (RAPP-941); a title this build cannot read is left out.
+  event_title: anyLanguageTextSchema.nullable().optional().catch(null),
   closes_at: z.string().nullable().optional(),
   recipient_count: z.number().int().optional(),
   version: z.number().int().min(1),
@@ -290,6 +296,7 @@ export function parseCustomForms(raw: unknown): readonly CustomForm[] {
         kind: form.kind ?? 'other',
         systemKey: form.system_key ?? null,
         eventId: form.event_id ?? null,
+        eventTitle: form.event_title ?? null,
         closesAt: form.closes_at ?? null,
         recipientCount: form.recipient_count ?? null,
         version: form.version,

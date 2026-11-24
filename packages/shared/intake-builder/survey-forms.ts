@@ -320,7 +320,7 @@ export function surveyCatalog(raw: unknown, survey: MySurvey): IntakeCatalog {
 export interface FormContentSource {
   readonly formId: string;
   readonly name: BuilderText;
-  readonly kind: 'survey' | 'other';
+  readonly kind: 'survey' | 'other' | 'signup';
   readonly systemKey: OnDemandFormKey | null;
   readonly eventId: string | null;
   readonly closesAt: string | null;
