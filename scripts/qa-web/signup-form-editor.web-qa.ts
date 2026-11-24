@@ -188,9 +188,16 @@ test.describe.serial('an activity sign-up questions', () => {
   test('Altres formularis lists it, and the design role builds it from there', async ({ page }) => {
     await signIn(page, ONBOARDING_DESIGNER_EMAIL);
     await page.goto('/forms/custom');
-    const listed = page.getByTestId(`custom-form-row-${formId}`);
-    await expect(listed).toContainText(ACTIVITY, { timeout: 30_000 });
-    await expect(listed).toContainText(/Preguntes de la inscripció|Signup questions/);
+    // In a section of their own, apart from the club's forms (RAPP-967).
+    const section = page.getByTestId('signup-forms-list');
+    await expect(section).toContainText(/Preguntes de les inscripcions|Signup questions/, {
+      timeout: 30_000,
+    });
+    const listed = section.getByTestId(`custom-form-row-${formId}`);
+    await expect(listed).toContainText(ACTIVITY);
+    await expect(
+      page.getByTestId('custom-forms-list').getByTestId(`custom-form-row-${formId}`),
+    ).toHaveCount(0);
     await listed.click();
     await expect(page).toHaveURL(new RegExp(`/forms/custom/${formId}$`), { timeout: 20_000 });
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(ACTIVITY);

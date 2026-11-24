@@ -58,15 +58,19 @@ export function CustomFormsList({
   readonly data: CustomFormsData;
   readonly kind: CustomFormKind;
 }) {
-  const { t, i18n } = useTranslation(['settings', 'nav', 'events']);
+  const { t, i18n } = useTranslation(['settings', 'nav']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const [isCreating, setIsCreating] = useState(false);
   const forms = (data.intakeCatalog.customForms ?? []).filter(
-    (form) =>
-      // The sign-up forms of the activities are among the other forms (RAPP-941).
-      (form.kind === kind || (kind === 'other' && form.kind === 'signup')) &&
-      form.systemKey === null,
+    (form) => form.kind === kind && form.systemKey === null,
   );
+  // The questions an activity asks when she signs up (RAPP-941) belong to the
+  // activity: they get a section of their own, named by their activity, so they
+  // never read as the club's forms or as surveys (RAPP-967).
+  const signupForms =
+    kind === 'other'
+      ? (data.intakeCatalog.customForms ?? []).filter((form) => form.kind === 'signup')
+      : [];
   // The app's own legal forms come first: the authorization, then the terms.
   const systemForms =
     kind === 'legal' && data.canDesign
@@ -153,31 +157,44 @@ export function CustomFormsList({
                   className={ROW_CLASS}
                   data-testid={`custom-form-row-${form.id}`}
                 >
-                  {form.kind === 'signup' ? (
-                    <FormRowContent
-                      icon={CalendarCheck}
-                      name={customFormTitle(form, language)}
-                      line={t('events:signupQuestions')}
-                      badge={<FormStatusBadge form={form} />}
-                    />
-                  ) : (
-                    <FormRowContent
-                      icon={kind === 'legal' ? Scale : isSurveys ? BarChart3 : ClipboardList}
-                      name={textIn(form.name, language)}
-                      line={[
-                        ...(isSurveys ? [] : [t(`customForms.level.${form.mandatory}`)]),
-                        t(`customForms.audienceOption.${form.audience}`),
-                        ...(form.repeatsEachSeason ? [t('customForms.repeatsEverySeason')] : []),
-                      ].join(' · ')}
-                      badge={<FormStatusBadge form={form} />}
-                    />
-                  )}
+                  <FormRowContent
+                    icon={kind === 'legal' ? Scale : isSurveys ? BarChart3 : ClipboardList}
+                    name={textIn(form.name, language)}
+                    line={[
+                      ...(isSurveys ? [] : [t(`customForms.level.${form.mandatory}`)]),
+                      t(`customForms.audienceOption.${form.audience}`),
+                      ...(form.repeatsEachSeason ? [t('customForms.repeatsEverySeason')] : []),
+                    ].join(' · ')}
+                    badge={<FormStatusBadge form={form} />}
+                  />
                 </Link>
               </li>
             ))}
           </ol>
         )}
       </EditorSection>
+      {signupForms.length === 0 ? null : (
+        <EditorSection title={t('customForms.signupListLabel')} isFlush testId="signup-forms-list">
+          <ol className="flex flex-col divide-y" aria-label={t('customForms.signupListLabel')}>
+            {signupForms.map((form) => (
+              <li key={form.id} className="bg-card">
+                <Link
+                  to="/forms/custom/$formId"
+                  params={{ formId: form.id }}
+                  className={ROW_CLASS}
+                  data-testid={`custom-form-row-${form.id}`}
+                >
+                  <FormRowContent
+                    icon={CalendarCheck}
+                    name={customFormTitle(form, language)}
+                    badge={<FormStatusBadge form={form} />}
+                  />
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </EditorSection>
+      )}
       {data.canDesign ? (
         <NewFormDialog kind={kind} isOpen={isCreating} onOpenChange={setIsCreating} />
       ) : null}
@@ -197,7 +214,7 @@ function FormRowContent({
 }: {
   readonly icon: LucideIcon;
   readonly name: string;
-  readonly line: string;
+  readonly line?: string;
   readonly badge: ReactNode;
 }) {
   return (
@@ -207,7 +224,9 @@ function FormRowContent({
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="truncate text-start text-sm font-medium">{name}</span>
-        <span className="truncate text-start text-xs text-muted-foreground">{line}</span>
+        {line === undefined ? null : (
+          <span className="truncate text-start text-xs text-muted-foreground">{line}</span>
+        )}
       </span>
       {badge}
     </>
