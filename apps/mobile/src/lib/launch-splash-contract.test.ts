@@ -32,7 +32,13 @@ describe('the launch splash: the shield builds itself (RAPP-955)', () => {
     expect(splash.match(/contentFit="contain"/g)).toHaveLength(3);
     expect(splash).toContain('instance.muted = true');
     expect(splash).toContain('instance.loop = false');
-    expect(splash).toContain('onLayout={hideNativeSplash}');
+    // The native splash goes once the shield's first frame is drawn, never before.
+    expect(splash).toContain('onDisplay={hideNativeSplash}');
+    expect(splash).toContain('setTimeout(hideNativeSplash, nativeHandOffMaxMs)');
+    expect(splash).not.toContain('onLayout={hideNativeSplash}');
+    // The clip layer stays hidden until it has drawn its own first frame.
+    expect(splash).toContain('style={clipShown ? styles.layer : styles.hiddenLayer}');
+    expect(splash).toContain('onFirstFrameRender={showClip}');
   });
 
   test('reduce motion or a failed clip shows the last frame at once', async () => {
