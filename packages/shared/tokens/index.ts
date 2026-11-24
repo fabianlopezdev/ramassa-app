@@ -133,6 +133,10 @@ export const tokens = {
   splash: {
     backgroundColor: '#DBE0E9',
     size: 220,
+    // Android 12 and later show the splash image in a 288 dp square but only
+    // reveal a circle 192 dp across. The shield reaches 0.51 of the image width
+    // from its centre, so at 180 dp its corners stay inside the circle.
+    androidSize: 180,
     fadeMs: 500,
     minDisplayMs: 600,
     maxDisplayMs: 5_000,

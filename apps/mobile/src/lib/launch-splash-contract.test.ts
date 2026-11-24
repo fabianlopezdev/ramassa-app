@@ -17,7 +17,12 @@ describe('the launch splash: the shield builds itself (RAPP-955)', () => {
       backgroundColor: tokens.splash.backgroundColor,
       image: './assets/images/splash-shield-start.png',
       imageWidth: tokens.splash.size,
+      // Android shows the image in a circle 192 dp across, so it draws smaller.
+      android: { imageWidth: tokens.splash.androidSize },
     });
+    // The shield reaches 0.507 of the image width from its centre: on Android
+    // it stays inside the 96 dp radius of the visible circle.
+    expect(tokens.splash.androidSize * 0.507).toBeLessThan(96);
     // The same blue as the app icon's tile (RAPP-948).
     expect(tokens.splash.backgroundColor).toBe('#DBE0E9');
   });
