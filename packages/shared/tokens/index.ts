@@ -125,6 +125,19 @@ export const tokens = {
     backdropOpacity: 0.07,
   },
 
+  // The launch splash (RAPP-955): the club shield builds itself in a centred
+  // square on the soft brand blue, the tile of the app icon (RAPP-948). The
+  // native splash draws the clip's first frame at the same size, so the swap
+  // to the animated overlay lines up on every phone. `fadeMs` is the fade into
+  // the app; `minDisplayMs` and `maxDisplayMs` bound how long it stays.
+  splash: {
+    backgroundColor: '#DBE0E9',
+    size: 220,
+    fadeMs: 500,
+    minDisplayMs: 600,
+    maxDisplayMs: 5_000,
+  },
+
   // The login title sits just above a centred block of this height, so every
   // login step puts its title in the same place on a tall screen.
   authForm: { titleAnchorBlockHeight: 276 },

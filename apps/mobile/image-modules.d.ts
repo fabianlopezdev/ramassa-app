@@ -5,3 +5,9 @@ declare module '*.png' {
   const source: ImageSourcePropType;
   export default source;
 }
+
+// An imported video file is a bundled asset the player resolves (RAPP-955).
+declare module '*.mp4' {
+  const source: number;
+  export default source;
+}

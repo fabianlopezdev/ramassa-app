@@ -21,6 +21,7 @@ import { tokens } from '@ramassa/shared/tokens';
 /** The pencil circle: as wide as the minimum tap target, over the photo's lower end corner. */
 const EDIT_BADGE_SIZE = tokens.tapTarget.min;
 const EDIT_ICON_SIZE = tokens.fontSize.xl;
+const EDIT_BADGE_ALONE_STYLE = { width: EDIT_BADGE_SIZE, height: EDIT_BADGE_SIZE } as const;
 const EDIT_BADGE_STYLE = {
   width: EDIT_BADGE_SIZE,
   height: EDIT_BADGE_SIZE,
@@ -38,15 +39,20 @@ const PHOTO_OPTIONS: ImagePicker.ImagePickerOptions = {
 
 /**
  * Her photo with the button that changes it underneath. `beside` sits to the
- * end of them, such as her name on Les meves dades (RAPP-888); the camera and
- * library choices open under the whole row.
+ * end of them; the camera and library choices open under the whole row.
+ *
+ * `badgeOnly` draws the pencil alone, for a screen that already shows her
+ * photo large, such as the top of Les meves dades (RAPP-960); what it is doing
+ * and any failure then show in the choices sheet.
  */
 export function ProfilePhotoEditor({
   profile,
   beside,
+  badgeOnly = false,
 }: {
   readonly profile: ProfileRecordWithFields;
   readonly beside?: ReactNode;
+  readonly badgeOnly?: boolean;
 }) {
   const { t } = useTranslation('profile');
   const font = useLanguageFontClass();
@@ -146,64 +152,75 @@ export function ProfilePhotoEditor({
     </>
   );
   const editLabel = profile.avatar_url ? t('photo.change') : t('photo.add');
+  // The way to change the photo (RAPP-888): a small pencil circle, a full
+  // minimum tap target, named for screen readers by what it does.
+  const pencil = (
+    <PressableScale
+      testID="profile-photo-edit"
+      accessibilityLabel={editLabel}
+      isDisabled={busy}
+      onPress={() => setExpanded(true)}
+      haptic="tapLight"
+      className={`${badgeOnly ? '' : 'absolute '}items-center justify-center rounded-full border-2 border-white bg-primary`}
+      style={badgeOnly ? EDIT_BADGE_ALONE_STYLE : EDIT_BADGE_STYLE}
+    >
+      <Icon name="pen" weight="linear" size={EDIT_ICON_SIZE} color={tokens.colors.white} />
+    </PressableScale>
+  );
+  const sheet = (
+    <AppSheet
+      testID="profile-photo-sheet"
+      title={editLabel}
+      visible={expanded}
+      onClose={() => setExpanded(false)}
+    >
+      <View className="gap-sm">
+        <AuthSubmitButton
+          label={t('photo.camera')}
+          testID="profile-photo-camera"
+          disabled={busy}
+          onPress={() => void change('camera')}
+        />
+        <AuthSubmitButton
+          label={t('photo.library')}
+          testID="profile-photo-library"
+          disabled={busy}
+          onPress={() => void change('library')}
+        />
+        {profile.avatar_url ? (
+          <PressableScale
+            accessibilityLabel={t('photo.remove')}
+            isDisabled={busy}
+            onPress={confirmRemove}
+            haptic="tapLight"
+            className="min-h-recommended justify-center"
+          >
+            <Text className={`text-center text-form text-error ${font}`}>{t('photo.remove')}</Text>
+          </PressableScale>
+        ) : null}
+        {status}
+      </View>
+    </AppSheet>
+  );
+  if (badgeOnly) {
+    return (
+      <>
+        {pencil}
+        {sheet}
+      </>
+    );
+  }
   return (
     <View className="gap-md">
       <View className="flex-row items-center gap-md">
         <View>
           {saved > 0 ? <SuccessPop key={saved}>{portrait}</SuccessPop> : portrait}
-          {/* The way to change the photo (RAPP-888): a small pencil circle on
-              the photo's lower corner, a full minimum tap target, named for
-              screen readers by what it does. */}
-          <PressableScale
-            testID="profile-photo-edit"
-            accessibilityLabel={editLabel}
-            isDisabled={busy}
-            onPress={() => setExpanded(true)}
-            haptic="tapLight"
-            className="absolute items-center justify-center rounded-full border-2 border-white bg-primary"
-            style={EDIT_BADGE_STYLE}
-          >
-            <Icon name="pen" weight="linear" size={EDIT_ICON_SIZE} color={tokens.colors.white} />
-          </PressableScale>
+          {pencil}
         </View>
         {beside === undefined ? null : <View className="flex-1">{beside}</View>}
       </View>
       {expanded ? null : status}
-      <AppSheet
-        testID="profile-photo-sheet"
-        title={editLabel}
-        visible={expanded}
-        onClose={() => setExpanded(false)}
-      >
-        <View className="gap-sm">
-          <AuthSubmitButton
-            label={t('photo.camera')}
-            testID="profile-photo-camera"
-            disabled={busy}
-            onPress={() => void change('camera')}
-          />
-          <AuthSubmitButton
-            label={t('photo.library')}
-            testID="profile-photo-library"
-            disabled={busy}
-            onPress={() => void change('library')}
-          />
-          {profile.avatar_url ? (
-            <PressableScale
-              accessibilityLabel={t('photo.remove')}
-              isDisabled={busy}
-              onPress={confirmRemove}
-              haptic="tapLight"
-              className="min-h-recommended justify-center"
-            >
-              <Text className={`text-center text-form text-error ${font}`}>
-                {t('photo.remove')}
-              </Text>
-            </PressableScale>
-          ) : null}
-          {status}
-        </View>
-      </AppSheet>
+      {sheet}
     </View>
   );
 }

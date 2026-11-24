@@ -60,4 +60,13 @@ describe('the club logo in Inici, the profile and the chat (RAPP-907)', () => {
     expect(tokens.brandLogo.backdropOpacity).toBeLessThanOrEqual(0.1);
     expect(tokens.brandLogo.backdropHeight).toBeGreaterThan(tokens.brandLogo.footerHeight);
   });
+
+  test('the bundled shield sits where the loaded logo will, so Inici does not jump (RAPP-947)', async () => {
+    const logo = await read('../components/branding/public-organization-logo.tsx');
+
+    // An expo-image placeholder is always centred; the header logo sits at the row's start.
+    expect(logo).not.toContain('placeholder=');
+    expect(logo).toContain('source={BUNDLED_CLUB_LOGO}');
+    expect(logo.match(/contentPosition=\{contentPosition\}/g)).toHaveLength(2);
+  });
 });

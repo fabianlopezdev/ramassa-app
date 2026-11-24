@@ -6,6 +6,7 @@ import {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
+  withDelay,
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
@@ -27,6 +28,7 @@ export function SelectionTransition({
   className,
   style,
   duration = 'fast',
+  delayMs = 0,
 }: {
   readonly active: boolean;
   readonly emphasis?: boolean;
@@ -34,6 +36,8 @@ export function SelectionTransition({
   readonly className?: string;
   readonly style?: StyleProp<ViewStyle>;
   readonly duration?: MotionDurationName;
+  /** A wait before it turns on, so it can arrive in step with a wave such as a rating's stars. */
+  readonly delayMs?: number;
 }) {
   const reduced = useReducedMotion();
   const previous = useRef(active);
@@ -50,7 +54,8 @@ export function SelectionTransition({
       scale.set(1);
       return;
     }
-    opacity.set(withTiming(active ? 1 : 0, { duration: resolveDurationMs(duration, false) }));
+    const fade = withTiming(active ? 1 : 0, { duration: resolveDurationMs(duration, false) });
+    opacity.set(active && delayMs > 0 ? withDelay(delayMs, fade) : fade);
     if (active && emphasis) {
       const motion = motionTokens.selection;
       scale.set(motion.initialScale);
@@ -66,7 +71,7 @@ export function SelectionTransition({
     } else {
       scale.set(withTiming(1, { duration: resolveDurationMs('fast', false) }));
     }
-  }, [active, emphasis, reduced, opacity, scale, duration]);
+  }, [active, delayMs, emphasis, reduced, opacity, scale, duration]);
 
   useEffect(
     () => () => {

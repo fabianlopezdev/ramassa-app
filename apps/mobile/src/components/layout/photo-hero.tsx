@@ -21,6 +21,9 @@
  * `PhotoHeroScreen` is the whole scrolling screen. A screen that scrolls a
  * list of its own, such as a forum thread, puts `PhotoHero` at the top of its
  * list and passes `overPhoto` to its header itself.
+ *
+ * `PhotoHeroTitle` puts a large title on the bottom of a photo, such as her
+ * name on the collapsing header of her profile (RAPP-960).
  */
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PhotoZoomTarget } from '@/components/media/photo-zoom';
@@ -32,6 +35,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Text,
   useWindowDimensions,
   View,
   type ImageStyle,
@@ -42,10 +46,12 @@ import type { PhotoFocus } from '@ramassa/shared/photo-focus';
 import { tokens } from '@ramassa/shared/tokens';
 
 /** The most of the screen's height the photo takes, so the title shows under it. */
-const PHOTO_HERO_MAX_SHARE_OF_SCREEN = 0.6;
+export const PHOTO_HERO_MAX_SHARE_OF_SCREEN = 0.6;
 /** How soft the copy behind a tall photo is, enough to read as colour only. */
 const BACKDROP_BLUR_RADIUS = tokens.spacing.xl;
 const SHEET_CORNER_RADIUS = tokens.radius.xl;
+/** The rounded top of the sheet, which overlaps the bottom of the photo. */
+export const PHOTO_HERO_SHEET_RADIUS = SHEET_CORNER_RADIUS;
 
 const styles = StyleSheet.create({
   frame: { width: '100%', overflow: 'hidden', backgroundColor: tokens.colors.neutral[900] },
@@ -60,6 +66,24 @@ const styles = StyleSheet.create({
 });
 const photoFillStyle: ImageStyle = StyleSheet.absoluteFill;
 
+// A title on the photo sits on a dark fade, so white type reads on any picture,
+// and clears the sheet's rounded corners that overlap the photo's bottom edge.
+const titleOnPhotoStyle: ViewStyle = {
+  position: 'absolute',
+  start: 0,
+  end: 0,
+  bottom: 0,
+  paddingHorizontal: tokens.spacing.lg,
+  paddingTop: tokens.spacing['2xl'],
+  paddingBottom: SHEET_CORNER_RADIUS + tokens.spacing.md,
+  backgroundImage: `linear-gradient(to bottom, ${tokens.colors.black}00, ${tokens.colors.black}99)`,
+};
+const titleEndRoom: ViewStyle = {
+  paddingEnd: tokens.spacing.lg + tokens.tapTarget.min + tokens.spacing.md,
+};
+// On a plain colour panel the title needs no fade.
+const titleOnPanelStyle: ViewStyle = { ...titleOnPhotoStyle, backgroundImage: undefined };
+
 export interface PhotoHeroProps {
   readonly source: ImageSource;
   /** The photo's stored key: the card that opened the screen measured its shape under it. */
@@ -73,6 +97,43 @@ export interface PhotoHeroProps {
   /** The sheet's colour, such as the wash of the item's kind (RAPP-893); white by default. */
   readonly sheetColor?: string;
   readonly children: ReactNode;
+}
+
+/**
+ * A large title on the bottom of the photo or panel (RAPP-960): white on a dark
+ * fade over a photo, the brand colour on a panel. It is the screen's heading.
+ */
+export function PhotoHeroTitle({
+  title,
+  onPanel = false,
+  numberOfLines = 2,
+  reserveEnd = false,
+  languageFontClass = '',
+  testID,
+}: {
+  readonly title: string;
+  readonly onPanel?: boolean;
+  readonly numberOfLines?: number;
+  /** Keeps clear of a round button on the bottom end, such as the photo pencil. */
+  readonly reserveEnd?: boolean;
+  readonly languageFontClass?: string;
+  readonly testID?: string;
+}) {
+  return (
+    <View
+      pointerEvents="none"
+      style={[onPanel ? titleOnPanelStyle : titleOnPhotoStyle, reserveEnd ? titleEndRoom : null]}
+    >
+      <Text
+        testID={testID}
+        accessibilityRole="header"
+        numberOfLines={numberOfLines}
+        className={`text-3xl font-bold ${onPanel ? 'text-primary' : 'text-white'} ${languageFontClass}`}
+      >
+        {title}
+      </Text>
+    </View>
+  );
 }
 
 function PhotoHeroPhoto({
@@ -149,20 +210,17 @@ export function PhotoHero({ sheetColor, children, ...photo }: PhotoHeroProps) {
   );
 }
 
-/**
- * A whole screen in the story layout: the floating header, and the photo and
- * its sheet scrolling together. The content keeps the screen's side margins.
- */
-export function PhotoHeroScreen({
+/** The floating header over the scrolling top and sheet, shared by both hero screens. */
+function HeroScreenScroll({
   testID,
-  hasBottomAction = false,
+  hasBottomAction,
   sheetColor,
   children,
-  ...photo
-}: PhotoHeroProps & {
+}: {
   readonly testID?: string;
-  /** The screen keeps a call to action under the content, which already clears the home indicator. */
-  readonly hasBottomAction?: boolean;
+  readonly hasBottomAction: boolean;
+  readonly sheetColor?: string;
+  readonly children: ReactNode;
 }) {
   const { bottom } = useSafeAreaInsets();
   const scrollStyle = useMemo<ViewStyle>(
@@ -183,10 +241,32 @@ export function PhotoHeroScreen({
         // The photo starts at the top of the screen, under the status bar.
         contentInsetAdjustmentBehavior="never"
       >
-        <PhotoHero sheetColor={sheetColor} {...photo}>
-          <View className="px-lg">{children}</View>
-        </PhotoHero>
+        {children}
       </ScrollView>
     </>
+  );
+}
+
+/**
+ * A whole screen in the story layout: the floating header, and the photo and
+ * its sheet scrolling together. The content keeps the screen's side margins.
+ */
+export function PhotoHeroScreen({
+  testID,
+  hasBottomAction = false,
+  sheetColor,
+  children,
+  ...photo
+}: PhotoHeroProps & {
+  readonly testID?: string;
+  /** The screen keeps a call to action under the content, which already clears the home indicator. */
+  readonly hasBottomAction?: boolean;
+}) {
+  return (
+    <HeroScreenScroll testID={testID} hasBottomAction={hasBottomAction} sheetColor={sheetColor}>
+      <PhotoHero sheetColor={sheetColor} {...photo}>
+        <View className="px-lg">{children}</View>
+      </PhotoHero>
+    </HeroScreenScroll>
   );
 }

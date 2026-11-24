@@ -3,6 +3,11 @@
   "back": "Enrere",
   "offline": "Sense connexió",
   "close": "Tanca",
+  "photoViewer": {
+    "previous": "Foto anterior",
+    "next": "Foto següent",
+    "position": "Foto {{current}} de {{count}}"
+  },
   "skipToMainContent": "Ves al contingut principal",
   "fundingAcknowledgment": "Projecte finançat per la Generalitat de Catalunya, Departament de Drets Socials i Inclusió.",
   "notFound": {

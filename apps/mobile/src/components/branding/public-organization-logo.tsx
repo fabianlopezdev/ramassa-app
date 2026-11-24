@@ -12,7 +12,9 @@
  * chat that opens again shows it without a new download or a blink. The three
  * in-app places start on the club shield bundled with the app, so the logo is
  * there at once and with no connection; the dashboard's logo replaces it when
- * it loads.
+ * it loads. The bundled shield is its own image under the dashboard's, placed
+ * exactly like it: an expo-image placeholder always sits centred, so in the
+ * header it jumped sideways when the logo arrived (RAPP-947).
  */
 import bundledClubLogo from '@/assets/images/ramassa-splash.png';
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
@@ -94,25 +96,37 @@ export function PublicOrganizationLogo({
   if (origin === undefined) return null;
   const look = VARIANT_LOOKS[variant];
   const startsOnBundledLogo = variant !== 'onboarding';
+  const contentPosition = variant === 'header' ? headerContentPosition : 'center';
   const logo = (
     <FadeSlideIn
       preset="logo"
       ready={loaded || startsOnBundledLogo}
       className={variant === 'backdrop' ? 'w-full' : ''}
     >
-      <Image
-        key={revision}
-        source={`${origin.replace(/\/+$/, '')}/branding/${encodeURIComponent(organizationSlug)}/logo`}
-        accessible={!look.decorative}
-        accessibilityLabel={look.decorative ? undefined : t('appName')}
-        onLoad={() => setLoaded(true)}
-        placeholder={startsOnBundledLogo ? BUNDLED_CLUB_LOGO : undefined}
-        placeholderContentFit="contain"
-        contentFit="contain"
-        contentPosition={variant === 'header' ? headerContentPosition : 'center'}
-        cachePolicy={look.cachePolicy}
-        style={look.style}
-      />
+      <View>
+        {startsOnBundledLogo && !loaded ? (
+          <Image
+            testID="organization-logo-bundled"
+            source={BUNDLED_CLUB_LOGO}
+            accessible={false}
+            contentFit="contain"
+            contentPosition={contentPosition}
+            style={[StyleSheet.absoluteFill, look.style]}
+          />
+        ) : null}
+        <Image
+          key={revision}
+          source={`${origin.replace(/\/+$/, '')}/branding/${encodeURIComponent(organizationSlug)}/logo`}
+          accessible={!look.decorative}
+          accessibilityLabel={look.decorative ? undefined : t('appName')}
+          onLoad={() => setLoaded(true)}
+          contentFit="contain"
+          contentPosition={contentPosition}
+          cachePolicy={look.cachePolicy}
+          transition={0}
+          style={look.style}
+        />
+      </View>
     </FadeSlideIn>
   );
   if (!look.decorative) return logo;

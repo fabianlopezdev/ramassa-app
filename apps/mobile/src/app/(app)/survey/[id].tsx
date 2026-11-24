@@ -12,6 +12,7 @@ import {
   screenBlockGapClassName,
   screenContentClassName,
 } from '@/components/layout/screen-spacing';
+import { ratingFillDelayMs, RatingStar } from '@/components/surveys/rating-star';
 import { continuousCorners } from '@/lib/continuous-corners';
 import {
   useOwnSurveyResponse,
@@ -80,6 +81,8 @@ function QuestionControl(props: QuestionControlProps) {
 
 function RatingQuestionControl({ question, answer, language, onChange }: QuestionControlProps) {
   const { t } = useTranslation('surveys');
+  // Every star up to the one chosen is filled (RAPP-963).
+  const chosenRating = typeof answer === 'number' ? answer : null;
   return (
     <View
       className="flex-row justify-between gap-xs"
@@ -93,16 +96,18 @@ function RatingQuestionControl({ question, answer, language, onChange }: Questio
           label={t('ratingLabel', { count: rating })}
           accessibilityRole="radio"
           isSelected={answer === rating}
+          // Every card up to the chosen star turns yellow, in step with its star.
+          isWashed={chosenRating !== null && rating <= chosenRating}
+          washDelayMs={ratingFillDelayMs(rating - 1)}
           onPress={() => onChange(rating)}
           className="flex-1"
           paddingClassName="px-xs"
           contentClassName="items-center justify-center"
         >
-          <Icon
-            name="star"
-            weight="boldDuotone"
-            size={tokens.fontSize['3xl']}
-            color={tokens.colors.secondary.dark}
+          <RatingStar
+            isFilled={chosenRating !== null && rating <= chosenRating}
+            order={rating - 1}
+            rating={chosenRating}
           />
         </SelectionChoiceSurface>
       ))}
