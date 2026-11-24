@@ -115,5 +115,8 @@
   "iconUsers": "Grup de persones",
   "categoriesHelpPhone": "Fes servir Puja i Baixa per ordenar les categories. Els participants les veuen en aquest ordre.",
   "sessionsTitle": "Sessions ({{count}})",
-  "recurrenceEveryWeekSummary": "Cada setmana, {{count}} sessions"
+  "recurrenceEveryWeekSummary": "Cada setmana, {{count}} sessions",
+  "signupQuestions": "Preguntes de la inscripció",
+  "signupQuestionsEdit": "Edita les preguntes",
+  "signupsTitle": "Inscripcions ({{count}})"
 }
