@@ -559,8 +559,12 @@ export function StaffScreenEditor({
     intro: BuilderText | null,
     texts: FormScreenTexts,
   ) => Promise<unknown>;
-  /** The hide switch (RAPP-711): saved with the texts, the setting the board's eye saves. */
-  readonly hide: {
+  /**
+   * The hide switch (RAPP-711): saved with the texts, the setting the board's
+   * eye saves. Left out on a form whose screens always show, which then has
+   * no switch (RAPP-966).
+   */
+  readonly hide?: {
     readonly isHidden: boolean;
     readonly lockReason: string | null;
     readonly save: (isHidden: boolean) => Promise<void>;
@@ -600,7 +604,7 @@ export function StaffScreenEditor({
     decline_label: {},
   });
   const [isSaving, setIsSaving] = useState(false);
-  const [isHidden, setIsHidden] = useState(hide.isHidden);
+  const [isHidden, setIsHidden] = useState(hide?.isHidden ?? false);
   const row = useRowEditing();
   const saved: Readonly<Record<TeamScreenField, BuilderText>> = {
     title: screen.title,
@@ -651,7 +655,7 @@ export function StaffScreenEditor({
       ) as Readonly<Record<TeamScreenField, string>>,
   );
   const isChanged =
-    isHidden !== hide.isHidden ||
+    isHidden !== (hide?.isHidden ?? false) ||
     fieldsEdited.some((field) =>
       SUPPORTED_LANGUAGES.some(
         (each) => shownIn(field, each).trim() !== savedIn(field, each).trim(),
@@ -707,7 +711,7 @@ export function StaffScreenEditor({
         ...(help === undefined ? {} : { help }),
         ...(continueLabel === undefined ? {} : { continue_label: continueLabel }),
       });
-      if (isHidden !== hide.isHidden) await hide.save(isHidden);
+      if (hide !== undefined && isHidden !== hide.isHidden) await hide.save(isHidden);
       await reload();
       toast.success(t('onboardingBoard.saved'));
       return true;
@@ -884,12 +888,14 @@ export function StaffScreenEditor({
                     </div>
                   </Field>
                 ) : null}
-                <HideScreenField
-                  id="hide-screen"
-                  isHidden={isHidden}
-                  lockReason={hide.lockReason}
-                  onChange={setIsHidden}
-                />
+                {hide === undefined ? null : (
+                  <HideScreenField
+                    id="hide-screen"
+                    isHidden={isHidden}
+                    lockReason={hide.lockReason}
+                    onChange={setIsHidden}
+                  />
+                )}
               </FieldGroup>
             </EditorSection>
 

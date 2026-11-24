@@ -34,10 +34,11 @@ function ReferralFormPage() {
 
 function ReferralFormScreen() {
   const data = Route.useLoaderData();
-  const { t } = useTranslation('settings');
+  // Named as the menu names it (RAPP-966).
+  const { t } = useTranslation('nav');
   return (
     <Page data-testid="referral-form-page">
-      <PageHeader title={t('referralForm.title')} />
+      <PageHeader title={t('staff.referralForm')} />
       <ReferralFormBoard catalog={data.intakeCatalog} />
     </Page>
   );

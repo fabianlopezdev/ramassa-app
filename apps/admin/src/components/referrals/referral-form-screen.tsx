@@ -36,7 +36,7 @@ export function ReferralFormScreenEditor({
   readonly catalog: IntakeCatalog;
   readonly screenId: string;
 }) {
-  const { t, i18n } = useTranslation('settings');
+  const { t, i18n } = useTranslation(['settings', 'nav']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const navigate = useNavigate();
   const view = referralFormView(catalog);
@@ -56,7 +56,7 @@ export function ReferralFormScreenEditor({
   return (
     <Page data-testid="referral-form-screen-page">
       <ScreenEditorHeading
-        back={{ to: '/entities/referral-form', label: t('referralForm.title') }}
+        back={{ to: '/entities/referral-form', label: t('nav:staff.referralForm') }}
         siblings={
           screen === undefined
             ? undefined
@@ -80,11 +80,6 @@ export function ReferralFormScreenEditor({
           number={index + 1}
           total={screens.length}
           saveKind={DRAFT_SAVE}
-          hide={{
-            isHidden: false,
-            lockReason: t('referralForm.alwaysShown'),
-            save: async () => undefined,
-          }}
           phoneQuestions={(shown, wording) =>
             placedPhoneQuestions(view.catalog, screen.id, shown, wording, 'custom_form')
           }
