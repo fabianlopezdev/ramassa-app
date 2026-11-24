@@ -3,6 +3,11 @@
   "back": "بازگشت",
   "offline": "اتصال برقرار نیست",
   "close": "بستن",
+  "photoViewer": {
+    "previous": "عکس قبلی",
+    "next": "عکس بعدی",
+    "position": "عکس {{current}} از {{count}}"
+  },
   "skipToMainContent": "رفتن به محتوای اصلی",
   "fundingAcknowledgment": "این پروژه با حمایت مالی دولت کاتالونیا، اداره حقوق اجتماعی و مشارکت اجرا می‌شود.",
   "notFound": {

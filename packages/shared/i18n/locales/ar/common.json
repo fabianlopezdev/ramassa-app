@@ -3,6 +3,11 @@
   "back": "رجوع",
   "offline": "لا يوجد اتصال",
   "close": "إغلاق",
+  "photoViewer": {
+    "previous": "الصورة السابقة",
+    "next": "الصورة التالية",
+    "position": "الصورة {{current}} من {{count}}"
+  },
   "skipToMainContent": "انتقل إلى المحتوى الرئيسي",
   "fundingAcknowledgment": "مشروع ممول من حكومة كتالونيا، إدارة الحقوق الاجتماعية والإدماج.",
   "notFound": {

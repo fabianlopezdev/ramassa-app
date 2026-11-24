@@ -5,9 +5,12 @@
  * Each photo is fitted inside the safe area. Pinch or double tap to zoom, drag
  * to move a zoomed photo, and drag the unzoomed photo up or down, or press the
  * close button, to leave. A sideways drag of an unzoomed photo pages to the
- * next or previous photo; with one photo nothing pages. A single tap hides the
- * overlay at the foot of the photo and shows it again. The status bar is
- * hidden while it is open.
+ * next or previous photo; with one photo nothing pages. With more than one, a
+ * counter at the top says which photo it is ("3 / 12") and round arrows on
+ * the sides turn the page too, so she sees there is more to swipe to
+ * (RAPP-962). A single tap hides the overlay at the foot of the photo, the
+ * counter and the arrows, and shows them again. The status bar is hidden
+ * while it is open.
  *
  * The photos sit in one row that moves under the finger: the current photo and
  * the one on each side are drawn, each at its own place in the row, so turning
@@ -18,6 +21,7 @@
  * page turns at once.
  */
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { BACKWARD_CHEVRON, FORWARD_CHEVRON } from '@/components/icons/direction';
 import { PhotoFade } from '@/components/media/photo-fade';
 import { NativeWindAnimatedView } from '@/components/motion/nativewind-animated-view';
 import { mediaAspectRatioOf } from '@/lib/gallery-media-frame';
@@ -54,10 +58,12 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   I18nManager,
   ScrollView,
   StyleSheet,
+  Text,
   useWindowDimensions,
   View,
   type AccessibilityActionEvent,
@@ -195,6 +201,7 @@ export function PhotoLightbox({
   /** About the photo shown, at its foot; a single tap hides it and shows it again. */
   readonly overlay?: ReactNode;
 }) {
+  const { t } = useTranslation('common');
   const isReducedMotion = useReducedMotion();
   const { top, bottom } = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
@@ -278,18 +285,34 @@ export function PhotoLightbox({
     [currentKey, onCurrentKeyChange, photos],
   );
   const toggleOverlay = useCallback(() => setIsOverlayShown((isShown) => !isShown), []);
-  // A screen reader swipe up or down turns the page, as a sideways drag does.
-  const turnPageForScreenReader = useCallback(
-    ({ nativeEvent }: AccessibilityActionEvent) => {
-      const target = currentIndex + (nativeEvent.actionName === 'increment' ? 1 : -1);
-      if (target < 0 || target >= pageCount || scale.get() > LIGHTBOX_MIN_SCALE) return;
+  // Turns to the photo one step after (1) or before (-1) the one shown, as a
+  // sideways drag does. A zoomed photo settles back to its fitted size first.
+  const turnPage = useCallback(
+    (step: 1 | -1) => {
+      const target = currentIndex + step;
+      if (target < 0 || target >= pageCount) return;
+      if (scale.get() > LIGHTBOX_MIN_SCALE) {
+        scale.set(withTiming(LIGHTBOX_MIN_SCALE, settle));
+        offsetX.set(withTiming(0, settle));
+        offsetY.set(withTiming(0, settle));
+      }
       pagePosition.set(
         withTiming(target, settle, (isFinished) => {
           if (isFinished) runOnJS(showPage)(target);
         }),
       );
     },
-    [currentIndex, pageCount, pagePosition, scale, settle, showPage],
+    [currentIndex, offsetX, offsetY, pageCount, pagePosition, scale, settle, showPage],
+  );
+  const turnBack = useCallback(() => turnPage(-1), [turnPage]);
+  const turnForward = useCallback(() => turnPage(1), [turnPage]);
+  // A screen reader swipe up or down turns the page, as a sideways drag does.
+  const turnPageForScreenReader = useCallback(
+    ({ nativeEvent }: AccessibilityActionEvent) => {
+      if (scale.get() > LIGHTBOX_MIN_SCALE) return;
+      turnPage(nativeEvent.actionName === 'increment' ? 1 : -1);
+    },
+    [scale, turnPage],
   );
   const motion = useMemo<LightboxMotion>(
     () => ({ stageWidth, shownIndex, scale, offsetX, offsetY, dismissY }),
@@ -508,6 +531,10 @@ export function PhotoLightbox({
   const closeStyle = useAnimatedStyle(() => ({
     opacity: lightboxBackdropOpacity(dismissY.get(), stageHeight.get()),
   }));
+  // The counter and the arrows hide with the overlay, and fade with the drag to close.
+  const pagingStyle = useAnimatedStyle(() => ({
+    opacity: overlayOpacity.get() * lightboxBackdropOpacity(dismissY.get(), stageHeight.get()),
+  }));
   const overlayStyle = useAnimatedStyle(() => ({
     opacity: overlayOpacity.get() * lightboxBackdropOpacity(dismissY.get(), stageHeight.get()),
   }));
@@ -520,9 +547,32 @@ export function PhotoLightbox({
     () => ({ position: 'absolute', top, bottom, start: 0, end: 0 }),
     [bottom, top],
   );
-  const closeCornerStyle = useMemo<ViewStyle>(
-    () => ({ position: 'absolute', top: top + tokens.spacing.sm, end: tokens.spacing.md }),
+  const topBarStyle = useMemo<ViewStyle>(
+    () => ({
+      position: 'absolute',
+      top: top + tokens.spacing.sm,
+      start: tokens.spacing.md,
+      end: tokens.spacing.md,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    }),
     [top],
+  );
+  // Each arrow sits on its own side, halfway down the photo's area.
+  const backArrowStyle = useMemo<ViewStyle>(
+    () => ({
+      position: 'absolute',
+      top,
+      bottom,
+      start: tokens.spacing.md,
+      justifyContent: 'center',
+    }),
+    [bottom, top],
+  );
+  const forwardArrowStyle = useMemo<ViewStyle>(
+    () => ({ position: 'absolute', top, bottom, end: tokens.spacing.md, justifyContent: 'center' }),
+    [bottom, top],
   );
   const overlayPlaceStyle = useMemo<ViewStyle>(
     () => ({ position: 'absolute', bottom: 0, start: 0, end: 0 }),
@@ -538,14 +588,20 @@ export function PhotoLightbox({
   );
   const rowLayerStyle = useMemo(() => [StyleSheet.absoluteFill, rowStyle], [rowStyle]);
   const backdropLayerStyle = useMemo(() => [styles.backdrop, backdropStyle], [backdropStyle]);
-  const closeLayerStyle = useMemo(
-    () => [closeCornerStyle, closeStyle],
-    [closeCornerStyle, closeStyle],
+  const backArrowLayerStyle = useMemo(
+    () => [backArrowStyle, pagingStyle],
+    [backArrowStyle, pagingStyle],
+  );
+  const forwardArrowLayerStyle = useMemo(
+    () => [forwardArrowStyle, pagingStyle],
+    [forwardArrowStyle, pagingStyle],
   );
   const overlayLayerStyle = useMemo(
     () => [overlayPlaceStyle, overlayStyle],
     [overlayPlaceStyle, overlayStyle],
   );
+  const hasPages = pageCount > 1;
+  const pagingPointerEvents = isOverlayShown ? 'box-none' : 'none';
   const firstDrawn = Math.max(0, currentIndex - 1);
   const drawnPhotos = photos.slice(firstDrawn, currentIndex + 2);
 
@@ -595,16 +651,73 @@ export function PhotoLightbox({
           </PhotoFade>
         </NativeWindAnimatedView>
       )}
-      <NativeWindAnimatedView style={closeLayerStyle}>
-        <RaisedActionButton
-          testID="photo-lightbox-close"
-          size="compact"
-          icon="close"
-          isLabelHidden
-          label={closeLabel}
-          onPress={onClose}
-        />
-      </NativeWindAnimatedView>
+      {hasPages && currentIndex > 0 ? (
+        <NativeWindAnimatedView
+          pointerEvents={pagingPointerEvents}
+          accessibilityElementsHidden={!isOverlayShown}
+          importantForAccessibility={isOverlayShown ? 'auto' : 'no-hide-descendants'}
+          style={backArrowLayerStyle}
+        >
+          <RaisedActionButton
+            testID="photo-lightbox-previous"
+            size="compact"
+            icon={BACKWARD_CHEVRON}
+            isLabelHidden
+            label={t('photoViewer.previous')}
+            onPress={turnBack}
+          />
+        </NativeWindAnimatedView>
+      ) : null}
+      {hasPages && currentIndex < pageCount - 1 ? (
+        <NativeWindAnimatedView
+          pointerEvents={pagingPointerEvents}
+          accessibilityElementsHidden={!isOverlayShown}
+          importantForAccessibility={isOverlayShown ? 'auto' : 'no-hide-descendants'}
+          style={forwardArrowLayerStyle}
+        >
+          <RaisedActionButton
+            testID="photo-lightbox-next"
+            size="compact"
+            icon={FORWARD_CHEVRON}
+            isLabelHidden
+            label={t('photoViewer.next')}
+            onPress={turnForward}
+          />
+        </NativeWindAnimatedView>
+      ) : null}
+      <View pointerEvents="box-none" style={topBarStyle}>
+        {hasPages ? (
+          <NativeWindAnimatedView
+            pointerEvents="none"
+            accessibilityElementsHidden={!isOverlayShown}
+            importantForAccessibility={isOverlayShown ? 'auto' : 'no-hide-descendants'}
+            style={pagingStyle}
+          >
+            <Text
+              testID="photo-lightbox-counter"
+              accessibilityLabel={t('photoViewer.position', {
+                current: currentIndex + 1,
+                count: pageCount,
+              })}
+              className="overflow-hidden rounded-full bg-black/50 px-md py-xs text-sm font-semibold tabular-nums text-white"
+            >
+              {`${currentIndex + 1} / ${pageCount}`}
+            </Text>
+          </NativeWindAnimatedView>
+        ) : (
+          <View />
+        )}
+        <NativeWindAnimatedView style={closeStyle}>
+          <RaisedActionButton
+            testID="photo-lightbox-close"
+            size="compact"
+            icon="close"
+            isLabelHidden
+            label={closeLabel}
+            onPress={onClose}
+          />
+        </NativeWindAnimatedView>
+      </View>
     </View>
   );
 }
