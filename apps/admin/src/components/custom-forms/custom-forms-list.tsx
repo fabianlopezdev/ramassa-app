@@ -6,13 +6,9 @@
  * asks the kind first (preset by the page), the name and the choices
  * (RAPP-701), creates the form as a draft and opens its board. Each row opens
  * its form.
- *
- * Altres formularis also lists each activity's sign-up form (RAPP-941), named
- * by its activity, so whoever builds forms finds every form here. A sign-up
- * form is made from its activity, never from Nou formulari.
  */
 
-import { customFormTitle, FormStatusBadge } from '@/components/custom-forms/custom-form-page';
+import { FormStatusBadge } from '@/components/custom-forms/custom-form-page';
 import { choicesProblem, FormChoicesFields } from '@/components/custom-forms/form-choices';
 import { EditorSection } from '@/components/layout/editor-section';
 import { Page, PageHeader } from '@/components/layout/page';
@@ -24,7 +20,6 @@ import { supabase } from '@/lib/supabase';
 import { Link, useNavigate } from '@tanstack/react-router';
 import {
   BarChart3,
-  CalendarCheck,
   ClipboardList,
   FileSignature,
   Plus,
@@ -64,13 +59,6 @@ export function CustomFormsList({
   const forms = (data.intakeCatalog.customForms ?? []).filter(
     (form) => form.kind === kind && form.systemKey === null,
   );
-  // The questions an activity asks when she signs up (RAPP-941) belong to the
-  // activity: they get a section of their own, named by their activity, so they
-  // never read as the club's forms or as surveys (RAPP-967).
-  const signupForms =
-    kind === 'other'
-      ? (data.intakeCatalog.customForms ?? []).filter((form) => form.kind === 'signup')
-      : [];
   // The app's own legal forms come first: the authorization, then the terms.
   const systemForms =
     kind === 'legal' && data.canDesign
@@ -173,28 +161,6 @@ export function CustomFormsList({
           </ol>
         )}
       </EditorSection>
-      {signupForms.length === 0 ? null : (
-        <EditorSection title={t('customForms.signupListLabel')} isFlush testId="signup-forms-list">
-          <ol className="flex flex-col divide-y" aria-label={t('customForms.signupListLabel')}>
-            {signupForms.map((form) => (
-              <li key={form.id} className="bg-card">
-                <Link
-                  to="/forms/custom/$formId"
-                  params={{ formId: form.id }}
-                  className={ROW_CLASS}
-                  data-testid={`custom-form-row-${form.id}`}
-                >
-                  <FormRowContent
-                    icon={CalendarCheck}
-                    name={customFormTitle(form, language)}
-                    badge={<FormStatusBadge form={form} />}
-                  />
-                </Link>
-              </li>
-            ))}
-          </ol>
-        </EditorSection>
-      )}
       {data.canDesign ? (
         <NewFormDialog kind={kind} isOpen={isCreating} onOpenChange={setIsCreating} />
       ) : null}
@@ -214,7 +180,7 @@ function FormRowContent({
 }: {
   readonly icon: LucideIcon;
   readonly name: string;
-  readonly line?: string;
+  readonly line: string;
   readonly badge: ReactNode;
 }) {
   return (
@@ -224,9 +190,7 @@ function FormRowContent({
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="truncate text-start text-sm font-medium">{name}</span>
-        {line === undefined ? null : (
-          <span className="truncate text-start text-xs text-muted-foreground">{line}</span>
-        )}
+        <span className="truncate text-start text-xs text-muted-foreground">{line}</span>
       </span>
       {badge}
     </>

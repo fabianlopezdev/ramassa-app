@@ -115,8 +115,5 @@
   "iconUsers": "گروه افراد",
   "categoriesHelpPhone": "با «حرکت به بالا» و «حرکت به پایین» ترتیب دسته‌ها را تعیین کنید. شرکت‌کنندگان آن‌ها را به همین ترتیب می‌بینند.",
   "sessionsTitle": "جلسه‌ها ({{count}})",
-  "recurrenceEveryWeekSummary": "هر هفته، {{count}} جلسه",
-  "signupQuestions": "پرسش‌های ثبت نام",
-  "signupQuestionsEdit": "ویرایش پرسش‌ها",
-  "signupsTitle": "ثبت نام‌ها ({{count}})"
+  "recurrenceEveryWeekSummary": "هر هفته، {{count}} جلسه"
 }

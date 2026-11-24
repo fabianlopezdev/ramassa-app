@@ -27,11 +27,6 @@
  * who signed each, its draft can be discarded, the seasons are created here,
  * its two re-registration screens open the board and its screen she signs
  * closes it.
- *
- * An activity's sign-up form (RAPP-941) is named by its activity: the back
- * link returns to the activity for whoever edits activities. What staff save
- * is what she fills in next, so it has no versions, no Publica and no
- * settings; its screens always show and its questions are its own.
  */
 
 import { useStepUp } from '@/components/auth/step-up';
@@ -81,7 +76,6 @@ import { ChevronLeft, Inbox } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { useAuth } from '@ramassa/shared/auth';
 import {
   discardAuthorizationDraft,
   publishAuthorizationDraft,
@@ -173,36 +167,19 @@ export function FormScreenPhone({
   );
 }
 
-/**
- * Draft, live or archived, as a badge. A sign-up form is live while it is not
- * archived: what staff save is what she fills in next (RAPP-941).
- */
+/** Draft, live or archived, as a badge. */
 export function FormStatusBadge({
   form,
 }: {
-  readonly form: Pick<CustomForm, 'isArchived' | 'publishedAt' | 'kind'>;
+  readonly form: Pick<CustomForm, 'isArchived' | 'publishedAt'>;
 }) {
   const { t } = useTranslation('settings');
-  const status = form.isArchived
-    ? 'archived'
-    : form.publishedAt === null && form.kind !== 'signup'
-      ? 'draft'
-      : 'live';
+  const status = form.isArchived ? 'archived' : form.publishedAt === null ? 'draft' : 'live';
   return (
     <Badge variant={status === 'live' ? 'default' : 'outline'} className="shrink-0">
       {t(`customForms.status.${status}`)}
     </Badge>
   );
-}
-
-/** A form's name; a sign-up form is named by its activity (RAPP-941). */
-export function customFormTitle(
-  form: Pick<CustomForm, 'kind' | 'name' | 'eventTitle'>,
-  language: LanguageCode,
-): string {
-  return form.kind === 'signup' && form.eventTitle != null
-    ? textIn(form.eventTitle, language)
-    : textIn(form.name, language);
 }
 
 /** How many answered a form, for the Nova versió note; null when the reader cannot see them. */
@@ -230,22 +207,12 @@ export function CustomFormPage({
   /** The season Publica starts on, when the authorization's overview picked it (RAPP-927). */
   readonly publishSeasonId?: string;
 }) {
-  const { t, i18n } = useTranslation(['settings', 'nav', 'events']);
+  const { t, i18n } = useTranslation(['settings', 'nav']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
-  const { permissions } = useAuth();
   const form = (data.intakeCatalog.customForms ?? []).find((each) => each.id === formId);
   // The app's legal forms are answered in their ledgers: no responses here (RAPP-772, RAPP-773).
   const isSystemForm = form !== undefined && form.systemKey !== null;
-  // A sign-up form's answers are read with each sign-up, on its activity (RAPP-941).
-  const isSignupForm = form?.kind === 'signup';
-  const hasResponses = data.canReadResponses && !isSystemForm && !isSignupForm;
-  // Its back link returns to the activity for whoever edits activities.
-  const activityId =
-    isSignupForm &&
-    form.eventId != null &&
-    (permissions.has('events.edit') || permissions.has('events.publish'))
-      ? form.eventId
-      : null;
+  const hasResponses = data.canReadResponses && !isSystemForm;
   // Whoever reads the responses without designing the form opens them directly.
   if (!data.canDesign && hasResponses) {
     return <Navigate to="/forms/custom/$formId/responses" params={{ formId }} replace />;
@@ -260,15 +227,6 @@ export function CustomFormPage({
               <ChevronLeft aria-hidden data-icon="inline-start" className="rtl:rotate-180" />
               {textIn(form.name, language)}
             </Link>
-          ) : activityId !== null && form !== undefined ? (
-            <Link
-              to="/content/events/$eventId"
-              params={{ eventId: activityId }}
-              data-testid="custom-form-back"
-            >
-              <ChevronLeft aria-hidden data-icon="inline-start" className="rtl:rotate-180" />
-              {customFormTitle(form, language)}
-            </Link>
           ) : (
             <Link to={formListPath(form)} data-testid="custom-form-back">
               <ChevronLeft aria-hidden data-icon="inline-start" className="rtl:rotate-180" />
@@ -281,14 +239,9 @@ export function CustomFormPage({
           )}
         </Button>
         <PageHeader
-          title={form === undefined ? t('customForms.notFound') : customFormTitle(form, language)}
+          title={form === undefined ? t('customForms.notFound') : textIn(form.name, language)}
           description={
-            form === undefined ? undefined : isSignupForm ? (
-              <span className="flex flex-wrap items-center gap-2">
-                <FormStatusBadge form={form} />
-                {t('events:signupQuestions')}
-              </span>
-            ) : (
+            form === undefined ? undefined : (
               <span className="flex flex-wrap items-center gap-2">
                 <FormStatusBadge form={form} />
                 {[
@@ -314,8 +267,8 @@ export function CustomFormPage({
                     </Link>
                   </Button>
                 ) : null}
-                {/* The app's legal forms have nothing to set: their name stays (RAPP-927); nor has a sign-up form (RAPP-941). */}
-                {data.canDesign && form.systemKey === null && !isSignupForm ? (
+                {/* The app's legal forms have nothing to set: their name stays (RAPP-927). */}
+                {data.canDesign && form.systemKey === null ? (
                   <FormSettingsSheet form={form} />
                 ) : null}
                 <FormActions data={data} form={form} publishSeasonId={publishSeasonId} />
@@ -327,8 +280,8 @@ export function CustomFormPage({
       {form === undefined || !data.canDesign ? null : (
         // Keyed by the form's version: a Publica starts from what the database holds.
         <div key={`${form.id}-${form.version}`} className="flex flex-col gap-6">
-          {/* Its versions come first (RAPP-923); the authorization keeps them on its overview (RAPP-927); a sign-up form has none (RAPP-941). */}
-          {form.systemKey === 'season_authorization' || isSignupForm ? null : (
+          {/* Its versions come first (RAPP-923); the authorization keeps them on its overview (RAPP-927). */}
+          {form.systemKey === 'season_authorization' ? null : (
             <CustomFormVersions data={data} form={form} />
           )}
           <FormScreensBoard data={data} form={form} seasonId={publishSeasonId} />
@@ -814,8 +767,7 @@ function TeamFormActions({
       {data.canDesign && form.repeatsEachSeason && !form.isArchived ? (
         <PublishSeasonPicker targets={targets} seasonId={seasonId} onChange={setSeasonId} />
       ) : null}
-      {/* A sign-up form is never published: what staff save is what she fills in next (RAPP-941). */}
-      {data.canDesign && !form.isArchived && form.kind !== 'signup' ? (
+      {data.canDesign && !form.isArchived ? (
         <Button
           type="button"
           disabled={isBusy || !canPublish || (form.repeatsEachSeason && seasonId === null)}
@@ -884,8 +836,6 @@ function FormScreensBoard({
   const createScreen = useCreateFormScreen(form);
   const dependent = useAddDependentScreen({ catalog, sources, onCreate: createScreen });
   const fill = formTextFill(form, data.seasons, seasonId);
-  // A sign-up form's screens always show and depend on no answer (RAPP-941).
-  const screensAlwaysShow = form.kind === 'signup';
   const hidingAncestor = (screen: CustomFormScreen): CustomFormScreen | null => {
     let parent = formScreenParent(catalog, form, screen);
     for (let depth = 0; parent !== null && depth < 64; depth += 1) {
@@ -904,26 +854,6 @@ function FormScreensBoard({
     const isOrphan =
       screen.showWhen !== undefined && formScreenParent(catalog, form, screen) === null;
     const lock = teamHideLockKey(catalog, 'custom_form', screen.id);
-    if (screensAlwaysShow) {
-      return {
-        key: screen.id,
-        ...(suffix === undefined ? {} : { suffix }),
-        name: textIn(screen.title, language),
-        miniature: <FormScreenPhone catalog={catalog} screen={screen} fill={fill} />,
-        status: null,
-        deletion: customFormDeletion(
-          catalog,
-          form,
-          screen.id,
-          language,
-          formBoardNumbers(catalog, form),
-        ),
-        link: {
-          to: '/forms/custom/$formId/screens/$screenId',
-          params: { formId: form.id, screenId: screen.id },
-        },
-      };
-    }
     return {
       key: screen.id,
       ...(suffix === undefined ? {} : { suffix }),
@@ -1012,22 +942,11 @@ function FormScreensBoard({
       <FormBoard
         // Keyed by the saved order: a reload starts again from what the database holds.
         key={ordered.map((screen) => screen.id).join('|')}
-        label={customFormTitle(form, language)}
+        label={textIn(form.name, language)}
         leading={opening.map((screen) => screenCard(screen))}
         movable={cards}
         // The add card is first, as on every board (RAPP-926); a new screen still goes before the screen she signs (RAPP-772).
-        addCard={
-          screensAlwaysShow ? (
-            <AddScreenCard
-              catalog={catalog}
-              sources={[]}
-              canDepend={false}
-              onCreate={(name) => createScreen(name, null)}
-            />
-          ) : (
-            <AddScreenCard catalog={catalog} sources={sources} onCreate={createScreen} />
-          )
-        }
+        addCard={<AddScreenCard catalog={catalog} sources={sources} onCreate={createScreen} />}
         trailing={closing.map((screen) => screenCard(screen))}
         onReorder={async (keys) => {
           // Each screen goes with every follow-up below it (RAPP-715); the fixed ones stay put.

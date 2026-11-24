@@ -107,11 +107,8 @@ export function ChoiceCards<Value extends string>({
   );
 }
 
-/**
- * The kinds a form takes in Formularis; a survey is made in Enquestes
- * (RAPP-929), a sign-up form from its activity (RAPP-941).
- */
-const FORM_KINDS = CUSTOM_FORM_KINDS.filter((kind) => kind !== 'survey' && kind !== 'signup');
+/** The kinds a form takes in Formularis; a survey is made in Enquestes (RAPP-929). */
+const FORM_KINDS = CUSTOM_FORM_KINDS.filter((kind) => kind !== 'survey');
 
 export function FormChoicesFields({
   choices,

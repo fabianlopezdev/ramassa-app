@@ -115,8 +115,5 @@
   "iconUsers": "Grupo de personas",
   "categoriesHelpPhone": "Usa Subir y Bajar para ordenar las categorías. Los participantes las ven en este orden.",
   "sessionsTitle": "Sesiones ({{count}})",
-  "recurrenceEveryWeekSummary": "Cada semana, {{count}} sesiones",
-  "signupQuestions": "Preguntas de la inscripción",
-  "signupQuestionsEdit": "Editar las preguntas",
-  "signupsTitle": "Inscripciones ({{count}})"
+  "recurrenceEveryWeekSummary": "Cada semana, {{count}} sesiones"
 }

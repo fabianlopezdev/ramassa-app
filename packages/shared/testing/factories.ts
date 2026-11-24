@@ -562,8 +562,6 @@ export function buildEventSignup(overrides: Partial<EventSignupRow> = {}): Event
     event_id: buildEvent().id,
     player_id: seedUserId(PARTICIPANT_FIXTURES[0]!.ordinal),
     state: 'confirmed',
-    // Her answers to the activity's sign-up questions (RAPP-941): none from an installed build.
-    answers_encrypted: null,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...overrides,

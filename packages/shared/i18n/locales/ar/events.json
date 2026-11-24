@@ -115,8 +115,5 @@
   "iconUsers": "مجموعة أشخاص",
   "categoriesHelpPhone": "استخدم «تحريك لأعلى» و«تحريك لأسفل» لترتيب الفئات. يراها المشاركون بهذا الترتيب.",
   "sessionsTitle": "الجلسات ({{count}})",
-  "recurrenceEveryWeekSummary": "كل أسبوع، {{count}} جلسات",
-  "signupQuestions": "أسئلة التسجيل",
-  "signupQuestionsEdit": "تعديل الأسئلة",
-  "signupsTitle": "التسجيلات ({{count}})"
+  "recurrenceEveryWeekSummary": "كل أسبوع، {{count}} جلسات"
 }
