@@ -11,7 +11,7 @@
 import { useBrandColor } from '@/components/branding/organization-branding-context';
 import { Icon } from '@/components/icons/icon';
 import { useEffect, useMemo, useRef } from 'react';
-import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, type ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -81,14 +81,17 @@ export function RatingStar({
     transform: [{ scale: scale.get() }, { rotate: `${tilt.get()}deg` }],
   }));
   const filledStyle = useAnimatedStyle(() => ({ opacity: fill.get() }));
+  // The outline gives way as the star fills, so it never shows through the paler half.
+  const outlineStyle = useAnimatedStyle(() => ({ opacity: 1 - fill.get() }));
   const popLayerStyle = useMemo(() => [frameStyle, popStyle], [popStyle]);
   const filledLayerStyle = useMemo(() => [StyleSheet.absoluteFill, filledStyle], [filledStyle]);
+  const outlineLayerStyle = useMemo(() => [StyleSheet.absoluteFill, outlineStyle], [outlineStyle]);
 
   return (
     <Animated.View style={popLayerStyle}>
-      <View style={StyleSheet.absoluteFill}>
+      <Animated.View style={outlineLayerStyle}>
         <Icon name="star" weight="linear" size={STAR_SIZE} color={brandColor} />
-      </View>
+      </Animated.View>
       <Animated.View style={filledLayerStyle}>
         <Icon name="star" weight="boldDuotone" size={STAR_SIZE} color={brandColor} />
       </Animated.View>
