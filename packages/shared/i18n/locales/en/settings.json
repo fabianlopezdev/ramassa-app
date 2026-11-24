@@ -867,6 +867,7 @@
     "newForm": "New form",
     "empty": "There are no forms yet.",
     "listLabel": "Forms",
+    "signupListLabel": "Signup questions",
     "name": "Name",
     "filledBy": "Who fills it in",
     "filler": {
