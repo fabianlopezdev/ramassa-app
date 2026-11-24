@@ -17,6 +17,7 @@
 import splashEnd from '@/assets/images/splash-shield-end.png';
 import splashStart from '@/assets/images/splash-shield-start.png';
 import splashClip from '@/assets/videos/splash-shield-build.mp4';
+import { markLaunchSplashDone, useLaunchSplashDone } from '@/lib/launch-splash-state';
 import { useEvent } from 'expo';
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
@@ -32,7 +33,6 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { markLaunchSplashDone, useLaunchSplashDone } from '@/lib/launch-splash-state';
 import { tokens } from '@ramassa/shared/tokens';
 
 const { backgroundColor, size, fadeMs, minDisplayMs, maxDisplayMs } = tokens.splash;
@@ -51,6 +51,7 @@ const styles = StyleSheet.create({
   },
   square: { width: size, height: size },
   layer: { ...StyleSheet.absoluteFill },
+  hiddenLayer: { ...StyleSheet.absoluteFill, opacity: 0 },
 });
 
 export function AnimatedSplash({
@@ -130,9 +131,15 @@ export function AnimatedSplash({
       <View style={styles.square}>
         {/* The first frame under the clip, so nothing blinks before it draws. */}
         <Image source={splashStart} contentFit="contain" accessible={false} style={styles.layer} />
-        {settled ? (
-          <Image source={splashEnd} contentFit="contain" accessible={false} style={styles.layer} />
-        ) : (
+        {/* The last frame loads with the first and waits hidden, so when the clip
+            ends it is already drawn: the shield never flashes back to empty. */}
+        <Image
+          source={splashEnd}
+          contentFit="contain"
+          accessible={false}
+          style={settled ? styles.layer : styles.hiddenLayer}
+        />
+        {settled ? null : (
           <VideoView
             player={player}
             contentFit="contain"
