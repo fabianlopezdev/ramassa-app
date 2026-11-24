@@ -2411,6 +2411,7 @@ export type Database = {
       };
       feedback_submissions: {
         Row: {
+          answers_encrypted: string | null;
           author_id: string;
           content_encrypted: string;
           created_at: string;
@@ -2424,6 +2425,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          answers_encrypted?: string | null;
           author_id: string;
           content_encrypted: string;
           created_at?: string;
@@ -2437,6 +2439,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          answers_encrypted?: string | null;
           author_id?: string;
           content_encrypted?: string;
           created_at?: string;
@@ -6862,6 +6865,11 @@ export type Database = {
         Args: { p_content: string; p_image_url: string; p_type: string };
         Returns: string;
       };
+      send_feedback_submission: {
+        Args: { p_answers?: Json; p_content: string; p_image_url: string; p_type: string };
+        Returns: string;
+      };
+      my_feedback_form: { Args: never; Returns: Json };
       create_forum_post: {
         Args: { p_category_id: string; p_content: string; p_image_url: string };
         Returns: string;
@@ -7631,6 +7639,7 @@ export type Database = {
       list_staff_feedback_submissions: {
         Args: { p_status?: string; p_type?: string };
         Returns: {
+          answers: Json;
           author_first_name: string;
           author_id: string;
           author_last_name: string;

@@ -1,6 +1,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
+import type { CustomQuestion, IntakeCatalog } from './intake-builder/builder';
+import { anyLanguageTextSchema, type BuilderText } from './intake-builder/profile-layout';
+import {
+  CUSTOM_QUESTION_TYPES,
+  parseQuestionSettings,
+  type CustomQuestionType,
+} from './intake-builder/question-types';
+import { formContentCatalog } from './intake-builder/survey-forms';
 import type { Database } from './types/database';
 
 export const FEEDBACK_TYPES = ['activity_proposal', 'idea', 'problem', 'general'] as const;
@@ -38,12 +46,56 @@ const ownFeedbackRowSchema = z.object({
   updated_at: z.string(),
 });
 
+/**
+ * One answer to a question staff added to the suggestions form (RAPP-939),
+ * with the question as she read it: the inbox reads it even after the
+ * question changes.
+ */
+const feedbackAnswerSchema = z.object({
+  field_id: z.uuid(),
+  question: z.object({
+    label: anyLanguageTextSchema,
+    help: anyLanguageTextSchema.nullable().optional(),
+    question_type: z.enum(CUSTOM_QUESTION_TYPES),
+    settings: z.unknown().optional(),
+    options: z
+      .array(z.object({ id: z.string(), label: anyLanguageTextSchema }))
+      .optional()
+      .catch([]),
+  }),
+  value: z.unknown(),
+});
+
+/** Her answers as the database sends them; one this build cannot read is left out. */
+const feedbackAnswersSchema = z
+  .array(z.unknown())
+  .catch([])
+  .transform((rows) =>
+    rows.flatMap((row): FeedbackAnswer[] => {
+      const parsed = feedbackAnswerSchema.safeParse(row);
+      if (!parsed.success) return [];
+      const { field_id: fieldId, question, value } = parsed.data;
+      return [
+        {
+          fieldId,
+          label: question.label,
+          type: question.question_type,
+          settings: question.settings ?? {},
+          options: question.options ?? [],
+          value,
+        },
+      ];
+    }),
+  );
+
 const staffFeedbackRowSchema = ownFeedbackRowSchema.extend({
   author_id: z.uuid(),
   author_first_name: z.string(),
   author_last_name: z.string(),
   resolved_by: z.uuid().nullable(),
   conversation_id: z.uuid(),
+  // A server before RAPP-939 sends none.
+  answers: feedbackAnswersSchema.optional(),
 });
 
 const monthlyCountRowSchema = z.object({
@@ -66,12 +118,24 @@ export interface FeedbackSubmission {
   readonly updatedAt: string;
 }
 
+export interface FeedbackAnswer {
+  readonly fieldId: string;
+  /** The question's wording as she read it. */
+  readonly label: BuilderText;
+  readonly type: CustomQuestionType;
+  readonly settings: unknown;
+  readonly options: readonly { readonly id: string; readonly label: BuilderText }[];
+  readonly value: unknown;
+}
+
 export interface StaffFeedbackSubmission extends FeedbackSubmission {
   readonly authorId: string;
   readonly authorFirstName: string;
   readonly authorLastName: string;
   readonly resolvedBy: string | null;
   readonly conversationId: string;
+  /** Her answers to the questions staff added (RAPP-939), in the form's order. */
+  readonly answers: readonly FeedbackAnswer[];
 }
 
 export interface FeedbackMonthlyCount {
@@ -153,7 +217,113 @@ export async function fetchStaffFeedbackSubmissions(
       authorLastName: row.author_last_name,
       resolvedBy: row.resolved_by,
       conversationId: row.conversation_id,
+      answers: row.answers ?? [],
     }));
+}
+
+/** An answer's question, so the shared answer text reads its value (an option's label, a yes). */
+export function feedbackAnswerQuestion(answer: FeedbackAnswer): CustomQuestion {
+  return {
+    id: answer.fieldId,
+    type: answer.type,
+    label: answer.label,
+    help: null,
+    privacy: 'normal',
+    isArchived: false,
+    settings: parseQuestionSettings(answer.type, answer.settings),
+    options: answer.options.map((option) => ({ ...option, isArchived: false })),
+  };
+}
+
+// The suggestions form on her phone (RAPP-939) ---------------------------------------------------
+
+/**
+ * The screen that holds a suggestion's type, text and photo: the form's
+ * fixed parts. Staff add screens and questions around it.
+ */
+export const FEEDBACK_MESSAGE_SCREEN = 'feedback_message';
+
+/** The suggestions form as she fills it in now: its screens and its questions. */
+export interface FeedbackForm {
+  readonly formId: string;
+  readonly name: BuilderText;
+  /** Its screens and placements, each naming its question, the shape a survey version has. */
+  readonly content: unknown;
+}
+
+const feedbackFormSchema = z.object({
+  form_id: z.uuid(),
+  name: anyLanguageTextSchema.catch({}),
+  content: z.unknown(),
+});
+
+/** The suggestions form; null from a server before it. */
+export async function fetchMyFeedbackForm(client: RpcClient): Promise<FeedbackForm | null> {
+  const { data, error } = await client.rpc('my_feedback_form' as never);
+  if (error) databaseFailure(error.message);
+  const parsed = feedbackFormSchema.safeParse(data);
+  if (!parsed.success) return null;
+  return { formId: parsed.data.form_id, name: parsed.data.name, content: parsed.data.content };
+}
+
+/**
+ * The catalog her phone walks the suggestions form with: the catalog
+ * `intake_catalog` sent (`raw`, which never holds this form or its
+ * questions), with the form laid over it. Its fixed screen is the one whose
+ * `systemScreen` is `FEEDBACK_MESSAGE_SCREEN`.
+ */
+export function feedbackFormCatalog(
+  raw: unknown,
+  form: FeedbackForm,
+  readAt: string = new Date().toISOString(),
+): IntakeCatalog {
+  return formContentCatalog(raw, {
+    formId: form.formId,
+    name: form.name,
+    kind: 'other',
+    systemKey: 'feedback',
+    eventId: null,
+    closesAt: null,
+    version: 1,
+    readAt,
+    content: form.content,
+  });
+}
+
+/** What her phone needs to walk the suggestions form: the catalog as sent, and the form. */
+export async function fetchMyFeedbackFormSource(
+  client: RpcClient,
+): Promise<{ readonly raw: unknown; readonly form: FeedbackForm | null }> {
+  const [catalog, form] = await Promise.all([
+    client.rpc('intake_catalog' as never),
+    fetchMyFeedbackForm(client),
+  ]);
+  if (catalog.error) databaseFailure(catalog.error.message);
+  return { raw: catalog.data, form };
+}
+
+/**
+ * A suggestion with her answers to the questions staff added, by question
+ * id; an unanswered optional question is left out. The database checks the
+ * answers against the form as it is now, a required one included.
+ */
+export async function sendFeedbackSubmission(
+  client: RpcClient,
+  input: FeedbackSubmissionValues,
+  answers: Readonly<Record<string, unknown>>,
+): Promise<string> {
+  const submission = feedbackSubmissionSchema.parse(input);
+  const { data, error } = await client.rpc(
+    'send_feedback_submission' as never,
+    {
+      p_type: submission.type,
+      p_content: submission.content,
+      p_image_url: submission.imageObjectKey,
+      p_answers: answers,
+    } as never,
+  );
+  if (error) databaseFailure(error.message);
+  return z.uuid().parse(data);
 }
 
 export async function transitionFeedbackSubmission(

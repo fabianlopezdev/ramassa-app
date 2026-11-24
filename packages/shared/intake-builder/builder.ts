@@ -236,6 +236,8 @@ export const intakeCatalogSchema = z.object({
   custom_form_consent_placements: z.unknown().optional(),
   // The referral form's screens (RAPP-938), apart for the same reason.
   entity_form: z.unknown().optional(),
+  // The suggestions form (RAPP-939), sent to the dashboard only, apart from the lists of forms.
+  feedback_form: z.unknown().optional(),
 });
 
 export interface CustomOption {
@@ -337,6 +339,11 @@ export interface IntakeCatalog {
   readonly customForms?: readonly CustomForm[];
   /** The referral form's screens (RAPP-938); absent from a server before it. */
   readonly entityForm?: EntityReferralForm;
+  /**
+   * The suggestions form (RAPP-939), in the dashboard's catalog only; its
+   * questions are among the fields and its placements among the forms' rows.
+   */
+  readonly feedbackForm?: CustomForm;
 }
 
 export const EMPTY_INTAKE_CATALOG: IntakeCatalog = {
@@ -407,7 +414,12 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
     ),
     customForms: parseCustomForms(raw.custom_forms),
     ...withEntityForm(parseEntityReferralForm(raw.entity_form)),
+    ...withFeedbackForm(parseCustomForms(raw.feedback_form == null ? [] : [raw.feedback_form])[0]),
   };
+}
+
+function withFeedbackForm(form: CustomForm | undefined): { readonly feedbackForm?: CustomForm } {
+  return form === undefined ? {} : { feedbackForm: form };
 }
 
 function withEntityForm(form: EntityReferralForm | undefined): {
