@@ -106,6 +106,8 @@ test('the onboarding design role sees the test players, the onboarding, the lega
     '/forms/custom',
     // Surveys are forms of the engine (RAPP-929).
     '/surveys',
+    // The entity referral form, built on the same board (RAPP-965).
+    '/entities/referral-form',
     '/profile-layout',
     '/legal-data',
   ]);
