@@ -43,7 +43,10 @@
         {
           "backgroundColor": "#DBE0E9",
           "image": "./assets/images/splash-shield-start.png",
-          "imageWidth": 220
+          "imageWidth": 220,
+          "android": {
+            "imageWidth": 180
+          }
         }
       ],
       "expo-localization",

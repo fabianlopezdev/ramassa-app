@@ -37,8 +37,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { tokens } from '@ramassa/shared/tokens';
 
-const { backgroundColor, size, fadeMs, minDisplayMs, maxDisplayMs, nativeHandOffMaxMs } =
-  tokens.splash;
+const { backgroundColor, fadeMs, minDisplayMs, maxDisplayMs, nativeHandOffMaxMs } = tokens.splash;
+// The overlay's square matches the native splash on each platform (Android draws it smaller).
+const size = Platform.OS === 'android' ? tokens.splash.androidSize : tokens.splash.size;
 
 // On Android a SurfaceView can draw above the views around it while the
 // overlay fades; a TextureView fades with them (expo-video `surfaceType`).
