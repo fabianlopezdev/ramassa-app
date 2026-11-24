@@ -7,6 +7,7 @@ import { describe, expect, test } from 'bun:test';
 import { parseIntakeCatalog } from './builder';
 import {
   entityFormItems,
+  entityFormPages,
   entityFormPick,
   fieldsAnsweredByEntity,
   isAlwaysOnEntityForm,
@@ -242,4 +243,75 @@ test('a required field left empty is named by its field id, her names included (
   expect(
     requiredEntityFormFieldsLeftEmpty(items, { first: 'Amina', type: 'x', gate: 'yes' }),
   ).toEqual(['details']);
+});
+
+describe('the referral form screen by screen (RAPP-938)', () => {
+  const FIRST = '5eed0000-0000-4000-8096-000000000001';
+  const SECOND = '5eed0000-0000-4000-8096-000000000002';
+  const BLOCK = '5eed0000-0000-4000-8097-000000000001';
+  const screen = (id: string, order: number, title: string) => ({
+    id,
+    title: { ca: title },
+    intro: null,
+    sort_order: order,
+    texts: {},
+  });
+  const raw = {
+    screens: [],
+    overrides: [],
+    presets: [],
+    blocks: [
+      {
+        id: BLOCK,
+        surface: 'entity_form',
+        screen_key: null,
+        kind: 'signature',
+        body: { ca: 'Confirmo les dades' },
+        title: null,
+        points: null,
+        sort_order: 4,
+      },
+    ],
+    entity_form: {
+      id: '5eed0000-0000-4000-8098-000000000001',
+      name: { ca: 'Formulari de derivació' },
+      // Sent out of order: the screens are read in their order.
+      screens: [screen(SECOND, 1, 'La seva situació'), screen(FIRST, 0, 'La derivació')],
+      items: [
+        { id: '5eed0000-0000-4000-8093-000000000000', screen_key: FIRST },
+        { id: '5eed0000-0000-4000-8093-000000000001', screen_key: FIRST },
+        { id: '5eed0000-0000-4000-8093-000000000002', screen_key: SECOND },
+        { id: BLOCK, screen_key: SECOND },
+      ],
+    },
+  };
+  const catalog = { ...parseIntakeCatalog(raw), layout: LAYOUT };
+
+  test('the catalog reads the referral form, its screens in order', () => {
+    expect(catalog.entityForm?.screens.map((each) => each.id)).toEqual([FIRST, SECOND]);
+    expect(catalog.entityForm?.screenOf[BLOCK]).toBe(SECOND);
+  });
+
+  test('each screen asks its own fields and blocks; one the catalog does not place goes last', () => {
+    const pages = entityFormPages(catalog);
+    expect(pages.map((page) => page.screen?.id)).toEqual([FIRST, SECOND]);
+    expect(pages[0]?.items.map((item) => item.field.id)).toEqual([FIRST_NAME.id, STOP.id]);
+    // DETAIL's placement is not in the list: it goes on the last screen.
+    expect(pages[1]?.items.map((item) => item.field.id)).toEqual([SITUATION.id, DETAIL.id]);
+    expect(pages[1]?.blocks.map((block) => block.id)).toEqual([BLOCK]);
+  });
+
+  test('a server before it sends no screens: the whole form is one page', () => {
+    const older = { ...parseIntakeCatalog({ ...raw, entity_form: undefined }), layout: LAYOUT };
+    expect(older.entityForm).toBeUndefined();
+    const pages = entityFormPages(older);
+    expect(pages).toHaveLength(1);
+    expect(pages[0]?.items).toHaveLength(4);
+    expect(pages[0]?.blocks.map((block) => block.id)).toEqual([BLOCK]);
+  });
+
+  test('a referral form this build cannot read leaves the form on one page', () => {
+    const odd = parseIntakeCatalog({ ...raw, entity_form: { id: 'not-an-id' } });
+    expect(odd.entityForm).toBeUndefined();
+  });
 });

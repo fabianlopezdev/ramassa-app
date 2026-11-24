@@ -39,8 +39,16 @@ export type CustomFormMandatory = (typeof CUSTOM_FORM_MANDATORY_LEVELS)[number];
 export const CUSTOM_FORM_KINDS = ['legal', 'other', 'survey'] as const;
 export type CustomFormKind = (typeof CUSTOM_FORM_KINDS)[number];
 
-/** The app's own legal forms as forms of their own (RAPP-771): one each, never archived. */
-export const CUSTOM_FORM_SYSTEM_KEYS = ['app_terms', 'season_authorization'] as const;
+/**
+ * The app's own forms as forms of their own, one each, never archived: its
+ * two legal forms (RAPP-771) and the referral form the entity fills in
+ * (RAPP-938).
+ */
+export const CUSTOM_FORM_SYSTEM_KEYS = [
+  'app_terms',
+  'season_authorization',
+  'entity_referral',
+] as const;
 export type CustomFormSystemKey = (typeof CUSTOM_FORM_SYSTEM_KEYS)[number];
 
 /** A screen's locked part of a legal form (RAPP-771): never deleted, never moved. */
@@ -219,6 +227,32 @@ const formSchema = z.object({
   screens: z.array(screenSchema),
 });
 
+type ScreenRow = z.infer<typeof screenSchema>;
+
+/** A form's screens in the order she walks them. */
+function screensInOrder(rows: readonly ScreenRow[]): readonly CustomFormScreen[] {
+  return [...rows]
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((screen) => ({
+      id: screen.id,
+      title: screen.title,
+      intro: screen.intro,
+      sortOrder: screen.sort_order,
+      isHidden: screen.is_hidden ?? false,
+      texts: parseFormScreenTexts(screen.texts),
+      ...(screen.system_screen == null ? {} : { systemScreen: screen.system_screen }),
+      ...(screen.attachments == null ? {} : { attachments: screen.attachments }),
+      ...(screen.show_when_field_id == null || (screen.show_when_values ?? []).length === 0
+        ? {}
+        : {
+            showWhen: {
+              fieldId: screen.show_when_field_id,
+              values: screen.show_when_values ?? [],
+            },
+          }),
+    }));
+}
+
 /** The catalog's forms; a row this build cannot read is left out. */
 export function parseCustomForms(raw: unknown): readonly CustomForm[] {
   if (!Array.isArray(raw)) return [];
@@ -249,27 +283,42 @@ export function parseCustomForms(raw: unknown): readonly CustomForm[] {
           isCorrection: version.is_correction,
           publishedAt: version.published_at,
         })),
-        screens: [...form.screens]
-          .sort((a, b) => a.sort_order - b.sort_order)
-          .map((screen) => ({
-            id: screen.id,
-            title: screen.title,
-            intro: screen.intro,
-            sortOrder: screen.sort_order,
-            isHidden: screen.is_hidden ?? false,
-            texts: parseFormScreenTexts(screen.texts),
-            ...(screen.system_screen == null ? {} : { systemScreen: screen.system_screen }),
-            ...(screen.attachments == null ? {} : { attachments: screen.attachments }),
-            ...(screen.show_when_field_id == null || (screen.show_when_values ?? []).length === 0
-              ? {}
-              : {
-                  showWhen: {
-                    fieldId: screen.show_when_field_id,
-                    values: screen.show_when_values ?? [],
-                  },
-                }),
-          })),
+        screens: screensInOrder(form.screens),
       },
     ];
   });
+}
+
+/**
+ * The referral form (RAPP-938): the form the entity fills in when it refers
+ * a woman, built on screens like every form. Its fields and blocks are the
+ * entity form's (surface `entity_form`), which the catalog sends with no
+ * screen so an installed build reads them as one list; `screenOf` names the
+ * screen of each one.
+ */
+export interface EntityReferralForm {
+  readonly id: string;
+  readonly name: BuilderText;
+  readonly screens: readonly CustomFormScreen[];
+  /** The screen of each placement and block of the entity form, by its id. */
+  readonly screenOf: Readonly<Record<string, string>>;
+}
+
+const entityReferralFormSchema = z.object({
+  id: z.uuid(),
+  name: anyLanguageTextSchema,
+  screens: z.array(screenSchema),
+  items: z.array(z.object({ id: z.uuid(), screen_key: z.string() })),
+});
+
+/** The catalog's referral form; undefined from a server before it, or one this build cannot read. */
+export function parseEntityReferralForm(raw: unknown): EntityReferralForm | undefined {
+  const parsed = entityReferralFormSchema.safeParse(raw);
+  if (!parsed.success) return undefined;
+  return {
+    id: parsed.data.id,
+    name: parsed.data.name,
+    screens: screensInOrder(parsed.data.screens),
+    screenOf: Object.fromEntries(parsed.data.items.map((item) => [item.id, item.screen_key])),
+  };
 }

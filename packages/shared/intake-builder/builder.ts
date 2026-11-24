@@ -64,8 +64,10 @@ import {
 } from './consents';
 import {
   parseCustomForms,
+  parseEntityReferralForm,
   parseFormScreenTexts,
   type CustomForm,
+  type EntityReferralForm,
   type FormScreenTexts,
 } from './custom-form-model';
 import { systemFieldIndexFromCatalog, type SystemFieldIndex } from './field-answers';
@@ -232,6 +234,8 @@ export const intakeCatalogSchema = z.object({
   custom_form_placements: z.unknown().optional(),
   custom_form_blocks: z.unknown().optional(),
   custom_form_consent_placements: z.unknown().optional(),
+  // The referral form's screens (RAPP-938), apart for the same reason.
+  entity_form: z.unknown().optional(),
 });
 
 export interface CustomOption {
@@ -331,6 +335,8 @@ export interface IntakeCatalog {
   readonly consentPlacements?: readonly ConsentPlacement[];
   /** The forms the team created (RAPP-700); their contents are in the lists above. */
   readonly customForms?: readonly CustomForm[];
+  /** The referral form's screens (RAPP-938); absent from a server before it. */
+  readonly entityForm?: EntityReferralForm;
 }
 
 export const EMPTY_INTAKE_CATALOG: IntakeCatalog = {
@@ -400,7 +406,14 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
       withFormRows(raw.consent_placements, raw.custom_form_consent_placements),
     ),
     customForms: parseCustomForms(raw.custom_forms),
+    ...withEntityForm(parseEntityReferralForm(raw.entity_form)),
   };
+}
+
+function withEntityForm(form: EntityReferralForm | undefined): {
+  readonly entityForm?: EntityReferralForm;
+} {
+  return form === undefined ? {} : { entityForm: form };
 }
 
 /** A list of the catalog with the forms' rows after it (RAPP-700); absent stays absent. */

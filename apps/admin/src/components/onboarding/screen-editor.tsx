@@ -279,6 +279,11 @@ export function ScreenEditorHeading({
         readonly to: '/forms/custom/$formId';
         readonly params: { readonly formId: string };
         readonly label: string;
+      }
+    | {
+        // The referral form (RAPP-938).
+        readonly to: '/entities/referral-form';
+        readonly label: string;
       };
   readonly title: string;
   readonly position?: string;

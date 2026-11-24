@@ -19,6 +19,8 @@ import { SYSTEM_FIELD_QUESTIONS } from '../onboarding/system-fields';
 import { layoutSystemFields } from './app-controls';
 import { appControlFits } from './app-field-form';
 import type { CustomAnswerValue, CustomQuestion, IntakeCatalog } from './builder';
+import type { CustomFormScreen } from './custom-form-model';
+import { formBlocksOn, signatureBlocks, type SignatureFormBlock } from './form-blocks';
 import { placedQuestion } from './her-onboarding';
 import {
   EMPTY_PROFILE_LAYOUT,
@@ -147,6 +149,50 @@ export function entityFormFallbackItems(): readonly EntityFormItem[] {
       },
     };
   });
+}
+
+/** The signature blocks of the entity form, in their order (it holds no other kind, RAPP-770). */
+export function entityFormBlocksOf(catalog: IntakeCatalog): readonly SignatureFormBlock[] {
+  return signatureBlocks(formBlocksOn(catalog.blocks, 'entity_form', null));
+}
+
+/** The screen of the referral form a field or a block of the entity form is on (RAPP-938). */
+export function entityFormScreenOf(catalog: IntakeCatalog, id: string): string | null {
+  return catalog.entityForm?.screenOf[id] ?? null;
+}
+
+/** One screen of the referral form as the entity walks it (RAPP-938). */
+export interface EntityFormPage {
+  /** Null when the catalog sends no screens: the whole form on one page. */
+  readonly screen: CustomFormScreen | null;
+  readonly items: readonly EntityFormItem[];
+  readonly blocks: readonly SignatureFormBlock[];
+}
+
+/**
+ * The referral form screen by screen, in order (RAPP-938), each with its
+ * fields and blocks in their order. A field or block whose screen the
+ * catalog does not name goes on the last screen, so nothing the form asks
+ * is ever left out; with no screens the form is one page.
+ */
+export function entityFormPages(
+  catalog: IntakeCatalog,
+  items: readonly EntityFormItem[] = entityFormItemsOf(catalog),
+  blocks: readonly SignatureFormBlock[] = entityFormBlocksOf(catalog),
+): readonly EntityFormPage[] {
+  const screens = catalog.entityForm?.screens ?? [];
+  if (screens.length === 0) return [{ screen: null, items, blocks }];
+  const last = screens[screens.length - 1]?.id ?? '';
+  const known = new Set(screens.map((screen) => screen.id));
+  const pageOf = (id: string) => {
+    const screen = entityFormScreenOf(catalog, id);
+    return screen !== null && known.has(screen) ? screen : last;
+  };
+  return screens.map((screen) => ({
+    screen,
+    items: items.filter((item) => pageOf(item.placement.id) === screen.id),
+    blocks: blocks.filter((block) => pageOf(block.id) === screen.id),
+  }));
 }
 
 /** The Ramassà fields of the form as questions, for reading and checking their answers. */

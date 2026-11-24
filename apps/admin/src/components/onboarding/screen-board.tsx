@@ -633,6 +633,11 @@ export type BoardCardLink =
       // A form the team created, chained after Onboarding (RAPP-703).
       readonly to: '/forms/custom/$formId';
       readonly params: { readonly formId: string };
+    }
+  | {
+      // A screen of the referral form (RAPP-938).
+      readonly to: '/entities/referral-form/screens/$screenId';
+      readonly params: { readonly screenId: string };
     };
 
 /** Whether an app screen asks her anything: a field, a block or a consent placed on it. */
@@ -1333,11 +1338,14 @@ function AddCard({
 export function AddScreenCard({
   catalog,
   sources,
+  canDepend = true,
   onCreate,
 }: {
   readonly catalog: IntakeCatalog;
   /** The screens with a choice question the new screen can depend on. */
   readonly sources: readonly ConditionSource[];
+  /** False on a form whose screens always show, such as the referral form (RAPP-938). */
+  readonly canDepend?: boolean;
   readonly onCreate: (name: string, condition: NewScreenCondition | null) => Promise<void>;
 }) {
   const { t } = useTranslation('settings');
@@ -1352,6 +1360,7 @@ export function AddScreenCard({
       <AddScreenDialog
         catalog={catalog}
         sources={sources}
+        canDepend={canDepend}
         onCreate={onCreate}
         isOpen={isOpen}
         onOpenChange={setIsOpen}
@@ -1370,6 +1379,7 @@ function AddScreenDialog({
   catalog,
   sources,
   parentKey = null,
+  canDepend = true,
   onCreate,
   isOpen,
   onOpenChange,
@@ -1378,6 +1388,8 @@ function AddScreenDialog({
   readonly sources: readonly ConditionSource[];
   /** The screen the new one depends on, chosen before the dialog opens (RAPP-717). */
   readonly parentKey?: string | null;
+  /** Whether it may depend on an answer; a form whose screens always show says no. */
+  readonly canDepend?: boolean;
   readonly onCreate: (name: string, condition: NewScreenCondition | null) => Promise<void>;
   readonly isOpen: boolean;
   readonly onOpenChange: (open: boolean) => void;
@@ -1465,7 +1477,7 @@ function AddScreenDialog({
                 data-testid="new-screen-name"
               />
             </Field>
-            {parent === null ? (
+            {parent === null && canDepend ? (
               <ChoiceCards
                 legend={t('onboardingBoard.dependsQuestion')}
                 name="new-screen-depends"

@@ -1,7 +1,8 @@
 /**
  * The fields of the entity referral form (RAPP-652): the Fitxa fields staff
  * placed on it, in their order, then the referral's own (her address, her
- * documentation, her season, the entity's notes) and her consent. The portal
+ * documentation, her season, the entity's notes) and her consent, which
+ * close the last screen (RAPP-938). The portal
  * fills it in; the staff editor shows it read-only as the entity sees it.
  * The form's signature blocks (RAPP-690) sit among the fields in their shared
  * order: the text to accept and a pad the entity person signs.
@@ -52,6 +53,8 @@ export interface ReferralFormFieldsProps {
   readonly onSignatureChange?: (blockId: string, strokes: SignatureStrokes | null) => void;
   /** The blocks left unsigned when the form was sent. */
   readonly unsigned?: ReadonlySet<string>;
+  /** Whether the referral's own fields follow: on the last screen only (RAPP-938). */
+  readonly asksOwnFields?: boolean;
 }
 
 /** The fields and the blocks in the order they share, a field first on a tie. */
@@ -90,6 +93,7 @@ export function ReferralFormFields({
   signatures = {},
   onSignatureChange,
   unsigned,
+  asksOwnFields = true,
 }: ReferralFormFieldsProps) {
   const { t } = useTranslation(['referrals', 'onboarding'], { lng: language });
   const id = (name: string) => `${idPrefix}-${name}`;
@@ -155,89 +159,95 @@ export function ReferralFormFields({
         ),
       )}
 
-      <Controller
-        name="email"
-        control={control}
-        render={({ field }) => (
-          <AdminAuthField
-            {...field}
-            value={field.value ?? ''}
-            id={id('email')}
-            type="email"
-            label={t('referrals:email')}
-            errorMessage={errors.email ? t('referrals:emailError') : undefined}
-          />
-        )}
-      />
-      <Controller
-        name="documentationStatus"
-        control={control}
-        render={({ field }) => (
-          <Labelled id={id('documentation')} label={t('referrals:documentationLabel')}>
-            <select {...field} id={id('documentation')} className={REFERRAL_CONTROL_CLASS}>
-              {DOCUMENTATION_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {t(`referrals:documentation.${status}`)}
-                </option>
-              ))}
-            </select>
-          </Labelled>
-        )}
-      />
-      <Controller
-        name="seasonNumber"
-        control={control}
-        render={({ field }) => (
-          <Labelled id={id('season-number')} label={t('onboarding:seasonNumberLabel')}>
-            <select
-              {...field}
-              value={String(field.value ?? '')}
-              id={id('season-number')}
-              className={REFERRAL_CONTROL_CLASS}
-            >
-              <option value="">—</option>
-              {SEASON_NUMBERS.map((season) => (
-                <option key={season} value={season}>
-                  {t(`onboarding:seasonNumber${season}`)}
-                </option>
-              ))}
-            </select>
-          </Labelled>
-        )}
-      />
-      <Controller
-        name="notes"
-        control={control}
-        render={({ field }) => (
-          <Labelled id={id('notes')} label={t('referrals:notes')}>
-            <Textarea {...field} value={field.value ?? ''} id={id('notes')} rows={5} />
-          </Labelled>
-        )}
-      />
-      <Controller
-        name="consentConfirmed"
-        control={control}
-        render={({ field }) => (
-          <div className="flex flex-col gap-1.5 rounded-lg border p-3">
-            <label className="flex items-start gap-2 text-sm font-medium">
-              <input
-                id={id('consent')}
-                type="checkbox"
-                checked={field.value === true}
-                onChange={(event) => field.onChange(event.target.checked)}
-                aria-invalid={errors.consentConfirmed !== undefined}
+      {asksOwnFields ? (
+        <>
+          <Controller
+            name="email"
+            control={control}
+            render={({ field }) => (
+              <AdminAuthField
+                {...field}
+                value={field.value ?? ''}
+                id={id('email')}
+                type="email"
+                label={t('referrals:email')}
+                errorMessage={errors.email ? t('referrals:emailError') : undefined}
               />
-              <span>{t('referrals:consentLabel')}</span>
-            </label>
-            {errors.consentConfirmed ? (
-              <p className="text-start text-sm text-destructive">
-                {t('referrals:consentRequired')}
-              </p>
-            ) : null}
-            <p className="text-start text-xs text-muted-foreground">{t('referrals:privacyNote')}</p>
-          </div>
-        )}
-      />
+            )}
+          />
+          <Controller
+            name="documentationStatus"
+            control={control}
+            render={({ field }) => (
+              <Labelled id={id('documentation')} label={t('referrals:documentationLabel')}>
+                <select {...field} id={id('documentation')} className={REFERRAL_CONTROL_CLASS}>
+                  {DOCUMENTATION_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {t(`referrals:documentation.${status}`)}
+                    </option>
+                  ))}
+                </select>
+              </Labelled>
+            )}
+          />
+          <Controller
+            name="seasonNumber"
+            control={control}
+            render={({ field }) => (
+              <Labelled id={id('season-number')} label={t('onboarding:seasonNumberLabel')}>
+                <select
+                  {...field}
+                  value={String(field.value ?? '')}
+                  id={id('season-number')}
+                  className={REFERRAL_CONTROL_CLASS}
+                >
+                  <option value="">—</option>
+                  {SEASON_NUMBERS.map((season) => (
+                    <option key={season} value={season}>
+                      {t(`onboarding:seasonNumber${season}`)}
+                    </option>
+                  ))}
+                </select>
+              </Labelled>
+            )}
+          />
+          <Controller
+            name="notes"
+            control={control}
+            render={({ field }) => (
+              <Labelled id={id('notes')} label={t('referrals:notes')}>
+                <Textarea {...field} value={field.value ?? ''} id={id('notes')} rows={5} />
+              </Labelled>
+            )}
+          />
+          <Controller
+            name="consentConfirmed"
+            control={control}
+            render={({ field }) => (
+              <div className="flex flex-col gap-1.5 rounded-lg border p-3">
+                <label className="flex items-start gap-2 text-sm font-medium">
+                  <input
+                    id={id('consent')}
+                    type="checkbox"
+                    checked={field.value === true}
+                    onChange={(event) => field.onChange(event.target.checked)}
+                    aria-invalid={errors.consentConfirmed !== undefined}
+                  />
+                  <span>{t('referrals:consentLabel')}</span>
+                </label>
+                {errors.consentConfirmed ? (
+                  <p className="text-start text-sm text-destructive">
+                    {t('referrals:consentRequired')}
+                  </p>
+                ) : null}
+                <p className="text-start text-xs text-muted-foreground">
+                  {t('referrals:privacyNote')}
+                </p>
+              </div>
+            )}
+          />
+        </>
+      ) : null}
     </>
   );
 }

@@ -794,13 +794,12 @@
     "title": "Formulari de derivació",
     "fields": "Camps que demanem a l'entitat",
     "wording": "Com ho veu l'entitat (opcional)",
-    "preview": "Com ho veu l'entitat",
-    "previewLanguage": "Llengua de la vista prèvia",
     "pickerTitle": "Afegeix un camp al formulari",
     "here": "Ja és al formulari",
     "hers": "Només ella ho pot donar",
     "removeNamed": "Treu {{field}} del formulari",
-    "removeTitle": "Vols treure «{{field}}» del formulari?"
+    "removeTitle": "Vols treure «{{field}}» del formulari?",
+    "alwaysShown": "Les pantalles del formulari de derivació sempre es mostren."
   },
   "signatureBlock": {
     "add": "Afegeix una signatura",
