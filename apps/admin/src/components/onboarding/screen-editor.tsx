@@ -281,8 +281,8 @@ export function ScreenEditorHeading({
         readonly label: string;
       }
     | {
-        // The referral form (RAPP-938).
-        readonly to: '/entities/referral-form';
+        // The referral form (RAPP-938) and the suggestions form (RAPP-939).
+        readonly to: '/entities/referral-form' | '/forms/feedback';
         readonly label: string;
       };
   readonly title: string;

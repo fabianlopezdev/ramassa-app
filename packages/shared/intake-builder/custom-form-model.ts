@@ -41,22 +41,28 @@ export type CustomFormKind = (typeof CUSTOM_FORM_KINDS)[number];
 
 /**
  * The app's own forms as forms of their own, one each, never archived: its
- * two legal forms (RAPP-771) and the referral form the entity fills in
- * (RAPP-938).
+ * two legal forms (RAPP-771), the referral form the entity fills in
+ * (RAPP-938) and the suggestions form she sends the club (RAPP-939).
  */
 export const CUSTOM_FORM_SYSTEM_KEYS = [
   'app_terms',
   'season_authorization',
   'entity_referral',
+  'feedback',
 ] as const;
 export type CustomFormSystemKey = (typeof CUSTOM_FORM_SYSTEM_KEYS)[number];
 
-/** A screen's locked part of a legal form (RAPP-771): never deleted, never moved. */
+/**
+ * A screen's locked part of one of the app's own forms (RAPP-771): never
+ * deleted, never moved. `feedback_message` holds a suggestion's type, text
+ * and photo (RAPP-939).
+ */
 export const FORM_SYSTEM_SCREENS = [
   'terms_sign',
   'authorization_sign',
   'reregistration',
   'reregistration_season',
+  'feedback_message',
 ] as const;
 export type FormSystemScreen = (typeof FORM_SYSTEM_SCREENS)[number];
 

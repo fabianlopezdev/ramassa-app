@@ -295,24 +295,58 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * type, settings, wording and options.
  */
 export function surveyCatalog(raw: unknown, survey: MySurvey): IntakeCatalog {
+  return formContentCatalog(raw, {
+    formId: survey.formId,
+    name: survey.name,
+    kind: 'survey',
+    systemKey: null,
+    eventId: survey.eventId,
+    closesAt: survey.closesAt,
+    version: survey.version,
+    readAt: survey.askedAt,
+    content: survey.content,
+  });
+}
+
+/**
+ * A form she fills in from its content (the shape `custom_form_versions`
+ * keeps: screens, and placements each naming its question), laid over the
+ * catalog `intake_catalog` sent, so the form walker draws it as it draws any
+ * form. A survey (above) and the suggestions form (RAPP-939) reach her phone
+ * this way, since neither they nor their questions are in that catalog.
+ */
+export interface FormContentSource {
+  readonly formId: string;
+  readonly name: BuilderText;
+  readonly kind: 'survey' | 'other';
+  readonly systemKey: 'feedback' | null;
+  readonly eventId: string | null;
+  readonly closesAt: string | null;
+  readonly version: number;
+  /** When she was asked it or read it: the form's publication date on her phone. */
+  readonly readAt: string;
+  readonly content: unknown;
+}
+
+export function formContentCatalog(raw: unknown, source: FormContentSource): IntakeCatalog {
   const base = isRecord(raw) ? raw : {};
-  const content = isRecord(survey.content) ? survey.content : {};
+  const content = isRecord(source.content) ? source.content : {};
   const screens = Array.isArray(content.screens) ? content.screens : [];
   const placements = Array.isArray(content.placements) ? content.placements.filter(isRecord) : [];
   const form = {
-    id: survey.formId,
-    name: survey.name,
+    id: source.formId,
+    name: source.name,
     filled_by: 'player',
     mandatory: 'optional',
     deadline: null,
     audience: 'all',
     repeats_each_season: false,
-    kind: 'survey',
-    system_key: null,
-    event_id: survey.eventId,
-    closes_at: survey.closesAt,
-    version: survey.version,
-    published_at: survey.askedAt,
+    kind: source.kind,
+    system_key: source.systemKey,
+    event_id: source.eventId,
+    closes_at: source.closesAt,
+    version: source.version,
+    published_at: source.readAt,
     is_archived: false,
     screens: screens.map((screen: unknown) =>
       isRecord(screen) ? { ...screen, is_hidden: false } : screen,
@@ -326,7 +360,7 @@ export function surveyCatalog(raw: unknown, survey: MySurvey): IntakeCatalog {
       {
         id: placement.field_id,
         section_id: null,
-        survey_form_id: survey.formId,
+        survey_form_id: source.formId,
         kind: 'survey',
         system_key: null,
         question_type: field.question_type,
@@ -340,7 +374,7 @@ export function surveyCatalog(raw: unknown, survey: MySurvey): IntakeCatalog {
         show_when_option_id: null,
         sort_order: typeof placement.sort_order === 'number' ? placement.sort_order : 0,
         is_archived: false,
-        created_at: survey.askedAt,
+        created_at: source.readAt,
         options: options.map((option, index) => ({
           id: option.id,
           key: option.key ?? null,
@@ -362,7 +396,7 @@ export function surveyCatalog(raw: unknown, survey: MySurvey): IntakeCatalog {
       ...placements.map((placement) => ({
         ...placement,
         surface: 'custom_form',
-        custom_form_id: survey.formId,
+        custom_form_id: source.formId,
       })),
     ],
   });

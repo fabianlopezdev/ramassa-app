@@ -1,5 +1,6 @@
 import { AuthenticatedMediaImage } from '@/components/content/authenticated-media-image';
 import { Page } from '@/components/layout/page';
+import { useAnswerWords } from '@/components/participants/custom-answer-value';
 import { adminClientEnv, supabase } from '@/lib/supabase';
 import { Link, useRouter } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
@@ -9,12 +10,16 @@ import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import {
   FEEDBACK_STATUSES,
   FEEDBACK_TYPES,
+  feedbackAnswerQuestion,
   transitionFeedbackSubmission,
+  type FeedbackAnswer,
   type FeedbackMonthlyCount,
   type FeedbackStatus,
   type FeedbackType,
   type StaffFeedbackSubmission,
 } from '@ramassa/shared/feedback';
+import { answerText, textIn, type CustomAnswerValue } from '@ramassa/shared/intake-builder';
+import type { LanguageCode } from '@ramassa/shared/schemas';
 
 const typeKey: Readonly<Record<FeedbackType, string>> = {
   activity_proposal: 'typeActivityProposal',
@@ -180,6 +185,7 @@ export function StaffFeedbackInbox({
                 </div>
               </div>
               <p className="whitespace-pre-wrap text-neutral-800">{submission.content}</p>
+              <FeedbackAnswers submissionId={submission.id} answers={submission.answers} />
               {submission.imageObjectKey === null ||
               adminClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL === undefined ? null : (
                 <AuthenticatedMediaImage
@@ -221,5 +227,39 @@ export function StaffFeedbackInbox({
         </ol>
       </section>
     </Page>
+  );
+}
+
+/**
+ * Her answers to the questions staff added to the suggestions form
+ * (RAPP-939), each under its question as she read it.
+ */
+function FeedbackAnswers({
+  submissionId,
+  answers,
+}: {
+  readonly submissionId: string;
+  readonly answers: readonly FeedbackAnswer[];
+}) {
+  const { i18n } = useTranslation();
+  const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
+  const words = useAnswerWords();
+  if (answers.length === 0) return null;
+  return (
+    <dl data-testid={`feedback-answers-${submissionId}`} className="grid gap-2">
+      {answers.map((answer) => (
+        <div key={answer.fieldId} className="flex flex-col">
+          <dt className="text-start text-sm text-neutral-500">{textIn(answer.label, language)}</dt>
+          <dd className="whitespace-pre-wrap text-start text-neutral-800" dir="auto">
+            {answerText(
+              feedbackAnswerQuestion(answer),
+              answer.value as CustomAnswerValue,
+              language,
+              words,
+            )}
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }

@@ -4,7 +4,8 @@
  * A person whose only access is `onboarding.design` and `test_players.manage`
  * reaches the onboarding page, the two legal forms (RAPP-694, their own
  * boards since RAPP-696), the forms the team creates (RAPP-700) and the surveys
- * (RAPP-929), the entity referral form and its screens (RAPP-965), Dades de
+ * (RAPP-929), the entity referral form and its screens (RAPP-965), the
+ * suggestions form and its screens (RAPP-939), Dades de
  * les jugadores (RAPP-650, its own page since RAPP-654), the test players and
  * her own account page (RAPP-634),
  * and every other admin URL sends her back. This is the screen half: the
@@ -73,6 +74,14 @@ function isReferralFormPath(pathname: string): boolean {
   return pathname === '/entities/referral-form' || pathname.startsWith('/entities/referral-form/');
 }
 
+/**
+ * The suggestions form and its screens (RAPP-939). The suggestions inbox
+ * (/feedback) stays closed to her.
+ */
+function isFeedbackFormPath(pathname: string): boolean {
+  return pathname === '/forms/feedback' || pathname.startsWith('/forms/feedback/');
+}
+
 /** Dades de les jugadores (RAPP-650, RAPP-654) and Dades legals (RAPP-699). */
 function isProfileLayoutPath(pathname: string): boolean {
   return ['/profile-layout', '/legal-data'].some(
@@ -95,6 +104,7 @@ export function designRoleRedirect(
   if (permissions.has('onboarding.design') && isLegalPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isCustomFormPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isReferralFormPath(pathname)) return null;
+  if (permissions.has('onboarding.design') && isFeedbackFormPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isProfileLayoutPath(pathname)) return null;
   if (permissions.has('test_players.manage') && isTestPlayerPath(pathname)) return null;
   return designRoleLanding(permissions);

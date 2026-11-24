@@ -926,6 +926,8 @@ export function buildFeedbackSubmission(
     author_id: seedUserId(player.ordinal),
     type: 'activity_proposal',
     content_encrypted: 'Synthetic private feedback content',
+    // Answers to the questions staff added to the suggestions form (RAPP-939); none here.
+    answers_encrypted: null,
     image_url: null,
     status: 'in_progress',
     resolved_by: null,
