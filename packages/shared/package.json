@@ -42,7 +42,6 @@
     "./translation/react": "./translation/react.ts",
     "./announcements": "./announcements.ts",
     "./events": "./events.ts",
-    "./event-signup-form": "./event-signup-form.ts",
     "./home-seen": "./home-seen.ts",
     "./tab-news": "./tab-news.ts",
     "./forum": "./forum.ts",

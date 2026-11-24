@@ -57,11 +57,9 @@ export type CustomFormsData = Awaited<ReturnType<typeof loadCustomForms>>;
  */
 export async function loadCustomForm(formId: string) {
   const data = await loadCustomForms();
-  const form = customFormById(data.intakeCatalog, formId);
-  const systemKey = form?.systemKey ?? null;
+  const systemKey = customFormById(data.intakeCatalog, formId)?.systemKey ?? null;
   const [responses, termsVersions, authorizationVersions] = await Promise.all([
-    // A sign-up form's answers are read with each sign-up, on its activity (RAPP-941).
-    data.canReadResponses && systemKey === null && form?.kind !== 'signup'
+    data.canReadResponses && systemKey === null
       ? fetchCustomFormResponses(supabase, formId)
       : Promise.resolve<readonly CustomFormResponse[]>([]),
     data.canDesign && systemKey === 'app_terms'
