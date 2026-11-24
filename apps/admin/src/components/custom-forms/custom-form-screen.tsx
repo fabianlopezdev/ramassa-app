@@ -10,9 +10,13 @@
  * screens are drawn by the app and hold nothing, so only their texts and
  * buttons are edited here; its document screen also lists the season
  * documents; its screen she signs keeps its own signature.
+ *
+ * An activity's sign-up form (RAPP-941): its screens always show and depend on
+ * no answer, and they ask the form's own questions, as a survey's do.
  */
 
 import {
+  customFormTitle,
   DRAFT_SAVE,
   formBoardNumbers,
   formConditionSources,
@@ -99,7 +103,7 @@ export function CustomFormScreenEditor({
             : {
                 to: '/forms/custom/$formId',
                 params: { formId: form.id },
-                label: textIn(form.name, language),
+                label: customFormTitle(form, language),
               }
         }
         siblings={
@@ -165,6 +169,8 @@ function FormScreenBody({
   // A legal form's fixed screen (the app terms' screen she signs, RAPP-772) always
   // shows, depends on no answer, and nothing comes after it.
   const isFixed = screen.systemScreen !== undefined;
+  // A sign-up form's screens always show and depend on no answer (RAPP-941).
+  const alwaysShows = form.kind === 'signup';
   const hideLock = isFixed
     ? fixedScreenLockKeys(screen).hide
     : teamHideLockKey(catalog, 'custom_form', screen.id);
@@ -249,25 +255,29 @@ function FormScreenBody({
       number={number}
       total={total}
       previewFooter={
-        <AddDependentButton
-          add={
-            isFixed
-              ? lockedAddDependent(t(fixedScreenLockKeys(screen).addDependent))
-              : dependent.addFor(screen.id)
-          }
-        />
+        alwaysShows ? undefined : (
+          <AddDependentButton
+            add={
+              isFixed
+                ? lockedAddDependent(t(fixedScreenLockKeys(screen).addDependent))
+                : dependent.addFor(screen.id)
+            }
+          />
+        )
       }
       buttons={formScreenButtons(screen)}
       {...(screen.attachments === undefined ? {} : { attachments: screen.attachments })}
       {...(fill === undefined ? {} : { fillText: fill })}
       family={
-        <>
-          <FamilyRow members={family} />
-          {dependent.dialog}
-        </>
+        alwaysShows ? undefined : (
+          <>
+            <FamilyRow members={family} />
+            {dependent.dialog}
+          </>
+        )
       }
       condition={
-        isFixed ? null : (
+        isFixed || alwaysShows ? null : (
           <ScreenConditionSection
             key={JSON.stringify(condition)}
             catalog={catalog}
@@ -281,11 +291,15 @@ function FormScreenBody({
       }
       // A draft: players see it with the next Publica (RAPP-701).
       saveKind={DRAFT_SAVE}
-      hide={{
-        isHidden: screen.isHidden === true,
-        lockReason: hideLock === null ? null : t(hideLock),
-        save: (isHidden) => setScreenHidden(supabase, screen.id, isHidden),
-      }}
+      hide={
+        alwaysShows
+          ? undefined
+          : {
+              isHidden: screen.isHidden === true,
+              lockReason: hideLock === null ? null : t(hideLock),
+              save: (isHidden) => setScreenHidden(supabase, screen.id, isHidden),
+            }
+      }
       phoneQuestions={(language, wording) =>
         placedPhoneQuestions(catalog, screen.id, language, wording, 'custom_form')
       }
@@ -300,7 +314,8 @@ function FormScreenBody({
               form={{
                 id: form.id,
                 filledBy: form.filledBy,
-                isSurvey: form.kind === 'survey',
+                // A survey and a sign-up form ask their own questions only (RAPP-929, RAPP-941).
+                isSurvey: form.kind === 'survey' || form.kind === 'signup',
                 screenIds: form.screens.map((each) => each.id),
               }}
               catalog={catalog}

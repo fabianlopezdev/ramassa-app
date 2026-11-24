@@ -1,26 +1,30 @@
 import { EventEditor } from '@/components/content/event-editor';
+import { EventSignups } from '@/components/content/event-signups';
 import { PreviewAsPlayer } from '@/components/content/preview-as-player';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { isContentVisible } from '@ramassa/shared/announcements';
+import { fetchEventSignupAnswers } from '@ramassa/shared/event-signup-form';
 import { fetchEvent, fetchEventCategories } from '@ramassa/shared/events';
 
 export const Route = createFileRoute('/_staff/content/events/$eventId')({
   ssr: false,
   loader: async ({ params }) => {
-    const [event, categories] = await Promise.all([
+    const [event, categories, signups] = await Promise.all([
       fetchEvent(supabase, params.eventId),
       fetchEventCategories(supabase),
+      // Who signed up, with her answers to its sign-up questions (RAPP-941).
+      fetchEventSignupAnswers(supabase, params.eventId),
     ]);
-    return { event, categories };
+    return { event, categories, signups };
   },
   component: EditEventPage,
 });
 
 function EditEventPage() {
-  const { event, categories } = Route.useLoaderData();
+  const { event, categories, signups } = Route.useLoaderData();
   const { t } = useTranslation('events');
   const navigate = useNavigate();
   const router = useRouter();
@@ -47,6 +51,7 @@ function EditEventPage() {
           await navigate({ to: '/content/events' });
         }}
       />
+      <EventSignups signups={signups} />
     </section>
   );
 }

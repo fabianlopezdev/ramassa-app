@@ -6,9 +6,13 @@
  * asks the kind first (preset by the page), the name and the choices
  * (RAPP-701), creates the form as a draft and opens its board. Each row opens
  * its form.
+ *
+ * Altres formularis also lists each activity's sign-up form (RAPP-941), named
+ * by its activity, so whoever builds forms finds every form here. A sign-up
+ * form is made from its activity, never from Nou formulari.
  */
 
-import { FormStatusBadge } from '@/components/custom-forms/custom-form-page';
+import { customFormTitle, FormStatusBadge } from '@/components/custom-forms/custom-form-page';
 import { choicesProblem, FormChoicesFields } from '@/components/custom-forms/form-choices';
 import { EditorSection } from '@/components/layout/editor-section';
 import { Page, PageHeader } from '@/components/layout/page';
@@ -20,6 +24,7 @@ import { supabase } from '@/lib/supabase';
 import { Link, useNavigate } from '@tanstack/react-router';
 import {
   BarChart3,
+  CalendarCheck,
   ClipboardList,
   FileSignature,
   Plus,
@@ -53,11 +58,14 @@ export function CustomFormsList({
   readonly data: CustomFormsData;
   readonly kind: CustomFormKind;
 }) {
-  const { t, i18n } = useTranslation(['settings', 'nav']);
+  const { t, i18n } = useTranslation(['settings', 'nav', 'events']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
   const [isCreating, setIsCreating] = useState(false);
   const forms = (data.intakeCatalog.customForms ?? []).filter(
-    (form) => form.kind === kind && form.systemKey === null,
+    (form) =>
+      // The sign-up forms of the activities are among the other forms (RAPP-941).
+      (form.kind === kind || (kind === 'other' && form.kind === 'signup')) &&
+      form.systemKey === null,
   );
   // The app's own legal forms come first: the authorization, then the terms.
   const systemForms =
@@ -145,16 +153,25 @@ export function CustomFormsList({
                   className={ROW_CLASS}
                   data-testid={`custom-form-row-${form.id}`}
                 >
-                  <FormRowContent
-                    icon={kind === 'legal' ? Scale : isSurveys ? BarChart3 : ClipboardList}
-                    name={textIn(form.name, language)}
-                    line={[
-                      ...(isSurveys ? [] : [t(`customForms.level.${form.mandatory}`)]),
-                      t(`customForms.audienceOption.${form.audience}`),
-                      ...(form.repeatsEachSeason ? [t('customForms.repeatsEverySeason')] : []),
-                    ].join(' · ')}
-                    badge={<FormStatusBadge form={form} />}
-                  />
+                  {form.kind === 'signup' ? (
+                    <FormRowContent
+                      icon={CalendarCheck}
+                      name={customFormTitle(form, language)}
+                      line={t('events:signupQuestions')}
+                      badge={<FormStatusBadge form={form} />}
+                    />
+                  ) : (
+                    <FormRowContent
+                      icon={kind === 'legal' ? Scale : isSurveys ? BarChart3 : ClipboardList}
+                      name={textIn(form.name, language)}
+                      line={[
+                        ...(isSurveys ? [] : [t(`customForms.level.${form.mandatory}`)]),
+                        t(`customForms.audienceOption.${form.audience}`),
+                        ...(form.repeatsEachSeason ? [t('customForms.repeatsEverySeason')] : []),
+                      ].join(' · ')}
+                      badge={<FormStatusBadge form={form} />}
+                    />
+                  )}
                 </Link>
               </li>
             ))}

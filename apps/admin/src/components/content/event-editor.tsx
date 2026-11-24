@@ -4,10 +4,14 @@ import { Input } from '@/components/ui/input';
 import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
 import { requestCatalanTranslation } from '@/lib/translation-worker';
+import { useNavigate } from '@tanstack/react-router';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { localizedTextFromReview } from '@ramassa/shared/announcements';
+import { useAuth } from '@ramassa/shared/auth';
 import type { AppErrorCode } from '@ramassa/shared/errors';
+import { openEventSignupForm } from '@ramassa/shared/event-signup-form';
 import {
   areEventTranslationsApproved,
   buildWeeklyRecurrenceRule,
@@ -25,6 +29,7 @@ import {
   type EventListRow,
   type EventSignupMode,
 } from '@ramassa/shared/events';
+import { canDesignOnboarding } from '@ramassa/shared/permissions';
 import { MAX_TRANSLATION_TEXT_LENGTH } from '@ramassa/shared/translation';
 import { useTranslationReview } from '@ramassa/shared/translation/react';
 import { approveAll, reviewOptions, startGeneratedReview } from './announcement-editor';
@@ -376,6 +381,9 @@ export function EventEditor({ categories, event, onSaved }: EventEditorProps) {
         </label>
       </div>
 
+      {/* The questions she answers when she signs up (RAPP-941), built on the form board. */}
+      {event === undefined ? null : <SignupQuestionsRow eventId={event.id} />}
+
       <ScheduledPublishFields
         fieldId="event"
         mode={mode}
@@ -410,6 +418,43 @@ export function EventEditor({ categories, event, onSaved }: EventEditorProps) {
             : t('events:update')}
       </Button>
     </form>
+  );
+}
+
+/**
+ * The activity's sign-up questions (RAPP-941): opens its sign-up form on the
+ * board, made when it has none. Shown to whoever builds forms; the database
+ * also asks for the activity's permission.
+ */
+function SignupQuestionsRow({ eventId }: { readonly eventId: string }) {
+  const { t } = useTranslation(['events', 'settings']);
+  const { permissions } = useAuth();
+  const navigate = useNavigate();
+  const [isOpening, setIsOpening] = useState(false);
+  if (!canDesignOnboarding(permissions)) return null;
+  async function open() {
+    setIsOpening(true);
+    try {
+      const formId = await openEventSignupForm(supabase, eventId);
+      await navigate({ to: '/forms/custom/$formId', params: { formId } });
+    } catch {
+      toast.error(t('settings:customForms.actionFailed'));
+      setIsOpening(false);
+    }
+  }
+  return (
+    <div className="flex flex-col items-start gap-2" data-testid="event-signup-questions">
+      <span className="text-sm font-medium">{t('events:signupQuestions')}</span>
+      <Button
+        type="button"
+        variant="outline"
+        disabled={isOpening}
+        onClick={() => void open()}
+        data-testid="event-signup-questions-open"
+      >
+        {t('events:signupQuestionsEdit')}
+      </Button>
+    </div>
   );
 }
 

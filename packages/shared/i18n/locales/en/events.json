@@ -112,5 +112,8 @@
   "iconUsers": "Group of people",
   "categoriesHelpPhone": "Use Move up and Move down to order the categories. Participants see them in this order.",
   "sessionsTitle": "Sessions ({{count}})",
-  "recurrenceEveryWeekSummary": "Every week, {{count}} sessions"
+  "recurrenceEveryWeekSummary": "Every week, {{count}} sessions",
+  "signupQuestions": "Signup questions",
+  "signupQuestionsEdit": "Edit the questions",
+  "signupsTitle": "Signups ({{count}})"
 }

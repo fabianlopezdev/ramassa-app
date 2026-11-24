@@ -2228,6 +2228,7 @@ export type Database = {
       };
       event_signups: {
         Row: {
+          answers_encrypted: string | null;
           created_at: string;
           event_id: string;
           id: string;
@@ -2237,6 +2238,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          answers_encrypted?: string | null;
           created_at?: string;
           event_id: string;
           id?: string;
@@ -2246,6 +2248,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          answers_encrypted?: string | null;
           created_at?: string;
           event_id?: string;
           id?: string;
@@ -6952,6 +6955,22 @@ export type Database = {
         Returns: string;
       };
       my_mentoring_form: { Args: never; Returns: Json };
+      open_event_signup_form: { Args: { p_event_id: string }; Returns: string };
+      event_signup_form: { Args: { p_event_id: string }; Returns: Json };
+      sign_up_for_event: { Args: { p_answers?: Json; p_event_id: string }; Returns: Json };
+      event_signup_answers: {
+        Args: { p_event_id: string };
+        Returns: {
+          answers: Json;
+          created_at: string;
+          first_name: string;
+          last_name: string;
+          player_id: string;
+          signup_id: string;
+          state: string;
+          updated_at: string;
+        }[];
+      };
       create_participant_invite: {
         Args: { payload: Json };
         Returns: {

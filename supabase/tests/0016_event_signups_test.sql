@@ -10,7 +10,8 @@ select has_table('public', 'event_signups', 'the event signup state machine exis
 select columns_are(
   'public',
   'event_signups',
-  array['id', 'org_id', 'event_id', 'player_id', 'state', 'created_at', 'updated_at'],
+  -- Her encrypted answers to the activity's sign-up questions (RAPP-941).
+  array['id', 'org_id', 'event_id', 'player_id', 'state', 'created_at', 'updated_at', 'answers_encrypted'],
   'one signup row records one player state for one event series'
 );
 select has_column(
