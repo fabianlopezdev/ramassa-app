@@ -39,8 +39,17 @@ describe('the launch splash: the shield builds itself (RAPP-955)', () => {
     const splash = await read('../components/branding/animated-splash.tsx');
 
     expect(splash).toContain('const settled = reduceMotion || hasError || clipEnded;');
-    expect(splash).toContain('{settled ? (');
+    expect(splash).toContain('style={settled ? styles.layer : styles.hiddenLayer}');
+    expect(splash).toContain('{settled ? null : (');
     expect(splash).toContain('if (reduceMotion || hasError || player.playing) return;');
+  });
+
+  test('the last frame is loaded from the start, so the shield never flashes back to empty', async () => {
+    const splash = await read('../components/branding/animated-splash.tsx');
+
+    // Mounted from the first render, hidden until the clip ends (RAPP-955 follow-up).
+    expect(splash).toContain('hiddenLayer: { ...StyleSheet.absoluteFill, opacity: 0 }');
+    expect(splash).not.toContain('{settled ? (\n          <Image source={splashEnd}');
   });
 
   test('it plays once on the phone, and the web hides the native splash on its own', async () => {
