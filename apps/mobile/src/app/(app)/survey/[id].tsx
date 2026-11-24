@@ -12,7 +12,7 @@ import {
   screenBlockGapClassName,
   screenContentClassName,
 } from '@/components/layout/screen-spacing';
-import { RatingStar } from '@/components/surveys/rating-star';
+import { ratingFillDelayMs, RatingStar } from '@/components/surveys/rating-star';
 import { continuousCorners } from '@/lib/continuous-corners';
 import {
   useOwnSurveyResponse,
@@ -96,8 +96,9 @@ function RatingQuestionControl({ question, answer, language, onChange }: Questio
           label={t('ratingLabel', { count: rating })}
           accessibilityRole="radio"
           isSelected={answer === rating}
-          // The filled stars show the choice, so the card keeps its white face.
-          isWashedWhenSelected={false}
+          // Every card up to the chosen star turns yellow, in step with its star.
+          isWashed={chosenRating !== null && rating <= chosenRating}
+          washDelayMs={ratingFillDelayMs(rating - 1)}
           onPress={() => onChange(rating)}
           className="flex-1"
           paddingClassName="px-xs"

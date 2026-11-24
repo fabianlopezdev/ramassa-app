@@ -1,6 +1,7 @@
 /**
  * One star of a survey's rating question (RAPP-963): an outline in the club's
- * colour, filled with it when the rating reaches this star.
+ * colour, filled with it when the rating reaches this star. Its card turns
+ * yellow with it (`ratingFillDelayMs`), so the navy star reads on the yellow.
  *
  * When she taps a rating, every star up to it pops in turn, a quick swell and
  * tilt that springs back, so the row fills like a wave towards her finger.
@@ -27,6 +28,11 @@ import { motionTokens, resolveDurationMs, resolveSpring } from '@ramassa/shared/
 const STAR_SIZE = tokens.fontSize['3xl'];
 const { staggerMs, peakScale, peakTiltDeg, riseMs } = motionTokens.ratingFill;
 const frameStyle: ViewStyle = { width: STAR_SIZE, height: STAR_SIZE };
+
+/** When the wave reaches the star at `order`, so its card can turn yellow at the same moment. */
+export function ratingFillDelayMs(order: number): number {
+  return order * staggerMs;
+}
 
 export function RatingStar({
   isFilled,
@@ -60,7 +66,7 @@ export function RatingStar({
       fill.set(1);
       return;
     }
-    const delay = order * staggerMs;
+    const delay = ratingFillDelayMs(order);
     const springBack = resolveSpring('snappy', isReducedMotion);
     fill.set(withDelay(delay, withTiming(1, { duration: fade })));
     scale.set(
