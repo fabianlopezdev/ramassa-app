@@ -6,8 +6,11 @@
  *     Sensible field with the picker, makes the Personal one required, words
  *     it for the entity, and sees the phone follow; the app's own fields are
  *     offered like any other, and her names cannot be removed;
- *   - the entity's portal draws the form from those placements, refuses it
- *     while the required field is empty, then sends both answers in one call;
+ *   - the admin adds a second screen from the board's add card and moves
+ *     the required field onto it, wording and required kept;
+ *   - the entity's portal walks the two screens: Continua waits for her
+ *     names, the second screen asks the moved field and refuses the referral
+ *     while it is empty, then both answers go in one call;
  *   - staff invite her from the referral: both answers are hers at once,
  *     with the entity as their source, the Sensible one encrypted.
  * Rows keep one height and every name one x. Every expected value comes from
@@ -28,8 +31,10 @@ const WORDING = `On agafa el metro? ${runTag}`;
 const WORDING_EN = `Nearest metro stop? ${runTag}`;
 const LAST_NAME = `Derivada ${runTag}`;
 const EMAIL = `derivada.${runTag}@example.test`;
+const SCREEN_NAME = `Pantalla ${runTag}`;
 
 let referralId = '';
+let screenId = '';
 
 const sql = (value: string) => `'${value.replaceAll("'", "''")}'`;
 const placementOf = (fieldId: string) =>
@@ -63,6 +68,7 @@ test.afterAll(() => {
     begin;
     delete from public.field_placements
      where surface = 'entity_form' and field_id in ('${PERSONAL}', '${SENSIBLE}');
+    update public.custom_form_screens set is_archived = true where id = nullif(${sql(screenId)}, '')::uuid;
     delete from public.audit_log where target_id = nullif(${sql(referralId)}, '')::uuid;
     create temporary table qa_invited on commit drop as
       select id from auth.users where email = ${sql(EMAIL)};
@@ -163,14 +169,79 @@ test.describe.serial('the entity referral form', () => {
     await expectSymmetry(page);
   });
 
-  test('the entity sends it, refused while the required field is empty', async ({ page }) => {
+  test('the admin adds a screen and moves a field onto it', async ({ page }) => {
+    await signIn(page, ADMIN_EMAIL);
+    await page.goto('/entities/referral-form');
+    await page.getByTestId('board-add-screen').click();
+    await page.getByTestId('new-screen-name').fill(SCREEN_NAME);
+    // Its screens always show: a new one depends on no answer.
+    await expect(page.getByTestId('new-screen-depends')).toHaveCount(0);
+    await page.getByTestId('new-screen-create').click();
+    await expect(page).toHaveURL(/\/entities\/referral-form\/screens\/[0-9a-f-]+$/, {
+      timeout: 20_000,
+    });
+    screenId = queryDatabase(
+      `select id from public.custom_form_screens where title ->> 'ca' = ${sql(SCREEN_NAME)}`,
+    );
+    const fields = page.getByTestId('referral-form-fields');
+    await fields.getByTestId('referral-form-add').click();
+    const picker = page.getByTestId('referral-form-picker');
+    const name = queryDatabase(
+      `select label ->> 'ca' from public.profile_fields where id = '${PERSONAL}'`,
+    );
+    await picker.getByTestId('referral-form-picker-search').fill(name.slice(0, 12));
+    const row = picker.getByTestId(`referral-form-picker-field-${PERSONAL}`);
+    await expect(row).toHaveAttribute('data-state', 'moves');
+    await row.focus();
+    await page.keyboard.press('Space');
+    await picker.getByTestId('referral-form-picker-confirm').click();
+    await expect
+      .poll(
+        () =>
+          queryDatabase(
+            `select screen_key from public.field_placements where field_id = '${PERSONAL}' and surface = 'entity_form'`,
+          ),
+        { timeout: 15_000 },
+      )
+      .toBe(screenId);
+    expect(placementOf(PERSONAL)).toBe(`true|${WORDING}`);
+    await expect(page.getByTestId(`entity-placement-${PERSONAL}`)).toBeVisible();
+  });
+
+  test('the entity walks the screens, refused while the required field is empty', async ({
+    page,
+  }) => {
     await signIn(page, ENTITY_EMAIL);
     await page.goto('/portal/referrals/new');
     const form = page.getByTestId('referral-form');
     await expect(form).toBeVisible({ timeout: 30_000 });
-    await expect(form).toContainText(`${WORDING_EN} *`);
+    const second = page.getByTestId('referral-screen-2');
+    await expect(second).toBeHidden();
+    // Continua waits for what the first screen asks: her names.
+    await page.getByTestId('referral-continue').click();
+    await expect(
+      page
+        .getByTestId('referral-screen-1')
+        .getByText(/complete this field|completa aquest camp/i)
+        .first(),
+    ).toBeVisible();
+    // The check is asynchronous: give a wrong move to the next screen the time to happen.
+    await page.waitForTimeout(1_000);
+    await expect(second).toBeHidden();
+    await expect(page.getByTestId('referral-screen-1')).toBeVisible();
     await page.locator('#referral-first-name').fill('Amina');
     await page.locator('#referral-last-name').fill(LAST_NAME);
+    const option = queryDatabase(
+      `select id from public.custom_question_options where question_id = '${SENSIBLE}' order by sort_order limit 1`,
+    );
+    await page.locator(`#referral-field-${SENSIBLE}`).selectOption(option);
+    await page.getByTestId('referral-continue').click();
+    await expect(second).toBeVisible();
+    await expect(second).toContainText(SCREEN_NAME);
+    // Arriving sends nothing: no message of the last screen shows yet.
+    await page.waitForTimeout(1_000);
+    await expect(page.locator('#referral-consent')).not.toHaveAttribute('aria-invalid', 'true');
+    await expect(second).toContainText(`${WORDING_EN} *`);
     await page.locator('#referral-email').fill(EMAIL);
     await page.locator('#referral-consent').check();
     await page.getByTestId('referral-submit').click();
@@ -182,10 +253,6 @@ test.describe.serial('the entity referral form', () => {
     ).toBe('0');
 
     await page.locator(`#referral-field-${PERSONAL}`).fill('Sants Estació');
-    const option = queryDatabase(
-      `select id from public.custom_question_options where question_id = '${SENSIBLE}' order by sort_order limit 1`,
-    );
-    await page.locator(`#referral-field-${SENSIBLE}`).selectOption(option);
     await page.getByTestId('referral-submit').click();
     await expect(page).toHaveURL(/\/portal\/referrals\/[0-9a-f-]+$/, { timeout: 30_000 });
     referralId = queryDatabase(

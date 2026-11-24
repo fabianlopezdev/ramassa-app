@@ -426,8 +426,10 @@ export function ReferralForm({
               {t('common:back')}
             </Button>
           )}
+          {/* Keyed apart: the Continua just pressed is never reused as the send button, which the click would then press. */}
           {pageIndex < lastPage ? (
             <Button
+              key="continue"
               type="button"
               size="lg"
               onClick={() => void continueFrom(pageIndex)}
@@ -436,7 +438,13 @@ export function ReferralForm({
               {continueLabelOf(pages[pageIndex], language) ?? t('onboarding:continueAction')}
             </Button>
           ) : (
-            <Button type="submit" size="lg" disabled={isSubmitting} data-testid="referral-submit">
+            <Button
+              key="submit"
+              type="submit"
+              size="lg"
+              disabled={isSubmitting}
+              data-testid="referral-submit"
+            >
               {continueLabelOf(pages[pageIndex], language) ?? t('save')}
             </Button>
           )}
