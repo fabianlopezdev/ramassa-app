@@ -7,6 +7,11 @@
  * (RAPP-918). The club logo in Settings carries the name under the shield,
  * which the name beside the tile already says, and the phone app keeps using
  * that one.
+ *
+ * The tile is round, and a shield has two square corners on top and a point
+ * below, so a shield centred by its box touches the circle with its corners
+ * (RAPP-964). It takes 65% of the tile and sits a tenth of its height lower:
+ * there its corners and its tip are the same distance from the edge.
  */
 import { useAdminBranding } from '@/components/branding/organization-branding-provider';
 import { cn } from '@/lib/utils';
@@ -22,11 +27,11 @@ function OrganizationLogoTile({ className }: { readonly className?: string }) {
     <span
       data-testid="organization-logo-tile"
       className={cn(
-        'flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white p-1 shadow-sm ring-1 ring-black/5',
+        'flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-black/5',
         className,
       )}
     >
-      <img src={CLUB_SHIELD_SRC} alt={name} className="size-full object-contain" />
+      <img src={CLUB_SHIELD_SRC} alt={name} className="h-[65%] w-auto translate-y-[10%]" />
     </span>
   );
 }
