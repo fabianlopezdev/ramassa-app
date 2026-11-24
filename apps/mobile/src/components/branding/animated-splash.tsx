@@ -7,7 +7,9 @@
  * `tokens.splash.size` on the same blue. This overlay draws that frame, the
  * clip and its held last frame in a square of the same size and place, so the
  * swap from the native splash is invisible on iPhone and Android alike. The
- * native splash is hidden once the overlay has laid out over it.
+ * native splash is hidden once the overlay's first frame is on screen (or
+ * after `nativeHandOffMaxMs`), and the clip shows from its own first drawn
+ * frame, so the shield never blinks out in between.
  *
  * Reduce motion, or a clip that fails to play, shows the last frame at once.
  * The splash stays at least `minDisplayMs`, leaves when the clip has ended and
@@ -35,7 +37,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { tokens } from '@ramassa/shared/tokens';
 
-const { backgroundColor, size, fadeMs, minDisplayMs, maxDisplayMs } = tokens.splash;
+const { backgroundColor, size, fadeMs, minDisplayMs, maxDisplayMs, nativeHandOffMaxMs } =
+  tokens.splash;
 
 // On Android a SurfaceView can draw above the views around it while the
 // overlay fades; a TextureView fades with them (expo-video `surfaceType`).
@@ -73,6 +76,9 @@ export function AnimatedSplash({
   const [clipEnded, setClipEnded] = useState(false);
   const [minElapsed, setMinElapsed] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
+  // Until the clip draws its first frame the video layer can be blank, so it
+  // stays hidden over the drawn first frame of the shield.
+  const [clipShown, setClipShown] = useState(false);
   const hidNativeSplash = useRef(false);
   const leaving = useRef(false);
   const opacity = useSharedValue(1);
@@ -103,6 +109,13 @@ export function AnimatedSplash({
     hidNativeSplash.current = true;
     void SplashScreen.hideAsync().catch(() => undefined);
   }, []);
+  // The first frame of the shield normally draws within a few dozen
+  // milliseconds; should it not, the native splash still goes.
+  useEffect(() => {
+    const handOffTimer = setTimeout(hideNativeSplash, nativeHandOffMaxMs);
+    return () => clearTimeout(handOffTimer);
+  }, [hideNativeSplash]);
+  const showClip = useCallback(() => setClipShown(true), []);
 
   const settled = reduceMotion || hasError || clipEnded;
   const ready = timedOut || (appReady && minElapsed && settled);
@@ -123,14 +136,19 @@ export function AnimatedSplash({
     <Animated.View
       testID="animated-splash"
       style={[styles.root, fadeStyle]}
-      onLayout={hideNativeSplash}
       accessible
       accessibilityRole="image"
       accessibilityLabel={t('appName')}
     >
       <View style={styles.square}>
         {/* The first frame under the clip, so nothing blinks before it draws. */}
-        <Image source={splashStart} contentFit="contain" accessible={false} style={styles.layer} />
+        <Image
+          source={splashStart}
+          contentFit="contain"
+          accessible={false}
+          style={styles.layer}
+          onDisplay={hideNativeSplash}
+        />
         {/* The last frame loads with the first and waits hidden, so when the clip
             ends it is already drawn: the shield never flashes back to empty. */}
         <Image
@@ -146,7 +164,8 @@ export function AnimatedSplash({
             nativeControls={false}
             surfaceType={DECORATIVE_VIDEO_SURFACE}
             accessible={false}
-            style={styles.layer}
+            style={clipShown ? styles.layer : styles.hiddenLayer}
+            onFirstFrameRender={showClip}
           />
         )}
       </View>

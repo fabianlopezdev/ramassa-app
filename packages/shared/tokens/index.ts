@@ -136,6 +136,9 @@ export const tokens = {
     fadeMs: 500,
     minDisplayMs: 600,
     maxDisplayMs: 5_000,
+    // The native splash waits for the overlay's first frame to be drawn, at
+    // most this long, so the shield never blinks out in between.
+    nativeHandOffMaxMs: 500,
   },
 
   // The login title sits just above a centred block of this height, so every
