@@ -791,15 +791,13 @@
     "removeConditionFirst": "First remove “{{field}}”, which depends on it."
   },
   "referralForm": {
-    "title": "Referral form",
     "fields": "Fields we ask the organization",
     "wording": "How the organization sees it (optional)",
     "pickerTitle": "Add a field to the form",
     "here": "Already on the form",
     "hers": "Only she can give it",
     "removeNamed": "Remove {{field}} from the form",
-    "removeTitle": "Remove “{{field}}” from the form?",
-    "alwaysShown": "The screens of the referral form always show."
+    "removeTitle": "Remove “{{field}}” from the form?"
   },
   "signatureBlock": {
     "add": "Add a signature",

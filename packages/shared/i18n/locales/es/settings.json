@@ -791,15 +791,13 @@
     "removeConditionFirst": "Primero quita «{{field}}», que depende de él."
   },
   "referralForm": {
-    "title": "Formulario de derivación",
     "fields": "Campos que pedimos a la entidad",
     "wording": "Cómo lo ve la entidad (opcional)",
     "pickerTitle": "Añade un campo al formulario",
     "here": "Ya está en el formulario",
     "hers": "Solo ella puede darlo",
     "removeNamed": "Quita {{field}} del formulario",
-    "removeTitle": "¿Quieres quitar «{{field}}» del formulario?",
-    "alwaysShown": "Las pantallas del formulario de derivación siempre se muestran."
+    "removeTitle": "¿Quieres quitar «{{field}}» del formulario?"
   },
   "signatureBlock": {
     "add": "Añade una firma",
