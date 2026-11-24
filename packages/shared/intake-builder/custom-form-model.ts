@@ -44,7 +44,11 @@ export type CustomFormKind = (typeof CUSTOM_FORM_KINDS)[number];
  * two legal forms (RAPP-771) and the referral form the entity fills in
  * (RAPP-938).
  */
-export const CUSTOM_FORM_SYSTEM_KEYS = ['app_terms', 'season_authorization', 'entity_referral'] as const;
+export const CUSTOM_FORM_SYSTEM_KEYS = [
+  'app_terms',
+  'season_authorization',
+  'entity_referral',
+] as const;
 export type CustomFormSystemKey = (typeof CUSTOM_FORM_SYSTEM_KEYS)[number];
 
 /** A screen's locked part of a legal form (RAPP-771): never deleted, never moved. */
