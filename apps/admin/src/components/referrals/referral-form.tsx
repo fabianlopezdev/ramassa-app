@@ -7,6 +7,12 @@
  * (612...) is sent with +34; a phone the field refuses says so before
  * anything is sent. The person from the entity signs each signature block of
  * the form (RAPP-690); the referral goes only once every block is signed.
+ *
+ * The entity walks it screen by screen (RAPP-938), the way a player walks a
+ * form: each screen's title, intro and help, its fields, and Continua once
+ * what it asks is complete. The referral's own fields close the last screen,
+ * which sends it. Every screen stays in the form while hidden, so nothing
+ * typed is lost going back and forth; one call still sends it all.
  */
 
 import {
@@ -19,25 +25,30 @@ import { safeAsync } from '@/lib/observability';
 import { supabase } from '@/lib/supabase';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useRef, useState, type ReactNode } from 'react';
+import { useForm, type FieldErrors } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import {
   appAnswersFromForm,
   EMPTY_INTAKE_CATALOG,
+  entityFormBlocksOf,
   entityFormItemsOf,
+  entityFormPages,
   entityFormQuestions,
   fetchSystemFieldIndex,
-  formBlocksOn,
+  formScreenTextsIn,
   formSignaturesPayload,
   internationalPhone,
   PHONE_PATTERN,
   requiredEntityFormFieldsLeftEmpty,
-  signatureBlocks,
   systemFieldsOf,
+  textIn,
   unsignedFormBlocks,
+  type EntityFormItem,
+  type EntityFormPage,
   type FormSignatureDrafts,
   type IntakeCatalog,
+  type SignatureFormBlock,
   type SystemFieldIndex,
 } from '@ramassa/shared/intake-builder';
 import {
@@ -109,6 +120,60 @@ function isRefusedPhone(phone: string | undefined): boolean {
   return (phone ?? '').trim() !== '' && !PHONE_PATTERN.test(internationalPhone(phone ?? ''));
 }
 
+/** The form's own names of an app field of the referral, to check one screen at a time. */
+const BUILTIN_VALUES: Readonly<Record<string, readonly (keyof CreateReferralInput)[]>> = {
+  first_name: ['firstName'],
+  last_name: ['lastName'],
+  phone: ['phone'],
+  date_of_birth: ['dateOfBirth'],
+  nationality: ['nationality'],
+  city: ['city'],
+  document: ['documentType', 'documentNumber'],
+  applicant_status: ['applicantStatus'],
+  supporting_entities: ['supportingEntities'],
+  reference_contact_name: ['referenceContactName'],
+  childcare_need: ['childcareNeed'],
+  specific_needs: ['specificNeeds'],
+};
+
+/** The referral's own fields, which close the last screen. */
+const OWN_VALUES: readonly (keyof CreateReferralInput)[] = [
+  'email',
+  'documentationStatus',
+  'seasonNumber',
+  'notes',
+  'consentConfirmed',
+];
+
+function valuesOf(items: readonly EntityFormItem[]): (keyof CreateReferralInput)[] {
+  return items.flatMap((item) => (item.kind === 'builtin' ? (BUILTIN_VALUES[item.key] ?? []) : []));
+}
+
+/** What one screen asks that is left out or does not fit. */
+interface PageProblems {
+  readonly fieldErrors: Readonly<Record<string, string>>;
+  readonly empty: ReadonlySet<string>;
+  readonly notSigned: ReadonlySet<string>;
+}
+
+function hasProblem(
+  page: EntityFormPage,
+  problems: PageProblems,
+  errors: FieldErrors<CreateReferralInput>,
+  isLast: boolean,
+): boolean {
+  return (
+    page.items.some(
+      (item) =>
+        problems.empty.has(item.field.id) || problems.fieldErrors[item.field.id] !== undefined,
+    ) ||
+    page.blocks.some((block) => problems.notSigned.has(block.id)) ||
+    [...valuesOf(page.items), ...(isLast ? OWN_VALUES : [])].some(
+      (name) => errors[name] !== undefined,
+    )
+  );
+}
+
 /** "Other" entities typed as a comma-separated list join the ticked ones. */
 function withTypedEntities(referral: CreateReferral, typed: string): CreateReferral {
   const names = typed
@@ -134,6 +199,11 @@ export function ReferralForm({
 }: ReferralFormProps) {
   const items = entityFormItemsOf(catalog);
   const questions = entityFormQuestions(items);
+  // The entity form holds signature blocks only (RAPP-770).
+  const blocks = entityFormBlocksOf(catalog);
+  const pages = entityFormPages(catalog, items, blocks);
+  const [pageIndex, setPageIndex] = useState(0);
+  const lastPage = pages.length - 1;
   const fields = systemFieldsOf(catalog);
   const formRef = useRef<HTMLFormElement>(null);
   const { t, i18n } = useTranslation(['referrals', 'onboarding']);
@@ -144,8 +214,6 @@ export function ReferralForm({
   // Each Ramassà answer that does not fit its field, in her wizard's words (RAPP-610).
   const [customErrors, setCustomErrors] = useState<Readonly<Record<string, string>>>({});
   const [missing, setMissing] = useState<ReadonlySet<string>>(new Set());
-  // The entity form holds signature blocks only (RAPP-770).
-  const blocks = signatureBlocks(formBlocksOn(catalog.blocks, 'entity_form', null));
   const [signatures, setSignatures] = useState<FormSignatureDrafts>({});
   const [unsigned, setUnsigned] = useState<ReadonlySet<string>>(new Set());
   const {
@@ -154,6 +222,7 @@ export function ReferralForm({
     watch,
     getValues,
     setError,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<CreateReferralInput, unknown, CreateReferral>({
     resolver: zodResolver(createReferralSchemaFor(fields)),
@@ -161,16 +230,23 @@ export function ReferralForm({
   });
   const documentType = watch('documentType') as string | null | undefined;
 
-  /** Reads the field answers and shows what is missing or does not fit; null while any is. */
-  function checkedFieldAnswers() {
+  /**
+   * Reads the field answers and shows what is missing or does not fit in the
+   * fields and blocks given (one screen, or the whole form).
+   */
+  function checkFields(
+    scope: readonly EntityFormItem[],
+    scopeBlocks: readonly SignatureFormBlock[],
+  ): PageProblems & { readonly answers: ReturnType<typeof readCustomAnswersOf> } {
+    const scopeQuestions = entityFormQuestions(scope);
     const answers =
       formRef.current === null
         ? {}
         : readCustomAnswersOf(new FormData(formRef.current), questions, FIELD_PREFIX);
-    const fieldErrors = customAnswerErrorsOf(questions, answers, t);
+    const fieldErrors = customAnswerErrorsOf(scopeQuestions, answers, t);
     const values = getValues();
     const empty = new Set(
-      requiredEntityFormFieldsLeftEmpty(items, {
+      requiredEntityFormFieldsLeftEmpty(scope, {
         ...answers,
         ...formAnswers(fields, {
           ...values,
@@ -179,47 +255,89 @@ export function ReferralForm({
         }),
       }),
     );
-    const notSigned = new Set(unsignedFormBlocks(blocks, signatures));
+    const notSigned = new Set(unsignedFormBlocks(scopeBlocks, signatures));
     setCustomErrors(fieldErrors);
     setMissing(empty);
     setUnsigned(notSigned);
-    return Object.keys(fieldErrors).length === 0 && empty.size === 0 && notSigned.size === 0
-      ? answers
-      : null;
+    return { answers, fieldErrors, empty, notSigned };
   }
 
-  const submit = handleSubmit(async (parsed) => {
-    setFailed(false);
-    // Nothing is sent while a field is missing or does not fit.
-    const answers = checkedFieldAnswers();
-    // The phone field takes an international number; a local Spanish one gets +34.
-    if (isRefusedPhone(parsed.phone ?? undefined)) {
+  function isComplete(problems: PageProblems): boolean {
+    return (
+      Object.keys(problems.fieldErrors).length === 0 &&
+      problems.empty.size === 0 &&
+      problems.notSigned.size === 0
+    );
+  }
+
+  /** Opens the first screen with something to complete. */
+  function showFirstProblem(problems: PageProblems, formErrors: FieldErrors<CreateReferralInput>) {
+    const at = pages.findIndex((page, index) =>
+      hasProblem(page, problems, formErrors, index === lastPage),
+    );
+    if (at >= 0) setPageIndex(at);
+  }
+
+  /** Continua: the next screen once this one is complete. */
+  async function continueFrom(index: number) {
+    const page = pages[index];
+    if (page === undefined) return;
+    const problems = checkFields(page.items, page.blocks);
+    const names = valuesOf(page.items);
+    const fits = names.length === 0 ? true : await trigger(names);
+    const asksPhone = page.items.some((item) => item.kind === 'builtin' && item.key === 'phone');
+    if (asksPhone && isRefusedPhone(getValues('phone') ?? undefined)) {
       setError('phone', { type: 'format' });
       return;
     }
-    if (answers === null) return;
-    const referral = withTypedEntities(parsed, otherEntities);
-    const result = await safeAsync(
-      async () => {
-        const known = fields.size === 0 ? await fetchSystemFieldIndex(supabase) : fields;
-        return sendReferral(
-          supabase,
-          referral,
-          { ...answers, ...referralAppAnswers(known, referral) },
-          formSignaturesPayload(blocks, signatures, language),
-        );
-      },
-      { context: { operation: 'entity-referral-create' } },
-    );
-    if (!result.ok) {
-      setFailed(true);
-      return;
-    }
-    await navigate({
-      to: '/portal/referrals/$referralId',
-      params: { referralId: result.value },
-    });
-  });
+    if (!fits || !isComplete(problems)) return;
+    setPageIndex(index + 1);
+    window.scrollTo({ top: 0 });
+  }
+
+  const submit = handleSubmit(
+    async (parsed) => {
+      setFailed(false);
+      // Nothing is sent while a field is missing or does not fit.
+      const checked = checkFields(items, blocks);
+      // The phone field takes an international number; a local Spanish one gets +34.
+      if (isRefusedPhone(parsed.phone ?? undefined)) {
+        setError('phone', { type: 'format' });
+        showFirstProblem(checked, { phone: { type: 'format' } });
+        return;
+      }
+      if (!isComplete(checked)) {
+        showFirstProblem(checked, {});
+        return;
+      }
+      const answers = checked.answers;
+      const referral = withTypedEntities(parsed, otherEntities);
+      const result = await safeAsync(
+        async () => {
+          const known = fields.size === 0 ? await fetchSystemFieldIndex(supabase) : fields;
+          return sendReferral(
+            supabase,
+            referral,
+            { ...answers, ...referralAppAnswers(known, referral) },
+            formSignaturesPayload(blocks, signatures, language),
+          );
+        },
+        { context: { operation: 'entity-referral-create' } },
+      );
+      if (!result.ok) {
+        setFailed(true);
+        return;
+      }
+      await navigate({
+        to: '/portal/referrals/$referralId',
+        params: { referralId: result.value },
+      });
+    },
+    (formErrors) => {
+      // A field the form refuses: every message shows, and its screen opens.
+      showFirstProblem(checkFields(items, blocks), formErrors);
+    },
+  );
 
   return (
     <Page>
@@ -238,43 +356,122 @@ export function ReferralForm({
         noValidate
         className="flex flex-col gap-4"
         onSubmit={(event) => {
-          // Every message shows at once, the field answers' too.
-          checkedFieldAnswers();
+          // Every message shows at once, the field answers' too; the first
+          // screen with something to complete opens.
           void submit(event);
         }}
         data-testid="referral-form"
       >
-        <ReferralFormFields
-          items={items}
-          control={control}
-          errors={errors}
-          language={language}
-          idPrefix="referral"
-          entityNames={entityNames}
-          otherEntities={otherEntities}
-          onOtherEntitiesChange={setOtherEntities}
-          documentType={documentType}
-          customErrors={customErrors}
-          missing={missing}
-          blocks={blocks}
-          signatures={signatures}
-          onSignatureChange={(blockId, strokes) => {
-            setSignatures((current) => ({ ...current, [blockId]: strokes }));
-            if (strokes !== null) {
-              setUnsigned((current) => new Set([...current].filter((id) => id !== blockId)));
-            }
-          }}
-          unsigned={unsigned}
-        />
+        {pages.map((page, index) => (
+          <section
+            key={page.screen?.id ?? 'form'}
+            hidden={index !== pageIndex}
+            className="flex flex-col gap-4"
+            data-testid={`referral-screen-${index + 1}`}
+          >
+            {page.screen === null ? null : (
+              <ScreenHeading
+                title={textIn(page.screen.title, language)}
+                intro={page.screen.intro === null ? '' : textIn(page.screen.intro, language)}
+                help={formScreenTextsIn(page.screen.texts, language).help}
+                step={
+                  pages.length > 1
+                    ? t('onboarding:stepOf', { current: index + 1, total: pages.length })
+                    : null
+                }
+              />
+            )}
+            <ReferralFormFields
+              items={page.items}
+              control={control}
+              errors={errors}
+              language={language}
+              idPrefix="referral"
+              entityNames={entityNames}
+              otherEntities={otherEntities}
+              onOtherEntitiesChange={setOtherEntities}
+              documentType={documentType}
+              customErrors={customErrors}
+              missing={missing}
+              blocks={page.blocks}
+              signatures={signatures}
+              onSignatureChange={(blockId, strokes) => {
+                setSignatures((current) => ({ ...current, [blockId]: strokes }));
+                if (strokes !== null) {
+                  setUnsigned((current) => new Set([...current].filter((id) => id !== blockId)));
+                }
+              }}
+              unsigned={unsigned}
+              asksOwnFields={index === lastPage}
+            />
+          </section>
+        ))}
         {failed ? (
           <p role="alert" className="text-start text-sm text-destructive">
             {t('saveError')}
           </p>
         ) : null}
-        <Button type="submit" size="lg" disabled={isSubmitting} data-testid="referral-submit">
-          {t('save')}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {pageIndex === 0 ? null : (
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              onClick={() => {
+                setPageIndex(pageIndex - 1);
+                window.scrollTo({ top: 0 });
+              }}
+              data-testid="referral-previous"
+            >
+              {t('common:back')}
+            </Button>
+          )}
+          {pageIndex < lastPage ? (
+            <Button
+              type="button"
+              size="lg"
+              onClick={() => void continueFrom(pageIndex)}
+              data-testid="referral-continue"
+            >
+              {continueLabelOf(pages[pageIndex], language) ?? t('onboarding:continueAction')}
+            </Button>
+          ) : (
+            <Button type="submit" size="lg" disabled={isSubmitting} data-testid="referral-submit">
+              {continueLabelOf(pages[pageIndex], language) ?? t('save')}
+            </Button>
+          )}
+        </div>
       </form>
     </Page>
+  );
+}
+
+/** The button label staff wrote for a screen; null shows the portal's own. */
+function continueLabelOf(page: EntityFormPage | undefined, language: LanguageCode): string | null {
+  return page?.screen == null ? null : formScreenTextsIn(page.screen.texts, language).continueLabel;
+}
+
+/** A screen's title, with its intro and help when staff wrote them. */
+function ScreenHeading({
+  title,
+  intro,
+  help,
+  step,
+}: {
+  readonly title: string;
+  readonly intro: string;
+  readonly help: string;
+  /** "Pas 2 de 3", on a form of more than one screen. */
+  readonly step: string | null;
+}): ReactNode {
+  return (
+    <div className="flex flex-col gap-1">
+      {step === null ? null : <p className="text-start text-sm text-muted-foreground">{step}</p>}
+      <h2 className="text-start text-xl font-semibold">{title}</h2>
+      {intro === '' ? null : <p className="text-start text-sm whitespace-pre-line">{intro}</p>}
+      {help === '' ? null : (
+        <p className="text-start text-sm whitespace-pre-line text-muted-foreground">{help}</p>
+      )}
+    </div>
   );
 }
