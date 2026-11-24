@@ -19,6 +19,7 @@ import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
 import type { Database, Json } from '../types/database';
 import { parseIntakeCatalog, type IntakeCatalog } from './builder';
+import type { OnDemandFormKey } from './custom-form-model';
 import type { BuilderText } from './profile-layout';
 import type { CustomQuestionType } from './question-types';
 
@@ -312,14 +313,15 @@ export function surveyCatalog(raw: unknown, survey: MySurvey): IntakeCatalog {
  * A form she fills in from its content (the shape `custom_form_versions`
  * keeps: screens, and placements each naming its question), laid over the
  * catalog `intake_catalog` sent, so the form walker draws it as it draws any
- * form. A survey (above) and the suggestions form (RAPP-939) reach her phone
- * this way, since neither they nor their questions are in that catalog.
+ * form. A survey (above), the suggestions form (RAPP-939) and the mentoring
+ * form (RAPP-940) reach her phone this way, since neither they nor their
+ * questions are in that catalog.
  */
 export interface FormContentSource {
   readonly formId: string;
   readonly name: BuilderText;
   readonly kind: 'survey' | 'other';
-  readonly systemKey: 'feedback' | null;
+  readonly systemKey: OnDemandFormKey | null;
   readonly eventId: string | null;
   readonly closesAt: string | null;
   readonly version: number;
