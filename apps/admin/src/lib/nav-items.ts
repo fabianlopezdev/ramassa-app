@@ -141,11 +141,11 @@ export const REFERRAL_FORM_PERMISSIONS = [
 ] as const satisfies readonly PermissionCode[];
 
 /**
- * The suggestions form (RAPP-939): the people who design the forms build it
- * on the same board. The suggestions themselves are read in the inbox, with
- * feedback.view.
+ * The forms she sends when she wants: the suggestions form (RAPP-939). The
+ * people who design the forms build them on the same board. What she sends is
+ * read elsewhere: suggestions in the inbox, with feedback.view.
  */
-export const FEEDBACK_FORM_PERMISSIONS = [
+export const ON_DEMAND_FORM_PERMISSIONS = [
   'settings.organization',
   'onboarding.design',
 ] as const satisfies readonly PermissionCode[];
@@ -259,8 +259,9 @@ export const STAFF_NAV_ITEMS = [
     icon: Lightbulb,
     labelKey: 'nav:staff.feedbackForm',
     group: 'forms',
-    anyPermission: FEEDBACK_FORM_PERMISSIONS,
+    anyPermission: ON_DEMAND_FORM_PERMISSIONS,
   },
+
   {
     to: '/profile-layout',
     icon: IdCard,

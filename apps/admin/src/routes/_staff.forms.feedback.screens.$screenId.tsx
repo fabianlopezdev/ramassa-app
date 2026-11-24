@@ -1,13 +1,13 @@
 /**
  * One screen of the suggestions form (RAPP-939), opened from its card on the
- * board. The same guard as the board; the database checks every change
+ * board, in the screen page the forms she sends when she wants share
+ * (RAPP-940). The same guard as the board; the database checks every change
  * again. `ssr: false` for the reason every staff screen gives (the session
  * lives in localStorage, ADR-005).
  */
 
-import { RequireAuth } from '@/components/auth/require-auth';
-import { FeedbackFormScreenEditor } from '@/components/feedback/feedback-form-screen';
-import { FEEDBACK_FORM_PERMISSIONS } from '@/lib/nav-items';
+import { OnDemandFormScreenPage } from '@/components/custom-forms/on-demand-form-screen';
+import { FEEDBACK_FORM } from '@/lib/feedback-form';
 import { supabase } from '@/lib/supabase';
 import { createFileRoute } from '@tanstack/react-router';
 import { fetchIntakeCatalogWithSurveys } from '@ramassa/shared/intake-builder';
@@ -20,15 +20,10 @@ export const Route = createFileRoute('/_staff/forms/feedback/screens/$screenId')
 
 function FeedbackFormScreenRoute() {
   return (
-    <RequireAuth allow={['staff', 'admin']} anyPermission={FEEDBACK_FORM_PERMISSIONS}>
-      <Screen />
-    </RequireAuth>
-  );
-}
-
-function Screen() {
-  const { screenId } = Route.useParams();
-  return (
-    <FeedbackFormScreenEditor catalog={Route.useLoaderData().intakeCatalog} screenId={screenId} />
+    <OnDemandFormScreenPage
+      definition={FEEDBACK_FORM}
+      catalog={Route.useLoaderData().intakeCatalog}
+      screenId={Route.useParams().screenId}
+    />
   );
 }
