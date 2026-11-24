@@ -31,6 +31,7 @@ import {
   LayoutDashboard,
   Lightbulb,
   ListChecks,
+  MessageCircleHeart,
   MessageSquare,
   Scale,
   ScrollText,
@@ -141,9 +142,11 @@ export const REFERRAL_FORM_PERMISSIONS = [
 ] as const satisfies readonly PermissionCode[];
 
 /**
- * The forms she sends when she wants: the suggestions form (RAPP-939). The
- * people who design the forms build them on the same board. What she sends is
- * read elsewhere: suggestions in the inbox, with feedback.view.
+ * The forms she sends when she wants: the suggestions form (RAPP-939) and the
+ * mentoring form (RAPP-940). The people who design the forms build them on
+ * the same board. What she sends is read elsewhere: suggestions in the inbox,
+ * with feedback.view, and mentoring requests in the queue, with
+ * mentoring.manage.
  */
 export const ON_DEMAND_FORM_PERMISSIONS = [
   'settings.organization',
@@ -261,7 +264,14 @@ export const STAFF_NAV_ITEMS = [
     group: 'forms',
     anyPermission: ON_DEMAND_FORM_PERMISSIONS,
   },
-
+  {
+    // The form a player fills in to ask for mentoring (RAPP-940).
+    to: '/forms/mentoring',
+    icon: MessageCircleHeart,
+    labelKey: 'nav:staff.mentoringForm',
+    group: 'forms',
+    anyPermission: ON_DEMAND_FORM_PERMISSIONS,
+  },
   {
     to: '/profile-layout',
     icon: IdCard,

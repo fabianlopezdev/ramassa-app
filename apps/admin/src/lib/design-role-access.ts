@@ -5,7 +5,8 @@
  * reaches the onboarding page, the two legal forms (RAPP-694, their own
  * boards since RAPP-696), the forms the team creates (RAPP-700) and the surveys
  * (RAPP-929), the entity referral form and its screens (RAPP-965), the
- * suggestions form and its screens (RAPP-939), Dades de
+ * suggestions form and the mentoring form and their screens (RAPP-939,
+ * RAPP-940), Dades de
  * les jugadores (RAPP-650, its own page since RAPP-654), the test players and
  * her own account page (RAPP-634),
  * and every other admin URL sends her back. This is the screen half: the
@@ -75,11 +76,14 @@ function isReferralFormPath(pathname: string): boolean {
 }
 
 /**
- * The suggestions form and its screens (RAPP-939). The suggestions inbox
- * (/feedback) stays closed to her.
+ * The suggestions form (RAPP-939) and the mentoring form (RAPP-940), and their
+ * screens. What players send stays closed to her: the suggestions inbox
+ * (/feedback) and the mentoring queue (/mentoring).
  */
-function isFeedbackFormPath(pathname: string): boolean {
-  return pathname === '/forms/feedback' || pathname.startsWith('/forms/feedback/');
+function isOnDemandFormPath(pathname: string): boolean {
+  return ['/forms/feedback', '/forms/mentoring'].some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  );
 }
 
 /** Dades de les jugadores (RAPP-650, RAPP-654) and Dades legals (RAPP-699). */
@@ -104,7 +108,7 @@ export function designRoleRedirect(
   if (permissions.has('onboarding.design') && isLegalPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isCustomFormPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isReferralFormPath(pathname)) return null;
-  if (permissions.has('onboarding.design') && isFeedbackFormPath(pathname)) return null;
+  if (permissions.has('onboarding.design') && isOnDemandFormPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isProfileLayoutPath(pathname)) return null;
   if (permissions.has('test_players.manage') && isTestPlayerPath(pathname)) return null;
   return designRoleLanding(permissions);

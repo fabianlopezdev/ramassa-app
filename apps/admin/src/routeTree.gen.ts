@@ -79,6 +79,7 @@ import { Route as StaffFormsAuthorizationStepRouteImport } from './routes/_staff
 import { Route as StaffFormsCustomIndexRouteImport } from './routes/_staff.forms.custom.index'
 import { Route as StaffFormsFeedbackIndexRouteImport } from './routes/_staff.forms.feedback.index'
 import { Route as StaffFormsLegalIndexRouteImport } from './routes/_staff.forms.legal.index'
+import { Route as StaffFormsMentoringIndexRouteImport } from './routes/_staff.forms.mentoring.index'
 import { Route as StaffFormsTermsIndexRouteImport } from './routes/_staff.forms.terms.index'
 import { Route as StaffFormsTermsStepRouteImport } from './routes/_staff.forms.terms.$step'
 import { Route as StaffOnboardingScreensScreenIdRouteImport } from './routes/_staff.onboarding.screens.$screenId'
@@ -88,6 +89,7 @@ import { Route as StaffEntitiesReferralFormScreensScreenIdRouteImport } from './
 import { Route as StaffFormsCustomFormIdIndexRouteImport } from './routes/_staff.forms.custom.$formId.index'
 import { Route as StaffFormsCustomFormIdResponsesRouteImport } from './routes/_staff.forms.custom.$formId.responses'
 import { Route as StaffFormsFeedbackScreensScreenIdRouteImport } from './routes/_staff.forms.feedback.screens.$screenId'
+import { Route as StaffFormsMentoringScreensScreenIdRouteImport } from './routes/_staff.forms.mentoring.screens.$screenId'
 import { Route as StaffFormsCustomFormIdScreensScreenIdRouteImport } from './routes/_staff.forms.custom.$formId.screens.$screenId'
 import { Route as StaffFormsCustomFormIdVersionsVersionKeyRouteImport } from './routes/_staff.forms.custom.$formId.versions.$versionKey'
 
@@ -467,6 +469,12 @@ const StaffFormsLegalIndexRoute = StaffFormsLegalIndexRouteImport.update({
   path: '/forms/legal/',
   getParentRoute: () => StaffRoute,
 } as any)
+const StaffFormsMentoringIndexRoute =
+  StaffFormsMentoringIndexRouteImport.update({
+    id: '/forms/mentoring/',
+    path: '/forms/mentoring/',
+    getParentRoute: () => StaffRoute,
+  } as any)
 const StaffFormsTermsIndexRoute = StaffFormsTermsIndexRouteImport.update({
   id: '/forms/terms/',
   path: '/forms/terms/',
@@ -517,6 +525,12 @@ const StaffFormsFeedbackScreensScreenIdRoute =
   StaffFormsFeedbackScreensScreenIdRouteImport.update({
     id: '/forms/feedback/screens/$screenId',
     path: '/forms/feedback/screens/$screenId',
+    getParentRoute: () => StaffRoute,
+  } as any)
+const StaffFormsMentoringScreensScreenIdRoute =
+  StaffFormsMentoringScreensScreenIdRouteImport.update({
+    id: '/forms/mentoring/screens/$screenId',
+    path: '/forms/mentoring/screens/$screenId',
     getParentRoute: () => StaffRoute,
   } as any)
 const StaffFormsCustomFormIdScreensScreenIdRoute =
@@ -603,11 +617,13 @@ export interface FileRoutesByFullPath {
   '/forms/custom/': typeof StaffFormsCustomIndexRoute
   '/forms/feedback/': typeof StaffFormsFeedbackIndexRoute
   '/forms/legal/': typeof StaffFormsLegalIndexRoute
+  '/forms/mentoring/': typeof StaffFormsMentoringIndexRoute
   '/forms/terms/': typeof StaffFormsTermsIndexRoute
   '/content/services/reviews/$serviceId': typeof StaffContentServicesReviewsServiceIdRoute
   '/entities/referral-form/screens/$screenId': typeof StaffEntitiesReferralFormScreensScreenIdRoute
   '/forms/custom/$formId/responses': typeof StaffFormsCustomFormIdResponsesRoute
   '/forms/feedback/screens/$screenId': typeof StaffFormsFeedbackScreensScreenIdRoute
+  '/forms/mentoring/screens/$screenId': typeof StaffFormsMentoringScreensScreenIdRoute
   '/content/services/reviews/': typeof StaffContentServicesReviewsIndexRoute
   '/forms/custom/$formId/': typeof StaffFormsCustomFormIdIndexRoute
   '/forms/custom/$formId/screens/$screenId': typeof StaffFormsCustomFormIdScreensScreenIdRoute
@@ -679,11 +695,13 @@ export interface FileRoutesByTo {
   '/forms/custom': typeof StaffFormsCustomIndexRoute
   '/forms/feedback': typeof StaffFormsFeedbackIndexRoute
   '/forms/legal': typeof StaffFormsLegalIndexRoute
+  '/forms/mentoring': typeof StaffFormsMentoringIndexRoute
   '/forms/terms': typeof StaffFormsTermsIndexRoute
   '/content/services/reviews/$serviceId': typeof StaffContentServicesReviewsServiceIdRoute
   '/entities/referral-form/screens/$screenId': typeof StaffEntitiesReferralFormScreensScreenIdRoute
   '/forms/custom/$formId/responses': typeof StaffFormsCustomFormIdResponsesRoute
   '/forms/feedback/screens/$screenId': typeof StaffFormsFeedbackScreensScreenIdRoute
+  '/forms/mentoring/screens/$screenId': typeof StaffFormsMentoringScreensScreenIdRoute
   '/content/services/reviews': typeof StaffContentServicesReviewsIndexRoute
   '/forms/custom/$formId': typeof StaffFormsCustomFormIdIndexRoute
   '/forms/custom/$formId/screens/$screenId': typeof StaffFormsCustomFormIdScreensScreenIdRoute
@@ -763,11 +781,13 @@ export interface FileRoutesById {
   '/_staff/forms/custom/': typeof StaffFormsCustomIndexRoute
   '/_staff/forms/feedback/': typeof StaffFormsFeedbackIndexRoute
   '/_staff/forms/legal/': typeof StaffFormsLegalIndexRoute
+  '/_staff/forms/mentoring/': typeof StaffFormsMentoringIndexRoute
   '/_staff/forms/terms/': typeof StaffFormsTermsIndexRoute
   '/_staff/content/services/reviews/$serviceId': typeof StaffContentServicesReviewsServiceIdRoute
   '/_staff/entities/referral-form/screens/$screenId': typeof StaffEntitiesReferralFormScreensScreenIdRoute
   '/_staff/forms/custom/$formId/responses': typeof StaffFormsCustomFormIdResponsesRoute
   '/_staff/forms/feedback/screens/$screenId': typeof StaffFormsFeedbackScreensScreenIdRoute
+  '/_staff/forms/mentoring/screens/$screenId': typeof StaffFormsMentoringScreensScreenIdRoute
   '/_staff/content/services/reviews/': typeof StaffContentServicesReviewsIndexRoute
   '/_staff/forms/custom/$formId/': typeof StaffFormsCustomFormIdIndexRoute
   '/_staff/forms/custom/$formId/screens/$screenId': typeof StaffFormsCustomFormIdScreensScreenIdRoute
@@ -846,11 +866,13 @@ export interface FileRouteTypes {
     | '/forms/custom/'
     | '/forms/feedback/'
     | '/forms/legal/'
+    | '/forms/mentoring/'
     | '/forms/terms/'
     | '/content/services/reviews/$serviceId'
     | '/entities/referral-form/screens/$screenId'
     | '/forms/custom/$formId/responses'
     | '/forms/feedback/screens/$screenId'
+    | '/forms/mentoring/screens/$screenId'
     | '/content/services/reviews/'
     | '/forms/custom/$formId/'
     | '/forms/custom/$formId/screens/$screenId'
@@ -922,11 +944,13 @@ export interface FileRouteTypes {
     | '/forms/custom'
     | '/forms/feedback'
     | '/forms/legal'
+    | '/forms/mentoring'
     | '/forms/terms'
     | '/content/services/reviews/$serviceId'
     | '/entities/referral-form/screens/$screenId'
     | '/forms/custom/$formId/responses'
     | '/forms/feedback/screens/$screenId'
+    | '/forms/mentoring/screens/$screenId'
     | '/content/services/reviews'
     | '/forms/custom/$formId'
     | '/forms/custom/$formId/screens/$screenId'
@@ -1005,11 +1029,13 @@ export interface FileRouteTypes {
     | '/_staff/forms/custom/'
     | '/_staff/forms/feedback/'
     | '/_staff/forms/legal/'
+    | '/_staff/forms/mentoring/'
     | '/_staff/forms/terms/'
     | '/_staff/content/services/reviews/$serviceId'
     | '/_staff/entities/referral-form/screens/$screenId'
     | '/_staff/forms/custom/$formId/responses'
     | '/_staff/forms/feedback/screens/$screenId'
+    | '/_staff/forms/mentoring/screens/$screenId'
     | '/_staff/content/services/reviews/'
     | '/_staff/forms/custom/$formId/'
     | '/_staff/forms/custom/$formId/screens/$screenId'
@@ -1515,6 +1541,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffFormsLegalIndexRouteImport
       parentRoute: typeof StaffRoute
     }
+    '/_staff/forms/mentoring/': {
+      id: '/_staff/forms/mentoring/'
+      path: '/forms/mentoring'
+      fullPath: '/forms/mentoring/'
+      preLoaderRoute: typeof StaffFormsMentoringIndexRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/_staff/forms/terms/': {
       id: '/_staff/forms/terms/'
       path: '/forms/terms'
@@ -1576,6 +1609,13 @@ declare module '@tanstack/react-router' {
       path: '/forms/feedback/screens/$screenId'
       fullPath: '/forms/feedback/screens/$screenId'
       preLoaderRoute: typeof StaffFormsFeedbackScreensScreenIdRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/forms/mentoring/screens/$screenId': {
+      id: '/_staff/forms/mentoring/screens/$screenId'
+      path: '/forms/mentoring/screens/$screenId'
+      fullPath: '/forms/mentoring/screens/$screenId'
+      preLoaderRoute: typeof StaffFormsMentoringScreensScreenIdRouteImport
       parentRoute: typeof StaffRoute
     }
     '/_staff/forms/custom/$formId/screens/$screenId': {
@@ -1760,10 +1800,12 @@ interface StaffRouteChildren {
   StaffFormsCustomIndexRoute: typeof StaffFormsCustomIndexRoute
   StaffFormsFeedbackIndexRoute: typeof StaffFormsFeedbackIndexRoute
   StaffFormsLegalIndexRoute: typeof StaffFormsLegalIndexRoute
+  StaffFormsMentoringIndexRoute: typeof StaffFormsMentoringIndexRoute
   StaffFormsTermsIndexRoute: typeof StaffFormsTermsIndexRoute
   StaffEntitiesReferralFormScreensScreenIdRoute: typeof StaffEntitiesReferralFormScreensScreenIdRoute
   StaffFormsCustomFormIdResponsesRoute: typeof StaffFormsCustomFormIdResponsesRoute
   StaffFormsFeedbackScreensScreenIdRoute: typeof StaffFormsFeedbackScreensScreenIdRoute
+  StaffFormsMentoringScreensScreenIdRoute: typeof StaffFormsMentoringScreensScreenIdRoute
   StaffFormsCustomFormIdIndexRoute: typeof StaffFormsCustomFormIdIndexRoute
   StaffFormsCustomFormIdScreensScreenIdRoute: typeof StaffFormsCustomFormIdScreensScreenIdRoute
   StaffFormsCustomFormIdVersionsVersionKeyRoute: typeof StaffFormsCustomFormIdVersionsVersionKeyRoute
@@ -1808,12 +1850,15 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffFormsCustomIndexRoute: StaffFormsCustomIndexRoute,
   StaffFormsFeedbackIndexRoute: StaffFormsFeedbackIndexRoute,
   StaffFormsLegalIndexRoute: StaffFormsLegalIndexRoute,
+  StaffFormsMentoringIndexRoute: StaffFormsMentoringIndexRoute,
   StaffFormsTermsIndexRoute: StaffFormsTermsIndexRoute,
   StaffEntitiesReferralFormScreensScreenIdRoute:
     StaffEntitiesReferralFormScreensScreenIdRoute,
   StaffFormsCustomFormIdResponsesRoute: StaffFormsCustomFormIdResponsesRoute,
   StaffFormsFeedbackScreensScreenIdRoute:
     StaffFormsFeedbackScreensScreenIdRoute,
+  StaffFormsMentoringScreensScreenIdRoute:
+    StaffFormsMentoringScreensScreenIdRoute,
   StaffFormsCustomFormIdIndexRoute: StaffFormsCustomFormIdIndexRoute,
   StaffFormsCustomFormIdScreensScreenIdRoute:
     StaffFormsCustomFormIdScreensScreenIdRoute,

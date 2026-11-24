@@ -31,12 +31,12 @@ export interface OnDemandFormDefinition {
   /** The screen holding the request's own parts. */
   readonly fixedScreen: FormSystemScreen;
   /** The board, and one screen's editor. */
-  readonly boardPath: '/forms/feedback';
-  readonly screenPath: '/forms/feedback/screens/$screenId';
+  readonly boardPath: '/forms/feedback' | '/forms/mentoring';
+  readonly screenPath: '/forms/feedback/screens/$screenId' | '/forms/mentoring/screens/$screenId';
   /** The one key that names it in the menu, on the page and in the editor's back link. */
-  readonly nameKey: 'nav:staff.feedbackForm';
+  readonly nameKey: 'nav:staff.feedbackForm' | 'nav:staff.mentoringForm';
   /** The translation namespace its fixed parts are worded in, as her app words them. */
-  readonly namespace: 'feedback';
+  readonly namespace: 'feedback' | 'mentoring';
   /** The fixed parts on her phone, in one language. They lead the fixed screen. */
   readonly fixedPhoneQuestions: (language: LanguageCode, t: Translate) => readonly PhoneQuestion[];
 }
