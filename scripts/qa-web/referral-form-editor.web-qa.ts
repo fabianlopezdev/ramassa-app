@@ -1,8 +1,10 @@
 /**
- * The entity referral form, composed from the Fitxa (RAPP-652):
- *   - the admin opens Formulari de derivació, adds a Personal and a Sensible
- *     field with the picker, makes the Personal one required, words it for
- *     the entity, and sees the preview follow; the app's own fields are
+ * The entity referral form, composed from the Fitxa (RAPP-652) on the form
+ * engine's board (RAPP-938):
+ *   - the admin opens Formulari de derivació, sees its screens as phones,
+ *     opens the first one in the screen editor, adds a Personal and a
+ *     Sensible field with the picker, makes the Personal one required, words
+ *     it for the entity, and sees the phone follow; the app's own fields are
  *     offered like any other, and her names cannot be removed;
  *   - the entity's portal draws the form from those placements, refuses it
  *     while the required field is empty, then sends both answers in one call;
@@ -74,9 +76,19 @@ test.afterAll(() => {
 });
 
 test.describe.serial('the entity referral form', () => {
-  test('the admin composes it from the Fitxa and the preview follows', async ({ page }) => {
+  test('the admin composes a screen from the Fitxa and the phone follows', async ({ page }) => {
     await signIn(page, ADMIN_EMAIL);
     await page.goto('/entities/referral-form');
+    // The board: its screens as phones, the add card first (RAPP-938).
+    const firstScreen = queryDatabase(
+      `select s.id from public.custom_form_screens s
+         join public.custom_forms f on f.id = s.form_id and f.system_key = 'entity_referral'
+        where f.org_id = '${ORG_ID}' and not s.is_archived order by s.sort_order, s.created_at limit 1`,
+    );
+    await expect(page.getByTestId('screen-board')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('board-add-screen')).toBeVisible();
+    await page.getByTestId(`board-edit-${firstScreen}`).click();
+    await expect(page).toHaveURL(new RegExp(`/entities/referral-form/screens/${firstScreen}$`));
     const fields = page.getByTestId('referral-form-fields');
     await expect(fields).toBeVisible({ timeout: 30_000 });
     // Type and privacy belong to the field: never asked here.
@@ -122,8 +134,8 @@ test.describe.serial('the entity referral form', () => {
     const row = page.getByTestId(`entity-placement-${PERSONAL}`);
     await row.getByTestId(`entity-placement-${PERSONAL}-edit`).click();
     await row.locator('[name="placement-label.ca"]').fill(WORDING);
-    const preview = page.getByTestId('referral-form-preview');
-    await expect(preview).toContainText(`${WORDING} *`);
+    const preview = page.getByTestId('phone-screen');
+    await expect(preview).toContainText(WORDING);
     await row.getByTestId(`entity-wording-${PERSONAL}-save`).click();
     await expect.poll(() => placementOf(PERSONAL), { timeout: 15_000 }).toBe(`true|${WORDING}`);
     // The entity reads its own language: the English wording too.
@@ -145,12 +157,8 @@ test.describe.serial('the entity referral form', () => {
       )
       .toBe(WORDING_EN);
 
-    // The preview in Arabic reads right to left, the field's own Arabic name or its Catalan one.
-    await page
-      .getByTestId('referral-preview-language')
-      .getByRole('radio')
-      .filter({ hasText: /^ar$/ })
-      .click();
+    // The phone in Arabic reads right to left, the field's own Arabic name or its Catalan one.
+    await page.getByTestId('phone-language').getByRole('radio').filter({ hasText: /^ar$/ }).click();
     await expect(preview).toHaveAttribute('dir', 'rtl');
     await expectSymmetry(page);
   });
