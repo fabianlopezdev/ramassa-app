@@ -277,7 +277,7 @@ export default function FeedbackScreen() {
             </SuccessPop>
           ) : null}
           {hasSubmissions || submissionsFailed ? (
-            <ScreenSection title={t('feedback:historyTitle')}>
+            <ScreenSection title={t('feedback:historyTitle')} isLast>
               {submissionsFailed ? (
                 <FailureNotice
                   code={toAppError(feedbackQuery.error).code}

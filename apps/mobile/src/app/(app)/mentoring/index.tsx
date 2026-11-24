@@ -179,7 +179,7 @@ export default function MentoringScreen() {
             </SuccessPop>
           ) : null}
           {hasRequests || requestsFailed ? (
-            <ScreenSection title={t('mentoring:statusTitle')}>
+            <ScreenSection title={t('mentoring:statusTitle')} isLast>
               {requestsFailed ? (
                 <View className="gap-sm">
                   <FailureNotice
