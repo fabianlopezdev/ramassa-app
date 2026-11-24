@@ -76,7 +76,7 @@ select throws_ok(
   'P0002', 'no such screen', 'an Onboarding block names a real screen');
 select throws_ok(
   $$ select public.save_form_block(null, 'entity_form', 'logistics', '{"ca": "Autoritzo"}'::jsonb) $$,
-  '23514', 'only an onboarding block names a screen', 'the entity form names no screen');
+  'P0002', 'no such screen of the referral form', 'an entity form block names a screen of the referral form (RAPP-938)');
 select lives_ok(
   $$ select public.save_form_block((select id from run where label = 'wizard'), null, null,
        '{"ca": "Autoritzo que em portin amb cotxe", "es": "Autorizo que me lleven en coche"}'::jsonb) $$,

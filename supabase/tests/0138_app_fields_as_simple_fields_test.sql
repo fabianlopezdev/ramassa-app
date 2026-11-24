@@ -31,7 +31,9 @@ create function pg_temp.field(p_org uuid, p_key text) returns uuid language sql 
   select id from public.profile_fields where org_id = p_org and system_key = p_key;
 $$;
 create function pg_temp.app_placements(p_org uuid) returns jsonb language sql as $$
-  select jsonb_agg(jsonb_build_object('key', f.system_key, 'surface', p.surface, 'screen', p.screen_key,
+  -- The referral form's screen is each organization's own (RAPP-938).
+  select jsonb_agg(jsonb_build_object('key', f.system_key, 'surface', p.surface,
+                                      'screen', case when p.surface = 'entity_form' then null else p.screen_key end,
                                       'required', p.required)
                    order by f.system_key, p.surface)
     from public.field_placements p join public.profile_fields f on f.id = p.field_id
