@@ -108,6 +108,8 @@ test('the onboarding design role sees the test players, the onboarding, the lega
     '/surveys',
     // The entity referral form, built on the same board (RAPP-965).
     '/entities/referral-form',
+    // The suggestions form, built on the same board (RAPP-939).
+    '/forms/feedback',
     '/profile-layout',
     '/legal-data',
   ]);
@@ -123,6 +125,7 @@ test('Settings holds the organization tabs only; the team, entities and Fitxa ha
     '/forms/custom',
     '/surveys',
     '/entities/referral-form',
+    '/forms/feedback',
     '/profile-layout',
     '/legal-data',
     '/settings',
@@ -156,6 +159,8 @@ test('the menu groups by audience in the agreed order (RAPP-654)', () => {
       // The forms the team creates (RAPP-700).
       '/forms/custom',
       '/entities/referral-form',
+      // The suggestions form, after the entities' (RAPP-939).
+      '/forms/feedback',
     ],
     // Surveys, one item of their own (RAPP-934).
     surveys: ['/surveys'],

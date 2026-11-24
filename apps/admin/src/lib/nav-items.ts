@@ -29,6 +29,7 @@ import {
   Inbox,
   Landmark,
   LayoutDashboard,
+  Lightbulb,
   ListChecks,
   MessageSquare,
   Scale,
@@ -139,6 +140,16 @@ export const REFERRAL_FORM_PERMISSIONS = [
   'onboarding.design',
 ] as const satisfies readonly PermissionCode[];
 
+/**
+ * The suggestions form (RAPP-939): the people who design the forms build it
+ * on the same board. The suggestions themselves are read in the inbox, with
+ * feedback.view.
+ */
+export const FEEDBACK_FORM_PERMISSIONS = [
+  'settings.organization',
+  'onboarding.design',
+] as const satisfies readonly PermissionCode[];
+
 /** The Data area: exports and the audit log. */
 export const DATA_PERMISSIONS = [
   'export.participants',
@@ -241,6 +252,14 @@ export const STAFF_NAV_ITEMS = [
     labelKey: 'nav:staff.referralForm',
     group: 'forms',
     anyPermission: REFERRAL_FORM_PERMISSIONS,
+  },
+  {
+    // The form a player fills in to send a suggestion (RAPP-939).
+    to: '/forms/feedback',
+    icon: Lightbulb,
+    labelKey: 'nav:staff.feedbackForm',
+    group: 'forms',
+    anyPermission: FEEDBACK_FORM_PERMISSIONS,
   },
   {
     to: '/profile-layout',

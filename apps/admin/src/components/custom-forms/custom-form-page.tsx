@@ -55,6 +55,7 @@ import {
   formScreenButtons,
   placedPhoneQuestions,
   staffScreenContent,
+  type PhoneQuestion,
 } from '@/components/onboarding/screen-content';
 import { customFormDeletion } from '@/components/onboarding/screen-deletion';
 import { fixedScreenLockKeys, teamHideLockKey } from '@/components/onboarding/screen-hiding';
@@ -128,11 +129,17 @@ export function FormScreenPhone({
   screen,
   fill,
   isDimmed,
+  leadingQuestions,
 }: {
   readonly catalog: CustomFormData['intakeCatalog'];
   readonly screen: CustomFormScreen;
   readonly fill: ((text: string) => string) | undefined;
   readonly isDimmed?: boolean;
+  /**
+   * What the app draws on the screen before the questions placed on it: the
+   * suggestions form's type, text and photo (RAPP-939).
+   */
+  readonly leadingQuestions?: (language: LanguageCode) => readonly PhoneQuestion[];
 }) {
   const { t, i18n } = useTranslation(['settings', 'onboarding']);
   const language = (i18n.resolvedLanguage ?? 'ca') as LanguageCode;
@@ -142,7 +149,10 @@ export function FormScreenPhone({
         staffScreenContent(
           screen.title,
           screen.intro,
-          placedPhoneQuestions(catalog, screen.id, language, null, 'custom_form'),
+          [
+            ...(leadingQuestions?.(language) ?? []),
+            ...placedPhoneQuestions(catalog, screen.id, language, null, 'custom_form'),
+          ],
           language,
           t,
           screen.texts,
