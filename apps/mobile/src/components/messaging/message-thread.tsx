@@ -1,6 +1,7 @@
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
 import { PublicOrganizationLogo } from '@/components/branding/public-organization-logo';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { Icon } from '@/components/icons/icon';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -321,9 +322,12 @@ function MessageThreadView({
   onTitlePress,
   titlePressLabel,
   usesNativeHeader = false,
+  notice,
 }: {
   readonly title: string;
   readonly controller: MessageThreadController;
+  /** A fixed line under the header, such as when the team replies (RAPP-971). */
+  readonly notice?: string;
   readonly headerAccessory?: ReactNode;
   /** The staff thread with a player: her name opens her card (RAPP-799). */
   readonly onTitlePress?: () => void;
@@ -544,6 +548,19 @@ function MessageThreadView({
               </Text>
             ) : null}
           </View>
+          {notice === undefined ? null : (
+            <View testID="message-thread-notice" className="items-center px-lg pt-sm">
+              <View
+                style={continuousCorners}
+                className="flex-row items-center gap-xs rounded-full bg-neutral-100 px-md py-xs"
+              >
+                <Icon name="clock" size={tokens.fontSize.sm} color={tokens.colors.neutral[600]} />
+                <Text className={`text-center text-sm text-neutral-600 ${fontClass}`}>
+                  {notice}
+                </Text>
+              </View>
+            </View>
+          )}
           {/*
             The club's logo, large and faint, behind the messages (RAPP-907).
             It stays still while the messages scroll over it.
@@ -601,12 +618,14 @@ export function PlayerMessageThread({
   readonly headerAccessory?: ReactNode;
   readonly usesNativeHeader?: boolean;
 }) {
+  const { t } = useTranslation('messaging');
   const thread = (
     <MessageThreadView
       title={title}
       controller={useOwnConversation()}
       headerAccessory={headerAccessory}
       usesNativeHeader={usesNativeHeader}
+      notice={t('replyHours')}
     />
   );
   if (!usesNativeHeader) return thread;

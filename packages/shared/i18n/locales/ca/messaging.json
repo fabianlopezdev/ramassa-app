@@ -18,6 +18,7 @@
   "messageStatus": "Estat del missatge: {{status}}",
   "retry": "Torna-ho a provar",
   "offline": "Els missatges quedaran en cua.",
+  "replyHours": "L’equip respon de dilluns a divendres, de 9 a 17 h.",
   "unread": "{{count}} missatges sense llegir",
   "unread_one": "{{count}} missatge sense llegir",
   "unread_other": "{{count}} missatges sense llegir",
