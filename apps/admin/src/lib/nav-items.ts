@@ -17,7 +17,7 @@ import {
   CalendarDays,
   CalendarRange,
   ClipboardList,
-  ClipboardPen,
+  // ClipboardPen, the entity form's icon, comes back with it (RAPP-970).
   Database,
   Files,
   FileSignature,
@@ -248,14 +248,16 @@ export const STAFF_NAV_ITEMS = [
     group: 'surveys',
     anyPermission: [...CUSTOM_FORMS_PERMISSIONS, 'surveys.manage', 'surveys.results'],
   },
-  {
-    // The entity referral form keeps its URL under the entities (RAPP-696).
-    to: '/entities/referral-form',
-    icon: ClipboardPen,
-    labelKey: 'nav:staff.referralForm',
-    group: 'forms',
-    anyPermission: REFERRAL_FORM_PERMISSIONS,
-  },
+  // Formulari de les entitats waits for the entities, which roll out after
+  // the app runs in production (RAPP-970). Its page and board stay built.
+  // {
+  //   // The entity referral form keeps its URL under the entities (RAPP-696).
+  //   to: '/entities/referral-form',
+  //   icon: ClipboardPen,
+  //   labelKey: 'nav:staff.referralForm',
+  //   group: 'forms',
+  //   anyPermission: REFERRAL_FORM_PERMISSIONS,
+  // },
   {
     // The form a player fills in to send a suggestion (RAPP-939).
     to: '/forms/feedback',

@@ -71,9 +71,10 @@ function isCustomFormPath(pathname: string): boolean {
  * The entity referral form and its screens (RAPP-965). The referrals an
  * entity sent and every other entity page stay closed to her.
  */
-function isReferralFormPath(pathname: string): boolean {
-  return pathname === '/entities/referral-form' || pathname.startsWith('/entities/referral-form/');
-}
+// Formulari de les entitats waits for the entities (RAPP-970).
+// function isReferralFormPath(pathname: string): boolean {
+//   return pathname === '/entities/referral-form' || pathname.startsWith('/entities/referral-form/');
+// }
 
 /**
  * The suggestions form (RAPP-939) and the mentoring form (RAPP-940), and their
@@ -107,7 +108,8 @@ export function designRoleRedirect(
   if (permissions.has('onboarding.design') && isOnboardingPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isLegalPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isCustomFormPath(pathname)) return null;
-  if (permissions.has('onboarding.design') && isReferralFormPath(pathname)) return null;
+  // Formulari de les entitats waits for the entities (RAPP-970).
+  // if (permissions.has('onboarding.design') && isReferralFormPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isOnDemandFormPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isProfileLayoutPath(pathname)) return null;
   if (permissions.has('test_players.manage') && isTestPlayerPath(pathname)) return null;
