@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { isWithinTeamReplyHours } from './team-reply-hours';
+import { isWithinTeamReplyHours } from './messaging';
 
 describe('the team reply hours, club time (RAPP-971)', () => {
   test('a weekday between 9:00 and 17:00 in Madrid is inside', () => {
