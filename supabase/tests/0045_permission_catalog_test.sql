@@ -2,9 +2,10 @@
 -- Run with: bunx supabase test db
 --
 -- What these assertions defend:
---   1. The catalog has the 46 permissions (participants.view_health since RAPP-304,
+--   1. The catalog has the 47 permissions (participants.view_health since RAPP-304,
 --      consents.collect since RAPP-305, in Coach, Staff and Admin; test_players.manage and
---      onboarding.design since RAPP-615) and the built-in presets their product defaults;
+--      onboarding.design since RAPP-615; incidents.manage since RAPP-973, in Staff and
+--      Admin) and the built-in presets their product defaults;
 --      every organization has the four built-in presets (Onboarding design since RAPP-615).
 --   2. Existing team members hold exactly the preset of their role, and nobody
 --      else holds anything. No access rule reads permissions yet (RAPP-230).
@@ -19,14 +20,14 @@ select plan(31);
 
 -- 1. Catalog and presets ----------------------------------------------------------------
 
-select is((select count(*)::int from public.permissions), 46, 'the catalog has 46 permissions');
+select is((select count(*)::int from public.permissions), 47, 'the catalog has 47 permissions');
 select is(
   (select count(*)::int from public.permission_preset_defaults where builtin_key = 'admin'),
-  46, 'the Admin default holds every permission'
+  47, 'the Admin default holds every permission'
 );
 select is(
   (select count(*)::int from public.permission_preset_defaults where builtin_key = 'staff'),
-  31, 'the Staff default holds 31'
+  32, 'the Staff default holds 32'
 );
 select is(
   (select array_agg(permission_code order by permission_code) from public.permission_preset_defaults where builtin_key = 'coach'),
@@ -51,11 +52,11 @@ select is(
 
 select is(
   (select count(*)::int from public.team_member_permissions where profile_id = '5eed0000-0000-4000-8000-000000000001'),
-  46, 'the admin holds the Admin preset'
+  47, 'the admin holds the Admin preset'
 );
 select is(
   (select count(*)::int from public.team_member_permissions where profile_id = '5eed0000-0000-4000-8000-000000000002'),
-  33, 'a seeded staff member holds the Staff preset plus the RAPP-230 adjustment (view_sensitive, rgpd.erase)'
+  34, 'a seeded staff member holds the Staff preset plus the RAPP-230 adjustment (view_sensitive, rgpd.erase)'
 );
 select is(
   (select count(*)::int from public.team_member_permissions t
@@ -69,11 +70,11 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000002", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
 select ok((select public.has_permission('attendance.mark')), 'staff hold attendance.mark');
 select ok(not (select public.has_permission('team.manage')), 'staff do not hold team.manage');
-select is((select count(*)::int from public.my_permissions()), 33, 'my_permissions lists her own 33');
+select is((select count(*)::int from public.my_permissions()), 34, 'my_permissions lists her own 34');
 select is((select count(*)::int from public.permission_presets), 0, 'without team.manage she cannot read presets');
 select is(
   (select count(*)::int from public.team_member_permissions),
-  33, 'she reads only her own toggles'
+  34, 'she reads only her own toggles'
 );
 select throws_ok(
   $$ select public.set_team_member_permissions('5eed0000-0000-4000-8000-000000000003', array['attendance.mark']) $$,
@@ -125,8 +126,8 @@ select is(
   (select jsonb_array_length(changes -> 'removed') from public.audit_log
     where action = 'team.permissions_update' and target_id = '5eed0000-0000-4000-8000-000000000003'
     order by created_at desc limit 1),
-  31,
-  'and the 31 toggles removed'
+  32,
+  'and the 32 toggles removed'
 );
 
 -- The admin gives that staff member team.manage, then the admin loses some toggles.
@@ -188,7 +189,7 @@ reset role;
 update public.profiles set role = 'admin' where id = '5eed0000-0000-4000-8000-000000000002';
 select is(
   (select count(*)::int from public.team_member_permissions where profile_id = '5eed0000-0000-4000-8000-000000000002'),
-  46, 'a staff member promoted to admin gets the Admin preset'
+  47, 'a staff member promoted to admin gets the Admin preset'
 );
 
 insert into public.organizations (id, name, slug)
