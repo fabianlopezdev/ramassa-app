@@ -69,6 +69,8 @@ export interface WizardFrameProps {
    * entity already answered whole screens (RAPP-300).
    */
   readonly totalSteps?: number;
+  /** The flow's name over the progress; the sign-up's "Alta a l'app" when omitted. */
+  readonly flowLabel?: string;
   readonly title: string;
   readonly intro?: string;
   readonly children: ReactNode;
@@ -92,6 +94,7 @@ function WizardFrameContent({
   stepNumber,
   scrollEnabled,
   totalSteps = WIZARD_TOTAL_STEPS,
+  flowLabel,
   title,
   intro,
   children,
@@ -119,6 +122,7 @@ function WizardFrameContent({
           <WizardProgress
             step={showProgress ? stepNumber : undefined}
             total={totalSteps}
+            flowLabel={flowLabel}
             onBack={
               onBack === undefined || !added.hasQuestions
                 ? onBack

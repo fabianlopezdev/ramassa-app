@@ -83,6 +83,7 @@ export default function NewIncidentRoute() {
       catalog={catalog}
       form={form}
       saved={NO_ANSWERS}
+      flowLabel={t('title')}
       sendLabel={t('submit')}
       failureMessage={t('submitFailed')}
       footer={(screen, isSending) =>
