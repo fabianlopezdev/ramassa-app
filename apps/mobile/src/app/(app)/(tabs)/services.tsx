@@ -14,6 +14,7 @@ import {
 import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { ServiceCategoryGrid } from '@/components/services/service-category-grid';
+import { useAjudaRefresh } from '@/lib/ajuda-refresh';
 import { countUnseenHelpItems, NO_HELP_NUMBERS } from '@/lib/help-news';
 import { selectBaseDocuments } from '@/lib/player-guides';
 import { usePlayerKnowledgeArticles } from '@/lib/player-knowledge';
@@ -24,7 +25,7 @@ import { useTabNews } from '@/lib/use-tab-news';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { toAppError } from '@ramassa/shared/errors';
 import { tokens } from '@ramassa/shared/tokens';
 
@@ -47,6 +48,7 @@ function ServicesScreen() {
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const categoriesQuery = usePlayerServiceCategories();
+  const { refresh, isRefreshing } = useAjudaRefresh();
   // Ajuda opens on the club's documents; with none published yet, on Serveis.
   const [chosenSegment, setSegment] = useState<AjudaSegment>('documents');
   const hasBaseDocuments = selectBaseDocuments(usePlayerKnowledgeArticles().data).length > 0;
@@ -114,7 +116,7 @@ function ServicesScreen() {
     [guideNewsCount, hasBaseDocuments, serviceNews.total, t],
   );
 
-  // One header for every segment, so the switch stays in place while any loads.
+  // One header for every view, so the switch stays in place while any loads.
   // The shared header draws Inici's section divider under the switch (RAPP-854).
   const tabHeader = (
     <PlayerTabHeader title={t('nav:tabs.services')}>
@@ -129,66 +131,59 @@ function ServicesScreen() {
     </PlayerTabHeader>
   );
 
+  // What sits under the header, and the name the page takes for the tests.
+  let body: ReactElement;
+  let screenTestID: string | undefined;
   if (segment === 'documents') {
-    return (
-      <PlayerBaseDocumentList
-        header={<PageWidth>{tabHeader}</PageWidth>}
-        contentContainerStyle={contentContainerStyle}
+    body = <PlayerBaseDocumentList />;
+    screenTestID = 'ajuda-base-documents';
+  } else if (segment === 'guides') {
+    body = <PlayerGuideList />;
+    screenTestID = 'knowledge-base-screen';
+  } else if (categoriesQuery.isPending && categoriesQuery.data === undefined) {
+    body = <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />;
+  } else if (categoriesQuery.isError && categoriesQuery.data === undefined) {
+    body = (
+      <AnnouncementFeedError
+        message={t('playerServices:loadFailed')}
+        retryLabel={t('playerServices:retry')}
+        code={toAppError(categoriesQuery.error).code}
+        languageFontClass={languageFontClass}
+        onRetry={refresh}
       />
     );
-  }
-
-  if (segment === 'guides') {
-    return (
-      <PlayerGuideList
-        header={<PageWidth>{tabHeader}</PageWidth>}
-        contentContainerStyle={contentContainerStyle}
-      />
+  } else {
+    body = (
+      <PageWidth>
+        <ScreenSection title={t('playerServices:chooseCategory')} isLast>
+          <ServiceCategoryGrid
+            categories={categoriesQuery.data ?? []}
+            newCounts={serviceNews.countsByCategoryId}
+            onSelect={selectCategory}
+          />
+        </ScreenSection>
+      </PageWidth>
     );
+    screenTestID = 'player-services-categories';
   }
 
-  const stateScreen = (body: ReactElement, testID?: string) => (
+  // One scrolling page for the three views (RAPP-977). The header is the same
+  // piece of the page whichever view shows, so choosing another view only
+  // changes what is under it. Her photo, the title and the switch are never
+  // built again, which is what made the photo blink on Android.
+  return (
     <ScrollView
-      testID={testID}
+      testID={screenTestID}
       style={styles.screen}
       contentContainerStyle={contentContainerStyle}
       contentInsetAdjustmentBehavior="automatic"
+      refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={refresh} />}
     >
       <View className={screenBlockGapClassName}>
         <PageWidth>{tabHeader}</PageWidth>
         {body}
       </View>
     </ScrollView>
-  );
-
-  if (categoriesQuery.isPending && categoriesQuery.data === undefined) {
-    return stateScreen(
-      <AnnouncementFeedSkeleton accessibilityLabel={t('playerServices:loading')} />,
-    );
-  }
-  if (categoriesQuery.isError && categoriesQuery.data === undefined) {
-    return stateScreen(
-      <AnnouncementFeedError
-        message={t('playerServices:loadFailed')}
-        retryLabel={t('playerServices:retry')}
-        code={toAppError(categoriesQuery.error).code}
-        languageFontClass={languageFontClass}
-        onRetry={() => void categoriesQuery.refetch()}
-      />,
-    );
-  }
-
-  return stateScreen(
-    <PageWidth>
-      <ScreenSection title={t('playerServices:chooseCategory')} isLast>
-        <ServiceCategoryGrid
-          categories={categoriesQuery.data ?? []}
-          newCounts={serviceNews.countsByCategoryId}
-          onSelect={selectCategory}
-        />
-      </ScreenSection>
-    </PageWidth>,
-    'player-services-categories',
   );
 }
 
