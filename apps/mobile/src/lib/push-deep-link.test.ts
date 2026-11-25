@@ -133,6 +133,22 @@ describe('forum report pushes (X4)', () => {
   });
 });
 
+describe('incident report pushes (RAPP-973)', () => {
+  const data = { contentType: 'incident_report', contentId: FLAG_ID };
+
+  test('open the incidents screen for incidents.manage', () => {
+    expect(resolvePushDetailRoute(data, team('incidents.manage'))).toBe('/team-incidents' as Href);
+  });
+
+  test('land a team member who reads mentoring only on her start screen', () => {
+    expect(resolvePushDetailRoute(data, team('mentoring.manage'))).toBe('/today' as Href);
+  });
+
+  test('refresh the incidents before they open', () => {
+    expect(pushDetailQueryRoot('incident_report')).toBe('incidents');
+  });
+});
+
 describe('referral update pushes (X4)', () => {
   const data = { contentType: 'referral_update', contentId: REFERRAL_UPDATE_ID };
 

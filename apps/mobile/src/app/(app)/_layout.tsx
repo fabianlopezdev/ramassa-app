@@ -12,6 +12,7 @@ import { PushPermissionRationale } from '@/components/push-permission-rationale'
 import { areaHome, awaitsSecondFactor, teamScreens } from '@/lib/account-area';
 import { useAuthorizationStatus } from '@/lib/authorization';
 import { useMyCustomForms } from '@/lib/custom-forms';
+import { useLaunchSplashDone } from '@/lib/launch-splash-state';
 import { isWaitingForNetwork, retryAfterNetworkCheck } from '@/lib/network-status';
 import { useFinishOnboardingChain, useMyOnboardingChain } from '@/lib/onboarding-chain';
 import { canPromptForPush } from '@/lib/push-prompt-eligibility';
@@ -20,7 +21,6 @@ import { useSigningSession } from '@/lib/tablet-signing';
 import { hasTeamAppScreen } from '@/lib/team-shell';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useLaunchSplashDone } from '@/lib/launch-splash-state';
 import { usePushRegistration } from '@/lib/use-push-registration';
 import { Redirect, usePathname, type Href } from 'expo-router';
 import { Stack } from 'expo-router/stack';
@@ -340,6 +340,9 @@ function AppNavigator() {
               <Stack.Screen name="mentoring/index" />
               <Stack.Screen name="mentoring/[id]" />
               <Stack.Screen name="feedback/index" />
+              {/* Reportar un incident (RAPP-973): her reports, and the form walked to send one. */}
+              <Stack.Screen name="incident/index" />
+              <Stack.Screen name="incident/new" />
               <Stack.Screen name="survey/[id]" />
               {/* A survey on the form engine (RAPP-929): a signature-free walk, so swipe back stays. */}
               <Stack.Screen name="survey-form/[responseId]" />
@@ -402,6 +405,9 @@ function AppNavigator() {
             </Stack.Protected>
             <Stack.Protected guard={isTeam && team.mentoring}>
               <Stack.Screen name="team-mentoring" />
+            </Stack.Protected>
+            <Stack.Protected guard={isTeam && team.incidents}>
+              <Stack.Screen name="team-incidents" />
             </Stack.Protected>
             <Stack.Protected guard={isTeam && team.notifications}>
               <Stack.Screen name="team-notifications" />

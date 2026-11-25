@@ -1,11 +1,13 @@
 /**
  * Contacte, once called Xat (RAPP-789, RAPP-860): everything private between
  * her and the staff, in one tab.
- * Three cards and nothing else: the chat with its unread count, mentoring
- * with the state of the request she is waiting on, and suggestions. Each opens
- * the screen it always opened (`team-chat`, `mentoring`, `feedback`). The chat
- * is the raised card of Per fer (RAPP-842); mentoring and suggestions sit under
- * it as a pair of half-width raised cards (RAPP-874). The unread count sits in a circle
+ * Four cards and nothing else: the chat with its unread count, reporting an
+ * incident (RAPP-973), mentoring with the state of the request she is waiting
+ * on, and suggestions. Each opens the screen it always opened (`team-chat`,
+ * `incident`, `mentoring`, `feedback`). The chat is the raised card of Per fer
+ * (RAPP-842), and reporting an incident the same long card under it;
+ * mentoring and suggestions sit under them as a pair of half-width raised
+ * cards (RAPP-874). The unread count sits in a circle
  * on the top edge near the end, and the state of her request is a badge on the
  * top edge near the start, like "Nou". Both are in the brand colour.
  * Mentoria and Suggeriments also count what the staff changed for her (RAPP-873),
@@ -54,7 +56,14 @@ function stateBadge(label: string | null): RaisedCardBadge | null {
 }
 
 function ChatTabScreen() {
-  const { t } = useTranslation(['nav', 'messaging', 'mentoring', 'feedback', 'common']);
+  const { t } = useTranslation([
+    'nav',
+    'messaging',
+    'incidents',
+    'mentoring',
+    'feedback',
+    'common',
+  ]);
   const { push } = useRouter();
   const unread = useUnreadMessages().data ?? 0;
   const news = contactCardNewsCounts(useTabNews().data);
@@ -66,6 +75,7 @@ function ChatTabScreen() {
   const tabInsets = usePlayerTabContentInsets();
   const languageFontClass = useLanguageFontClass();
   const teamChatTitle = t('messaging:playerTitle');
+  const incidentTitle = t('incidents:title');
   const mentoringTitle = t('mentoring:title');
   const feedbackTitle = t('feedback:title');
   const unreadLabel = formatUnreadBadge(unread);
@@ -75,6 +85,7 @@ function ChatTabScreen() {
     [t],
   );
   const openTeamChat = useCallback(() => push('/team-chat' as Href), [push]);
+  const openIncident = useCallback(() => push('/incident' as Href), [push]);
   const openMentoring = useCallback(() => push('/mentoring' as Href), [push]);
   const openFeedback = useCallback(() => push('/feedback' as Href), [push]);
 
@@ -100,6 +111,14 @@ function ChatTabScreen() {
           count={unreadLabel}
           languageFontClass={languageFontClass}
           onOpen={openTeamChat}
+        />
+        <RaisedIconCard
+          testID="chat-open-incident"
+          icon={playerNavIcons.incident}
+          title={incidentTitle}
+          accessibilityLabel={incidentTitle}
+          languageFontClass={languageFontClass}
+          onOpen={openIncident}
         />
         <RaisedHalfCardRow>
           <RaisedHalfCard

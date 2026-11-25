@@ -21,6 +21,7 @@ import { useOpenDeletionRequests } from '@/lib/rgpd';
 import { useMonthlyCount, useOpenCheckouts } from '@/lib/stock';
 import { useStaffFeedback } from '@/lib/team-feedback';
 import { useForumModerationQueue } from '@/lib/team-forum';
+import { useStaffIncidentReports } from '@/lib/team-incidents';
 import { useStaffMentoringRequests } from '@/lib/team-mentoring';
 import { teamAreas } from '@/lib/team-shell';
 import { pendingQueues, type PendingQueue } from '@/lib/today';
@@ -40,6 +41,7 @@ const TEST_IDS: Readonly<Record<PendingQueue, string>> = {
   reports: 'today-forum',
   feedback: 'today-feedback',
   mentoring: 'today-mentoring',
+  incidents: 'today-incidents',
   erasure: 'today-erasure',
   messages: 'today-messages',
   lateLoans: 'today-checkouts',
@@ -61,6 +63,8 @@ function usePendingLabel(queue: PendingQueue): string {
       return t('team.pendingRow.feedback');
     case 'mentoring':
       return t('team.pendingRow.mentoring');
+    case 'incidents':
+      return t('team.pendingRow.incidents');
     case 'erasure':
       return t('team.pendingRow.erasure');
     case 'messages':
@@ -149,6 +153,16 @@ function MentoringRow() {
   const count = data?.filter((request) => request.status === 'requested').length;
   return (
     <CountRow queue="mentoring" count={count} onPress={() => push('/team-mentoring' as Href)} />
+  );
+}
+
+/** The open incidents players reported (RAPP-973). */
+function IncidentsRow() {
+  const { push } = useRouter();
+  const data = useStaffIncidentReports().data;
+  const count = data?.filter((report) => report.status === 'open').length;
+  return (
+    <CountRow queue="incidents" count={count} onPress={() => push('/team-incidents' as Href)} />
   );
 }
 
@@ -287,6 +301,8 @@ export function TodayPendingList() {
             return <FeedbackRow key={queue} />;
           case 'mentoring':
             return <MentoringRow key={queue} />;
+          case 'incidents':
+            return <IncidentsRow key={queue} />;
           case 'erasure':
             return <ErasureRow key={queue} />;
           case 'messages':

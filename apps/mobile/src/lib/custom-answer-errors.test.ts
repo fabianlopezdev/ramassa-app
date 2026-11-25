@@ -47,7 +47,8 @@ describe('the message names the fix', () => {
 
   test('a day today or before (RAPP-973): a future day says so', () => {
     const past = question('date', { min_age: 0 });
-    expect(customAnswerMessage(past, '2999-01-01', t)).toBe('onboarding:customErrorDateFuture');
+    const nextYear = `${new Date().getUTCFullYear() + 1}-01-01`;
+    expect(customAnswerMessage(past, nextYear, t)).toBe('onboarding:customErrorDateFuture');
     expect(customAnswerMessage(past, '2020-01-01', t)).toBeUndefined();
   });
 

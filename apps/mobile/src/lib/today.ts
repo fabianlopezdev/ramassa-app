@@ -13,6 +13,7 @@ export type PendingQueue =
   | 'reports'
   | 'feedback'
   | 'mentoring'
+  | 'incidents'
   | 'erasure'
   | 'messages'
   | 'lateLoans'
@@ -36,6 +37,8 @@ const PENDING_QUEUE_RULES: readonly {
   { queue: 'reports', rule: [['forum.moderate', 'gallery.moderate']] },
   { queue: 'feedback', rule: [['feedback.view']] },
   { queue: 'mentoring', rule: [['mentoring.manage']] },
+  // The incidents players report (RAPP-973), beside mentoring.
+  { queue: 'incidents', rule: [['incidents.manage']] },
   // The requests screen sits inside Participants, so it needs that area too.
   { queue: 'erasure', rule: [['rgpd.erase'], ['participants.view']] },
   { queue: 'messages', rule: [['messages.inbox']] },

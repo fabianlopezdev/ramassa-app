@@ -11,8 +11,7 @@ import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
 import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
-import { SuccessPop } from '@/components/motion/success-pop';
-import { continuousCorners } from '@/lib/continuous-corners';
+import { SentNotice } from '@/components/layout/sent-notice';
 import { uploadFeedbackImage, type FeedbackImageDraft } from '@/lib/feedback-upload';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { useCreateFeedback, usePlayerFeedback } from '@/lib/player-feedback';
@@ -258,23 +257,11 @@ export default function FeedbackScreen() {
       >
         <FormWidth className="gap-lg">
           {isComplete ? (
-            <SuccessPop>
-              <View
-                testID="feedback-confirmation"
-                accessibilityRole="alert"
-                className="gap-xs rounded-lg border border-success bg-white p-lg"
-                style={continuousCorners}
-              >
-                <Text
-                  className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-                >
-                  {t('feedback:successTitle')}
-                </Text>
-                <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
-                  {t('feedback:successBody')}
-                </Text>
-              </View>
-            </SuccessPop>
+            <SentNotice
+              testID="feedback-confirmation"
+              title={t('feedback:successTitle')}
+              body={t('feedback:successBody')}
+            />
           ) : null}
           {hasSubmissions || submissionsFailed ? (
             <ScreenSection title={t('feedback:historyTitle')} isLast>

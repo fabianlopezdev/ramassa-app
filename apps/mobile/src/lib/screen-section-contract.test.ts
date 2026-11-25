@@ -39,9 +39,9 @@ test('no screen defines its own Section component', () => {
   expect(offenders).toEqual([]);
 });
 
-// Headings that are not section titles: a notice card and the title of one
-// request. Anything else at these sizes is a section title.
-const notSectionTitles = new Set(['app/(app)/mentoring/[id].tsx', 'app/(app)/mentoring/index.tsx']);
+// Headings that are not section titles: the title of one request. Anything
+// else at these sizes is a section title.
+const notSectionTitles = new Set(['app/(app)/mentoring/[id].tsx']);
 
 test('no screen draws a section title by hand', () => {
   const handMade =
@@ -57,8 +57,10 @@ test('no screen draws a section title by hand', () => {
 // section titles: a block a staff member wrote into a form, three cards of one
 // service review, a numbered heading inside an article, the title of one
 // article card, the places left on an event, and the notice that asks her to
-// confirm deleting her own post (RAPP-884).
+// confirm deleting her own post (RAPP-884), and the notice once she sent
+// something (RAPP-973).
 const componentHeadingsThatAreNotSectionTitles = new Set([
+  'components/layout/sent-notice.tsx',
   'components/forms/text-block.tsx',
   'components/content/service-review-detail.tsx',
   'components/knowledge/player-structured-content-shared.tsx',

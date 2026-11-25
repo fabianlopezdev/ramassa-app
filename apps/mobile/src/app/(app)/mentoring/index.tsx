@@ -11,8 +11,8 @@ import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { OpenableCard } from '@/components/layout/openable-card';
 import { ActionScreen } from '@/components/layout/screen-action';
 import { ScreenSection } from '@/components/layout/screen-section';
+import { SentNotice } from '@/components/layout/sent-notice';
 import { MentoringPreferencePickers } from '@/components/mentoring/mentoring-preference-pickers';
-import { SuccessPop } from '@/components/motion/success-pop';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { MENTORING_STATUS_KEYS, MENTORING_TOPIC_KEYS } from '@/lib/mentoring-labels';
 import { useCreateMentoringRequest, usePlayerMentoringRequests } from '@/lib/player-mentoring';
@@ -159,24 +159,11 @@ export default function MentoringScreen() {
       >
         <FormWidth className="gap-lg">
           {isComplete ? (
-            <SuccessPop>
-              <View
-                accessibilityRole="alert"
-                testID="mentoring-request-confirmation"
-                className="gap-xs rounded-lg border border-success bg-white p-lg"
-                style={continuousCorners}
-              >
-                <Text
-                  accessibilityRole="header"
-                  className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-                >
-                  {t('mentoring:successTitle')}
-                </Text>
-                <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
-                  {t('mentoring:successBody')}
-                </Text>
-              </View>
-            </SuccessPop>
+            <SentNotice
+              testID="mentoring-request-confirmation"
+              title={t('mentoring:successTitle')}
+              body={t('mentoring:successBody')}
+            />
           ) : null}
           {hasRequests || requestsFailed ? (
             <ScreenSection title={t('mentoring:statusTitle')} isLast>

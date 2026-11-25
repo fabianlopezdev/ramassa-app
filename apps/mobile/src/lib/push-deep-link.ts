@@ -28,7 +28,9 @@ export type PushDetailQueryRoot =
   // A report on the forum, for the moderators (X4).
   | 'forum-moderation'
   // An entity's update on a referral, for the referral's team member (X4).
-  | 'participants';
+  | 'participants'
+  // A player reported an incident, for incidents.manage (RAPP-973).
+  | 'incidents';
 
 export function pushDetailQueryRoot(contentType: unknown): PushDetailQueryRoot | null {
   if (contentType === 'announcement') return 'player-announcements';
@@ -38,6 +40,7 @@ export function pushDetailQueryRoot(contentType: unknown): PushDetailQueryRoot |
   if (contentType === 'custom_form') return 'player-forms';
   if (contentType === 'forum_flag') return 'forum-moderation';
   if (contentType === 'referral_update') return 'participants';
+  if (contentType === 'incident_report') return 'incidents';
   return null;
 }
 
@@ -57,6 +60,10 @@ export function resolvePushDetailRoute(data: unknown, access: PushRouteAccess): 
     return teamScreens(access.permissions).forumModeration
       ? ('/forum-moderation' as Href)
       : access.start;
+  }
+  // The id is the report; the incidents screen lists every one, open first (RAPP-973).
+  if (contentType === 'incident_report') {
+    return teamScreens(access.permissions).incidents ? ('/team-incidents' as Href) : access.start;
   }
   // The id is the update. Her card needs a lookup (`referralParticipantRoute`);
   // until then, or without it, the list is the closest screen.

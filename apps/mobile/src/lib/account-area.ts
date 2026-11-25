@@ -164,6 +164,7 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
   readonly staff: boolean;
   readonly impact: boolean;
   readonly mentoring: boolean;
+  readonly incidents: boolean;
   readonly messages: boolean;
   readonly stock: boolean;
   readonly arrivals: boolean;
@@ -201,6 +202,8 @@ export function teamScreens(permissions: ReadonlySet<PermissionCode>): {
     staff: permissions.has('team.manage'),
     impact: permissions.has('impact.view'),
     mentoring: permissions.has('mentoring.manage'),
+    // The incidents players report (RAPP-973): their own permission, and only it.
+    incidents: permissions.has('incidents.manage'),
     messages: permissions.has('messages.inbox'),
     stock: teamAreas(permissions).includes('stock'),
     arrivals: permissions.has('equipment.receive'),
