@@ -31,9 +31,6 @@ describe('the onboarding design role reaches its two areas only (RAPP-615)', () 
       '/forms/custom/5eed0000-0000-4000-8100-000000000001/screens/5eed0000-0000-4000-8101-000000000001',
       // Enquestes, the surveys' list (RAPP-929).
       '/surveys',
-      // The entity referral form and its screens (RAPP-965).
-      '/entities/referral-form',
-      '/entities/referral-form/screens/5eed0000-0000-4000-8101-000000000001',
       // The suggestions form and its screens (RAPP-939).
       '/forms/feedback',
       '/forms/feedback/screens/5eed0000-0000-4000-8101-000000000001',
@@ -58,6 +55,9 @@ describe('the onboarding design role reaches its two areas only (RAPP-615)', () 
       // The entities and the referrals they sent are not hers (RAPP-965).
       '/entities',
       '/entities/referral-forms',
+      // Formulari de les entitats waits for the entities (RAPP-970).
+      '/entities/referral-form',
+      '/entities/referral-form/screens/5eed0000-0000-4000-8101-000000000001',
       // The suggestions themselves are not hers (RAPP-939).
       '/feedback',
       '/forms/feedbacks',

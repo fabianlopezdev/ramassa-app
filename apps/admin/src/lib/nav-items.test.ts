@@ -106,8 +106,6 @@ test('the onboarding design role sees the test players, the onboarding, the lega
     '/forms/custom',
     // Surveys are forms of the engine (RAPP-929).
     '/surveys',
-    // The entity referral form, built on the same board (RAPP-965).
-    '/entities/referral-form',
     // The suggestions form, built on the same board (RAPP-939).
     '/forms/feedback',
     // The mentoring form, after it (RAPP-940).
@@ -126,7 +124,6 @@ test('Settings holds the organization tabs only; the team, entities and Fitxa ha
     '/forms/terms',
     '/forms/custom',
     '/surveys',
-    '/entities/referral-form',
     '/forms/feedback',
     '/forms/mentoring',
     '/profile-layout',
@@ -161,8 +158,8 @@ test('the menu groups by audience in the agreed order (RAPP-654)', () => {
       '/forms/terms',
       // The forms the team creates (RAPP-700).
       '/forms/custom',
-      '/entities/referral-form',
-      // The suggestions form, after the entities' (RAPP-939).
+      // Formulari de les entitats waits for the entities (RAPP-970).
+      // The suggestions form (RAPP-939).
       '/forms/feedback',
       // The mentoring form, after the suggestions form (RAPP-940).
       '/forms/mentoring',
@@ -203,9 +200,6 @@ test('only the deepest item the path sits in is marked as the current page', () 
   );
   expect(activeStaffNavPath('/participants/season', STAFF_NAV_ITEMS)).toBe('/participants/season');
   expect(activeStaffNavPath('/participants/invites', STAFF_NAV_ITEMS)).toBe('/participants');
-  expect(activeStaffNavPath('/entities/referral-form', STAFF_NAV_ITEMS)).toBe(
-    '/entities/referral-form',
-  );
   expect(activeStaffNavPath('/entities', STAFF_NAV_ITEMS)).toBe('/entities');
   expect(activeStaffNavPath('/account', STAFF_NAV_ITEMS)).toBeNull();
   // Without the Derivacions item, its page still marks Participants.
