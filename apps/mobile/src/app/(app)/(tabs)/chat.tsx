@@ -109,6 +109,7 @@ function ChatTabScreen() {
             accessibilityLabel={incidentTitle}
             languageFontClass={languageFontClass}
             tone="danger"
+            showsArrow
             onOpen={openIncident}
           />
         </PlayerTabHeader>
