@@ -1,11 +1,12 @@
 /**
  * Contacte, once called Xat (RAPP-789, RAPP-860): everything private between
  * her and the staff, in one tab.
- * Four cards and nothing else: the chat with its unread count, reporting an
- * incident (RAPP-973), mentoring with the state of the request she is waiting
- * on, and suggestions. Each opens the screen it always opened (`team-chat`,
- * `incident`, `mentoring`, `feedback`). The chat is the raised card of Per fer
- * (RAPP-842), and reporting an incident the same long card under it;
+ * Four cards and nothing else: reporting an incident (RAPP-973), the chat with
+ * its unread count, mentoring with the state of the request she is waiting
+ * on, and suggestions. Each opens the screen it always opened (`incident`,
+ * `team-chat`, `mentoring`, `feedback`). Reporting an incident comes first, as
+ * the red long card, under the title with the header's divider below it; the
+ * chat is the raised card of Per fer (RAPP-842) under the divider;
  * mentoring and suggestions sit under them as a pair of half-width raised
  * cards (RAPP-874). The unread count sits in a circle
  * on the top edge near the end, and the state of her request is a badge on the
@@ -98,7 +99,19 @@ function ChatTabScreen() {
       contentInsetAdjustmentBehavior="automatic"
     >
       <PageWidth className="gap-lg">
-        <PlayerTabHeader title={t('nav:tabs.chat')} />
+        {/* Reporting an incident comes first, in red, and the header's divider
+            sets it apart from the rest (RAPP-973). */}
+        <PlayerTabHeader title={t('nav:tabs.chat')}>
+          <RaisedIconCard
+            testID="chat-open-incident"
+            icon={playerNavIcons.incident}
+            title={incidentTitle}
+            accessibilityLabel={incidentTitle}
+            languageFontClass={languageFontClass}
+            tone="danger"
+            onOpen={openIncident}
+          />
+        </PlayerTabHeader>
         <RaisedIconCard
           testID="chat-open-team-chat"
           icon={playerNavIcons.teamChat}
@@ -111,14 +124,6 @@ function ChatTabScreen() {
           count={unreadLabel}
           languageFontClass={languageFontClass}
           onOpen={openTeamChat}
-        />
-        <RaisedIconCard
-          testID="chat-open-incident"
-          icon={playerNavIcons.incident}
-          title={incidentTitle}
-          accessibilityLabel={incidentTitle}
-          languageFontClass={languageFontClass}
-          onOpen={openIncident}
         />
         <RaisedHalfCardRow>
           <RaisedHalfCard
