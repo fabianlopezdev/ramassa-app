@@ -331,6 +331,8 @@ export interface KnowledgeCategoryRow {
   /** One of the category palette's colours (RAPP-868), see `@ramassa/shared/category-colors`. */
   readonly color: string;
   readonly sort_order: number;
+  /** The club's base documents (RAPP-972): their own card in Ajuda, never a Guies category. */
+  readonly is_base_documents: boolean;
 }
 
 export interface KnowledgeArticleListRow {
@@ -371,9 +373,9 @@ export interface KnowledgeArticlePage {
 
 type Client = SupabaseClient<Database>;
 const KNOWLEDGE_COLUMNS =
-  'id, category_id, category:knowledge_categories!knowledge_articles_category_same_org(id, name, slug, icon, color, sort_order), title, body, image_url, image_focus_x, image_focus_y, video_url, external_url, content_type, story_status, submission_language, story_image_urls, publication_consent, publication_consent_at, publication_consent_version, author_id, author_first_name, created_by, reviewer_note, is_published, published_at, expires_at, created_at, updated_at';
+  'id, category_id, category:knowledge_categories!knowledge_articles_category_same_org(id, name, slug, icon, color, sort_order, is_base_documents), title, body, image_url, image_focus_x, image_focus_y, video_url, external_url, content_type, story_status, submission_language, story_image_urls, publication_consent, publication_consent_at, publication_consent_version, author_id, author_first_name, created_by, reviewer_note, is_published, published_at, expires_at, created_at, updated_at';
 
-const KNOWLEDGE_CATEGORY_COLUMNS = 'id, name, slug, icon, color, sort_order';
+const KNOWLEDGE_CATEGORY_COLUMNS = 'id, name, slug, icon, color, sort_order, is_base_documents';
 
 export async function fetchKnowledgeCategories(
   client: Client,

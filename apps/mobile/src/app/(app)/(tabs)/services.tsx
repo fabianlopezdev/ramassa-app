@@ -2,6 +2,7 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { BaseDocumentsCard } from '@/components/knowledge/base-documents-card';
 import { PlayerGuideList } from '@/components/knowledge/player-guide-list';
 import { PageWidth } from '@/components/layout/content-width';
 import { ScreenSection } from '@/components/layout/screen-section';
@@ -98,6 +99,8 @@ function ServicesScreen() {
   // The shared header draws Inici's section divider under the switch (RAPP-854).
   const tabHeader = (
     <PlayerTabHeader title={t('nav:tabs.services')}>
+      {/* The club's base documents, above the switch so both views show it (RAPP-972). */}
+      <BaseDocumentsCard />
       <SegmentedControl
         testID="ajuda-segments"
         options={segmentOptions}

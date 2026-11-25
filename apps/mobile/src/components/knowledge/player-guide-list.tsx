@@ -12,6 +12,7 @@ import {
   countPlayerGuidesByCategory,
   selectGuideCategories,
   selectPlayerGuides,
+  withoutBaseDocuments,
 } from '@/lib/player-guides';
 import { usePlayerKnowledgeArticles, usePlayerKnowledgeCategories } from '@/lib/player-knowledge';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
@@ -64,7 +65,11 @@ export function PlayerGuideList({
     () => (news === undefined ? NO_HELP_NUMBERS : countUnseenHelpItems(news.guides.unseenArticles)),
     [news],
   );
-  const guides = useMemo(() => selectPlayerGuides(articlesQuery.data), [articlesQuery.data]);
+  // The base documents have their own card above the switch (RAPP-972).
+  const guides = useMemo(
+    () => withoutBaseDocuments(selectPlayerGuides(articlesQuery.data)),
+    [articlesQuery.data],
+  );
   const counts = useMemo(() => countPlayerGuidesByCategory(guides), [guides]);
   const guideCategories = useMemo(
     () => selectGuideCategories(categoriesQuery.data, counts),

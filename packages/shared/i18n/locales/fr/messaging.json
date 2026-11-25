@@ -18,6 +18,7 @@
   "messageStatus": "État du message : {{status}}",
   "retry": "Réessaie",
   "offline": "Les messages restent en attente.",
+  "replyHours": "L’équipe répond du lundi au vendredi, de 9 h à 17 h.",
   "unread": "{{count}} messages non lus",
   "unread_one": "{{count}} message non lu",
   "unread_other": "{{count}} messages non lus",

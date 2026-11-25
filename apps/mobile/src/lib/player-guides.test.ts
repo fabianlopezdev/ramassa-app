@@ -7,19 +7,29 @@ import type {
 import {
   countPlayerGuidesByCategory,
   filterPlayerGuides,
+  selectBaseDocumentsCategory,
   selectGuideCategories,
   selectPlayerGuides,
+  withoutBaseDocuments,
 } from './player-guides';
 
 function article(
   id: string,
   contentType: KnowledgeContentType,
   categoryId = 'category-a',
+  isBaseDocuments = false,
 ): KnowledgeArticleListRow {
   return {
     id,
     category_id: categoryId,
-    category: { id: categoryId, name: { ca: 'Tema' }, slug: categoryId, icon: null, sort_order: 0 },
+    category: {
+      id: categoryId,
+      name: { ca: 'Tema' },
+      slug: categoryId,
+      icon: null,
+      sort_order: 0,
+      is_base_documents: isBaseDocuments,
+    },
     title: { ca: id },
     body: {},
     image_url: null,
@@ -101,5 +111,37 @@ describe('player guides', () => {
       'category-b',
     ]);
     expect(selectGuideCategories(undefined, counts)).toEqual([]);
+  });
+});
+
+describe('the club base documents (RAPP-972)', () => {
+  const baseCategory = {
+    id: 'base',
+    name: { ca: 'Protocols i documents base' },
+    slug: 'protocols-i-documents-base',
+    icon: 'document',
+    color: 'indigo',
+    sort_order: 0,
+    is_base_documents: true,
+  } as unknown as KnowledgeCategoryRow;
+  const guideCategory = { ...baseCategory, id: 'guides', is_base_documents: false };
+
+  test('they stay out of the Guies list and its categories', () => {
+    const guides = [article('a', 'article', 'guides'), article('b', 'article', 'base', true)];
+    expect(withoutBaseDocuments(guides).map((guide) => guide.id)).toEqual(['a']);
+    expect(
+      selectGuideCategories([baseCategory, guideCategory], { base: 1, guides: 1 }).map(
+        (category) => category.id,
+      ),
+    ).toEqual(['guides']);
+  });
+
+  test('the card shows only once the category holds a document', () => {
+    const categories = [guideCategory, baseCategory];
+    expect(selectBaseDocumentsCategory(categories, [article('a', 'article', 'guides')])).toBeNull();
+    expect(
+      selectBaseDocumentsCategory(categories, [article('b', 'article', 'base', true)])?.id,
+    ).toBe('base');
+    expect(selectBaseDocumentsCategory(undefined, [])).toBeNull();
   });
 });

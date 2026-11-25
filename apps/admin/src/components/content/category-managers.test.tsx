@@ -22,6 +22,7 @@ const guideCategories: KnowledgeCategoryRow[] = [
     icon: 'scale',
     color: 'indigo',
     sort_order: 10,
+    is_base_documents: false,
   },
   {
     id: '00000000-0000-4000-8000-000000000002',
@@ -30,6 +31,7 @@ const guideCategories: KnowledgeCategoryRow[] = [
     icon: 'book',
     color: 'teal',
     sort_order: 20,
+    is_base_documents: false,
   },
 ];
 
