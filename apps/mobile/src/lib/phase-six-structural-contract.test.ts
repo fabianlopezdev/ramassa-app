@@ -25,7 +25,7 @@ const scrollableSources = [
   'app/(app)/gallery/[id].tsx',
   'app/(app)/gallery/upload.tsx',
   'components/gallery/gallery-grid.tsx',
-  'components/knowledge/community-story-list.tsx',
+  // The stories are rows of Comunitat's one list, listed above (RAPP-977).
   // The report sheet scrolls inside this shared sheet (RAPP-881).
   'components/layout/app-sheet.tsx',
 ] as const;

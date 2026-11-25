@@ -82,7 +82,8 @@ describe('Phase 6 React Native performance contract', () => {
 
     expect(gallery).not.toContain('onRefresh={query.refetch}');
     expect(gallery).toContain('const refresh = useCallback');
-    expect(gallery).toContain('onRefresh={refresh}');
+    // The gallery hands its refresh to the list that draws it (RAPP-977).
+    expect(gallery).toContain('onRefresh: refresh,');
   });
 
   test('bounded option collections reuse named render functions and stable empty arrays', async () => {

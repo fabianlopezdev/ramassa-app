@@ -6,8 +6,9 @@ import {
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ForumCategoryFilters } from '@/components/forum/forum-category-tabs';
 import { ForumPostCard } from '@/components/forum/forum-post-card';
-import { GalleryGrid } from '@/components/gallery/gallery-grid';
-import { CommunityStoryList } from '@/components/knowledge/community-story-list';
+import { useGalleryList } from '@/components/gallery/gallery-grid';
+import { useCommunityStoryList } from '@/components/knowledge/community-story-list';
+import { OwnStoryStatuses } from '@/components/knowledge/own-story-statuses';
 import { PageWidth } from '@/components/layout/content-width';
 import { raisedToneFromColorName, type RaisedTone } from '@/components/layout/raised-surface';
 import { screenBlockGapClassName } from '@/components/layout/screen-spacing';
@@ -50,6 +51,7 @@ const styles = StyleSheet.create({
   content: { paddingBottom: tokens.spacing['3xl'], paddingHorizontal: tokens.spacing.lg },
 });
 const postKeyExtractor = (post: ForumPostRow) => post.id;
+const postItemType = () => 'post';
 type CommunitySegment = 'forum' | 'gallery' | 'stories';
 /**
  * The pinned button opens the form of the section on show (RAPP-858), with
@@ -110,6 +112,15 @@ function CommunityScreen() {
     () => ({ unopenedPostIds, newRepliesByPostId }),
     [newRepliesByPostId, unopenedPostIds],
   );
+  // The photos and the stories, as rows for the one list below (RAPP-977).
+  const galleryList = useGalleryList({
+    isOnShow: segment === 'gallery',
+    unopenedItemIds: unopenedGalleryItemIds,
+  });
+  const storyList = useCommunityStoryList({
+    isOnShow: segment === 'stories',
+    unopenedArticleIds: unopenedStoryIds,
+  });
   const posts = useMemo(
     () => filterForumPostsByCategory(postsQuery.data ?? EMPTY_POSTS, categoryId),
     [categoryId, postsQuery.data],
@@ -259,49 +270,65 @@ function CommunityScreen() {
     );
   }
 
-  // One header for every segment; forum category chips show only in the
-  // Fòrum segment, so the screen never stacks two filter rows (plan P4).
+  // One header for every view; forum category chips show only in the Fòrum
+  // view, so the screen never stacks two filter rows (plan P4), and her own
+  // stories waiting for the team show above the stories (RAPP-890).
   const header = (
-    <View className="gap-lg pb-lg">
-      <PageWidth className={screenBlockGapClassName}>
-        <PlayerTabHeader title={t('nav:tabs.community')}>
-          <SegmentedControl
-            testID="community-segments"
-            options={segmentOptions}
-            selected={segment}
-            onSelect={setSegment}
-            accessibilityLabel={t('forum:segmentsLabel')}
-            languageFontClass={languageFontClass}
-          />
-        </PlayerTabHeader>
-        {segment === 'forum' ? (
-          <ForumCategoryFilters
-            categories={categoriesQuery.data ?? EMPTY_CATEGORIES}
-            selectedId={categoryId}
-            allLabel={t('forum:allCategories')}
-            accessibilityLabel={t('forum:categoriesLabel')}
-            onSelect={setCategoryId}
-          />
-        ) : null}
-      </PageWidth>
+    <View>
+      <View className="gap-lg pb-lg">
+        <PageWidth className={screenBlockGapClassName}>
+          <PlayerTabHeader title={t('nav:tabs.community')}>
+            <SegmentedControl
+              testID="community-segments"
+              options={segmentOptions}
+              selected={segment}
+              onSelect={setSegment}
+              accessibilityLabel={t('forum:segmentsLabel')}
+              languageFontClass={languageFontClass}
+            />
+          </PlayerTabHeader>
+          {segment === 'forum' ? (
+            <ForumCategoryFilters
+              categories={categoriesQuery.data ?? EMPTY_CATEGORIES}
+              selectedId={categoryId}
+              allLabel={t('forum:allCategories')}
+              accessibilityLabel={t('forum:categoriesLabel')}
+              onSelect={setCategoryId}
+            />
+          ) : null}
+        </PageWidth>
+      </View>
+      {segment === 'stories' ? (
+        <PageWidth className="pb-lg">
+          <OwnStoryStatuses />
+        </PageWidth>
+      ) : null}
     </View>
   );
 
+  // One list for the three views (RAPP-977). Each branch is the same list in
+  // the same place, so React keeps it and its header when the view changes and
+  // only the rows change. Her photo, the title and the switch are never built
+  // again, which is what made the photo blink on Android.
   let segmentList: ReactElement;
   if (segment === 'gallery') {
     segmentList = (
-      <GalleryGrid
-        header={header}
+      <FlashList
+        {...galleryList}
+        style={styles.screen}
         contentContainerStyle={contentStyle}
-        unopenedItemIds={unopenedGalleryItemIds}
+        contentInsetAdjustmentBehavior="automatic"
+        ListHeaderComponent={header}
       />
     );
   } else if (segment === 'stories') {
     segmentList = (
-      <CommunityStoryList
-        header={header}
+      <FlashList
+        {...storyList}
+        style={styles.screen}
         contentContainerStyle={contentStyle}
-        unopenedArticleIds={unopenedStoryIds}
+        contentInsetAdjustmentBehavior="automatic"
+        ListHeaderComponent={header}
       />
     );
   } else {
@@ -311,6 +338,7 @@ function CommunityScreen() {
         data={posts}
         renderItem={renderPost}
         keyExtractor={postKeyExtractor}
+        getItemType={postItemType}
         extraData={forumListMarks}
         style={styles.screen}
         contentContainerStyle={contentStyle}
