@@ -55,17 +55,19 @@ export function PlayerBaseDocumentList({
     >
       <View className="gap-lg">
         {header}
-        <PageWidth className="gap-md">
-          {documents.map((document) => (
-            <KnowledgeArticleCard
-              key={document.id}
-              article={document}
-              accessToken={accessToken}
-              href={`/knowledge/${document.id}` as Href}
-              showsCategory={false}
-              unseenLabel={null}
-            />
-          ))}
+        <PageWidth>
+          <View className="gap-md">
+            {documents.map((document) => (
+              <KnowledgeArticleCard
+                key={document.id}
+                article={document}
+                accessToken={accessToken}
+                href={`/knowledge/${document.id}` as Href}
+                showsCategory={false}
+                unseenLabel={null}
+              />
+            ))}
+          </View>
         </PageWidth>
       </View>
     </ScrollView>
