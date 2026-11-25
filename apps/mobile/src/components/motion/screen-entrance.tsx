@@ -71,7 +71,16 @@ function ScreenEntrance({ screenId, arrivesByZoom = false, children }: ScreenEnt
   const fade = useAnimatedStyle(() => ({ opacity: progress.get() }));
   return (
     <RouteEntranceContext value={route}>
-      <NativeWindAnimatedView className="flex-1" style={fade} onLayout={onLayout}>
+      <NativeWindAnimatedView
+        className="flex-1"
+        style={fade}
+        // While it fades, Android draws the screen as one picture, as iOS
+        // always does; drawn layer by layer, a card's navy edge shows through
+        // its half-faded white face and the cards flash blue (RAPP-976).
+        needsOffscreenAlphaCompositing={isMoving}
+        renderToHardwareTextureAndroid={isMoving}
+        onLayout={onLayout}
+      >
         {children}
       </NativeWindAnimatedView>
     </RouteEntranceContext>
