@@ -3592,6 +3592,7 @@ export type Database = {
           created_at: string;
           icon: string;
           id: string;
+          is_base_documents: boolean;
           name: Json;
           org_id: string;
           slug: string;
@@ -3603,6 +3604,7 @@ export type Database = {
           created_at?: string;
           icon: string;
           id?: string;
+          is_base_documents?: boolean;
           name: Json;
           org_id?: string;
           slug: string;
@@ -3614,6 +3616,7 @@ export type Database = {
           created_at?: string;
           icon?: string;
           id?: string;
+          is_base_documents?: boolean;
           name?: Json;
           org_id?: string;
           slug?: string;
