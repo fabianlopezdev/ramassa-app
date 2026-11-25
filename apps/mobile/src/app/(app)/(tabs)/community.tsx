@@ -12,6 +12,7 @@ import { OwnStoryStatuses } from '@/components/knowledge/own-story-statuses';
 import { PageWidth } from '@/components/layout/content-width';
 import { raisedToneFromColorName, type RaisedTone } from '@/components/layout/raised-surface';
 import { screenBlockGapClassName } from '@/components/layout/screen-spacing';
+import { useSegmentListReset } from '@/components/layout/segment-list';
 import {
   SegmentedControl,
   type SegmentedControlOption,
@@ -78,6 +79,15 @@ function CommunityScreen() {
   const refetchPosts = postsQuery.refetch;
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [segment, setSegment] = useState<CommunitySegment>('forum');
+  // The one list forgets its row sizes as the view changes (RAPP-977).
+  const { holdList, forgetRowSizes } = useSegmentListReset();
+  const selectSegment = useCallback(
+    (next: CommunitySegment) => {
+      forgetRowSizes();
+      setSegment(next);
+    },
+    [forgetRowSizes],
+  );
   // Two levels, both live (RAPP-873). The number on each switch option counts
   // what she has not seen in that list, and seeing the list on show clears it.
   // "Nou" stays on a post, photo or story until she opens it. The new replies
@@ -282,7 +292,7 @@ function CommunityScreen() {
               testID="community-segments"
               options={segmentOptions}
               selected={segment}
-              onSelect={setSegment}
+              onSelect={selectSegment}
               accessibilityLabel={t('forum:segmentsLabel')}
               languageFontClass={languageFontClass}
             />
@@ -314,6 +324,7 @@ function CommunityScreen() {
   if (segment === 'gallery') {
     segmentList = (
       <FlashList
+        ref={holdList}
         {...galleryList}
         style={styles.screen}
         contentContainerStyle={contentStyle}
@@ -324,6 +335,7 @@ function CommunityScreen() {
   } else if (segment === 'stories') {
     segmentList = (
       <FlashList
+        ref={holdList}
         {...storyList}
         style={styles.screen}
         contentContainerStyle={contentStyle}
@@ -334,6 +346,7 @@ function CommunityScreen() {
   } else {
     segmentList = (
       <FlashList
+        ref={holdList}
         testID="forum-board"
         data={posts}
         renderItem={renderPost}

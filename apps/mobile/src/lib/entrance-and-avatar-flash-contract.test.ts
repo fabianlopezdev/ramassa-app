@@ -39,7 +39,7 @@ describe('nothing flashes while a screen arrives or rebuilds', () => {
   test('Comunitat is one list whose header stays while the view changes (RAPP-977)', async () => {
     const community = await read('../app/(app)/(tabs)/community.tsx');
     // The same list in the same place for every view, so React keeps it.
-    expect(community.match(/segmentList = \(\n\s+<FlashList\n/g)).toHaveLength(3);
+    expect(community.match(/segmentList = \(\n\s+<FlashList\n\s+ref=\{holdList\}\n/g)).toHaveLength(3);
     expect(community.match(/ListHeaderComponent=\{header\}/g)).toHaveLength(3);
     expect(community).toContain('{...galleryList}');
     expect(community).toContain('{...storyList}');
@@ -53,5 +53,12 @@ describe('nothing flashes while a screen arrives or rebuilds', () => {
     expect(gallery).toContain("useListSeen('gallery', isOnShow && query.data !== undefined);");
     expect(stories).toContain("useListSeen('stories', isOnShow && query.data !== undefined);");
     expect(stories).not.toContain('<FlashList');
+    // The list forgets its row sizes in the press that changes the view, so a
+    // forum card never keeps the height of the gallery tile it replaces.
+    expect(community).toContain('onSelect={selectSegment}');
+    expect(community).toMatch(/forgetRowSizes\(\);\n\s+setSegment\(next\);/);
+    expect(community.match(/ref=\{holdList\}/g)).toHaveLength(3);
+    const segmentList = await read('../components/layout/segment-list.ts');
+    expect(segmentList).toContain('list.current?.clearLayoutCacheOnUpdate()');
   });
 });
