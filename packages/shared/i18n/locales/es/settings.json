@@ -217,6 +217,10 @@
       "label": "Mentoría",
       "description": "Ver las solicitudes de mentoría, también el tema privado, y escribir las notas del equipo."
     },
+    "incidents_manage": {
+      "label": "Incidentes",
+      "description": "Leer los incidentes que reportan las jugadoras, también los anónimos, y cerrarlos."
+    },
     "feedback_view": {
       "label": "Leer opiniones",
       "description": "Leer las opiniones privadas que envían las jugadoras."

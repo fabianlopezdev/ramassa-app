@@ -19,6 +19,7 @@
     "forum": "Moderació del fòrum",
     "gallery": "Galeria",
     "mentoring": "Mentoria",
+    "incidents": "Incidents",
     "feedback": "Suggeriments",
     "notifications": "Notificacions",
     "surveys": "Enquestes",
@@ -28,6 +29,7 @@
     "referralForm": "Formulari de les entitats",
     "feedbackForm": "Formulari de suggeriments",
     "mentoringForm": "Formulari de mentoria",
+    "incidentForm": "Formulari d'incidents",
     "entities": "Entitats col·laboradores",
     "profileLayout": "Dades de les jugadores",
     "legalData": "Dades legals",
@@ -81,6 +83,7 @@
       "reports": "Contingut denunciat",
       "feedback": "Suggeriments nous",
       "mentoring": "Peticions de mentoria",
+      "incidents": "Incidents oberts",
       "erasure": "Peticions d'esborrat",
       "messages": "Xats sense llegir",
       "stockAlerts": "Material sota zero"

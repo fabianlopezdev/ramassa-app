@@ -19,6 +19,7 @@
     "forum": "Moderación del foro",
     "gallery": "Galería",
     "mentoring": "Mentoría",
+    "incidents": "Incidentes",
     "feedback": "Sugerencias",
     "notifications": "Notificaciones",
     "surveys": "Encuestas",
@@ -28,6 +29,7 @@
     "referralForm": "Formulario de las entidades",
     "feedbackForm": "Formulario de sugerencias",
     "mentoringForm": "Formulario de mentoría",
+    "incidentForm": "Formulario de incidentes",
     "entities": "Entidades colaboradoras",
     "profileLayout": "Datos de las jugadoras",
     "legalData": "Datos legales",
@@ -81,6 +83,7 @@
       "reports": "Contenido denunciado",
       "feedback": "Sugerencias nuevas",
       "mentoring": "Peticiones de mentoría",
+      "incidents": "Incidentes abiertos",
       "erasure": "Peticiones de borrado",
       "messages": "Chats sin leer",
       "stockAlerts": "Material bajo cero"

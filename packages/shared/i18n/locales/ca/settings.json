@@ -217,6 +217,10 @@
       "label": "Mentoria",
       "description": "Veure les sol·licituds de mentoria, també el tema privat, i escriure les notes de l'equip."
     },
+    "incidents_manage": {
+      "label": "Incidents",
+      "description": "Llegir els incidents que reporten les jugadores, també els anònims, i tancar-los."
+    },
     "feedback_view": {
       "label": "Llegir opinions",
       "description": "Llegir les opinions privades que envien les jugadores."

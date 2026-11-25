@@ -93,6 +93,7 @@ export type ServiceImageRow = Database['public']['Tables']['service_images']['Ro
 export type ServiceInterestRow = Database['public']['Tables']['service_interests']['Row'];
 export type MentoringRequestRow = Database['public']['Tables']['mentoring_requests']['Row'];
 export type FeedbackSubmissionRow = Database['public']['Tables']['feedback_submissions']['Row'];
+export type IncidentReportRow = Database['public']['Tables']['incident_reports']['Row'];
 export type StaffInvitationRow = Database['public']['Tables']['staff_invitations']['Row'];
 export type InternalDocumentRow = Database['public']['Tables']['internal_documents']['Row'];
 export type NotificationTemplateRow = Database['public']['Tables']['notification_templates']['Row'];
@@ -912,6 +913,26 @@ export function buildMentoringRequest(
     assigned_staff_id: seedUserId(staff.ordinal),
     staff_notes_encrypted: 'Synthetic private staff note',
     completed_at: null,
+    created_at: FIXTURE_TIMESTAMP,
+    updated_at: FIXTURE_TIMESTAMP,
+    ...overrides,
+  };
+}
+
+/** An incident a player reported (RAPP-973), named and open, with no answers to added questions. */
+export function buildIncidentReport(overrides: Partial<IncidentReportRow> = {}): IncidentReportRow {
+  const player = PARTICIPANT_FIXTURES[0]!;
+  return {
+    id: '5eed0000-0000-4000-8049-000000000001',
+    org_id: SEED_ORGANIZATION_ID,
+    player_id: seedUserId(player.ordinal),
+    is_anonymous: false,
+    what_encrypted: 'Synthetic incident: what happened',
+    happened_on: '2026-01-20',
+    where_encrypted: 'Synthetic incident: where',
+    answers_encrypted: null,
+    status: 'open',
+    closed_at: null,
     created_at: FIXTURE_TIMESTAMP,
     updated_at: FIXTURE_TIMESTAMP,
     ...overrides,

@@ -56,6 +56,8 @@ export const PERMISSION_CATALOG = [
   { code: 'gallery.moderate', area: 'community' },
   { code: 'messages.inbox', area: 'community' },
   { code: 'mentoring.manage', area: 'community' },
+  // Read the incidents players report and close them (RAPP-973). Staff and Admin by default.
+  { code: 'incidents.manage', area: 'community' },
   { code: 'feedback.view', area: 'community' },
   { code: 'surveys.manage', area: 'community' },
   { code: 'surveys.results', area: 'community' },

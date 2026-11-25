@@ -3053,6 +3053,66 @@ export type Database = {
           },
         ];
       };
+      incident_reports: {
+        Row: {
+          answers_encrypted: string | null;
+          closed_at: string | null;
+          created_at: string;
+          happened_on: string;
+          id: string;
+          is_anonymous: boolean;
+          org_id: string;
+          player_id: string;
+          status: string;
+          updated_at: string;
+          what_encrypted: string;
+          where_encrypted: string;
+        };
+        Insert: {
+          answers_encrypted?: string | null;
+          closed_at?: string | null;
+          created_at?: string;
+          happened_on: string;
+          id?: string;
+          is_anonymous?: boolean;
+          org_id: string;
+          player_id: string;
+          status?: string;
+          updated_at?: string;
+          what_encrypted: string;
+          where_encrypted: string;
+        };
+        Update: {
+          answers_encrypted?: string | null;
+          closed_at?: string | null;
+          created_at?: string;
+          happened_on?: string;
+          id?: string;
+          is_anonymous?: boolean;
+          org_id?: string;
+          player_id?: string;
+          status?: string;
+          updated_at?: string;
+          what_encrypted?: string;
+          where_encrypted?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'incident_reports_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'incident_reports_player_tenant_fkey';
+            columns: ['org_id', 'player_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
       intake_builtin_screens: {
         Row: {
           is_deleted: boolean;
@@ -6952,6 +7012,49 @@ export type Database = {
         Returns: string;
       };
       my_mentoring_form: { Args: never; Returns: Json };
+      my_incident_form: { Args: never; Returns: Json };
+      send_incident_report: {
+        Args: {
+          p_answers?: Json;
+          p_happened_on: string;
+          p_is_anonymous?: boolean;
+          p_what: string;
+          p_where: string;
+        };
+        Returns: string;
+      };
+      list_own_incident_reports: {
+        Args: never;
+        Returns: {
+          created_at: string;
+          happened_on: string;
+          id: string;
+          is_anonymous: boolean;
+          status: string;
+        }[];
+      };
+      list_staff_incident_reports: {
+        Args: never;
+        Returns: {
+          answers: Json;
+          closed_at: string;
+          created_at: string;
+          happened_on: string;
+          id: string;
+          is_anonymous: boolean;
+          player_first_name: string;
+          player_id: string;
+          player_last_name: string;
+          status: string;
+          updated_at: string;
+          what: string;
+          where_text: string;
+        }[];
+      };
+      set_incident_report_status: {
+        Args: { p_report_id: string; p_status: string };
+        Returns: undefined;
+      };
       create_participant_invite: {
         Args: { payload: Json };
         Returns: {

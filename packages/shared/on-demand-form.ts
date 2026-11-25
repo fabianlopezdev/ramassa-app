@@ -1,6 +1,7 @@
 /**
- * The app's own forms she sends when she wants (RAPP-939, RAPP-940): the
- * suggestions form and the mentoring request. Each is a form of the engine
+ * The app's own forms she sends when she wants (RAPP-939, RAPP-940,
+ * RAPP-973): the suggestions form, the mentoring request and the incident
+ * report. Each is a form of the engine
  * with one fixed screen that holds the request's own parts, and questions
  * staff add around it. What both share lives here: reading the form for her
  * phone, laying it over the catalog the form walker draws, and reading her
@@ -11,7 +12,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
 import type { CustomQuestion, IntakeCatalog } from './intake-builder/builder';
-import type { OnDemandFormKey } from './intake-builder/custom-form-model';
+import type { FormSystemScreen, OnDemandFormKey } from './intake-builder/custom-form-model';
 import { anyLanguageTextSchema, type BuilderText } from './intake-builder/profile-layout';
 import {
   CUSTOM_QUESTION_TYPES,
@@ -44,6 +45,7 @@ const onDemandFormSchema = z.object({
 const MY_FORM_FUNCTIONS = {
   feedback: 'my_feedback_form',
   mentoring: 'my_mentoring_form',
+  incident: 'my_incident_form',
 } as const satisfies Readonly<Record<OnDemandFormKey, string>>;
 
 /** The form of this key for the player signed in; null from a server before it. */
@@ -62,7 +64,7 @@ export async function fetchMyOnDemandForm(
  * The catalog her phone walks the form with: the catalog `intake_catalog`
  * sent (`raw`, which never holds these forms or their questions), with the
  * form laid over it. Its fixed screen is the one whose `systemScreen` is the
- * form's own (`feedback_message`, `mentoring_request`).
+ * form's own (`feedback_message`, `mentoring_request`, `incident_report`).
  */
 export function onDemandFormCatalog(
   raw: unknown,
@@ -94,6 +96,83 @@ export async function fetchMyOnDemandFormSource(
   ]);
   if (catalog.error) databaseFailure(catalog.error.message);
   return { raw: catalog.data, form };
+}
+
+// The form's own parts, walked as questions ---------------------------------------------------------
+
+/**
+ * One of the form's own parts (the incident's what, when and where), drawn on
+ * her phone by the form walker as a question of the engine, so it is worded,
+ * checked and laid out as every other question. Its id is the app's own, a
+ * fixed UUID no question staff make can take; its answer is the request's own
+ * and never goes to the database as an answer (`takeFixedAnswers`).
+ */
+export interface FixedFormQuestion {
+  readonly fieldId: string;
+  readonly type: CustomQuestionType;
+  readonly label: BuilderText;
+  readonly isRequired: boolean;
+  readonly settings?: Readonly<Record<string, unknown>>;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * The form with its own parts laid first on its fixed screen, before the
+ * questions staff added there. A form without that screen is left as it is.
+ */
+export function withFixedQuestions(
+  form: OnDemandForm,
+  fixedScreen: FormSystemScreen,
+  questions: readonly FixedFormQuestion[],
+): OnDemandForm {
+  const content = isRecord(form.content) ? form.content : {};
+  const screens = Array.isArray(content.screens) ? content.screens.filter(isRecord) : [];
+  const screen = screens.find((each) => each.system_screen === fixedScreen);
+  if (screen === undefined || typeof screen.id !== 'string') return form;
+  const placements = Array.isArray(content.placements) ? content.placements.filter(isRecord) : [];
+  const first = Math.min(
+    0,
+    ...placements
+      .filter((placement) => placement.screen_key === screen.id)
+      .map((placement) => (typeof placement.sort_order === 'number' ? placement.sort_order : 0)),
+  );
+  const fixed = questions.map((question, index) => ({
+    id: question.fieldId,
+    field_id: question.fieldId,
+    screen_key: screen.id,
+    sort_order: first - questions.length + index,
+    required: question.isRequired,
+    label_override: null,
+    help_override: null,
+    field: {
+      label: question.label,
+      help: null,
+      question_type: question.type,
+      settings: question.settings ?? {},
+      options: [],
+    },
+  }));
+  return { ...form, content: { ...content, placements: [...fixed, ...placements] } };
+}
+
+/** Her answers split in two: the form's own parts by field id, and her answers to the questions staff added. */
+export function takeFixedAnswers(
+  answers: Readonly<Record<string, unknown>>,
+  questions: readonly Pick<FixedFormQuestion, 'fieldId'>[],
+): {
+  readonly fixed: Readonly<Record<string, unknown>>;
+  readonly added: Readonly<Record<string, unknown>>;
+} {
+  const ids = new Set(questions.map((question) => question.fieldId));
+  const entries = Object.entries(answers);
+  return {
+    fixed: Object.fromEntries(entries.filter(([id]) => ids.has(id))),
+    // An unanswered optional question is left out.
+    added: Object.fromEntries(entries.filter(([id, value]) => !ids.has(id) && value != null)),
+  };
 }
 
 // Her answers, read back by the staff who read the request ---------------------------------------

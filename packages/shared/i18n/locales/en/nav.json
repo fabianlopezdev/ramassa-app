@@ -19,6 +19,7 @@
     "forum": "Forum moderation",
     "gallery": "Gallery",
     "mentoring": "Mentoring",
+    "incidents": "Incidents",
     "feedback": "Feedback",
     "notifications": "Notifications",
     "surveys": "Surveys",
@@ -28,6 +29,7 @@
     "referralForm": "Entity form",
     "feedbackForm": "Suggestions form",
     "mentoringForm": "Mentoring form",
+    "incidentForm": "Incident form",
     "entities": "Collaborating entities",
     "profileLayout": "Player data",
     "legalData": "Legal data",
@@ -81,6 +83,7 @@
       "reports": "Reported content",
       "feedback": "New suggestions",
       "mentoring": "Mentoring requests",
+      "incidents": "Open incidents",
       "erasure": "Deletion requests",
       "messages": "Unread chats",
       "stockAlerts": "Material below zero"

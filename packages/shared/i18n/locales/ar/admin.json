@@ -157,6 +157,7 @@
       "walk_in": "توقيع جديد من {{name}}",
       "deletion_request": "{{name}} تطلب حذف بياناتها",
       "mentoring_request": "{{name}} تطلب جلسة إرشاد",
+      "incident_report": "حادثة جديدة",
       "feedback": "ملاحظة جديدة من {{name}}",
       "forum_report": "تم الإبلاغ عن محتوى في المنتدى",
       "gallery_report": "تم الإبلاغ عن صورة في المعرض",

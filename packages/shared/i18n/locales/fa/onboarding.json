@@ -218,6 +218,7 @@
   "customErrorNumberMin": "{{min}} یا بیشتر بنویسید.",
   "customErrorNumberMax": "{{max}} یا کمتر بنویسید.",
   "customErrorDateAge": "تاریخ را بررسی کنید: سنی را نشان می‌دهد که این سؤال نمی‌پذیرد.",
+  "customErrorDateFuture": "تاریخ نمی‌تواند بعد از امروز باشد.",
   "customErrorEmail": "ایمیل را این‌طور بنویسید: name@example.com.",
   "customErrorList": "فهرست را بررسی کنید: هیچ مورد تکراری نباشد و حداکثر {{max}} مورد.",
   "customErrorInvalid": "این پاسخ را بررسی کنید.",

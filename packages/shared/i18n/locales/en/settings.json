@@ -217,6 +217,10 @@
       "label": "Mentoring",
       "description": "See mentoring requests, including their private topic, and write the team's notes."
     },
+    "incidents_manage": {
+      "label": "Incidents",
+      "description": "Read the incidents players report, anonymous ones included, and close them."
+    },
     "feedback_view": {
       "label": "Read feedback",
       "description": "Read the private feedback players send."

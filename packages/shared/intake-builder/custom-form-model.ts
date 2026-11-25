@@ -42,8 +42,8 @@ export type CustomFormKind = (typeof CUSTOM_FORM_KINDS)[number];
 /**
  * The app's own forms as forms of their own, one each, never archived: its
  * two legal forms (RAPP-771), the referral form the entity fills in
- * (RAPP-938), the suggestions form she sends the club (RAPP-939) and the
- * mentoring request (RAPP-940).
+ * (RAPP-938), the suggestions form she sends the club (RAPP-939), the
+ * mentoring request (RAPP-940) and the incident report (RAPP-973).
  */
 export const CUSTOM_FORM_SYSTEM_KEYS = [
   'app_terms',
@@ -51,22 +51,25 @@ export const CUSTOM_FORM_SYSTEM_KEYS = [
   'entity_referral',
   'feedback',
   'mentoring',
+  'incident',
 ] as const;
 export type CustomFormSystemKey = (typeof CUSTOM_FORM_SYSTEM_KEYS)[number];
 
 /**
  * The app's own forms she sends when she wants, with questions staff add
- * around one fixed screen: the suggestions form (RAPP-939) and the mentoring
- * request (RAPP-940). Their questions and her answers are the form's own.
+ * around one fixed screen: the suggestions form (RAPP-939), the mentoring
+ * request (RAPP-940) and the incident report (RAPP-973). Their questions and
+ * her answers are the form's own.
  */
-export const ON_DEMAND_FORM_KEYS = ['feedback', 'mentoring'] as const;
+export const ON_DEMAND_FORM_KEYS = ['feedback', 'mentoring', 'incident'] as const;
 export type OnDemandFormKey = (typeof ON_DEMAND_FORM_KEYS)[number];
 
 /**
  * A screen's locked part of one of the app's own forms (RAPP-771): never
  * deleted, never moved. `feedback_message` holds a suggestion's type, text
  * and photo (RAPP-939); `mentoring_request` a mentoring request's topic,
- * detail and preferred date and time (RAPP-940).
+ * detail and preferred date and time (RAPP-940); `incident_report` what
+ * happened, when, where and whether she sends it anonymously (RAPP-973).
  */
 export const FORM_SYSTEM_SCREENS = [
   'terms_sign',
@@ -75,6 +78,7 @@ export const FORM_SYSTEM_SCREENS = [
   'reregistration_season',
   'feedback_message',
   'mentoring_request',
+  'incident_report',
 ] as const;
 export type FormSystemScreen = (typeof FORM_SYSTEM_SCREENS)[number];
 

@@ -160,6 +160,7 @@
       "walk_in": "New signature from {{name}}",
       "deletion_request": "{{name}} asks to delete her data",
       "mentoring_request": "{{name}} asks for mentoring",
+      "incident_report": "New incident",
       "feedback": "New feedback from {{name}}",
       "forum_report": "Forum content reported",
       "gallery_report": "Gallery photo reported",

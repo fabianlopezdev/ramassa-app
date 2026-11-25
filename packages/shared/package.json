@@ -58,6 +58,7 @@
     "./referrals": "./referrals.ts",
     "./entity-management": "./entity-management.ts",
     "./mentoring": "./mentoring.ts",
+    "./incidents": "./incidents.ts",
     "./on-demand-form": "./on-demand-form.ts",
     "./feedback": "./feedback.ts",
     "./notifications": "./notifications.ts",
