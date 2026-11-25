@@ -13,7 +13,7 @@ import { Icon } from '@/components/icons/icon';
 import { resolveMediaImageSource } from '@/lib/media-source';
 import { mobileClientEnv } from '@/lib/supabase';
 import { Image } from 'expo-image';
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { tokens } from '@ramassa/shared/tokens';
@@ -31,6 +31,15 @@ export const PERSON_AVATAR_SIZE = {
   profile: tokens.spacing['3xl'] * 2,
 } as const;
 export type PersonAvatarSize = keyof typeof PERSON_AVATAR_SIZE;
+
+/**
+ * The photos this session has already shown. A screen that rebuilds its
+ * header, such as Ajuda switching between its views, draws the same photo
+ * again: shown before, it comes from memory at once, so it skips the fade and
+ * the icon or initial under it, which would otherwise flash for a moment
+ * (RAPP-977).
+ */
+const shownPhotoKeys = new Set<string>();
 
 const styles = StyleSheet.create({
   small: {
@@ -98,6 +107,10 @@ export const PersonAvatar = memo(function PersonAvatar({
       }),
     [accessToken, avatarKey],
   );
+  const wasShown = source !== null && avatarKey != null && shownPhotoKeys.has(avatarKey);
+  const rememberShown = useCallback(() => {
+    if (avatarKey != null) shownPhotoKeys.add(avatarKey);
+  }, [avatarKey]);
   return (
     <View
       testID={testID}
@@ -105,7 +118,7 @@ export const PersonAvatar = memo(function PersonAvatar({
       importantForAccessibility="no-hide-descendants"
       style={[styles.circle, styles[size]]}
     >
-      {fallback === 'person' ? (
+      {wasShown ? null : fallback === 'person' ? (
         <Icon
           name="user"
           weight="boldDuotone"
@@ -126,7 +139,8 @@ export const PersonAvatar = memo(function PersonAvatar({
           contentFit="cover"
           cachePolicy="memory-disk"
           recyclingKey={avatarKey ?? undefined}
-          transition={150}
+          transition={wasShown ? 0 : 150}
+          onDisplay={rememberShown}
           style={styles.photo}
         />
       )}
