@@ -39,5 +39,27 @@ export function selectGuideCategories(
   counts: Readonly<Record<string, number>>,
 ): readonly KnowledgeCategoryRow[] {
   if (categories === undefined) return NO_CATEGORIES;
-  return categories.filter((category) => (counts[category.id] ?? 0) > 0);
+  return categories.filter(
+    (category) => !category.is_base_documents && (counts[category.id] ?? 0) > 0,
+  );
+}
+
+/** The guides of the Guies list: the club's base documents have their own card (RAPP-972). */
+export function withoutBaseDocuments(
+  guides: readonly KnowledgeArticleListRow[],
+): readonly KnowledgeArticleListRow[] {
+  return guides.filter((guide) => !guide.category.is_base_documents);
+}
+
+/**
+ * The club's base-documents category, once it holds at least one published
+ * document she can read; until then Ajuda shows no card for it (RAPP-972).
+ */
+export function selectBaseDocumentsCategory(
+  categories: readonly KnowledgeCategoryRow[] | undefined,
+  guides: readonly KnowledgeArticleListRow[],
+): KnowledgeCategoryRow | null {
+  const category = categories?.find((candidate) => candidate.is_base_documents);
+  if (category === undefined) return null;
+  return guides.some((guide) => guide.category_id === category.id) ? category : null;
 }
