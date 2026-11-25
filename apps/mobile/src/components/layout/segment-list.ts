@@ -1,4 +1,5 @@
-import type { FlashListProps } from '@shopify/flash-list';
+import type { FlashListProps, FlashListRef } from '@shopify/flash-list';
+import { useCallback, useRef } from 'react';
 
 /**
  * What one view of a tab hands to the tab's single list (RAPP-977).
@@ -24,3 +25,26 @@ export type SegmentListProps<Item> = Pick<
   | 'refreshing'
   | 'onRefresh'
 >;
+
+type SegmentListHandle = Pick<FlashListRef<unknown>, 'clearLayoutCacheOnUpdate'>;
+
+/**
+ * The list remembers the size of every row it has drawn. The rows of one view
+ * say nothing about the rows of the next: a forum card that takes the place of
+ * a gallery tile would keep the tile's height, and the cards would sit too far
+ * apart. So the tab asks the list to forget its sizes as the view changes.
+ *
+ * `holdList` goes on the list as its `ref`; `forgetRowSizes` is called in the
+ * press that changes the view, before the list draws the new rows.
+ */
+export function useSegmentListReset(): {
+  readonly holdList: (list: SegmentListHandle | null) => void;
+  readonly forgetRowSizes: () => void;
+} {
+  const list = useRef<SegmentListHandle | null>(null);
+  const holdList = useCallback((held: SegmentListHandle | null) => {
+    list.current = held;
+  }, []);
+  const forgetRowSizes = useCallback(() => list.current?.clearLayoutCacheOnUpdate(), []);
+  return { holdList, forgetRowSizes };
+}
