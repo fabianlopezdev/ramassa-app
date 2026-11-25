@@ -217,6 +217,10 @@
       "label": "Mentoring",
       "description": "See mentoring requests, including their private topic, and write the team's notes."
     },
+    "incidents_manage": {
+      "label": "Incidents",
+      "description": "Read the incidents players report, anonymous ones included, and close them."
+    },
     "feedback_view": {
       "label": "Read feedback",
       "description": "Read the private feedback players send."
@@ -320,6 +324,25 @@
   "colorInvalid": "Use a six-digit hex colour such as #0077B6.",
   "authorizationIntro": "The text every player signs for the season: participation, insurance, data, images, obligations and the code of conduct.",
   "authorizationVersionsTitle": "Published versions",
+  "formVersionsIntro": "Each time you publish, a version is saved. Open it to see the screens as they were.",
+  "authorizationOverview": {
+    "currentTitle": "Current season: {{season}}",
+    "noCurrent": "There is no current season yet.",
+    "nextTitle": "Season {{season}}",
+    "notPublished": "Not published for this season yet.",
+    "versionPublished": "Version {{number}} · published on {{date}}",
+    "signatures_one": "{{count}} signature",
+    "signatures_other": "{{count}} signatures",
+    "edit": "Edit",
+    "unpublishedChanges": "There are unpublished changes.",
+    "prepare": "Prepare season {{season}}",
+    "prepareBody": "It starts on {{date}}. Then you edit the authorization and publish it for this season.",
+    "prepareConfirm": "Create it and edit",
+    "previousTitle": "Previous seasons"
+  },
+  "formVersionView": "View",
+  "formVersionPublishedOn": "Published on {{date}}",
+  "formVersionNoCopy": "This version did not keep a copy of its screens.",
   "authorizationNoVersions": "No version has been published yet.",
   "authorizationVersionInSeason": "Version {{number}}, published on {{date}}",
   "authorizationCurrentBadge": "Current",
@@ -330,14 +353,6 @@
   "authorizationAddAttachment": "Add a document",
   "authorizationRemoveAttachment": "Remove the document",
   "authorizationAttachmentInvalid": "Each document needs its name in Catalan and a link that starts with https://.",
-  "seasonsTitle": "Seasons",
-  "seasonsIntro": "Publishing the current season's authorization makes returning players register again.",
-  "seasonName": "Name (for example 2027/28)",
-  "seasonStartsOn": "Starts on",
-  "seasonMakeCurrent": "Make it current",
-  "seasonCreate": "Create the season",
-  "seasonCreated": "Season created.",
-  "seasonCreateFailed": "The season could not be created.",
   "seasonSetCurrent": "Make it current",
   "tabQuestions": "Questions",
   "questions": {
@@ -361,6 +376,7 @@
       "file_upload": "Photo or file",
       "country": "Country",
       "municipality": "Municipality of Catalonia",
+      "rating": "Rating from 1 to 5",
       "signature": "Signature",
       "text_block": "Text",
       "points_block": "Points",
@@ -432,7 +448,8 @@
       "item_list": "Items are added one by one, like the organizations that give support.",
       "file_upload": "A photo or a PDF. It is private: only staff who may read this level see it.",
       "country": "A country from the list of every country.",
-      "municipality": "A municipality of Catalonia, from the official list."
+      "municipality": "A municipality of Catalonia, from the official list.",
+      "rating": "Five buttons from 1 to 5 to rate something. Surveys only."
     },
     "tooManyOptions": "There are too many options for this type. For a long list, choose \"One choice from a long list\".",
     "settingsInvalid": "Check the settings: the lowest cannot be above the highest, and ages are whole years.",
@@ -487,7 +504,6 @@
     "intro": "The screens a player sees the first time she opens the app."
   },
   "onboardingChain": {
-    "count": "{{total}} screens in total: {{onboarding}} in Onboarding · {{terms}} in the app terms · {{forms}} in forms",
     "termsLine": "Required to use the app.",
     "divider": "After onboarding",
     "listLabel": "Forms after onboarding",
@@ -503,8 +519,7 @@
     "addForm": "Add a form",
     "nothingToAdd": "There are no forms to add.",
     "saveFailed": "Could not save. Try again.",
-    "openForm": "Open form",
-    "countWithConditional": "{{total}} screens in total: {{onboarding}} in Onboarding (+{{conditional}} conditional) · {{terms}} in the app terms · {{forms}} in forms"
+    "openForm": "Open form"
   },
   "appTerms": {
     "versionsTitle": "Versions",
@@ -780,11 +795,8 @@
     "removeConditionFirst": "First remove “{{field}}”, which depends on it."
   },
   "referralForm": {
-    "title": "Referral form",
     "fields": "Fields we ask the organization",
     "wording": "How the organization sees it (optional)",
-    "preview": "How the organization sees it",
-    "previewLanguage": "Preview language",
     "pickerTitle": "Add a field to the form",
     "here": "Already on the form",
     "hers": "Only she can give it",
@@ -925,6 +937,9 @@
     },
     "repeats": "Does it repeat every season?",
     "repeatsYes": "Yes",
+    "repeatsEverySeason": "Every season",
+    "choosePlayersTitle": "Choose the players",
+    "choosePlayersLater": "Not now",
     "repeatsNo": "No",
     "repeatsLine": "Yes: every season we will remind you to review it. It does not reach the players until someone publishes the new season’s version.",
     "saveDraft": "Save draft",
@@ -965,5 +980,36 @@
       "ar": "Arabic",
       "fa": "Persian"
     }
+  },
+  "surveyQuestion": {
+    "new": "New question",
+    "edit": "Edit the question",
+    "add": "Add a question",
+    "label": "The question",
+    "save": "Save the question",
+    "saved": "Question saved."
+  },
+  "surveyList": {
+    "new": "New survey",
+    "listLabel": "Surveys",
+    "empty": "There are no surveys yet.",
+    "archive": "Previous surveys"
+  },
+  "surveySettings": {
+    "event": "Activity",
+    "noEvent": "No activity",
+    "closesAt": "Closes on"
+  },
+  "surveyResults": {
+    "title": "Results",
+    "answered_one": "{{count}} answer",
+    "answered_other": "{{count}} answers",
+    "average_one": "Average {{average}} · {{count}} answer",
+    "average_other": "Average {{average}} · {{count}} answers",
+    "csv": "Download CSV",
+    "noQuestions": "This survey has no questions yet.",
+    "noAnswers": "No answers yet.",
+    "player": "Player",
+    "answeredAt": "Answered on"
   }
 }

@@ -35,19 +35,50 @@ export type CustomFormMandatory = (typeof CUSTOM_FORM_MANDATORY_LEVELS)[number];
  * Legal (listed under Condicions legals, published by an admin, never put off)
  * or other (under Altres formularis), RAPP-771.
  */
-export const CUSTOM_FORM_KINDS = ['legal', 'other'] as const;
+// A survey (RAPP-929): her answers kept with the response, never on her record.
+export const CUSTOM_FORM_KINDS = ['legal', 'other', 'survey'] as const;
 export type CustomFormKind = (typeof CUSTOM_FORM_KINDS)[number];
 
-/** The app's own legal forms as forms of their own (RAPP-771): one each, never archived. */
-export const CUSTOM_FORM_SYSTEM_KEYS = ['app_terms', 'season_authorization'] as const;
+/**
+ * The app's own forms as forms of their own, one each, never archived: its
+ * two legal forms (RAPP-771), the referral form the entity fills in
+ * (RAPP-938), the suggestions form she sends the club (RAPP-939), the
+ * mentoring request (RAPP-940) and the incident report (RAPP-973).
+ */
+export const CUSTOM_FORM_SYSTEM_KEYS = [
+  'app_terms',
+  'season_authorization',
+  'entity_referral',
+  'feedback',
+  'mentoring',
+  'incident',
+] as const;
 export type CustomFormSystemKey = (typeof CUSTOM_FORM_SYSTEM_KEYS)[number];
 
-/** A screen's locked part of a legal form (RAPP-771): never deleted, never moved. */
+/**
+ * The app's own forms she sends when she wants, with questions staff add
+ * around one fixed screen: the suggestions form (RAPP-939), the mentoring
+ * request (RAPP-940) and the incident report (RAPP-973). Their questions and
+ * her answers are the form's own.
+ */
+export const ON_DEMAND_FORM_KEYS = ['feedback', 'mentoring', 'incident'] as const;
+export type OnDemandFormKey = (typeof ON_DEMAND_FORM_KEYS)[number];
+
+/**
+ * A screen's locked part of one of the app's own forms (RAPP-771): never
+ * deleted, never moved. `feedback_message` holds a suggestion's type, text
+ * and photo (RAPP-939); `mentoring_request` a mentoring request's topic,
+ * detail and preferred date and time (RAPP-940); `incident_report` what
+ * happened, when, where and whether she sends it anonymously (RAPP-973).
+ */
 export const FORM_SYSTEM_SCREENS = [
   'terms_sign',
   'authorization_sign',
   'reregistration',
   'reregistration_season',
+  'feedback_message',
+  'mentoring_request',
+  'incident_report',
 ] as const;
 export type FormSystemScreen = (typeof FORM_SYSTEM_SCREENS)[number];
 
@@ -151,6 +182,10 @@ export interface CustomForm {
   readonly kind: CustomFormKind;
   /** One of the app's own legal forms (RAPP-771); null for every form the team created. */
   readonly systemKey: CustomFormSystemKey | null;
+  /** A survey's activity (RAPP-929); null for every other form. */
+  readonly eventId?: string | null;
+  /** When a survey stops taking answers (RAPP-929); null: open. */
+  readonly closesAt?: string | null;
   /** How many players were picked, for the team; null on her phone. */
   readonly recipientCount: number | null;
   /** The latest published version's number. */
@@ -195,6 +230,8 @@ const formSchema = z.object({
   repeats_each_season: z.boolean().optional(),
   kind: z.enum(CUSTOM_FORM_KINDS).optional().catch('other'),
   system_key: z.enum(CUSTOM_FORM_SYSTEM_KEYS).nullable().optional().catch(null),
+  event_id: z.uuid().nullable().optional(),
+  closes_at: z.string().nullable().optional(),
   recipient_count: z.number().int().optional(),
   version: z.number().int().min(1),
   published_at: z.string().nullable(),
@@ -211,6 +248,32 @@ const formSchema = z.object({
     .optional(),
   screens: z.array(screenSchema),
 });
+
+type ScreenRow = z.infer<typeof screenSchema>;
+
+/** A form's screens in the order she walks them. */
+function screensInOrder(rows: readonly ScreenRow[]): readonly CustomFormScreen[] {
+  return [...rows]
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((screen) => ({
+      id: screen.id,
+      title: screen.title,
+      intro: screen.intro,
+      sortOrder: screen.sort_order,
+      isHidden: screen.is_hidden ?? false,
+      texts: parseFormScreenTexts(screen.texts),
+      ...(screen.system_screen == null ? {} : { systemScreen: screen.system_screen }),
+      ...(screen.attachments == null ? {} : { attachments: screen.attachments }),
+      ...(screen.show_when_field_id == null || (screen.show_when_values ?? []).length === 0
+        ? {}
+        : {
+            showWhen: {
+              fieldId: screen.show_when_field_id,
+              values: screen.show_when_values ?? [],
+            },
+          }),
+    }));
+}
 
 /** The catalog's forms; a row this build cannot read is left out. */
 export function parseCustomForms(raw: unknown): readonly CustomForm[] {
@@ -230,6 +293,8 @@ export function parseCustomForms(raw: unknown): readonly CustomForm[] {
         repeatsEachSeason: form.repeats_each_season ?? form.appears === 'every_season',
         kind: form.kind ?? 'other',
         systemKey: form.system_key ?? null,
+        eventId: form.event_id ?? null,
+        closesAt: form.closes_at ?? null,
         recipientCount: form.recipient_count ?? null,
         version: form.version,
         publishedAt: form.published_at,
@@ -240,27 +305,42 @@ export function parseCustomForms(raw: unknown): readonly CustomForm[] {
           isCorrection: version.is_correction,
           publishedAt: version.published_at,
         })),
-        screens: [...form.screens]
-          .sort((a, b) => a.sort_order - b.sort_order)
-          .map((screen) => ({
-            id: screen.id,
-            title: screen.title,
-            intro: screen.intro,
-            sortOrder: screen.sort_order,
-            isHidden: screen.is_hidden ?? false,
-            texts: parseFormScreenTexts(screen.texts),
-            ...(screen.system_screen == null ? {} : { systemScreen: screen.system_screen }),
-            ...(screen.attachments == null ? {} : { attachments: screen.attachments }),
-            ...(screen.show_when_field_id == null || (screen.show_when_values ?? []).length === 0
-              ? {}
-              : {
-                  showWhen: {
-                    fieldId: screen.show_when_field_id,
-                    values: screen.show_when_values ?? [],
-                  },
-                }),
-          })),
+        screens: screensInOrder(form.screens),
       },
     ];
   });
+}
+
+/**
+ * The referral form (RAPP-938): the form the entity fills in when it refers
+ * a woman, built on screens like every form. Its fields and blocks are the
+ * entity form's (surface `entity_form`), which the catalog sends with no
+ * screen so an installed build reads them as one list; `screenOf` names the
+ * screen of each one.
+ */
+export interface EntityReferralForm {
+  readonly id: string;
+  readonly name: BuilderText;
+  readonly screens: readonly CustomFormScreen[];
+  /** The screen of each placement and block of the entity form, by its id. */
+  readonly screenOf: Readonly<Record<string, string>>;
+}
+
+const entityReferralFormSchema = z.object({
+  id: z.uuid(),
+  name: anyLanguageTextSchema,
+  screens: z.array(screenSchema),
+  items: z.array(z.object({ id: z.uuid(), screen_key: z.string() })),
+});
+
+/** The catalog's referral form; undefined from a server before it, or one this build cannot read. */
+export function parseEntityReferralForm(raw: unknown): EntityReferralForm | undefined {
+  const parsed = entityReferralFormSchema.safeParse(raw);
+  if (!parsed.success) return undefined;
+  return {
+    id: parsed.data.id,
+    name: parsed.data.name,
+    screens: screensInOrder(parsed.data.screens),
+    screenOf: Object.fromEntries(parsed.data.items.map((item) => [item.id, item.screen_key])),
+  };
 }

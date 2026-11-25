@@ -217,6 +217,10 @@
       "label": "Mentoría",
       "description": "Ver las solicitudes de mentoría, también el tema privado, y escribir las notas del equipo."
     },
+    "incidents_manage": {
+      "label": "Incidentes",
+      "description": "Leer los incidentes que reportan las jugadoras, también los anónimos, y cerrarlos."
+    },
     "feedback_view": {
       "label": "Leer opiniones",
       "description": "Leer las opiniones privadas que envían las jugadoras."
@@ -320,6 +324,25 @@
   "colorInvalid": "Usa un color hexadecimal de seis cifras, como #0077B6.",
   "authorizationIntro": "El texto que cada jugadora firma para la temporada: participación, seguro, datos, imagen, obligaciones y código de conducta.",
   "authorizationVersionsTitle": "Versiones publicadas",
+  "formVersionsIntro": "Cada vez que publicas se guarda una versión. Ábrela para ver las pantallas tal como eran.",
+  "authorizationOverview": {
+    "currentTitle": "Temporada vigente: {{season}}",
+    "noCurrent": "Todavía no hay ninguna temporada vigente.",
+    "nextTitle": "Temporada {{season}}",
+    "notPublished": "Todavía no se ha publicado para esta temporada.",
+    "versionPublished": "Versión {{number}} · publicada el {{date}}",
+    "signatures_one": "{{count}} firma",
+    "signatures_other": "{{count}} firmas",
+    "edit": "Editar",
+    "unpublishedChanges": "Hay cambios sin publicar.",
+    "prepare": "Preparar la temporada {{season}}",
+    "prepareBody": "Empieza el {{date}}. Después editas la autorización y la publicas para esta temporada.",
+    "prepareConfirm": "Crearla y editar",
+    "previousTitle": "Temporadas anteriores"
+  },
+  "formVersionView": "Ver",
+  "formVersionPublishedOn": "Publicada el {{date}}",
+  "formVersionNoCopy": "Esta versión no guardó una copia de las pantallas.",
   "authorizationNoVersions": "Todavía no se ha publicado ninguna versión.",
   "authorizationVersionInSeason": "Versión {{number}}, publicada el {{date}}",
   "authorizationCurrentBadge": "Vigente",
@@ -330,14 +353,6 @@
   "authorizationAddAttachment": "Añadir un documento",
   "authorizationRemoveAttachment": "Quitar el documento",
   "authorizationAttachmentInvalid": "Cada documento necesita el nombre en catalán y un enlace que empiece por https://.",
-  "seasonsTitle": "Temporadas",
-  "seasonsIntro": "Publicar la autorización de la temporada vigente hace que las jugadoras que vuelven se inscriban de nuevo.",
-  "seasonName": "Nombre (por ejemplo 2027/28)",
-  "seasonStartsOn": "Empieza el",
-  "seasonMakeCurrent": "Hacerla vigente",
-  "seasonCreate": "Crear la temporada",
-  "seasonCreated": "Temporada creada.",
-  "seasonCreateFailed": "No se ha podido crear la temporada.",
   "seasonSetCurrent": "Hacerla vigente",
   "tabQuestions": "Preguntas",
   "questions": {
@@ -361,6 +376,7 @@
       "file_upload": "Foto o archivo",
       "country": "País",
       "municipality": "Municipio de Cataluña",
+      "rating": "Valoración del 1 al 5",
       "signature": "Firma",
       "text_block": "Texto",
       "points_block": "Puntos",
@@ -432,7 +448,8 @@
       "item_list": "Se añaden elementos uno por uno, como las entidades que dan apoyo.",
       "file_upload": "Una foto o un PDF. Es privado: solo lo ve el equipo que puede leer este nivel.",
       "country": "Un país de la lista de todos los países.",
-      "municipality": "Un municipio de Cataluña, de la lista oficial."
+      "municipality": "Un municipio de Cataluña, de la lista oficial.",
+      "rating": "Cinco botones del 1 al 5 para valorar algo. Solo en las encuestas."
     },
     "tooManyOptions": "Hay demasiadas opciones para este tipo. Para una lista larga, elige \"Una opción de una lista larga\".",
     "settingsInvalid": "Revisa los ajustes: el mínimo no puede ser mayor que el máximo, y las edades son años enteros.",
@@ -487,7 +504,6 @@
     "intro": "Las pantallas que ve una jugadora la primera vez que abre la app."
   },
   "onboardingChain": {
-    "count": "En total, {{total}} pantallas: {{onboarding}} de Onboarding · {{terms}} de condiciones de la app · {{forms}} de formularios",
     "termsLine": "Hay que aceptarlas para usar la app.",
     "divider": "Después del onboarding",
     "listLabel": "Formularios después del onboarding",
@@ -503,8 +519,7 @@
     "addForm": "Añadir un formulario",
     "nothingToAdd": "No hay ningún formulario para añadir.",
     "saveFailed": "No se ha podido guardar. Vuelve a intentarlo.",
-    "openForm": "Abrir el formulario",
-    "countWithConditional": "En total, {{total}} pantallas: {{onboarding}} de Onboarding (+{{conditional}} condicionales) · {{terms}} de condiciones de la app · {{forms}} de formularios"
+    "openForm": "Abrir el formulario"
   },
   "appTerms": {
     "versionsTitle": "Versiones",
@@ -780,11 +795,8 @@
     "removeConditionFirst": "Primero quita «{{field}}», que depende de él."
   },
   "referralForm": {
-    "title": "Formulario de derivación",
     "fields": "Campos que pedimos a la entidad",
     "wording": "Cómo lo ve la entidad (opcional)",
-    "preview": "Cómo lo ve la entidad",
-    "previewLanguage": "Idioma de la vista previa",
     "pickerTitle": "Añade un campo al formulario",
     "here": "Ya está en el formulario",
     "hers": "Solo ella puede darlo",
@@ -925,6 +937,9 @@
     },
     "repeats": "¿Se repite cada temporada?",
     "repeatsYes": "Sí",
+    "repeatsEverySeason": "Cada temporada",
+    "choosePlayersTitle": "Elige las jugadoras",
+    "choosePlayersLater": "Ahora no",
     "repeatsNo": "No",
     "repeatsLine": "Sí: cada temporada te recordaremos que lo revises. No llega a las jugadoras hasta que alguien publique la versión de la nueva temporada.",
     "saveDraft": "Guardar el borrador",
@@ -965,5 +980,36 @@
       "ar": "árabe",
       "fa": "persa"
     }
+  },
+  "surveyQuestion": {
+    "new": "Nueva pregunta",
+    "edit": "Editar la pregunta",
+    "add": "Añadir una pregunta",
+    "label": "La pregunta",
+    "save": "Guardar la pregunta",
+    "saved": "Pregunta guardada."
+  },
+  "surveyList": {
+    "new": "Nueva encuesta",
+    "listLabel": "Encuestas",
+    "empty": "Todavía no hay ninguna encuesta.",
+    "archive": "Encuestas anteriores"
+  },
+  "surveySettings": {
+    "event": "Actividad",
+    "noEvent": "Ninguna actividad",
+    "closesAt": "Se cierra el"
+  },
+  "surveyResults": {
+    "title": "Resultados",
+    "answered_one": "{{count}} respuesta",
+    "answered_other": "{{count}} respuestas",
+    "average_one": "Media {{average}} · {{count}} respuesta",
+    "average_other": "Media {{average}} · {{count}} respuestas",
+    "csv": "Descargar CSV",
+    "noQuestions": "Esta encuesta todavía no tiene preguntas.",
+    "noAnswers": "Todavía no hay respuestas.",
+    "player": "Jugadora",
+    "answeredAt": "Fecha de respuesta"
   }
 }

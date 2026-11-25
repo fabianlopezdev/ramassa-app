@@ -1,4 +1,5 @@
 import { AuthenticatedMediaImage } from '@/components/content/authenticated-media-image';
+import { FormAnswerList } from '@/components/custom-forms/form-answer-list';
 import { Page } from '@/components/layout/page';
 import { adminClientEnv, supabase } from '@/lib/supabase';
 import { Link, useRouter } from '@tanstack/react-router';
@@ -180,6 +181,10 @@ export function StaffFeedbackInbox({
                 </div>
               </div>
               <p className="whitespace-pre-wrap text-neutral-800">{submission.content}</p>
+              <FormAnswerList
+                testId={`feedback-answers-${submission.id}`}
+                answers={submission.answers}
+              />
               {submission.imageObjectKey === null ||
               adminClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL === undefined ? null : (
                 <AuthenticatedMediaImage

@@ -21,6 +21,7 @@ import {
 } from './document-number';
 import {
   customAnswerSchema,
+  dateSettings,
   itemListSettings,
   normalizeCustomAnswerInput,
   numberSettings,
@@ -56,7 +57,12 @@ export function customAnswerMessage(
       const isRealDate = customAnswerSchema({ ...question, settings: {} }).safeParse(
         normalized,
       ).success;
-      return isRealDate ? t('onboarding:customErrorDateAge') : t('onboarding:errorInvalidDate');
+      if (!isRealDate) return t('onboarding:errorInvalidDate');
+      // An age of at least 0 and no upper bound is a day today or before (RAPP-973).
+      const settings = dateSettings(question.settings);
+      return settings.min_age === 0 && settings.max_age === undefined
+        ? t('onboarding:customErrorDateFuture')
+        : t('onboarding:customErrorDateAge');
     }
     case 'phone':
       return t('onboarding:errorPhoneFormat');

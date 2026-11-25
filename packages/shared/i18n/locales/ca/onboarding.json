@@ -218,6 +218,7 @@
   "customErrorNumberMin": "Escriu {{min}} o més.",
   "customErrorNumberMax": "Escriu {{max}} o menys.",
   "customErrorDateAge": "Revisa la data: dona una edat que aquesta pregunta no accepta.",
+  "customErrorDateFuture": "La data no pot ser posterior a avui.",
   "customErrorEmail": "Escriu el correu així: nom@exemple.com.",
   "customErrorList": "Revisa la llista: cap element repetit i com a màxim {{max}}.",
   "customErrorInvalid": "Revisa aquesta resposta.",

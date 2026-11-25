@@ -17,12 +17,14 @@ import {
 } from '@ramassa/shared/announcements';
 import type { PlayerEventOccurrence } from '@ramassa/shared/events';
 import { isUnseenSince, type HomeSeen } from '@ramassa/shared/home-seen';
-import type { PendingCustomForm } from '@ramassa/shared/intake-builder';
+import type { MySurvey, PendingCustomForm } from '@ramassa/shared/intake-builder';
 import type { PlayerSurvey } from '@ramassa/shared/surveys';
 
 export interface HomeAttentionSources {
   readonly forms: readonly PendingCustomForm[] | undefined;
   readonly surveys: readonly PlayerSurvey[] | undefined;
+  /** Her surveys on the form engine (RAPP-929); an older caller sends none. */
+  readonly surveyForms?: readonly MySurvey[] | undefined;
   readonly events: readonly PlayerEventOccurrence[] | undefined;
   readonly announcements: readonly AnnouncementListRow[] | undefined;
   /** Not loaded yet: nothing is shown as unseen, so no number flashes and goes. */
@@ -93,7 +95,7 @@ export function buildHomeAttention(
   sources: HomeAttentionSources,
   now: Date = new Date(),
 ): HomeAttention {
-  const toDoItems = buildHomeToDoQueue(sources.forms, sources.surveys);
+  const toDoItems = buildHomeToDoQueue(sources.forms, sources.surveys, sources.surveyForms);
   const nextActivity = pickNextPlayerActivity(sources.events, now);
   const isNextActivityUnseen = isActivityUnseen(nextActivity, sources.seen);
   const isNextActivityCounted =

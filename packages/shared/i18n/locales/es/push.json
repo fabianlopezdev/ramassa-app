@@ -13,5 +13,7 @@
   "referralUpdateBody": "Abre la ficha de la participante para revisarla.",
   "mentoringUpdateTitle": "Actualización de tu mentoría",
   "mentoringUpdateBody": "Abre la aplicación de AE Ramassà para ver el día y la hora.",
+  "incidentReportTitle": "Nuevo incidente",
+  "incidentReportBody": "Ábrelo en la app.",
   "customFormFallbackBody": "Toca para responderlo."
 }

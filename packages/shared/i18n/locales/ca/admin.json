@@ -160,6 +160,7 @@
       "walk_in": "Signatura nova de {{name}}",
       "deletion_request": "{{name}} demana esborrar les seves dades",
       "mentoring_request": "{{name}} demana una mentoria",
+      "incident_report": "Nou incident",
       "feedback": "Suggeriment nou de {{name}}",
       "forum_report": "Contingut del fòrum denunciat",
       "gallery_report": "Foto de la galeria denunciada",

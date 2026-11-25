@@ -22,6 +22,8 @@ export function renderPushEdgeCatalog(): string {
         referralUpdateBody: catalog.referralUpdateBody,
         mentoringUpdateTitle: catalog.mentoringUpdateTitle,
         mentoringUpdateBody: catalog.mentoringUpdateBody,
+        incidentReportTitle: catalog.incidentReportTitle,
+        incidentReportBody: catalog.incidentReportBody,
         customFormFallbackBody: catalog.customFormFallbackBody,
       },
     ]),

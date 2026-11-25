@@ -104,6 +104,14 @@ test('the onboarding design role sees the test players, the onboarding, the lega
     '/forms/authorization',
     '/forms/terms',
     '/forms/custom',
+    // Surveys are forms of the engine (RAPP-929).
+    '/surveys',
+    // The suggestions form, built on the same board (RAPP-939).
+    '/forms/feedback',
+    // The mentoring form, after it (RAPP-940).
+    '/forms/mentoring',
+    // The incident form, after it (RAPP-973). The reports stay closed to her.
+    '/forms/incidents',
     '/profile-layout',
     '/legal-data',
   ]);
@@ -117,7 +125,10 @@ test('Settings holds the organization tabs only; the team, entities and Fitxa ha
     '/forms/authorization',
     '/forms/terms',
     '/forms/custom',
-    '/entities/referral-form',
+    '/surveys',
+    '/forms/feedback',
+    '/forms/mentoring',
+    '/forms/incidents',
     '/profile-layout',
     '/legal-data',
     '/settings',
@@ -150,8 +161,16 @@ test('the menu groups by audience in the agreed order (RAPP-654)', () => {
       '/forms/terms',
       // The forms the team creates (RAPP-700).
       '/forms/custom',
-      '/entities/referral-form',
+      // Formulari de les entitats waits for the entities (RAPP-970).
+      // The suggestions form (RAPP-939).
+      '/forms/feedback',
+      // The mentoring form, after the suggestions form (RAPP-940).
+      '/forms/mentoring',
+      // The incident form, after the mentoring form (RAPP-973).
+      '/forms/incidents',
     ],
+    // Surveys, one item of their own (RAPP-934).
+    surveys: ['/surveys'],
     data: ['/profile-layout', '/legal-data'],
     app: [
       '/content',
@@ -160,13 +179,23 @@ test('the menu groups by audience in the agreed order (RAPP-654)', () => {
       '/forum',
       '/gallery',
       '/mentoring',
+      // The incidents players report, beside the mentoring queue (RAPP-973).
+      '/incidents',
       '/feedback',
-      '/surveys',
       '/notifications',
     ],
     entities: ['/participants/referrals', '/entities'],
     organisation: ['/team', '/participants/season', '/data', '/settings'],
   });
+});
+
+test('the incidents are read with incidents.manage only, never by the people who build the form (RAPP-973)', () => {
+  expect(
+    visibleStaffNavItems(new Set<PermissionCode>(['incidents.manage'])).map((item) => item.to),
+  ).toEqual(['/dashboard', '/incidents']);
+  expect(
+    visibleStaffNavItems(new Set<PermissionCode>(['mentoring.manage'])).map((item) => item.to),
+  ).toEqual(['/dashboard', '/mentoring']);
 });
 
 test('a group with nothing she may open is left out', () => {
@@ -187,9 +216,6 @@ test('only the deepest item the path sits in is marked as the current page', () 
   );
   expect(activeStaffNavPath('/participants/season', STAFF_NAV_ITEMS)).toBe('/participants/season');
   expect(activeStaffNavPath('/participants/invites', STAFF_NAV_ITEMS)).toBe('/participants');
-  expect(activeStaffNavPath('/entities/referral-form', STAFF_NAV_ITEMS)).toBe(
-    '/entities/referral-form',
-  );
   expect(activeStaffNavPath('/entities', STAFF_NAV_ITEMS)).toBe('/entities');
   expect(activeStaffNavPath('/account', STAFF_NAV_ITEMS)).toBeNull();
   // Without the Derivacions item, its page still marks Participants.

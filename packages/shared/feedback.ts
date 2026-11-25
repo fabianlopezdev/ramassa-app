@@ -1,6 +1,16 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
+import type { CustomQuestion, IntakeCatalog } from './intake-builder/builder';
+import {
+  fetchMyOnDemandForm,
+  fetchMyOnDemandFormSource,
+  formAnswerQuestion,
+  formAnswersSchema,
+  onDemandFormCatalog,
+  type FormAnswer,
+  type OnDemandForm,
+} from './on-demand-form';
 import type { Database } from './types/database';
 
 export const FEEDBACK_TYPES = ['activity_proposal', 'idea', 'problem', 'general'] as const;
@@ -44,6 +54,8 @@ const staffFeedbackRowSchema = ownFeedbackRowSchema.extend({
   author_last_name: z.string(),
   resolved_by: z.uuid().nullable(),
   conversation_id: z.uuid(),
+  // A server before RAPP-939 sends none.
+  answers: formAnswersSchema.optional(),
 });
 
 const monthlyCountRowSchema = z.object({
@@ -66,12 +78,21 @@ export interface FeedbackSubmission {
   readonly updatedAt: string;
 }
 
+/**
+ * One answer to a question staff added to the suggestions form (RAPP-939),
+ * with the question as she read it: the inbox reads it even after the
+ * question changes. The mentoring form's answers are the same (RAPP-940).
+ */
+export type FeedbackAnswer = FormAnswer;
+
 export interface StaffFeedbackSubmission extends FeedbackSubmission {
   readonly authorId: string;
   readonly authorFirstName: string;
   readonly authorLastName: string;
   readonly resolvedBy: string | null;
   readonly conversationId: string;
+  /** Her answers to the questions staff added (RAPP-939), in the form's order. */
+  readonly answers: readonly FeedbackAnswer[];
 }
 
 export interface FeedbackMonthlyCount {
@@ -153,7 +174,74 @@ export async function fetchStaffFeedbackSubmissions(
       authorLastName: row.author_last_name,
       resolvedBy: row.resolved_by,
       conversationId: row.conversation_id,
+      answers: row.answers ?? [],
     }));
+}
+
+/** An answer's question, so the shared answer text reads its value (an option's label, a yes). */
+export function feedbackAnswerQuestion(answer: FeedbackAnswer): CustomQuestion {
+  return formAnswerQuestion(answer);
+}
+
+// The suggestions form on her phone (RAPP-939) ---------------------------------------------------
+
+/**
+ * The screen that holds a suggestion's type, text and photo: the form's
+ * fixed parts. Staff add screens and questions around it.
+ */
+export const FEEDBACK_MESSAGE_SCREEN = 'feedback_message';
+
+/** The suggestions form as she fills it in now: its screens and its questions. */
+export type FeedbackForm = OnDemandForm;
+
+/** The suggestions form; null from a server before it. */
+export async function fetchMyFeedbackForm(client: RpcClient): Promise<FeedbackForm | null> {
+  return fetchMyOnDemandForm(client, 'feedback');
+}
+
+/**
+ * The catalog her phone walks the suggestions form with: the catalog
+ * `intake_catalog` sent (`raw`, which never holds this form or its
+ * questions), with the form laid over it. Its fixed screen is the one whose
+ * `systemScreen` is `FEEDBACK_MESSAGE_SCREEN`.
+ */
+export function feedbackFormCatalog(
+  raw: unknown,
+  form: FeedbackForm,
+  readAt: string = new Date().toISOString(),
+): IntakeCatalog {
+  return onDemandFormCatalog(raw, 'feedback', form, readAt);
+}
+
+/** What her phone needs to walk the suggestions form: the catalog as sent, and the form. */
+export async function fetchMyFeedbackFormSource(
+  client: RpcClient,
+): Promise<{ readonly raw: unknown; readonly form: FeedbackForm | null }> {
+  return fetchMyOnDemandFormSource(client, 'feedback');
+}
+
+/**
+ * A suggestion with her answers to the questions staff added, by question
+ * id; an unanswered optional question is left out. The database checks the
+ * answers against the form as it is now, a required one included.
+ */
+export async function sendFeedbackSubmission(
+  client: RpcClient,
+  input: FeedbackSubmissionValues,
+  answers: Readonly<Record<string, unknown>>,
+): Promise<string> {
+  const submission = feedbackSubmissionSchema.parse(input);
+  const { data, error } = await client.rpc(
+    'send_feedback_submission' as never,
+    {
+      p_type: submission.type,
+      p_content: submission.content,
+      p_image_url: submission.imageObjectKey,
+      p_answers: answers,
+    } as never,
+  );
+  if (error) databaseFailure(error.message);
+  return z.uuid().parse(data);
 }
 
 export async function transitionFeedbackSubmission(

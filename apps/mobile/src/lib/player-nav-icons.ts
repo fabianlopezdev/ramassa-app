@@ -11,6 +11,8 @@ export const playerNavIcons = {
   teamChat: 'chat',
   mentoring: 'users',
   feedback: 'lightbulb',
+  // Reportar un incident (RAPP-973): the flag a report raises.
+  incident: 'flag',
   myData: 'id-card',
   attendance: 'calendar-check',
   formsLater: 'clock',

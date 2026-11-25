@@ -9,9 +9,8 @@
  * keeps applying by its own rules (who it is for, when it must be answered,
  * its Home card and its gate).
  *
- *   - The board: `fetchOnboardingFormChain`, `saveOnboardingFormChain` (a live
- *     edit, like Onboarding's own screen order) and the "Fins a N pantalles"
- *     count (`onboardingScreenCounts`).
+ *   - The board: `fetchOnboardingFormChain` and `saveOnboardingFormChain` (a
+ *     live edit, like Onboarding's own screen order).
  *   - Her phone: her chain while it is ahead of her (`fetchMyOnboardingChain`,
  *     empty once done), the next form that applies to her
  *     (`nextChainedForm`) and the end of the walk (`finishOnboardingChain`).
@@ -20,26 +19,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode } from '../errors';
-import { FINAL_WIZARD_SCREENS } from '../onboarding/intake';
-import { DETAIL_SCREEN_BRANCHES } from '../onboarding/screen-texts';
 import type { Database } from '../types/database';
 import { authorizationQuestions } from './authorization-fields';
 import { authorizationForm, isReregistrationScreen } from './authorization-form';
-import { wizardFlow, type IntakeCatalog } from './builder';
+import type { IntakeCatalog } from './builder';
 import type { CustomForm, CustomFormScreen } from './custom-form-model';
 import {
   customFormScreenBlocks,
   customFormScreenConsents,
   customFormScreenQuestions,
 } from './custom-forms';
-import { followUpAsksSomething } from './follow-up-fields';
-import { flowStep, isShownToHer, movableOrder } from './player-plan';
-import {
-  formOpensWhen,
-  formScreensInOrder,
-  isOnboardingBranch,
-  onboardingOpensWhen,
-} from './screen-branches';
+import { formOpensWhen, formScreensInOrder } from './screen-branches';
 
 type Client = SupabaseClient<Database>;
 
@@ -147,63 +137,6 @@ export function chainedFormScreenCount(catalog: IntakeCatalog, ref: ChainedFormR
   if (ref === AUTHORIZATION_FORM_REF) return authorizationScreenCount(catalog);
   const form = chainedCustomForm(catalog, ref);
   return form === undefined ? 0 : customFormAskingScreens(catalog, form).length;
-}
-
-export interface OnboardingScreenCounts {
-  /** Onboarding's own screens she can be shown, the summary included. */
-  readonly onboarding: number;
-  /**
-   * The follow-up screens of those screens (RAPP-713), shown only after some
-   * answers. A hidden screen's follow-up is out.
-   */
-  readonly conditional: number;
-  /** The app terms: the screen before them and the one she signs. */
-  readonly terms: number;
-  /** The chained forms' screens. */
-  readonly forms: number;
-  readonly total: number;
-}
-
-/** The app terms' screens on her phone: the one before them and the one she signs. */
-export const TERMS_SCREEN_COUNT = FINAL_WIZARD_SCREENS.filter(
-  (screen) => screen !== 'summary',
-).length;
-
-/**
- * The screens a new player can be shown, for "Fins a N pantalles". Hidden and
- * archived screens are out, and so is a Ramassà screen with nothing to ask.
- * Some players see fewer (a question already answered is skipped), so the
- * board reads it as "up to".
- */
-export function onboardingScreenCounts(
-  catalog: IntakeCatalog,
-  chain: readonly ChainedFormRef[],
-): OnboardingScreenCounts {
-  const hidden = wizardFlow(catalog).hiddenScreens;
-  const order = movableOrder(catalog);
-  const shown = order.filter((key) => {
-    const step = flowStep(catalog, key);
-    if (step === null) return false;
-    if (step.kind === 'builtin') return !hidden.has(step.key);
-    return (
-      step.kind !== 'custom' ||
-      (isShownToHer(catalog, step.screen) && onboardingOpensWhen(catalog, step.screen) !== null)
-    );
-  });
-  // Every follow-up, the app's and the team's, at any depth (RAPP-715).
-  const branches = shown.filter((key) => isOnboardingBranch(catalog, key, order));
-  const conditional =
-    // An app follow-up that asks her nothing never shows (RAPP-720).
-    DETAIL_SCREEN_BRANCHES.filter(
-      (branch) =>
-        (shown as readonly string[]).includes(branch.parent) &&
-        followUpAsksSomething(catalog, branch.screen),
-    ).length + branches.length;
-  const roots = shown.length - branches.length;
-  const terms = TERMS_SCREEN_COUNT;
-  const onboarding = roots + 1;
-  const forms = chain.reduce((sum, ref) => sum + chainedFormScreenCount(catalog, ref), 0);
-  return { onboarding, conditional, terms, forms, total: onboarding + conditional + terms + forms };
 }
 
 // Her phone ---------------------------------------------------------------------------------------

@@ -30,6 +30,7 @@ import {
   buildForumFlag,
   buildForumPost,
   buildForumReply,
+  buildIncidentReport,
   buildIntakeBuiltinScreen,
   buildIntakeFlowOrder,
   buildIntakeScreen,
@@ -368,6 +369,21 @@ describe('buildMentoringRequest', () => {
     expect(buildMentoringRequest({ status: 'requested', scheduled_at: null }).status).toBe(
       'requested',
     );
+  });
+});
+
+describe('buildIncidentReport', () => {
+  test('defaults to an open, named report owned by a seeded participant', () => {
+    const report = buildIncidentReport();
+
+    expect(report.player_id).toBe(buildParticipant().id);
+    expect(report.status).toBe('open');
+    expect(report.is_anonymous).toBe(false);
+    expect(report.closed_at).toBeNull();
+  });
+
+  test('overrides win over the defaults', () => {
+    expect(buildIncidentReport({ is_anonymous: true }).is_anonymous).toBe(true);
   });
 });
 

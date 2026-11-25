@@ -186,11 +186,17 @@ export function SurveyWorkspace({
   groups,
   options,
   onRefresh,
+  isArchive = false,
 }: {
   readonly surveys: readonly StaffSurvey[];
   readonly groups: readonly CustomNotificationGroup[];
   readonly options: NotificationAudienceOptions;
   readonly onRefresh: () => Promise<void>;
+  /**
+   * The surveys made before they moved to the form engine (RAPP-929): read
+   * and exported here, no new one made. New surveys are made in Enquestes.
+   */
+  readonly isArchive?: boolean;
 }) {
   const { t, i18n } = useTranslation('surveys');
   const resolvedLanguage = i18n?.resolvedLanguage ?? 'ca';
@@ -337,10 +343,11 @@ export function SurveyWorkspace({
   return (
     <Page className="gap-10">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold">{t('title')}</h1>
-        <p className="text-neutral-600">{t('intro')}</p>
+        <h1 className="text-3xl font-bold">{isArchive ? t('archiveTitle') : t('title')}</h1>
+        {isArchive ? null : <p className="text-neutral-600">{t('intro')}</p>}
       </header>
 
+      {isArchive ? null : (
       <form
         onSubmit={submit}
         className="space-y-6 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm"
@@ -536,6 +543,7 @@ export function SurveyWorkspace({
           {saving ? t('saving') : t('savePublish')}
         </Button>
       </form>
+      )}
 
       <section className="space-y-5" aria-labelledby="survey-results-title">
         <div className="flex flex-wrap items-center justify-between gap-3">

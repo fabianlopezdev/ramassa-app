@@ -1418,9 +1418,12 @@ export type Database = {
       };
       custom_forms: {
         Row: {
+          closes_at: string | null;
+          event_id: string | null;
           kind: string;
           system_key: string | null;
           audience: string;
+          audience_rule: Json | null;
           created_at: string;
           created_by: string | null;
           deadline: string | null;
@@ -1436,9 +1439,12 @@ export type Database = {
           version: number;
         };
         Insert: {
+          closes_at?: string | null;
+          event_id?: string | null;
           kind?: string;
           system_key?: string | null;
           audience?: string;
+          audience_rule?: Json | null;
           created_at?: string;
           created_by?: string | null;
           deadline?: string | null;
@@ -1454,9 +1460,12 @@ export type Database = {
           version?: number;
         };
         Update: {
+          closes_at?: string | null;
+          event_id?: string | null;
           kind?: string;
           system_key?: string | null;
           audience?: string;
+          audience_rule?: Json | null;
           created_at?: string;
           created_by?: string | null;
           deadline?: string | null;
@@ -1472,6 +1481,13 @@ export type Database = {
           version?: number;
         };
         Relationships: [
+          {
+            foreignKeyName: 'custom_forms_event_id_fkey';
+            columns: ['event_id'];
+            isOneToOne: false;
+            referencedRelation: 'events';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'custom_forms_created_by_fkey';
             columns: ['created_by'];
@@ -2401,6 +2417,7 @@ export type Database = {
       };
       feedback_submissions: {
         Row: {
+          answers_encrypted: string | null;
           author_id: string;
           content_encrypted: string;
           created_at: string;
@@ -2414,6 +2431,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          answers_encrypted?: string | null;
           author_id: string;
           content_encrypted: string;
           created_at?: string;
@@ -2427,6 +2445,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          answers_encrypted?: string | null;
           author_id?: string;
           content_encrypted?: string;
           created_at?: string;
@@ -3030,6 +3049,66 @@ export type Database = {
             columns: ['org_id', 'post_id'];
             isOneToOne: false;
             referencedRelation: 'forum_posts';
+            referencedColumns: ['org_id', 'id'];
+          },
+        ];
+      };
+      incident_reports: {
+        Row: {
+          answers_encrypted: string | null;
+          closed_at: string | null;
+          created_at: string;
+          happened_on: string;
+          id: string;
+          is_anonymous: boolean;
+          org_id: string;
+          player_id: string;
+          status: string;
+          updated_at: string;
+          what_encrypted: string;
+          where_encrypted: string;
+        };
+        Insert: {
+          answers_encrypted?: string | null;
+          closed_at?: string | null;
+          created_at?: string;
+          happened_on: string;
+          id?: string;
+          is_anonymous?: boolean;
+          org_id: string;
+          player_id: string;
+          status?: string;
+          updated_at?: string;
+          what_encrypted: string;
+          where_encrypted: string;
+        };
+        Update: {
+          answers_encrypted?: string | null;
+          closed_at?: string | null;
+          created_at?: string;
+          happened_on?: string;
+          id?: string;
+          is_anonymous?: boolean;
+          org_id?: string;
+          player_id?: string;
+          status?: string;
+          updated_at?: string;
+          what_encrypted?: string;
+          where_encrypted?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'incident_reports_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'incident_reports_player_tenant_fkey';
+            columns: ['org_id', 'player_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
             referencedColumns: ['org_id', 'id'];
           },
         ];
@@ -3805,6 +3884,7 @@ export type Database = {
       };
       mentoring_requests: {
         Row: {
+          answers_encrypted: string | null;
           assigned_staff_id: string | null;
           completed_at: string | null;
           created_at: string;
@@ -3821,6 +3901,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          answers_encrypted?: string | null;
           assigned_staff_id?: string | null;
           completed_at?: string | null;
           created_at?: string;
@@ -3837,6 +3918,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          answers_encrypted?: string | null;
           assigned_staff_id?: string | null;
           completed_at?: string | null;
           created_at?: string;
@@ -4321,6 +4403,7 @@ export type Database = {
       };
       profile_fields: {
         Row: {
+          survey_form_id: string | null;
           created_at: string;
           created_by: string | null;
           default_required: boolean;
@@ -4333,7 +4416,7 @@ export type Database = {
           privacy: string;
           question_type: string;
           read_permission: string | null;
-          section_id: string;
+          section_id: string | null;
           settings: Json;
           show_when_field_id: string | null;
           show_when_option_id: string | null;
@@ -4342,6 +4425,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          survey_form_id?: string | null;
           created_at?: string;
           created_by?: string | null;
           default_required?: boolean;
@@ -4354,7 +4438,7 @@ export type Database = {
           privacy: string;
           question_type: string;
           read_permission?: string | null;
-          section_id: string;
+          section_id?: string | null;
           settings?: Json;
           show_when_field_id?: string | null;
           show_when_option_id?: string | null;
@@ -4363,6 +4447,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          survey_form_id?: string | null;
           created_at?: string;
           created_by?: string | null;
           default_required?: boolean;
@@ -4375,7 +4460,7 @@ export type Database = {
           privacy?: string;
           question_type?: string;
           read_permission?: string | null;
-          section_id?: string;
+          section_id?: string | null;
           settings?: Json;
           show_when_field_id?: string | null;
           show_when_option_id?: string | null;
@@ -4384,6 +4469,13 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'profile_fields_survey_form_id_fkey';
+            columns: ['survey_form_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_forms';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'profile_fields_created_by_fkey';
             columns: ['created_by'];
@@ -5791,6 +5883,59 @@ export type Database = {
           },
         ];
       };
+      survey_answers: {
+        Row: {
+          field_id: string;
+          org_id: string;
+          profile_id: string;
+          response_id: string;
+          value_encrypted: string;
+        };
+        Insert: {
+          field_id: string;
+          org_id: string;
+          profile_id: string;
+          response_id: string;
+          value_encrypted: string;
+        };
+        Update: {
+          field_id?: string;
+          org_id?: string;
+          profile_id?: string;
+          response_id?: string;
+          value_encrypted?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'survey_answers_field_id_fkey';
+            columns: ['field_id'];
+            isOneToOne: false;
+            referencedRelation: 'profile_fields';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'survey_answers_org_id_fkey';
+            columns: ['org_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'survey_answers_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'survey_answers_response_id_fkey';
+            columns: ['response_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_form_responses';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       survey_questions: {
         Row: {
           created_at: string;
@@ -6598,6 +6743,10 @@ export type Database = {
       };
       archive_custom_form_screen: { Args: { p_id: string }; Returns: undefined };
       archive_intake_screen: { Args: { p_id: string }; Returns: undefined };
+      complete_survey: {
+        Args: { p_answers: Json; p_response_id: string };
+        Returns: undefined;
+      };
       delete_builder_screen: {
         Args: { p_surface: string; p_key: string; p_expected_keys: string[] };
         Returns: undefined;
@@ -6812,6 +6961,11 @@ export type Database = {
         Args: { p_content: string; p_image_url: string; p_type: string };
         Returns: string;
       };
+      send_feedback_submission: {
+        Args: { p_answers?: Json; p_content: string; p_image_url: string; p_type: string };
+        Returns: string;
+      };
+      my_feedback_form: { Args: never; Returns: Json };
       create_forum_post: {
         Args: {
           p_category_id: string;
@@ -6850,6 +7004,60 @@ export type Database = {
         };
         Returns: string;
       };
+      send_mentoring_request: {
+        Args: {
+          p_answers?: Json;
+          p_preferred_date: string;
+          p_preferred_time: string;
+          p_topic: string;
+          p_topic_detail: string;
+        };
+        Returns: string;
+      };
+      my_mentoring_form: { Args: never; Returns: Json };
+      my_incident_form: { Args: never; Returns: Json };
+      send_incident_report: {
+        Args: {
+          p_answers?: Json;
+          p_happened_on: string;
+          p_is_anonymous?: boolean;
+          p_what: string;
+          p_where: string;
+        };
+        Returns: string;
+      };
+      list_own_incident_reports: {
+        Args: never;
+        Returns: {
+          created_at: string;
+          happened_on: string;
+          id: string;
+          is_anonymous: boolean;
+          status: string;
+        }[];
+      };
+      list_staff_incident_reports: {
+        Args: never;
+        Returns: {
+          answers: Json;
+          closed_at: string;
+          created_at: string;
+          happened_on: string;
+          id: string;
+          is_anonymous: boolean;
+          player_first_name: string;
+          player_id: string;
+          player_last_name: string;
+          status: string;
+          updated_at: string;
+          what: string;
+          where_text: string;
+        }[];
+      };
+      set_incident_report_status: {
+        Args: { p_report_id: string; p_status: string };
+        Returns: undefined;
+      };
       create_participant_invite: {
         Args: { payload: Json };
         Returns: {
@@ -6871,6 +7079,7 @@ export type Database = {
         Returns: string;
       };
       create_survey_export: { Args: { p_survey_id: string }; Returns: Json };
+      create_survey_results_export: { Args: { p_form_id: string }; Returns: Json };
       create_targeted_notification_send: {
         Args: {
           p_audience_config: Json;
@@ -7105,6 +7314,7 @@ export type Database = {
         Args: { p_profile_id: string };
         Returns: Json;
       };
+      intake_catalog_with_surveys: { Args: never; Returns: Json };
       mark_home_items_seen: {
         Args: { p_announcement_ids?: string[]; p_event_ids?: string[] };
         Returns: undefined;
@@ -7116,6 +7326,20 @@ export type Database = {
       };
       my_put_off_custom_forms: { Args: never; Returns: string[] };
       my_started_custom_forms: { Args: never; Returns: string[] };
+      my_surveys: {
+        Args: never;
+        Returns: {
+          asked_at: string;
+          closes_at: string;
+          content: Json;
+          event_id: string;
+          form_id: string;
+          is_started: boolean;
+          name: Json;
+          response_id: string;
+          version: number;
+        }[];
+      };
       put_off_custom_form: {
         Args: { p_response_id: string };
         Returns: undefined;
@@ -7123,6 +7347,19 @@ export type Database = {
       save_custom_form_progress: {
         Args: { p_response_id: string; p_answers: Json; p_screen_id?: string };
         Returns: undefined;
+      };
+      save_survey_question: {
+        Args: {
+          p_help: Json;
+          p_id: string;
+          p_label: Json;
+          p_options?: Json;
+          p_required?: boolean;
+          p_screen_id: string;
+          p_settings?: Json;
+          p_type: string;
+        };
+        Returns: string;
       };
       set_player_profile_banner: {
         Args: { p_profile_id: string; p_object_key: string; p_all_players: boolean };
@@ -7185,6 +7422,10 @@ export type Database = {
       get_person_cards: {
         Args: { p_profile_ids: string[] };
         Returns: { id: string; first_name: string | null; avatar_url: string | null }[];
+      };
+      save_survey_settings: {
+        Args: { p_closes_at: string; p_event_id: string; p_form_id: string };
+        Returns: undefined;
       };
       set_own_profile_photo: {
         Args: { p_profile_id: string; p_object_key: string | null };
@@ -7556,6 +7797,7 @@ export type Database = {
       list_staff_feedback_submissions: {
         Args: { p_status?: string; p_type?: string };
         Returns: {
+          answers: Json;
           author_first_name: string;
           author_id: string;
           author_last_name: string;
@@ -7587,6 +7829,7 @@ export type Database = {
       list_staff_mentoring_requests: {
         Args: never;
         Returns: {
+          answers: Json;
           assigned_staff_id: string;
           assigned_staff_name: string;
           completed_at: string;
@@ -8683,6 +8926,18 @@ export type Database = {
           p_version_id: string;
         };
         Returns: string;
+      };
+      survey_results: {
+        Args: { p_form_id: string };
+        Returns: {
+          answered_at: string;
+          answers: Json;
+          display_name: string;
+          member_number: number;
+          profile_id: string;
+          response_id: string;
+          version: number;
+        }[];
       };
       test_player_scenario: { Args: { p_profile_id: string }; Returns: Json };
       test_sign_in_account: { Args: { p_email: string }; Returns: string };

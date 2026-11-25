@@ -10,13 +10,14 @@
  */
 
 import {
+  BarChart3,
   BellRing,
   Building2,
   CalendarCheck,
   CalendarDays,
   CalendarRange,
   ClipboardList,
-  ClipboardPen,
+  // ClipboardPen, the entity form's icon, comes back with it (RAPP-970).
   Database,
   Files,
   FileSignature,
@@ -28,12 +29,15 @@ import {
   Inbox,
   Landmark,
   LayoutDashboard,
+  Lightbulb,
   ListChecks,
+  MessageCircleHeart,
   MessageSquare,
   Scale,
   ScrollText,
   Settings,
   Share2,
+  ShieldAlert,
   ShieldCheck,
   Smartphone,
   Table2,
@@ -63,7 +67,8 @@ export interface NavItem {
  * collected (Dades, RAPP-696), what the players see in their app, what the
  * partner entities use, and how the organization itself is run.
  */
-export type StaffNavGroupId = 'top' | 'forms' | 'data' | 'app' | 'entities' | 'organisation';
+export type StaffNavGroupId =
+  'top' | 'forms' | 'surveys' | 'data' | 'app' | 'entities' | 'organisation';
 
 /** A menu row that holds other items under it (RAPP-696): Condicions legals. */
 export type StaffNavParentId = 'legal';
@@ -87,6 +92,8 @@ export const STAFF_NAV_PARENTS = {
 export const STAFF_NAV_GROUPS = [
   { id: 'top', labelKey: null, icon: null },
   { id: 'forms', labelKey: 'nav:staff.groups.forms', icon: Files },
+  // Surveys, one item of their own with nothing to open (RAPP-934).
+  { id: 'surveys', labelKey: null, icon: null },
   { id: 'data', labelKey: 'nav:staff.groups.data', icon: Table2 },
   { id: 'app', labelKey: 'nav:staff.groups.app', icon: Smartphone },
   { id: 'entities', labelKey: 'nav:staff.groups.entities', icon: Handshake },
@@ -126,9 +133,31 @@ export const CUSTOM_FORMS_PERMISSIONS = [
   'participants.view_personal',
 ] as const satisfies readonly PermissionCode[];
 
-/** The entity referral form (RAPP-652): the organization's own settings. */
+/**
+ * The entity referral form (RAPP-652): the organization's own settings, and
+ * the people who design the forms, who build it on the same board (RAPP-965).
+ */
 export const REFERRAL_FORM_PERMISSIONS = [
   'settings.organization',
+  'onboarding.design',
+] as const satisfies readonly PermissionCode[];
+
+/**
+ * The forms she sends when she wants: the suggestions form (RAPP-939), the
+ * mentoring form (RAPP-940) and the incident form (RAPP-973). The people who
+ * design the forms build them on the same board. What she sends is read
+ * elsewhere: suggestions in the inbox, with feedback.view, mentoring requests
+ * in the queue, with mentoring.manage, and incidents on their own page, with
+ * incidents.manage.
+ */
+export const ON_DEMAND_FORM_PERMISSIONS = [
+  'settings.organization',
+  'onboarding.design',
+] as const satisfies readonly PermissionCode[];
+
+/** The incidents players report (RAPP-973): their own permission, and only it. */
+export const INCIDENTS_PERMISSIONS = [
+  'incidents.manage',
 ] as const satisfies readonly PermissionCode[];
 
 /** The Data area: exports and the audit log. */
@@ -219,12 +248,46 @@ export const STAFF_NAV_ITEMS = [
     anyPermission: CUSTOM_FORMS_PERMISSIONS,
   },
   {
-    // The entity referral form keeps its URL under the entities (RAPP-696).
-    to: '/entities/referral-form',
-    icon: ClipboardPen,
-    labelKey: 'nav:staff.referralForm',
+    // Surveys are forms of the engine (RAPP-929), for whoever builds forms or had surveys.
+    to: '/surveys',
+    icon: BarChart3,
+    labelKey: 'nav:staff.surveys',
+    group: 'surveys',
+    anyPermission: [...CUSTOM_FORMS_PERMISSIONS, 'surveys.manage', 'surveys.results'],
+  },
+  // Formulari de les entitats waits for the entities, which roll out after
+  // the app runs in production (RAPP-970). Its page and board stay built.
+  // {
+  //   // The entity referral form keeps its URL under the entities (RAPP-696).
+  //   to: '/entities/referral-form',
+  //   icon: ClipboardPen,
+  //   labelKey: 'nav:staff.referralForm',
+  //   group: 'forms',
+  //   anyPermission: REFERRAL_FORM_PERMISSIONS,
+  // },
+  {
+    // The form a player fills in to send a suggestion (RAPP-939).
+    to: '/forms/feedback',
+    icon: Lightbulb,
+    labelKey: 'nav:staff.feedbackForm',
     group: 'forms',
-    anyPermission: REFERRAL_FORM_PERMISSIONS,
+    anyPermission: ON_DEMAND_FORM_PERMISSIONS,
+  },
+  {
+    // The form a player fills in to ask for mentoring (RAPP-940).
+    to: '/forms/mentoring',
+    icon: MessageCircleHeart,
+    labelKey: 'nav:staff.mentoringForm',
+    group: 'forms',
+    anyPermission: ON_DEMAND_FORM_PERMISSIONS,
+  },
+  {
+    // The form a player fills in to report an incident (RAPP-973).
+    to: '/forms/incidents',
+    icon: ShieldAlert,
+    labelKey: 'nav:staff.incidentForm',
+    group: 'forms',
+    anyPermission: ON_DEMAND_FORM_PERMISSIONS,
   },
   {
     to: '/profile-layout',
@@ -294,18 +357,19 @@ export const STAFF_NAV_ITEMS = [
     anyPermission: ['mentoring.manage'],
   },
   {
+    // The incidents players report, beside the mentoring queue (RAPP-973).
+    to: '/incidents',
+    icon: ShieldAlert,
+    labelKey: 'nav:staff.incidents',
+    group: 'app',
+    anyPermission: INCIDENTS_PERMISSIONS,
+  },
+  {
     to: '/feedback',
     icon: Inbox,
     labelKey: 'nav:staff.feedback',
     group: 'app',
     anyPermission: ['feedback.view'],
-  },
-  {
-    to: '/surveys',
-    icon: ClipboardList,
-    labelKey: 'nav:staff.surveys',
-    group: 'app',
-    anyPermission: ['surveys.manage', 'surveys.results'],
   },
   {
     to: '/notifications',

@@ -14,6 +14,8 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "referralUpdateBody": "Obre la fitxa de la participant per revisar-la.",
     "mentoringUpdateTitle": "Actualització de la teva mentoria",
     "mentoringUpdateBody": "Obre l'aplicació d'AE Ramassà per veure el dia i l’hora.",
+    "incidentReportTitle": "Nou incident",
+    "incidentReportBody": "Obre'l a l'app.",
     "customFormFallbackBody": "Toca per respondre'l."
   },
   "es": {
@@ -27,6 +29,8 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "referralUpdateBody": "Abre la ficha de la participante para revisarla.",
     "mentoringUpdateTitle": "Actualización de tu mentoría",
     "mentoringUpdateBody": "Abre la aplicación de AE Ramassà para ver el día y la hora.",
+    "incidentReportTitle": "Nuevo incidente",
+    "incidentReportBody": "Ábrelo en la app.",
     "customFormFallbackBody": "Toca para responderlo."
   },
   "en": {
@@ -40,6 +44,8 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "referralUpdateBody": "Open the participant record to review it.",
     "mentoringUpdateTitle": "Update to your mentoring",
     "mentoringUpdateBody": "Open the AE Ramassà app to see the date and time.",
+    "incidentReportTitle": "New incident",
+    "incidentReportBody": "Open it in the app.",
     "customFormFallbackBody": "Tap to answer it."
   },
   "fr": {
@@ -53,6 +59,8 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "referralUpdateBody": "Ouvre la fiche de la participante pour la vérifier.",
     "mentoringUpdateTitle": "Mise à jour de ton mentorat",
     "mentoringUpdateBody": "Ouvre l’application d’AE Ramassà pour voir le jour et l’heure.",
+    "incidentReportTitle": "Nouvel incident",
+    "incidentReportBody": "Ouvre-le dans l’app.",
     "customFormFallbackBody": "Appuie pour y répondre."
   },
   "ar": {
@@ -66,6 +74,8 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "referralUpdateBody": "افتحي سجل المشاركة لمراجعته.",
     "mentoringUpdateTitle": "تحديث بشأن الإرشاد",
     "mentoringUpdateBody": "افتحي تطبيق AE Ramassà لرؤية اليوم والوقت.",
+    "incidentReportTitle": "حادثة جديدة",
+    "incidentReportBody": "افتحيها في التطبيق.",
     "customFormFallbackBody": "اضغطي للإجابة عليه."
   },
   "fa": {
@@ -79,6 +89,8 @@ export const PUSH_NOTIFICATION_FALLBACK_BODIES = {
     "referralUpdateBody": "پرونده شرکت‌کننده را برای بررسی باز کنید.",
     "mentoringUpdateTitle": "به‌روزرسانی راهنمایی شما",
     "mentoringUpdateBody": "برنامه AE Ramassà را باز کنید تا روز و ساعت را ببینید.",
+    "incidentReportTitle": "حادثهٔ جدید",
+    "incidentReportBody": "آن را در برنامه باز کنید.",
     "customFormFallbackBody": "برای پاسخ دادن ضربه بزن."
   }
 } as const;

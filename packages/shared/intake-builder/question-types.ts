@@ -26,6 +26,7 @@
 import { z } from 'zod';
 import { isCanonicalCountry } from '../i18n/countries';
 import { isCanonicalMunicipality } from '../i18n/municipalities';
+import { todayInMadrid } from '../madrid-time';
 import type { LanguageCode } from '../schemas/language';
 
 export const CUSTOM_QUESTION_TYPES = [
@@ -44,8 +45,33 @@ export const CUSTOM_QUESTION_TYPES = [
   'file_upload',
   'country',
   'municipality',
+  // A survey's 1 to 5 rating (RAPP-929): a survey question only, never a field of her record.
+  'rating',
 ] as const;
 export type CustomQuestionType = (typeof CUSTOM_QUESTION_TYPES)[number];
+
+/** The types a field of her record takes: every one but a survey's rating (RAPP-929). */
+export const FIELD_QUESTION_TYPES: readonly CustomQuestionType[] = CUSTOM_QUESTION_TYPES.filter(
+  (type) => type !== 'rating',
+);
+
+/** The types a survey question takes (RAPP-929): opinions, never personal data. */
+export const SURVEY_QUESTION_TYPES = [
+  'rating',
+  'single_choice',
+  'multiple_choice',
+  'yes_no',
+  'yes_no_maybe',
+  'short_text',
+  'long_text',
+  'number',
+  // A day she picks (RAPP-935); two days to choose between are a one-choice question.
+  'date',
+] as const satisfies readonly CustomQuestionType[];
+
+/** A survey's rating runs from 1 to 5 (RAPP-929). */
+export const RATING_MIN = 1;
+export const RATING_MAX = 5;
 
 /**
  * The two lists the app ships (D6, RAPP-660): every country and every
@@ -301,11 +327,19 @@ export function customAnswerSchema(question: AnswerQuestionShape): z.ZodType<Cus
     }
     case 'date': {
       const settings = dateSettings(question.settings);
-      return z
-        .string()
-        .refine(isCalendarDate)
-        .refine((value) => settings.min_age === undefined || ageOn(value) >= settings.min_age)
-        .refine((value) => settings.max_age === undefined || ageOn(value) <= settings.max_age);
+      return (
+        z
+          .string()
+          .refine(isCalendarDate)
+          // "Today or before" (min_age 0, no upper bound) is Madrid's today, as the
+          // database checks it, so a day picked just after midnight is accepted (RAPP-973).
+          .refine((value) =>
+            settings.min_age === 0 && settings.max_age === undefined
+              ? value <= todayInMadrid()
+              : settings.min_age === undefined || ageOn(value) >= settings.min_age,
+          )
+          .refine((value) => settings.max_age === undefined || ageOn(value) <= settings.max_age)
+      );
     }
     case 'phone':
       return z.string().regex(PHONE_PATTERN);
@@ -347,6 +381,8 @@ export function customAnswerSchema(question: AnswerQuestionShape): z.ZodType<Cus
       return z.string().refine(isCanonicalCountry);
     case 'municipality':
       return z.string().refine(isCanonicalMunicipality);
+    case 'rating':
+      return z.int().min(RATING_MIN).max(RATING_MAX);
   }
 }
 
@@ -446,6 +482,8 @@ export function sampleCustomAnswer(
       return 'Espanya';
     case 'municipality':
       return 'Vic';
+    case 'rating':
+      return RATING_MAX - 1;
     case 'file_upload': {
       const isPhoto = fileSettings(question.settings).accept === 'photo';
       return {

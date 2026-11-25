@@ -30,13 +30,19 @@ import {
 } from '@/lib/nav-items';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Link, useLocation } from '@tanstack/react-router';
+import { Link, useLocation, useMatches } from '@tanstack/react-router';
 import { ChevronRight, Scale, type LucideIcon } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@ramassa/shared/auth';
 import type { LayoutDirection } from '@ramassa/shared/i18n';
-import { fetchLegalFormEntries, textIn, type LegalFormEntry } from '@ramassa/shared/intake-builder';
+import {
+  customFormById,
+  fetchLegalFormEntries,
+  textIn,
+  type IntakeCatalog,
+  type LegalFormEntry,
+} from '@ramassa/shared/intake-builder';
 import type { LanguageCode } from '@ramassa/shared/schemas';
 
 /**
@@ -44,9 +50,13 @@ import type { LanguageCode } from '@ramassa/shared/schemas';
  * hover, and for the current page a yellow marker at the start edge with a
  * yellow icon. Yellow only ever sits on the navy, never on white. A long name
  * wraps to a second line, with no ellipsis (RAPP-702).
+ *
+ * The current page keeps the same font weight as every other row (RAPP-925):
+ * bold letters are wider, so a name that fits would wrap when it is picked
+ * and the menu would jump.
  */
 const NAV_BUTTON_CLASS =
-  'relative h-auto min-h-9 leading-snug [&>span:last-child]:text-clip before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-full before:bg-sidebar-primary before:opacity-0 data-active:font-semibold data-active:before:opacity-100 data-active:[&>svg]:text-sidebar-primary group-data-[collapsible=icon]:before:inset-y-1.5';
+  'relative h-auto min-h-9 leading-snug [&>span:last-child]:text-clip before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-full before:bg-sidebar-primary before:opacity-0 data-active:font-normal data-active:before:opacity-100 data-active:[&>svg]:text-sidebar-primary group-data-[collapsible=icon]:before:inset-y-1.5';
 
 export function sidebarSideForDirection(direction: LayoutDirection): 'left' | 'right' {
   return direction === 'rtl' ? 'right' : 'left';
@@ -80,7 +90,8 @@ export function StaffSidebar() {
   const groups = visibleStaffNavGroups(permissions).map((group) => ({
     ...group,
     items: group.items.map((item) => {
-      const formId = systemFormIds[item.to] ?? null;
+      // The season authorization opens on its overview (RAPP-927); the app terms on their board.
+      const formId = item.to === '/forms/authorization' ? null : (systemFormIds[item.to] ?? null);
       return formId === null
         ? item
         : // The row's own address, read at run time: the menu links by string.
@@ -92,7 +103,19 @@ export function StaffSidebar() {
     holdsAnyPermission(permissions, CUSTOM_FORMS_PERMISSIONS) && hasLegalRows,
     pathname,
   );
-  const activePath = activeStaffNavPath(pathname, [
+  // The authorization's board, screens and versions light its overview's row (RAPP-927).
+  const authorizationId = systemFormIds['/forms/authorization'] ?? null;
+  const authorizationPath = authorizationId === null ? null : legalFormPath(authorizationId);
+  // A survey's board, screens, responses and versions light Enquestes (RAPP-929).
+  const isSurveyPage = useMatches({ select: (matches) => matches.some(isSurveyMatch) });
+  const navPathname =
+    authorizationPath !== null &&
+    (pathname === authorizationPath || pathname.startsWith(`${authorizationPath}/`))
+      ? '/forms/authorization'
+      : isSurveyPage
+        ? '/surveys'
+        : pathname;
+  const activePath = activeStaffNavPath(navPathname, [
     ...groups.flatMap((group) => group.items),
     ...Object.values(STAFF_NAV_PARENTS),
     ...legalForms.map((form) => ({ to: legalFormPath(form.id) })),
@@ -136,6 +159,27 @@ export function StaffSidebar() {
       <SidebarRail />
     </Sidebar>
   );
+}
+
+/**
+ * Whether a matched route shows a survey: its `formId` is a survey of the
+ * catalog it loaded (RAPP-929). A form page's loader returns the catalog, or
+ * holds it under `data`.
+ */
+function isSurveyMatch(match: {
+  readonly params: unknown;
+  readonly loaderData?: unknown;
+}): boolean {
+  const formId = (match.params as { readonly formId?: unknown }).formId;
+  if (typeof formId !== 'string') return false;
+  const loaded = match.loaderData as
+    | {
+        readonly intakeCatalog?: IntakeCatalog;
+        readonly data?: { readonly intakeCatalog?: IntakeCatalog };
+      }
+    | undefined;
+  const catalog = loaded?.intakeCatalog ?? loaded?.data?.intakeCatalog;
+  return catalog !== undefined && customFormById(catalog, formId)?.kind === 'survey';
 }
 
 /** Where a created legal form opens: its board, the engine of every form (RAPP-771). */

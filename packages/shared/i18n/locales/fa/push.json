@@ -13,5 +13,7 @@
   "referralUpdateBody": "پرونده شرکت‌کننده را برای بررسی باز کنید.",
   "mentoringUpdateTitle": "به‌روزرسانی راهنمایی شما",
   "mentoringUpdateBody": "برنامه AE Ramassà را باز کنید تا روز و ساعت را ببینید.",
+  "incidentReportTitle": "حادثهٔ جدید",
+  "incidentReportBody": "آن را در برنامه باز کنید.",
   "customFormFallbackBody": "برای پاسخ دادن ضربه بزن."
 }

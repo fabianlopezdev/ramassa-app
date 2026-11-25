@@ -90,6 +90,11 @@ export interface FormWalkerProps {
   readonly header?: ReactNode;
   /** A text staff wrote, filled in: the authorization names its season (RAPP-773). */
   readonly fillText?: (text: string) => string;
+  /**
+   * The form's name over the progress, such as "Reportar un incident"; the
+   * sign-up's "Alta a l'app" when omitted (RAPP-973).
+   */
+  readonly flowLabel?: string;
 }
 
 export function FormWalker({
@@ -106,6 +111,7 @@ export function FormWalker({
   footer,
   header,
   fillText,
+  flowLabel,
 }: FormWalkerProps) {
   const shownFor = (answers: CustomAnswerDraft) => formWalkScreens(catalog, form, answers);
   const [draft, setDraft] = useState<FormWalkDraft>({
@@ -163,6 +169,7 @@ export function FormWalker({
       catalog={catalog}
       screen={screen}
       position={{ step: index + 1, total: screens.length }}
+      flowLabel={flowLabel}
       draft={draft}
       // Send on the last screen her answers open, as she answers this one.
       continueLabelFor={(answers) => {
@@ -232,6 +239,8 @@ export interface FormWalkStepProps {
   readonly header?: ReactNode;
   /** A text staff wrote, filled in (`{{season}}`). */
   readonly fillText?: (text: string) => string;
+  /** The form's name over the progress; the sign-up's when omitted. */
+  readonly flowLabel?: string;
   /** Her answers on this screen as she gives them, checked or not. */
   readonly onAnswersChange?: (answers: CustomAnswerDraft) => void;
 }
@@ -250,6 +259,7 @@ export function FormWalkStep({
   footer,
   header,
   fillText = (text: string) => text,
+  flowLabel,
   onAnswersChange,
 }: FormWalkStepProps) {
   const { t } = useTranslation('onboarding');
@@ -277,8 +287,10 @@ export function FormWalkStep({
   return (
     <WizardFrame
       screenId={frameId}
-      stepNumber={position.step}
+      // A walk of one screen has no steps to count, and its title already names it.
+      stepNumber={position.total > 1 ? position.step : undefined}
       totalSteps={position.total}
+      flowLabel={position.total > 1 ? flowLabel : undefined}
       title={fillText(teamTextIn(screen.title, language, false))}
       intro={intro === '' ? undefined : fillText(intro)}
       scrollEnabled={!isDrawing}

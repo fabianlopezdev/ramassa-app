@@ -218,6 +218,7 @@
   "customErrorNumberMin": "اكتبي {{min}} أو أكثر.",
   "customErrorNumberMax": "اكتبي {{max}} أو أقل.",
   "customErrorDateAge": "تحقّقي من التاريخ: يعطي عمرًا لا يقبله هذا السؤال.",
+  "customErrorDateFuture": "لا يمكن أن يكون التاريخ بعد اليوم.",
   "customErrorEmail": "اكتبي البريد الإلكتروني هكذا: name@example.com.",
   "customErrorList": "تحقّقي من القائمة: لا عنصر مكرّر، و{{max}} على الأكثر.",
   "customErrorInvalid": "تحقّقي من هذه الإجابة.",

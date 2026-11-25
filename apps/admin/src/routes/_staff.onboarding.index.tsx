@@ -1,9 +1,7 @@
 /**
  * Registration (RAPP-615, RAPP-641): everything a player sees the first time
  * she opens the app, as a board of screens in her order, then the forms
- * chained after it (RAPP-703), under a count of every screen she can be
- * shown. Each card opens its
- * screen's editor (`/onboarding/screens/<id>`); the More menu downloads and
+ * chained after it (RAPP-703). Each card opens its screen's editor (`/onboarding/screens/<id>`); the More menu downloads and
  * imports the whole setup (RAPP-621) and resets the order.
  *
  * Settings shows the same editors in its tabs. This page exists so the
@@ -20,7 +18,6 @@ import { ONBOARDING_PERMISSIONS } from '@/lib/nav-items';
 import { loadOnboardingDesign } from '@/lib/onboarding-design';
 import { createFileRoute } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { onboardingScreenCounts } from '@ramassa/shared/intake-builder';
 
 export const Route = createFileRoute('/_staff/onboarding/')({
   ssr: false,
@@ -39,27 +36,9 @@ function OnboardingPage() {
 function OnboardingBoard() {
   const data = Route.useLoaderData();
   const { t } = useTranslation('settings');
-  const counts = onboardingScreenCounts(data.intakeCatalog, data.formChain);
   return (
     <Page data-testid="onboarding-design-page">
-      <PageHeader
-        title={t('onboardingPage.title')}
-        description={
-          <>
-            {/* What Onboarding is: her first time only (RAPP-705). */}
-            <span className="block">{t('onboardingPage.intro')}</span>
-            {/* The follow-up screens count too, marked as conditional (RAPP-713). */}
-            <span className="block">
-              {t(
-                counts.conditional === 0
-                  ? 'onboardingChain.count'
-                  : 'onboardingChain.countWithConditional',
-                { ...counts },
-              )}
-            </span>
-          </>
-        }
-      />
+      <PageHeader title={t('onboardingPage.title')} description={t('onboardingPage.intro')} />
       <ScreenBoard catalog={data.intakeCatalog} chain={data.formChain} />
     </Page>
   );

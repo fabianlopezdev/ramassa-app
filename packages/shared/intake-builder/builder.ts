@@ -64,9 +64,12 @@ import {
 } from './consents';
 import {
   parseCustomForms,
+  parseEntityReferralForm,
   parseFormScreenTexts,
   type CustomForm,
+  type EntityReferralForm,
   type FormScreenTexts,
+  type OnDemandFormKey,
 } from './custom-form-model';
 import { systemFieldIndexFromCatalog, type SystemFieldIndex } from './field-answers';
 import { parseFormBlocks, type FormBlock } from './form-blocks';
@@ -232,6 +235,13 @@ export const intakeCatalogSchema = z.object({
   custom_form_placements: z.unknown().optional(),
   custom_form_blocks: z.unknown().optional(),
   custom_form_consent_placements: z.unknown().optional(),
+  // The referral form's screens (RAPP-938), apart for the same reason.
+  entity_form: z.unknown().optional(),
+  // The suggestions form (RAPP-939), the mentoring form (RAPP-940) and the
+  // incident form (RAPP-973), sent to the dashboard only, apart from the lists of forms.
+  feedback_form: z.unknown().optional(),
+  mentoring_form: z.unknown().optional(),
+  incident_form: z.unknown().optional(),
 });
 
 export interface CustomOption {
@@ -331,6 +341,17 @@ export interface IntakeCatalog {
   readonly consentPlacements?: readonly ConsentPlacement[];
   /** The forms the team created (RAPP-700); their contents are in the lists above. */
   readonly customForms?: readonly CustomForm[];
+  /** The referral form's screens (RAPP-938); absent from a server before it. */
+  readonly entityForm?: EntityReferralForm;
+  /**
+   * The suggestions form (RAPP-939), in the dashboard's catalog only; its
+   * questions are among the fields and its placements among the forms' rows.
+   */
+  readonly feedbackForm?: CustomForm;
+  /** The mentoring form (RAPP-940), sent and read as the suggestions form is. */
+  readonly mentoringForm?: CustomForm;
+  /** The incident form (RAPP-973), sent and read as the suggestions form is. */
+  readonly incidentForm?: CustomForm;
 }
 
 export const EMPTY_INTAKE_CATALOG: IntakeCatalog = {
@@ -400,7 +421,42 @@ export function parseIntakeCatalog(data: unknown): IntakeCatalog {
       withFormRows(raw.consent_placements, raw.custom_form_consent_placements),
     ),
     customForms: parseCustomForms(raw.custom_forms),
+    ...withEntityForm(parseEntityReferralForm(raw.entity_form)),
+    ...withOnDemandForm('feedbackForm', raw.feedback_form),
+    ...withOnDemandForm('mentoringForm', raw.mentoring_form),
+    ...withOnDemandForm('incidentForm', raw.incident_form),
   };
+}
+
+/** A form she sends when she wants (RAPP-939, RAPP-940, RAPP-973), under its key; absent stays absent. */
+function withOnDemandForm<Key extends OnDemandCatalogKey>(
+  key: Key,
+  raw: unknown,
+): { readonly [K in Key]?: CustomForm } {
+  const form = parseCustomForms(raw == null ? [] : [raw])[0];
+  return (form === undefined ? {} : { [key]: form }) as { readonly [K in Key]?: CustomForm };
+}
+
+/** Where the catalog keeps each form she sends when she wants. */
+const ON_DEMAND_CATALOG_KEYS = {
+  feedback: 'feedbackForm',
+  mentoring: 'mentoringForm',
+  incident: 'incidentForm',
+} as const satisfies Readonly<Record<OnDemandFormKey, keyof IntakeCatalog>>;
+type OnDemandCatalogKey = (typeof ON_DEMAND_CATALOG_KEYS)[OnDemandFormKey];
+
+/** The dashboard's form of an on-demand key (RAPP-939, RAPP-940, RAPP-973); absent from a server before it. */
+export function onDemandFormOf(
+  catalog: IntakeCatalog,
+  key: OnDemandFormKey,
+): CustomForm | undefined {
+  return catalog[ON_DEMAND_CATALOG_KEYS[key]];
+}
+
+function withEntityForm(form: EntityReferralForm | undefined): {
+  readonly entityForm?: EntityReferralForm;
+} {
+  return form === undefined ? {} : { entityForm: form };
 }
 
 /** A list of the catalog with the forms' rows after it (RAPP-700); absent stays absent. */

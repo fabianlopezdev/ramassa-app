@@ -44,6 +44,8 @@
   "groupSearch": "Buscar participantes",
   "groupEmpty": "Ninguna participante coincide con esta búsqueda.",
   "groupMembers": "Participantes",
+  "chosenCount_one": "{{count}} elegida",
+  "chosenCount_other": "{{count}} elegidas",
   "saveGroup": "Guardar grupo",
   "groupSaved": "Grupo guardado.",
   "editGroup": "Editar",

@@ -157,6 +157,7 @@ test('team screens follow permissions', () => {
     staff: false,
     impact: false,
     mentoring: false,
+    incidents: false,
     messages: false,
     stock: false,
     arrivals: false,
@@ -190,6 +191,7 @@ test('team screens follow permissions', () => {
     staff: false,
     impact: false,
     mentoring: false,
+    incidents: false,
     messages: true,
     stock: false,
     arrivals: false,
@@ -223,6 +225,7 @@ test('team screens follow permissions', () => {
     staff: false,
     impact: false,
     mentoring: false,
+    incidents: false,
     messages: false,
     stock: false,
     arrivals: false,
@@ -256,6 +259,7 @@ test('team screens follow permissions', () => {
     staff: false,
     impact: false,
     mentoring: false,
+    incidents: false,
     messages: false,
     stock: false,
     arrivals: false,
@@ -290,6 +294,7 @@ test('team screens follow permissions', () => {
     staff: false,
     impact: false,
     mentoring: false,
+    incidents: false,
     messages: false,
     stock: true,
     arrivals: false,
@@ -347,6 +352,11 @@ test('any export permission opens the exports, and audit.view the audit log', ()
 test('impact.view opens the impact dashboard', () => {
   expect(teamScreens(new Set(['impact.view'])).impact).toBe(true);
   expect(teamScreens(new Set(['export.attendance'])).impact).toBe(false);
+});
+
+test('incidents.manage alone opens the incidents; mentoring.manage does not (RAPP-973)', () => {
+  expect(teamScreens(new Set(['incidents.manage'])).incidents).toBe(true);
+  expect(teamScreens(new Set(['mentoring.manage'])).incidents).toBe(false);
 });
 
 test('team.manage opens the team screen', () => {

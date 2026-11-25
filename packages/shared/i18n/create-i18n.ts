@@ -22,6 +22,7 @@ import arFeedback from './locales/ar/feedback.json';
 import arForum from './locales/ar/forum.json';
 import arGallery from './locales/ar/gallery.json';
 import arHome from './locales/ar/home.json';
+import arIncidents from './locales/ar/incidents.json';
 import arKnowledge from './locales/ar/knowledge.json';
 import arMentoring from './locales/ar/mentoring.json';
 import arMessaging from './locales/ar/messaging.json';
@@ -49,6 +50,7 @@ import caFeedback from './locales/ca/feedback.json';
 import caForum from './locales/ca/forum.json';
 import caGallery from './locales/ca/gallery.json';
 import caHome from './locales/ca/home.json';
+import caIncidents from './locales/ca/incidents.json';
 import caKnowledge from './locales/ca/knowledge.json';
 import caMentoring from './locales/ca/mentoring.json';
 import caMessaging from './locales/ca/messaging.json';
@@ -77,6 +79,7 @@ import enFeedback from './locales/en/feedback.json';
 import enForum from './locales/en/forum.json';
 import enGallery from './locales/en/gallery.json';
 import enHome from './locales/en/home.json';
+import enIncidents from './locales/en/incidents.json';
 import enKnowledge from './locales/en/knowledge.json';
 import enMentoring from './locales/en/mentoring.json';
 import enMessaging from './locales/en/messaging.json';
@@ -105,6 +108,7 @@ import esFeedback from './locales/es/feedback.json';
 import esForum from './locales/es/forum.json';
 import esGallery from './locales/es/gallery.json';
 import esHome from './locales/es/home.json';
+import esIncidents from './locales/es/incidents.json';
 import esKnowledge from './locales/es/knowledge.json';
 import esMentoring from './locales/es/mentoring.json';
 import esMessaging from './locales/es/messaging.json';
@@ -133,6 +137,7 @@ import faFeedback from './locales/fa/feedback.json';
 import faForum from './locales/fa/forum.json';
 import faGallery from './locales/fa/gallery.json';
 import faHome from './locales/fa/home.json';
+import faIncidents from './locales/fa/incidents.json';
 import faKnowledge from './locales/fa/knowledge.json';
 import faMentoring from './locales/fa/mentoring.json';
 import faMessaging from './locales/fa/messaging.json';
@@ -156,6 +161,7 @@ import frFeedback from './locales/fr/feedback.json';
 import frForum from './locales/fr/forum.json';
 import frGallery from './locales/fr/gallery.json';
 import frHome from './locales/fr/home.json';
+import frIncidents from './locales/fr/incidents.json';
 import frKnowledge from './locales/fr/knowledge.json';
 import frMentoring from './locales/fr/mentoring.json';
 import frMessaging from './locales/fr/messaging.json';
@@ -188,6 +194,7 @@ const resources = {
     knowledge: caKnowledge,
     messaging: caMessaging,
     mentoring: caMentoring,
+    incidents: caIncidents,
     feedback: caFeedback,
     notifications: caNotifications,
     attendance: caAttendance,
@@ -218,6 +225,7 @@ const resources = {
     knowledge: esKnowledge,
     messaging: esMessaging,
     mentoring: esMentoring,
+    incidents: esIncidents,
     feedback: esFeedback,
     notifications: esNotifications,
     attendance: esAttendance,
@@ -248,6 +256,7 @@ const resources = {
     knowledge: enKnowledge,
     messaging: enMessaging,
     mentoring: enMentoring,
+    incidents: enIncidents,
     feedback: enFeedback,
     notifications: enNotifications,
     attendance: enAttendance,
@@ -279,6 +288,7 @@ const resources = {
     knowledge: frKnowledge,
     messaging: frMessaging,
     mentoring: frMentoring,
+    incidents: frIncidents,
     feedback: frFeedback,
     attendance: frAttendance,
     playerServices: frPlayerServices,
@@ -305,6 +315,7 @@ const resources = {
     knowledge: arKnowledge,
     messaging: arMessaging,
     mentoring: arMentoring,
+    incidents: arIncidents,
     feedback: arFeedback,
     notifications: arNotifications,
     attendance: arAttendance,
@@ -335,6 +346,7 @@ const resources = {
     knowledge: faKnowledge,
     messaging: faMessaging,
     mentoring: faMentoring,
+    incidents: faIncidents,
     feedback: faFeedback,
     notifications: faNotifications,
     attendance: faAttendance,

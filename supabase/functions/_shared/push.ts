@@ -27,7 +27,9 @@ export type PushContentType =
   | 'referral_update'
   | 'mentoring_update'
   // A form the team created asks her (RAPP-700): its name is the title, the link her response.
-  | 'custom_form';
+  | 'custom_form'
+  // A player reported an incident (RAPP-973): the team's push, with no content and no name.
+  | 'incident_report';
 export type LocalizedPushText = Readonly<Partial<Record<PushLanguage, string>>>;
 
 export interface PushContent {
@@ -139,6 +141,13 @@ export function resolvePushText(
     return {
       title: fallbackCatalog.mentoringUpdateTitle,
       body: fallbackCatalog.mentoringUpdateBody,
+      language: fallbackLanguage,
+    };
+  }
+  if (content.contentType === 'incident_report') {
+    return {
+      title: fallbackCatalog.incidentReportTitle,
+      body: fallbackCatalog.incidentReportBody,
       language: fallbackLanguage,
     };
   }

@@ -29,6 +29,17 @@ describe('the onboarding design role reaches its two areas only (RAPP-615)', () 
       '/forms/custom',
       '/forms/custom/5eed0000-0000-4000-8100-000000000001',
       '/forms/custom/5eed0000-0000-4000-8100-000000000001/screens/5eed0000-0000-4000-8101-000000000001',
+      // Enquestes, the surveys' list (RAPP-929).
+      '/surveys',
+      // The suggestions form and its screens (RAPP-939).
+      '/forms/feedback',
+      '/forms/feedback/screens/5eed0000-0000-4000-8101-000000000001',
+      // The mentoring form and its screens (RAPP-940).
+      '/forms/mentoring',
+      '/forms/mentoring/screens/5eed0000-0000-4000-8101-000000000001',
+      // The incident form and its screens (RAPP-973).
+      '/forms/incidents',
+      '/forms/incidents/screens/5eed0000-0000-4000-8101-000000000001',
     ]) {
       expect(designRoleRedirect(path, DESIGN)).toBeNull();
     }
@@ -44,7 +55,20 @@ describe('the onboarding design role reaches its two areas only (RAPP-615)', () 
       '/legal/elsewhere',
       '/forms',
       '/forms/authorizations',
+      // The entities and the referrals they sent are not hers (RAPP-965).
+      '/entities',
+      '/entities/referral-forms',
+      // Formulari de les entitats waits for the entities (RAPP-970).
       '/entities/referral-form',
+      '/entities/referral-form/screens/5eed0000-0000-4000-8101-000000000001',
+      // The suggestions themselves are not hers (RAPP-939).
+      '/feedback',
+      '/forms/feedbacks',
+      // Nor the mentoring requests (RAPP-940).
+      '/mentoring',
+      '/forms/mentorings',
+      // Nor the incidents players report (RAPP-973).
+      '/incidents',
       '/team',
       '/data',
       '/content',
@@ -56,6 +80,8 @@ describe('the onboarding design role reaches its two areas only (RAPP-615)', () 
       '/participants/walk-ins',
       '/photo-handoff/abc',
       '/somewhere-new',
+      // The surveys made before the form engine are not hers (RAPP-929).
+      '/surveys/archive',
     ]) {
       expect(designRoleRedirect(path, DESIGN)).toBe('/onboarding');
     }

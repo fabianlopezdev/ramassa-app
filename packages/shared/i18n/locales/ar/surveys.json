@@ -71,5 +71,6 @@
   "averageRating": "المتوسط {{value}} من 5",
   "choiceLabel": "الخيار {{number}} بالكتالونية",
   "datesInvalid": "يجب أن يكون تاريخ الإغلاق بعد تاريخ النشر.",
-  "publishAtRequired": "اختر موعد نشر الاستبيان."
+  "publishAtRequired": "اختر موعد نشر الاستبيان.",
+  "archiveTitle": "الاستبيانات السابقة"
 }

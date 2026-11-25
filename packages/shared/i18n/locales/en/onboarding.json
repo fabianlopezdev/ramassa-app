@@ -218,6 +218,7 @@
   "customErrorNumberMin": "Write {{min}} or more.",
   "customErrorNumberMax": "Write {{max}} or less.",
   "customErrorDateAge": "Check the date: it gives an age this question does not accept.",
+  "customErrorDateFuture": "The date cannot be later than today.",
   "customErrorEmail": "Write the email like this: name@example.com.",
   "customErrorList": "Check the list: no item twice, and {{max}} at most.",
   "customErrorInvalid": "Check this answer.",

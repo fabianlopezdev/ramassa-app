@@ -3,8 +3,12 @@
  *
  * A person whose only access is `onboarding.design` and `test_players.manage`
  * reaches the onboarding page, the two legal forms (RAPP-694, their own
- * boards since RAPP-696), the forms the team creates (RAPP-700), Dades de les jugadores (RAPP-650, its own page
- * since RAPP-654), the test players and her own account page (RAPP-634),
+ * boards since RAPP-696), the forms the team creates (RAPP-700) and the surveys
+ * (RAPP-929), the entity referral form and its screens (RAPP-965), the
+ * suggestions form, the mentoring form and the incident form and their
+ * screens (RAPP-939, RAPP-940, RAPP-973), Dades de
+ * les jugadores (RAPP-650, its own page since RAPP-654), the test players and
+ * her own account page (RAPP-634),
  * and every other admin URL sends her back. This is the screen half: the
  * database refuses her every other read and write on its own
  * (`private.limited_to_test_players`).
@@ -50,9 +54,38 @@ function isLegalPath(pathname: string): boolean {
 
 const LEGAL_FORM_PATHS = ['/forms/authorization', '/forms/terms', '/forms/legal'] as const;
 
-/** The forms the team creates (RAPP-700): the list, each form and its screens. */
+/**
+ * The forms the team creates (RAPP-700): the list, each form and its screens,
+ * and Enquestes, the surveys' list (RAPP-929), whose surveys open as forms.
+ */
 function isCustomFormPath(pathname: string): boolean {
-  return pathname === '/forms/custom' || pathname.startsWith('/forms/custom/');
+  return (
+    pathname === '/forms/custom' ||
+    pathname.startsWith('/forms/custom/') ||
+    pathname === '/surveys' ||
+    pathname === '/surveys/'
+  );
+}
+
+/**
+ * The entity referral form and its screens (RAPP-965). The referrals an
+ * entity sent and every other entity page stay closed to her.
+ */
+// Formulari de les entitats waits for the entities (RAPP-970).
+// function isReferralFormPath(pathname: string): boolean {
+//   return pathname === '/entities/referral-form' || pathname.startsWith('/entities/referral-form/');
+// }
+
+/**
+ * The suggestions form (RAPP-939), the mentoring form (RAPP-940) and the
+ * incident form (RAPP-973), and their screens. What players send stays closed
+ * to her: the suggestions inbox (/feedback), the mentoring queue (/mentoring)
+ * and the incidents (/incidents).
+ */
+function isOnDemandFormPath(pathname: string): boolean {
+  return ['/forms/feedback', '/forms/mentoring', '/forms/incidents'].some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  );
 }
 
 /** Dades de les jugadores (RAPP-650, RAPP-654) and Dades legals (RAPP-699). */
@@ -76,6 +109,9 @@ export function designRoleRedirect(
   if (permissions.has('onboarding.design') && isOnboardingPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isLegalPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isCustomFormPath(pathname)) return null;
+  // Formulari de les entitats waits for the entities (RAPP-970).
+  // if (permissions.has('onboarding.design') && isReferralFormPath(pathname)) return null;
+  if (permissions.has('onboarding.design') && isOnDemandFormPath(pathname)) return null;
   if (permissions.has('onboarding.design') && isProfileLayoutPath(pathname)) return null;
   if (permissions.has('test_players.manage') && isTestPlayerPath(pathname)) return null;
   return designRoleLanding(permissions);
