@@ -20,6 +20,7 @@ import { useSigningSession } from '@/lib/tablet-signing';
 import { hasTeamAppScreen } from '@/lib/team-shell';
 import { useAccountAccess } from '@/lib/use-account-access';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import { useLaunchSplashDone } from '@/lib/launch-splash-state';
 import { usePushRegistration } from '@/lib/use-push-registration';
 import { Redirect, usePathname, type Href } from 'expo-router';
 import { Stack } from 'expo-router/stack';
@@ -40,6 +41,9 @@ const hiddenHeaderScreenOptions = { headerShown: false } as const;
 // Her signature is a drag across the screen, which iOS would read as swipe back
 // and close the handover. The screen has its own Back button (RAPP-249).
 const noSwipeBackOptions = { gestureEnabled: false, fullScreenGestureEnabled: false } as const;
+// A gallery photo opens over its item screen on black and fades in and out;
+// the lightbox closes itself on a drag or its close button (RAPP-913).
+const photoLightboxOptions = { presentation: 'transparentModal', animation: 'fade' } as const;
 
 export default function AppLayout() {
   const { user } = useAuth();
@@ -153,7 +157,11 @@ function AppNavigator() {
       (area === 'player' && authorization.isPending) ||
       (isTeam && !permissionsAreCurrent),
   });
-  const { shouldShowRationale, acceptRationale, declineRationale } = usePushRegistration(canPrompt);
+  // The question is a Modal, which would draw over the launch splash (RAPP-955).
+  const launchSplashDone = useLaunchSplashDone();
+  const { shouldShowRationale, acceptRationale, declineRationale } = usePushRegistration(
+    canPrompt && launchSplashDone,
+  );
 
   // Just after signing in, the account type is not known yet. The screens wait
   // for it, so the stack mounts once with the right area and opens its first
@@ -327,6 +335,7 @@ function AppNavigator() {
               <Stack.Screen name="gallery/index" />
               <Stack.Screen name="gallery/upload" />
               <Stack.Screen name="gallery/[id]" />
+              <Stack.Screen name="gallery/photo/[id]" options={photoLightboxOptions} />
               <Stack.Screen name="team-chat" />
               <Stack.Screen name="mentoring/index" />
               <Stack.Screen name="mentoring/[id]" />

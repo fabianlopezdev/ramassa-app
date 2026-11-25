@@ -1,5 +1,7 @@
 import { AnnouncementFeedSkeleton } from '@/components/announcements/feed-states';
+import { PublicOrganizationLogo } from '@/components/branding/public-organization-logo';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
+import { Icon } from '@/components/icons/icon';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
 import { PressableScale } from '@/components/motion/pressable-scale';
@@ -7,6 +9,7 @@ import { PERSON_AVATAR_SIZE, PersonAvatar } from '@/components/people/person-ava
 import { continuousCorners } from '@/lib/continuous-corners';
 import { messageListKeyboardDismissMode, staffConversationTitle } from '@/lib/message-thread-state';
 import { useOwnConversation, useStaffConversation } from '@/lib/messaging';
+import { useOutsideTeamReplyHours } from '@/lib/team-reply-hours';
 import { canOpenParticipantCard, participantCardHref } from '@/lib/participant-segments';
 import { usePersonCards } from '@/lib/person-cards';
 import { useAccountAccess } from '@/lib/use-account-access';
@@ -320,9 +323,12 @@ function MessageThreadView({
   onTitlePress,
   titlePressLabel,
   usesNativeHeader = false,
+  notice,
 }: {
   readonly title: string;
   readonly controller: MessageThreadController;
+  /** A fixed line under the header, such as when the team replies (RAPP-971). */
+  readonly notice?: string;
   readonly headerAccessory?: ReactNode;
   /** The staff thread with a player: her name opens her card (RAPP-799). */
   readonly onTitlePress?: () => void;
@@ -543,30 +549,50 @@ function MessageThreadView({
               </Text>
             ) : null}
           </View>
-          {rows.length === 0 ? (
-            <MessageThreadEmptyState
-              title={t('emptyTitle')}
-              body={t('emptyBody')}
-              languageClass={fontClass}
-            />
-          ) : (
-            <FlashList
-              ref={listRef}
-              onLoad={showNewest}
-              onContentSizeChange={showNewest}
-              onScrollBeginDrag={stopFollowing}
-              data={rows}
-              renderItem={renderItem}
-              keyExtractor={timelineKeyExtractor}
-              getItemType={timelineItemType}
-              keyboardDismissMode={messageListKeyboardDismissMode(process.env.EXPO_OS)}
-              keyboardShouldPersistTaps="handled"
-              contentInsetAdjustmentBehavior="automatic"
-              contentContainerStyle={listContentStyle}
-              style={listStyle}
-              maintainVisibleContentPosition={timelineVisibleContentPosition}
-            />
+          {notice === undefined ? null : (
+            <View testID="message-thread-notice" className="items-center px-lg pt-sm">
+              <View
+                style={continuousCorners}
+                className="flex-row items-center gap-xs rounded-full bg-neutral-100 px-md py-xs"
+              >
+                <Icon name="clock" size={tokens.fontSize.sm} color={tokens.colors.neutral[600]} />
+                <Text className={`text-center text-sm text-neutral-600 ${fontClass}`}>
+                  {notice}
+                </Text>
+              </View>
+            </View>
           )}
+          {/*
+            The club's logo, large and faint, behind the messages (RAPP-907).
+            It stays still while the messages scroll over it.
+          */}
+          <View style={listStyle}>
+            <PublicOrganizationLogo variant="backdrop" />
+            {rows.length === 0 ? (
+              <MessageThreadEmptyState
+                title={t('emptyTitle')}
+                body={t('emptyBody')}
+                languageClass={fontClass}
+              />
+            ) : (
+              <FlashList
+                ref={listRef}
+                onLoad={showNewest}
+                onContentSizeChange={showNewest}
+                onScrollBeginDrag={stopFollowing}
+                data={rows}
+                renderItem={renderItem}
+                keyExtractor={timelineKeyExtractor}
+                getItemType={timelineItemType}
+                keyboardDismissMode={messageListKeyboardDismissMode(process.env.EXPO_OS)}
+                keyboardShouldPersistTaps="handled"
+                contentInsetAdjustmentBehavior="automatic"
+                contentContainerStyle={listContentStyle}
+                style={listStyle}
+                maintainVisibleContentPosition={timelineVisibleContentPosition}
+              />
+            )}
+          </View>
           <MessageComposer
             languageClass={fontClass}
             placeholder={t('composerPlaceholder')}
@@ -593,12 +619,16 @@ export function PlayerMessageThread({
   readonly headerAccessory?: ReactNode;
   readonly usesNativeHeader?: boolean;
 }) {
+  const { t } = useTranslation('messaging');
+  // Outside the team's hours only: inside them a reply is on its way (RAPP-971).
+  const isOutsideReplyHours = useOutsideTeamReplyHours();
   const thread = (
     <MessageThreadView
       title={title}
       controller={useOwnConversation()}
       headerAccessory={headerAccessory}
       usesNativeHeader={usesNativeHeader}
+      notice={isOutsideReplyHours ? t('replyHours') : undefined}
     />
   );
   if (!usesNativeHeader) return thread;

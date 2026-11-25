@@ -1,21 +1,21 @@
 /**
- * One event as a player sees it: category, title, description, date, time,
- * place and the places left, in the reader's language. The player screen
- * passes its sign-up controls in as `children`. The team's editor draws its
- * unsaved draft with it (RAPP-373), so the preview is the player's own layout.
+ * One event as a player sees it: category, title, description, then the places
+ * left and her answer centred under them (RAPP-908), then date, time and place,
+ * in the reader's language. The player screen passes its answer controls in as
+ * `children`. The team's editor draws its unsaved draft with it (RAPP-373), so
+ * the preview is the player's own layout.
  */
-import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { EventDetailLine } from '@/components/events/event-card';
 import { RaisedActionButton } from '@/components/forms/raised-action-button';
 import { Badge } from '@/components/layout/badge';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
-import { useMemo, type ReactNode } from 'react';
+import { useCallback, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import {
   MADRID_TIME_ZONE,
-  nextEventSignupState,
+  type EventSignupAnswer,
   type EventSignupMode,
 } from '@ramassa/shared/events';
 import {
@@ -44,7 +44,7 @@ export function EventArticle({
 }: {
   readonly event: EventArticleContent;
   readonly onOpenMap: () => void;
-  /** The sign-up state and action under the places left. */
+  /** Her answer controls, centred under the places left. */
   readonly children: ReactNode;
 }) {
   const { t, i18n } = useTranslation('events');
@@ -94,6 +94,24 @@ export function EventArticle({
         )}
       </View>
 
+      {/* The places left and her answer, centred under the title (RAPP-908). */}
+      <View className="items-center gap-md">
+        <Text
+          accessibilityRole="header"
+          className={`text-center text-lg font-bold tabular-nums text-neutral-900 ${languageFontClass}`}
+        >
+          {event.maxParticipants === null
+            ? t('playerUnlimited')
+            : isFull
+              ? t('playerFull')
+              : t('playerPlaces', {
+                  remaining: event.maxParticipants - event.activeSignupCount,
+                  total: event.maxParticipants,
+                })}
+        </Text>
+        {children}
+      </View>
+
       <View
         accessibilityLabel={t('playerDetails')}
         className="gap-md rounded-lg bg-neutral-50 p-lg"
@@ -129,49 +147,68 @@ export function EventArticle({
           />
         )}
       </View>
+    </View>
+  );
+}
 
-      {/* The places left, then what the screen says about her sign-up. The
-          action itself sits at the bottom of the screen (RAPP-881). */}
-      <View className="gap-md">
-        <Text
-          accessibilityRole="header"
-          className={`text-start text-lg font-bold tabular-nums text-neutral-900 ${languageFontClass}`}
-        >
-          {event.maxParticipants === null
-            ? t('playerUnlimited')
-            : isFull
-              ? t('playerFull')
-              : t('playerPlaces', {
-                  remaining: event.maxParticipants - event.activeSignupCount,
-                  total: event.maxParticipants,
-                })}
-        </Text>
-        {children}
+const ANSWER_ICONS = { yes: 'check-circle', no: 'close-circle' } as const;
+
+/**
+ * Her two answers side by side (RAPP-908): she will go, or she will not. The
+ * one she gave shows selected, and she can change it until the activity
+ * starts. Without `onAnswer` the buttons only show, for a draft's preview.
+ */
+export function EventAnswerButtons({
+  answer,
+  isYesDisabled = false,
+  onAnswer,
+}: {
+  readonly answer: EventSignupAnswer | null;
+  readonly isYesDisabled?: boolean;
+  readonly onAnswer?: (answer: EventSignupAnswer) => void;
+}) {
+  const { t } = useTranslation('events');
+  const answerYes = useCallback(() => onAnswer?.('yes'), [onAnswer]);
+  const answerNo = useCallback(() => onAnswer?.('no'), [onAnswer]);
+  const isPreview = onAnswer === undefined;
+  return (
+    <View accessibilityRole="radiogroup" className="flex-row gap-md self-stretch">
+      <View className="flex-1">
+        <RaisedActionButton
+          testID="event-answer-yes"
+          accessibilityRole="radio"
+          icon={ANSWER_ICONS.yes}
+          label={t('playerConfirmAction')}
+          isSelected={answer === 'yes'}
+          isDisabled={isPreview || isYesDisabled}
+          onPress={answerYes}
+        />
+      </View>
+      <View className="flex-1">
+        <RaisedActionButton
+          testID="event-answer-no"
+          accessibilityRole="radio"
+          icon={ANSWER_ICONS.no}
+          label={t('playerDeclineAction')}
+          isSelected={answer === 'no'}
+          isDisabled={isPreview}
+          onPress={answerNo}
+        />
       </View>
     </View>
   );
 }
 
-/**
- * The sign-up area of a draft's preview (RAPP-373): the action a player will
- * see, which does nothing here.
- */
+/** The answer area of a draft's preview (RAPP-373): what a player will see, which does nothing here. */
 export function EventSignupPreview({ signupMode }: { readonly signupMode: EventSignupMode }) {
   const { t } = useTranslation('events');
   const languageFontClass = useLanguageFontClass();
-  if (nextEventSignupState(signupMode, null) === null) {
+  if (signupMode === 'none') {
     return (
-      <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
+      <Text className={`text-center text-md text-neutral-600 ${languageFontClass}`}>
         {t('playerSignupClosed')}
       </Text>
     );
   }
-  return (
-    <AuthSubmitButton
-      label={signupMode === 'interest' ? t('playerInterestAction') : t('playerConfirmAction')}
-      disabled
-      isLoading={false}
-      onPress={() => undefined}
-    />
-  );
+  return <EventAnswerButtons answer={null} />;
 }

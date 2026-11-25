@@ -3,6 +3,11 @@
   "back": "Enrere",
   "offline": "Sense connexió",
   "close": "Tanca",
+  "photoViewer": {
+    "previous": "Foto anterior",
+    "next": "Foto següent",
+    "position": "Foto {{current}} de {{count}}"
+  },
   "skipToMainContent": "Ves al contingut principal",
   "fundingAcknowledgment": "Projecte finançat per la Generalitat de Catalunya, Departament de Drets Socials i Inclusió.",
   "notFound": {
@@ -39,5 +44,9 @@
   "previewOpening": "Obrint la vista de jugadora.",
   "characterCount": "{{count}} / {{limit}} caràcters",
   "newCount_one": "{{label}}, {{count}} nou",
-  "newCount_other": "{{label}}, {{count}} nous"
+  "newCount_other": "{{label}}, {{count}} nous",
+  "photoFocus": {
+    "label": "Part visible",
+    "reset": "Restableix"
+  }
 }

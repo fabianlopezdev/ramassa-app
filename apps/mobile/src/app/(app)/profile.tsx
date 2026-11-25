@@ -15,6 +15,7 @@
  * that already point here keep working.
  */
 
+import { PublicOrganizationLogo } from '@/components/branding/public-organization-logo';
 import { ICON_LICENCE } from '@/components/icons/icon';
 import { RaisedHalfCard, RaisedHalfCardRow } from '@/components/layout/raised-half-card';
 import { RaisedIconCard } from '@/components/layout/raised-icon-card';
@@ -47,13 +48,16 @@ export default function ProfileScreen() {
 
   /*
     The credits, together and centred in the frame's footer, at the very
-    bottom of the phone (RAPP-877): the funding the grant terms ask to
-    mention (RAPP-64), then the icon set's licence credit (RAPP-834). Small
-    type takes a tight line height, so a wrapped line stays close to the
-    one above.
+    bottom of the phone (RAPP-877): the club's logo (RAPP-907), the funding
+    the grant terms ask to mention (RAPP-64), then the icon set's licence
+    credit (RAPP-834). Small type takes a tight line height, so a wrapped
+    line stays close to the one above.
   */
   const credits = (
     <View className="items-center gap-xs">
+      <View testID="profile-logo" className="w-full pb-md">
+        <PublicOrganizationLogo variant="footer" />
+      </View>
       <Text
         testID="generalitat-credit"
         className={`text-center text-xs leading-5 text-neutral-600 ${languageFontClass}`}

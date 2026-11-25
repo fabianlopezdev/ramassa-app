@@ -13,6 +13,7 @@ import { getAnnouncementLifecycle } from '@ramassa/shared/announcements';
 import type { AppErrorCode } from '@ramassa/shared/errors';
 import {
   deleteEvent,
+  editableEventSignupMode,
   EVENT_PAGE_SIZE,
   formatEventCapacity,
   parseWeeklyRecurrenceRule,
@@ -121,7 +122,7 @@ export function EventsTable({ page, categories, search }: EventsTableProps) {
         id: 'signup',
         header: t('events:columnSignup'),
         enableSorting: false,
-        cell: ({ row }) => t(`events:signup${capitalize(row.original.signup_mode)}`),
+        cell: ({ row }) => t(`events:signup${capitalize(editableEventSignupMode(row.original.signup_mode))}`),
       },
       {
         id: 'status',

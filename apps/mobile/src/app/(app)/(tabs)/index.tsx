@@ -9,6 +9,7 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
+import { HomeGreeting } from '@/components/home/home-greeting';
 import { HomeNextActivity } from '@/components/home/home-next-activity';
 import { HomeToDo } from '@/components/home/home-to-do';
 import { PageWidth } from '@/components/layout/content-width';
@@ -27,7 +28,7 @@ import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
 import { useListSeenWhen } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
-import { useRouter, type Href } from 'expo-router';
+import type { Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
@@ -39,6 +40,7 @@ import {
 } from '@ramassa/shared/announcements';
 import { toAppError } from '@ramassa/shared/errors';
 import { DEFAULT_LANGUAGE, resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
+import { photoFocusFromColumns } from '@ramassa/shared/photo-focus';
 import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_ANNOUNCEMENTS: readonly AnnouncementListRow[] = [];
@@ -54,10 +56,9 @@ const styles = StyleSheet.create({
 const keyExtractor = (item: AnnouncementListRow) => item.id;
 
 function HomeScreen() {
-  const { t, i18n } = useTranslation(['home', 'common', 'nav']);
+  const { t, i18n } = useTranslation(['home', 'common']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
-  const { push } = useRouter();
   const networkState = useNetworkState();
   const isOffline = !isNetworkStateOnline(networkState);
   const [category, setCategory] = useState<PlayerAnnouncementCategoryFilter>('all');
@@ -108,7 +109,6 @@ function HomeScreen() {
       }),
     [i18n.resolvedLanguage],
   );
-  const openAnnouncement = useCallback((id: string) => push(`/announcement/${id}` as Href), [push]);
 
   const renderAnnouncement = useCallback(
     ({ item }: ListRenderItemInfo<AnnouncementListRow>) => {
@@ -132,14 +132,21 @@ function HomeScreen() {
             title={title.text}
             category={item.category}
             accessibilityLabel={accessibilityLabel}
+            imageObjectKey={item.image_url}
+            imageFocus={photoFocusFromColumns(item.image_focus_x, item.image_focus_y)}
+            imageAlt={
+              item.image_alt === null
+                ? undefined
+                : resolveLocalizedText(item.image_alt, language)?.text
+            }
             unseenLabel={unseenLabel}
             languageFontClass={languageFontClass}
-            onOpen={openAnnouncement}
+            href={`/announcement/${item.id}` as Href}
           />
         </PageWidth>
       );
     },
-    [dateFormatter, language, languageFontClass, unseenAnnouncementIds, openAnnouncement, t],
+    [dateFormatter, language, languageFontClass, unseenAnnouncementIds, t],
   );
 
   const onRefresh = useCallback(() => {
@@ -165,7 +172,7 @@ function HomeScreen() {
 
   if (isPending && data === undefined) {
     return (
-      <PlayerTabStateFrame title={t('nav:tabs.home')}>
+      <PlayerTabStateFrame title={<HomeGreeting />}>
         <AnnouncementFeedSkeleton accessibilityLabel={t('loading')} />
       </PlayerTabStateFrame>
     );
@@ -173,7 +180,7 @@ function HomeScreen() {
 
   if (isError && data === undefined) {
     return (
-      <PlayerTabStateFrame title={t('nav:tabs.home')}>
+      <PlayerTabStateFrame title={<HomeGreeting />}>
         <AnnouncementFeedError
           message={t('loadFailed')}
           retryLabel={t('retryAction')}
@@ -200,7 +207,8 @@ function HomeScreen() {
       onLoad={onListLoad}
       ListHeaderComponent={
         <PageWidth className="gap-lg pb-lg">
-          <PlayerTabHeader title={t('nav:tabs.home')} />
+          {/* The logo, "Hola," and her name in place of the tab's name (RAPP-907). */}
+          <PlayerTabHeader title={<HomeGreeting />} />
           {/*
             Her next activity, then the forms and surveys that wait, then the
             announcements (RAPP-790). The activity comes first because it is

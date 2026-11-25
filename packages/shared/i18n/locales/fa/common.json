@@ -3,6 +3,11 @@
   "back": "بازگشت",
   "offline": "اتصال برقرار نیست",
   "close": "بستن",
+  "photoViewer": {
+    "previous": "عکس قبلی",
+    "next": "عکس بعدی",
+    "position": "عکس {{current}} از {{count}}"
+  },
   "skipToMainContent": "رفتن به محتوای اصلی",
   "fundingAcknowledgment": "این پروژه با حمایت مالی دولت کاتالونیا، اداره حقوق اجتماعی و مشارکت اجرا می‌شود.",
   "notFound": {
@@ -38,5 +43,9 @@
   "previewOpening": "در حال باز کردن نمای بازیکن.",
   "characterCount": "{{count}} / {{limit}} نویسه",
   "newCount_one": "{{label}}، {{count}} مورد جدید",
-  "newCount_other": "{{label}}، {{count}} مورد جدید"
+  "newCount_other": "{{label}}، {{count}} مورد جدید",
+  "photoFocus": {
+    "label": "بخش نمایان",
+    "reset": "بازنشانی"
+  }
 }

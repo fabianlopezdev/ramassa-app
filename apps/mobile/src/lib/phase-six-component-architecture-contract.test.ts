@@ -14,7 +14,7 @@ describe('Phase 6 component architecture contract', () => {
       'components/forum/forum-own-post-actions.tsx',
     );
     const gallery = await readMobileSource('components/gallery/gallery-grid.tsx');
-    const galleryItem = await readMobileSource('app/(app)/gallery/[id].tsx');
+    const galleryItem = await readMobileSource('components/gallery/gallery-item-actions.tsx');
     const galleryUpload = await readMobileSource('app/(app)/gallery/upload.tsx');
 
     expect(forumDetail).toContain('onPress={saveEdit}');
@@ -25,7 +25,8 @@ describe('Phase 6 component architecture contract', () => {
     expect(forumReplyComposer).toContain('onPress={onSubmit}');
     expect(forumComposer).toContain('onPress={choosePhoto}');
     expect(forumComposer).toContain('onPress={submit}');
-    expect(gallery).toContain('onRefresh={refresh}');
+    // The gallery hands its refresh to the list that draws it (RAPP-977).
+    expect(gallery).toContain('onRefresh: refresh,');
     expect(gallery).toContain('const refresh = useCallback');
     expect(galleryItem).not.toContain('const setPrivacy = useCallback');
     expect(galleryItem).toContain('onPress={privacyActions[value]}');

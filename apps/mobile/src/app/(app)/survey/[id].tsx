@@ -1,3 +1,4 @@
+import { AuthBackButton } from '@/components/auth/auth-back-button';
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { SelectionChoiceCard } from '@/components/auth/selection-choice-card';
 import { FailureNotice } from '@/components/error-code-line';
@@ -11,6 +12,7 @@ import {
   screenBlockGapClassName,
   screenContentClassName,
 } from '@/components/layout/screen-spacing';
+import { ratingFillDelayMs, RatingStar } from '@/components/surveys/rating-star';
 import { continuousCorners } from '@/lib/continuous-corners';
 import {
   useOwnSurveyResponse,
@@ -79,6 +81,8 @@ function QuestionControl(props: QuestionControlProps) {
 
 function RatingQuestionControl({ question, answer, language, onChange }: QuestionControlProps) {
   const { t } = useTranslation('surveys');
+  // Every star up to the one chosen is filled (RAPP-963).
+  const chosenRating = typeof answer === 'number' ? answer : null;
   return (
     <View
       className="flex-row justify-between gap-xs"
@@ -92,16 +96,18 @@ function RatingQuestionControl({ question, answer, language, onChange }: Questio
           label={t('ratingLabel', { count: rating })}
           accessibilityRole="radio"
           isSelected={answer === rating}
+          // Every card up to the chosen star turns yellow, in step with its star.
+          isWashed={chosenRating !== null && rating <= chosenRating}
+          washDelayMs={ratingFillDelayMs(rating - 1)}
           onPress={() => onChange(rating)}
           className="flex-1"
           paddingClassName="px-xs"
           contentClassName="items-center justify-center"
         >
-          <Icon
-            name="star"
-            weight="boldDuotone"
-            size={tokens.fontSize['3xl']}
-            color={tokens.colors.secondary.dark}
+          <RatingStar
+            isFilled={chosenRating !== null && rating <= chosenRating}
+            order={rating - 1}
+            rating={chosenRating}
           />
         </SelectionChoiceSurface>
       ))}
@@ -324,6 +330,10 @@ export default function SurveyScreen() {
     }
   }
 
+  function previous() {
+    setIndex((current) => Math.max(current - 1, 0));
+  }
+
   async function saveAndExit() {
     try {
       await persist(false);
@@ -431,7 +441,13 @@ export default function SurveyScreen() {
       contentInsets={contentInsets}
       contentContainerClassName="grow px-lg py-lg"
       action={
+        // "Desa i surt" above, the main button at the bottom (RAPP-910).
         <>
+          <RaisedActionButton
+            label={t('saveExit')}
+            onPress={() => void saveAndExit()}
+            isDisabled={isSavePending}
+          />
           <AuthSubmitButton
             label={isAtEnd ? t('submit') : t('next')}
             onPress={() => void next()}
@@ -439,28 +455,29 @@ export default function SurveyScreen() {
             disabled={!canContinue}
             testID="survey-next"
           />
-          <RaisedActionButton
-            label={t('saveExit')}
-            onPress={() => void saveAndExit()}
-            isDisabled={isSavePending}
-          />
         </>
       }
     >
       <FormWidth className={screenBlockGapClassName}>
         <View className={screenBlockGapClassName}>
           <View className="gap-sm">
-            <Text
-              style={styles.dynamicCopy}
-              className={`text-start text-sm font-bold uppercase text-primary ${languageFontClass}`}
-            >
-              {resolveSurveyCopy(survey.title, language)}
-            </Text>
-            <Text
-              className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}
-            >
-              {t('progress', { current: index + 1, total: orderedQuestions.length })}
-            </Text>
+            {/* Until she sends, she can step back; her answers stay (RAPP-910). */}
+            <View className="flex-row items-center gap-sm">
+              {index > 0 ? <AuthBackButton onPress={previous} /> : null}
+              <View className="flex-1 gap-sm">
+                <Text
+                  style={styles.dynamicCopy}
+                  className={`text-start text-sm font-bold uppercase text-primary ${languageFontClass}`}
+                >
+                  {resolveSurveyCopy(survey.title, language)}
+                </Text>
+                <Text
+                  className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}
+                >
+                  {t('progress', { current: index + 1, total: orderedQuestions.length })}
+                </Text>
+              </View>
+            </View>
             <View className="flex-row gap-xs" accessibilityElementsHidden>
               {orderedQuestions.map((item, dotIndex) => (
                 <View

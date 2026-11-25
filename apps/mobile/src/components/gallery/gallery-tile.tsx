@@ -1,18 +1,69 @@
+import { useBrandColor } from '@/components/branding/organization-branding-context';
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
 import { Badge } from '@/components/layout/badge';
+import { PhotoFade } from '@/components/media/photo-fade';
 import { continuousCorners } from '@/lib/continuous-corners';
 import { resolveMediaImageSource } from '@/lib/media-source';
+import { usePhotoFocusPosition } from '@/lib/photo-focus-position';
 import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { Image } from 'expo-image';
+import { useRouter, type Href } from 'expo-router';
 import { memo, useCallback, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import type { PhotoFocus } from '@ramassa/shared/photo-focus';
 import { motionTokens } from '@ramassa/shared/tokens/motion';
 
-const GALLERY_TILE_ASPECT_RATIO = 1;
+export const GALLERY_TILE_ASPECT_RATIO = 1;
 const styles = StyleSheet.create({
   tile: { width: '100%', aspectRatio: GALLERY_TILE_ASPECT_RATIO },
+  title: { writingDirection: 'auto' },
 });
+const TILE_TITLE_MAX_LINES = 2;
+const TILE_TITLE_CLASS = 'text-start text-md font-semibold text-white';
+const TILE_DATE_CLASS = 'text-start text-sm text-white';
+
+/**
+ * The title and the date on the foot of a gallery photo (RAPP-931), in white
+ * on the fade of the card photos. A title takes at most two lines; without
+ * one, only the date shows. Every tile is square, so a row stays even.
+ */
+function GalleryTileCaption({
+  title,
+  date,
+  fontClass,
+}: {
+  readonly title: string | null;
+  readonly date: string;
+  readonly fontClass: string;
+}) {
+  const brandColor = useBrandColor();
+  return (
+    <PhotoFade
+      testID="gallery-tile-caption"
+      color={brandColor}
+      className="absolute bottom-0 end-0 start-0 gap-xs px-sm pb-sm pt-xl"
+    >
+      {title === null ? null : (
+        <Text
+          testID="gallery-tile-title"
+          numberOfLines={TILE_TITLE_MAX_LINES}
+          style={styles.title}
+          className={`${TILE_TITLE_CLASS} ${fontClass}`}
+        >
+          {title}
+        </Text>
+      )}
+      <Text
+        testID="gallery-tile-date"
+        numberOfLines={1}
+        className={`${TILE_DATE_CLASS} ${fontClass}`}
+      >
+        {date}
+      </Text>
+    </PhotoFade>
+  );
+}
 
 /**
  * The word on a photo new to her (RAPP-873), at its top start corner, where
@@ -37,21 +88,36 @@ function GalleryTileUnseenMark({ label }: { readonly label: string }) {
 export const GalleryTile = memo(function GalleryTile({
   id,
   objectKeyOrUrl,
+  focus,
   accessToken,
   accessibilityLabel,
   imageAlt,
-  onOpen,
+  title,
+  date,
+  fontClass,
+  href,
   unseenLabel = null,
 }: {
   readonly id: string;
   readonly objectKeyOrUrl: string;
+  /** The part of the photo the square tile keeps (RAPP-932); null keeps the default crop. */
+  readonly focus: PhotoFocus | null;
   readonly accessToken: string | undefined;
+  /** Says the title and the date too: the text on the photo is not read on its own. */
   readonly accessibilityLabel: string;
   readonly imageAlt: string;
-  readonly onOpen: (id: string) => void;
+  /** The item's title; null when it has none. */
+  readonly title: string | null;
+  /** When it was shared, already written in her language. */
+  readonly date: string;
+  readonly fontClass: string;
+  /** A photo opens straight in the lightbox (RAPP-931); a video opens its own screen. */
+  readonly href: Href;
   /** Set while the photo is new to her: the word over its top start corner. */
   readonly unseenLabel?: string | null;
 }) {
+  const { push } = useRouter();
+  const open = useCallback(() => push(href), [href, push]);
   const source = useMemo(
     () =>
       resolveMediaImageSource({
@@ -61,7 +127,7 @@ export const GalleryTile = memo(function GalleryTile({
       }),
     [accessToken, objectKeyOrUrl],
   );
-  const open = useCallback(() => onOpen(id), [id, onOpen]);
+  const { contentPosition, rememberShape } = usePhotoFocusPosition(objectKeyOrUrl, focus);
 
   return (
     <View className="p-xs">
@@ -83,10 +149,13 @@ export const GalleryTile = memo(function GalleryTile({
               accessibilityLabel={imageAlt}
               cachePolicy="memory-disk"
               contentFit="cover"
+              contentPosition={contentPosition}
+              onLoad={rememberShape}
               transition={motionTokens.duration.fast}
               style={StyleSheet.absoluteFill}
             />
           )}
+          <GalleryTileCaption title={title} date={date} fontClass={fontClass} />
           {unseenLabel === null ? null : <GalleryTileUnseenMark label={unseenLabel} />}
         </View>
       </SelectionChoiceSurface>

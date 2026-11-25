@@ -6,11 +6,13 @@ import {
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { ForumCategoryFilters } from '@/components/forum/forum-category-tabs';
 import { ForumPostCard } from '@/components/forum/forum-post-card';
-import { GalleryGrid } from '@/components/gallery/gallery-grid';
-import { CommunityStoryList } from '@/components/knowledge/community-story-list';
+import { useGalleryList } from '@/components/gallery/gallery-grid';
+import { useCommunityStoryList } from '@/components/knowledge/community-story-list';
+import { OwnStoryStatuses } from '@/components/knowledge/own-story-statuses';
 import { PageWidth } from '@/components/layout/content-width';
 import { raisedToneFromColorName, type RaisedTone } from '@/components/layout/raised-surface';
 import { screenBlockGapClassName } from '@/components/layout/screen-spacing';
+import { useSegmentListReset } from '@/components/layout/segment-list';
 import {
   SegmentedControl,
   type SegmentedControlOption,
@@ -22,6 +24,7 @@ import { communityUnseenCounts, forumPostMarks, toUnopenedIdSet } from '@/lib/co
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
 import { useForumCategories, useForumPosts } from '@/lib/player-forum';
+import { repliesCountLabel } from '@/lib/replies-count-label';
 import { formatUnreadBadge } from '@/lib/unread-badge';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
@@ -49,6 +52,7 @@ const styles = StyleSheet.create({
   content: { paddingBottom: tokens.spacing['3xl'], paddingHorizontal: tokens.spacing.lg },
 });
 const postKeyExtractor = (post: ForumPostRow) => post.id;
+const postItemType = () => 'post';
 type CommunitySegment = 'forum' | 'gallery' | 'stories';
 /**
  * The pinned button opens the form of the section on show (RAPP-858), with
@@ -75,6 +79,15 @@ function CommunityScreen() {
   const refetchPosts = postsQuery.refetch;
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [segment, setSegment] = useState<CommunitySegment>('forum');
+  // The one list forgets its row sizes as the view changes (RAPP-977).
+  const { holdList, forgetRowSizes } = useSegmentListReset();
+  const selectSegment = useCallback(
+    (next: CommunitySegment) => {
+      forgetRowSizes();
+      setSegment(next);
+    },
+    [forgetRowSizes],
+  );
   // Two levels, both live (RAPP-873). The number on each switch option counts
   // what she has not seen in that list, and seeing the list on show clears it.
   // "Nou" stays on a post, photo or story until she opens it. The new replies
@@ -109,6 +122,15 @@ function CommunityScreen() {
     () => ({ unopenedPostIds, newRepliesByPostId }),
     [newRepliesByPostId, unopenedPostIds],
   );
+  // The photos and the stories, as rows for the one list below (RAPP-977).
+  const galleryList = useGalleryList({
+    isOnShow: segment === 'gallery',
+    unopenedItemIds: unopenedGalleryItemIds,
+  });
+  const storyList = useCommunityStoryList({
+    isOnShow: segment === 'stories',
+    unopenedArticleIds: unopenedStoryIds,
+  });
   const posts = useMemo(
     () => filterForumPostsByCategory(postsQuery.data ?? EMPTY_POSTS, categoryId),
     [categoryId, postsQuery.data],
@@ -145,10 +167,6 @@ function CommunityScreen() {
     ],
     [shareActionHeight, tabInsets],
   );
-  const openPost = useCallback(
-    (id: string) => push({ pathname: '/forum/[id]', params: { id } } as unknown as Href),
-    [push],
-  );
   const share = useCallback(() => push(shareActions[segment].route), [push, segment]);
   const segmentOptions = useMemo<readonly SegmentedControlOption<CommunitySegment>[]>(() => {
     const newCountLabel = (label: string, count: number) =>
@@ -184,6 +202,10 @@ function CommunityScreen() {
     ];
   }, [segmentCounts, t]);
   const openLinkLabel = useCallback((url: string) => t('forum:openLink', { url }), [t]);
+  const formatRepliesCount = useCallback(
+    (count: number) => t('forum:repliesCount', { count }),
+    [t],
+  );
   const refresh = useCallback(() => {
     void Promise.all([refetchCategories(), refetchPosts(), refetchTabNews()]);
   }, [refetchCategories, refetchPosts, refetchTabNews]);
@@ -204,16 +226,15 @@ function CommunityScreen() {
           <ForumPostCard
             post={item}
             tone={toneByCategoryId[item.category_id]}
-            authorLabel={t('forum:postBy', { name: item.author_first_name })}
             authorAvatarKey={personCards.get(item.author_id)?.avatarKey ?? null}
-            repliesLabel={t('forum:repliesCount', { count: item.reply_count })}
+            repliesLabel={repliesCountLabel(item.reply_count, formatRepliesCount)}
             pinnedLabel={t('forum:pinned')}
             imageAlt={t('forum:imageAlt', { name: item.author_first_name })}
             accessibilityLabel={accessibilityLabel}
             languageFontClass={languageFontClass}
             accessToken={session?.access_token}
             openLinkLabel={openLinkLabel}
-            onOpen={openPost}
+            href={`/forum/${item.id}` as Href}
             unseenLabel={unseenLabel}
             newRepliesCount={formatUnreadBadge(marks.newReplies)}
           />
@@ -221,10 +242,10 @@ function CommunityScreen() {
       );
     },
     [
+      formatRepliesCount,
       languageFontClass,
       newRepliesByPostId,
       openLinkLabel,
-      openPost,
       session?.access_token,
       personCards,
       t,
@@ -259,58 +280,78 @@ function CommunityScreen() {
     );
   }
 
-  // One header for every segment; forum category chips show only in the
-  // Fòrum segment, so the screen never stacks two filter rows (plan P4).
+  // One header for every view; forum category chips show only in the Fòrum
+  // view, so the screen never stacks two filter rows (plan P4), and her own
+  // stories waiting for the team show above the stories (RAPP-890).
   const header = (
-    <View className="gap-lg pb-lg">
-      <PageWidth className={screenBlockGapClassName}>
-        <PlayerTabHeader title={t('nav:tabs.community')}>
-          <SegmentedControl
-            testID="community-segments"
-            options={segmentOptions}
-            selected={segment}
-            onSelect={setSegment}
-            accessibilityLabel={t('forum:segmentsLabel')}
-            languageFontClass={languageFontClass}
-          />
-        </PlayerTabHeader>
-        {segment === 'forum' ? (
-          <ForumCategoryFilters
-            categories={categoriesQuery.data ?? EMPTY_CATEGORIES}
-            selectedId={categoryId}
-            allLabel={t('forum:allCategories')}
-            accessibilityLabel={t('forum:categoriesLabel')}
-            onSelect={setCategoryId}
-          />
-        ) : null}
-      </PageWidth>
+    <View>
+      <View className="gap-lg pb-lg">
+        <PageWidth className={screenBlockGapClassName}>
+          <PlayerTabHeader title={t('nav:tabs.community')}>
+            <SegmentedControl
+              testID="community-segments"
+              options={segmentOptions}
+              selected={segment}
+              onSelect={selectSegment}
+              accessibilityLabel={t('forum:segmentsLabel')}
+              languageFontClass={languageFontClass}
+            />
+          </PlayerTabHeader>
+          {segment === 'forum' ? (
+            <ForumCategoryFilters
+              categories={categoriesQuery.data ?? EMPTY_CATEGORIES}
+              selectedId={categoryId}
+              allLabel={t('forum:allCategories')}
+              accessibilityLabel={t('forum:categoriesLabel')}
+              onSelect={setCategoryId}
+            />
+          ) : null}
+        </PageWidth>
+      </View>
+      {segment === 'stories' ? (
+        <PageWidth className="pb-lg">
+          <OwnStoryStatuses />
+        </PageWidth>
+      ) : null}
     </View>
   );
 
+  // One list for the three views (RAPP-977). Each branch is the same list in
+  // the same place, so React keeps it and its header when the view changes and
+  // only the rows change. Her photo, the title and the switch are never built
+  // again, which is what made the photo blink on Android.
   let segmentList: ReactElement;
   if (segment === 'gallery') {
     segmentList = (
-      <GalleryGrid
-        header={header}
+      <FlashList
+        ref={holdList}
+        {...galleryList}
+        style={styles.screen}
         contentContainerStyle={contentStyle}
-        unopenedItemIds={unopenedGalleryItemIds}
+        contentInsetAdjustmentBehavior="automatic"
+        ListHeaderComponent={header}
       />
     );
   } else if (segment === 'stories') {
     segmentList = (
-      <CommunityStoryList
-        header={header}
+      <FlashList
+        ref={holdList}
+        {...storyList}
+        style={styles.screen}
         contentContainerStyle={contentStyle}
-        unopenedArticleIds={unopenedStoryIds}
+        contentInsetAdjustmentBehavior="automatic"
+        ListHeaderComponent={header}
       />
     );
   } else {
     segmentList = (
       <FlashList
+        ref={holdList}
         testID="forum-board"
         data={posts}
         renderItem={renderPost}
         keyExtractor={postKeyExtractor}
+        getItemType={postItemType}
         extraData={forumListMarks}
         style={styles.screen}
         contentContainerStyle={contentStyle}

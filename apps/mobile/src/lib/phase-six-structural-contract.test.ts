@@ -14,6 +14,7 @@ const playerFacingSources = [
   'app/(app)/gallery/index.tsx',
   'app/(app)/gallery/upload.tsx',
   'components/gallery/gallery-tile.tsx',
+  'components/gallery/gallery-item-actions.tsx',
   'components/forum/forum-category-tabs.tsx',
 ] as const;
 
@@ -24,7 +25,7 @@ const scrollableSources = [
   'app/(app)/gallery/[id].tsx',
   'app/(app)/gallery/upload.tsx',
   'components/gallery/gallery-grid.tsx',
-  'components/knowledge/community-story-list.tsx',
+  // The stories are rows of Comunitat's one list, listed above (RAPP-977).
   // The report sheet scrolls inside this shared sheet (RAPP-881).
   'components/layout/app-sheet.tsx',
 ] as const;
@@ -33,6 +34,14 @@ describe('Phase 6 structural polish contract', () => {
   test('every player-facing scrollable uses automatic native insets', async () => {
     for (const path of scrollableSources) {
       const source = await readMobileSource(path);
+      // A list that opens on the shared photo hero (RAPP-915) starts under the
+      // status bar only while it has the photo; otherwise it keeps the native insets.
+      if (source.includes('<PhotoHero\n') || source.includes('<PhotoHero ')) {
+        expect(source, path).toContain(
+          "contentInsetAdjustmentBehavior={hasPhotoHero ? 'never' : 'automatic'}",
+        );
+        continue;
+      }
       expect(source, path).toContain('contentInsetAdjustmentBehavior="automatic"');
     }
   });
@@ -60,7 +69,7 @@ describe('Phase 6 structural polish contract', () => {
 
   test('native gallery and forum interactions use the shared haptic vocabulary', async () => {
     const galleryUpload = await readMobileSource('app/(app)/gallery/upload.tsx');
-    const galleryItem = await readMobileSource('app/(app)/gallery/[id].tsx');
+    const galleryItem = await readMobileSource('components/gallery/gallery-item-actions.tsx');
     const forumPlainText = await readMobileSource('components/forum/forum-plain-text.tsx');
 
     // The consent is the shared switch card (RAPP-894). Its press gives the

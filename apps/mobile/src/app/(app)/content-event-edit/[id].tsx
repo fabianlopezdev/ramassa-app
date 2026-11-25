@@ -65,7 +65,7 @@ import { getErrorMessageKey, type AppErrorCode } from '@ramassa/shared/errors';
 import {
   areEventTranslationsApproved,
   createEvent,
-  EVENT_SIGNUP_MODES,
+  EVENT_SIGNUP_CHOICES,
   eventInputSchema,
   MAX_EVENT_LOCATION_LENGTH,
   MAX_EVENT_RECURRENCE_INTERVAL,
@@ -371,7 +371,7 @@ function EventForm({
       <View className="gap-xs">
         <FieldLabel>{t('fieldSignup')}</FieldLabel>
         <View className="flex-row flex-wrap gap-sm">
-          {EVENT_SIGNUP_MODES.map((signupMode) => (
+          {EVENT_SIGNUP_CHOICES.map((signupMode) => (
             <ChoiceOption
               key={signupMode}
               testID={`event-signup-${signupMode}`}

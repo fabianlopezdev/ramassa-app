@@ -20,8 +20,19 @@
  * wash; its border, edge and arrow stay in the brand.
  *
  * A card may open with a photo (RAPP-852), such as a forum post's or a
- * story's: full width across the top of the face, clipped by its corners,
- * with the row under it.
+ * story's. Such a card takes the photo layout (RAPP-921): the photo edge to
+ * edge across the top in one landscape shape, fading into a panel in the
+ * brand colour. Its badge and title sit in white on the lower part of the
+ * photo, its other content in white on the panel, and a row at its foot holds
+ * the pieces it has (an author, the replies) with a thin line between them and
+ * the arrow at the end. The block at the start is left out.
+ *
+ * A photo card with a tone (RAPP-930), such as an avís of a kind or a post in
+ * a coloured forum category, fades into the pale wash of its topic, the shade
+ * its plain siblings wear, and its text, lines and arrow turn to the dark ink
+ * of those siblings. A photo card with nothing for its foot row (no author, no
+ * replies) puts its title in that row beside the arrow, so the panel has no
+ * empty band; its badge stays on the photo.
  *
  * A card may be a tile in a grid (RAPP-854), such as an Ajuda category: the
  * same face, block and divider with tighter padding and gaps, no arrow, and
@@ -30,15 +41,33 @@
  * its row then takes the stacked tile's height. A tile with a mark on its
  * edge still fills its cell (RAPP-873): its marks grow from their own height
  * like the tile does.
+ *
+ * A card that opens a screen by its `href` (RAPP-916) and shows a photo grows
+ * that photo into the photo at the top of the screen it opens, on iOS. A card
+ * that opens anything else keeps its `onOpen`.
  */
 import { useBrandColor } from '@/components/branding/organization-branding-provider';
 import { SelectionChoiceSurface } from '@/components/forms/selection-choice-surface';
 import { FORWARD_CHEVRON } from '@/components/icons/direction';
 import { Icon, type IconName } from '@/components/icons/icon';
+import { Badge, type BadgeTone } from '@/components/layout/badge';
 import { EdgeMarks, type EdgeMarkBadge } from '@/components/layout/edge-marks';
-import type { RaisedTone } from '@/components/layout/raised-surface';
-import type { ReactNode } from 'react';
-import { View } from 'react-native';
+import {
+  RAISED_CARD_PANEL_INK,
+  raisedCardPanelInk,
+  RaisedCardPanelInkContext,
+  type RaisedCardPanelInk,
+} from '@/components/layout/raised-card-footer';
+import {
+  useRaisedChoiceFaceStyle,
+  useSectionWash,
+  type RaisedTone,
+} from '@/components/layout/raised-surface';
+import { PhotoZoomLink } from '@/components/media/photo-zoom';
+import { useLanguageFontClass } from '@/lib/use-language-font-class';
+import type { Href } from 'expo-router';
+import { Children, Fragment, useMemo, type ReactNode } from 'react';
+import { Text, View, type ViewStyle } from 'react-native';
 import { tokens } from '@ramassa/shared/tokens';
 
 const leadingBlockStyle = { minWidth: tokens.spacing['2xl'] } as const;
@@ -53,6 +82,49 @@ const TILE_ROW_CLASS_NAME = 'grow flex-row items-stretch gap-sm';
  * other tile of the row is taller the name still sits at its foot.
  */
 const TILE_STACK_CLASS_NAME = 'grow items-stretch gap-sm';
+
+/**
+ * How far up the photo the fade into the brand panel starts (RAPP-921). The
+ * badge and the title sit inside it, so they always have the fade under them.
+ */
+const PHOTO_FADE_HEIGHT = tokens.spacing['2xl'] + tokens.spacing['3xl'];
+/**
+ * The fade when nothing sits on the photo (no badge, the title at the foot):
+ * a short blend into the panel, so no empty band of colour opens between the
+ * photo and the foot row (RAPP-930).
+ */
+const PHOTO_BLEND_HEIGHT = tokens.spacing['2xl'];
+const PHOTO_TITLE_LINES = 2;
+
+/**
+ * The fade from the photo into the panel, in the panel's colour (the brand, or
+ * the wash of the card's topic) with two hex digits of opacity: clear at the
+ * top, mostly panel behind the badge, solid under the title, so the panel's
+ * ink reads on any photo.
+ */
+function photoFadeStyle(panelColor: string, holdsText: boolean): ViewStyle {
+  if (!holdsText) {
+    return {
+      marginTop: -PHOTO_BLEND_HEIGHT,
+      minHeight: PHOTO_BLEND_HEIGHT,
+      backgroundImage: `linear-gradient(to bottom, ${panelColor}00, ${panelColor})`,
+    };
+  }
+  return {
+    marginTop: -PHOTO_FADE_HEIGHT,
+    minHeight: PHOTO_FADE_HEIGHT,
+    paddingTop: tokens.spacing.xl,
+    backgroundImage: `linear-gradient(to bottom, ${panelColor}00, ${panelColor}B3 45%, ${panelColor} 85%)`,
+  };
+}
+
+/**
+ * The dark "Nou" would sink into the brand fade, so on the brand it turns
+ * white. On the pale wash of a topic it keeps its dark tone, which stands out.
+ */
+function badgeToneOnPhoto(tone: BadgeTone, panelInk: RaisedCardPanelInk): BadgeTone {
+  return tone === 'brand' && panelInk === 'onBrand' ? 'inverse' : tone;
+}
 
 /**
  * An icon for the block at the start of a card: as wide as the block, in the
@@ -74,10 +146,21 @@ export function RaisedCardSymbol({
   return <Icon name={name} weight="boldDuotone" size={size} color={color ?? brandColor} />;
 }
 
-interface RaisedCardProps {
+/** What the card opens: a screen by its `href`, or anything else through `onOpen`. */
+type RaisedCardOpening =
+  | { readonly onOpen: () => void; readonly href?: undefined }
+  | {
+      /**
+       * The screen the card opens (RAPP-916). With a photo in `media`, the
+       * photo grows into the photo at the top of that screen on iOS.
+       */
+      readonly href: Href;
+      readonly onOpen?: undefined;
+    };
+
+type RaisedCardProps = RaisedCardOpening & {
   readonly testID?: string;
   readonly accessibilityLabel: string;
-  readonly onOpen: () => void;
   /** The block at the start, before a divider: a date or an icon. */
   readonly leading?: ReactNode;
   /** The forward arrow at the end. Off for a card whose content already fills the row. */
@@ -86,10 +169,28 @@ interface RaisedCardProps {
   readonly badge?: RaisedCardBadge | null;
   /** A number in a circle on the top edge near the end. Also part of `accessibilityLabel`. */
   readonly count?: string | null;
-  /** The colour of the card's kind, as a wash on its face. */
+  /**
+   * The colour of the card's kind, as a wash on its face. With a photo, the
+   * panel and the fade take that wash (RAPP-930); without a tone they stay in
+   * the brand colour.
+   */
   readonly tone?: RaisedTone;
-  /** A full-width photo above the row, such as a post's image. */
+  /**
+   * The card's photo from `RaisedCardPhoto`, such as a post's image. With it
+   * the card takes the photo layout (RAPP-921): `children` go on the panel in
+   * the panel's ink (`raisedCardPanelInk`), and `leading` is left out.
+   */
   readonly media?: ReactNode;
+  /**
+   * With a photo: the title, on the lower part of the photo. When the card has
+   * no footer pieces, it sits in the foot row beside the arrow (RAPP-930).
+   */
+  readonly mediaTitle?: string | null;
+  /**
+   * With a photo: the pieces of the row at the panel's foot, from
+   * `raised-card-footer`, before the arrow. A missing piece is null.
+   */
+  readonly footer?: readonly ReactNode[];
   /** A tile in a grid: tighter, no arrow, fills its cell. */
   readonly tile?: boolean;
   /**
@@ -104,29 +205,45 @@ interface RaisedCardProps {
   readonly isSelected?: boolean;
   /** Read after the label, such as how many messages are unread. */
   readonly accessibilityHint?: string;
-  readonly children: ReactNode;
-}
+  readonly children?: ReactNode;
+};
 
 export type RaisedCardBadge = EdgeMarkBadge;
 
-export function RaisedCard({
-  testID,
-  accessibilityLabel,
-  onOpen,
-  leading,
-  showsArrow = true,
-  badge = null,
-  count = null,
-  tone,
-  media,
-  tile = false,
-  stacked = false,
-  isSelected,
-  accessibilityHint,
-  children,
-}: RaisedCardProps) {
+export function RaisedCard(props: RaisedCardProps) {
+  const {
+    testID,
+    accessibilityLabel,
+    leading,
+    showsArrow = true,
+    badge = null,
+    count = null,
+    tone,
+    media,
+    mediaTitle = null,
+    footer,
+    tile = false,
+    stacked = false,
+    isSelected,
+    accessibilityHint,
+    children,
+  } = props;
   const brandColor = useBrandColor();
+  const languageFontClass = useLanguageFontClass();
+  const defaultFaceStyle = useRaisedChoiceFaceStyle();
   const hasMedia = media !== undefined && media !== null;
+  // With a photo, the panel is the wash of the card's topic, or the brand
+  // colour when it has none (RAPP-930).
+  const panelWash = useSectionWash(hasMedia ? tone : undefined);
+  const panelColor = panelWash ?? brandColor;
+  const panelInkName = raisedCardPanelInk(hasMedia ? tone : undefined);
+  const panelInk = RAISED_CARD_PANEL_INK[panelInkName];
+  // The whole face takes the panel colour, so the fade below a tall title
+  // still meets the panel.
+  const panelFaceStyle = useMemo<ViewStyle>(
+    () => ({ ...defaultFaceStyle, backgroundColor: panelColor }),
+    [defaultFaceStyle, panelColor],
+  );
   const isStackedTile = tile && stacked && !hasMedia;
   const stackedContent = (
     <>
@@ -155,38 +272,105 @@ export function RaisedCard({
       ) : null}
     </>
   );
-  const card = (
+  const footerPieces = (footer ?? []).filter(
+    (piece) => piece !== null && piece !== undefined && piece !== false,
+  );
+  const hasMediaTitle = mediaTitle !== null && mediaTitle.length > 0;
+  // Nothing for the foot row: the title takes the author's place there (RAPP-930).
+  const titleInFooter = hasMediaTitle && footerPieces.length === 0;
+  const fadeHoldsText = badge !== null || (hasMediaTitle && !titleInFooter);
+  const fadeStyle = photoFadeStyle(panelColor, fadeHoldsText);
+  const photoContent = hasMedia ? (
+    <RaisedCardPanelInkContext.Provider value={panelInkName}>
+      <View style={mediaBleedStyle}>
+        {media}
+        <View pointerEvents="none" style={fadeStyle} className="justify-end gap-sm px-lg pb-xs">
+          {badge === null ? null : (
+            <Badge
+              label={badge.label}
+              tone={badgeToneOnPhoto(badge.tone, panelInkName)}
+              languageFontClass={languageFontClass}
+              className="self-start"
+            />
+          )}
+          {hasMediaTitle && !titleInFooter ? (
+            <Text
+              numberOfLines={PHOTO_TITLE_LINES}
+              className={`text-start text-2xl font-bold ${panelInk.textClassName} ${languageFontClass}`}
+            >
+              {mediaTitle}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+      {Children.toArray(children).length === 0 ? null : <View className="gap-sm">{children}</View>}
+      <View className="flex-row items-center gap-md">
+        {titleInFooter ? (
+          <Text
+            numberOfLines={PHOTO_TITLE_LINES}
+            className={`flex-1 text-start text-lg font-bold ${panelInk.textClassName} ${languageFontClass}`}
+          >
+            {mediaTitle}
+          </Text>
+        ) : (
+          <View className="flex-1 flex-row flex-wrap items-center gap-x-md gap-y-xs">
+            {footerPieces.map((piece, index) => (
+              <Fragment key={index}>
+                {index === 0 ? null : (
+                  <View
+                    accessible={false}
+                    className={`self-stretch border-s ${panelInk.dividerClassName}`}
+                  />
+                )}
+                {piece}
+              </Fragment>
+            ))}
+          </View>
+        )}
+        {showsArrow ? (
+          <Icon
+            name={FORWARD_CHEVRON}
+            size={tokens.fontSize['2xl']}
+            color={panelWash === undefined ? panelInk.iconColor : brandColor}
+          />
+        ) : null}
+      </View>
+    </RaisedCardPanelInkContext.Provider>
+  ) : null;
+  const renderSurface = (open: () => void) => (
     <SelectionChoiceSurface
       testID={testID}
       label={accessibilityLabel}
       accessibilityHint={accessibilityHint}
       accessibilityRole="link"
       isSelected={isSelected}
-      onPress={onOpen}
+      onPress={open}
       contentClassName={
         hasMedia
           ? 'gap-md pb-md'
           : `${isStackedTile ? TILE_STACK_CLASS_NAME : tile ? TILE_ROW_CLASS_NAME : ROW_CLASS_NAME} py-md`
       }
+      rowStyle={hasMedia ? panelFaceStyle : undefined}
       className={tile ? 'grow' : undefined}
       paddingClassName={tile ? 'px-md' : undefined}
-      tone={tone}
+      tone={hasMedia ? undefined : tone}
     >
-      {isStackedTile ? (
-        stackedContent
-      ) : hasMedia ? (
-        <>
-          <View style={mediaBleedStyle}>{media}</View>
-          <View className={ROW_CLASS_NAME}>{rowContent}</View>
-        </>
-      ) : (
-        rowContent
-      )}
+      {isStackedTile ? stackedContent : hasMedia ? photoContent : rowContent}
     </SelectionChoiceSurface>
   );
-  if (badge === null && count === null) return card;
+  const card =
+    props.href === undefined ? (
+      renderSurface(props.onOpen)
+    ) : (
+      <PhotoZoomLink href={props.href} hasPhoto={hasMedia}>
+        {renderSurface}
+      </PhotoZoomLink>
+    );
+  // With a photo, the badge sits on the photo over the title.
+  const edgeBadge = hasMedia ? null : badge;
+  if (edgeBadge === null && count === null) return card;
   return (
-    <EdgeMarks badge={badge} count={count} className={tile ? 'grow' : undefined}>
+    <EdgeMarks badge={edgeBadge} count={count} className={tile ? 'grow' : undefined}>
       {card}
     </EdgeMarks>
   );

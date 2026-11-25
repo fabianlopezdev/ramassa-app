@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { photoFocusSchema } from '../photo-focus';
 
 export const FORUM_POST_MAX_LENGTH = 2_000;
 export const FORUM_REPLY_MAX_LENGTH = 1_000;
@@ -28,6 +29,8 @@ export const forumPostInputSchema = z.object({
   categoryId: z.uuid(),
   content: forumText(FORUM_POST_MAX_LENGTH),
   imageObjectKey: forumImageObjectKeySchema.nullish().transform((value) => value ?? null),
+  /** The part of the photo cards keep (RAPP-932); left out or null keeps the default crop. */
+  imageFocus: photoFocusSchema.nullish().transform((value) => value ?? null),
 });
 export type ForumPostInput = z.infer<typeof forumPostInputSchema>;
 

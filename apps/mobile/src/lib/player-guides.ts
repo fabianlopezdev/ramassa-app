@@ -39,5 +39,25 @@ export function selectGuideCategories(
   counts: Readonly<Record<string, number>>,
 ): readonly KnowledgeCategoryRow[] {
   if (categories === undefined) return NO_CATEGORIES;
-  return categories.filter((category) => (counts[category.id] ?? 0) > 0);
+  return categories.filter(
+    (category) => !category.is_base_documents && (counts[category.id] ?? 0) > 0,
+  );
+}
+
+/** The guides of the Guies list: the club's base documents have their own card (RAPP-972). */
+export function withoutBaseDocuments(
+  guides: readonly KnowledgeArticleListRow[],
+): readonly KnowledgeArticleListRow[] {
+  return guides.filter((guide) => !guide.category.is_base_documents);
+}
+
+/**
+ * The club's published base documents for the Documents segment of Ajuda,
+ * newest first like the feed. With none, Ajuda offers no Documents segment
+ * (RAPP-972).
+ */
+export function selectBaseDocuments(
+  articles: readonly KnowledgeArticleListRow[] | undefined,
+): readonly KnowledgeArticleListRow[] {
+  return selectPlayerGuides(articles).filter((guide) => guide.category.is_base_documents);
 }

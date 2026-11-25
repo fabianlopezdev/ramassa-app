@@ -3,6 +3,11 @@
   "back": "Back",
   "offline": "No connection",
   "close": "Close",
+  "photoViewer": {
+    "previous": "Previous photo",
+    "next": "Next photo",
+    "position": "Photo {{current}} of {{count}}"
+  },
   "skipToMainContent": "Skip to main content",
   "fundingAcknowledgment": "Project funded by the Generalitat de Catalunya, Departament de Drets Socials i Inclusió.",
   "notFound": {
@@ -38,5 +43,9 @@
   "previewOpening": "Opening the player view.",
   "characterCount": "{{count}} / {{limit}} characters",
   "newCount_one": "{{label}}, {{count}} new",
-  "newCount_other": "{{label}}, {{count}} new"
+  "newCount_other": "{{label}}, {{count}} new",
+  "photoFocus": {
+    "label": "Visible part",
+    "reset": "Reset"
+  }
 }

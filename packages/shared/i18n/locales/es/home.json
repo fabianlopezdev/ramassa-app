@@ -1,5 +1,6 @@
 {
   "title": "Bienvenida",
+  "greeting": "Hola,",
   "feedTitle": "Avisos",
   "filterLabel": "Filtra los avisos por categoría",
   "filterAll": "Todo",

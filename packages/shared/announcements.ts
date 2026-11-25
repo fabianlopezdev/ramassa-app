@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
+import { photoFocusSchema } from './photo-focus';
 import { draftTranslationsSchema, languageCodeSchema, type LanguageCode } from './schemas/language';
 import { SECTION_BRAND_COLOR, SECTION_URGENT_COLOR } from './section-colors';
 import {
@@ -68,6 +69,8 @@ export const announcementInputSchema = z
     body: announcementBodySchema,
     imageUrl: z.string().trim().min(1).nullable(),
     imageAlt: announcementImageAltSchema.nullable(),
+    /** The part of the photo cards keep (RAPP-932); null keeps the default crop. */
+    imageFocus: photoFocusSchema.nullable(),
     isPinned: z.boolean(),
     status: z.enum(ANNOUNCEMENT_STATUSES),
     publishedAt: z.iso.datetime({ offset: true }).nullable(),
@@ -211,6 +214,9 @@ export interface AnnouncementListRow {
   readonly body: AnnouncementLocalizedText;
   readonly image_url: string | null;
   readonly image_alt: AnnouncementLocalizedText | null;
+  /** The photo's focus (RAPP-932): both set, or both null for the default crop. */
+  readonly image_focus_x: number | null;
+  readonly image_focus_y: number | null;
   readonly is_pinned: boolean;
   readonly status: AnnouncementStatus;
   readonly published_at: string | null;
@@ -316,7 +322,7 @@ export function applyAnnouncementQuery<T extends AnnouncementQueryBuilder>(
 }
 
 const ANNOUNCEMENT_COLUMNS =
-  'id, category, title, body, image_url, image_alt, is_pinned, status, published_at, expires_at, created_by, created_at, updated_at';
+  'id, category, title, body, image_url, image_alt, image_focus_x, image_focus_y, is_pinned, status, published_at, expires_at, created_by, created_at, updated_at';
 
 export async function fetchAnnouncements(
   client: Client,
@@ -375,6 +381,8 @@ function toDatabaseValues(input: AnnouncementInput) {
     body: input.body,
     image_url: input.imageUrl,
     image_alt: input.imageAlt,
+    image_focus_x: input.imageUrl === null ? null : (input.imageFocus?.x ?? null),
+    image_focus_y: input.imageUrl === null ? null : (input.imageFocus?.y ?? null),
     is_pinned: input.isPinned,
     status: input.status,
     published_at: input.publishedAt,

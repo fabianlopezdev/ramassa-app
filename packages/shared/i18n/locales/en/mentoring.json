@@ -28,7 +28,6 @@
   "submitting": "Sending...",
   "submitFailed": "We could not send the request.",
   "invalidRequest": "Check the topic, date, and time.",
-  "submitAnother": "Make another request",
   "successTitle": "Request sent",
   "successBody": "The staff will review it and notify you when the appointment is scheduled.",
   "statusTitle": "Your requests",

@@ -1,25 +1,26 @@
 import { ForumPlainText } from '@/components/forum/forum-plain-text';
 import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
+import {
+  RaisedCardFooterAuthor,
+  RaisedCardFooterReplies,
+  raisedCardPanelInk,
+} from '@/components/layout/raised-card-footer';
+import { RaisedCardPhoto, useRaisedCardPhotoSource } from '@/components/layout/raised-card-photo';
 import type { RaisedTone } from '@/components/layout/raised-surface';
 import { PersonAvatar } from '@/components/people/person-avatar';
-import { resolveMediaImageSource } from '@/lib/media-source';
-import { mobileClientEnv } from '@/lib/supabase';
-import { Image } from 'expo-image';
-import { memo, useCallback, useMemo } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { splitForumPostTitle } from '@/lib/forum-post-title';
+import type { Href } from 'expo-router';
+import { memo, useMemo } from 'react';
+import { Text } from 'react-native';
 import type { ForumPostRow } from '@ramassa/shared/forum';
-import { tokens } from '@ramassa/shared/tokens';
+import { photoFocusFromColumns } from '@ramassa/shared/photo-focus';
 
-const FORUM_POST_IMAGE_HEIGHT = tokens.spacing['3xl'] * 3;
 const FORUM_POST_PREVIEW_LINES = 5;
-const styles = StyleSheet.create({
-  image: { width: '100%', height: FORUM_POST_IMAGE_HEIGHT },
-});
 
 /**
  * A forum post on Comunitat as the shared raised card (RAPP-852): its photo
  * across the top, the author's avatar in the block before the divider
- * (RAPP-859), the author's name, a preview of the text and the number of
+ * (RAPP-859), the author's first name alone (RAPP-912), a preview of the text and the number of
  * replies, in the colour of its category. A pinned post carries the word on
  * the card's top edge, like "Nou" on an avis.
  *
@@ -29,11 +30,17 @@ const styles = StyleSheet.create({
  *
  * Without a photo the avatar shows the person icon in place of the initial,
  * so a photo is what makes her card hers.
+ *
+ * A post with a photo takes the photo layout of the shared card (RAPP-921):
+ * its first sentence is the title on the photo, the rest is the preview on the
+ * panel, and the author and the replies share the row at its foot. The replies
+ * show only when there is at least one (RAPP-922). A post in a coloured
+ * category sits on the wash of that colour, so its preview takes the dark ink
+ * of the plain cards (RAPP-930).
  */
 export const ForumPostCard = memo(function ForumPostCard({
   post,
   tone,
-  authorLabel,
   authorAvatarKey,
   repliesLabel,
   pinnedLabel,
@@ -42,39 +49,33 @@ export const ForumPostCard = memo(function ForumPostCard({
   languageFontClass,
   accessToken,
   openLinkLabel,
-  onOpen,
+  href,
   unseenLabel = null,
   newRepliesCount = null,
 }: {
   readonly post: ForumPostRow;
   /** The colour of the post's category, as a wash on the card. */
   readonly tone?: RaisedTone;
-  readonly authorLabel: string;
   /** The author's photo (RAPP-639); without one, the person icon. */
   readonly authorAvatarKey: string | null;
-  readonly repliesLabel: string;
+  /** Such as "2 respostes"; null when the post has no replies (RAPP-922). */
+  readonly repliesLabel: string | null;
   readonly pinnedLabel: string;
   readonly imageAlt: string;
   readonly accessibilityLabel: string;
   readonly languageFontClass: string;
   readonly accessToken: string | undefined;
   readonly openLinkLabel: (url: string) => string;
-  readonly onOpen: (id: string) => void;
+  /** The post's own screen; its photo grows into that screen's photo (RAPP-916). */
+  readonly href: Href;
   /** Set while the post is new to her: the word on the card's edge, ahead of pinned. */
   readonly unseenLabel?: string | null;
   /** The replies she has not read, already formatted, in the circle on the edge. */
   readonly newRepliesCount?: string | null;
 }) {
-  const imageSource = useMemo(
-    () =>
-      resolveMediaImageSource({
-        objectKeyOrUrl: post.image_url,
-        mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
-        accessToken,
-      }),
-    [accessToken, post.image_url],
-  );
-  const open = useCallback(() => onOpen(post.id), [onOpen, post.id]);
+  const imageSource = useRaisedCardPhotoSource(post.image_url, accessToken);
+  const hasPhoto = imageSource !== null;
+  const { title, preview } = useMemo(() => splitForumPostTitle(post.content), [post.content]);
   const badge = useMemo<RaisedCardBadge | null>(() => {
     if (unseenLabel !== null) return { label: unseenLabel, tone: 'brand' };
     return post.is_pinned ? { label: pinnedLabel, tone: 'accent' } : null;
@@ -90,7 +91,7 @@ export const ForumPostCard = memo(function ForumPostCard({
     <RaisedCard
       testID={`forum-post-${post.id}`}
       accessibilityLabel={cardAccessibilityLabel}
-      onOpen={open}
+      href={href}
       badge={badge}
       count={newRepliesCount}
       tone={tone}
@@ -104,31 +105,58 @@ export const ForumPostCard = memo(function ForumPostCard({
       }
       media={
         imageSource === null ? null : (
-          <Image
+          <RaisedCardPhoto
             source={imageSource}
             accessibilityLabel={imageAlt}
-            contentFit="cover"
-            cachePolicy="memory-disk"
             recyclingKey={post.image_url ?? post.id}
-            style={styles.image}
+            focus={photoFocusFromColumns(post.image_focus_x, post.image_focus_y)}
           />
         )
       }
+      mediaTitle={title}
+      footer={[
+        <RaisedCardFooterAuthor
+          key="author"
+          name={post.author_first_name}
+          avatarKey={authorAvatarKey}
+        />,
+        repliesLabel === null ? null : (
+          <RaisedCardFooterReplies key="replies" label={repliesLabel} />
+        ),
+      ]}
     >
-      <Text className={`text-start text-md font-bold text-primary-dark ${languageFontClass}`}>
-        {authorLabel}
-      </Text>
-      {post.content === null ? null : (
-        <ForumPlainText
-          content={post.content}
-          languageFontClass={languageFontClass}
-          openLinkLabel={openLinkLabel}
-          numberOfLines={FORUM_POST_PREVIEW_LINES}
-        />
+      {hasPhoto ? (
+        preview === null ? null : (
+          <ForumPlainText
+            content={preview}
+            languageFontClass={languageFontClass}
+            openLinkLabel={openLinkLabel}
+            numberOfLines={FORUM_POST_PREVIEW_LINES}
+            ink={raisedCardPanelInk(tone) === 'onWash' ? 'default' : 'onBrand'}
+          />
+        )
+      ) : (
+        <>
+          <Text className={`text-start text-md font-bold text-primary-dark ${languageFontClass}`}>
+            {post.author_first_name}
+          </Text>
+          {post.content === null ? null : (
+            <ForumPlainText
+              content={post.content}
+              languageFontClass={languageFontClass}
+              openLinkLabel={openLinkLabel}
+              numberOfLines={FORUM_POST_PREVIEW_LINES}
+            />
+          )}
+          {repliesLabel === null ? null : (
+            <Text
+              className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}
+            >
+              {repliesLabel}
+            </Text>
+          )}
+        </>
       )}
-      <Text className={`text-start text-sm tabular-nums text-neutral-600 ${languageFontClass}`}>
-        {repliesLabel}
-      </Text>
     </RaisedCard>
   );
 });

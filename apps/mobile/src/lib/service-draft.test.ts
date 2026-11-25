@@ -112,7 +112,7 @@ describe('the service form (RAPP-344)', () => {
       costAmount: '12,5',
       contactEmail: ' teatre@example.test ',
       metadata: { activity_type: 'cultural', family_friendly: true, age_restriction: '' },
-      images: [{ key: 'img-1', url: null, alt: 'Escenari' }],
+      images: [{ key: 'img-1', url: null, alt: 'Escenari', focus: null }],
       mode: 'now' as const,
     };
     const reviews = {
@@ -155,7 +155,7 @@ describe('the service form (RAPP-344)', () => {
   test('a photo without approved descriptions blocks publishing', () => {
     const form = {
       ...startingServiceDraft(undefined, leisure, NOW),
-      images: [{ key: 'a', url: 'services/a.webp', alt: 'Foto' }],
+      images: [{ key: 'a', url: 'services/a.webp', alt: 'Foto', focus: { x: 0.5, y: 0.7 } }],
     };
     expect(
       areServiceTranslationsApproved(form, {
@@ -194,8 +194,8 @@ describe('the service form (RAPP-344)', () => {
 
   test('photos reorder, and the form is kept per person and per service', () => {
     const images = [
-      { key: 'a', url: null, alt: 'A' },
-      { key: 'b', url: null, alt: 'B' },
+      { key: 'a', url: null, alt: 'A', focus: null },
+      { key: 'b', url: null, alt: 'B', focus: null },
     ];
     expect(moveImage(images, 1, -1).map((image) => image.key)).toEqual(['b', 'a']);
     expect(moveImage(images, 0, -1)).toBe(images);

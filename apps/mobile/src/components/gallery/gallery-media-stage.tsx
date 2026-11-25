@@ -1,13 +1,12 @@
 /**
- * An opened gallery photo or video (RAPP-897).
+ * An opened gallery video (RAPP-897).
  *
  * It runs across the full width of its column, in the shape of what it shows,
- * with the title drawn on it. One tap on a photo hides the title and the next
- * tap brings it back. On a video the first tap hides the title and starts the
+ * with the title drawn on it. The first tap hides the title and starts the
  * video; from then on the taps belong to the player, and the title returns
- * while the video is paused.
+ * while the video is paused. An opened photo opens on the story layout of
+ * every screen with a photo (RAPP-915).
  */
-import { ForumFlagButton } from '@/components/forum/forum-flag-button';
 import { GalleryMediaTitle } from '@/components/gallery/gallery-media-title';
 import { containedPictureCornerOffsets } from '@/lib/contained-picture-corner';
 import {
@@ -17,7 +16,6 @@ import {
   mediaAspectRatioOf,
 } from '@/lib/gallery-media-frame';
 import { useEvent, useEventListener } from 'expo';
-import { Image, type ImageLoadEventData, type ImageSource } from 'expo-image';
 import { useVideoPlayer, VideoView, type VideoSource } from 'expo-video';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View, type LayoutChangeEvent, type ViewStyle } from 'react-native';
@@ -79,69 +77,6 @@ interface GalleryMediaStageProps {
   readonly onTitleCutChange: (isCut: boolean) => void;
 }
 
-export const GalleryPhotoStage = memo(function GalleryPhotoStage({
-  source,
-  accessibilityLabel,
-  title,
-  fontClass,
-  maxHeight,
-  onTitleCutChange,
-  flagAccessibilityLabel,
-  onFlag,
-}: GalleryMediaStageProps & {
-  readonly source: ImageSource;
-  /** The report flag's label; null when she cannot report this photo (her own). */
-  readonly flagAccessibilityLabel: string | null;
-  readonly onFlag: () => void;
-}) {
-  const [pictureAspectRatio, setPictureAspectRatio] = useState<number | null>(null);
-  const [isTitleVisible, setIsTitleVisible] = useState(true);
-  const { measureFrame, frameStyle, onPictureStyle } = useMediaFrame(pictureAspectRatio, maxHeight);
-  const recordPictureShape = useCallback(
-    ({ source: loaded }: ImageLoadEventData) => setPictureAspectRatio(mediaAspectRatioOf(loaded)),
-    [],
-  );
-  const toggleTitle = useCallback(() => setIsTitleVisible((isVisible) => !isVisible), []);
-  const frame = useMemo(() => [styles.frame, frameStyle], [frameStyle]);
-  return (
-    <Pressable
-      testID="gallery-photo-frame"
-      accessible={false}
-      disabled={title === null}
-      onPress={toggleTitle}
-      onLayout={measureFrame}
-      style={frame}
-    >
-      <Image
-        source={source}
-        accessibilityLabel={accessibilityLabel}
-        cachePolicy="memory-disk"
-        contentFit="contain"
-        style={styles.media}
-        onLoad={recordPictureShape}
-      />
-      {title === null && flagAccessibilityLabel === null ? null : (
-        <GalleryMediaTitle
-          style={onPictureStyle}
-          title={title}
-          isVisible={isTitleVisible}
-          fontClass={fontClass}
-          onCutChange={onTitleCutChange}
-          endAction={
-            flagAccessibilityLabel === null ? null : (
-              <ForumFlagButton
-                testID="gallery-flag"
-                accessibilityLabel={flagAccessibilityLabel}
-                onPress={onFlag}
-              />
-            )
-          }
-        />
-      )}
-    </Pressable>
-  );
-});
-
 export const GalleryVideoStage = memo(function GalleryVideoStage({
   source,
   accessibilityLabel,
@@ -197,7 +132,6 @@ export const GalleryVideoStage = memo(function GalleryVideoStage({
           <GalleryMediaTitle
             style={onPictureStyle}
             title={title}
-            isVisible
             fontClass={fontClass}
             onCutChange={onTitleCutChange}
           />

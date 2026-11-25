@@ -1,5 +1,6 @@
 {
   "title": "Welcome",
+  "greeting": "Hello,",
   "feedTitle": "Announcements",
   "filterLabel": "Filter announcements by category",
   "filterAll": "All",

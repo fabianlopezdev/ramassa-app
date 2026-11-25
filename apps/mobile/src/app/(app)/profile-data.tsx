@@ -3,30 +3,50 @@
  * language, with her photo and the way to correct it. Opened from the profile
  * menu. Her consents live under "Privacitat i permisos", the only place she
  * changes them.
+ *
+ * It opens on her photo with her name on it, in a top that collapses to a
+ * band as she scrolls, with the pencil that changes the photo on its corner
+ * (RAPP-960). With no photo, her initials stand on the soft brand blue.
  */
 
 import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
+import { CollapsingHeroScreen } from '@/components/layout/collapsing-hero-screen';
+import { useSectionWash } from '@/components/layout/raised-surface';
+import { ActionScreen } from '@/components/layout/screen-action';
 import { ShakeOnError } from '@/components/motion/shake-on-error';
 import { SkeletonPulse } from '@/components/motion/skeleton-pulse';
-import { ProfileNameBox } from '@/components/profile/profile-name-box';
-import { ProfileScreenFrame } from '@/components/profile/profile-screen-frame';
+import { ProfilePhotoEditor } from '@/components/profile/profile-photo-editor';
 import { ProfileRow, ProfileSection } from '@/components/profile/profile-section';
 import { SeasonAnswerRows } from '@/components/profile/season-answer-rows';
+import { resolveMediaImageSource } from '@/lib/media-source';
+import { useOwnPersonCard } from '@/lib/person-cards';
+import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
+import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import { DEFAULT_LANGUAGE } from '@ramassa/shared/i18n';
 import { useOwnProfile } from '@ramassa/shared/profile';
 import { profileFormOf } from '@ramassa/shared/schemas';
+import { SECTION_BRAND_COLOR } from '@ramassa/shared/section-colors';
+import { tokens } from '@ramassa/shared/tokens';
 
 /**
  * How many section placeholders the loading state draws, one per real section
  * below. A skeleton, not a spinner (contract rule 14).
  */
 const LOADING_SECTION_COUNT = 4;
+
+/** The first letter of her first and last names, upper-cased. */
+function initialsOf(firstName: string | null, lastName: string | null): string {
+  return [firstName, lastName]
+    .map((part) => [...(part ?? '').trim()][0] ?? '')
+    .join('')
+    .toLocaleUpperCase();
+}
 
 export default function ProfileDataScreen() {
   const { t, i18n } = useTranslation(['profile', 'onboarding']);
@@ -64,10 +84,34 @@ export default function ProfileDataScreen() {
   const hasProfile =
     !isLoading && !isError && profile !== null && profile !== undefined && answers !== null;
 
+  // The top (RAPP-960): her photo and name, from her cached card until the profile arrives.
+  const { session } = useAuth();
+  const card = useOwnPersonCard();
+  const firstName = profile?.first_name ?? card?.firstName ?? null;
+  const lastName = profile?.last_name ?? null;
+  const fullName = [firstName, lastName]
+    .map((part) => part?.trim() ?? '')
+    .filter((part) => part !== '')
+    .join(' ');
+  const avatarKey =
+    profile === undefined ? (card?.avatarKey ?? null) : (profile?.avatar_url ?? null);
+  const accessToken = session?.access_token;
+  const heroPhoto = useMemo(() => {
+    const source = resolveMediaImageSource({
+      objectKeyOrUrl: avatarKey,
+      mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
+      accessToken,
+    });
+    return source === null || avatarKey === null
+      ? null
+      : { source, photoKey: avatarKey, focus: null, accessibilityLabel: fullName };
+  }, [accessToken, avatarKey, fullName]);
+  const panelColor = useSectionWash(SECTION_BRAND_COLOR) ?? tokens.colors.neutral[100];
+
   return (
-    <ProfileScreenFrame
-      title={t('menu.data')}
-      testID="profile-data"
+    <ActionScreen
+      className="bg-neutral-50"
+      isUnderFloatingHeader
       action={
         hasProfile ? (
           <AuthSubmitButton
@@ -78,93 +122,118 @@ export default function ProfileDataScreen() {
         ) : undefined
       }
     >
-      {isLoading ? (
-        // One node that says it is LOADING: a screen reader announcing the
-        // title over a skeleton is indistinguishable from an empty profile.
-        <View
-          accessible
-          accessibilityRole="progressbar"
-          accessibilityLabel={t('loading')}
-          accessibilityState={{ busy: true }}
-          accessibilityLiveRegion="polite"
-          className="gap-lg"
-        >
-          {Array.from({ length: LOADING_SECTION_COUNT }, (_unused, index) => (
-            <View key={index} className="gap-sm">
-              <SkeletonPulse className="h-lg w-1/2 rounded-md" />
-              <SkeletonPulse className="h-3xl w-full rounded-md" />
-            </View>
-          ))}
-        </View>
-      ) : !hasProfile || profile === null || profile === undefined || answers === null ? (
-        // A failed read says so and offers a retry. It must never render as an
-        // empty profile: "we hold nothing about you" is a false statement.
-        <ShakeOnError errorCode={loadFailureCode}>
-          <View className="gap-md">
-            <Text
-              selectable
+      <CollapsingHeroScreen
+        testID="profile-data"
+        title={fullName === '' ? t('menu.data') : fullName}
+        languageFontClass={languageFontClass}
+        photo={heroPhoto}
+        panelColor={panelColor}
+        panel={
+          <Text
+            testID="profile-initials"
+            accessible={false}
+            className={`text-5xl font-bold text-primary ${languageFontClass}`}
+          >
+            {initialsOf(firstName, lastName)}
+          </Text>
+        }
+        accessory={
+          profile === null || profile === undefined ? null : (
+            <ProfilePhotoEditor profile={profile} badgeOnly />
+          )
+        }
+        sheetColor={tokens.colors.neutral[50]}
+        hasBottomAction={hasProfile}
+      >
+        <View className="gap-lg">
+          {isLoading ? (
+            // One node that says it is LOADING: a screen reader announcing the
+            // title over a skeleton is indistinguishable from an empty profile.
+            <View
+              accessible
+              accessibilityRole="progressbar"
+              accessibilityLabel={t('loading')}
+              accessibilityState={{ busy: true }}
               accessibilityLiveRegion="polite"
-              className={`text-start text-md text-error ${languageFontClass}`}
+              className="gap-lg"
             >
-              {t('loadFailed')}
-            </Text>
-            <AuthSubmitButton label={t('retryAction')} onPress={handleRetry} />
-          </View>
-        </ShakeOnError>
-      ) : (
-        <>
-          <ProfileNameBox profile={profile} />
-          <ProfileSection title={t('sectionIdentity')}>
-            {/* Her name is not repeated here: it heads the screen in the box
-                above (RAPP-888). */}
-            <ProfileRow
-              label={t('onboarding:dateOfBirthLabel')}
-              value={formatDate(answers.dateOfBirth || null)}
-            />
-            <ProfileRow
-              label={t('onboarding:placeOfBirthLabel')}
-              value={shown(answers.placeOfBirth)}
-            />
-            <ProfileRow
-              label={t('onboarding:nationalityLabel')}
-              value={shown(answers.nationality)}
-            />
-          </ProfileSection>
+              {Array.from({ length: LOADING_SECTION_COUNT }, (_unused, index) => (
+                <View key={index} className="gap-sm">
+                  <SkeletonPulse className="h-lg w-1/2 rounded-md" />
+                  <SkeletonPulse className="h-3xl w-full rounded-md" />
+                </View>
+              ))}
+            </View>
+          ) : !hasProfile || profile === null || profile === undefined || answers === null ? (
+            // A failed read says so and offers a retry. It must never render as an
+            // empty profile: "we hold nothing about you" is a false statement.
+            <ShakeOnError errorCode={loadFailureCode}>
+              <View className="gap-md">
+                <Text
+                  selectable
+                  accessibilityLiveRegion="polite"
+                  className={`text-start text-md text-error ${languageFontClass}`}
+                >
+                  {t('loadFailed')}
+                </Text>
+                <AuthSubmitButton label={t('retryAction')} onPress={handleRetry} />
+              </View>
+            </ShakeOnError>
+          ) : (
+            <>
+              <ProfileSection title={t('sectionIdentity')}>
+                {/* Her name is not repeated here: it heads the screen on her photo
+                (RAPP-888, RAPP-960). */}
+                <ProfileRow
+                  label={t('onboarding:dateOfBirthLabel')}
+                  value={formatDate(answers.dateOfBirth || null)}
+                />
+                <ProfileRow
+                  label={t('onboarding:placeOfBirthLabel')}
+                  value={shown(answers.placeOfBirth)}
+                />
+                <ProfileRow
+                  label={t('onboarding:nationalityLabel')}
+                  value={shown(answers.nationality)}
+                />
+              </ProfileSection>
 
-          <ProfileSection title={t('sectionDocumentation')}>
-            <ProfileRow
-              label={t('onboarding:documentTypeLabel')}
-              value={
-                answers.documentType === 'other' && answers.documentName
-                  ? answers.documentName
-                  : documentTypeLabel(answers.documentType ?? null, t)
-              }
-            />
-            <ProfileRow
-              label={t('onboarding:documentNumberLabel')}
-              value={shown(answers.documentNumber)}
-            />
-          </ProfileSection>
+              <ProfileSection title={t('sectionDocumentation')}>
+                <ProfileRow
+                  label={t('onboarding:documentTypeLabel')}
+                  value={
+                    answers.documentType === 'other' && answers.documentName
+                      ? answers.documentName
+                      : documentTypeLabel(answers.documentType ?? null, t)
+                  }
+                />
+                <ProfileRow
+                  label={t('onboarding:documentNumberLabel')}
+                  value={shown(answers.documentNumber)}
+                />
+              </ProfileSection>
 
-          <ProfileSection title={t('sectionContact')}>
-            <ProfileRow label={t('fieldPhone')} value={shown(answers.phone)} />
-            <ProfileRow label={t('fieldAddress')} value={shown(answers.address)} />
-            <ProfileRow label={t('fieldCity')} value={shown(answers.city)} />
-            <ProfileRow label={t('fieldPostalCode')} value={shown(answers.postalCode)} />
-            <ProfileRow
-              label={t('onboarding:clothingSizeLabel')}
-              value={shown(answers.clothingSize)}
-            />
-            <ProfileRow label={t('onboarding:shoeSizeLabel')} value={shown(answers.shoeSize)} />
-          </ProfileSection>
+              <ProfileSection title={t('sectionContact')}>
+                <ProfileRow label={t('fieldPhone')} value={shown(answers.phone)} />
+                <ProfileRow label={t('fieldAddress')} value={shown(answers.address)} />
+                <ProfileRow label={t('fieldCity')} value={shown(answers.city)} />
+                <ProfileRow label={t('fieldPostalCode')} value={shown(answers.postalCode)} />
+                <ProfileRow
+                  label={t('onboarding:clothingSizeLabel')}
+                  value={shown(answers.clothingSize)}
+                />
+                <ProfileRow label={t('onboarding:shoeSizeLabel')} value={shown(answers.shoeSize)} />
+              </ProfileSection>
 
-          {/* The season registration answers (RAPP-303): hers to see and correct. */}
-          <ProfileSection title={t('onboarding:seasonSectionTitle')}>
-            <SeasonAnswerRows answers={answers} emptyLabel={t('notProvided')} />
-          </ProfileSection>
-        </>
-      )}
-    </ProfileScreenFrame>
+              {/* The season registration answers (RAPP-303): hers to see and correct. */}
+              <ProfileSection title={t('onboarding:seasonSectionTitle')}>
+                <SeasonAnswerRows answers={answers} emptyLabel={t('notProvided')} />
+              </ProfileSection>
+            </>
+          )}
+        </View>
+      </CollapsingHeroScreen>
+    </ActionScreen>
   );
 }
 

@@ -28,7 +28,6 @@
   "submitting": "جارٍ الإرسال...",
   "submitFailed": "تعذر إرسال الطلب.",
   "invalidRequest": "راجعي الموضوع والتاريخ والوقت.",
-  "submitAnother": "تقديم طلب آخر",
   "successTitle": "تم إرسال الطلب",
   "successBody": "سيراجعه الطاقم الفني ويخبرك عند تحديد الموعد.",
   "statusTitle": "طلباتك",

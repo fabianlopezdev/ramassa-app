@@ -16,7 +16,8 @@ export const EVENT_STATUS_KEYS = {
 
 export const EVENT_SIGNUP_KEYS = {
   none: 'signupNone',
-  interest: 'signupInterest',
+  // Stored before the option was removed; it reads as a confirmation.
+  interest: 'signupConfirm',
   confirm: 'signupConfirm',
 } as const satisfies Record<EventSignupMode, string>;
 

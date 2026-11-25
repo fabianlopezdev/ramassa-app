@@ -21,7 +21,7 @@ import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useListSeen, useTabNews } from '@/lib/use-tab-news';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
-import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useLocalSearchParams, type Href } from 'expo-router';
 import { useCallback, useMemo, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
@@ -48,7 +48,6 @@ export default function GuideCategoryScreen() {
   const { t } = useTranslation(['knowledge', 'home']);
   const { language } = useLanguage();
   const languageFontClass = useLanguageFontClass();
-  const { push } = useRouter();
   const { session } = useAuth();
   const isOnline = isNetworkStateOnline(useNetworkState());
   const categoriesQuery = usePlayerKnowledgeCategories();
@@ -70,10 +69,6 @@ export default function GuideCategoryScreen() {
   const guides = useMemo(
     () => filterPlayerGuides(selectPlayerGuides(articlesQuery.data), categoryId ?? ''),
     [articlesQuery.data, categoryId],
-  );
-  const openGuide = useCallback(
-    (id: string) => push({ pathname: '/knowledge/[id]', params: { id } } as unknown as Href),
-    [push],
   );
   const { refetch: refetchArticles } = articlesQuery;
   // A guide keeps "Nou" until she opens it, also after she comes back (RAPP-873).
@@ -98,13 +93,13 @@ export default function GuideCategoryScreen() {
         <KnowledgeArticleCard
           article={item}
           accessToken={accessToken}
-          onOpen={openGuide}
+          href={`/knowledge/${item.id}` as Href}
           showsCategory={false}
           unseenLabel={newGuideIds.has(item.id) ? t('home:unseen') : null}
         />
       </PageWidth>
     ),
-    [accessToken, newGuideIds, openGuide, t],
+    [accessToken, newGuideIds, t],
   );
 
   let emptyState: ReactElement;

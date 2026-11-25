@@ -4,55 +4,50 @@ import {
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
 import { KnowledgeArticleCard } from '@/components/knowledge/knowledge-article-card';
-import { OwnStoryStatuses } from '@/components/knowledge/own-story-statuses';
 import { PageWidth } from '@/components/layout/content-width';
+import type { SegmentListProps } from '@/components/layout/segment-list';
 import { NO_UNOPENED_IDS } from '@/lib/community-news';
 import { useCommunityStories } from '@/lib/community-stories';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { usePersonCards } from '@/lib/person-cards';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useListSeen, useTabNews } from '@/lib/use-tab-news';
-import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
+import type { ListRenderItemInfo } from '@shopify/flash-list';
 import { useNetworkState } from 'expo-network';
-import { useRouter, type Href } from 'expo-router';
+import type { Href } from 'expo-router';
 import { useCallback, useMemo, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { toAppError } from '@ramassa/shared/errors';
 import type { KnowledgeArticleListRow } from '@ramassa/shared/knowledge';
-import { tokens } from '@ramassa/shared/tokens';
 
 const EMPTY_STORIES: readonly KnowledgeArticleListRow[] = [];
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: tokens.colors.surface.page },
-});
 const keyExtractor = (story: KnowledgeArticleListRow) => story.id;
+const storyItemType = () => 'story';
 
 /**
- * Published participant stories, the Històries segment of Comunitat
- * (RAPP-792). Each story opens the shared reader `knowledge/[id]`. Her own
- * stories still waiting for the team sit above them (RAPP-890).
+ * Published participant stories, the Històries view of Comunitat (RAPP-792),
+ * as rows for the tab's one list (RAPP-977). Each story opens the shared
+ * reader `knowledge/[id]`. Her own stories still waiting for the team sit
+ * above them (RAPP-890); the tab draws those in the list's header.
  */
-export function CommunityStoryList({
-  header,
-  contentContainerStyle,
+export function useCommunityStoryList({
+  isOnShow,
   unopenedArticleIds = NO_UNOPENED_IDS,
 }: {
-  readonly header: ReactElement;
-  readonly contentContainerStyle: StyleProp<ViewStyle>;
+  /** Whether Històries is the view she is looking at. */
+  readonly isOnShow: boolean;
   /** Stories she has not opened yet, marked "Nou" until she does (RAPP-873). */
   readonly unopenedArticleIds?: ReadonlySet<string>;
-}) {
+}): SegmentListProps<KnowledgeArticleListRow> {
   const { t } = useTranslation(['knowledge', 'home']);
   const languageFontClass = useLanguageFontClass();
-  const { push } = useRouter();
   const { session } = useAuth();
   const isOnline = isNetworkStateOnline(useNetworkState());
   const query = useCommunityStories();
   // Seeing the stories clears their number; a list still loading has shown
   // nothing (RAPP-873).
-  useListSeen('stories', query.data !== undefined);
+  useListSeen('stories', isOnShow && query.data !== undefined);
   const authorIds = useMemo(
     () => (query.data ?? EMPTY_STORIES).map((story) => story.author_id),
     [query.data],
@@ -62,28 +57,16 @@ export function CommunityStoryList({
   // Pull to refresh also asks again what is new for her (RAPP-873).
   const refetchTabNews = useTabNews().refetch;
   const accessToken = session?.access_token;
-  const openStory = useCallback(
-    (id: string) => push({ pathname: '/knowledge/[id]', params: { id } } as unknown as Href),
-    [push],
-  );
   const refresh = useCallback(() => {
     void Promise.all([refetchStories(), refetchTabNews()]);
   }, [refetchStories, refetchTabNews]);
-  const listHeader = (
-    <View>
-      {header}
-      <PageWidth className="pb-lg">
-        <OwnStoryStatuses />
-      </PageWidth>
-    </View>
-  );
   const renderStory = useCallback(
     ({ item }: ListRenderItemInfo<KnowledgeArticleListRow>) => (
       <PageWidth className="pb-md">
         <KnowledgeArticleCard
           article={item}
           accessToken={accessToken}
-          onOpen={openStory}
+          href={`/knowledge/${item.id}` as Href}
           authorAvatarKey={
             item.author_id === null ? null : (personCards.get(item.author_id)?.avatarKey ?? null)
           }
@@ -91,7 +74,7 @@ export function CommunityStoryList({
         />
       </PageWidth>
     ),
-    [accessToken, openStory, personCards, t, unopenedArticleIds],
+    [accessToken, personCards, t, unopenedArticleIds],
   );
 
   let emptyState: ReactElement;
@@ -120,20 +103,20 @@ export function CommunityStoryList({
     );
   }
 
-  return (
-    <FlashList
-      testID="community-stories"
-      data={query.data ?? EMPTY_STORIES}
-      renderItem={renderStory}
-      keyExtractor={keyExtractor}
-      extraData={unopenedArticleIds}
-      style={styles.screen}
-      contentContainerStyle={contentContainerStyle}
-      contentInsetAdjustmentBehavior="automatic"
-      ListHeaderComponent={listHeader}
-      ListEmptyComponent={emptyState}
-      refreshing={query.isRefetching && isOnline}
-      onRefresh={refresh}
-    />
+  const data = query.data ?? EMPTY_STORIES;
+  const refreshing = query.isRefetching && isOnline;
+  return useMemo(
+    () => ({
+      testID: 'community-stories',
+      data,
+      renderItem: renderStory,
+      keyExtractor,
+      getItemType: storyItemType,
+      extraData: unopenedArticleIds,
+      ListEmptyComponent: emptyState,
+      refreshing,
+      onRefresh: refresh,
+    }),
+    [data, emptyState, refresh, refreshing, renderStory, unopenedArticleIds],
   );
 }

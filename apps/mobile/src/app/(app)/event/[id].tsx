@@ -2,14 +2,12 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
-import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
-import { EventArticle } from '@/components/events/event-article';
+import { EventAnswerButtons, EventArticle } from '@/components/events/event-article';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
-import { ScreenAction } from '@/components/layout/screen-action';
 import { SuccessPop } from '@/components/motion/success-pop';
 import { EventSurveyPrompt } from '@/components/surveys/survey-prompt';
-import { isEventSignupActionDisabled } from '@/lib/event-signup-policy';
+import { isEventAnswerDisabled } from '@/lib/event-signup-policy';
 import { playErrorHaptic } from '@/lib/haptics/haptics';
 import { isNetworkStateOnline } from '@/lib/network-status';
 import { useEventSignup } from '@/lib/player-events';
@@ -24,14 +22,18 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toAppError } from '@ramassa/shared/errors';
-import { nextEventSignupState, type EventSignupState } from '@ramassa/shared/events';
+import {
+  eventSignupAnswer,
+  eventSignupStateForAnswer,
+  type EventSignupAnswer,
+  type EventSignupState,
+} from '@ramassa/shared/events';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
 import { tokens } from '@ramassa/shared/tokens';
 
 function successKey(state: EventSignupState): string {
-  if (state === 'confirmed') return 'playerSignupSuccessConfirmed';
-  if (state === 'interested') return 'playerSignupSuccessInterested';
-  return 'playerSignupSuccessCancelled';
+  if (state === 'confirmed' || state === 'interested') return 'playerSignupSuccessConfirmed';
+  return 'playerSignupSuccessDeclined';
 }
 
 export default function EventDetailScreen() {
@@ -58,25 +60,13 @@ export default function EventDetailScreen() {
   const title = row === undefined ? undefined : resolveLocalizedText(row.event.title, language);
   const category =
     row === undefined ? undefined : resolveLocalizedText(row.event.category.name, language);
-  const currentState = row?.signup?.state ?? null;
-  const nextState =
-    row === undefined ? null : nextEventSignupState(row.event.signup_mode, currentState);
-  const hasActiveSignup = currentState === 'confirmed' || currentState === 'interested';
+  const signupMode = row?.event.signup_mode ?? 'none';
+  const currentAnswer = eventSignupAnswer(row?.signup?.state);
   const isFull =
     row?.event.max_participants !== null &&
     row?.event.max_participants !== undefined &&
     row.event.active_signup_count >= row.event.max_participants;
-  const actionDisabled = isEventSignupActionDisabled({
-    hasEvent: row !== undefined,
-    hasNextState: nextState !== null,
-    isFull,
-    hasActiveSignup,
-  });
-  const actionLabel = hasActiveSignup
-    ? t('playerCancelAction')
-    : row?.event.signup_mode === 'interest'
-      ? t('playerInterestAction')
-      : t('playerConfirmAction');
+  const isYesDisabled = isEventAnswerDisabled({ answer: 'yes', currentAnswer, isFull });
   const insets = useSafeAreaInsets();
   const androidInsets = useMemo(
     () =>
@@ -94,11 +84,17 @@ export default function EventDetailScreen() {
     if (locationUrl !== null && locationUrl !== undefined) void Linking.openURL(locationUrl);
   }, [locationUrl]);
   const retryEvents = useCallback(() => void refetch(), [refetch]);
-  const submitSignup = useCallback(() => {
-    if (row !== undefined && nextState !== null) {
-      mutateSignup({ eventId: row.event.id, state: nextState });
-    }
-  }, [mutateSignup, nextState, row]);
+  const eventId = row?.event.id;
+  // One answer at a time, and only a change: tapping her own answer again does nothing.
+  const submitAnswer = useCallback(
+    (answer: EventSignupAnswer) => {
+      const state = eventSignupStateForAnswer(signupMode, answer);
+      if (eventId === undefined || state === null || isSignupPending) return;
+      if (answer === currentAnswer) return;
+      mutateSignup({ eventId, state });
+    },
+    [currentAnswer, eventId, isSignupPending, mutateSignup, signupMode],
+  );
 
   useEffect(() => {
     if (signupError !== null) playErrorHaptic(signupError.code);
@@ -127,16 +123,13 @@ export default function EventDetailScreen() {
     );
   }
 
-  // Her sign-up is the screen's call to action, at the bottom (RAPP-881).
-  const hasAction = row !== undefined && nextState !== null;
-
   return (
     <View className="flex-1 bg-white">
       <NativeScreenHeader surface="white" title={screenTitle} />
       <ScrollView
         className="flex-1"
         contentContainerClassName="grow px-lg py-lg"
-        contentContainerStyle={hasAction ? undefined : androidInsets}
+        contentContainerStyle={androidInsets}
         contentInsetAdjustmentBehavior="automatic"
       >
         <PageWidth className="gap-lg">
@@ -168,20 +161,19 @@ export default function EventDetailScreen() {
                 }}
                 onOpenMap={openMap}
               >
-                {currentState === 'confirmed' || currentState === 'interested' ? (
-                  <Text
-                    className={`text-start text-md font-semibold text-success ${languageFontClass}`}
-                  >
-                    {currentState === 'confirmed' ? t('playerConfirmed') : t('playerInterested')}
-                  </Text>
-                ) : null}
-                {nextState === null ? (
-                  <Text className={`text-start text-md text-neutral-600 ${languageFontClass}`}>
+                {signupMode === 'none' ? (
+                  <Text className={`text-center text-md text-neutral-600 ${languageFontClass}`}>
                     {t('playerSignupClosed')}
                   </Text>
-                ) : null}
-                {isOffline && nextState !== null ? (
-                  <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+                ) : (
+                  <EventAnswerButtons
+                    answer={currentAnswer}
+                    isYesDisabled={isYesDisabled}
+                    onAnswer={submitAnswer}
+                  />
+                )}
+                {isOffline && signupMode !== 'none' ? (
+                  <Text className={`text-center text-sm text-neutral-600 ${languageFontClass}`}>
                     {t('playerSignupOffline')}
                   </Text>
                 ) : null}
@@ -189,7 +181,7 @@ export default function EventDetailScreen() {
                   <View className="gap-xs" accessibilityRole="alert">
                     <Text
                       selectable
-                      className={`text-start text-sm text-error ${languageFontClass}`}
+                      className={`text-center text-sm text-error ${languageFontClass}`}
                     >
                       {t(`errors:${signupError.code}`)}
                     </Text>
@@ -199,7 +191,7 @@ export default function EventDetailScreen() {
                   <SuccessPop key={`${signupData.state}:${signupSubmittedAt}`}>
                     <Text
                       accessibilityLiveRegion="polite"
-                      className={`text-start text-md font-semibold text-success ${languageFontClass}`}
+                      className={`text-center text-md font-semibold text-success ${languageFontClass}`}
                     >
                       {t(successKey(signupData.state))}
                     </Text>
@@ -214,16 +206,6 @@ export default function EventDetailScreen() {
           )}
         </PageWidth>
       </ScrollView>
-      {hasAction ? (
-        <ScreenAction testID="event-signup-action">
-          <AuthSubmitButton
-            label={actionLabel}
-            disabled={actionDisabled}
-            isLoading={isSignupPending}
-            onPress={submitSignup}
-          />
-        </ScreenAction>
-      ) : null}
     </View>
   );
 }

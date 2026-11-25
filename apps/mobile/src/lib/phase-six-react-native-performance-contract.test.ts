@@ -10,10 +10,12 @@ const phaseSixTargets = [
   'app/(app)/forum/[id].tsx',
   'app/(app)/forum/create.tsx',
   'app/(app)/gallery/[id].tsx',
+  'app/(app)/gallery/photo/[id].tsx',
   'app/(app)/gallery/index.tsx',
   'app/(app)/gallery/upload.tsx',
   'components/gallery/gallery-grid.tsx',
   'components/gallery/gallery-tile.tsx',
+  'components/gallery/gallery-item-actions.tsx',
   'components/knowledge/community-story-list.tsx',
   'components/layout/segmented-control.tsx',
   'components/forum/forum-category-tabs.tsx',
@@ -57,7 +59,7 @@ describe('Phase 6 React Native performance contract', () => {
   test('list and option callbacks are stable instead of allocated in mapped children', async () => {
     const forumDetail = await readMobileSource('app/(app)/forum/[id].tsx');
     const forumComposer = await readMobileSource('app/(app)/forum/create.tsx');
-    const galleryItem = await readMobileSource('app/(app)/gallery/[id].tsx');
+    const galleryItem = await readMobileSource('components/gallery/gallery-item-actions.tsx');
     const galleryUpload = await readMobileSource('app/(app)/gallery/upload.tsx');
     const flagDialog = await readMobileSource('components/forum/forum-flag-dialog.tsx');
     const threadMessage = await readMobileSource('components/forum/forum-thread-message.tsx');
@@ -80,7 +82,8 @@ describe('Phase 6 React Native performance contract', () => {
 
     expect(gallery).not.toContain('onRefresh={query.refetch}');
     expect(gallery).toContain('const refresh = useCallback');
-    expect(gallery).toContain('onRefresh={refresh}');
+    // The gallery hands its refresh to the list that draws it (RAPP-977).
+    expect(gallery).toContain('onRefresh: refresh,');
   });
 
   test('bounded option collections reuse named render functions and stable empty arrays', async () => {
@@ -89,7 +92,7 @@ describe('Phase 6 React Native performance contract', () => {
     const categoryTabs = await readMobileSource('components/forum/forum-category-tabs.tsx');
     const flagDialog = await readMobileSource('components/forum/forum-flag-dialog.tsx');
     const forumPlainText = await readMobileSource('components/forum/forum-plain-text.tsx');
-    const galleryItem = await readMobileSource('app/(app)/gallery/[id].tsx');
+    const galleryItem = await readMobileSource('components/gallery/gallery-item-actions.tsx');
     const galleryUpload = await readMobileSource('app/(app)/gallery/upload.tsx');
 
     expect(community).toContain('categoriesQuery.data ?? EMPTY_CATEGORIES');

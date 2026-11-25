@@ -115,6 +115,36 @@ export const tokens = {
     footerBlurIntensity: 50,
   },
 
+  // The club's logo inside the app (RAPP-907): beside "Hola" at the top of
+  // Inici, above the credits at the foot of the profile, and large and faint
+  // behind a chat, faint enough that the bubbles and their text stay clear.
+  brandLogo: {
+    headerSize: 64,
+    footerHeight: 96,
+    backdropHeight: 320,
+    backdropOpacity: 0.07,
+  },
+
+  // The launch splash (RAPP-955): the club shield builds itself in a centred
+  // square on the soft brand blue, the tile of the app icon (RAPP-948). The
+  // native splash draws the clip's first frame at the same size, so the swap
+  // to the animated overlay lines up on every phone. `fadeMs` is the fade into
+  // the app; `minDisplayMs` and `maxDisplayMs` bound how long it stays.
+  splash: {
+    backgroundColor: '#DBE0E9',
+    size: 220,
+    // Android 12 and later show the splash image in a 288 dp square but only
+    // reveal a circle 192 dp across. The shield reaches 0.51 of the image width
+    // from its centre, so at 180 dp its corners stay inside the circle.
+    androidSize: 180,
+    fadeMs: 500,
+    minDisplayMs: 600,
+    maxDisplayMs: 5_000,
+    // The native splash waits for the overlay's first frame to be drawn, at
+    // most this long, so the shield never blinks out in between.
+    nativeHandOffMaxMs: 500,
+  },
+
   // The login title sits just above a centred block of this height, so every
   // login step puts its title in the same place on a tall screen.
   authForm: { titleAnchorBlockHeight: 276 },
@@ -154,6 +184,10 @@ export const tokens = {
   // Number of flags that auto-hides a forum post pending moderation (ADR-014).
   // `threadLineWidth` (RAPP-884): the line that joins a forum post to its answers.
   forum: { autoHideFlagThreshold: 3, threadLineWidth: 2 },
+
+  // The photo of a preview card (RAPP-921): one landscape shape for every
+  // card, cropped to fill it, so a tall photo never makes a tall card.
+  photoCard: { aspectRatio: 16 / 9 },
 } as const;
 
 export type Tokens = typeof tokens;

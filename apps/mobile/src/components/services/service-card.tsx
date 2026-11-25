@@ -1,15 +1,11 @@
 import { RaisedCard, type RaisedCardBadge } from '@/components/layout/raised-card';
-import { resolveMediaImageSource } from '@/lib/media-source';
-import { mobileClientEnv } from '@/lib/supabase';
-import { Image } from 'expo-image';
-import { memo, useCallback, useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { RaisedCardFooterText } from '@/components/layout/raised-card-footer';
+import { RaisedCardPhoto, useRaisedCardPhotoSource } from '@/components/layout/raised-card-photo';
+import type { Href } from 'expo-router';
+import { memo, useMemo } from 'react';
+import { Text, View } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
-import { tokens } from '@ramassa/shared/tokens';
-
-const styles = StyleSheet.create({
-  image: { width: '100%', height: tokens.spacing['3xl'] * 3 },
-});
+import type { PhotoFocus } from '@ramassa/shared/photo-focus';
 
 export interface ServiceCardProps {
   readonly id: string;
@@ -21,10 +17,13 @@ export interface ServiceCardProps {
   readonly interested: boolean;
   readonly interestedLabel: string;
   readonly imageObjectKey: string | null;
+  /** The part of the photo the card keeps (RAPP-932); null keeps the default crop. */
+  readonly imageFocus: PhotoFocus | null;
   readonly imageAlt: string | null;
   readonly accessibilityLabel: string;
   readonly languageFontClass: string;
-  readonly onOpen: (id: string) => void;
+  /** The service's own screen; its photo grows into that screen's photo (RAPP-916). */
+  readonly href: Href;
   /**
    * Set while the service is new to her (RAPP-873): the word on the card's top
    * edge, where every card carries it. The caller says it in the label.
@@ -42,19 +41,15 @@ export const ServiceCard = memo(function ServiceCard({
   interested,
   interestedLabel,
   imageObjectKey,
+  imageFocus,
   imageAlt,
   accessibilityLabel,
   languageFontClass,
-  onOpen,
+  href,
   unseenLabel = null,
 }: ServiceCardProps) {
   const { session } = useAuth();
-  const imageSource = resolveMediaImageSource({
-    objectKeyOrUrl: imageObjectKey,
-    mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
-    accessToken: session?.access_token,
-  });
-  const handlePress = useCallback(() => onOpen(id), [id, onOpen]);
+  const imageSource = useRaisedCardPhotoSource(imageObjectKey, session?.access_token);
   // Her saved interest sits on the card's edge, like her sign-up on an activity
   // card. While the service is new to her, "Nou" takes that place (RAPP-873).
   const badge = useMemo<RaisedCardBadge | null>(() => {
@@ -65,52 +60,65 @@ export const ServiceCard = memo(function ServiceCard({
     <RaisedCard
       testID={`service-card-${id}`}
       accessibilityLabel={accessibilityLabel}
-      onOpen={handlePress}
+      href={href}
       badge={badge}
       media={
         imageSource === null ? undefined : (
-          <Image
+          <RaisedCardPhoto
             source={imageSource}
             accessibilityLabel={imageAlt ?? title}
-            contentFit="cover"
-            cachePolicy="memory-disk"
             recyclingKey={imageObjectKey ?? id}
-            style={styles.image}
+            focus={imageFocus}
           />
         )
       }
+      mediaTitle={title}
+      footer={[
+        <RaisedCardFooterText key="cost" text={cost} emphasis />,
+        <RaisedCardFooterText key="availability" text={availability} />,
+      ]}
     >
-      <View className="gap-sm">
-        <Text
-          className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
-          numberOfLines={2}
-        >
-          {title}
-        </Text>
-        {provider === null ? null : (
-          <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
-            {provider}
-          </Text>
-        )}
-        {location === null ? null : (
+      {imageSource === null ? (
+        <View className="gap-sm">
           <Text
-            className={`text-start text-sm text-neutral-600 ${languageFontClass}`}
+            className={`text-start text-xl font-bold text-neutral-900 ${languageFontClass}`}
             numberOfLines={2}
           >
-            {location}
+            {title}
           </Text>
-        )}
-        <View className="flex-row flex-wrap gap-sm">
-          <Text
-            className={`text-start text-sm font-semibold text-primary-dark ${languageFontClass}`}
-          >
-            {cost}
-          </Text>
-          <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
-            {availability}
-          </Text>
+          {provider === null ? null : (
+            <Text className={`text-start text-md text-neutral-700 ${languageFontClass}`}>
+              {provider}
+            </Text>
+          )}
+          {location === null ? null : (
+            <Text
+              className={`text-start text-sm text-neutral-600 ${languageFontClass}`}
+              numberOfLines={2}
+            >
+              {location}
+            </Text>
+          )}
+          <View className="flex-row flex-wrap gap-sm">
+            <Text
+              className={`text-start text-sm font-semibold text-primary-dark ${languageFontClass}`}
+            >
+              {cost}
+            </Text>
+            <Text className={`text-start text-sm text-neutral-600 ${languageFontClass}`}>
+              {availability}
+            </Text>
+          </View>
         </View>
-      </View>
+      ) : null}
+      {imageSource === null || provider === null ? null : (
+        <Text className={`text-start text-md text-white ${languageFontClass}`}>{provider}</Text>
+      )}
+      {imageSource === null || location === null ? null : (
+        <Text className={`text-start text-sm text-white ${languageFontClass}`} numberOfLines={2}>
+          {location}
+        </Text>
+      )}
     </RaisedCard>
   );
 });

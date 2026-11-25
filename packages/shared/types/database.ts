@@ -80,6 +80,8 @@ export type Database = {
           expires_at: string | null;
           id: string;
           image_alt: Json | null;
+          image_focus_x: number | null;
+          image_focus_y: number | null;
           image_url: string | null;
           is_pinned: boolean;
           org_id: string;
@@ -96,6 +98,8 @@ export type Database = {
           expires_at?: string | null;
           id?: string;
           image_alt?: Json | null;
+          image_focus_x?: number | null;
+          image_focus_y?: number | null;
           image_url?: string | null;
           is_pinned?: boolean;
           org_id?: string;
@@ -112,6 +116,8 @@ export type Database = {
           expires_at?: string | null;
           id?: string;
           image_alt?: Json | null;
+          image_focus_x?: number | null;
+          image_focus_y?: number | null;
           image_url?: string | null;
           is_pinned?: boolean;
           org_id?: string;
@@ -2887,6 +2893,8 @@ export type Database = {
           created_at: string;
           flag_count: number;
           id: string;
+          image_focus_x: number | null;
+          image_focus_y: number | null;
           image_url: string | null;
           is_pinned: boolean;
           org_id: string;
@@ -2902,6 +2910,8 @@ export type Database = {
           created_at?: string;
           flag_count?: number;
           id?: string;
+          image_focus_x?: number | null;
+          image_focus_y?: number | null;
           image_url?: string | null;
           is_pinned?: boolean;
           org_id: string;
@@ -2917,6 +2927,8 @@ export type Database = {
           created_at?: string;
           flag_count?: number;
           id?: string;
+          image_focus_x?: number | null;
+          image_focus_y?: number | null;
           image_url?: string | null;
           is_pinned?: boolean;
           org_id?: string;
@@ -3378,6 +3390,8 @@ export type Database = {
           expires_at: string | null;
           external_url: string | null;
           id: string;
+          image_focus_x: number | null;
+          image_focus_y: number | null;
           image_url: string | null;
           is_published: boolean;
           org_id: string;
@@ -3406,6 +3420,8 @@ export type Database = {
           expires_at?: string | null;
           external_url?: string | null;
           id?: string;
+          image_focus_x?: number | null;
+          image_focus_y?: number | null;
           image_url?: string | null;
           is_published?: boolean;
           org_id?: string;
@@ -3434,6 +3450,8 @@ export type Database = {
           expires_at?: string | null;
           external_url?: string | null;
           id?: string;
+          image_focus_x?: number | null;
+          image_focus_y?: number | null;
           image_url?: string | null;
           is_published?: boolean;
           org_id?: string;
@@ -3495,6 +3513,7 @@ export type Database = {
           created_at: string;
           icon: string;
           id: string;
+          is_base_documents: boolean;
           name: Json;
           org_id: string;
           slug: string;
@@ -3506,6 +3525,7 @@ export type Database = {
           created_at?: string;
           icon: string;
           id?: string;
+          is_base_documents?: boolean;
           name: Json;
           org_id?: string;
           slug: string;
@@ -3517,6 +3537,7 @@ export type Database = {
           created_at?: string;
           icon?: string;
           id?: string;
+          is_base_documents?: boolean;
           name?: Json;
           org_id?: string;
           slug?: string;
@@ -3622,6 +3643,8 @@ export type Database = {
           file_type: string;
           file_url: string;
           flag_count: number;
+          focus_x: number | null;
+          focus_y: number | null;
           id: string;
           moderation_state: string;
           org_id: string;
@@ -3640,6 +3663,8 @@ export type Database = {
           file_type: string;
           file_url: string;
           flag_count?: number;
+          focus_x?: number | null;
+          focus_y?: number | null;
           id?: string;
           moderation_state?: string;
           org_id: string;
@@ -3658,6 +3683,8 @@ export type Database = {
           file_type?: string;
           file_url?: string;
           flag_count?: number;
+          focus_x?: number | null;
+          focus_y?: number | null;
           id?: string;
           moderation_state?: string;
           org_id?: string;
@@ -4914,6 +4941,8 @@ export type Database = {
         Row: {
           alt_text: Json;
           created_at: string;
+          focus_x: number | null;
+          focus_y: number | null;
           id: string;
           org_id: string;
           position: number;
@@ -4923,6 +4952,8 @@ export type Database = {
         Insert: {
           alt_text: Json;
           created_at?: string;
+          focus_x?: number | null;
+          focus_y?: number | null;
           id?: string;
           org_id?: string;
           position?: number;
@@ -4932,6 +4963,8 @@ export type Database = {
         Update: {
           alt_text?: Json;
           created_at?: string;
+          focus_x?: number | null;
+          focus_y?: number | null;
           id?: string;
           org_id?: string;
           position?: number;
@@ -6780,7 +6813,13 @@ export type Database = {
         Returns: string;
       };
       create_forum_post: {
-        Args: { p_category_id: string; p_content: string; p_image_url: string };
+        Args: {
+          p_category_id: string;
+          p_content: string;
+          p_image_focus_x?: number;
+          p_image_focus_y?: number;
+          p_image_url: string;
+        };
         Returns: string;
       };
       create_forum_reply: {
@@ -6795,6 +6834,8 @@ export type Database = {
           p_file_size: number;
           p_file_type: string;
           p_file_url: string;
+          p_focus_x?: number;
+          p_focus_y?: number;
           p_privacy_level: string;
           p_thumbnail_url: string;
         };

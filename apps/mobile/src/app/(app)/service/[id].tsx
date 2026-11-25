@@ -6,16 +6,19 @@ import { AuthSubmitButton } from '@/components/auth/auth-submit-button';
 import { FailureNotice } from '@/components/error-code-line';
 import { PageWidth } from '@/components/layout/content-width';
 import { NativeScreenHeader } from '@/components/layout/native-screen-header';
+import { PhotoHeroScreen } from '@/components/layout/photo-hero';
 import { ActionScreen } from '@/components/layout/screen-action';
 import { SuccessPop } from '@/components/motion/success-pop';
 import { ServiceArticle } from '@/components/services/service-article';
 import { playErrorHaptic } from '@/lib/haptics/haptics';
+import { resolveMediaImageSource } from '@/lib/media-source';
 import { safeAsync } from '@/lib/observability';
 import {
   usePlayerServiceCategories,
   usePlayerServiceDetail,
   useServiceInterest,
 } from '@/lib/player-services';
+import { mobileClientEnv } from '@/lib/supabase';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { useMarkServiceSeen } from '@/lib/use-tab-news';
 import * as Linking from 'expo-linking';
@@ -24,8 +27,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@ramassa/shared/auth';
 import { toAppError, type AppErrorCode } from '@ramassa/shared/errors';
 import { resolveLocalizedText, useLanguage } from '@ramassa/shared/i18n';
+import { photoFocusFromColumns } from '@ramassa/shared/photo-focus';
 import { tokens } from '@ramassa/shared/tokens';
 
 export default function ServiceDetailScreen() {
@@ -43,6 +48,18 @@ export default function ServiceDetailScreen() {
   useMarkServiceSeen(service?.id);
   const category = categoriesQuery.data?.find((candidate) => candidate.id === service?.category_id);
   const title = service === undefined ? undefined : resolveLocalizedText(service.title, language);
+  // The first photo, the one on the service's card, opens the screen (RAPP-915).
+  const { session } = useAuth();
+  const heroImage = service?.images[0];
+  const heroSource = useMemo(
+    () =>
+      resolveMediaImageSource({
+        objectKeyOrUrl: heroImage?.url ?? null,
+        mediaWorkerUrl: mobileClientEnv.EXPO_PUBLIC_MEDIA_WORKER_URL,
+        accessToken: session?.access_token,
+      }),
+    [heroImage?.url, session?.access_token],
+  );
   const androidInsets = useMemo(
     () =>
       process.env.EXPO_OS === 'android'
@@ -93,11 +110,58 @@ export default function ServiceDetailScreen() {
     );
   }
 
+  const hasService = service !== undefined && title !== undefined;
+  const hasHero = hasService && heroImage !== undefined && heroSource !== null;
+  const article = hasService ? (
+    <ServiceArticle
+      service={{
+        title: service.title,
+        description: service.description,
+        // The photo at the top is not repeated in the row of photos under the text.
+        images: (hasHero ? service.images.slice(1) : service.images).map((image) => ({
+          id: image.id,
+          url: image.url,
+          altText: image.alt_text,
+        })),
+        providerName: service.provider_name,
+        location: service.location,
+        costType: service.cost_type,
+        costAmount: service.cost_amount,
+        schedule: service.schedule,
+        availability: service.availability,
+        metadata: service.metadata,
+        contactPhone: service.contact_phone,
+        contactEmail: service.contact_email,
+        externalUrl: service.external_url,
+      }}
+      formFields={category?.contract.formFields ?? []}
+      onOpenContact={(url) => void openContact(url)}
+      contactErrorCode={contactErrorCode}
+    >
+      {interest.isSuccess ? (
+        <SuccessPop>
+          <Text
+            accessibilityRole="alert"
+            className={`text-center text-md font-semibold text-neutral-900 ${languageFontClass}`}
+          >
+            {interest.variables.interested
+              ? t('playerServices:interestAdded')
+              : t('playerServices:interestRemoved')}
+          </Text>
+        </SuccessPop>
+      ) : null}
+      {interestErrorCode === null ? null : (
+        <FailureNotice code={interestErrorCode} message={t(`errors:${interestErrorCode}`)} />
+      )}
+    </ServiceArticle>
+  ) : null;
+
   return (
     <ActionScreen
       className="bg-white"
+      isUnderFloatingHeader={hasHero}
       action={
-        service !== undefined && title !== undefined ? (
+        hasService ? (
           <AuthSubmitButton
             testID="service-interest-toggle"
             label={
@@ -113,74 +177,47 @@ export default function ServiceDetailScreen() {
         ) : null
       }
     >
-      <NativeScreenHeader surface="white" />
-      <ScrollView
-        testID="player-service-detail"
-        className="flex-1"
-        contentContainerClassName="grow px-lg py-lg"
-        contentContainerStyle={androidInsets}
-        contentInsetAdjustmentBehavior="automatic"
-      >
-        <PageWidth className="gap-lg">
-          {service === undefined || title === undefined ? (
-            <View className="flex-1 items-center justify-center gap-md py-3xl">
-              <Text
-                accessibilityRole="header"
-                className={`text-center text-xl font-bold text-neutral-900 ${languageFontClass}`}
-              >
-                {t('playerServices:detailNotFoundTitle')}
-              </Text>
-              <Text className={`text-center text-md text-neutral-600 ${languageFontClass}`}>
-                {t('playerServices:detailNotFoundBody')}
-              </Text>
-            </View>
-          ) : (
-            <ServiceArticle
-              service={{
-                title: service.title,
-                description: service.description,
-                images: service.images.map((image) => ({
-                  id: image.id,
-                  url: image.url,
-                  altText: image.alt_text,
-                })),
-                providerName: service.provider_name,
-                location: service.location,
-                costType: service.cost_type,
-                costAmount: service.cost_amount,
-                schedule: service.schedule,
-                availability: service.availability,
-                metadata: service.metadata,
-                contactPhone: service.contact_phone,
-                contactEmail: service.contact_email,
-                externalUrl: service.external_url,
-              }}
-              formFields={category?.contract.formFields ?? []}
-              onOpenContact={(url) => void openContact(url)}
-              contactErrorCode={contactErrorCode}
-            >
-              {interest.isSuccess ? (
-                <SuccessPop>
+      {hasHero ? (
+        <PhotoHeroScreen
+          testID="player-service-detail"
+          source={heroSource}
+          photoKey={heroImage.url}
+          focus={photoFocusFromColumns(heroImage.focus_x, heroImage.focus_y)}
+          accessibilityLabel={
+            resolveLocalizedText(heroImage.alt_text, language)?.text ?? title.text
+          }
+          hasBottomAction
+        >
+          <PageWidth className="gap-lg">{article}</PageWidth>
+        </PhotoHeroScreen>
+      ) : (
+        <>
+          <NativeScreenHeader surface="white" />
+          <ScrollView
+            testID="player-service-detail"
+            className="flex-1"
+            contentContainerClassName="grow px-lg py-lg"
+            contentContainerStyle={androidInsets}
+            contentInsetAdjustmentBehavior="automatic"
+          >
+            <PageWidth className="gap-lg">
+              {article ?? (
+                <View className="flex-1 items-center justify-center gap-md py-3xl">
                   <Text
-                    accessibilityRole="alert"
-                    className={`text-center text-md font-semibold text-neutral-900 ${languageFontClass}`}
+                    accessibilityRole="header"
+                    className={`text-center text-xl font-bold text-neutral-900 ${languageFontClass}`}
                   >
-                    {interest.variables.interested
-                      ? t('playerServices:interestAdded')
-                      : t('playerServices:interestRemoved')}
+                    {t('playerServices:detailNotFoundTitle')}
                   </Text>
-                </SuccessPop>
-              ) : null}
-              {interestErrorCode === null ? null : (
-                <FailureNotice
-                  code={interestErrorCode}
-                  message={t(`errors:${interestErrorCode}`)}
-                />
+                  <Text className={`text-center text-md text-neutral-600 ${languageFontClass}`}>
+                    {t('playerServices:detailNotFoundBody')}
+                  </Text>
+                </View>
               )}
-            </ServiceArticle>
-          )}
-        </PageWidth>
-      </ScrollView>
+            </PageWidth>
+          </ScrollView>
+        </>
+      )}
     </ActionScreen>
   );
 }

@@ -446,7 +446,7 @@
     "signup": {
       "interested": "Interessada",
       "confirmed": "Confirmada",
-      "cancelled": "Cancel·lada"
+      "cancelled": "No hi anirà"
     },
     "showAll": "Mostra-ho tot ({{count}})",
     "loadFailed": "No hem pogut carregar l'activitat."

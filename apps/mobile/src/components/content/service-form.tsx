@@ -62,6 +62,7 @@ import { Text, View, type KeyboardTypeOptions } from 'react-native';
 import { useAuth } from '@ramassa/shared/auth';
 import { AppError, getErrorMessageKey, type AppErrorCode } from '@ramassa/shared/errors';
 import { DEFAULT_LANGUAGE, type SupportedLanguage } from '@ramassa/shared/i18n';
+import { photoFocusFromColumns } from '@ramassa/shared/photo-focus';
 import {
   approveEntityService,
   createAdminServiceInputSchema,
@@ -214,18 +215,28 @@ export function ServiceForm({
     if (userId.length === 0 || !isTouched) return;
     writeServiceDraft(privateStorage, userId, draftId, {
       ...form,
-      images: form.images.map((image) => ({
-        ...image,
-        altTranslations: reviewTexts(imageReviews[image.key]),
-      })),
+      images: form.images.map((image) => {
+        // A picked photo is not kept on the device, so neither is its focus.
+        const stored = detail?.images.find((candidate) => candidate.id === image.key);
+        return {
+          ...image,
+          focus:
+            pendingPhotos[image.key] === undefined
+              ? image.focus
+              : photoFocusFromColumns(stored?.focus_x, stored?.focus_y),
+          altTranslations: reviewTexts(imageReviews[image.key]),
+        };
+      }),
       titleTranslations: reviewTexts(titleReview.review),
       descriptionTranslations: reviewTexts(descriptionReview.review),
     });
   }, [
     descriptionReview.review,
+    detail?.images,
     form,
     imageReviews,
     isTouched,
+    pendingPhotos,
     serviceId,
     titleReview.review,
     userId,
@@ -504,16 +515,29 @@ export function ServiceForm({
 
       <ServiceImagesField
         images={form.images}
-        pendingPhotos={pendingSet}
+        pendingPhotos={pendingPhotos}
         reviews={imageReviews}
         handlers={imageHandlers}
         onAdd={() => {
           if (form.images.length >= MAX_SERVICE_IMAGES) return;
-          set({ images: [...form.images, { key: newImageKey(), url: null, alt: '' }] });
+          set({
+            images: [...form.images, { key: newImageKey(), url: null, alt: '', focus: null }],
+          });
         }}
         onPick={(key, photo) => {
           touch();
           setPendingPhotos((current) => ({ ...current, [key]: photo }));
+          // A new photo starts from the default crop (RAPP-932).
+          set({
+            images: form.images.map((image) =>
+              image.key === key ? { ...image, focus: null } : image,
+            ),
+          });
+        }}
+        onFocusChange={(key, focus) => {
+          set({
+            images: form.images.map((image) => (image.key === key ? { ...image, focus } : image)),
+          });
         }}
         onAltChange={(key, alt) => {
           set({

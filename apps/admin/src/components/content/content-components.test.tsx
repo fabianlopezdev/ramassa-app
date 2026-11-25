@@ -1,5 +1,6 @@
 import { ImageUploadField } from '@/components/content/image-upload-field';
 import { MultilingualEditor } from '@/components/content/multilingual-editor';
+import { PhotoFocusPicker } from '@/components/content/photo-focus-field';
 import { ScheduledPublishFields } from '@/components/content/scheduled-publish-fields';
 import { TranslationReviewPanel } from '@/components/content/translation-review-panel';
 import { createAdminI18n } from '@/lib/i18n';
@@ -101,4 +102,42 @@ test('ImageUploadField accepts only the image formats supported by the media pip
   expect(view.getByTestId('announcement-image').getAttribute('accept')).toBe(
     'image/jpeg,image/png,image/webp',
   );
+});
+
+test('PhotoFocusPicker sets the point a click lands on, moves by key, and resets (RAPP-932)', () => {
+  const onChange = mock((focus: unknown) => void focus);
+  const view = withI18n(
+    <PhotoFocusPicker
+      photoUrl="blob:local-photo"
+      focus={{ x: 0.5, y: 0.2 }}
+      onChange={onChange}
+      fieldId="announcement"
+    />,
+  );
+  const box = view.getByTestId('announcement-focus');
+  box.getBoundingClientRect = () =>
+    ({ left: 10, top: 20, width: 400, height: 200, right: 410, bottom: 220 }) as DOMRect;
+
+  fireEvent.pointerDown(box, { clientX: 110, clientY: 170, pointerId: 1 });
+  expect(onChange).toHaveBeenLastCalledWith({ x: 0.25, y: 0.75 });
+
+  fireEvent.keyDown(box, { key: 'ArrowDown' });
+  expect(onChange).toHaveBeenLastCalledWith({ x: 0.5, y: 0.25 });
+
+  fireEvent.click(view.getByTestId('announcement-focus-reset'));
+  expect(onChange).toHaveBeenLastCalledWith(null);
+});
+
+test('PhotoFocusPicker shows the default crop and no reset when nothing is chosen', () => {
+  const view = withI18n(
+    <PhotoFocusPicker
+      photoUrl="blob:local-photo"
+      focus={null}
+      onChange={() => undefined}
+      fieldId="service-0"
+    />,
+  );
+  // Until the photo loads its shape is unknown, so the frame shows the card's shape whole.
+  expect(view.getByTestId('service-0-focus-frame').style.height).toBe('100%');
+  expect(view.queryByTestId('service-0-focus-reset')).toBeNull();
 });

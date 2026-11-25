@@ -1,5 +1,6 @@
 {
   "title": "Bienvenue",
+  "greeting": "Bonjour,",
   "feedTitle": "Annonces",
   "filterLabel": "Filtre les annonces par catégorie",
   "filterAll": "Tout",

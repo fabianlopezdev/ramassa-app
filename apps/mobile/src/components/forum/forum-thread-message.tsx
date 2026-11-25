@@ -126,7 +126,7 @@ export const ForumThreadMessage = memo(function ForumThreadMessage({
   testID,
   name,
   avatarKey,
-  authorLabel,
+  authorAccessibilityLabel,
   content,
   tombstone,
   rails,
@@ -152,7 +152,7 @@ export const ForumThreadMessage = memo(function ForumThreadMessage({
   /** A team member's photo (RAPP-639); players show their initial. */
   readonly avatarKey: string | null;
   /** What the screen reader says for the author, such as "Publicat per Amina". */
-  readonly authorLabel: string;
+  readonly authorAccessibilityLabel: string;
   /** The text; null once the author deleted it, which shows the tombstone. */
   readonly content: string | null;
   readonly tombstone: string;
@@ -197,7 +197,7 @@ export const ForumThreadMessage = memo(function ForumThreadMessage({
       <View className="flex-1 gap-sm py-xs">
         <View className="justify-center" style={styles.authorRow}>
           <Text
-            accessibilityLabel={authorLabel}
+            accessibilityLabel={authorAccessibilityLabel}
             className={`text-start text-md font-bold text-primary-dark ${languageFontClass}`}
           >
             {name}

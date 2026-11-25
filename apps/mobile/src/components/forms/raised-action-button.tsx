@@ -71,13 +71,17 @@ export function RaisedActionButton({
   iconFace = 'regular',
   hitSlop,
   isDisabled = false,
+  isSelected,
 }: {
   readonly label: string;
   readonly onPress: () => void;
   readonly testID?: string;
   readonly accessibilityLabel?: string;
-  /** `link` when it opens something outside the screen, such as a map. */
-  readonly accessibilityRole?: 'button' | 'link';
+  /**
+   * `link` when it opens something outside the screen, such as a map; `radio`
+   * when it is one of a set of answers, with `isSelected`.
+   */
+  readonly accessibilityRole?: 'button' | 'link' | 'radio';
   readonly size?: 'full' | 'compact' | 'fit';
   /** An icon before the words. */
   readonly icon?: IconName;
@@ -98,6 +102,8 @@ export function RaisedActionButton({
   readonly hitSlop?: Insets;
   /** While its action runs, or until it may run, a press does nothing and the button dims. */
   readonly isDisabled?: boolean;
+  /** Her chosen answer of a set (RAPP-908), shown with the selected wash every choice shares. */
+  readonly isSelected?: boolean;
 }) {
   const fontClass = useLanguageFontClass();
   const styles = toneStyles[tone];
@@ -106,10 +112,14 @@ export function RaisedActionButton({
   }, [isDisabled, onPress]);
   const isWordSized = size !== 'full';
   const isIconOnly = isLabelHidden && icon !== undefined;
+  // On the selected wash the words read in the dark ink, as on every chosen card.
+  const textClassName = isSelected === true ? 'text-neutral-900' : styles.text;
+  const iconColor = isSelected === true ? tokens.colors.neutral[900] : styles.icon;
   return (
     <SelectionChoiceSurface
       label={accessibilityLabel ?? label}
       accessibilityRole={accessibilityRole}
+      isSelected={isSelected}
       onPress={handlePress}
       testID={testID}
       className={`${isWordSized && !isIconOnly ? 'self-end' : ''} ${isDisabled ? 'opacity-50' : ''}`}
@@ -137,12 +147,12 @@ export function RaisedActionButton({
                 ? tokens.fontSize.xl
                 : tokens.fontSize['2xl']
           }
-          color={styles.icon}
+          color={iconColor}
         />
       )}
       {isIconOnly ? null : (
         <Text
-          className={`text-center ${isWordSized ? 'text-md font-bold' : 'text-form font-medium'} ${styles.text} ${fontClass}`}
+          className={`text-center ${isWordSized ? 'text-md font-bold' : 'text-form font-medium'} ${textClassName} ${fontClass}`}
         >
           {label}
         </Text>

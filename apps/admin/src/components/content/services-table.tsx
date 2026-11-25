@@ -7,6 +7,7 @@ import { Link, useNavigate, useRouter } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppError, type AppErrorCode } from '@ramassa/shared/errors';
+import { photoFocusFromColumns } from '@ramassa/shared/photo-focus';
 import {
   ADMIN_SERVICE_PAGE_SIZE,
   deleteAdminService,
@@ -269,7 +270,11 @@ function detailInput(detail: AdminServiceDetail, published: boolean) {
     status: published ? ('published' as const) : ('draft' as const),
     publishedAt: published ? new Date().toISOString() : null,
     expiresAt: published ? service.expires_at : null,
-    images: detail.images.map((image) => ({ url: image.url, altText: image.alt_text })),
+    images: detail.images.map((image) => ({
+      url: image.url,
+      altText: image.alt_text,
+      focus: photoFocusFromColumns(image.focus_x, image.focus_y),
+    })),
   };
 }
 

@@ -4,13 +4,12 @@
  * It sits at the bottom-start of the picture in white, on a dark fade that
  * covers only the band behind the text, so it reads on any picture. A long
  * title shows three lines; `onCutChange` tells the screen when it was cut, so
- * the screen can print the whole text under the media. A control at the end,
- * such as the report flag on a photo, keeps its corner whether the title is
- * shown or hidden.
+ * the screen can print the whole text under the media. Every touch passes
+ * through to the media under it.
  */
 import { FadeSlideIn } from '@/components/motion/fade-slide-in';
 import { GALLERY_MEDIA_TITLE_MAX_LINES } from '@/lib/gallery-media-frame';
-import { memo, useCallback, type ReactNode } from 'react';
+import { memo, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -38,20 +37,15 @@ const TITLE_TEXT_CLASS = 'text-start text-lg font-semibold text-white';
 
 export const GalleryMediaTitle = memo(function GalleryMediaTitle({
   title,
-  isVisible,
   fontClass,
   onCutChange,
-  endAction = null,
   style,
 }: {
-  /** Null for an item without a title: only the control at the end is drawn. */
+  /** Null for an item without a title: nothing is drawn. */
   readonly title: string | null;
-  readonly isVisible: boolean;
   readonly fontClass: string;
   /** Called with whether the whole title needs more than the lines shown. */
   readonly onCutChange: (isCut: boolean) => void;
-  /** A control at the bottom-end corner, such as the report flag on a photo. */
-  readonly endAction?: ReactNode;
   /** Where the picture's own bottom edge is inside its frame. */
   readonly style?: StyleProp<ViewStyle>;
 }) {
@@ -60,16 +54,17 @@ export const GalleryMediaTitle = memo(function GalleryMediaTitle({
       onCutChange(nativeEvent.lines.length > GALLERY_MEDIA_TITLE_MAX_LINES),
     [onCutChange],
   );
-  const isTitleShown = title !== null && isVisible;
   return (
-    <View style={style}>
-      {isTitleShown ? (
-        <FadeSlideIn preset="fade" className="absolute inset-0">
-          <View style={styles.scrim} className="flex-1" />
-        </FadeSlideIn>
-      ) : null}
-      <View className="flex-row items-end gap-sm p-sm pt-2xl">
-        <View className="flex-1 pb-xs ps-sm">
+    <View pointerEvents="box-none" style={style}>
+      {title === null ? null : (
+        <View pointerEvents="none" className="absolute inset-0">
+          <FadeSlideIn preset="fade" className="flex-1">
+            <View style={styles.scrim} className="flex-1" />
+          </FadeSlideIn>
+        </View>
+      )}
+      <View pointerEvents="box-none" className="flex-row items-end gap-sm p-sm pt-2xl">
+        <View pointerEvents="none" className="flex-1 pb-xs ps-sm">
           {title === null ? null : (
             <View>
               {/* The same text with no line limit, never seen: it counts the
@@ -83,22 +78,19 @@ export const GalleryMediaTitle = memo(function GalleryMediaTitle({
               >
                 {title}
               </Text>
-              {isVisible ? (
-                <FadeSlideIn preset="fade">
-                  <Text
-                    testID="gallery-media-title"
-                    numberOfLines={GALLERY_MEDIA_TITLE_MAX_LINES}
-                    style={styles.title}
-                    className={`${TITLE_TEXT_CLASS} ${fontClass}`}
-                  >
-                    {title}
-                  </Text>
-                </FadeSlideIn>
-              ) : null}
+              <FadeSlideIn preset="fade">
+                <Text
+                  testID="gallery-media-title"
+                  numberOfLines={GALLERY_MEDIA_TITLE_MAX_LINES}
+                  style={styles.title}
+                  className={`${TITLE_TEXT_CLASS} ${fontClass}`}
+                >
+                  {title}
+                </Text>
+              </FadeSlideIn>
             </View>
           )}
         </View>
-        {endAction}
       </View>
     </View>
   );

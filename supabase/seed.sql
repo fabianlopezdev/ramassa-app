@@ -386,7 +386,10 @@ values
   )
 on conflict (id) do nothing;
 
-insert into public.service_images (id, org_id, service_id, url, alt_text, position)
+-- The second photo carries a chosen focus (RAPP-932); the first keeps the default crop.
+insert into public.service_images (
+  id, org_id, service_id, url, alt_text, position, focus_x, focus_y
+)
 values
   (
     '5eed0000-0000-4000-800b-000000000001',
@@ -394,7 +397,9 @@ values
     '5eed0000-0000-4000-800a-000000000003',
     'org/services/housing/shared-room.webp',
     '{"ca":"Habitació doble amb llum natural","es":"Habitación doble con luz natural","en":"Twin room with natural light","ar":"غرفة مزدوجة بإضاءة طبيعية","fa":"اتاق دو نفره با نور طبیعی"}',
-    0
+    0,
+    null,
+    null
   ),
   (
     '5eed0000-0000-4000-800b-000000000002',
@@ -402,7 +407,9 @@ values
     '5eed0000-0000-4000-800a-000000000016',
     'org/services/leisure/family-football.webp',
     '{"ca":"Jugadores i famílies al camp de futbol","es":"Jugadoras y familias en el campo","en":"Players and families on the football pitch","ar":"لاعبات وعائلات في ملعب كرة القدم","fa":"بازیکنان و خانواده‌ها در زمین فوتبال"}',
-    0
+    0,
+    0.5,
+    0.7
   )
 on conflict (id) do nothing;
 

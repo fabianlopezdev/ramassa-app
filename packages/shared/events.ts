@@ -24,6 +24,12 @@ import type { Database } from './types/database';
 
 export const MADRID_TIME_ZONE = 'Europe/Madrid';
 export const EVENT_SIGNUP_MODES = ['none', 'interest', 'confirm'] as const;
+/**
+ * The sign-up types staff can choose. Every activity asks whether she will go,
+ * so "interest" is no longer offered; activities stored with it before keep
+ * working and open in an editor as "confirm" (see `editableEventSignupMode`).
+ */
+export const EVENT_SIGNUP_CHOICES = ['none', 'confirm'] as const;
 export const EVENT_SIGNUP_STATES = ['interested', 'confirmed', 'cancelled'] as const;
 export const EVENT_SIGNUP_CAPACITY_ERROR = 'EVENTS/CAPACITY_FULL' as const;
 export const EVENT_STATUSES = ['draft', 'published'] as const;
@@ -61,6 +67,7 @@ export const MAX_EVENT_RECURRENCE_COUNT = 52;
 export const MAX_EVENT_RECURRENCE_INTERVAL = 4;
 
 export type EventSignupMode = (typeof EVENT_SIGNUP_MODES)[number];
+export type EventSignupChoice = (typeof EVENT_SIGNUP_CHOICES)[number];
 export type EventSignupState = (typeof EVENT_SIGNUP_STATES)[number];
 export type EventStatus = (typeof EVENT_STATUSES)[number];
 export type EventCategoryIcon = (typeof EVENT_CATEGORY_ICONS)[number];
@@ -387,14 +394,31 @@ function isActiveEventSignup(state: EventSignupState | null): boolean {
   return state === 'interested' || state === 'confirmed';
 }
 
-export function nextEventSignupState(
+/** Her answer to an activity (RAPP-908): she will go, or she will not. */
+export const EVENT_SIGNUP_ANSWERS = ['yes', 'no'] as const;
+export type EventSignupAnswer = (typeof EVENT_SIGNUP_ANSWERS)[number];
+
+/**
+ * Her answer as the stored state says it (RAPP-908). A "no" is stored as
+ * `cancelled`, the state a withdrawn sign-up already had: the row stays, takes
+ * no place, and every reader (places, audiences, reports) already leaves it
+ * out. No row at all means she has not answered.
+ */
+export function eventSignupAnswer(
+  state: EventSignupState | null | undefined,
+): EventSignupAnswer | null {
+  if (state === undefined || state === null) return null;
+  return isActiveEventSignup(state) ? 'yes' : 'no';
+}
+
+/** The state that stores her answer, or null when the activity takes no answers. */
+export function eventSignupStateForAnswer(
   mode: EventSignupMode,
-  current: EventSignupState | null,
+  answer: EventSignupAnswer,
 ): EventSignupState | null {
-  if (isActiveEventSignup(current)) return 'cancelled';
-  if (mode === 'interest') return 'interested';
-  if (mode === 'confirm') return 'confirmed';
-  return null;
+  if (mode === 'none') return null;
+  if (answer === 'no') return 'cancelled';
+  return mode === 'interest' ? 'interested' : 'confirmed';
 }
 
 export function formatEventCapacity(
@@ -724,4 +748,9 @@ export async function updateEvent(
 export async function deleteEvent(client: Client, eventId: string): Promise<void> {
   const { error } = await client.from('events').delete().eq('id', eventId);
   if (error) throw new AppError('DB-1', { message: error.message });
+}
+
+/** The sign-up type an editor shows for a stored activity: "interest" reads as "confirm". */
+export function editableEventSignupMode(mode: EventSignupMode | null | undefined): EventSignupChoice {
+  return mode === 'none' || mode === undefined || mode === null ? 'none' : 'confirm';
 }

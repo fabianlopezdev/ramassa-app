@@ -1,5 +1,6 @@
 import { AppError } from '@ramassa/shared/errors';
 import { createForumPost, type ForumPostInput } from '@ramassa/shared/forum';
+import type { PhotoFocus } from '@ramassa/shared/photo-focus';
 import { uploadFile, type UploadFileOptions } from '@ramassa/shared/upload-client';
 import type { CompressedNativeStoryImage } from './native-image-compression-core';
 
@@ -14,6 +15,8 @@ interface SubmitForumPostOptions {
   readonly categoryId: string;
   readonly content: string;
   readonly image: CompressedNativeStoryImage | null;
+  /** The part of the photo cards keep (RAPP-932); null keeps the default crop. */
+  readonly imageFocus: PhotoFocus | null;
 }
 
 interface SubmitForumPostDependencies {
@@ -56,5 +59,6 @@ export async function submitForumPostWithDependencies(
     categoryId: options.categoryId,
     content: options.content,
     imageObjectKey,
+    imageFocus: imageObjectKey === null ? null : options.imageFocus,
   });
 }

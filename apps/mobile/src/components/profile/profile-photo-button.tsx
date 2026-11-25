@@ -7,12 +7,11 @@
  */
 import { PressableDepth } from '@/components/motion/pressable-depth';
 import { PersonAvatar } from '@/components/people/person-avatar';
-import { usePersonCards } from '@/lib/person-cards';
+import { useOwnPersonCard } from '@/lib/person-cards';
 import { useRouter, type Href } from 'expo-router';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { useAuth } from '@ramassa/shared/auth';
 import { tokens } from '@ramassa/shared/tokens';
 
 const wrapperStyle = {
@@ -30,10 +29,7 @@ const edgeStyle = {
 export const ProfilePhotoButton = memo(function ProfilePhotoButton() {
   const { t } = useTranslation('profile');
   const { push } = useRouter();
-  const { user } = useAuth();
-  const userId = user?.id ?? null;
-  const ids = useMemo(() => [userId], [userId]);
-  const card = usePersonCards(ids).get(userId ?? '');
+  const card = useOwnPersonCard();
   const openProfile = useCallback(() => push('/profile' as Href), [push]);
   return (
     <PressableDepth

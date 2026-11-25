@@ -20,6 +20,7 @@ import {
 import { AppError, type AppErrorCode } from '@ramassa/shared/errors';
 import { type SupportedLanguage } from '@ramassa/shared/i18n';
 import { compressBrowserImage } from '@ramassa/shared/image-compression';
+import { photoFocusFromColumns, type PhotoFocus } from '@ramassa/shared/photo-focus';
 import { uploadContentTypeSchema } from '@ramassa/shared/schemas';
 import {
   MAX_TRANSLATION_TEXT_LENGTH,
@@ -102,6 +103,9 @@ export function AnnouncementEditor({ announcement, onSaved }: AnnouncementEditor
   const [imageAlt, setImageAlt] = useState(announcement?.image_alt?.ca ?? '');
   const [imageUrl, setImageUrl] = useState<string | null>(announcement?.image_url ?? null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFocus, setImageFocus] = useState<PhotoFocus | null>(() =>
+    photoFocusFromColumns(announcement?.image_focus_x, announcement?.image_focus_y),
+  );
   const [imageState, setImageState] = useState<ImageUploadState>(
     announcement?.image_url === null || announcement === undefined ? 'empty' : 'stored',
   );
@@ -212,6 +216,7 @@ export function AnnouncementEditor({ announcement, onSaved }: AnnouncementEditor
           title: localizedTextFromReview(title, titleReview.review),
           body: localizedTextFromReview(body, bodyReview.review),
           imageUrl: storedImageUrl,
+          imageFocus: storedImageUrl === null ? null : imageFocus,
           imageAlt:
             storedImageUrl === null
               ? null
@@ -309,14 +314,22 @@ export function AnnouncementEditor({ announcement, onSaved }: AnnouncementEditor
 
       <ImageUploadField
         state={imageState}
+        focus={{
+          file: imageFile,
+          objectKey: imageUrl,
+          value: imageFocus,
+          onChange: setImageFocus,
+        }}
         onSelect={(file) => {
           setImageFile(file);
+          setImageFocus(null);
           setImageState('ready');
           imageAltReview.reset();
         }}
         onRemove={() => {
           setImageFile(null);
           setImageUrl(null);
+          setImageFocus(null);
           setImageState('empty');
           setImageAlt('');
           imageAltReview.reset();

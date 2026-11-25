@@ -51,6 +51,7 @@ const mediaItemId = await createMediaItem(client, {
   privacyLevel: 'staff_only',
   consentAcknowledged: true,
   consentVersion: 'gallery-consent-v1',
+  focus: null,
 });
 
 for (const key of [fileObjectKey, thumbnailObjectKey]) {

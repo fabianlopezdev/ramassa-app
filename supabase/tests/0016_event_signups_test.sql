@@ -1,5 +1,5 @@
 begin;
-select plan(27);
+select plan(29);
 
 -- The local seed deliberately includes signup fixtures. This file owns the
 -- state machine it exercises, so start with a clean ledger and let the delete
@@ -201,6 +201,28 @@ select is(
   (select count(*) from public.event_signups)::int,
   0,
   'entity contacts cannot read player signups'
+);
+
+-- Her "no" (RAPP-908) is stored as cancelled. It can be her first answer, and
+-- it takes no place, so she can give it on a full activity too.
+set local request.jwt.claims = '{"sub": "5eed0000-0000-4000-8000-000000000014", "role": "authenticated", "aal": "aal2", "amr": [{"method": "totp", "timestamp": 4102444800}]}';
+
+select lives_ok(
+  $$ insert into public.event_signups (event_id, player_id, state)
+     values (
+       '5eed0000-0000-4000-8003-000000000001',
+       '5eed0000-0000-4000-8000-000000000014',
+       'cancelled'
+     )
+     on conflict (event_id, player_id) do update set state = excluded.state $$,
+  'a player can answer no first, even on a full activity'
+);
+
+select is(
+  (select active_signup_count from public.events
+   where id = '5eed0000-0000-4000-8003-000000000001'),
+  1,
+  'her no takes no place'
 );
 
 reset role;
