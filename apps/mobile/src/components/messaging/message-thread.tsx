@@ -9,6 +9,7 @@ import { PERSON_AVATAR_SIZE, PersonAvatar } from '@/components/people/person-ava
 import { continuousCorners } from '@/lib/continuous-corners';
 import { messageListKeyboardDismissMode, staffConversationTitle } from '@/lib/message-thread-state';
 import { useOwnConversation, useStaffConversation } from '@/lib/messaging';
+import { useOutsideTeamReplyHours } from '@/lib/team-reply-hours';
 import { canOpenParticipantCard, participantCardHref } from '@/lib/participant-segments';
 import { usePersonCards } from '@/lib/person-cards';
 import { useAccountAccess } from '@/lib/use-account-access';
@@ -619,13 +620,15 @@ export function PlayerMessageThread({
   readonly usesNativeHeader?: boolean;
 }) {
   const { t } = useTranslation('messaging');
+  // Outside the team's hours only: inside them a reply is on its way (RAPP-971).
+  const isOutsideReplyHours = useOutsideTeamReplyHours();
   const thread = (
     <MessageThreadView
       title={title}
       controller={useOwnConversation()}
       headerAccessory={headerAccessory}
       usesNativeHeader={usesNativeHeader}
-      notice={t('replyHours')}
+      notice={isOutsideReplyHours ? t('replyHours') : undefined}
     />
   );
   if (!usesNativeHeader) return thread;

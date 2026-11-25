@@ -52,14 +52,12 @@ export function withoutBaseDocuments(
 }
 
 /**
- * The club's base-documents category, once it holds at least one published
- * document she can read; until then Ajuda shows no card for it (RAPP-972).
+ * The club's published base documents for the Documents segment of Ajuda,
+ * newest first like the feed. With none, Ajuda offers no Documents segment
+ * (RAPP-972).
  */
-export function selectBaseDocumentsCategory(
-  categories: readonly KnowledgeCategoryRow[] | undefined,
-  guides: readonly KnowledgeArticleListRow[],
-): KnowledgeCategoryRow | null {
-  const category = categories?.find((candidate) => candidate.is_base_documents);
-  if (category === undefined) return null;
-  return guides.some((guide) => guide.category_id === category.id) ? category : null;
+export function selectBaseDocuments(
+  articles: readonly KnowledgeArticleListRow[] | undefined,
+): readonly KnowledgeArticleListRow[] {
+  return selectPlayerGuides(articles).filter((guide) => guide.category.is_base_documents);
 }

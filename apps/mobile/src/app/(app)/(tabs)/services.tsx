@@ -2,7 +2,7 @@ import {
   AnnouncementFeedError,
   AnnouncementFeedSkeleton,
 } from '@/components/announcements/feed-states';
-import { BaseDocumentsCard } from '@/components/knowledge/base-documents-card';
+import { PlayerBaseDocumentList } from '@/components/knowledge/player-base-document-list';
 import { PlayerGuideList } from '@/components/knowledge/player-guide-list';
 import { PageWidth } from '@/components/layout/content-width';
 import { ScreenSection } from '@/components/layout/screen-section';
@@ -15,6 +15,8 @@ import { withScreenEntrance } from '@/components/motion/screen-entrance';
 import { PlayerTabHeader } from '@/components/profile/player-tab-header';
 import { ServiceCategoryGrid } from '@/components/services/service-category-grid';
 import { countUnseenHelpItems, NO_HELP_NUMBERS } from '@/lib/help-news';
+import { selectBaseDocuments } from '@/lib/player-guides';
+import { usePlayerKnowledgeArticles } from '@/lib/player-knowledge';
 import { usePlayerServiceCategories } from '@/lib/player-services';
 import { useLanguageFontClass } from '@/lib/use-language-font-class';
 import { usePlayerTabContentInsets } from '@/lib/use-player-tab-content-insets';
@@ -33,15 +35,22 @@ const styles = StyleSheet.create({
     paddingBottom: tokens.spacing['3xl'],
   },
 });
-/** The two views of Ajuda (RAPP-851): services by category, and the guides. */
-type AjudaSegment = 'services' | 'guides';
+/**
+ * The views of Ajuda: the club's base documents (RAPP-972), services by
+ * category, and the guides (RAPP-851). Documents comes first, and only once
+ * the club has published one.
+ */
+type AjudaSegment = 'documents' | 'services' | 'guides';
 
 function ServicesScreen() {
   const { t } = useTranslation(['playerServices', 'errors', 'nav', 'common']);
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const categoriesQuery = usePlayerServiceCategories();
-  const [segment, setSegment] = useState<AjudaSegment>('services');
+  const [chosenSegment, setSegment] = useState<AjudaSegment>('services');
+  const hasBaseDocuments = selectBaseDocuments(usePlayerKnowledgeArticles().data).length > 0;
+  // If the club withdraws its last document while she is on it, she lands on Serveis.
+  const segment = chosenSegment === 'documents' && !hasBaseDocuments ? 'services' : chosenSegment;
   // The numbers count what she has not seen in a category's list; the "Nou"
   // stays until she opens that service or guide (RAPP-873).
   const { data: news } = useTabNews();
@@ -63,6 +72,16 @@ function ServicesScreen() {
   );
   const segmentOptions = useMemo<readonly SegmentedControlOption<AjudaSegment>[]>(
     () => [
+      ...(hasBaseDocuments
+        ? [
+            {
+              key: 'documents' as const,
+              label: t('playerServices:segmentDocuments'),
+              symbol: 'document' as const,
+              testID: 'ajuda-segment-documents',
+            },
+          ]
+        : []),
       {
         key: 'services',
         label: t('playerServices:segmentServices'),
@@ -92,15 +111,13 @@ function ServicesScreen() {
             : undefined,
       },
     ],
-    [guideNewsCount, serviceNews.total, t],
+    [guideNewsCount, hasBaseDocuments, serviceNews.total, t],
   );
 
-  // One header for both segments, so the switch stays in place while either loads.
+  // One header for every segment, so the switch stays in place while any loads.
   // The shared header draws Inici's section divider under the switch (RAPP-854).
   const tabHeader = (
     <PlayerTabHeader title={t('nav:tabs.services')}>
-      {/* The club's base documents, above the switch so both views show it (RAPP-972). */}
-      <BaseDocumentsCard />
       <SegmentedControl
         testID="ajuda-segments"
         options={segmentOptions}
@@ -111,6 +128,15 @@ function ServicesScreen() {
       />
     </PlayerTabHeader>
   );
+
+  if (segment === 'documents') {
+    return (
+      <PlayerBaseDocumentList
+        header={<PageWidth>{tabHeader}</PageWidth>}
+        contentContainerStyle={contentContainerStyle}
+      />
+    );
+  }
 
   if (segment === 'guides') {
     return (

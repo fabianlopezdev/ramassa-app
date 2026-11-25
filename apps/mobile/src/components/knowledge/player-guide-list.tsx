@@ -65,7 +65,7 @@ export function PlayerGuideList({
     () => (news === undefined ? NO_HELP_NUMBERS : countUnseenHelpItems(news.guides.unseenArticles)),
     [news],
   );
-  // The base documents have their own card above the switch (RAPP-972).
+  // The base documents have their own segment (RAPP-972).
   const guides = useMemo(
     () => withoutBaseDocuments(selectPlayerGuides(articlesQuery.data)),
     [articlesQuery.data],

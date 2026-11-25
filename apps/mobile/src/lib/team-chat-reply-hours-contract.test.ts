@@ -3,10 +3,10 @@ import { describe, expect, test } from 'bun:test';
 const read = (path: string) => Bun.file(new URL(path, import.meta.url)).text();
 
 describe('the team chat says when the team replies (RAPP-971)', () => {
-  test('her chat with the team shows the reply hours under its header', async () => {
+  test('her chat with the team shows the reply hours under its header, outside those hours only', async () => {
     const thread = await read('../components/messaging/message-thread.tsx');
 
-    expect(thread).toContain("notice={t('replyHours')}");
+    expect(thread).toContain("notice={isOutsideReplyHours ? t('replyHours') : undefined}");
     expect(thread).toContain('testID="message-thread-notice"');
     const ca = (await Bun.file(
       new URL('../../../../packages/shared/i18n/locales/ca/messaging.json', import.meta.url),

@@ -1,6 +1,8 @@
+import { TZDate } from '@date-fns/tz';
 import type { RealtimePostgresInsertPayload, SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError, databaseErrorCode, type AppErrorCode } from '../errors';
+import { MADRID_TIME_ZONE } from '../events';
 import { realtimeTopic } from '../lib/realtime-topic';
 import { buildPrefixTsQuery } from '../participants/participant-query';
 import type { Database } from '../types/database';
@@ -518,4 +520,20 @@ export function subscribeToConversationQueue(
   return () => {
     void client.removeChannel(channel);
   };
+}
+
+const TEAM_REPLY_START_HOUR = 9;
+const TEAM_REPLY_END_HOUR = 17;
+
+/**
+ * The team answers the chat Monday to Friday, 9:00 to 17:00, club time
+ * (RAPP-971), whatever the phone's own time zone.
+ */
+export function isWithinTeamReplyHours(now: Date): boolean {
+  const club = new TZDate(now.getTime(), MADRID_TIME_ZONE);
+  const weekday = club.getDay();
+  const hour = club.getHours();
+  return (
+    weekday >= 1 && weekday <= 5 && hour >= TEAM_REPLY_START_HOUR && hour < TEAM_REPLY_END_HOUR
+  );
 }
