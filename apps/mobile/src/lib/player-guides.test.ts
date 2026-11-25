@@ -7,7 +7,7 @@ import type {
 import {
   countPlayerGuidesByCategory,
   filterPlayerGuides,
-  selectBaseDocumentsCategory,
+  selectBaseDocuments,
   selectGuideCategories,
   selectPlayerGuides,
   withoutBaseDocuments,
@@ -136,12 +136,10 @@ describe('the club base documents (RAPP-972)', () => {
     ).toEqual(['guides']);
   });
 
-  test('the card shows only once the category holds a document', () => {
-    const categories = [guideCategory, baseCategory];
-    expect(selectBaseDocumentsCategory(categories, [article('a', 'article', 'guides')])).toBeNull();
-    expect(
-      selectBaseDocumentsCategory(categories, [article('b', 'article', 'base', true)])?.id,
-    ).toBe('base');
-    expect(selectBaseDocumentsCategory(undefined, [])).toBeNull();
+  test('the Documents segment lists only the base documents, and none means no segment', () => {
+    const articles = [article('a', 'article', 'guides'), article('b', 'article', 'base', true)];
+    expect(selectBaseDocuments(articles).map((document) => document.id)).toEqual(['b']);
+    expect(selectBaseDocuments([article('a', 'article', 'guides')])).toEqual([]);
+    expect(selectBaseDocuments(undefined)).toEqual([]);
   });
 });
