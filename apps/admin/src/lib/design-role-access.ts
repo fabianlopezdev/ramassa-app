@@ -5,8 +5,8 @@
  * reaches the onboarding page, the two legal forms (RAPP-694, their own
  * boards since RAPP-696), the forms the team creates (RAPP-700) and the surveys
  * (RAPP-929), the entity referral form and its screens (RAPP-965), the
- * suggestions form and the mentoring form and their screens (RAPP-939,
- * RAPP-940), Dades de
+ * suggestions form, the mentoring form and the incident form and their
+ * screens (RAPP-939, RAPP-940, RAPP-973), Dades de
  * les jugadores (RAPP-650, its own page since RAPP-654), the test players and
  * her own account page (RAPP-634),
  * and every other admin URL sends her back. This is the screen half: the
@@ -77,12 +77,13 @@ function isCustomFormPath(pathname: string): boolean {
 // }
 
 /**
- * The suggestions form (RAPP-939) and the mentoring form (RAPP-940), and their
- * screens. What players send stays closed to her: the suggestions inbox
- * (/feedback) and the mentoring queue (/mentoring).
+ * The suggestions form (RAPP-939), the mentoring form (RAPP-940) and the
+ * incident form (RAPP-973), and their screens. What players send stays closed
+ * to her: the suggestions inbox (/feedback), the mentoring queue (/mentoring)
+ * and the incidents (/incidents).
  */
 function isOnDemandFormPath(pathname: string): boolean {
-  return ['/forms/feedback', '/forms/mentoring'].some(
+  return ['/forms/feedback', '/forms/mentoring', '/forms/incidents'].some(
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
 }

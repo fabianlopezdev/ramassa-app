@@ -37,6 +37,7 @@ import {
   ScrollText,
   Settings,
   Share2,
+  ShieldAlert,
   ShieldCheck,
   Smartphone,
   Table2,
@@ -142,15 +143,21 @@ export const REFERRAL_FORM_PERMISSIONS = [
 ] as const satisfies readonly PermissionCode[];
 
 /**
- * The forms she sends when she wants: the suggestions form (RAPP-939) and the
- * mentoring form (RAPP-940). The people who design the forms build them on
- * the same board. What she sends is read elsewhere: suggestions in the inbox,
- * with feedback.view, and mentoring requests in the queue, with
- * mentoring.manage.
+ * The forms she sends when she wants: the suggestions form (RAPP-939), the
+ * mentoring form (RAPP-940) and the incident form (RAPP-973). The people who
+ * design the forms build them on the same board. What she sends is read
+ * elsewhere: suggestions in the inbox, with feedback.view, mentoring requests
+ * in the queue, with mentoring.manage, and incidents on their own page, with
+ * incidents.manage.
  */
 export const ON_DEMAND_FORM_PERMISSIONS = [
   'settings.organization',
   'onboarding.design',
+] as const satisfies readonly PermissionCode[];
+
+/** The incidents players report (RAPP-973): their own permission, and only it. */
+export const INCIDENTS_PERMISSIONS = [
+  'incidents.manage',
 ] as const satisfies readonly PermissionCode[];
 
 /** The Data area: exports and the audit log. */
@@ -275,6 +282,14 @@ export const STAFF_NAV_ITEMS = [
     anyPermission: ON_DEMAND_FORM_PERMISSIONS,
   },
   {
+    // The form a player fills in to report an incident (RAPP-973).
+    to: '/forms/incidents',
+    icon: ShieldAlert,
+    labelKey: 'nav:staff.incidentForm',
+    group: 'forms',
+    anyPermission: ON_DEMAND_FORM_PERMISSIONS,
+  },
+  {
     to: '/profile-layout',
     icon: IdCard,
     labelKey: 'nav:staff.profileLayout',
@@ -340,6 +355,14 @@ export const STAFF_NAV_ITEMS = [
     labelKey: 'nav:staff.mentoring',
     group: 'app',
     anyPermission: ['mentoring.manage'],
+  },
+  {
+    // The incidents players report, beside the mentoring queue (RAPP-973).
+    to: '/incidents',
+    icon: ShieldAlert,
+    labelKey: 'nav:staff.incidents',
+    group: 'app',
+    anyPermission: INCIDENTS_PERMISSIONS,
   },
   {
     to: '/feedback',

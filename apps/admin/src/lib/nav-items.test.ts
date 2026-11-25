@@ -110,6 +110,8 @@ test('the onboarding design role sees the test players, the onboarding, the lega
     '/forms/feedback',
     // The mentoring form, after it (RAPP-940).
     '/forms/mentoring',
+    // The incident form, after it (RAPP-973). The reports stay closed to her.
+    '/forms/incidents',
     '/profile-layout',
     '/legal-data',
   ]);
@@ -126,6 +128,7 @@ test('Settings holds the organization tabs only; the team, entities and Fitxa ha
     '/surveys',
     '/forms/feedback',
     '/forms/mentoring',
+    '/forms/incidents',
     '/profile-layout',
     '/legal-data',
     '/settings',
@@ -163,6 +166,8 @@ test('the menu groups by audience in the agreed order (RAPP-654)', () => {
       '/forms/feedback',
       // The mentoring form, after the suggestions form (RAPP-940).
       '/forms/mentoring',
+      // The incident form, after the mentoring form (RAPP-973).
+      '/forms/incidents',
     ],
     // Surveys, one item of their own (RAPP-934).
     surveys: ['/surveys'],
@@ -174,12 +179,23 @@ test('the menu groups by audience in the agreed order (RAPP-654)', () => {
       '/forum',
       '/gallery',
       '/mentoring',
+      // The incidents players report, beside the mentoring queue (RAPP-973).
+      '/incidents',
       '/feedback',
       '/notifications',
     ],
     entities: ['/participants/referrals', '/entities'],
     organisation: ['/team', '/participants/season', '/data', '/settings'],
   });
+});
+
+test('the incidents are read with incidents.manage only, never by the people who build the form (RAPP-973)', () => {
+  expect(
+    visibleStaffNavItems(new Set<PermissionCode>(['incidents.manage'])).map((item) => item.to),
+  ).toEqual(['/dashboard', '/incidents']);
+  expect(
+    visibleStaffNavItems(new Set<PermissionCode>(['mentoring.manage'])).map((item) => item.to),
+  ).toEqual(['/dashboard', '/mentoring']);
 });
 
 test('a group with nothing she may open is left out', () => {

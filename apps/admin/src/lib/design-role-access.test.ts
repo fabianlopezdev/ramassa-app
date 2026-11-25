@@ -37,6 +37,9 @@ describe('the onboarding design role reaches its two areas only (RAPP-615)', () 
       // The mentoring form and its screens (RAPP-940).
       '/forms/mentoring',
       '/forms/mentoring/screens/5eed0000-0000-4000-8101-000000000001',
+      // The incident form and its screens (RAPP-973).
+      '/forms/incidents',
+      '/forms/incidents/screens/5eed0000-0000-4000-8101-000000000001',
     ]) {
       expect(designRoleRedirect(path, DESIGN)).toBeNull();
     }
@@ -64,6 +67,8 @@ describe('the onboarding design role reaches its two areas only (RAPP-615)', () 
       // Nor the mentoring requests (RAPP-940).
       '/mentoring',
       '/forms/mentorings',
+      // Nor the incidents players report (RAPP-973).
+      '/incidents',
       '/team',
       '/data',
       '/content',

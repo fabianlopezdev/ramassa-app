@@ -635,12 +635,13 @@ export type BoardCardLink =
       readonly params: { readonly formId: string };
     }
   | {
-      // A screen of the referral form (RAPP-938), the suggestions form (RAPP-939)
-      // or the mentoring form (RAPP-940).
+      // A screen of the referral form (RAPP-938), the suggestions form (RAPP-939),
+      // the mentoring form (RAPP-940) or the incident form (RAPP-973).
       readonly to:
         | '/entities/referral-form/screens/$screenId'
         | '/forms/feedback/screens/$screenId'
-        | '/forms/mentoring/screens/$screenId';
+        | '/forms/mentoring/screens/$screenId'
+        | '/forms/incidents/screens/$screenId';
       readonly params: { readonly screenId: string };
     };
 

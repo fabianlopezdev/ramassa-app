@@ -21,6 +21,7 @@ import { Route as StaffDataRouteImport } from './routes/_staff.data'
 import { Route as StaffFeedbackRouteImport } from './routes/_staff.feedback'
 import { Route as StaffForumRouteImport } from './routes/_staff.forum'
 import { Route as StaffGalleryRouteImport } from './routes/_staff.gallery'
+import { Route as StaffIncidentsRouteImport } from './routes/_staff.incidents'
 import { Route as StaffLegalRouteImport } from './routes/_staff.legal'
 import { Route as StaffLegalDataRouteImport } from './routes/_staff.legal-data'
 import { Route as StaffMentoringRouteImport } from './routes/_staff.mentoring'
@@ -78,6 +79,7 @@ import { Route as StaffFormsAuthorizationIndexRouteImport } from './routes/_staf
 import { Route as StaffFormsAuthorizationStepRouteImport } from './routes/_staff.forms.authorization.$step'
 import { Route as StaffFormsCustomIndexRouteImport } from './routes/_staff.forms.custom.index'
 import { Route as StaffFormsFeedbackIndexRouteImport } from './routes/_staff.forms.feedback.index'
+import { Route as StaffFormsIncidentsIndexRouteImport } from './routes/_staff.forms.incidents.index'
 import { Route as StaffFormsLegalIndexRouteImport } from './routes/_staff.forms.legal.index'
 import { Route as StaffFormsMentoringIndexRouteImport } from './routes/_staff.forms.mentoring.index'
 import { Route as StaffFormsTermsIndexRouteImport } from './routes/_staff.forms.terms.index'
@@ -89,6 +91,7 @@ import { Route as StaffEntitiesReferralFormScreensScreenIdRouteImport } from './
 import { Route as StaffFormsCustomFormIdIndexRouteImport } from './routes/_staff.forms.custom.$formId.index'
 import { Route as StaffFormsCustomFormIdResponsesRouteImport } from './routes/_staff.forms.custom.$formId.responses'
 import { Route as StaffFormsFeedbackScreensScreenIdRouteImport } from './routes/_staff.forms.feedback.screens.$screenId'
+import { Route as StaffFormsIncidentsScreensScreenIdRouteImport } from './routes/_staff.forms.incidents.screens.$screenId'
 import { Route as StaffFormsMentoringScreensScreenIdRouteImport } from './routes/_staff.forms.mentoring.screens.$screenId'
 import { Route as StaffFormsCustomFormIdScreensScreenIdRouteImport } from './routes/_staff.forms.custom.$formId.screens.$screenId'
 import { Route as StaffFormsCustomFormIdVersionsVersionKeyRouteImport } from './routes/_staff.forms.custom.$formId.versions.$versionKey'
@@ -149,6 +152,11 @@ const StaffForumRoute = StaffForumRouteImport.update({
 const StaffGalleryRoute = StaffGalleryRouteImport.update({
   id: '/gallery',
   path: '/gallery',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffIncidentsRoute = StaffIncidentsRouteImport.update({
+  id: '/incidents',
+  path: '/incidents',
   getParentRoute: () => StaffRoute,
 } as any)
 const StaffLegalRoute = StaffLegalRouteImport.update({
@@ -464,6 +472,12 @@ const StaffFormsFeedbackIndexRoute = StaffFormsFeedbackIndexRouteImport.update({
   path: '/forms/feedback/',
   getParentRoute: () => StaffRoute,
 } as any)
+const StaffFormsIncidentsIndexRoute =
+  StaffFormsIncidentsIndexRouteImport.update({
+    id: '/forms/incidents/',
+    path: '/forms/incidents/',
+    getParentRoute: () => StaffRoute,
+  } as any)
 const StaffFormsLegalIndexRoute = StaffFormsLegalIndexRouteImport.update({
   id: '/forms/legal/',
   path: '/forms/legal/',
@@ -527,6 +541,12 @@ const StaffFormsFeedbackScreensScreenIdRoute =
     path: '/forms/feedback/screens/$screenId',
     getParentRoute: () => StaffRoute,
   } as any)
+const StaffFormsIncidentsScreensScreenIdRoute =
+  StaffFormsIncidentsScreensScreenIdRouteImport.update({
+    id: '/forms/incidents/screens/$screenId',
+    path: '/forms/incidents/screens/$screenId',
+    getParentRoute: () => StaffRoute,
+  } as any)
 const StaffFormsMentoringScreensScreenIdRoute =
   StaffFormsMentoringScreensScreenIdRouteImport.update({
     id: '/forms/mentoring/screens/$screenId',
@@ -557,6 +577,7 @@ export interface FileRoutesByFullPath {
   '/feedback': typeof StaffFeedbackRoute
   '/forum': typeof StaffForumRoute
   '/gallery': typeof StaffGalleryRoute
+  '/incidents': typeof StaffIncidentsRoute
   '/legal': typeof StaffLegalRoute
   '/legal-data': typeof StaffLegalDataRoute
   '/mentoring': typeof StaffMentoringRoute
@@ -616,6 +637,7 @@ export interface FileRoutesByFullPath {
   '/forms/authorization/': typeof StaffFormsAuthorizationIndexRoute
   '/forms/custom/': typeof StaffFormsCustomIndexRoute
   '/forms/feedback/': typeof StaffFormsFeedbackIndexRoute
+  '/forms/incidents/': typeof StaffFormsIncidentsIndexRoute
   '/forms/legal/': typeof StaffFormsLegalIndexRoute
   '/forms/mentoring/': typeof StaffFormsMentoringIndexRoute
   '/forms/terms/': typeof StaffFormsTermsIndexRoute
@@ -623,6 +645,7 @@ export interface FileRoutesByFullPath {
   '/entities/referral-form/screens/$screenId': typeof StaffEntitiesReferralFormScreensScreenIdRoute
   '/forms/custom/$formId/responses': typeof StaffFormsCustomFormIdResponsesRoute
   '/forms/feedback/screens/$screenId': typeof StaffFormsFeedbackScreensScreenIdRoute
+  '/forms/incidents/screens/$screenId': typeof StaffFormsIncidentsScreensScreenIdRoute
   '/forms/mentoring/screens/$screenId': typeof StaffFormsMentoringScreensScreenIdRoute
   '/content/services/reviews/': typeof StaffContentServicesReviewsIndexRoute
   '/forms/custom/$formId/': typeof StaffFormsCustomFormIdIndexRoute
@@ -638,6 +661,7 @@ export interface FileRoutesByTo {
   '/feedback': typeof StaffFeedbackRoute
   '/forum': typeof StaffForumRoute
   '/gallery': typeof StaffGalleryRoute
+  '/incidents': typeof StaffIncidentsRoute
   '/legal': typeof StaffLegalRoute
   '/legal-data': typeof StaffLegalDataRoute
   '/mentoring': typeof StaffMentoringRoute
@@ -694,6 +718,7 @@ export interface FileRoutesByTo {
   '/forms/authorization': typeof StaffFormsAuthorizationIndexRoute
   '/forms/custom': typeof StaffFormsCustomIndexRoute
   '/forms/feedback': typeof StaffFormsFeedbackIndexRoute
+  '/forms/incidents': typeof StaffFormsIncidentsIndexRoute
   '/forms/legal': typeof StaffFormsLegalIndexRoute
   '/forms/mentoring': typeof StaffFormsMentoringIndexRoute
   '/forms/terms': typeof StaffFormsTermsIndexRoute
@@ -701,6 +726,7 @@ export interface FileRoutesByTo {
   '/entities/referral-form/screens/$screenId': typeof StaffEntitiesReferralFormScreensScreenIdRoute
   '/forms/custom/$formId/responses': typeof StaffFormsCustomFormIdResponsesRoute
   '/forms/feedback/screens/$screenId': typeof StaffFormsFeedbackScreensScreenIdRoute
+  '/forms/incidents/screens/$screenId': typeof StaffFormsIncidentsScreensScreenIdRoute
   '/forms/mentoring/screens/$screenId': typeof StaffFormsMentoringScreensScreenIdRoute
   '/content/services/reviews': typeof StaffContentServicesReviewsIndexRoute
   '/forms/custom/$formId': typeof StaffFormsCustomFormIdIndexRoute
@@ -721,6 +747,7 @@ export interface FileRoutesById {
   '/_staff/feedback': typeof StaffFeedbackRoute
   '/_staff/forum': typeof StaffForumRoute
   '/_staff/gallery': typeof StaffGalleryRoute
+  '/_staff/incidents': typeof StaffIncidentsRoute
   '/_staff/legal': typeof StaffLegalRoute
   '/_staff/legal-data': typeof StaffLegalDataRoute
   '/_staff/mentoring': typeof StaffMentoringRoute
@@ -780,6 +807,7 @@ export interface FileRoutesById {
   '/_staff/forms/authorization/': typeof StaffFormsAuthorizationIndexRoute
   '/_staff/forms/custom/': typeof StaffFormsCustomIndexRoute
   '/_staff/forms/feedback/': typeof StaffFormsFeedbackIndexRoute
+  '/_staff/forms/incidents/': typeof StaffFormsIncidentsIndexRoute
   '/_staff/forms/legal/': typeof StaffFormsLegalIndexRoute
   '/_staff/forms/mentoring/': typeof StaffFormsMentoringIndexRoute
   '/_staff/forms/terms/': typeof StaffFormsTermsIndexRoute
@@ -787,6 +815,7 @@ export interface FileRoutesById {
   '/_staff/entities/referral-form/screens/$screenId': typeof StaffEntitiesReferralFormScreensScreenIdRoute
   '/_staff/forms/custom/$formId/responses': typeof StaffFormsCustomFormIdResponsesRoute
   '/_staff/forms/feedback/screens/$screenId': typeof StaffFormsFeedbackScreensScreenIdRoute
+  '/_staff/forms/incidents/screens/$screenId': typeof StaffFormsIncidentsScreensScreenIdRoute
   '/_staff/forms/mentoring/screens/$screenId': typeof StaffFormsMentoringScreensScreenIdRoute
   '/_staff/content/services/reviews/': typeof StaffContentServicesReviewsIndexRoute
   '/_staff/forms/custom/$formId/': typeof StaffFormsCustomFormIdIndexRoute
@@ -806,6 +835,7 @@ export interface FileRouteTypes {
     | '/feedback'
     | '/forum'
     | '/gallery'
+    | '/incidents'
     | '/legal'
     | '/legal-data'
     | '/mentoring'
@@ -865,6 +895,7 @@ export interface FileRouteTypes {
     | '/forms/authorization/'
     | '/forms/custom/'
     | '/forms/feedback/'
+    | '/forms/incidents/'
     | '/forms/legal/'
     | '/forms/mentoring/'
     | '/forms/terms/'
@@ -872,6 +903,7 @@ export interface FileRouteTypes {
     | '/entities/referral-form/screens/$screenId'
     | '/forms/custom/$formId/responses'
     | '/forms/feedback/screens/$screenId'
+    | '/forms/incidents/screens/$screenId'
     | '/forms/mentoring/screens/$screenId'
     | '/content/services/reviews/'
     | '/forms/custom/$formId/'
@@ -887,6 +919,7 @@ export interface FileRouteTypes {
     | '/feedback'
     | '/forum'
     | '/gallery'
+    | '/incidents'
     | '/legal'
     | '/legal-data'
     | '/mentoring'
@@ -943,6 +976,7 @@ export interface FileRouteTypes {
     | '/forms/authorization'
     | '/forms/custom'
     | '/forms/feedback'
+    | '/forms/incidents'
     | '/forms/legal'
     | '/forms/mentoring'
     | '/forms/terms'
@@ -950,6 +984,7 @@ export interface FileRouteTypes {
     | '/entities/referral-form/screens/$screenId'
     | '/forms/custom/$formId/responses'
     | '/forms/feedback/screens/$screenId'
+    | '/forms/incidents/screens/$screenId'
     | '/forms/mentoring/screens/$screenId'
     | '/content/services/reviews'
     | '/forms/custom/$formId'
@@ -969,6 +1004,7 @@ export interface FileRouteTypes {
     | '/_staff/feedback'
     | '/_staff/forum'
     | '/_staff/gallery'
+    | '/_staff/incidents'
     | '/_staff/legal'
     | '/_staff/legal-data'
     | '/_staff/mentoring'
@@ -1028,6 +1064,7 @@ export interface FileRouteTypes {
     | '/_staff/forms/authorization/'
     | '/_staff/forms/custom/'
     | '/_staff/forms/feedback/'
+    | '/_staff/forms/incidents/'
     | '/_staff/forms/legal/'
     | '/_staff/forms/mentoring/'
     | '/_staff/forms/terms/'
@@ -1035,6 +1072,7 @@ export interface FileRouteTypes {
     | '/_staff/entities/referral-form/screens/$screenId'
     | '/_staff/forms/custom/$formId/responses'
     | '/_staff/forms/feedback/screens/$screenId'
+    | '/_staff/forms/incidents/screens/$screenId'
     | '/_staff/forms/mentoring/screens/$screenId'
     | '/_staff/content/services/reviews/'
     | '/_staff/forms/custom/$formId/'
@@ -1133,6 +1171,13 @@ declare module '@tanstack/react-router' {
       path: '/gallery'
       fullPath: '/gallery'
       preLoaderRoute: typeof StaffGalleryRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/incidents': {
+      id: '/_staff/incidents'
+      path: '/incidents'
+      fullPath: '/incidents'
+      preLoaderRoute: typeof StaffIncidentsRouteImport
       parentRoute: typeof StaffRoute
     }
     '/_staff/legal': {
@@ -1534,6 +1579,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffFormsFeedbackIndexRouteImport
       parentRoute: typeof StaffRoute
     }
+    '/_staff/forms/incidents/': {
+      id: '/_staff/forms/incidents/'
+      path: '/forms/incidents'
+      fullPath: '/forms/incidents/'
+      preLoaderRoute: typeof StaffFormsIncidentsIndexRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/_staff/forms/legal/': {
       id: '/_staff/forms/legal/'
       path: '/forms/legal'
@@ -1609,6 +1661,13 @@ declare module '@tanstack/react-router' {
       path: '/forms/feedback/screens/$screenId'
       fullPath: '/forms/feedback/screens/$screenId'
       preLoaderRoute: typeof StaffFormsFeedbackScreensScreenIdRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/_staff/forms/incidents/screens/$screenId': {
+      id: '/_staff/forms/incidents/screens/$screenId'
+      path: '/forms/incidents/screens/$screenId'
+      fullPath: '/forms/incidents/screens/$screenId'
+      preLoaderRoute: typeof StaffFormsIncidentsScreensScreenIdRouteImport
       parentRoute: typeof StaffRoute
     }
     '/_staff/forms/mentoring/screens/$screenId': {
@@ -1771,6 +1830,7 @@ interface StaffRouteChildren {
   StaffFeedbackRoute: typeof StaffFeedbackRoute
   StaffForumRoute: typeof StaffForumRoute
   StaffGalleryRoute: typeof StaffGalleryRoute
+  StaffIncidentsRoute: typeof StaffIncidentsRoute
   StaffLegalRoute: typeof StaffLegalRoute
   StaffLegalDataRoute: typeof StaffLegalDataRoute
   StaffMentoringRoute: typeof StaffMentoringRoute
@@ -1799,12 +1859,14 @@ interface StaffRouteChildren {
   StaffFormsAuthorizationIndexRoute: typeof StaffFormsAuthorizationIndexRoute
   StaffFormsCustomIndexRoute: typeof StaffFormsCustomIndexRoute
   StaffFormsFeedbackIndexRoute: typeof StaffFormsFeedbackIndexRoute
+  StaffFormsIncidentsIndexRoute: typeof StaffFormsIncidentsIndexRoute
   StaffFormsLegalIndexRoute: typeof StaffFormsLegalIndexRoute
   StaffFormsMentoringIndexRoute: typeof StaffFormsMentoringIndexRoute
   StaffFormsTermsIndexRoute: typeof StaffFormsTermsIndexRoute
   StaffEntitiesReferralFormScreensScreenIdRoute: typeof StaffEntitiesReferralFormScreensScreenIdRoute
   StaffFormsCustomFormIdResponsesRoute: typeof StaffFormsCustomFormIdResponsesRoute
   StaffFormsFeedbackScreensScreenIdRoute: typeof StaffFormsFeedbackScreensScreenIdRoute
+  StaffFormsIncidentsScreensScreenIdRoute: typeof StaffFormsIncidentsScreensScreenIdRoute
   StaffFormsMentoringScreensScreenIdRoute: typeof StaffFormsMentoringScreensScreenIdRoute
   StaffFormsCustomFormIdIndexRoute: typeof StaffFormsCustomFormIdIndexRoute
   StaffFormsCustomFormIdScreensScreenIdRoute: typeof StaffFormsCustomFormIdScreensScreenIdRoute
@@ -1820,6 +1882,7 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffFeedbackRoute: StaffFeedbackRoute,
   StaffForumRoute: StaffForumRoute,
   StaffGalleryRoute: StaffGalleryRoute,
+  StaffIncidentsRoute: StaffIncidentsRoute,
   StaffLegalRoute: StaffLegalRoute,
   StaffLegalDataRoute: StaffLegalDataRoute,
   StaffMentoringRoute: StaffMentoringRoute,
@@ -1849,6 +1912,7 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffFormsAuthorizationIndexRoute: StaffFormsAuthorizationIndexRoute,
   StaffFormsCustomIndexRoute: StaffFormsCustomIndexRoute,
   StaffFormsFeedbackIndexRoute: StaffFormsFeedbackIndexRoute,
+  StaffFormsIncidentsIndexRoute: StaffFormsIncidentsIndexRoute,
   StaffFormsLegalIndexRoute: StaffFormsLegalIndexRoute,
   StaffFormsMentoringIndexRoute: StaffFormsMentoringIndexRoute,
   StaffFormsTermsIndexRoute: StaffFormsTermsIndexRoute,
@@ -1857,6 +1921,8 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffFormsCustomFormIdResponsesRoute: StaffFormsCustomFormIdResponsesRoute,
   StaffFormsFeedbackScreensScreenIdRoute:
     StaffFormsFeedbackScreensScreenIdRoute,
+  StaffFormsIncidentsScreensScreenIdRoute:
+    StaffFormsIncidentsScreensScreenIdRoute,
   StaffFormsMentoringScreensScreenIdRoute:
     StaffFormsMentoringScreensScreenIdRoute,
   StaffFormsCustomFormIdIndexRoute: StaffFormsCustomFormIdIndexRoute,

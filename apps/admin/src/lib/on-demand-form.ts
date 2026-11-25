@@ -1,12 +1,13 @@
 /**
  * The app's own forms she sends when she wants, on the board (RAPP-939,
- * RAPP-940): the suggestions form and the mentoring request. Each is read as
+ * RAPP-940, RAPP-973): the suggestions form, the mentoring request and the
+ * incident report. Each is read as
  * a form of the engine, so the board, the phones and the screen editor every
  * form uses draw it as they draw any form, and both share one board and one
  * screen page (`OnDemandFormBoard`, `OnDemandFormScreenEditor`).
  *
  * The dashboard's catalog sends each apart from the lists of forms
- * (`feedbackForm`, `mentoringForm`); their questions are among the fields and
+ * (`feedbackForm`, `mentoringForm`, `incidentForm`); their questions are among the fields and
  * their placements among the forms' rows. The view below adds the form to the
  * forms, so the shared pieces that find a form by id find it.
  *
@@ -31,12 +32,15 @@ export interface OnDemandFormDefinition {
   /** The screen holding the request's own parts. */
   readonly fixedScreen: FormSystemScreen;
   /** The board, and one screen's editor. */
-  readonly boardPath: '/forms/feedback' | '/forms/mentoring';
-  readonly screenPath: '/forms/feedback/screens/$screenId' | '/forms/mentoring/screens/$screenId';
+  readonly boardPath: '/forms/feedback' | '/forms/mentoring' | '/forms/incidents';
+  readonly screenPath:
+    | '/forms/feedback/screens/$screenId'
+    | '/forms/mentoring/screens/$screenId'
+    | '/forms/incidents/screens/$screenId';
   /** The one key that names it in the menu, on the page and in the editor's back link. */
-  readonly nameKey: 'nav:staff.feedbackForm' | 'nav:staff.mentoringForm';
+  readonly nameKey: 'nav:staff.feedbackForm' | 'nav:staff.mentoringForm' | 'nav:staff.incidentForm';
   /** The translation namespace its fixed parts are worded in, as her app words them. */
-  readonly namespace: 'feedback' | 'mentoring';
+  readonly namespace: 'feedback' | 'mentoring' | 'incidents';
   /** The fixed parts on her phone, in one language. They lead the fixed screen. */
   readonly fixedPhoneQuestions: (language: LanguageCode, t: Translate) => readonly PhoneQuestion[];
 }
