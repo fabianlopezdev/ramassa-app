@@ -15,10 +15,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AppError } from './errors';
-import { MADRID_TIME_ZONE } from './events';
 import type { IntakeCatalog } from './intake-builder/builder';
 import type { BuilderText } from './intake-builder/profile-layout';
 import { LONG_TEXT_MAX_LENGTH, SHORT_TEXT_MAX_LENGTH } from './intake-builder/question-types';
+import { todayInMadrid as madridToday } from './madrid-time';
 import {
   fetchMyOnDemandFormSource,
   formAnswersSchema,
@@ -56,15 +56,12 @@ export const INCIDENT_FIXED_FIELD_IDS = {
   where: '00000000-0000-4973-8000-000000000003',
 } as const;
 
-/** Today in Madrid, `YYYY-MM-DD`: the latest day an incident can have happened. */
-export function todayInMadrid(now: Date = new Date()): string {
-  // `en-CA` writes the date as YYYY-MM-DD.
-  return new Intl.DateTimeFormat('en-CA', { timeZone: MADRID_TIME_ZONE }).format(now);
-}
+/** Today in Madrid: the latest day an incident can have happened. */
+export { todayInMadrid } from './madrid-time';
 
 export const incidentReportSchema = z.object({
   what: z.string().trim().min(1).max(LONG_TEXT_MAX_LENGTH),
-  happenedOn: z.iso.date().refine((day) => day <= todayInMadrid()),
+  happenedOn: z.iso.date().refine((day) => day <= madridToday()),
   where: z.string().trim().min(1).max(SHORT_TEXT_MAX_LENGTH),
   isAnonymous: z.boolean(),
 });

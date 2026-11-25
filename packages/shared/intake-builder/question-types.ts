@@ -26,6 +26,7 @@
 import { z } from 'zod';
 import { isCanonicalCountry } from '../i18n/countries';
 import { isCanonicalMunicipality } from '../i18n/municipalities';
+import { todayInMadrid } from '../madrid-time';
 import type { LanguageCode } from '../schemas/language';
 
 export const CUSTOM_QUESTION_TYPES = [
@@ -326,11 +327,19 @@ export function customAnswerSchema(question: AnswerQuestionShape): z.ZodType<Cus
     }
     case 'date': {
       const settings = dateSettings(question.settings);
-      return z
-        .string()
-        .refine(isCalendarDate)
-        .refine((value) => settings.min_age === undefined || ageOn(value) >= settings.min_age)
-        .refine((value) => settings.max_age === undefined || ageOn(value) <= settings.max_age);
+      return (
+        z
+          .string()
+          .refine(isCalendarDate)
+          // "Today or before" (min_age 0, no upper bound) is Madrid's today, as the
+          // database checks it, so a day picked just after midnight is accepted (RAPP-973).
+          .refine((value) =>
+            settings.min_age === 0 && settings.max_age === undefined
+              ? value <= todayInMadrid()
+              : settings.min_age === undefined || ageOn(value) >= settings.min_age,
+          )
+          .refine((value) => settings.max_age === undefined || ageOn(value) <= settings.max_age)
+      );
     }
     case 'phone':
       return z.string().regex(PHONE_PATTERN);
