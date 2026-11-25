@@ -47,9 +47,9 @@ function ServicesScreen() {
   const languageFontClass = useLanguageFontClass();
   const { push } = useRouter();
   const categoriesQuery = usePlayerServiceCategories();
-  const [chosenSegment, setSegment] = useState<AjudaSegment>('services');
+  // Ajuda opens on the club's documents; with none published yet, on Serveis.
+  const [chosenSegment, setSegment] = useState<AjudaSegment>('documents');
   const hasBaseDocuments = selectBaseDocuments(usePlayerKnowledgeArticles().data).length > 0;
-  // If the club withdraws its last document while she is on it, she lands on Serveis.
   const segment = chosenSegment === 'documents' && !hasBaseDocuments ? 'services' : chosenSegment;
   // The numbers count what she has not seen in a category's list; the "Nou"
   // stays until she opens that service or guide (RAPP-873).
