@@ -13,5 +13,7 @@
   "referralUpdateBody": "افتحي سجل المشاركة لمراجعته.",
   "mentoringUpdateTitle": "تحديث بشأن الإرشاد",
   "mentoringUpdateBody": "افتحي تطبيق AE Ramassà لرؤية اليوم والوقت.",
+  "incidentReportTitle": "حادثة جديدة",
+  "incidentReportBody": "افتحيها في التطبيق.",
   "customFormFallbackBody": "اضغطي للإجابة عليه."
 }

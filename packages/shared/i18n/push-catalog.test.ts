@@ -20,6 +20,9 @@ const PUSH_KEYS = [
   'announcementFallbackBody',
   'referralUpdateTitle',
   'referralUpdateBody',
+  // The team's push for a new incident report (RAPP-973), with no content.
+  'incidentReportTitle',
+  'incidentReportBody',
 ] as const;
 
 describe('push catalog', () => {

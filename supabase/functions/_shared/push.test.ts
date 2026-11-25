@@ -122,6 +122,22 @@ describe('recipient language selection', () => {
     expect(JSON.stringify(resolved)).not.toContain('sala tranquil·la');
   });
 
+  test('an incident report reaches the team with fixed copy and never its content (RAPP-973)', () => {
+    const content: PushContent = {
+      contentType: 'incident_report',
+      contentId: '5eed0000-0000-4000-8049-000000000001',
+      title: { ca: 'Em van insultar' },
+      body: { ca: 'Al vestidor' },
+      expiresAt: null,
+    };
+
+    const resolved = buildExpoMessage('ExponentPushToken[test]', content, 'es');
+    expect(resolved.title).toBe('Nuevo incidente');
+    expect(resolved.body).toBe('Ábrelo en la app.');
+    expect(JSON.stringify(resolved)).not.toContain('insultar');
+    expect(JSON.stringify(resolved)).not.toContain('vestidor');
+  });
+
   test('a form the team created is titled by its name and opens her response (RAPP-700)', () => {
     const content: PushContent = {
       contentType: 'custom_form',
