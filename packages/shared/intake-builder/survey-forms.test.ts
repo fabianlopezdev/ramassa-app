@@ -15,6 +15,7 @@ const SURVEY: MySurvey = {
   eventId: null,
   closesAt: null,
   askedAt: '2026-11-23T10:00:00.000Z',
+  isStarted: false,
   content: {
     kind: 'survey',
     name: { ca: "Com ha anat l'entrenament?" },
